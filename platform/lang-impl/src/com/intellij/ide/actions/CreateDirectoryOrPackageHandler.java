@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.List;
 
 public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   @Nullable private final Project myProject;
@@ -49,6 +49,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   @Nullable private PsiFileSystemItem myCreatedElement = null;
   @NotNull private final String myDelimiters;
   @Nullable private final Component myDialogParent;
+  private String myErrorText;
 
   public CreateDirectoryOrPackageHandler(@Nullable Project project,
                                          @NotNull PsiDirectory directory,
@@ -71,21 +72,39 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
 
   @Override
   public boolean checkInput(String inputString) {
+    boolean firstToken = true;
+    for (String token : StringUtil.tokenize(inputString, myDelimiters)) {
+      if (token.equals(".") || token.equals("..")) {
+        myErrorText = "Can't create a directory with name '" + token + "'";
+        return false;
+      }
+      if (firstToken) {
+        final VirtualFile vFile = myDirectory.getVirtualFile();
+        final VirtualFile child = vFile.findChild(token);
+        if (child != null) {
+          myErrorText = "A " + (child.isDirectory() ? "directory" : "file") +
+                        " with name '" + token + "' already exists";
+          return false;
+        }
+      }
+      firstToken = false;
+      if (FileTypeManager.getInstance().isFileIgnored(token)) {
+        myErrorText = "Trying to create a " + (myIsDirectory ? "directory" : "package") +
+                      " with an ignored name, the result will not be visible";
+        return true;
+      }
+      if (!myIsDirectory && token.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(token)) {
+        myErrorText = "Not a valid package name, it will not be possible to create a class inside";
+        return true;
+      }
+    }
+    myErrorText = null;
     return true;
   }
 
   @Override
   public String getErrorText(String inputString) {
-    List<String> strings = StringUtil.split(inputString, ".");
-    for (String part : strings) {
-      if (FileTypeManager.getInstance().isFileIgnored(part)) {
-        return "Trying to create a " + (myIsDirectory ? "directory" : "package") + " with ignored name, result will not be visible";
-      }
-      if (!myIsDirectory && part.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(part)) {
-        return "Not a valid package name, it would be impossible to create a class inside";
-      }
-    }
-    return null;
+    return myErrorText;
   }
 
   @Override

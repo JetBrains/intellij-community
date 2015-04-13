@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.List;
+import java.util.StringTokenizer;
 
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
 
@@ -139,13 +141,30 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
     @Override
     public boolean checkInput(String inputString) {
-      if (FileTypeManager.getInstance().isFileIgnored(getFileName(inputString))) {
-        myErrorText = "This filename is ignored (Settings | File Types | Ignore files and folders)";
-        return false;
-      }
-      if (inputString.equals(".") || StringUtil.isEmpty(inputString.replace('.', ' ').trim())) {
-        myErrorText = "Can't create file with name '" + inputString + "'";
-        return false;
+      final StringTokenizer tokenizer = new StringTokenizer(inputString, "\\/");
+      boolean firstToken = true;
+      while (tokenizer.hasMoreTokens()) {
+        final String token = tokenizer.nextToken();
+        if (token.equals(".") || token.equals("..")) {
+          myErrorText = tokenizer.hasMoreTokens()
+                        ? "Can't create directory with name '" + token + "'"
+                        : "Can't create file with name '" + token + "'";
+          return false;
+        }
+        if (firstToken) {
+          final VirtualFile vFile = getDirectory().getVirtualFile();
+          final VirtualFile child = vFile.findChild(token);
+          if (child != null) {
+            myErrorText = "A " + (child.isDirectory() ? "directory" : "file") +
+                          " with name '" + token + "' already exists";
+            return false;
+          }
+        }
+        firstToken = false;
+        if (FileTypeManager.getInstance().isFileIgnored(getFileName(token))) {
+          myErrorText = "'" + token + "' is an ignored name (Settings | Editor | File Types | Ignore files and folders)";
+          return true;
+        }
       }
       myErrorText = null;
       return true;
