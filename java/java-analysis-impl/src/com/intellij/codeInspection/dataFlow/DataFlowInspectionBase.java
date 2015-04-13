@@ -767,8 +767,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private static class ReplaceOptionalOfWithOfNullableFix implements LocalQuickFix {
 
-    public static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
-    public static final String JAVA_OPTIONAL = "java.util.Optional";
+    private static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
     private final String myTargetMethodName;
 
     public ReplaceOptionalOfWithOfNullableFix(final String targetMethodName) {
@@ -785,7 +784,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
             final PsiClass containingClass = method.getContainingClass();
             if ("of".equals(method.getName()) && containingClass != null) {
               final String qualifiedName = containingClass.getQualifiedName();
-              if (JAVA_OPTIONAL.equals(qualifiedName)) {
+              if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(qualifiedName)) {
                 return new ReplaceOptionalOfWithOfNullableFix("ofNullable");
               } 
               else if (GUAVA_OPTIONAL.equals(qualifiedName)) {
