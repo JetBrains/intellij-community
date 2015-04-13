@@ -104,14 +104,23 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     consoleView.attachToProcess(handler);
     handler.addProcessListener(new ProcessAdapter() {
       @Override
+      public void startNotified(ProcessEvent event) {
+        if (getConfiguration().isSaveOutputToFile()) {
+          viewer.getRoot().setOutputFilePath(getConfiguration().getOutputFilePath());
+        }
+      }
+
+      @Override
       public void processTerminated(ProcessEvent event) {
         Runnable runnable = new Runnable() {
           public void run() {
+            final AbstractTestProxy viewerRoot = viewer.getRoot();
             if (viewer.hasTestSuites() ||
                 !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), testConsoleProperties.isDebug())) {
-              TestsUIUtil.notifyByBalloon(testConsoleProperties.getProject(), viewer.hasTestSuites(), viewer.getRoot(), testConsoleProperties, null);
+              TestsUIUtil.notifyByBalloon(testConsoleProperties.getProject(), viewer.hasTestSuites(), viewerRoot, testConsoleProperties, null);
             }
 
+            viewerRoot.flush();
             deleteTempFiles();
             clear();
           }
