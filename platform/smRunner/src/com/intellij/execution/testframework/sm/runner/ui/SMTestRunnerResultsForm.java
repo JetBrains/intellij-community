@@ -273,7 +273,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public void onSuiteTreeNodeAdded(SMTestProxy testProxy) {
-    updateOnTestStarted(false);
+    myTotalTestCount++;
     _addTestOrSuite(testProxy);
   }
 
