@@ -1658,16 +1658,17 @@
             icon="JetgroovyIcons.Groovy.GroovyDoc">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-    <action id="Groovy.Shell"
-            class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
-            text="Groovy Shell..." description="Launch Groovy Shell"
+    
+    <action id="Groovy.Console"
+            class="org.jetbrains.plugins.groovy.console.actions.GrNewConsoleAction"
+            text="Groovy Console..." description="Launch new Groovy Console"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-
-    <action id="New.Groovy.Console"
-            class="org.jetbrains.plugins.groovy.console.actions.GrNewConsoleAction"
-            text="New Groovy Console..." description="Launch new Groovy Console"
+    
+    <action id="Groovy.Shell"
+            class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
+            text="Groovy Shell..." description="Launch Groovy Shell"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
