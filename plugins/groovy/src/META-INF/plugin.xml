@@ -417,7 +417,7 @@
                             id="groovyBasic2ClassName" order="first, after liveTemplates"/>
     <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor"
                             id="groovyBasic" order="before javaClassName"/>
-    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.console.GroovyShellCompletionContributor"/>
+    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.shell.GroovyShellCompletionContributor"/>
 
     <completion.contributor language="Groovy"
                             implementationClass="org.jetbrains.plugins.groovy.lang.completion.GroovySmartCompletionContributor"/>
@@ -1659,7 +1659,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
     <action id="Groovy.Shell"
-            class="org.jetbrains.plugins.groovy.console.GroovyShellAction"
+            class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
             text="Groovy Shell..." description="Launch Groovy Shell"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>

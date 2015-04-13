@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
-import static org.jetbrains.plugins.groovy.console.GroovyConsoleRunnerImpl.GROOVY_SHELL_FILE;
+import static org.jetbrains.plugins.groovy.shell.GroovyConsoleRunnerImpl.GROOVY_SHELL_FILE;
 
 /**
  * @author peter
