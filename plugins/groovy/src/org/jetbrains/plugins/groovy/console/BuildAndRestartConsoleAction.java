@@ -20,7 +20,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.compiler.CompileContext;
@@ -34,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by Max Medvedev on 21/03/14
  */
-public class BuildAndRestartConsoleAction extends AnAction implements Disposable {
+public class BuildAndRestartConsoleAction extends AnAction {
 
   private Module myModule;
   private Project myProject;
@@ -81,15 +80,5 @@ public class BuildAndRestartConsoleAction extends AnAction implements Disposable
         }
       });
     }
-  }
-
-
-  @Override
-  public void dispose() {
-    myModule = null;
-    myRestarter = null;
-    myProject = null;
-    myExecutor = null;
-    myContentDescriptor = null;
   }
 }

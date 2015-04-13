@@ -75,7 +75,6 @@ public class GroovyShellRunnerImpl extends AbstractConsoleRunnerWithHistory<Lang
     toolbarActions.add(rebuildAction);
     List<AnAction> actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     actions.add(rebuildAction);
-    Disposer.register(getConsoleView(), rebuildAction);
     return actions;
   }
 

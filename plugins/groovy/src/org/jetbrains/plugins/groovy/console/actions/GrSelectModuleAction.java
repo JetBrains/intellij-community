@@ -26,8 +26,8 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.console.GroovyConsole;
-import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService;
+import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil;
 
 public class GrSelectModuleAction extends AnAction {
 
@@ -58,7 +58,7 @@ public class GrSelectModuleAction extends AnAction {
 
   @NotNull
   public static String getText(@Nullable Module module) {
-    return module == null ? "<select module>" : GroovyConsoleUtil.getTitle(module);
+    return module == null || module.isDisposed() ? "Select module..." : GroovyConsoleUtil.getTitle(module);
   }
 
   @Override
