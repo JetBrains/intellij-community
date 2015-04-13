@@ -334,7 +334,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   protected void scrollToLine(@NotNull Side side, int line) {
     Editor editor = side.select(myEditor1, myEditor2);
     if (editor == null) return;
-    DiffUtil.scrollEditor(editor, line);
+    DiffUtil.scrollEditor(editor, line, false);
     myCurrentSide = side;
   }
 
@@ -569,7 +569,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
         }
       }
       else {
-        DiffUtil.scrollToCaret(getCurrentEditor());
+        DiffUtil.scrollToCaret(getCurrentEditor(), false);
       }
       return true;
     }
@@ -581,7 +581,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       if (side.select(myEditor1, myEditor2) == null) return false;
 
       myCurrentSide = side;
-      DiffUtil.scrollEditor(getCurrentEditor(), line);
+      DiffUtil.scrollEditor(getCurrentEditor(), line, false);
       return true;
     }
   }

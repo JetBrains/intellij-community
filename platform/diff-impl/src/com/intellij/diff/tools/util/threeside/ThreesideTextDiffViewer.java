@@ -90,7 +90,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     super(context, request);
 
     List<DiffContent> contents = myRequest.getContents();
-    myActualContents = ContainerUtil.newArrayList((DocumentContent)contents.get(0), (DocumentContent)contents.get(1), (DocumentContent)contents.get(2));
+    myActualContents = ContainerUtil.newArrayList((DocumentContent)contents.get(0),
+                                                  (DocumentContent)contents.get(1),
+                                                  (DocumentContent)contents.get(2));
 
 
     myEditors = createEditors();
@@ -285,7 +287,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @CalledInAwt
   protected void scrollToLine(@NotNull ThreeSide side, int line) {
     Editor editor = side.select(myEditors);
-    DiffUtil.scrollEditor(editor, line);
+    DiffUtil.scrollEditor(editor, line, false);
     myCurrentSide = side;
   }
 
@@ -515,7 +517,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
         }
       }
       else {
-        DiffUtil.scrollToCaret(getCurrentEditor());
+        DiffUtil.scrollToCaret(getCurrentEditor(), false);
       }
       return true;
     }
@@ -527,7 +529,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       if (side.select(myEditors) == null) return false;
 
       myCurrentSide = side;
-      DiffUtil.scrollEditor(getCurrentEditor(), line);
+      DiffUtil.scrollEditor(getCurrentEditor(), line, false);
       return true;
     }
   }
