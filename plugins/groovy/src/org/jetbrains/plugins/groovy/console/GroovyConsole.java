@@ -105,9 +105,9 @@ public class GroovyConsole {
     }
   }
 
-  public static void createConsole(@NotNull final Project project,
-                                   @NotNull final VirtualFile contentFile,
-                                   @NotNull final Consumer<GroovyConsole> callback) {
+  public static void getOrCreateConsole(@NotNull final Project project,
+                                        @NotNull final VirtualFile contentFile,
+                                        @NotNull final Consumer<GroovyConsole> callback) {
     final GroovyConsole existingConsole = contentFile.getUserData(GROOVY_CONSOLE);
     if (existingConsole != null) return;
 
@@ -123,50 +123,59 @@ public class GroovyConsole {
 
     final Module module = GroovyConsoleStateService.getInstance(project).getSelectedModule(contentFile);
     if (module != null) {
+      // if module for console is already selected, then use it for creation
       initializer.consume(module);
     }
     else {
+      // if not, then select module, then run initializer
       GroovyConsoleUtil.selectModuleAndRun(project, initializer);
     }
   }
 
   @Nullable
-  public static GroovyConsole createConsole(@NotNull Project project, @NotNull final VirtualFile contentFile, @NotNull Module module) {
+  public static GroovyConsole createConsole(@NotNull final Project project,
+                                            @NotNull final VirtualFile contentFile,
+                                            @NotNull Module module) {
     final ProcessHandler processHandler = createProcessHandler(module);
     if (processHandler == null) return null;
 
-    final String title = GroovyConsoleUtil.getTitle(module);
+    final GroovyConsoleStateService consoleStateService = GroovyConsoleStateService.getInstance(project);
+    consoleStateService.setFileModule(contentFile, module);
+    final String title = consoleStateService.getSelectedModuleTitle(contentFile);
+
     final ConsoleViewImpl consoleView = new ConsoleViewImpl(project, true);
     final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, processHandler, new JPanel(new BorderLayout()), title);
     final GroovyConsole console = new GroovyConsole(project, descriptor, consoleView, processHandler);
 
-    final CloseAction closeAction = new CloseAction(defaultExecutor, descriptor, project);
-    consoleView.addCustomConsoleAction(closeAction);
-
+    // must call getComponent before createConsoleActions()
     final JComponent consoleViewComponent = consoleView.getComponent();
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.UNKNOWN,
-      new DefaultActionGroup(consoleView.createConsoleActions()),
-      false
-    );
+
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(new BuildAndRestartConsoleAction(module, project, defaultExecutor, descriptor, restarter(project, contentFile)));
+    actionGroup.addSeparator();
+    actionGroup.addAll(consoleView.createConsoleActions());
+    actionGroup.add(new CloseAction(defaultExecutor, descriptor, project));
+
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
     toolbar.setTargetComponent(consoleViewComponent);
 
     final JComponent ui = descriptor.getComponent();
     ui.add(consoleViewComponent, BorderLayout.CENTER);
     ui.add(toolbar.getComponent(), BorderLayout.WEST);
 
-    contentFile.putUserData(GROOVY_CONSOLE, console);
-
     consoleView.attachToProcess(processHandler);
-    processHandler.startNotify();
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(ProcessEvent event) {
-        contentFile.putUserData(GROOVY_CONSOLE, null);
+        if (contentFile.getUserData(GROOVY_CONSOLE) == console) {
+          contentFile.putUserData(GROOVY_CONSOLE, null);
+        }
       }
     });
+    processHandler.startNotify();
     ExecutionManager.getInstance(project).getContentManager().showRunContent(defaultExecutor, descriptor);
 
+    contentFile.putUserData(GROOVY_CONSOLE, console);
     return console;
   }
 
@@ -199,5 +208,14 @@ public class GroovyConsole {
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
     res.setWorkingDirectory(ModuleRootManager.getInstance(module).getContentRoots()[0].getPath());
     return res;
+  }
+
+  private static Consumer<Module> restarter(final Project project, final VirtualFile file) {
+    return new Consumer<Module>() {
+      @Override
+      public void consume(Module module) {
+        createConsole(project, file, module);
+      }
+    };
   }
 }

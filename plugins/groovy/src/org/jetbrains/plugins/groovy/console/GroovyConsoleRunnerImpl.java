@@ -34,6 +34,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 
@@ -47,6 +48,12 @@ public class GroovyConsoleRunnerImpl extends AbstractConsoleRunnerWithHistory<La
   private final GroovyShellHandler myHandler;
   private final GroovyShellRunner myShellRunner;
   private final Module myModule;
+  private final Consumer<Module> myStarter = new Consumer<Module>() {
+    @Override
+    public void consume(Module module) {
+      myHandler.doRunShell(module);
+    }
+  };
 
   public GroovyConsoleRunnerImpl(@NotNull String consoleTitle,
                                  GroovyShellHandler handler, @NotNull GroovyShellRunner shellRunner,
@@ -62,7 +69,7 @@ public class GroovyConsoleRunnerImpl extends AbstractConsoleRunnerWithHistory<La
                                               final Executor defaultExecutor,
                                               final RunContentDescriptor contentDescriptor) {
     BuildAndRestartConsoleAction rebuildAction =
-      new BuildAndRestartConsoleAction(myModule, getProject(), defaultExecutor, contentDescriptor, myHandler);
+      new BuildAndRestartConsoleAction(myModule, getProject(), defaultExecutor, contentDescriptor, myStarter);
     toolbarActions.add(rebuildAction);
     List<AnAction> actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     actions.add(rebuildAction);

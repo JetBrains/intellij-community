@@ -42,7 +42,7 @@ public class GrExecuteCommandAction extends AnAction {
 
     final GroovyConsole existingConsole = virtualFile.getUserData(GroovyConsole.GROOVY_CONSOLE);
     if (existingConsole == null) {
-      GroovyConsole.createConsole(project, virtualFile, new Consumer<GroovyConsole>() {
+      GroovyConsole.getOrCreateConsole(project, virtualFile, new Consumer<GroovyConsole>() {
         @Override
         public void consume(GroovyConsole console) {
           console.execute(command);

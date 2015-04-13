@@ -27,7 +27,6 @@ import com.intellij.util.Consumer;
 import org.jetbrains.plugins.groovy.console.GroovyConsole;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleRootType;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil;
-import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService;
 
 public class GrNewConsoleAction extends AnAction {
 
@@ -44,7 +43,6 @@ public class GrNewConsoleAction extends AnAction {
           ScratchFileService.Option.create_new_always
         );
         assert contentFile != null;
-        GroovyConsoleStateService.getInstance(project).setFileModule(contentFile, module);
         GroovyConsole.createConsole(project, contentFile, module);
         FileEditorManager.getInstance(project).openFile(contentFile, true);
       }
