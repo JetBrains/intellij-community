@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class ClassesProcessor {
 
   public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
 
-  private Map<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
+  private final Map<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
 
   public ClassesProcessor(StructContext context) {
 
@@ -353,14 +353,14 @@ public class ClassesProcessor {
     public int type;
     public int access;
     public String simpleName;
-    public StructClass classStruct;
+    public final StructClass classStruct;
     private ClassWrapper wrapper;
     public String enclosingMethod;
     public InvocationExprent superInvocation;
-    public Map<String, VarVersionPair> mapFieldsToVars = new HashMap<String, VarVersionPair>();
+    public final Map<String, VarVersionPair> mapFieldsToVars = new HashMap<String, VarVersionPair>();
     public VarType anonymousClassType;
-    public List<ClassNode> nested = new ArrayList<ClassNode>();
-    public Set<String> enclosingClasses = new HashSet<String>();
+    public final List<ClassNode> nested = new ArrayList<ClassNode>();
+    public final Set<String> enclosingClasses = new HashSet<String>();
     public ClassNode parent;
     public LambdaInformation lambdaInformation;
     public boolean namelessConstructorStub = false;

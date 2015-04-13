@@ -4,18 +4,18 @@ public enum TestEnum {
    E1,
    E2 {
       public void m() {
-      }
+      }// 22
    },
    E3("-"),
    E4("+") {
       public void m() {
-      }
+      }// 27
    };
 
    private String s;
 
    public void m() {
-   }
+   }// 30
 
    private TestEnum() {
       this("?");// 34
@@ -26,17 +26,38 @@ public enum TestEnum {
    }
 }
 
+class 'pkg/TestEnum$1' {
+   method 'm ()V' {
+      0      6
+   }
+}
+
+class 'pkg/TestEnum$2' {
+   method 'm ()V' {
+      0      11
+   }
+}
+
 class 'pkg/TestEnum' {
+   method 'm ()V' {
+      0      17
+   }
+
    method '<init> (Ljava/lang/String;I)V' {
       3      20
       5      20
+      8      21
    }
 
    method '<init> (Ljava/lang/String;ILjava/lang/String;)V' {
       8      24
+      b      25
    }
 }
 
 Lines mapping:
+22 <-> 7
+27 <-> 12
+30 <-> 18
 34 <-> 21
 35 <-> 25

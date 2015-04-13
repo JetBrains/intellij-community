@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,9 +160,9 @@ public class LazyLoader {
     public static final int CLASS = 1;
     public static final int ENTRY = 2;
 
-    public int type;
-    public String externalPath;
-    public String internalPath;
+    public final int type;
+    public final String externalPath;
+    public final String internalPath;
 
     public Link(int type, String externalPath, String internalPath) {
       this.type = type;

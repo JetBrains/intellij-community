@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.java.decompiler.struct.match;
 
 import java.util.ArrayList;
@@ -21,16 +36,16 @@ public class MatchEngine {
 
   private MatchNode rootNode = null;
   
-  private Map<String, Object> variables = new HashMap<String, Object>();
+  private final Map<String, Object> variables = new HashMap<String, Object>();
   
-  private static Map<String, MatchProperties> stat_properties = new HashMap<String, MatchProperties>();
-  private static Map<String, MatchProperties> expr_properties = new HashMap<String, MatchProperties>();
-  private static Map<String, Integer> stat_type = new HashMap<String, Integer>();
-  private static Map<String, Integer> expr_type = new HashMap<String, Integer>();
-  private static Map<String, Integer> expr_func_type = new HashMap<String, Integer>();
-  private static Map<String, Integer> expr_exit_type = new HashMap<String, Integer>();
-  private static Map<String, Integer> stat_if_type = new HashMap<String, Integer>();
-  private static Map<String, VarType> expr_const_type = new HashMap<String, VarType>();
+  private static final Map<String, MatchProperties> stat_properties = new HashMap<String, MatchProperties>();
+  private static final Map<String, MatchProperties> expr_properties = new HashMap<String, MatchProperties>();
+  private static final Map<String, Integer> stat_type = new HashMap<String, Integer>();
+  private static final Map<String, Integer> expr_type = new HashMap<String, Integer>();
+  private static final Map<String, Integer> expr_func_type = new HashMap<String, Integer>();
+  private static final Map<String, Integer> expr_exit_type = new HashMap<String, Integer>();
+  private static final Map<String, Integer> stat_if_type = new HashMap<String, Integer>();
+  private static final Map<String, VarType> expr_const_type = new HashMap<String, VarType>();
   
   static {
     stat_properties.put("type", MatchProperties.STATEMENT_TYPE);

@@ -13,7 +13,7 @@ public class TestClassLoop {
       while(true) {
          try {
             if(!var0) {// 33
-               return;
+               return;// 34
             }
          } finally {
             System.out.println("1");// 38
@@ -32,12 +32,12 @@ public class TestClassLoop {
             } finally {
                if(var0) {// 52
                   System.out.println("3");// 53
-                  continue;
+                  continue;// 54
                }
             }
          }
 
-         System.out.println("4");
+         System.out.println("4");// 58
       }
    }
 }
@@ -54,6 +54,7 @@ class 'pkg/TestClassLoop' {
       4      10
       d      10
       f      14
+      1a      15
       26      18
       27      18
       2a      18
@@ -71,6 +72,10 @@ class 'pkg/TestClassLoop' {
       2a      33
       2d      33
       2f      33
+      32      34
+      37      39
+      3a      39
+      3c      39
    }
 }
 
@@ -78,8 +83,13 @@ Lines mapping:
 23 <-> 6
 29 <-> 11
 33 <-> 15
+34 <-> 16
 38 <-> 19
 45 <-> 25
 49 <-> 30
 52 <-> 33
 53 <-> 34
+54 <-> 35
+58 <-> 40
+Not mapped:
+39

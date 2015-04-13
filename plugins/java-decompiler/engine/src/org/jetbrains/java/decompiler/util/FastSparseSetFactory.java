@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.util.Set;
 
 public class FastSparseSetFactory<E> {
 
-  private VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<int[], E>();
+  private final VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<int[], E>();
 
   private int lastBlock;
 
@@ -90,9 +90,9 @@ public class FastSparseSetFactory<E> {
   public static class FastSparseSet<E> implements Iterable<E> {
     public static final FastSparseSet[] EMPTY_ARRAY = new FastSparseSet[0];
 
-    private FastSparseSetFactory<E> factory;
+    private final FastSparseSetFactory<E> factory;
 
-    private VBStyleCollection<int[], E> colValuesInternal;
+    private final VBStyleCollection<int[], E> colValuesInternal;
 
     private int[] data;
     private int[] next;
@@ -219,7 +219,7 @@ public class FastSparseSetFactory<E> {
         index = factory.addElement(element);
       }
 
-      return index[0] >= data.length ? false : ((data[index[0]] & index[1]) != 0);
+      return index[0] < data.length && ((data[index[0]] & index[1]) != 0);
     }
 
     public boolean contains(FastSparseSet<E> set) {
@@ -478,10 +478,10 @@ public class FastSparseSetFactory<E> {
 
   public static class FastSparseSetIterator<E> implements Iterator<E> {
 
-    private VBStyleCollection<int[], E> colValuesInternal;
-    private int[] data;
-    private int[] next;
-    private int size;
+    private final VBStyleCollection<int[], E> colValuesInternal;
+    private final int[] data;
+    private final int[] next;
+    private final int size;
 
     private int pointer = -1;
     private int next_pointer = -1;

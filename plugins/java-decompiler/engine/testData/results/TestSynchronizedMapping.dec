@@ -9,7 +9,7 @@ public class TestSynchronizedMapping {
 
    public void test2(String var1) {
       System.out.println(var1);// 14
-   }
+   }// 15
 }
 
 class 'pkg/TestSynchronizedMapping' {
@@ -22,6 +22,7 @@ class 'pkg/TestSynchronizedMapping' {
    method 'test2 (Ljava/lang/String;)V' {
       0      10
       4      10
+      7      11
    }
 }
 
@@ -29,3 +30,6 @@ Lines mapping:
 8 <-> 5
 9 <-> 6
 14 <-> 11
+15 <-> 12
+Not mapped:
+10

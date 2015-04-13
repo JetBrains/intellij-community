@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,10 +46,10 @@ import java.util.Map.Entry;
 
 public class FinallyProcessor {
 
-  private Map<Integer, Integer> finallyBlockIDs = new HashMap<Integer, Integer>();
-  private Map<Integer, Integer> catchallBlockIDs = new HashMap<Integer, Integer>();
+  private final Map<Integer, Integer> finallyBlockIDs = new HashMap<Integer, Integer>();
+  private final Map<Integer, Integer> catchallBlockIDs = new HashMap<Integer, Integer>();
 
-  private VarProcessor varprocessor;
+  private final VarProcessor varprocessor;
 
   public FinallyProcessor(VarProcessor varprocessor) {
     this.varprocessor = varprocessor;
@@ -863,11 +863,11 @@ public class FinallyProcessor {
 
       if ((type & 2) > 0) { // last
         if (finallytype == 0 || finallytype == 2) {
-          seqPattern.removeInstruction(seqPattern.length() - 1);
+          seqPattern.removeLast();
         }
 
         if (finallytype == 2) {
-          seqPattern.removeInstruction(seqPattern.length() - 1);
+          seqPattern.removeLast();
         }
       }
     }
@@ -889,13 +889,16 @@ public class FinallyProcessor {
     if (seqPattern.length() < seqSample.length()) { // split in two blocks
 
       SimpleInstructionSequence seq = new SimpleInstructionSequence();
+      LinkedList<Integer> oldOffsets = new LinkedList<Integer>();
       for (int i = seqSample.length() - 1; i >= seqPattern.length(); i--) {
         seq.addInstruction(0, seqSample.getInstr(i), -1);
+        oldOffsets.addFirst(sample.getOldOffset(i));
         seqSample.removeInstruction(i);
       }
 
       BasicBlock newblock = new BasicBlock(++graph.last_id);
       newblock.setSeq(seq);
+      newblock.getInstrOldOffsets().addAll(oldOffsets);
 
       List<BasicBlock> lstTemp = new ArrayList<BasicBlock>();
       lstTemp.addAll(sample.getSuccs());
@@ -1038,7 +1041,7 @@ public class FinallyProcessor {
 
       // new empty block
       BasicBlock emptyblock = new BasicBlock(++graph.last_id);
-      emptyblock.setSeq(new SimpleInstructionSequence());
+
       graph.getBlocks().addWithKey(emptyblock, emptyblock.id);
 
       // add to ranges if necessary
@@ -1075,11 +1078,11 @@ public class FinallyProcessor {
 
       if ((blocktype & 2) > 0) { // last
         if (finallytype == 2 || finallytype == 0) {
-          seq.removeInstruction(seq.length() - 1);
+          seq.removeLast();
         }
 
         if (finallytype == 2) { // astore
-          seq.removeInstruction(seq.length() - 1);
+          seq.removeLast();
         }
       }
     }

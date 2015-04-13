@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 
 public class RootStatement extends Statement {
 
-  private Statement dummyExit;
+  private DummyExitStatement dummyExit;
 
-  public RootStatement(Statement head, Statement dummyExit) {
+  public RootStatement(Statement head, DummyExitStatement dummyExit) {
 
     type = Statement.TYPE_ROOT;
 
@@ -39,11 +39,11 @@ public class RootStatement extends Statement {
     return ExprProcessor.listToJava(varDefinitions, indent, tracer).append(first.toJava(indent, tracer));
   }
 
-  public Statement getDummyExit() {
+  public DummyExitStatement getDummyExit() {
     return dummyExit;
   }
 
-  public void setDummyExit(Statement dummyExit) {
+  public void setDummyExit(DummyExitStatement dummyExit) {
     this.dummyExit = dummyExit;
   }
 }

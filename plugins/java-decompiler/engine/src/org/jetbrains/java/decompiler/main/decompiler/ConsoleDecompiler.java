@@ -113,8 +113,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
   private final File root;
   private final Fernflower fernflower;
-  private Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<String, ZipOutputStream>();
-  private Map<String, Set<String>> mapArchiveEntries = new HashMap<String, Set<String>>();
+  private final Map<String, ZipOutputStream> mapArchiveStreams = new HashMap<String, ZipOutputStream>();
+  private final Map<String, Set<String>> mapArchiveEntries = new HashMap<String, Set<String>>();
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public ConsoleDecompiler(File destination, Map<String, Object> options) {

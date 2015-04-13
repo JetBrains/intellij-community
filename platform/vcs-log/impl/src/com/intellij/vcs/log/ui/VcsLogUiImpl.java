@@ -87,7 +87,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
     }
     else {
       currentModel.setVisiblePack(myVisiblePack);
-      previousSelection.restore(myVisiblePack.getVisibleGraph());
+      previousSelection.restore(myVisiblePack.getVisibleGraph(), true);
     }
     getTable().setPaintBusy(false);
 

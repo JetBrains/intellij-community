@@ -17,7 +17,7 @@ public class TestClassTypes {
          System.out.println();// 36
       }
 
-   }
+   }// 38
 
    public boolean testBit(int var1) {
       return (var1 & 1) == 1;// 41
@@ -27,16 +27,16 @@ public class TestClassTypes {
       switch(var1) {// 46
       case 88:
          System.out.println("1");// 48
-         break;
+         break;// 49
       case 656:
          System.out.println("2");// 51
-         break;
+         break;// 52
       case 65201:
       case 65489:
          System.out.println("3");// 55
       }
 
-   }
+   }// 57
 
    public void testAssignmentType(List var1) {
       Object var2 = var1;// 61
@@ -45,7 +45,7 @@ public class TestClassTypes {
       }
 
       System.out.println(((List)var2).size());// 67
-   }
+   }// 68
 }
 
 class 'pkg/TestClassTypes' {
@@ -72,6 +72,7 @@ class 'pkg/TestClassTypes' {
       23      15
       26      16
       29      16
+      2c      19
    }
 
    method 'testBit (I)Z' {
@@ -86,12 +87,15 @@ class 'pkg/TestClassTypes' {
       2c      28
       2f      28
       31      28
+      34      29
       37      31
       3a      31
       3c      31
+      3f      32
       42      35
       45      35
       47      35
+      4a      38
    }
 
    method 'testAssignmentType (Ljava/util/List;)V' {
@@ -103,6 +107,7 @@ class 'pkg/TestClassTypes' {
       18      46
       1c      46
       21      46
+      24      47
    }
 }
 
@@ -115,12 +120,17 @@ Lines mapping:
 32 <-> 13
 35 <-> 16
 36 <-> 17
+38 <-> 20
 41 <-> 23
 46 <-> 27
 48 <-> 29
+49 <-> 30
 51 <-> 32
+52 <-> 33
 55 <-> 36
+57 <-> 39
 61 <-> 42
 63 <-> 43
 64 <-> 44
 67 <-> 47
+68 <-> 48

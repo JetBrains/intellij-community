@@ -10,13 +10,14 @@ public class TestClassNestedInitializer {
          }
       };// 22
       System.out.println(var1.secret);// 23
-   }
+   }// 24
 }
 
 class 'pkg/TestClassNestedInitializer$1' {
    method '<init> (Lpkg/TestClassNestedInitializer;)V' {
       a      8
       c      8
+      f      9
    }
 }
 
@@ -26,9 +27,11 @@ class 'pkg/TestClassNestedInitializer' {
       9      11
       d      11
       10      11
+      13      12
    }
 }
 
 Lines mapping:
 22 <-> 11
 23 <-> 12
+24 <-> 13

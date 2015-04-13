@@ -30,7 +30,7 @@ public class FastExtendedPostdominanceHelper {
 
   private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new HashMap<Integer, FastFixedSet<Integer>>();
 
-  private HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new HashMap<Integer, FastFixedSet<Integer>>();
+  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new HashMap<Integer, FastFixedSet<Integer>>();
 
   private Statement statement;
 

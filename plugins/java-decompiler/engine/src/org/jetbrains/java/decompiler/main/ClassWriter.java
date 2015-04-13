@@ -47,8 +47,8 @@ import java.util.*;
 
 public class ClassWriter {
 
-  private ClassReference14Processor ref14processor;
-  private PoolInterceptor interceptor;
+  private final ClassReference14Processor ref14processor;
+  private final PoolInterceptor interceptor;
 
   public ClassWriter() {
     ref14processor = new ClassReference14Processor();
@@ -534,8 +534,8 @@ public class ClassWriter {
         indent += 1;
       }
 
+      RootStatement root = classWrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
       if (!methodWrapper.decompiledWithErrors) {
-        RootStatement root = classWrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
         if (root != null) { // check for existence
           try {
             buffer.append(root.toJava(indent, tracer));
@@ -553,12 +553,13 @@ public class ClassWriter {
         buffer.appendLineSeparator();
       }
 
+      if (root != null) {
+        tracer.addMapping(root.getDummyExit().bytecode);
+      }
+
       if (!codeOnly) {
         indent -= 1;
-
-        buffer.appendIndent(indent);
-        buffer.append('}');
-        buffer.appendLineSeparator();
+        buffer.appendIndent(indent).append('}').appendLineSeparator();
       }
     }
     finally {
@@ -869,6 +870,9 @@ public class ClassWriter {
           tracer.incrementCurrentSourceLine();
         }
 
+        if (root != null) {
+          tracer.addMapping(root.getDummyExit().bytecode);
+        }
         buffer.appendIndent(indent).append('}').appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
