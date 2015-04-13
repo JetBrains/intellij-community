@@ -30,6 +30,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onStart(ISuite suite) {
+    System.out.println("##teamcity[enteredTheMatrix]");
     System.out.println("##teamcity[testSuiteStarted name =\'" + suite.getName() + "\']");
   }
 

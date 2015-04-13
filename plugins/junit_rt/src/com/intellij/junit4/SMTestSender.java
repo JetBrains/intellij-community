@@ -46,6 +46,7 @@ class SMTestSender extends RunListener {
 
   public void testRunStarted(Description description) throws Exception {
     myCurrentClassName = myIgnoreTopSuite ? description.toString() : null;
+    System.out.println("##teamcity[enteredTheMatrix]");
   }
 
   public void testRunFinished(Result result) throws Exception {
