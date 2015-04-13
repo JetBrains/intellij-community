@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,10 +67,10 @@ public class JsonBlock implements ASTBlock {
     mySpacingBuilder = JsonFormattingBuilderModel.createSpacingBuilder(settings);
 
     if (myPsiElement instanceof JsonObject) {
-      myChildWrap = Wrap.createWrap(getCustomSettings().OBJECT_WRAPPING, false);
+      myChildWrap = Wrap.createWrap(getCustomSettings().OBJECT_WRAPPING, true);
     }
     else if (myPsiElement instanceof JsonArray) {
-      myChildWrap = Wrap.createWrap(getCustomSettings().ARRAY_WRAPPING, false);
+      myChildWrap = Wrap.createWrap(getCustomSettings().ARRAY_WRAPPING, true);
     }
     else {
       myChildWrap = null;
@@ -113,9 +114,14 @@ public class JsonBlock implements ASTBlock {
 
     final JsonCodeStyleSettings customSettings = getCustomSettings();
     if (hasElementType(myNode, JSON_CONTAINERS)) {
-      if (!hasElementType(childNode, COMMA) && !hasElementType(childNode, JSON_ALL_BRACES)) {
+      if (hasElementType(childNode, COMMA)) {
+        wrap = Wrap.createWrap(WrapType.NONE, true);
+      }
+      else if (!hasElementType(childNode, JSON_ALL_BRACES)) {
         assert myChildWrap != null;
-        wrap = myChildWrap;
+        if (!FormatterUtil.isPrecededBy(childNode, JSON_OPEN_BRACES)) {
+          wrap = myChildWrap;
+        }
         indent = Indent.getNormalIndent();
       }
       else if (hasElementType(childNode, JSON_OPEN_BRACES)) {
