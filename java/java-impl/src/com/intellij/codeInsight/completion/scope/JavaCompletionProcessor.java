@@ -92,9 +92,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       scope = scope.getContext();
     }
     myScope = scope;
-    if (!(element.getContainingFile() instanceof PsiJavaFile)) {
-      myMembersFlag = true;
-    }
 
     PsiElement elementParent = element.getContext();
     if (elementParent instanceof PsiReferenceExpression) {
