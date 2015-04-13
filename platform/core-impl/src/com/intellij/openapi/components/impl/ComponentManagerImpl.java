@@ -340,8 +340,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
   }
 
-  @NotNull
-  protected ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  @NotNull // used in upsource
+  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getAppComponents();
   }
 

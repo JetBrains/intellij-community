@@ -212,7 +212,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @NotNull
   @Override
-  protected ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getProjectComponents();
   }
 

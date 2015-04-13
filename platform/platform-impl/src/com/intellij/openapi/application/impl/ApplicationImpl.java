@@ -529,7 +529,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @NotNull
   @Override
-  protected ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getAppComponents();
   }
 
