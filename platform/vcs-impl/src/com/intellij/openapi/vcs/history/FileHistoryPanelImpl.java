@@ -575,14 +575,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private void adjustEmptyText() {
     VirtualFile virtualFile = myFilePath.getVirtualFile();
-    if (virtualFile == null || !virtualFile.isValid()) {
-      if (!myFilePath.getIOFile().exists()) {
-        String emptyText = "File " + myFilePath.getName() + " not found";
-        setEmptyText(emptyText);
-        return;
-      }
+    if ((virtualFile == null || !virtualFile.isValid()) && !myFilePath.getIOFile().exists()) {
+      setEmptyText("File " + myFilePath.getName() + " not found");
     }
-    setEmptyText(CommonBundle.getLoadingTreeNodeText());
+    else {
+      setEmptyText(CommonBundle.getLoadingTreeNodeText());
+    }
   }
 
   private void setEmptyText(@NotNull String emptyText) {
