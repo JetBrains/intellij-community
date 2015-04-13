@@ -23,6 +23,8 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
@@ -252,5 +254,14 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
       super.startNotified(event);
       switchToProcessMode(event.getProcessHandler());
     }
+  }
+
+  @Override
+   protected void setupEditorDefault(@NotNull final EditorEx editor) {
+    super.setupEditorDefault(editor);
+    // We do not need spaces here, because it leads to PY-15557
+    final EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setAdditionalLinesCount(0);
+    editorSettings.setAdditionalColumnsCount(0);
   }
 }
