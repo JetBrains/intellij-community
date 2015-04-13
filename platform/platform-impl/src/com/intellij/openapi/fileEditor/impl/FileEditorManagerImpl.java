@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -649,7 +650,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
     assertDispatchThread();
 
-    if (isOpenInNewWindow(EventQueue.getCurrentEvent())) {
+    if (isOpenInNewWindow(IdeEventQueue.getInstance().getTrueCurrentEvent())) {
       return openFileInNewWindow(file);
     }
 
