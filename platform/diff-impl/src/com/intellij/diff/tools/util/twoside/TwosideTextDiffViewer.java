@@ -299,13 +299,13 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @NotNull
   public EditorEx getCurrentEditor() {
     //noinspection ConstantConditions
-    return getCurrentSide().isLeft() ? myEditor1 : myEditor2;
+    return getCurrentSide().select(myEditor1, myEditor2);
   }
 
   @NotNull
   public DocumentContent getCurrentContent() {
     //noinspection ConstantConditions
-    return getCurrentSide().isLeft() ? myActualContent1 : myActualContent2;
+    return getCurrentSide().select(myActualContent1, myActualContent2);
   }
 
   @Nullable

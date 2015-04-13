@@ -60,7 +60,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     if (content != null && content.getContentType() != null) return content.getContentType();
 
     DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
-    if (request != null && request instanceof ContentDiffRequest) {
+    if (request instanceof ContentDiffRequest) {
       for (DiffContent diffContent : ((ContentDiffRequest)request).getContents()) {
         FileType type = diffContent.getContentType();
         if (type != null && type != UnknownFileType.INSTANCE) return type;
