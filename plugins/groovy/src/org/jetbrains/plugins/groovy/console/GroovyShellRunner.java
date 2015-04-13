@@ -17,18 +17,12 @@ package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey Evdokimov
- */
 public abstract class GroovyShellRunner {
-
-  private static final ExtensionPointName<GroovyShellRunner> EP_NAME = ExtensionPointName.create("org.intellij.groovy.groovyShellRunner");
 
   @NotNull
   public abstract String getWorkingDirectory(@NotNull Module module);
@@ -52,16 +46,4 @@ public abstract class GroovyShellRunner {
   public String transformUserInput(@NotNull String userInput) {
     return userInput;
   }
-
-  @Nullable
-  public static GroovyShellRunner getAppropriateRunner(@NotNull Module module) {
-    for (GroovyShellRunner runner : EP_NAME.getExtensions()) {
-      if (runner.canRun(module)) {
-        return runner;
-      }
-    }
-
-    return null;
-  }
-
 }

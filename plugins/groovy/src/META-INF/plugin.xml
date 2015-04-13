@@ -56,8 +56,6 @@
     <extensionPoint name="classDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyClassDescriptor"/>
     <extensionPoint name="methodDescriptor" beanClass="org.jetbrains.plugins.groovy.extensions.GroovyMethodDescriptorExtension"/>
 
-    <extensionPoint name="groovyShellRunner" interface="org.jetbrains.plugins.groovy.console.GroovyShellRunner"/>
-
     <!-- Groovy DSL extension points -->
     <extensionPoint name="psiEnhancerCategory" interface="org.jetbrains.plugins.groovy.dsl.psi.PsiEnhancerCategory"/>
     <extensionPoint name="gdslTopLevelProvider" interface="org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider"/>
