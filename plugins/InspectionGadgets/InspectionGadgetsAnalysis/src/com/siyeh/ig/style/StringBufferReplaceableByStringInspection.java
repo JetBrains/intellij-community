@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,10 +107,10 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (initializer == null) {
         return;
       }
-      final StringBuilder stringExpression;
+      final StringBuilder builder;
       if (isAppendCall(initializer)) {
-        stringExpression = buildStringExpression(initializer, new StringBuilder());
-        if (stringExpression == null) {
+        builder = buildStringExpression(initializer, new StringBuilder());
+        if (builder == null) {
           return;
         }
       } else if (initializer instanceof PsiNewExpression) {
@@ -121,9 +121,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         }
         final PsiExpression[] arguments = argumentList.getExpressions();
         if (arguments.length == 0 || PsiType.INT.equals(arguments[0].getType())) {
-          stringExpression = new StringBuilder();
+          builder = new StringBuilder();
         } else {
-          stringExpression = new StringBuilder(arguments[0].getText());
+          builder = new StringBuilder(arguments[0].getText());
         }
       } else {
         return;
@@ -132,25 +132,51 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (codeBlock == null) {
         return;
       }
-      final StringBuildingVisitor visitor = new StringBuildingVisitor(variable, stringExpression);
+      final StringBuildingVisitor visitor = new StringBuildingVisitor(variable, builder);
       codeBlock.accept(visitor);
       if (visitor.hadProblem()) {
         return;
       }
       final List<PsiMethodCallExpression> expressions = visitor.getExpressions();
+      final String expression = builder.toString().trim();
+      final PsiMethodCallExpression lastExpression = expressions.get(expressions.size() - 1);
+      final boolean useVariable = expression.contains("\n") && !isVariableInitializer(lastExpression);
+      if (useVariable) {
+        final PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
+        if (statement == null) {
+          return;
+        }
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        final PsiStatement newStatement =
+          factory.createStatementFromText(CommonClassNames.JAVA_LANG_STRING + ' ' + variable.getName() + '=' + expression + ';', variable);
+        codeBlock.addBefore(newStatement, statement);
+      }
       variable.delete();
       for (int i = 0, size = expressions.size() - 1; i < size; i++) {
-        final PsiMethodCallExpression expression = expressions.get(i);
-        expression.getParent().delete();
+        expressions.get(i).getParent().delete();
       }
-      final PsiMethodCallExpression lastExpression = expressions.get(expressions.size() - 1);
-      PsiReplacementUtil.replaceExpression(lastExpression, stringExpression.toString());
+      if (useVariable) {
+        PsiReplacementUtil.replaceExpression(lastExpression, variable.getName());
+      }
+      else {
+        PsiReplacementUtil.replaceExpression(lastExpression, expression);
+      }
+    }
+
+    private static boolean isVariableInitializer(PsiExpression expression) {
+      final PsiElement parent = expression.getParent();
+      if (!(parent instanceof PsiVariable)) {
+        return false;
+      }
+      final PsiVariable variable = (PsiVariable)parent;
+      final PsiExpression initializer = variable.getInitializer();
+      return initializer == expression;
     }
 
     @Nullable
-    private static StringBuilder buildStringExpression(PsiExpression expression, @NonNls StringBuilder result) {
-      if (expression instanceof PsiNewExpression) {
-        final PsiNewExpression newExpression = (PsiNewExpression)expression;
+    private static StringBuilder buildStringExpression(PsiElement element, @NonNls StringBuilder result) {
+      if (element instanceof PsiNewExpression) {
+        final PsiNewExpression newExpression = (PsiNewExpression)element;
         final PsiExpressionList argumentList = newExpression.getArgumentList();
         if (argumentList == null) {
           return null;
@@ -171,33 +197,44 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             }
           }
         }
-        final PsiElement parent = expression.getParent();
-        if (result.length() == 0 && parent instanceof PsiVariable) {
-          result.append("\"\"");
-        }
+        return result;
       }
-      else if (expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        result = buildStringExpression(qualifier, result);
-        if (result == null) {
+      for (PsiElement child : element.getChildren()) {
+        if (child instanceof PsiExpressionList) {
+          continue;
+        }
+        if (buildStringExpression(child, result) == null) {
           return null;
         }
-        if ("toString".equals(methodExpression.getReferenceName())) {
+      }
+
+      if (element instanceof PsiWhiteSpace) {
+        if (element.getText().contains("\n")) {
+          result.append('\n'); // keep line break structure
+        }
+      }
+      else if (element instanceof PsiComment) {
+        result.append(element.getText()); // keep comments
+      }
+      else if (element instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
+        final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        final String referenceName = methodExpression.getReferenceName();
+        if ("toString".equals(referenceName)) {
           if (result.length() == 0) {
             result.append("\"\"");
           }
         }
-        else {
-          final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+        else if ("append".equals(referenceName)){
           final PsiExpression[] arguments = argumentList.getExpressions();
           if (arguments.length == 0) {
             return null;
           }
           else if (arguments.length > 1) {
             if (result.length() != 0) {
-              result.append('+');
+              insertPlus(result);
             }
             result.append("String.valueOf").append(argumentList.getText());
             return result;
@@ -206,7 +243,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiType type = argument.getType();
           final String argumentText = argument.getText();
           if (result.length() != 0) {
-            result.append('+');
+            insertPlus(result);
             if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
                 (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
               result.append('(').append(argumentText).append(')');
@@ -257,6 +294,27 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       return result;
     }
 
+    private static void insertPlus(@NonNls StringBuilder result) {
+      if (result.charAt(result.length() - 1) == '\n') {
+        int index = result.length() - 2;
+        while (index > 0) {
+          final char c = result.charAt(index);
+          if (c == '/' && result.charAt(index - 1) == '/') { // special handling of end-of-line comment
+            result.insert(index - 1, "+ ");
+            return;
+          }
+          else if (c == '\n') {
+            break;
+          }
+          index--;
+        }
+        result.insert(result.length() - 1, '+');
+      }
+      else {
+        result.append('+');
+      }
+    }
+
     private static class StringBuildingVisitor extends JavaRecursiveElementVisitor {
 
       private final PsiVariable myVariable;
@@ -296,6 +354,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         if (buildStringExpression(methodCallExpression, myBuilder) == null) {
           myProblem = true;
         }
+        myBuilder.append('\n');
         expressions.add(methodCallExpression);
       }
 

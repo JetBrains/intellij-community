@@ -16,6 +16,7 @@
 
 package com.intellij.util.io.fs;
 
+@Deprecated
 public interface IFileSystem {
   IFile createFile(String filePath);
   char getSeparatorChar();

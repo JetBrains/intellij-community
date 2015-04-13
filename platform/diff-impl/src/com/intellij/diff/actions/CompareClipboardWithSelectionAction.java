@@ -17,9 +17,12 @@ package com.intellij.diff.actions;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -28,6 +31,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +54,22 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     return null;
   }
 
+  @Nullable
+  private static FileType getEditorFileType(@NotNull AnActionEvent e) {
+    DiffContent content = e.getData(DiffDataKeys.CURRENT_CONTENT);
+    if (content != null && content.getContentType() != null) return content.getContentType();
+
+    DiffRequest request = e.getData(DiffDataKeys.DIFF_REQUEST);
+    if (request instanceof ContentDiffRequest) {
+      for (DiffContent diffContent : ((ContentDiffRequest)request).getContents()) {
+        FileType type = diffContent.getContentType();
+        if (type != null && type != UnknownFileType.INSTANCE) return type;
+      }
+    }
+
+    return null;
+  }
+
   @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
     Editor editor = getEditor(e);
@@ -60,9 +81,10 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     Editor editor = getEditor(e);
+    FileType editorFileType = getEditorFileType(e);
     assert editor != null;
 
-    DocumentContent content2 = createContent(project, editor);
+    DocumentContent content2 = createContent(project, editor, editorFileType);
     DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(content2);
 
     String title1 = DiffBundle.message("diff.content.clipboard.content.title");
@@ -78,8 +100,8 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   }
 
   @NotNull
-  private static DocumentContent createContent(@NotNull Project project, @NotNull Editor editor) {
-    DocumentContent content = DiffContentFactory.getInstance().create(project, editor.getDocument());
+  private static DocumentContent createContent(@NotNull Project project, @NotNull Editor editor, @Nullable FileType type) {
+    DocumentContent content = DiffContentFactory.getInstance().create(project, editor.getDocument(), type);
 
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {

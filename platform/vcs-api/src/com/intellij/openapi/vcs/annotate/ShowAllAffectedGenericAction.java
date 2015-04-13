@@ -33,6 +33,8 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.vfs.VcsFileSystem;
+import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,6 +87,7 @@ public class ShowAllAffectedGenericAction extends AnAction implements DumbAware 
                                                ? ((ShortVcsRevisionNumber) revision).toShortString()
                                                :  revision.asString());
     final CommittedChangeList[] list = new CommittedChangeList[1];
+    final FilePath[] targetPath = new FilePath[1];
     final VcsException[] exc = new VcsException[1];
     Task.Backgroundable task = new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {
       @Override
@@ -95,6 +98,7 @@ public class ShowAllAffectedGenericAction extends AnAction implements DumbAware 
             final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
             if (pair != null) {
               list[0] = pair.getFirst();
+              targetPath[0] = pair.getSecond();
             }
           }
           else {
@@ -141,7 +145,10 @@ public class ShowAllAffectedGenericAction extends AnAction implements DumbAware 
           Messages.showErrorDialog(project, failedText(virtualFile, revision), getTitle());
         }
         else {
-          instance.showChangesListBrowser(list[0], virtualFile, title);
+          VirtualFile navigateToFile = targetPath[0] != null ?
+                                       new VcsVirtualFile(targetPath[0].getPath(), null, VcsFileSystem.getInstance()) :
+                                       virtualFile;
+          instance.showChangesListBrowser(list[0], navigateToFile, title);
         }
       }
     };

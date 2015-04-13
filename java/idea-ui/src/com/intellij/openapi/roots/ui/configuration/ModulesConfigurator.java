@@ -421,7 +421,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     if (anImport) {
       wizard = ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
       if (wizard == null) return null;
-      if (wizard.getStepCount() == 0) return wizard.getProjectBuilder();
+      if (wizard.getStepCount() == 0) {
+        ProjectBuilder builder = wizard.getProjectBuilder();
+        Disposer.dispose(wizard.getDisposable());
+        return builder;
+      }
     }
     else {
       wizard = new NewProjectWizard(myProject, dialogParent, this);

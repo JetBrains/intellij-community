@@ -543,6 +543,7 @@ sqlerror
 sqlexception
 sqlstate
 sqlwarning
+stacktrace
 startup
 stateful
 stdarg

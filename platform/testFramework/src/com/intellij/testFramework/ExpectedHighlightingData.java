@@ -613,7 +613,7 @@ public class ExpectedHighlightingData {
     int startCol = startOffset - StringUtil.lineColToOffset(text, startLine, 0);
     int endCol = endOffset - StringUtil.lineColToOffset(text, endLine, 0);
 
-    return "(" + (startLine + 1) + ", " + (startCol + 1) + ")" + "-" +
-           "(" + (endLine + 1) + ", " + (endCol + 1) + ")";
+    return "(line: " + (startLine + 1) + "; col: " + (startCol + 1) + ")" + " - " +
+           "(line: " + (endLine   + 1) + "; col: " + (endCol   + 1) + ")";
   }
 }

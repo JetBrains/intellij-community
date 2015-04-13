@@ -38,6 +38,7 @@
     <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngGroupDescription"/>
     <dom.fileDescription implementation="org.intellij.plugins.relaxNG.RngDomFileDescription$RngInterleaveDescription"/>
 
+    <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngDomElement" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngDomElementBase"/>
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngDefine" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngDefineImpl"/>
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngGrammar" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngGrammarImpl"/>
     <dom.implementation interfaceClass="org.intellij.plugins.relaxNG.xml.dom.RngInclude" implementationClass="org.intellij.plugins.relaxNG.xml.dom.impl.RngIncludeImpl"/>

@@ -9,7 +9,7 @@ namespace a = "http://relaxng.org/ns/compatibility/annotations/1.0"
 ##     This is SVG, a language for describing two-dimensional graphics in XML.
 ##     Copyright 2001, 2002 W3C (MIT, INRIA, Keio), All Rights Reserved.
 ##
-##     Modifications Copyright 2007 Mozilla Foundation
+##     Modifications Copyright 2007-2014 Mozilla Foundation
 ## 
 ##     $Id$
 ##   
@@ -53,7 +53,7 @@ grammar {
         SVG.base.attrib,
         SVG.lang.attrib,
         SVG.Core.extra.attrib,
-        attribute type { ContentType.datatype },
+        attribute type { ContentType.datatype }?,
         attribute media { MediaDesc.datatype }?,
         attribute title { Text.datatype }?
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,21 +66,21 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
       if (producers.size() > 1) {
         final AnAction[] children = new AnAction[producers.size()];
-        int chldIdx = 0;
+        int childIdx = 0;
         for (final ConfigurationFromContext fromContext : producers) {
           final ConfigurationType configurationType = fromContext.getConfigurationType();
           final RunConfiguration configuration = fromContext.getConfiguration();
           final String actionName = configuration instanceof LocatableConfiguration
                                     ? StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configuration))
                                     : configurationType.getDisplayName();
-          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configurationType.getIcon()) {
+          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configuration.getIcon()) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               perform(fromContext, context);
             }
           };
           anAction.getTemplatePresentation().setText(actionName, false);
-          children[chldIdx++] = anAction;
+          children[childIdx++] = anAction;
         }
         return children;
       }

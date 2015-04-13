@@ -690,10 +690,17 @@ public abstract class HgUtil {
       email = authorString.substring(startEmailIndex + 1, endEmailIndex);
       userName = authorString.substring(0, startEmailIndex).trim();
     }
-    // vasya.pupkin@email.com --> vasya.pupkin, vasya.pupkin@email.com
+    // vasya.pupkin@email.com || <vasya.pupkin@email.com>
     else if (!authorString.contains(" ") && startDomainIndex > 0) { //simple e-mail check. john@localhost
-      userName = authorString.substring(0, startDomainIndex).trim();
-      email = authorString;
+      if (startEmailIndex >= 0 && startDomainIndex > startEmailIndex && startDomainIndex < endEmailIndex) {
+        // <vasya.pupkin@email.com> --> vasya.pupkin, vasya.pupkin@email.com
+        userName = authorString.substring(startEmailIndex + 1, startDomainIndex).trim();
+        email = authorString.substring(startEmailIndex + 1, endEmailIndex).trim();
+      } else {
+        // vasya.pupkin@email.com --> vasya.pupkin, vasya.pupkin@email.com
+        userName = authorString.substring(0, startDomainIndex).trim();
+        email = authorString;
+      }
     }
 
     else {

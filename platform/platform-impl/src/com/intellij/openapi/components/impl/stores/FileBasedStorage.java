@@ -23,11 +23,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +40,11 @@ import java.nio.CharBuffer;
 import java.util.Set;
 
 public class FileBasedStorage extends XmlElementStorage {
-  private final String myFilePath;
   private final File myFile;
   private volatile VirtualFile myCachedVirtualFile;
   private LineSeparator myLineSeparator;
 
-  public FileBasedStorage(@NotNull String filePath,
+  public FileBasedStorage(@NotNull File file,
                           @NotNull String fileSpec,
                           @Nullable RoamingType roamingType,
                           @Nullable TrackingPathMacroSubstitutor pathMacroManager,
@@ -55,13 +54,12 @@ public class FileBasedStorage extends XmlElementStorage {
                           @Nullable StreamProvider streamProvider) {
     super(fileSpec, roamingType, pathMacroManager, rootElementName, streamProvider);
 
-    myFilePath = filePath;
-    myFile = new File(filePath);
+    myFile = file;
 
     if (listener != null) {
       VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
       if (virtualFileTracker != null) {
-        virtualFileTracker.addTracker(LocalFileSystem.PROTOCOL_PREFIX + myFile.getAbsolutePath().replace(File.separatorChar, '/'), new VirtualFileAdapter() {
+        virtualFileTracker.addTracker(VfsUtilCore.pathToUrl(getFilePath()), new VirtualFileAdapter() {
           @Override
           public void fileMoved(@NotNull VirtualFileMoveEvent event) {
             myCachedVirtualFile = null;
@@ -122,7 +120,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
       BufferExposingByteArrayOutputStream content = element == null ? null : StorageUtil.writeToBytes(element, myLineSeparator.getSeparatorString());
       if (ApplicationManager.getApplication().isUnitTestMode() && StringUtil.startsWithChar(myFile.getPath(), '$')) {
-        throw new StateStorageException("It seems like some macros were not expanded for path: " + myFile.getPath());
+        throw new StateStorageException("It seems like some macros were not expanded for path: " + myFile);
       }
 
       try {
@@ -139,25 +137,15 @@ public class FileBasedStorage extends XmlElementStorage {
         LOG.debug("doSave " + getFilePath());
       }
 
+      VirtualFile virtualFile = getVirtualFile();
       if (content == null) {
-        StorageUtil.deleteFile(myFile, this, getVirtualFile());
+        StorageUtil.deleteFile(myFile, this, virtualFile);
         myCachedVirtualFile = null;
       }
       else {
-        VirtualFile file = getVirtualFile();
-        if (file == null || !file.exists()) {
-          FileUtil.createParentDirs(myFile);
-          file = null;
-        }
-        myCachedVirtualFile = StorageUtil.writeFile(myFile, this, file, content, isUseXmlProlog() ? myLineSeparator : null);
+        myCachedVirtualFile = StorageUtil.writeFile(myFile, this, virtualFile, content, isUseXmlProlog() ? myLineSeparator : null);
       }
     }
-  }
-
-  @Override
-  @NotNull
-  protected StorageData createStorageData() {
-    return new StorageData(myRootElementName);
   }
 
   @Nullable
@@ -176,7 +164,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @NotNull
   public String getFilePath() {
-    return myFilePath;
+    return PathUtil.toSystemIndependentName(myFile.getPath());
   }
 
   @Override
@@ -217,7 +205,7 @@ public class FileBasedStorage extends XmlElementStorage {
       }
       new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Load Settings",
                        "Cannot load settings from file '" +
-                       myFile.getPath() + "': " +
+                       myFile + "': " +
                        (e == null ? "content truncated" : e.getMessage()) + "\n" +
                        (myBlockSavingTheContent ? "Please correct the file content" : "File content will be recreated"),
                        NotificationType.WARNING).notify(null);

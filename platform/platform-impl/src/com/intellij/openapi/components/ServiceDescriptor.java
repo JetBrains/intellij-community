@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ public class ServiceDescriptor {
   public String serviceImplementation;
 
   @Attribute("overrides")
-  public boolean overrides = false;
+  public boolean overrides;
 
   public String getInterface() {
     return serviceInterface != null ? serviceInterface : getImplementation();

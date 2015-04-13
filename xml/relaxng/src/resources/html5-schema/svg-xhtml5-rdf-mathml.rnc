@@ -6,7 +6,7 @@ include "html5/xhtml5full-xhtml.rnc" {
 	start = svg
 }
 include "svg11/svg11-inc.rnc"
-include "inkscape/inkscape.rnc"
+include "svg11/inkscape.rnc"
 include "mml3/mathml3-inc.rnc"
 include "rdf/rdf.rnc"
 

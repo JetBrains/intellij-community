@@ -139,6 +139,7 @@ public class BasePathMacroManager extends PathMacroManager {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, true);
   }
 
+  @NotNull
   @Override
   public String collapsePathsRecursively(@NotNull final String text) {
     return getReplacePathMap().substituteRecursively(text, SystemInfo.isFileSystemCaseSensitive);

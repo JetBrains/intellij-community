@@ -17,19 +17,12 @@ package com.jetbrains.commandInterface.console;
 
 import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.toolWindowWithActions.WindowWithActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,46 +55,17 @@ public final class CommandLineConsoleApi {
     @NotNull final String consoleName,
     @Nullable final List<Command> commandList) {
     final Project project = module.getProject();
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    ToolWindow window = toolWindowManager.getToolWindow(consoleName);
-    if (window == null) {
-      window = toolWindowManager.registerToolWindow(consoleName, true, ToolWindowAnchor.BOTTOM);
-    }
-    window.activate(null);
-
-    final ContentManager contentManager = window.getContentManager();
-    contentManager.removeAllContents(true);
     final CommandConsole console = CommandConsole.createConsole(module, consoleName, commandList);
 
+    // Show console on "toolwindow"
+    WindowWithActions.showConsoleWithProcess(console,
+                                             console.getEditor().getComponent(),
+                                             consoleName,
+                                             project,
+                                             null);
 
-    final Content content = new ContentImpl(console.getComponent(), "", true);
-    contentManager.addContent(content);
-
-    showHiddenCommandWorkAround(console);
     ArgumentHintLayer.attach(console); // Display [arguments]
     return console;
-  }
-
-  /**
-   * TODO: Investigate why do we need this hack
-   * For some reason console is not displayed correctly unless we type something to it (i.e. space)
-   *
-   * @param console console to type space
-   */
-  private static void showHiddenCommandWorkAround(@NotNull final LanguageConsoleView console) {
-    console.getComponent().setVisible(true);
-    CommandProcessor.getInstance().executeCommand(null, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            console.getEditorDocument().insertString(0, " ");
-            console.getComponent().grabFocus();
-          }
-        });
-      }
-    }, null, null);
   }
 }
 

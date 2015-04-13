@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author: Roman Chernyatchik
@@ -132,4 +133,12 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
       myTransferToEDTQueue.offer(runnable);
     }
   }
+
+  //tree construction events
+
+  public void onSuiteTreeNodeAdded(String testName, String locationHint) {}
+
+  public void onSuiteTreeStarted(String suiteName, String locationHint) {}
+
+  public void onSuiteTreeEnded(String suiteName) {}
 }

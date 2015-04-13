@@ -20,7 +20,7 @@
  */
 package com.intellij.junit4;
 
-import com.intellij.rt.execution.junit.*;
+import com.intellij.rt.execution.junit.ComparisonFailureData;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import junit.framework.ComparisonFailure;
@@ -31,29 +31,59 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 class SMTestSender extends RunListener {
+  private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
   private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
   private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
-
+  
   private String myCurrentClassName;
+  private String myParamName;
+  private boolean myIgnoreTopSuite;
 
   public void testRunStarted(Description description) throws Exception {
-    myCurrentClassName = description.toString();
-    System.out.println("##teamcity[testSuiteStarted name =\'" + myCurrentClassName + "\']");
+    myCurrentClassName = myIgnoreTopSuite ? description.toString() : null;
+    System.out.println("##teamcity[enteredTheMatrix]");
   }
 
   public void testRunFinished(Result result) throws Exception {
+    if (myParamName != null) {
+      System.out.println("##teamcity[testSuiteFinished name=\'" + myParamName + "\']");
+    }
     if (myCurrentClassName != null) {
       System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
     }
   }
 
   public void testStarted(Description description) throws Exception {
-    System.out.println("##teamcity[testStarted name=\'" + JUnit4ReflectionUtil.getMethodName(description) + "\']");
+    final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+    final int paramStart = methodName.indexOf('[');
+    if (paramStart < 0 && myParamName != null){
+      System.out.println("##teamcity[testSuiteFinished name=\'" + myParamName + "\']");
+      myParamName = null;
+    }
+    final String className = JUnit4ReflectionUtil.getClassName(description);
+    if (!className.equals(myCurrentClassName)) {
+      if (myCurrentClassName != null) {
+        System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
+      }
+      myCurrentClassName = className;
+      System.out.println("##teamcity[testSuiteStarted name =\'" + myCurrentClassName + "\']");
+    }
+    if (paramStart > -1) {
+      final String paramName = methodName.substring(paramStart, methodName.length());
+      if (!paramName.equals(myParamName)) {
+        if (myParamName != null) {
+          System.out.println("##teamcity[testSuiteFinished name=\'" + myParamName + "\']");
+        }
+        myParamName = paramName;
+        System.out.println("##teamcity[testSuiteStarted name =\'" + myParamName + "\']");
+      }
+    }
+    System.out.println("##teamcity[testStarted name=\'" + methodName + "\']");
   }
 
   public void testFinished(Description description) throws Exception {
@@ -73,6 +103,10 @@ class SMTestSender extends RunListener {
 
       final int failureIdx = trace.indexOf(failureMessage);
       attrs.put("details", failureIdx > -1 ? trace.substring(failureIdx + failureMessage.length()) : trace);
+      final String filePath = notification.getFilePath();
+      if (filePath != null) {
+        attrs.put("expectedFile", filePath);
+      }
     } else {
       attrs.put("details", trace);
       attrs.put("error", "true");
@@ -86,7 +120,9 @@ class SMTestSender extends RunListener {
   }
 
   public synchronized void testIgnored(Description description) throws Exception {
+    testStarted(description);
     prepareIgnoreMessage(description, true);
+    testFinished(description);
   }
 
   private static void prepareIgnoreMessage(Description description, boolean commentMessage) {
@@ -121,49 +157,88 @@ class SMTestSender extends RunListener {
     return isComparisonFailure(aClass.getSuperclass());
   }
 
-  private static ComparisonFailureData createExceptionNotification(Throwable assertion) {
+  static ComparisonFailureData createExceptionNotification(Throwable assertion) {
     if (isComparisonFailure(assertion)) {
       return ComparisonFailureData.create(assertion);
     }
-    final Throwable cause = assertion.getCause();
-    if (isComparisonFailure(cause)) {
-      try {
+    try {
+      final Throwable cause = assertion.getCause();
+      if (isComparisonFailure(cause)) {
         return ComparisonFailureData.create(assertion);
       }
-      catch (Throwable ignore) {
-      }
     }
-
+    catch (Throwable ignore) {
+    }
     final String message = assertion.getMessage();
-    if (message != null) {
-      ComparisonFailureData notification = createExceptionNotification(message, "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n");
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\nExpected: is \"(.*)\"\n\\s*but: was \"(.*)\"");
+    if (message != null  && acceptedByThreshold(message.length())) {
+      try {
+        return ExpectedPatterns.createExceptionNotification(message);
       }
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\nExpected: (.*)\n\\s*got: (.*)");
-      }
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\\s*expected same:<(.*)> was not:<(.*)>");
-      }
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\\s*expected:<(.*)> but was:<(.*)>");
-      }
-      if (notification == null) {
-        notification = createExceptionNotification(message, "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"");
-      }
-      if (notification != null) {
-        return notification;
-      }
+      catch (Throwable ignored) {}
     }
     return null;
   }
 
-  private static ComparisonFailureData createExceptionNotification(String message, final String regex) {
-    final Matcher matcher = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE).matcher(message);
-    if (matcher.matches()) {
-      return new ComparisonFailureData(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
+  private static boolean acceptedByThreshold(int messageLength) {
+    int threshold = 10000;
+    try {
+      final String property = System.getProperty(MESSAGE_LENGTH_FOR_PATTERN_MATCHING);
+      if (property != null) {
+        try {
+          threshold = Integer.parseInt(property);
+        }
+        catch (NumberFormatException ignore) {}
+      }
     }
-    return null;
+    catch (SecurityException ignored) {}
+    return messageLength < threshold;
+  }
+
+  private static void sendTree(JUnit4IdeaTestRunner runner, Object description, List tests) {
+    if (tests.isEmpty()) {
+      final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
+      System.out.println("##teamcity[suiteTreeNode name=\'" + methodName + 
+                         "\' locationHint=\'java:test://" + JUnit4ReflectionUtil.getClassName((Description)description) + "." + methodName + "\']");
+    }
+    boolean pass = false;
+    for (Iterator iterator = tests.iterator(); iterator.hasNext(); ) {
+      final Object next = iterator.next();
+      final List childTests = runner.getChildTests(next);
+      final Description nextDescription = (Description)next;
+      if ((childTests.isEmpty() || isParameter(nextDescription)) && !pass) {
+        pass = true;
+        final String className = JUnit4ReflectionUtil.getClassName((Description)description);
+        String locationHint = className;
+        if (isParameter((Description)description)) {
+          final String displayName = nextDescription.getDisplayName();
+          final int paramIdx = displayName.indexOf(locationHint);
+          if (paramIdx > -1) {
+            locationHint = displayName.substring(paramIdx + locationHint.length());
+            if (locationHint.startsWith("(") && locationHint.endsWith(")")) {
+              locationHint = locationHint.substring(1, locationHint.length() - 1) + "." + className; 
+            }
+          }
+        }
+        System.out.println("##teamcity[suiteTreeStarted name=\'" + className +
+                           "\' locationHint=\'java:suite://" + locationHint + "\']");
+      }
+      sendTree(runner, next, childTests);
+    }
+    if (pass) {
+      System.out.println("##teamcity[suiteTreeEnded name=\'" + JUnit4ReflectionUtil.getClassName((Description)description) + "\']");
+    }
+  }
+
+  private static boolean isParameter(Description description) {
+    String displayName = description.getDisplayName();
+    return displayName.startsWith("[") && displayName.endsWith("]");
+  }
+
+  public void sendTree(JUnit4IdeaTestRunner runner, Description description) {
+    final List tests = runner.getChildTests(description);
+    if (tests.isEmpty()) {
+      myIgnoreTopSuite = true;
+    }
+    sendTree(runner, description, tests);
   }
 }

@@ -185,7 +185,10 @@ public class ExceptionWorker {
       }
     }
 
-    final int rParenIdx = line.lastIndexOf(')');
+    int rParenIdx = line.lastIndexOf(')');
+    while (rParenIdx > 0 && !Character.isDigit(line.charAt(rParenIdx-1))) {
+      rParenIdx = line.lastIndexOf(')', rParenIdx - 1);
+    }
     if (rParenIdx < 0) return null;
 
     final int lParenIdx = line.lastIndexOf('(', rParenIdx);

@@ -79,7 +79,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
       return false;
     }
 
-    if (!FileTypeUtils.isInServerPageFile(file)) {
+    if (FileTypeUtils.isInServerPageFile(file)) {
       return false;
     }
 

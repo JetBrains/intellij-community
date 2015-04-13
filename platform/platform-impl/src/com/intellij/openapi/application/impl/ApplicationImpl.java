@@ -21,7 +21,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
@@ -29,6 +28,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.components.impl.ApplicationPathMacroManager;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
@@ -47,7 +47,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -120,12 +119,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
-  @SuppressWarnings({"UseOfArchaicSystemPropertyAccessors"})
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   private static final int ourDumpThreadsOnLongWriteActionWaiting = Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
 
   private final ExecutorService ourThreadExecutorsService = PooledThreadExecutor.INSTANCE;
-  private boolean myIsFiringLoadingEvent = false;
-  private boolean myLoaded = false;
+  private boolean myLoaded;
   @NonNls private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
   private Boolean myActive;
@@ -186,6 +184,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     getStateStore().initComponent(component, service);
   }
 
+  @Override
+  public void init() {
+    loadComponents();
+    super.init();
+  }
+
   public ApplicationImpl(boolean isInternal,
                          boolean isUnitTestMode,
                          boolean isHeadless,
@@ -216,8 +220,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     myDoNotSave = isUnitTestMode || isHeadless;
 
-    loadApplicationComponents();
-
     if (myTestModeFlag) {
       registerShutdownHook();
     }
@@ -235,13 +237,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
               String currentDirectory = args.isEmpty() ? null : args.get(0);
               List<String> realArgs = args.isEmpty() ? args : args.subList(1, args.size());
               final Project project = CommandLineProcessor.processExternalCommandLine(realArgs, currentDirectory);
-              final JFrame frame;
-              if (project != null) {
-                frame = (JFrame)WindowManager.getInstance().getIdeFrame(project);
-              }
-              else {
-                frame = WindowManager.getInstance().findVisibleFrame();
-              }
+              JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() :
+                             (JFrame)WindowManager.getInstance().getIdeFrame(project);
               if (frame != null) frame.requestFocus();
             }
           });
@@ -346,16 +343,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private static boolean holdsReadLock(Status status) {
     return BitUtil.isSet(status.flags, IS_READ_LOCK_ACQUIRED_FLAG);
-  }
-
-  private void loadApplicationComponents() {
-    PluginManagerCore.initPlugins(mySplash);
-    IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
-    for (IdeaPluginDescriptor plugin : plugins) {
-      if (!PluginManagerCore.shouldSkipPlugin(plugin)) {
-        loadComponentsConfiguration(plugin.getAppComponents(), plugin, false);
-      }
-    }
   }
 
   @Override
@@ -495,14 +482,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     store.setOptionsPath(optionsPath);
     store.setConfigPath(configPath);
 
-    myIsFiringLoadingEvent = true;
-    try {
-      fireBeforeApplicationLoaded();
-    }
-    finally {
-      myIsFiringLoadingEvent = false;
-    }
-
     AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
     try {
       store.load();
@@ -535,25 +514,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @Override
-  protected <T> T getComponentFromContainer(@NotNull final Class<T> interfaceClass) {
-    if (myIsFiringLoadingEvent) {
-      return null;
-    }
-    return super.getComponentFromContainer(interfaceClass);
-  }
-
-  private void fireBeforeApplicationLoaded() {
-    for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
-      try {
-        listener.beforeApplicationLoaded(this);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  @Override
   public void dispose() {
     fireApplicationExiting();
 
@@ -565,6 +525,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myComponentStore = null;
     super.dispose();
     Disposer.dispose(myLastDisposable); // dispose it last
+  }
+
+  @NotNull
+  @Override
+  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+    return plugin.getAppComponents();
   }
 
   @Override
@@ -802,7 +768,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    *  Note: there are possible scenarios when we get a quit notification at a moment when another
    *  quit message is shown. In that case, showing multiple messages sounds contra-intuitive as well
    */
-  private static volatile boolean exiting = false;
+  private static volatile boolean exiting;
 
   public void exit(final boolean force, final boolean exitConfirmed, final boolean allowListenersToCancel, final boolean restart) {
     if (!force && exiting) {
@@ -1453,8 +1419,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project openProject : openProjects) {
-      ProjectEx project = (ProjectEx)openProject;
-      project.save();
+      openProject.save();
     }
 
     saveSettings();

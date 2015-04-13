@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,6 +27,7 @@ import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsUserImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,11 +81,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     if (filter == null) {
       return Collections.emptySet();
     }
-    Set<String> result = ContainerUtil.newHashSet();
-    for (VirtualFile root : myFilterModel.getDataPack().getLogProviders().keySet()) {
-      result.addAll(filter.getUserNames(root));
-    }
-    return result;
+    return ContainerUtil.newHashSet(((VcsLogUserFilterImpl)filter).getUserNamesForPresentation());
   }
 
   @NotNull
@@ -111,32 +109,59 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   @NotNull
   @Override
   protected VcsLogUserFilter createFilter(@NotNull Collection<String> values) {
-    return new VcsLogUserFilterImpl(values, myDataHolder.getCurrentUser());
+    return new VcsLogUserFilterImpl(values, myDataHolder.getCurrentUser(), myDataHolder.getAllUsers());
   }
 
   private static class VcsLogUserFilterImpl implements VcsLogUserFilter {
 
     @NotNull private final Collection<String> myUsers;
     @NotNull private final Map<VirtualFile, VcsUser> myData;
+    @NotNull private final Collection<String> myAllUserNames;
 
-    public VcsLogUserFilterImpl(@NotNull Collection<String> users, @NotNull Map<VirtualFile, VcsUser> meData) {
+    public VcsLogUserFilterImpl(@NotNull Collection<String> users,
+                                @NotNull Map<VirtualFile, VcsUser> meData,
+                                @NotNull Set<VcsUser> allUsers) {
       myUsers = users;
       myData = meData;
+      myAllUserNames = ContainerUtil.mapNotNull(allUsers, new Function<VcsUser, String>() {
+        @Override
+        public String fun(VcsUser vcsUser) {
+          String name = vcsUser.getName();
+          if (!name.isEmpty()) {
+            return name.toLowerCase();
+          }
+          String email = vcsUser.getEmail();
+          int at = email.indexOf('@');
+          if (at > 0) {
+            return email.substring(0, at).toLowerCase();
+          }
+
+          return null;
+        }
+      });
     }
 
     @NotNull
     @Override
     public Collection<String> getUserNames(@NotNull final VirtualFile root) {
-      return ContainerUtil.mapNotNull(myUsers, new Function<String, String>() {
-        @Override
-        public String fun(String user) {
-          if (ME.equals(user)) {
-            VcsUser vcsUser = myData.get(root);
-            return vcsUser == null ? null : vcsUser.getName();
+      Set<String> result = ContainerUtil.newHashSet();
+      for (String user : myUsers) {
+        if (ME.equals(user)) {
+          VcsUser vcsUser = myData.get(root);
+          if (vcsUser != null) {
+            result.addAll(getVariants(vcsUser.getName()));
           }
-          return user;
         }
-      });
+        else {
+          result.addAll(getVariants(user));
+        }
+      }
+      return result;
+    }
+
+    @NotNull
+    public Collection<String> getUserNamesForPresentation() {
+      return myUsers;
     }
 
     @Override
@@ -146,10 +171,29 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
         @Override
         public boolean value(String user) {
           String lowerUser = user.toLowerCase();
-          return commit.getAuthor().getName().toLowerCase().contains(lowerUser) ||
-                 commit.getAuthor().getEmail().toLowerCase().contains(lowerUser);
+          return commit.getAuthor().getName().toLowerCase().equals(lowerUser) ||
+                 commit.getAuthor().getEmail().toLowerCase().startsWith(lowerUser + "@");
         }
       });
+    }
+
+    @NotNull
+    public Set<String> getVariants(@NotNull String name) {
+      Set<String> result = ContainerUtil.newHashSet(name);
+
+      Pair<String, String> firstAndLastName = VcsUserImpl.getFirstAndLastName(name);
+      if (firstAndLastName != null) {
+        result.addAll(ContainerUtil.filter(Arrays.asList(firstAndLastName.first + " " + firstAndLastName.second,
+                                                         firstAndLastName.first + "." + firstAndLastName.second,
+                                                         firstAndLastName.first + firstAndLastName.second), new Condition<String>() {
+          @Override
+          public boolean value(String s) {
+            return myAllUserNames.contains(s.toLowerCase());
+          }
+        }));
+      }
+
+      return result;
     }
   }
 }

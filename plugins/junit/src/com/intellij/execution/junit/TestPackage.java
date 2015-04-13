@@ -23,10 +23,16 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.ResetConfigurationModuleAdapter;
+import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
@@ -129,7 +135,21 @@ public class TestPackage extends TestObject {
   }
 
   protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
-    final PsiPackage aPackage = getPackage(data);
+    final Ref<CantRunException> ref = new Ref<CantRunException>();
+    final PsiPackage aPackage = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage>() {
+      @Override
+      public PsiPackage compute() {
+        try {
+          return getPackage(data);
+        }
+        catch (CantRunException e) {
+          ref.set(e);
+          return null;
+        }
+      }
+    });
+    final CantRunException exception = ref.get();
+    if (exception != null) throw exception;
     return PackageScope.packageScope(aPackage, true);
   }
 

@@ -90,7 +90,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     super(context, request);
 
     List<DiffContent> contents = myRequest.getContents();
-    myActualContents = ContainerUtil.newArrayList((DocumentContent)contents.get(0), (DocumentContent)contents.get(1), (DocumentContent)contents.get(2));
+    myActualContents = ContainerUtil.newArrayList((DocumentContent)contents.get(0),
+                                                  (DocumentContent)contents.get(1),
+                                                  (DocumentContent)contents.get(2));
 
 
     myEditors = createEditors();
@@ -263,6 +265,11 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @NotNull
+  public DocumentContent getCurrentContent() {
+    return myCurrentSide.select(myActualContents);
+  }
+
+  @NotNull
   @Override
   protected List<? extends EditorEx> getEditors() {
     return myEditors;
@@ -280,7 +287,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @CalledInAwt
   protected void scrollToLine(@NotNull ThreeSide side, int line) {
     Editor editor = side.select(myEditors);
-    DiffUtil.scrollEditor(editor, line);
+    DiffUtil.scrollEditor(editor, line, false);
     myCurrentSide = side;
   }
 
@@ -306,10 +313,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   protected OpenFileDescriptor getOpenFileDescriptor() {
     EditorEx editor = getCurrentEditor();
 
-    DocumentContent content = getCurrentSide().select(myActualContents);
-
     int offset = editor.getCaretModel().getOffset();
-    return content.getOpenFileDescriptor(offset);
+    return getCurrentContent().getOpenFileDescriptor(offset);
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -391,6 +396,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return getCurrentEditor();
+    }
+    else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
+      return getCurrentContent();
     }
     return super.getData(dataId);
   }
@@ -509,7 +517,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
         }
       }
       else {
-        DiffUtil.scrollToCaret(getCurrentEditor());
+        DiffUtil.scrollToCaret(getCurrentEditor(), false);
       }
       return true;
     }
@@ -521,7 +529,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
       if (side.select(myEditors) == null) return false;
 
       myCurrentSide = side;
-      DiffUtil.scrollEditor(getCurrentEditor(), line);
+      DiffUtil.scrollEditor(getCurrentEditor(), line, false);
       return true;
     }
   }

@@ -23,6 +23,6 @@ namespace local = ""
 
 include "html5-svg-mathml.rnc"
 include "html5/html5full.rnc"
-include "its20-html5.rnc"
+include "its2/its20-html5.rnc"
 
 common.attrs &= its-html-attributes

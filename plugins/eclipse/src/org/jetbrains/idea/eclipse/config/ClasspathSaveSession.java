@@ -38,6 +38,7 @@ import org.jetbrains.idea.eclipse.conversion.DotProjectFileHelper;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
 import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -118,7 +119,8 @@ final class ClasspathSaveSession implements StateStorage.ExternalizationSession,
     try {
       for (String key : modifiedContent.keySet()) {
         Element content = modifiedContent.get(key);
-        Writer writer = new OutputStreamWriter(StorageUtil.getOrCreateVirtualFile(this, fileSet.getParent(key) + '/' + key).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
+        String path = fileSet.getParent(key) + '/' + key;
+        Writer writer = new OutputStreamWriter(StorageUtil.getOrCreateVirtualFile(this, new File(path)).getOutputStream(this), CharsetToolkit.UTF8_CHARSET);
         try {
           EclipseJDOMUtil.output(content, writer, module.getProject());
         }

@@ -18,7 +18,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.util.containers.ContainerUtil.createConcurrentSoftValueMap;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
@@ -61,20 +61,29 @@ public class DomApplicationComponent {
     }
   };
 
-  private final SofterCache<Type, StaticGenericInfo> myGenericInfos = SofterCache.create(new NotNullFunction<Type, StaticGenericInfo>() {
-    @NotNull
+  private final FactoryMap<Type, StaticGenericInfo> myGenericInfos = new FactoryMap<Type, StaticGenericInfo>() {
     @Override
-    public StaticGenericInfo fun(Type type) {
+    protected Map<Type, StaticGenericInfo> createMap() {
+      return createConcurrentSoftValueMap();
+    }
+    @Nullable
+    @Override
+    protected StaticGenericInfo create(Type type) {
       return new StaticGenericInfo(type);
     }
-  });
-  private final SofterCache<Class, InvocationCache> myInvocationCaches = SofterCache.create(new NotNullFunction<Class, InvocationCache>() {
-    @NotNull
+  };
+  private final FactoryMap<Class, InvocationCache> myInvocationCaches = new FactoryMap<Class, InvocationCache>() {
     @Override
-    public InvocationCache fun(Class key) {
+    protected Map<Class, InvocationCache> createMap() {
+      return createConcurrentSoftValueMap();
+    }
+
+    @Nullable
+    @Override
+    protected InvocationCache create(Class key) {
       return new InvocationCache(key);
     }
-  });
+  };
   private final ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription> myVisitorDescriptions =
     new ConcurrentFactoryMap<Class<? extends DomElementVisitor>, VisitorDescription>() {
       @Override
@@ -176,11 +185,11 @@ public class DomApplicationComponent {
   }
 
   public final StaticGenericInfo getStaticGenericInfo(final Type type) {
-    return myGenericInfos.getCachedValue(type);
+    return myGenericInfos.get(type);
   }
 
   final InvocationCache getInvocationCache(final Class type) {
-    return myInvocationCaches.getCachedValue(type);
+    return myInvocationCaches.get(type);
   }
 
   public final VisitorDescription getVisitorDescription(Class<? extends DomElementVisitor> aClass) {

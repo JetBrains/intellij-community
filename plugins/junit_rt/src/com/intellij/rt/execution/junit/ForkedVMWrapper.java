@@ -76,7 +76,7 @@ class ForkedVMWrapper extends DataOutputStream {
       boolean afterDelimiter = false;
       while (stream.available() > 0) {
         char read = (char)stream.read();
-        if (read == '/') {
+        if (!afterSymbol && read == '/') {
           afterSymbol = true;
           continue;
         }

@@ -23,6 +23,8 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
@@ -31,9 +33,13 @@ import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.toolWindowWithActions.ConsoleWithProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.border.Border;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -62,7 +68,11 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 @SuppressWarnings({"DeserializableClassInSecureContext", "SerializableClassInSecureContext"}) // Nobody will serialize console
-final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>,Condition<LanguageConsoleView> {
+final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>, Condition<LanguageConsoleView>, ConsoleWithProcess {
+  /**
+   * Width of border to create around console
+   */
+  static final int BORDER_SIZE_PX = 3;
   /**
    * List of commands (to be injected into {@link CommandLineFile}) if any
    */
@@ -87,6 +97,13 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    */
   @NotNull
   private final Collection<Runnable> myStateChangeListeners = new ArrayList<Runnable>();
+  /**
+   * Process handler currently running on console (if any)
+   *
+   * @see #switchToProcessMode(ProcessHandler)
+   */
+  @Nullable
+  private volatile ProcessHandler myProcessHandler;
 
   /**
    * @param module      module console runs on
@@ -116,7 +133,23 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     LanguageConsoleBuilder.registerExecuteAction(console, console, title, title, console);
 
     console.switchToCommandMode();
+    console.getComponent(); // For some reason console does not have component until this method is called which leads to some errros.
     return console;
+  }
+
+  /**
+   * Enables/disables left border {@link #BORDER_SIZE_PX} width for certain editors.
+   *
+   * @param editors editors to enable/disable border
+   * @param enable  whether border should be enabled
+   */
+  private static void configureLeftBorder(final boolean enable, @NotNull final EditorEx... editors) {
+    for (final EditorEx editor : editors) {
+      final Color backgroundColor = editor.getBackgroundColor(); // Border have the same color console background has
+      final int thickness = enable ? BORDER_SIZE_PX : 0;
+      final Border border = BorderFactory.createMatteBorder(0, thickness, 0, 0, backgroundColor);
+      editor.getComponent().setBorder(border);
+    }
   }
 
   @Override
@@ -129,6 +162,9 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * Switches console to "command-mode" (see class doc for details)
    */
   private void switchToCommandMode() {
+    // "upper" and "bottom" parts of console both need padding in command mode
+    configureLeftBorder(true, getConsoleEditor(), getHistoryViewer());
+    myProcessHandler = null;
     setPrompt(getTitle() + " > ");
 
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
@@ -154,6 +190,8 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @param processHandler process to attach to
    */
   private void switchToProcessMode(@NotNull final ProcessHandler processHandler) {
+    configureLeftBorder(false, getConsoleEditor()); // "bottom" part of console do not need padding now because it is used for user input
+    myProcessHandler = processHandler;
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
@@ -175,12 +213,21 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     }
   }
 
+  /**
+   * @return process handler currently running on console (if any) or null if in {@link #switchToCommandMode() command mode}
+   * @see #switchToProcessMode(ProcessHandler)
+   */
+  @Override
+  @Nullable
+  public ProcessHandler getProcessHandler() {
+    return myProcessHandler;
+  }
 
   /**
    * Chooses consumer to delegate execute action to.
    *
    * @param newConsumer new consumer to register to delegate execution to
-   *                  or null if just reset consumer
+   *                    or null if just reset consumer
    */
   private void resetConsumer(@Nullable final Consumer<String> newConsumer) {
     synchronized (myConsumerSemaphore) {
@@ -209,6 +256,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   /**
    * Adds listener that will be notified when console state (mode?) changed.
    * <strong>Called on EDT</strong>
+   *
    * @param listener listener to notify
    */
   void addStateChangeListener(@NotNull final Runnable listener) {
@@ -231,5 +279,14 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
       super.startNotified(event);
       switchToProcessMode(event.getProcessHandler());
     }
+  }
+
+  @Override
+  protected void setupEditorDefault(@NotNull final EditorEx editor) {
+    super.setupEditorDefault(editor);
+    // We do not need spaces here, because it leads to PY-15557
+    final EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setAdditionalLinesCount(0);
+    editorSettings.setAdditionalColumnsCount(0);
   }
 }

@@ -294,10 +294,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       }
 
       int newSize = myContents.size();
-
-      ActionCallback result = new ActionCallback();
-
       if (newSize > 0 && trackSelection) {
+        ActionCallback result = new ActionCallback();
         if (indexToSelect > -1) {
           final Content toSelect = mySelectionHistory.size() > 0 ? mySelectionHistory.get(0) : myContents.get(indexToSelect);
           if (!isSelected(toSelect)) {
@@ -310,12 +308,12 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
             }
           }
         }
+        return result;
       }
       else {
         mySelection.clear();
+        return ActionCallback.DONE;
       }
-
-      return result;
     }
     finally {
       if (ApplicationManager.getApplication().isDispatchThread()) {

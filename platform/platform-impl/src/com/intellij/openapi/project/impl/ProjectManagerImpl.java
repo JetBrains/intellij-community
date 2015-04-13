@@ -312,13 +312,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
     boolean succeed = false;
     try {
-      if (template != null) {
-        project.getStateStore().loadProjectFromTemplate(template);
-      }
-      else {
+      if (template == null) {
         project.getStateStore().load();
       }
-      project.loadProjectComponents();
+      else {
+        project.getStateStore().loadProjectFromTemplate(template);
+      }
       project.init();
       succeed = true;
     }
@@ -707,10 +706,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       }
     }
 
-    if (causes.isEmpty()) {
-      return false;
-    }
-    return ComponentStoreImpl.reloadStore(causes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED;
+    return !causes.isEmpty() &&
+           ComponentStoreImpl.reloadStore(causes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED;
   }
 
   @Override
@@ -721,7 +718,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   @Override
   public void unblockReloadingProjectOnExternalChanges() {
     if (myReloadBlockCount.decrementAndGet() == 0 && myChangedFilesAlarm.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL, ApplicationManager.getApplication().getDisposed());
     }
   }
 

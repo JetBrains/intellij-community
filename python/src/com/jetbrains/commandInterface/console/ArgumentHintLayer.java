@@ -16,11 +16,11 @@
 package com.jetbrains.commandInterface.console;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -78,15 +78,10 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
   @NotNull
   private final LanguageConsoleImpl myConsole;
   /**
-   * Color to be used for required arguments
+   * Color to be used for options/arguments
    */
   @NotNull
-  private final Color myRequiredColor;
-  /**
-   * Color to be used for optional arguments
-   */
-  @NotNull
-  private final Color myOptionalColor;
+  private final Color myArgumentColor;
   /**
    * Number of chars in current document
    */
@@ -115,8 +110,7 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
     myDocumentLengthInChars = console.getEditorDocument().getTextLength();
     myLastText = console.getFile().getText();
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    myRequiredColor = scheme.getAttributes(ConsoleViewContentType.ERROR_OUTPUT_KEY).getForegroundColor();
-    myOptionalColor = scheme.getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES).getForegroundColor();
+    myArgumentColor = scheme.getAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES).getForegroundColor();
   }
 
 
@@ -133,15 +127,13 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
     myNextArg = null; // Reset current argument
 
 
-    myDocumentLengthInChars = newText.length();
+    myDocumentLengthInChars = StringUtil.trim(newText).length();
     final PsiFile consoleFile = myConsole.getFile();
     // Get next arg from file
     if (consoleFile instanceof CommandLineFile) {
       final ValidationResult result = ((CommandLineFile)consoleFile).getValidationResult();
-      if (result != null) {
-        myNextArg = result.getNextArg();
-        repaint(); // We need to repaint us if argument changed
-      }
+      myNextArg = result != null ? result.getNextArg() : null;
+      repaint(); // We need to repaint us if argument changed
     }
   }
 
@@ -158,16 +150,29 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
     }
 
 
+    final EditorEx editor = myConsole.getCurrentEditor();
     @SuppressWarnings("NumericCastThatLosesPrecision") // Y will never be > Integer.MAX_VALUE
-    final int y = ((int)Math.round(myConsole.getCurrentEditor().getComponent().getLocation().getY())) + myLineHeightPx;
+    final int y = ((int)Math.floor(editor.getComponent().getLocation().getY())) + myLineHeightPx - 1;
+    //1 is hack here, just to align. TODO: investigate why do we need it
     final int spaceToRight = myCharWidthPx * SPACES_BEFORE_ARG; // Space after line end to placeholder
-    final int x = (myPromptWidthPx + (myCharWidthPx * myDocumentLengthInChars)) + spaceToRight;
+
+    /**
+     * We should display argument right after document end or cursor position what ever comes first.
+     * But document length is trimmed, so in case of documents with several white spaces at the end
+     * we do not count these spaces.
+     *
+     * We also need to add prompt length.
+     */
+    final int cursorOffset = editor.getCaretModel().getOffset();
+    final int lengthInChars = Math.max(cursorOffset, myDocumentLengthInChars);
+
+    final int x = myPromptWidthPx + spaceToRight + lengthInChars * myCharWidthPx;
 
     final boolean required = nextArg.first;
     final String argumentText = nextArg.second.getHelp().getHelpString();
 
 
-    g.setColor(required ? myRequiredColor : myOptionalColor);
+    g.setColor(myArgumentColor);
     final String textToShow = StringUtil.isEmpty(argumentText) ? PyBundle.message("commandLine.argumentHint.defaultName") : argumentText;
     g.drawString(wrapBracesIfNeeded(required, textToShow), x, y);
   }

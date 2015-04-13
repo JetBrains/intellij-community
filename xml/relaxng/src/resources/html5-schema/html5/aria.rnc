@@ -1162,7 +1162,6 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 ## timer
 	aria.timer =
 		(	aria.role.timer
-		&	aria.prop.activedescendant?
 		&	aria.state.expanded?
 		)
 		aria.role.timer = 
