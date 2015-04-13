@@ -290,7 +290,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile) {
-    if (!checkFileSizeLimit(vFile)) return false;
     return fileSizeIsGreaterThan(vFile, PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
   }
 
@@ -304,6 +303,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile, final long contentSize) {
     if (!checkFileSizeLimit(vFile)) return false;
     return contentSize > PersistentFSConstants.getMaxIntellisenseFileSize();
+  }
+
+  public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile, final long contentSize) {
+    return contentSize > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
   }
 
   private static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, final long maxBytes) {
