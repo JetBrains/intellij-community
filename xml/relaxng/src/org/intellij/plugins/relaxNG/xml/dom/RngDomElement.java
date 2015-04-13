@@ -17,9 +17,11 @@
 package org.intellij.plugins.relaxNG.xml.dom;
 
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.NameStrategy;
 import org.intellij.plugins.relaxNG.model.CommonElement;
-import org.intellij.plugins.relaxNG.xml.dom.impl.RngDomElementBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
  * Date: 16.08.2007
  */
 @NameStrategy(com.intellij.util.xml.JavaNameStrategy.class)
-@Implementation(RngDomElementBase.class)
 public interface RngDomElement extends DomElement, CommonElement<XmlElement> {
   /**
    * Returns the value of the ns child.
