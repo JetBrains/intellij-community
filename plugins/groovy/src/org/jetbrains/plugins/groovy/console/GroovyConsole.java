@@ -131,13 +131,13 @@ public class GroovyConsole {
     };
 
     final Module module = GroovyConsoleStateService.getInstance(project).getSelectedModule(contentFile);
-    if (module != null) {
-      // if module for console is already selected, then use it for creation
-      initializer.consume(module);
-    }
-    else {
+    if (module == null || module.isDisposed()) {
       // if not, then select module, then run initializer
       GroovyConsoleUtil.selectModuleAndRun(project, initializer);
+    }
+    else {
+      // if module for console is already selected, then use it for creation
+      initializer.consume(module);
     }
   }
 

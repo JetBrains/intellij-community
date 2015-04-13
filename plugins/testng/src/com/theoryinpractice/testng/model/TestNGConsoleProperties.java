@@ -24,7 +24,7 @@ import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 
 import javax.swing.*;
 
-public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties {
+public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<TestNGConfiguration> {
   private final TestNGConfiguration myConfiguration;
 
     public TestNGConsoleProperties(TestNGConfiguration config, Executor executor)

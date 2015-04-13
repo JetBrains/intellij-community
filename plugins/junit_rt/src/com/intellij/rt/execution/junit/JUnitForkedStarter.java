@@ -16,6 +16,7 @@
 package com.intellij.rt.execution.junit;
 
 import com.intellij.rt.execution.CommandLineWrapper;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 
 import java.io.*;
@@ -93,7 +94,7 @@ public class JUnitForkedStarter {
     final Object description = testRunner.getTestToStart(args, params);
     if (description == null) return -1;
 
-    TreeSender.sendTree(testRunner, description, true);
+    TreeSender.sendTree(testRunner, description, !JUnitStarter.SM_RUNNER);
 
     long time = System.currentTimeMillis();
 
@@ -129,9 +130,10 @@ public class JUnitForkedStarter {
               File tempFile = File.createTempFile("idea_junit", ".tmp");
               tempFile.deleteOnExit();
               JUnitStarter.printClassesList(classNames, packageName + ", working directory: \'" + workingDir + "\'", "", tempFile);
+              final OutputObjectRegistry registry = testRunner.getRegistry();
+              final String startIndex = String.valueOf(registry != null ? registry.getKnownObject(rootDescriptor) - 1 : -1);
               childResult =
-                runChild(isJUnit4, listeners, out, err, parameters, "@" + tempFile.getAbsolutePath(), dir,
-                         String.valueOf(testRunner.getRegistry().getKnownObject(rootDescriptor) - 1), classpath, dynamicClasspath);
+                runChild(isJUnit4, listeners, out, err, parameters, "@" + tempFile.getAbsolutePath(), dir, startIndex, classpath, dynamicClasspath);
             } else {
               final List children = new ArrayList(testRunner.getChildTests(description));
               for (Iterator iterator = children.iterator(); iterator.hasNext(); ) {
@@ -155,7 +157,7 @@ public class JUnitForkedStarter {
     }
 
     time = System.currentTimeMillis() - time;
-    new TimeSender(testRunner.getRegistry()).printHeader(time);
+    if (!JUnitStarter.SM_RUNNER) new TimeSender(testRunner.getRegistry()).printHeader(time);
     return result;
   }
 
@@ -188,7 +190,8 @@ public class JUnitForkedStarter {
       final List childTests = testRunner.getChildTests(child);
       final int childResult;
       if (childTests.isEmpty() || !forkTillMethod) {
-        final int startIndex = testRunner.getRegistry().getKnownObject(child);
+        final OutputObjectRegistry registry = testRunner.getRegistry();
+        final int startIndex = registry != null ? registry.getKnownObject(child) : -1;
         childResult =
           runChild(isJUnit4, listeners, out, err, parameters, testRunner.getStartDescription(child), workingDir, String.valueOf(startIndex), classpath, dynamicClasspath);
       }
@@ -213,6 +216,7 @@ public class JUnitForkedStarter {
                               String dynamicClasspath) throws IOException, InterruptedException {
     //noinspection SSBasedInspection
     final File tempFile = File.createTempFile("fork", "test");
+    tempFile.deleteOnExit();
     final String testOutputPath = tempFile.getAbsolutePath();
 
     final ProcessBuilder builder = new ProcessBuilder();

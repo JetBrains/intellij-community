@@ -21,7 +21,10 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.JavaTestLocationProvider;
+import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -84,7 +87,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
   }
 
   protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
-    if (!Registry.is(getFrameworkId() + "_sm_runner")) {
+    if (!isSmRunnerUsed()) {
       return null;
     }
     getJavaParameters().getVMParametersList().addProperty("idea." + getFrameworkId() + ".sm_runner");
@@ -104,14 +107,17 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     consoleView.attachToProcess(handler);
     handler.addProcessListener(new ProcessAdapter() {
       @Override
+      public void startNotified(ProcessEvent event) {
+        if (getConfiguration().isSaveOutputToFile()) {
+          viewer.getRoot().setOutputFilePath(getConfiguration().getOutputFilePath());
+        }
+      }
+
+      @Override
       public void processTerminated(ProcessEvent event) {
         Runnable runnable = new Runnable() {
           public void run() {
-            if (viewer.hasTestSuites() ||
-                !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), testConsoleProperties.isDebug())) {
-              TestsUIUtil.notifyByBalloon(testConsoleProperties.getProject(), viewer.hasTestSuites(), viewer.getRoot(), testConsoleProperties, null);
-            }
-
+            viewer.getRoot().flush();
             deleteTempFiles();
             clear();
           }
@@ -135,6 +141,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     return result;
+  }
+
+  protected boolean isSmRunnerUsed() {
+    return Registry.is(getFrameworkId() + "_sm_runner");
   }
 
   @Override

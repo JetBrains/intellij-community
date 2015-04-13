@@ -46,6 +46,7 @@ class SMTestSender extends RunListener {
 
   public void testRunStarted(Description description) throws Exception {
     myCurrentClassName = myIgnoreTopSuite ? description.toString() : null;
+    System.out.println("##teamcity[enteredTheMatrix]");
   }
 
   public void testRunFinished(Result result) throws Exception {
@@ -119,7 +120,9 @@ class SMTestSender extends RunListener {
   }
 
   public synchronized void testIgnored(Description description) throws Exception {
+    testStarted(description);
     prepareIgnoreMessage(description, true);
+    testFinished(description);
   }
 
   private static void prepareIgnoreMessage(Description description, boolean commentMessage) {

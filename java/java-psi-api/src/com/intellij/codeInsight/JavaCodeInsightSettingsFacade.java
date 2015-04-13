@@ -19,6 +19,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 public abstract class JavaCodeInsightSettingsFacade {
+  /** todo remove in IDEA 16 */
+  @Deprecated
   public abstract boolean isShowStaticAfterInstance();
 
   public static JavaCodeInsightSettingsFacade getInstance(Project project) {

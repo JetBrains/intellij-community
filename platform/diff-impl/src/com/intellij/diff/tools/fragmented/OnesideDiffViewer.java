@@ -629,7 +629,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
       assert next != null;
 
-      DiffUtil.scrollToLineAnimated(myEditor, next.getLine1());
+      DiffUtil.scrollEditor(myEditor, next.getLine1(), true);
     }
 
     @Override
@@ -661,7 +661,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
       if (prev == null) prev = diffChanges.get(diffChanges.size() - 1);
 
-      DiffUtil.scrollToLineAnimated(myEditor, prev.getLine1());
+      DiffUtil.scrollEditor(myEditor, prev.getLine1(), true);
     }
   }
 
@@ -1006,7 +1006,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
           DiffUtil.scrollToPoint(myEditor, myEditorPosition.myPoints[0]);
         }
         else {
-          DiffUtil.scrollToCaret(myEditor);
+          DiffUtil.scrollToCaret(myEditor, false);
         }
         myShouldScroll = false;
       }
@@ -1024,7 +1024,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
     private boolean doScrollToLine(@NotNull Side side, @NotNull LogicalPosition position) {
       int onesideLine = transferLineToOneside(side, position.line);
-      DiffUtil.scrollEditor(myEditor, onesideLine, position.column);
+      DiffUtil.scrollEditor(myEditor, onesideLine, position.column, false);
       return true;
     }
 
@@ -1045,7 +1045,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
           throw new IllegalArgumentException(scrollToChangePolicy.name());
       }
 
-      DiffUtil.scrollEditor(myEditor, targetChange.getLine1());
+      DiffUtil.scrollEditor(myEditor, targetChange.getLine1(), false);
       return true;
     }
 

@@ -115,6 +115,8 @@ public class TestsUIUtil {
     if (project.isDisposed()) return;
     if (properties == null) return;
 
+    TestStatusListener.notifySuiteFinished(root, properties.getProject());
+
     final String testRunDebugId = properties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
 
