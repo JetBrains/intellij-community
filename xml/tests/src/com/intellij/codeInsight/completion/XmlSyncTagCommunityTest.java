@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.psi.PsiFile;
 
 /**
@@ -135,5 +134,9 @@ public class XmlSyncTagCommunityTest extends XmlSyncTagTest {
 
   public void testDeletingIncorrectTag() {
     doTest("<div>text</span><caret></div>", "\b\b\b\b\b\b\b", "<div>text</div>");
+  }
+
+  public void testEndTagEnd() {
+    doTest("<div></div><caret></div>", "\b\b\b\b\b\b", "<div></div>");
   }
 }
