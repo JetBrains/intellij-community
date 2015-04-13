@@ -64,8 +64,9 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
   public MyState getState() {
     synchronized (myFileModuleMap) {
       final MyState result = new MyState();
-      for (VirtualFile file : myFileModuleMap.keySet()) {
-        final Pair<Module, String> pair = myFileModuleMap.get(file);
+      for (Map.Entry<VirtualFile, Pair<Module, String>> entry : myFileModuleMap.entrySet()) {
+        final VirtualFile file = entry.getKey();
+        final Pair<Module, String> pair = entry.getValue();
         final Module module = pair == null ? null : pair.first;
         final Entry e = new Entry();
         e.url = file.getUrl();
@@ -92,7 +93,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
   }
 
   public boolean isProjectConsole(@NotNull VirtualFile file) {
-    return myFileModuleMap.keySet().contains(file);
+    return myFileModuleMap.containsKey(file);
   }
 
   @Nullable
