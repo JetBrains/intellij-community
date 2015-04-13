@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -40,18 +41,22 @@ import java.util.List;
  */
 public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(StaticPseudoFunctionalStyleMethodInspection.class);
-
   private StaticPseudoFunctionalStyleMethodOptions myOptions = new StaticPseudoFunctionalStyleMethodOptions();
-
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
-    super.readSettings(node);
+    myOptions.readExternal(node);
   }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
+    myOptions.writeExternal(node);
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return myOptions.createPanel();
   }
 
   @NotNull
@@ -226,7 +231,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
     return -1;
   }
 
-  private static PsiExpression convertToJavaLambda(final PsiExpression expression, String streamApiMethodName) {
+  private static PsiExpression convertToJavaLambda(PsiExpression expression, String streamApiMethodName) {
     if (expression instanceof PsiLambdaExpression) {
       return expression;
     }
@@ -244,7 +249,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
         return null;
       }
       final String methodName = lambdaClass.getMethods()[0].getName();
-      if (tryConvertLambdaToStreamApi(method, resolveStreamApiLambdaClass(expression.getProject(), streamApiMethodName))) {
+      if (tryConvertPseudoLambdaToStreamApi(method, resolveStreamApiLambdaClass(expression.getProject(), streamApiMethodName))) {
         return expression;
       }
       else {
@@ -272,7 +277,16 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
     return resolved;
   }
 
-  private static boolean tryConvertLambdaToStreamApi(final PsiMethod method, final PsiClass expectedReturnClass) {
+  private static boolean tryConvertPseudoLambdaToStreamApi(final @NotNull PsiMethod method, final @NotNull PsiClass expectedReturnClass) {
+    final PsiType currentReturnType = method.getReturnType();
+    if (!(currentReturnType instanceof PsiClassType)) {
+      LOG.error("pseudo-lambda return type must be class " + currentReturnType);
+      return true;
+    }
+    final PsiClass resolvedCurrentReturnType = ((PsiClassType)currentReturnType).resolve();
+    if (expectedReturnClass.getManager().areElementsEquivalent(expectedReturnClass, resolvedCurrentReturnType)) {
+      return true;
+    }
     final PsiCodeBlock body = method.getBody();
     Collection<PsiReturnStatement> returnStatements = PsiTreeUtil.findChildrenOfType(body, PsiReturnStatement.class);
     returnStatements = ContainerUtil.filter(returnStatements, new Condition<PsiReturnStatement>() {

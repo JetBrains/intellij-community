@@ -270,6 +270,7 @@ public class ChangesUtil {
     }
   }
 
+  @Nullable
   public static VirtualFile findValidParentAccurately(final FilePath filePath) {
     if (filePath.getVirtualFile() != null) return filePath.getVirtualFile();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
@@ -282,6 +283,7 @@ public class ChangesUtil {
     return getValidParentUnderReadAction(filePath);
   }
 
+  @Nullable
   private static VirtualFile getValidParentUnderReadAction(final FilePath filePath) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.CommonBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
@@ -391,6 +392,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     final TableLinkMouseListener listener = new TableLinkMouseListener();
     listener.installOn(myDualView.getFlatView());
     listener.installOn(myDualView.getTreeView());
+    setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
     createDualView();
     if (isStaticEmbedded) {
@@ -573,19 +575,16 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private void adjustEmptyText() {
     VirtualFile virtualFile = myFilePath.getVirtualFile();
-    if (virtualFile == null || !virtualFile.isValid()) {
-      if (!myFilePath.getIOFile().exists()) {
-        String emptyText = "File " + myFilePath.getName() + " not found";
-        setEmptyText(emptyText);
-        return;
-      }
+    if ((virtualFile == null || !virtualFile.isValid()) && !myFilePath.getIOFile().exists()) {
+      setEmptyText("File " + myFilePath.getName() + " not found");
     }
-    setEmptyText(StatusText.DEFAULT_EMPTY_TEXT);
+    else {
+      setEmptyText(CommonBundle.getLoadingTreeNodeText());
+    }
   }
 
-  private void setEmptyText(String emptyText) {
-    myDualView.getFlatView().getEmptyText().setText(emptyText);
-    myDualView.getTreeView().getEmptyText().setText(emptyText);
+  private void setEmptyText(@NotNull String emptyText) {
+    myDualView.setEmptyText(emptyText);
   }
 
   protected void addActionsTo(DefaultActionGroup group) {

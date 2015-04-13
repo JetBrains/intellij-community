@@ -776,6 +776,10 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertSameLinesWithFile(String filePath, String actualText) {
+    assertSameLinesWithFile(filePath, actualText, true);
+  }
+
+  public static void assertSameLinesWithFile(String filePath, String actualText, boolean trimBeforeComparing) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
@@ -791,8 +795,8 @@ public abstract class UsefulTestCase extends TestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    String expected = StringUtil.convertLineSeparators(fileText.trim());
-    String actual = StringUtil.convertLineSeparators(actualText.trim());
+    String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
+    String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
     if (!Comparing.equal(expected, actual)) {
       throw new FileComparisonFailure(null, expected, actual, filePath);
     }

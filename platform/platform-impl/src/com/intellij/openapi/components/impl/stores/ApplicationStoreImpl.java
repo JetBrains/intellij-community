@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
+public class ApplicationStoreImpl extends ComponentStoreImpl implements IApplicationStore {
   private static final Logger LOG = Logger.getInstance(ApplicationStoreImpl.class);
 
   private static final String DEFAULT_STORAGE_SPEC = StoragePathMacros.APP_CONFIG + "/" + PathManager.DEFAULT_OPTIONS_FILE_NAME + DirectoryStorageData.DEFAULT_EXT;

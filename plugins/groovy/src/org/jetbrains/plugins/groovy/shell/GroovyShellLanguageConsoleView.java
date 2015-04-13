@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.console;
+package org.jetbrains.plugins.groovy.shell;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
@@ -37,12 +39,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
-/**
- * @author Max Medvedev
- */
-public abstract class GroovyConsoleImpl extends LanguageConsoleImpl {
+public class GroovyShellLanguageConsoleView extends LanguageConsoleImpl {
 
-  public GroovyConsoleImpl(Project project, String name) {
+  public GroovyShellLanguageConsoleView(Project project, String name) {
     super(project, name, GroovyLanguage.INSTANCE);
   }
 
@@ -50,10 +49,8 @@ public abstract class GroovyConsoleImpl extends LanguageConsoleImpl {
   @Override
   protected PsiFile createFile(@NotNull Project project,
                                @NotNull VirtualFile virtualFile) {
-    return new GroovyShellCodeFragment(project, (LightVirtualFile)virtualFile, isShell());
+    return new GroovyShellCodeFragment(project, (LightVirtualFile)virtualFile);
   }
-
-  protected abstract boolean isShell();
 
   protected void processCode() {
     for (GrTopStatement statement : getFile().getTopStatements()) {
@@ -125,5 +122,43 @@ public abstract class GroovyConsoleImpl extends LanguageConsoleImpl {
     }
 
     return buffer.toString();
+  }
+
+  @NotNull
+  @Override
+  protected String addToHistoryInner(@NotNull TextRange textRange, @NotNull EditorEx editor, boolean erase, boolean preserveMarkup) {
+    final String result = super.addToHistoryInner(textRange, editor, erase, preserveMarkup);
+
+    if ("purge variables".equals(result.trim())) {
+      clearVariables();
+    }
+    else if ("purge classes".equals(result.trim())) {
+      clearClasses();
+    }
+    else if ("purge imports".equals(result.trim())) {
+      clearImports();
+    }
+    else if ("purge all".equals(result.trim())) {
+      clearVariables();
+      clearClasses();
+      clearImports();
+    }
+    else {
+      processCode();
+    }
+
+    return result;
+  }
+
+  private void clearVariables() {
+    getFile().clearVariables();
+  }
+
+  private void clearClasses() {
+    getFile().clearClasses();
+  }
+
+  private void clearImports() {
+    getFile().clearImports();
   }
 }

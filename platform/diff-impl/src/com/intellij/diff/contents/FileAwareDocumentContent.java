@@ -20,7 +20,6 @@ import java.nio.charset.Charset;
 
 public class FileAwareDocumentContent extends DocumentContentImpl {
   @Nullable private final Project myProject;
-  @Nullable private final VirtualFile myHighlightFile;
 
   public FileAwareDocumentContent(@Nullable Project project,
                                   @NotNull Document document,
@@ -30,12 +29,11 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
                                   @Nullable Charset charset) {
     super(document, fileType, highlightFile, separator, charset);
     myProject = project;
-    myHighlightFile = highlightFile;
   }
 
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
-    if (myProject == null || myHighlightFile == null) return null;
-    return new OpenFileDescriptor(myProject, myHighlightFile, offset);
+    if (myProject == null || getHighlightFile() == null) return null;
+    return new OpenFileDescriptor(myProject, getHighlightFile(), offset);
   }
 
   @NotNull

@@ -1992,8 +1992,16 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String escapeChar(@NotNull final String str, final char character) {
+    return escapeChars(str, character);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String escapeChars(@NotNull final String str, final char... character) {
     final StringBuilder buf = new StringBuilder(str);
-    escapeChar(buf, character);
+    for (char c : character) {
+      escapeChar(buf, c);
+    }
     return buf.toString();
   }
 

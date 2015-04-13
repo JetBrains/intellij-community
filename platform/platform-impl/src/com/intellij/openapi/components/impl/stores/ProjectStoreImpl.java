@@ -54,7 +54,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
+public class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProjectStore {
   private static final Logger LOG = Logger.getInstance(ProjectStoreImpl.class);
 
   private static final Storage DEFAULT_STORAGE_ANNOTATION = new MyStorage();
@@ -65,13 +65,19 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   private static int originalVersion = -1;
 
   protected ProjectImpl myProject;
+  @NotNull
   private StorageScheme myScheme = StorageScheme.DEFAULT;
   private String myPresentableUrl;
 
-  ProjectStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
+  public ProjectStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
     super(pathMacroManager);
 
     myProject = project;
+  }
+
+  @SuppressWarnings("unused") //used in upsource
+  protected void setStorageScheme(@NotNull StorageScheme scheme) {
+    myScheme = scheme;
   }
 
   @Override
@@ -339,6 +345,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @NotNull
+  @Override
+  public String getProjectFilePath() {
+    return myProject.isDefault() ? "" : ((FileBasedStorage)getProjectFileStorage()).getFilePath();
+  }
+
+  @NotNull
   private XmlElementStorage getProjectFileStorage() {
     // XmlElementStorage if default project, otherwise FileBasedStorage
     XmlElementStorage storage = (XmlElementStorage)getStateStorageManager().getStateStorage(StoragePathMacros.PROJECT_FILE, RoamingType.PER_USER);
@@ -354,6 +366,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     return storage.getVirtualFile();
   }
 
+  @Nullable
+  @Override
+  public String getWorkspaceFilePath() {
+    if (myProject.isDefault()) return null;
+    final FileBasedStorage storage = (FileBasedStorage)getStateStorageManager().getStateStorage(StoragePathMacros.WORKSPACE_FILE, RoamingType.DISABLED);
+    assert storage != null;
+    return storage.getFilePath();
+  }
+
   @Override
   public void loadProjectFromTemplate(@NotNull ProjectImpl defaultProject) {
     defaultProject.save();
@@ -362,12 +383,6 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     if (element != null) {
       getProjectFileStorage().setDefaultState(element);
     }
-  }
-
-  @NotNull
-  @Override
-  public String getProjectFilePath() {
-    return myProject.isDefault() ? "" : ((FileBasedStorage)getProjectFileStorage()).getFilePath();
   }
 
   @NotNull
@@ -536,7 +551,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
         }
 
         for (Storage storage : storages) {
-          if (storage.scheme() == StorageScheme.DEFAULT) {
+          if (storage.scheme() == StorageScheme.DEFAULT && !result.contains(storage)) {
             result.add(storage);
           }
         }

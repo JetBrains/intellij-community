@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -34,21 +36,34 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.imgscalr.Scalr;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author yole
+ * @author Konstantin Bulenkov
  */
 public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements ProjectManagerListener, PersistentStateComponent<RecentProjectsManagerBase.State> {
+  private static final Map<String, MyIcon> ourProjectIcons = new HashMap<String, MyIcon>();
+
   public static RecentProjectsManagerBase getInstanceEx() {
     return (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
   }
@@ -173,6 +188,73 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   @NotNull
   protected String getProjectDisplayName(@NotNull Project project) {
     return "";
+  }
+
+  @Nullable
+  public static Icon getProjectIcon(String path) {
+    final File file = new File(path + "/.idea/icon.png");
+    if (file.exists()) {
+      final long timestamp = file.lastModified();
+      MyIcon icon = ourProjectIcons.get(path);
+      if (icon != null && icon.getTimestamp() == timestamp) {
+        return icon.getIcon();
+      }
+      try {
+        final BufferedImage image = loadAndScaleImage(file);
+        Icon ico = new Icon() {
+          @Override
+          public void paintIcon(Component c, Graphics g, int x, int y) {
+            if (UIUtil.isRetina()) {
+              final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
+              newG.scale(0.5, 0.5);
+              newG.drawImage(image, x/2, y/2, null);
+              newG.scale(1, 1);
+              newG.dispose();
+            }
+            else {
+              g.drawImage(image, x, y, null);
+            }
+          }
+
+          @Override
+          public int getIconWidth() {
+            return UIUtil.isRetina() ? image.getWidth() / 2 : image.getWidth();
+          }
+
+          @Override
+          public int getIconHeight() {
+            return UIUtil.isRetina() ? image.getHeight() / 2 : image.getHeight();
+          }
+        };
+        icon = new MyIcon(ico, timestamp);
+        ourProjectIcons.put(path, icon);
+        return icon.getIcon();
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    return null;
+  }
+
+  private static BufferedImage loadAndScaleImage(File file) {
+    try {
+      Image img = ImageLoader.loadFromUrl(file.toURL());
+      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16), null);
+    }
+    catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public static Icon getProjectOrAppIcon(String path) {
+    final Icon icon = getProjectIcon(path);
+    if (icon != null) {
+      return icon;
+    }
+
+    return AllIcons.Nodes.IdeaProject;
   }
 
   private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
@@ -472,6 +554,20 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     @Override
     public void appClosing() {
       updateLastProjectPath();
+    }
+  }
+
+  private static class MyIcon extends Pair<Icon, Long> {
+    public MyIcon(Icon icon, Long timestamp) {
+      super(icon, timestamp);
+    }
+
+    public Icon getIcon() {
+      return first;
+    }
+
+    public long getTimestamp() {
+      return second;
     }
   }
 }

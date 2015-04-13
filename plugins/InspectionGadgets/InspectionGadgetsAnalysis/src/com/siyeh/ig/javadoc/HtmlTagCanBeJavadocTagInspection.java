@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2014 Bas Leijdekkers
+ * Copyright 2011-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -85,24 +86,24 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
       final int replaceStartOffset = element.getTextOffset() + startOffset;
       int startTag = range.getEndOffset();
       @NonNls String text = element.getText();
-      if (!"<code>".equals(text.substring(startOffset, startTag))) {
+      if (!"<code>".equalsIgnoreCase(text.substring(startOffset, startTag))) {
         return;
       }
       @NonNls final StringBuilder newCommentText = new StringBuilder("{@code");
-      int endTag = text.indexOf("</code>", startTag);
+      int endTag = StringUtil.indexOfIgnoreCase(text, "</code>", startTag);
       while (endTag < 0) {
         appendElementText(text, startTag, text.length(), newCommentText);
         element = element.getNextSibling();
         if (element == null) return;
         startTag = 0;
         text = element.getText();
-        endTag = text.indexOf("</code>");
+        endTag = StringUtil.indexOfIgnoreCase(text, "</code>", 0);
       }
       appendElementText(text, startTag, endTag, newCommentText);
       newCommentText.append('}');
       final int replaceEndOffset = element.getTextOffset() + endTag + 7;
       final String oldText = document.getText(new TextRange(replaceStartOffset, replaceEndOffset));
-      if (!oldText.startsWith("<code>") || !oldText.endsWith("</code>")) { // sanity check
+      if (!StringUtil.startsWithIgnoreCase(oldText, "<code>") || !StringUtil.endsWithIgnoreCase(oldText, "</code>")) { // sanity check
         return;
       }
       document.replaceString(replaceStartOffset, replaceEndOffset, newCommentText);
@@ -137,7 +138,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
       @NonNls final String text = token.getText();
       int startIndex = 0;
       while (true) {
-        startIndex = text.indexOf("<code>", startIndex);
+        startIndex = StringUtil.indexOfIgnoreCase(text, "<code>", startIndex);
         if (startIndex < 0) {
           return;
         }
@@ -150,17 +151,17 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
 
     private static boolean hasMatchingCloseTag(PsiElement element, int offset) {
       @NonNls final String text = element.getText();
-      final int endOffset1 = text.indexOf("</code>", offset);
+      final int endOffset1 = StringUtil.indexOfIgnoreCase(text, "</code>", offset);
       if (endOffset1 >= 0) {
-        final int startOffset1 = text.indexOf("<code>", offset);
+        final int startOffset1 = StringUtil.indexOfIgnoreCase(text, "<code>", offset);
         return startOffset1 < 0 || startOffset1 > endOffset1;
       }
       PsiElement sibling = element.getNextSibling();
       while (sibling != null) {
         @NonNls final String text1 = sibling.getText();
-        final int endOffset = text1.indexOf("</code>");
+        final int endOffset = StringUtil.indexOfIgnoreCase(text1, "</code>", 0);
         if (endOffset >= 0) {
-          final int startOffset = text1.indexOf("<code>");
+          final int startOffset = StringUtil.indexOfIgnoreCase(text1, "<code>", 0);
           return startOffset < 0 || startOffset > endOffset;
         }
         sibling = sibling.getNextSibling();

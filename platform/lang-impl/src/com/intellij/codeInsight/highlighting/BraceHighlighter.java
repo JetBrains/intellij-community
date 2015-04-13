@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -40,6 +41,7 @@ public class BraceHighlighter implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull final Project project) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return; // sorry, upsource
     final EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     CaretListener myCaretListener = new CaretAdapter() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.console;
+package org.jetbrains.plugins.groovy.shell;
 
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -36,7 +36,7 @@ public class GroovyShellCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     PsiFile file = parameters.getOriginalFile();
-    if (!(file instanceof GroovyShellCodeFragment) || !((GroovyShellCodeFragment)file).isShell()) return;
+    if (!(file instanceof GroovyShellCodeFragment)) return;
 
     PsiElement position = parameters.getPosition();
     PsiElement parent = position.getParent();

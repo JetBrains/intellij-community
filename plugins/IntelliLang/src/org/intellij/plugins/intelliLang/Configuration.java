@@ -206,14 +206,14 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   };
 
   protected Collection<BaseInjection> getAllInjections() {
-    ArrayList<BaseInjection> injections = new ArrayList<BaseInjection>();
+    List<BaseInjection> injections = new ArrayList<BaseInjection>();
     for (List<BaseInjection> list : myInjections.values()) {
       injections.addAll(list);
     }
     return injections;
   }
 
-  private CachedValue<MultiMap<String, BaseInjection>> myInjectionsById = new CachedValueImpl<MultiMap<String, BaseInjection>>(new CachedValueProvider<MultiMap<String, BaseInjection>>() {
+  private final CachedValue<MultiMap<String, BaseInjection>> myInjectionsById = new CachedValueImpl<MultiMap<String, BaseInjection>>(new CachedValueProvider<MultiMap<String, BaseInjection>>() {
     @Nullable
     @Override
     public Result<MultiMap<String, BaseInjection>> compute() {
@@ -235,7 +235,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @Override
   public void loadState(final Element element) {
     myInjections.clear();
-    final THashMap<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
+    final Map<String, LanguageInjectionSupport> supports = new THashMap<String, LanguageInjectionSupport>();
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       supports.put(support.getId(), support);
     }
@@ -271,8 +271,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   private static List<BaseInjection> loadDefaultInjections() {
-    final ArrayList<Configuration> cfgList = new ArrayList<Configuration>();
-    final THashSet<Object> visited = new THashSet<Object>();
+    final List<Configuration> cfgList = new ArrayList<Configuration>();
+    final Set<Object> visited = new THashSet<Object>();
     for (LanguageInjectionConfigBean configBean : Extensions.getExtensions(LanguageInjectionSupport.CONFIG_EP_NAME)) {
       PluginDescriptor descriptor = configBean.getPluginDescriptor();
       final ClassLoader loader = descriptor.getPluginClassLoader();
@@ -285,11 +285,18 @@ public class Configuration extends SimpleModificationTracker implements Persiste
           while (enumeration.hasMoreElements()) {
             URL url = enumeration.nextElement();
             if (!visited.add(url.getFile())) continue; // for DEBUG mode
+            InputStream stream = null;
             try {
-              cfgList.add(load(url.openStream()));
+              stream = url.openStream();
+              cfgList.add(load(stream));
             }
             catch (Exception e) {
               LOG.warn(e);
+            }
+            finally {
+              if (stream != null) {
+                stream.close();
+              }
             }
           }
         }
@@ -299,7 +306,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     }
 
-    final ArrayList<BaseInjection> defaultInjections = new ArrayList<BaseInjection>();
+    final List<BaseInjection> defaultInjections = new ArrayList<BaseInjection>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
       for (Configuration cfg : cfgList) {
         final List<BaseInjection> imported = cfg.getInjections(supportId);
@@ -324,7 +331,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     List<String> injectorIds = new ArrayList<String>(myInjections.keySet());
     Collections.sort(injectorIds);
     for (String key : injectorIds) {
-      TreeSet<BaseInjection> injections = new TreeSet<BaseInjection>(comparator);
+      Set<BaseInjection> injections = new TreeSet<BaseInjection>(comparator);
       injections.addAll(myInjections.get(key));
       injections.removeAll(getDefaultInjections());
       for (BaseInjection injection : injections) {
@@ -352,7 +359,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
   @Nullable
   public static Configuration load(final InputStream is) throws IOException, JDOMException {
-    final ArrayList<Element> elements = new ArrayList<Element>();
+    final List<Element> elements = new ArrayList<Element>();
     final Element rootElement = JDOMUtil.load(is);
     final Element state;
     if (rootElement.getName().equals(COMPONENT_NAME)) {
@@ -384,8 +391,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         return o.getSupportId();
       }
     });
-    final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
-    final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+    List<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
+    List<BaseInjection> newInjections = new ArrayList<BaseInjection>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
       final Set<BaseInjection> importingInjections = map.get(supportId);
       if (importingInjections == null) continue;
@@ -448,8 +455,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   public boolean setHostInjectionEnabled(final PsiLanguageInjectionHost host, final Collection<String> languages, final boolean enabled) {
-    final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
-    final ArrayList<BaseInjection> newInjections = new ArrayList<BaseInjection>();
+    List<BaseInjection> originalInjections = new ArrayList<BaseInjection>();
+    List<BaseInjection> newInjections = new ArrayList<BaseInjection>();
     for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
       for (BaseInjection injection : getInjections(support.getId())) {
         if (!languages.contains(injection.getInjectedLanguageId())) continue;

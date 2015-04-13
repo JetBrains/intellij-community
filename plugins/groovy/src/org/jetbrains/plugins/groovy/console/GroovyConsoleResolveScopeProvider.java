@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,31 +15,21 @@
  */
 package org.jetbrains.plugins.groovy.console;
 
-import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ResolveScopeProvider;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
-public class GroovyShellAction extends GroovyShellActionBase {
-  @Override
-  protected boolean isSuitableModule(Module module) {
-    return super.isSuitableModule(module) && DefaultGroovyShellRunner.hasGroovyWithNeededJars(module);
-  }
+public class GroovyConsoleResolveScopeProvider extends ResolveScopeProvider {
 
+  @Nullable
   @Override
-  protected GroovyShellRunner getRunner(Module module) {
-    return new DefaultGroovyShellRunner();
-  }
-
-  @Override
-  public String getTitle() {
-    return "Groovy Shell";
-  }
-
-  @Override
-  protected LanguageConsoleView createConsole(Project project, String title) {
-    return new GroovyShellConsoleImpl(project, title);
+  public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project) {
+    final GroovyConsoleStateService projectConsole = GroovyConsoleStateService.getInstance(project);
+    final Module module = projectConsole.getSelectedModule(file);
+    return module == null ? null : module.getModuleWithDependenciesAndLibrariesScope(false);
   }
 }

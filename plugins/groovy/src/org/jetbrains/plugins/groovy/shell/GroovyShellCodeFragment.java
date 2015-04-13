@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.console;
+package org.jetbrains.plugins.groovy.shell;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.testFramework.LightVirtualFile;
@@ -28,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
@@ -40,15 +39,9 @@ public class GroovyShellCodeFragment extends GroovyCodeFragment {
 
   private final Map<String, PsiVariable> myVariables = ContainerUtil.newHashMap();
   private final Map<String, GrTypeDefinition> myTypeDefinitions = ContainerUtil.newHashMap();
-  private final boolean myShell;
 
-  public GroovyShellCodeFragment(Project project, LightVirtualFile virtualFile, boolean isShell) {
+  public GroovyShellCodeFragment(Project project, LightVirtualFile virtualFile) {
     super(project, virtualFile);
-    myShell = isShell;
-  }
-
-  public boolean isShell() {
-    return myShell;
   }
 
   @Override
@@ -60,7 +53,12 @@ public class GroovyShellCodeFragment extends GroovyCodeFragment {
   }
 
   public void addVariable(String name, GrExpression expr) {
-    final PsiType type = expr.getType();
+    PsiType type = expr.getType();
+    if (type instanceof GrClassReferenceType) {
+      final PsiClassType.ClassResolveResult resolveResult = ((GrClassReferenceType)type).resolveGenerics();
+      final PsiClass psiClass = resolveResult.getElement();
+      type = psiClass == null ? null : new PsiImmediateClassType(psiClass, resolveResult.getSubstitutor());
+    }
     if (type != null) {
       myVariables.put(name, new GrLightVariable(getManager(), name, type, this));
     }

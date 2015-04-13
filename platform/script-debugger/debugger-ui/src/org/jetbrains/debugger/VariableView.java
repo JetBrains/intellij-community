@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger;
 
 import com.intellij.icons.AllIcons;
@@ -34,14 +49,17 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
   private static final class ArrayPresentation extends XValuePresentation {
     private final String length;
+    private final String className;
 
-    private ArrayPresentation(int length) {
+    private ArrayPresentation(int length, @Nullable String className) {
       this.length = Integer.toString(length);
+      this.className = StringUtil.isEmpty(className) ? "Array" : className;
     }
 
     @Override
     public void renderValue(@NotNull XValueTextRenderer renderer) {
-      renderer.renderSpecialSymbol("Array[");
+      renderer.renderSpecialSymbol(className);
+      renderer.renderSpecialSymbol("[");
       renderer.renderSpecialSymbol(length);
       renderer.renderSpecialSymbol("]");
     }
@@ -89,7 +107,7 @@ public final class VariableView extends XNamedValue implements VariableContext {
 
     if (value instanceof ArrayValue) {
       int length = ((ArrayValue)value).getLength();
-      node.setPresentation(icon, new ArrayPresentation(length), length > 0);
+      node.setPresentation(icon, new ArrayPresentation(length, ((ArrayValue)value).getClassName()), length > 0);
       return;
     }
 

@@ -241,7 +241,8 @@ public abstract class ContextProvider {
               public void run() {
                 if (file.getUserData(XML_FILE_WITH_XPATH_INJECTTION) == null) {
                   file.putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
-                  if (!ApplicationManager.getApplication().isUnitTestMode()) { // TODO workaround for highlighting tests
+                  // TODO workaround for highlighting tests
+                  if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
                     DaemonCodeAnalyzer.getInstance(file.getProject()).restart(file);
                   }
                 }

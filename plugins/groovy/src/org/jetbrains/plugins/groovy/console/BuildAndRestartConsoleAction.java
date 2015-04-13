@@ -28,29 +28,31 @@ import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by Max Medvedev on 21/03/14
  */
 public class BuildAndRestartConsoleAction extends AnAction implements Disposable {
+
   private Module myModule;
   private Project myProject;
   private Executor myExecutor;
   private RunContentDescriptor myContentDescriptor;
-  private GroovyShellActionBase myShellAction;
+  private Consumer<Module> myRestarter;
 
   public BuildAndRestartConsoleAction(@NotNull Module module,
                                       @NotNull Project project,
                                       @NotNull Executor executor,
                                       @NotNull RunContentDescriptor contentDescriptor,
-                                      @NotNull GroovyShellActionBase action) {
-    super("Restart", "Build module '" + module.getName() + "' and restart", AllIcons.Actions.Restart);
+                                      @NotNull Consumer<Module> restarter) {
+    super("Build and restart", "Build module '" + module.getName() + "' and restart", AllIcons.Actions.Restart);
     myModule = module;
     myProject = project;
     myExecutor = executor;
     myContentDescriptor = contentDescriptor;
-    myShellAction = action;
+    myRestarter = restarter;
   }
 
   @Override
@@ -59,45 +61,33 @@ public class BuildAndRestartConsoleAction extends AnAction implements Disposable
   }
 
   private boolean isEnabled() {
-    if (myModule == null) return false;
+    if (myModule == null || myModule.isDisposed()) return false;
 
-    if (myModule.isDisposed()) return false;
-
-    ProcessHandler processHandler = myContentDescriptor.getProcessHandler();
-    if (processHandler == null) return false;
-
-    if (processHandler.isProcessTerminated()) return false;
+    final ProcessHandler processHandler = myContentDescriptor.getProcessHandler();
+    if (processHandler == null || processHandler.isProcessTerminated()) return false;
 
     return true;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    rerun(myModule, myProject, myContentDescriptor, myShellAction, myExecutor);
-  }
-
-  private static void rerun(@NotNull final Module module,
-                            @NotNull final Project project,
-                            @NotNull final RunContentDescriptor contentDescriptor,
-                            @NotNull final GroovyShellActionBase action,
-                            @NotNull final Executor executor) {
-    ExecutionManager.getInstance(project).getContentManager().removeRunContent(executor, contentDescriptor);
-    if (contentDescriptor.getProcessHandler() != null && contentDescriptor.getProcessHandler().isProcessTerminated()) {
-      CompilerManager.getInstance(project).compile(module, new CompileStatusNotification() {
+    if (ExecutionManager.getInstance(myProject).getContentManager().removeRunContent(myExecutor, myContentDescriptor)) {
+      CompilerManager.getInstance(myProject).compile(myModule, new CompileStatusNotification() {
         @Override
         public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-          if (!module.isDisposed()) {
-            action.doRunShell(module);
+          if (!myModule.isDisposed()) {
+            myRestarter.consume(myModule);
           }
         }
       });
     }
   }
 
+
   @Override
   public void dispose() {
     myModule = null;
-    myShellAction = null;
+    myRestarter = null;
     myProject = null;
     myExecutor = null;
     myContentDescriptor = null;

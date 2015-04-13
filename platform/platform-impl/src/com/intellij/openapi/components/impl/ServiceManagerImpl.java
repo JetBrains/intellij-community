@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -61,7 +62,8 @@ public class ServiceManagerImpl implements BaseComponent {
   protected ServiceManagerImpl(boolean ignoreInit) {
   }
 
-  protected void installEP(final ExtensionPointName<ServiceDescriptor> pointName, final ComponentManager componentManager) {
+  protected void installEP(@NotNull ExtensionPointName<ServiceDescriptor> pointName, @NotNull final ComponentManager componentManager) {
+    LOG.assertTrue(myExtensionPointName == null, "Already called installEP with " + myExtensionPointName);
     myExtensionPointName = pointName;
     final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(pointName);
     final MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
@@ -77,7 +79,10 @@ public class ServiceManagerImpl implements BaseComponent {
           }
         }
 
-        picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));
+        // empty serviceImplementation means we want to unregister service
+        if (!StringUtil.isEmpty(descriptor.serviceImplementation)) {
+          picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));
+        }
       }
 
       @Override

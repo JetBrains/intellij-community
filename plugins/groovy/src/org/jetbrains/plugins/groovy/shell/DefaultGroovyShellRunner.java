@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.console;
+package org.jetbrains.plugins.groovy.shell;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
@@ -32,7 +32,8 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 /**
  * @author Sergey Evdokimov
  */
-public class DefaultGroovyShellRunner extends GroovyShellRunner {
+public class DefaultGroovyShellRunner extends GroovyShellConfig {
+
   @NotNull
   @Override
   public String getWorkingDirectory(@NotNull Module module) {
@@ -57,19 +58,30 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
 
   @NotNull
   @Override
-  public String getTitle(@NotNull Module module) {
+  public String getVersion(@NotNull Module module) {
     String homePath = LibrariesUtil.getGroovyHomePath(module);
     assert homePath != null;
 
     String version = GroovyConfigUtils.getInstance().getSDKVersion(homePath);
-    return version == AbstractConfigUtils.UNDEFINED_VERSION ? "" : " (Groovy " + version + ")";
+    return version == AbstractConfigUtils.UNDEFINED_VERSION ? "" : "Groovy " + version;
   }
 
-  static boolean hasGroovyWithNeededJars(Module module) {
+  public static boolean hasGroovyWithNeededJars(Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
-    return (facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null || facade.findClass("groovyjarjarcommonscli.CommandLineParser", scope) != null) &&
-           facade.findClass("groovy.ui.GroovyMain", scope) != null  &&
+    return (facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null ||
+            facade.findClass("groovyjarjarcommonscli.CommandLineParser", scope) != null) &&
+           facade.findClass("groovy.ui.GroovyMain", scope) != null &&
            facade.findClass("org.fusesource.jansi.AnsiConsole", scope) != null;
+  }
+
+  @Override
+  public boolean isSuitableModule(Module module) {
+    return super.isSuitableModule(module) && hasGroovyWithNeededJars(module);
+  }
+
+  @Override
+  public String getTitle() {
+    return "Groovy Shell";
   }
 }

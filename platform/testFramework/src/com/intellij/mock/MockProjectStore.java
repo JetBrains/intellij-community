@@ -103,6 +103,12 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method getWorkspaceFile is not yet implemented in " + getClass().getName());
   }
 
+  @Nullable
+  @Override
+  public String getWorkspaceFilePath() {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public void loadProjectFromTemplate(@NotNull ProjectImpl project) {
     throw new UnsupportedOperationException("Method loadProjectFromTemplate is not yet implemented in " + getClass().getName());

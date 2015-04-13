@@ -846,7 +846,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public boolean isFileInContent(final VirtualFile vf) {
+  public boolean isFileInContent(@Nullable final VirtualFile vf) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
