@@ -18,7 +18,6 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
-import com.intellij.execution.testframework.sm.TestsLocationProviderUtil;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
@@ -247,18 +246,14 @@ public class SMTestProxy extends AbstractTestProxy {
   @Nullable
   public Location getLocation(final Project project, GlobalSearchScope searchScope) {
     //determines location of test proxy
-
-    if (myLocationUrl == null || myLocator == null) {
-      return null;
-    }
-
-    final String protocolId = VirtualFileManager.extractProtocol(myLocationUrl);
-    final String path = TestsLocationProviderUtil.extractPath(myLocationUrl);
-
-    if (protocolId != null && path != null) {
-      List<Location> locations = myLocator.getLocation(protocolId, path, project);
-      if (!locations.isEmpty()) {
-        return locations.iterator().next();
+    if (myLocationUrl != null && myLocator != null) {
+      String protocolId = VirtualFileManager.extractProtocol(myLocationUrl);
+      if (protocolId != null) {
+        String path = VirtualFileManager.extractPath(myLocationUrl);
+        List<Location> locations = myLocator.getLocation(protocolId, path, project);
+        if (!locations.isEmpty()) {
+          return locations.get(0);
+        }
       }
     }
 
