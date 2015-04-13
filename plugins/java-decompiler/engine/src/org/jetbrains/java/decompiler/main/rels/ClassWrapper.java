@@ -40,11 +40,11 @@ import java.util.Set;
 
 public class ClassWrapper {
 
-  private StructClass classStruct;
-  private Set<String> hiddenMembers = new HashSet<String>();
-  private VBStyleCollection<Exprent, String> staticFieldInitializers = new VBStyleCollection<Exprent, String>();
-  private VBStyleCollection<Exprent, String> dynamicFieldInitializers = new VBStyleCollection<Exprent, String>();
-  private VBStyleCollection<MethodWrapper, String> methods = new VBStyleCollection<MethodWrapper, String>();
+  private final StructClass classStruct;
+  private final Set<String> hiddenMembers = new HashSet<String>();
+  private final VBStyleCollection<Exprent, String> staticFieldInitializers = new VBStyleCollection<Exprent, String>();
+  private final VBStyleCollection<Exprent, String> dynamicFieldInitializers = new VBStyleCollection<Exprent, String>();
+  private final VBStyleCollection<MethodWrapper, String> methods = new VBStyleCollection<MethodWrapper, String>();
 
   public ClassWrapper(StructClass classStruct) {
     this.classStruct = classStruct;

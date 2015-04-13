@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,21 @@ import java.util.List;
 
 public class DirectGraph {
 
-  public VBStyleCollection<DirectNode, String> nodes = new VBStyleCollection<DirectNode, String>();
+  public final VBStyleCollection<DirectNode, String> nodes = new VBStyleCollection<DirectNode, String>();
 
   public DirectNode first;
 
   // exit, [source, destination]
-  public HashMap<String, List<FinallyPathWrapper>> mapShortRangeFinallyPaths = new HashMap<String, List<FinallyPathWrapper>>();
+  public final HashMap<String, List<FinallyPathWrapper>> mapShortRangeFinallyPaths = new HashMap<String, List<FinallyPathWrapper>>();
 
   // exit, [source, destination]
-  public HashMap<String, List<FinallyPathWrapper>> mapLongRangeFinallyPaths = new HashMap<String, List<FinallyPathWrapper>>();
+  public final HashMap<String, List<FinallyPathWrapper>> mapLongRangeFinallyPaths = new HashMap<String, List<FinallyPathWrapper>>();
 
   // negative if branches (recorded for handling of && and ||)
-  public HashMap<String, String> mapNegIfBranch = new HashMap<String, String>();
+  public final HashMap<String, String> mapNegIfBranch = new HashMap<String, String>();
 
   // nodes, that are exception exits of a finally block with monitor variable
-  public HashMap<String, String> mapFinallyMonitorExceptionPathExits = new HashMap<String, String>();
+  public final HashMap<String, String> mapFinallyMonitorExceptionPathExits = new HashMap<String, String>();
 
   public void sortReversePostOrder() {
     LinkedList<DirectNode> res = new LinkedList<DirectNode>();

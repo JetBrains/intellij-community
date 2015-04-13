@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.java.decompiler.struct.gen.generics;
+package com.intellij.vcs.log;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.util.Function;
 
-public class GenericClassDescriptor {
+public class UserNameRegex implements Function<String, String> {
+  public static final UserNameRegex INSTANCE = new UserNameRegex();
 
-  public GenericType superclass;
+  private UserNameRegex(){}
 
-  public final List<GenericType> superinterfaces = new ArrayList<GenericType>();
-
-  public final List<String> fparameters = new ArrayList<String>();
-
-  public final List<List<GenericType>> fbounds = new ArrayList<List<GenericType>>();
+  @Override
+  public String fun(String s) {
+    return "^" +
+           s +
+           "( <.*>)?$|^<" +
+           s +
+           "@.*>$|^" +
+           s +
+           "@.*$"; // either exact user name with any email or no name with exact email (on any domain)
+  }
 }

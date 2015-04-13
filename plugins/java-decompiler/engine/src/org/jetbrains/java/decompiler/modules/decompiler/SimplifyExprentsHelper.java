@@ -51,9 +51,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 public class SimplifyExprentsHelper {
 
-  static MatchEngine class14Builder = new MatchEngine();
+  static final MatchEngine class14Builder = new MatchEngine();
   
-  private boolean firstInvocation;
+  private final boolean firstInvocation;
 
   public SimplifyExprentsHelper(boolean firstInvocation) {
     this.firstInvocation = firstInvocation;

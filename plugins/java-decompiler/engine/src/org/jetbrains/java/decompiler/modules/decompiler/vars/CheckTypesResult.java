@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import java.util.List;
 
 public class CheckTypesResult {
 
-  private List<ExprentTypePair> lstMaxTypeExprents = new ArrayList<ExprentTypePair>();
+  private final List<ExprentTypePair> lstMaxTypeExprents = new ArrayList<ExprentTypePair>();
 
-  private List<ExprentTypePair> lstMinTypeExprents = new ArrayList<ExprentTypePair>();
+  private final List<ExprentTypePair> lstMinTypeExprents = new ArrayList<ExprentTypePair>();
 
   public void addMaxTypeExprent(Exprent exprent, VarType type) {
     lstMaxTypeExprents.add(new ExprentTypePair(exprent, type, null));
@@ -44,9 +44,9 @@ public class CheckTypesResult {
   }
 
   public static class ExprentTypePair {
-    public Exprent exprent;
-    public VarType type;
-    public VarType desttype;
+    public final Exprent exprent;
+    public final VarType type;
+    public final VarType desttype;
 
     public ExprentTypePair(Exprent exprent, VarType type, VarType desttype) {
       this.exprent = exprent;

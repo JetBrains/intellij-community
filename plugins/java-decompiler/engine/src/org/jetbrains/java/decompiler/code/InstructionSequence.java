@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,19 @@ public abstract class InstructionSequence {
   // private fields
   // *****************************************************************************
 
-  protected VBStyleCollection<Instruction, Integer> collinstr = new VBStyleCollection<Instruction, Integer>();
+  protected final VBStyleCollection<Instruction, Integer> collinstr;
 
   protected int pointer = 0;
 
-  protected ExceptionTable exceptionTable = new ExceptionTable();
+  protected ExceptionTable exceptionTable = ExceptionTable.EMPTY;
+
+  protected InstructionSequence() {
+    this(new VBStyleCollection<Instruction, Integer>());
+  }
+
+  protected InstructionSequence(VBStyleCollection<Instruction, Integer> collinstr) {
+    this.collinstr = collinstr;
+  }
 
   // *****************************************************************************
   // public methods
@@ -52,7 +60,7 @@ public abstract class InstructionSequence {
   public void clear() {
     collinstr.clear();
     pointer = 0;
-    exceptionTable = new ExceptionTable();
+    exceptionTable = ExceptionTable.EMPTY;
   }
 
   public void addInstruction(Instruction inst, int offset) {
@@ -71,6 +79,12 @@ public abstract class InstructionSequence {
 
   public void removeInstruction(int index) {
     collinstr.remove(index);
+  }
+
+  public void removeLast() {
+    if (!collinstr.isEmpty()) {
+      collinstr.remove(collinstr.size() - 1);
+    }
   }
 
   public Instruction getCurrentInstr() {

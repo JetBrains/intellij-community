@@ -2,42 +2,106 @@ package pkg;
 
 public class TestMethodParameters {
    TestMethodParameters(@Deprecated int var1) {
-   }
+   }// 19
 
    void m1(@Deprecated int var1) {
-   }
+   }// 20
 
    static void m2(@Deprecated int var0) {
-   }
+   }// 21
 
    void local() {
       class Local {
          Local(@Deprecated int var2) {
-         }
+         }// 36
 
          void m(@Deprecated int var1) {
-         }
+         }// 37
       }
 
-   }
+   }// 39
 
    static class C2 {
       C2(@Deprecated int var1) {
-      }
+      }// 29
 
       void m1(@Deprecated int var1) {
-      }
+      }// 30
 
       static void m2(@Deprecated int var0) {
-      }
+      }// 31
    }
 
    class C1 {
       C1(@Deprecated int var2) {
-      }
+      }// 24
 
       void m(@Deprecated int var1) {
-      }
+      }// 25
    }
 }
 
+class 'pkg/TestMethodParameters' {
+   method '<init> (I)V' {
+      4      4
+   }
+
+   method 'm1 (I)V' {
+      0      7
+   }
+
+   method 'm2 (I)V' {
+      0      10
+   }
+
+   method 'local ()V' {
+      0      21
+   }
+}
+
+class 'pkg/TestMethodParameters$1Local' {
+   method '<init> (Lpkg/TestMethodParameters;I)V' {
+      9      15
+   }
+
+   method 'm (I)V' {
+      0      18
+   }
+}
+
+class 'pkg/TestMethodParameters$C2' {
+   method '<init> (I)V' {
+      4      25
+   }
+
+   method 'm1 (I)V' {
+      0      28
+   }
+
+   method 'm2 (I)V' {
+      0      31
+   }
+}
+
+class 'pkg/TestMethodParameters$C1' {
+   method '<init> (Lpkg/TestMethodParameters;I)V' {
+      9      36
+   }
+
+   method 'm (I)V' {
+      0      39
+   }
+}
+
+Lines mapping:
+19 <-> 5
+20 <-> 8
+21 <-> 11
+24 <-> 37
+25 <-> 40
+29 <-> 26
+30 <-> 29
+31 <-> 32
+36 <-> 16
+37 <-> 19
+39 <-> 22

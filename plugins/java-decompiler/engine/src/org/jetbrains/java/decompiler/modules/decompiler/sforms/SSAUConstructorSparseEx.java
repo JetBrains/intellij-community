@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,42 +40,42 @@ import java.util.Map.Entry;
 public class SSAUConstructorSparseEx {
 
   // node id, var, version
-  private HashMap<String, SFormsFastMapDirect> inVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> inVarVersions = new HashMap<String, SFormsFastMapDirect>();
   //private HashMap<String, HashMap<Integer, FastSet<Integer>>> inVarVersions = new HashMap<String, HashMap<Integer, FastSet<Integer>>>();
 
   // node id, var, version (direct branch)
-  private HashMap<String, SFormsFastMapDirect> outVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> outVarVersions = new HashMap<String, SFormsFastMapDirect>();
   //private HashMap<String, HashMap<Integer, FastSet<Integer>>> outVarVersions = new HashMap<String, HashMap<Integer, FastSet<Integer>>>();
 
   // node id, var, version (negative branch)
-  private HashMap<String, SFormsFastMapDirect> outNegVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> outNegVarVersions = new HashMap<String, SFormsFastMapDirect>();
   //private HashMap<String, HashMap<Integer, FastSet<Integer>>> outNegVarVersions = new HashMap<String, HashMap<Integer, FastSet<Integer>>>();
 
   // node id, var, version
-  private HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<String, SFormsFastMapDirect>();
+  private final HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<String, SFormsFastMapDirect>();
   //private HashMap<String, HashMap<Integer, FastSet<Integer>>> extraVarVersions = new HashMap<String, HashMap<Integer, FastSet<Integer>>>();
 
   // (var, version), version
-  private HashMap<VarVersionPair, HashSet<Integer>> phi = new HashMap<VarVersionPair, HashSet<Integer>>();
+  private final HashMap<VarVersionPair, HashSet<Integer>> phi = new HashMap<VarVersionPair, HashSet<Integer>>();
 
   // var, version
-  private HashMap<Integer, Integer> lastversion = new HashMap<Integer, Integer>();
+  private final HashMap<Integer, Integer> lastversion = new HashMap<Integer, Integer>();
 
   // version, protected ranges (catch, finally)
-  private HashMap<VarVersionPair, Integer> mapVersionFirstRange = new HashMap<VarVersionPair, Integer>();
+  private final HashMap<VarVersionPair, Integer> mapVersionFirstRange = new HashMap<VarVersionPair, Integer>();
 
   // version, version
-  private HashMap<VarVersionPair, VarVersionPair> phantomppnodes = new HashMap<VarVersionPair, VarVersionPair>(); // ++ and --
+  private final HashMap<VarVersionPair, VarVersionPair> phantomppnodes = new HashMap<VarVersionPair, VarVersionPair>(); // ++ and --
 
   // node.id, version, version
-  private HashMap<String, HashMap<VarVersionPair, VarVersionPair>> phantomexitnodes =
+  private final HashMap<String, HashMap<VarVersionPair, VarVersionPair>> phantomexitnodes =
     new HashMap<String, HashMap<VarVersionPair, VarVersionPair>>(); // finally exits
 
   // versions memory dependencies
-  private VarVersionsGraph ssuversions = new VarVersionsGraph();
+  private final VarVersionsGraph ssuversions = new VarVersionsGraph();
 
   // field access vars (exprent id, var id)
-  private HashMap<Integer, Integer> mapFieldVars = new HashMap<Integer, Integer>();
+  private final HashMap<Integer, Integer> mapFieldVars = new HashMap<Integer, Integer>();
 
   // field access counter
   private int fieldvarcounter = -1;

@@ -13,34 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.java.decompiler.main.collectors;
+package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class VarNamesCollector {
+/**
+ * @author egor
+ */
+public class DummyExitStatement extends Statement {
+  public Set<Integer> bytecode = null;  // offsets of bytecode instructions mapped to dummy exit
 
-  private final Set<String> usedNames = new HashSet<String>();
-
-  public VarNamesCollector() { }
-
-  public VarNamesCollector(Set<String> setNames) {
-    usedNames.addAll(setNames);
+  public DummyExitStatement() {
+    type = Statement.TYPE_DUMMYEXIT;
   }
 
-  public void addName(String value) {
-    usedNames.add(value);
-  }
-
-  public String getFreeName(int index) {
-    return getFreeName("var" + index);
-  }
-
-  public String getFreeName(String proposition) {
-    while (usedNames.contains(proposition)) {
-      proposition += "x";
+  public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
+    if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
+      if (bytecode == null) {
+        bytecode = new HashSet<Integer>(bytecodeOffsets);
+      }
+      else {
+        bytecode.addAll(bytecodeOffsets);
+      }
     }
-    usedNames.add(proposition);
-    return proposition;
   }
 }

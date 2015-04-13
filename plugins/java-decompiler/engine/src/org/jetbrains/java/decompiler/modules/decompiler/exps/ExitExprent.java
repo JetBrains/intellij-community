@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.Map.Entry;
 
 public class ExitExprent extends Exprent {
 

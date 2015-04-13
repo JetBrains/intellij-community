@@ -6,7 +6,7 @@ public class TestClassFields {
 
    static {
       sizes = new int[names.length];// 26
-   }
+   }// 27
 }
 
 class 'pkg/TestClassFields' {
@@ -14,8 +14,12 @@ class 'pkg/TestClassFields' {
       11      7
       14      7
       17      7
+      1a      8
    }
 }
 
 Lines mapping:
 26 <-> 8
+27 <-> 9
+Not mapped:
+25

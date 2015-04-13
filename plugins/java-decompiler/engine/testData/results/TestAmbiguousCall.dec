@@ -2,10 +2,10 @@ package pkg;
 
 class TestAmbiguousCall {
    void m1(RuntimeException var1, String var2) {
-   }
+   }// 4
 
    void m1(IllegalArgumentException var1, String var2) {
-   }
+   }// 5
 
    void test() {
       IllegalArgumentException var1 = new IllegalArgumentException();// 8
@@ -14,10 +14,18 @@ class TestAmbiguousCall {
       IllegalArgumentException var2 = new IllegalArgumentException();// 12
       this.m1((RuntimeException)var2, "RE");// 13
       this.m1((IllegalArgumentException)var2, "IAE");// 14
-   }
+   }// 15
 }
 
 class 'pkg/TestAmbiguousCall' {
+   method 'm1 (Ljava/lang/RuntimeException;Ljava/lang/String;)V' {
+      0      4
+   }
+
+   method 'm1 (Ljava/lang/IllegalArgumentException;Ljava/lang/String;)V' {
+      0      7
+   }
+
    method 'test ()V' {
       7      10
       a      11
@@ -30,13 +38,17 @@ class 'pkg/TestAmbiguousCall' {
       27      15
       2a      15
       2c      15
+      2f      16
    }
 }
 
 Lines mapping:
+4 <-> 5
+5 <-> 8
 8 <-> 11
 9 <-> 12
 10 <-> 13
 12 <-> 14
 13 <-> 15
 14 <-> 16
+15 <-> 17

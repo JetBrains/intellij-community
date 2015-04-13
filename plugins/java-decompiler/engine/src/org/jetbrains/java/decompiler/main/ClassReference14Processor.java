@@ -38,9 +38,9 @@ import java.util.Map.Entry;
 
 public class ClassReference14Processor {
 
-  public ExitExprent bodyexprent;
+  public final ExitExprent bodyexprent;
 
-  public ExitExprent handlerexprent;
+  public final ExitExprent handlerexprent;
 
 
   public ClassReference14Processor() {

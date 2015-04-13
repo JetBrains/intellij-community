@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import java.util.List;
 
 public class GenericMethodDescriptor {
 
-  public List<String> fparameters = new ArrayList<String>();
+  public final List<String> fparameters = new ArrayList<String>();
 
-  public List<List<GenericType>> fbounds = new ArrayList<List<GenericType>>();
+  public final List<List<GenericType>> fbounds = new ArrayList<List<GenericType>>();
 
-  public List<GenericType> params = new ArrayList<GenericType>();
+  public final List<GenericType> params = new ArrayList<GenericType>();
 
   public GenericType ret;
 
-  public List<GenericType> exceptions = new ArrayList<GenericType>();
+  public final List<GenericType> exceptions = new ArrayList<GenericType>();
 }

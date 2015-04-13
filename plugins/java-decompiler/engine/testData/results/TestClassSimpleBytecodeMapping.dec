@@ -6,7 +6,7 @@ public class TestClassSimpleBytecodeMapping {
       this.run(new Runnable() {// 14
          public void run() {
             System.out.println("Runnable");// 17
-         }
+         }// 18
       });
       this.test2("1");// 21
       if(Math.random() > 0.0D) {// 23
@@ -21,28 +21,28 @@ public class TestClassSimpleBytecodeMapping {
    public void test2(String var1) {
       try {
          Integer.parseInt(var1);// 34
-      } catch (Exception var6) {
+      } catch (Exception var6) {// 35
          System.out.println(var6);// 36
       } finally {
          System.out.println("Finally");// 38
       }
 
-   }
+   }// 40
 
    void run(Runnable var1) {
       var1.run();// 49
-   }
+   }// 50
 
    public class InnerClass2 {
       public void print() {
          System.out.println("Inner2");// 54
-      }
+      }// 55
    }
 
    public class InnerClass {
       public void print() {
          System.out.println("Inner");// 44
-      }
+      }// 45
    }
 }
 
@@ -51,6 +51,7 @@ class 'pkg/TestClassSimpleBytecodeMapping$1' {
       0      7
       3      7
       5      7
+      8      8
    }
 }
 
@@ -80,15 +81,18 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
 
    method 'test2 (Ljava/lang/String;)V' {
       1      22
+      10      23
       11      24
       15      24
       23      26
       24      26
       27      26
+      2e      29
    }
 
    method 'run (Ljava/lang/Runnable;)V' {
       1      32
+      6      33
    }
 }
 
@@ -97,6 +101,7 @@ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
       0      37
       3      37
       5      37
+      8      38
    }
 }
 
@@ -105,6 +110,7 @@ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
       0      43
       3      43
       5      43
+      8      44
    }
 }
 
@@ -112,6 +118,7 @@ Lines mapping:
 12 <-> 5
 14 <-> 6
 17 <-> 8
+18 <-> 9
 21 <-> 11
 23 <-> 12
 24 <-> 13
@@ -119,8 +126,15 @@ Lines mapping:
 27 <-> 16
 28 <-> 17
 34 <-> 23
+35 <-> 24
 36 <-> 25
 38 <-> 27
+40 <-> 30
 44 <-> 44
+45 <-> 45
 49 <-> 33
+50 <-> 34
 54 <-> 38
+55 <-> 39
+Not mapped:
+39

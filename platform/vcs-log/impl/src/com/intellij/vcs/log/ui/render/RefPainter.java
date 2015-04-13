@@ -66,8 +66,8 @@ public class RefPainter {
   }
 
   private int draw(@NotNull Graphics2D g2, @NotNull VcsRef ref, int padding) {
-    Rectangle rectangle = drawLabel(g2, ref.getName(), padding, ref.getType().getBackgroundColor(),
-                                    myColorManager.getRootColor(ref.getRoot()));
+    Rectangle rectangle =
+      drawLabel(g2, ref.getName(), padding, ref.getType().getBackgroundColor(), myColorManager.getRootColor(ref.getRoot()));
     return rectangle.x;
   }
 
@@ -82,22 +82,21 @@ public class RefPainter {
     int yBottom = y0 + height - 4;
 
     // something like a knight flag
-    Polygon polygon = new Polygon(new int[]{ x0, xRight, xRight,    xMid,   x0 },
-                                  new int[]{ y0,     y0,   yMid, yBottom, yMid }, 5);
+    Polygon polygon = new Polygon(new int[]{x0, xRight, xRight, xMid, x0}, new int[]{y0, y0, yMid, yBottom, yMid}, 5);
     g2.fillPolygon(polygon);
     g2.setColor(myColorManager.getReferenceBorderColor());
     g2.drawPolygon(polygon);
   }
 
   public int padding(@NotNull Collection<String> refs, FontMetrics fontMetrics) {
-    int p = 0;
+    if (refs.isEmpty()) return 0;
+
+    int p = 2 * LABEL_PADDING; // additional padding after all references looks better
     for (String ref : refs) {
-      XAndWidth xAndWidth = getXAndWidth(ref, 0, fontMetrics);
-      p += xAndWidth.x + xAndWidth.width + LABEL_PADDING;
+      HorizontalDimensions horizontalDimensions = getHorizontalDimensions(ref, p, fontMetrics);
+      p += horizontalDimensions.width + LABEL_PADDING;
     }
-    if (p > 0) { // additional padding after all references looks better
-      p += LABEL_PADDING;
-    }
+
     return p;
   }
 
@@ -131,19 +130,22 @@ public class RefPainter {
     }
   }
 
-  private XAndWidth getXAndWidth(String label, int paddingX, FontMetrics metrics) {
+  private HorizontalDimensions getHorizontalDimensions(String label, int paddingX, FontMetrics metrics) {
     int x = paddingX + REF_PADDING / 2 - RECTANGLE_X_PADDING;
     int width = metrics.stringWidth(label) + 2 * RECTANGLE_X_PADDING + flagWidth();
-    return new XAndWidth(x, width);
+    return new HorizontalDimensions(x, width);
   }
 
-  public Rectangle drawLabel(@NotNull Graphics2D g2, @NotNull String label, int paddingX, @NotNull Color bgColor,
+  public Rectangle drawLabel(@NotNull Graphics2D g2,
+                             @NotNull String label,
+                             int paddingX,
+                             @NotNull Color bgColor,
                              @Nullable Color rootIndicatorColor) {
     setupGraphics(g2);
     FontMetrics metrics = g2.getFontMetrics();
-    XAndWidth xAndWidth = getXAndWidth(label, paddingX, metrics);
-    int x = xAndWidth.x;
-    int width = xAndWidth.width;
+    HorizontalDimensions horizontalDimensions = getHorizontalDimensions(label, paddingX, metrics);
+    int x = horizontalDimensions.x;
+    int width = horizontalDimensions.width;
     int y = RECTANGLE_Y_PADDING;
     int height = HEIGHT_CELL - 2 * RECTANGLE_Y_PADDING;
     RoundRectangle2D rectangle2D = new RoundRectangle2D.Double(x, y, width, height, ROUND_RADIUS, ROUND_RADIUS);
@@ -164,11 +166,11 @@ public class RefPainter {
     return new Rectangle(x, y, width, height);
   }
 
-  private static class XAndWidth {
+  private static class HorizontalDimensions {
     private final int x;
     private final int width;
 
-    private XAndWidth(int x, int width) {
+    private HorizontalDimensions(int x, int width) {
       this.x = x;
       this.width = width;
     }

@@ -30,13 +30,12 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 
 
 public class IfStatement extends Statement {
 
-  public static int IFTYPE_IF = 0;
-  public static int IFTYPE_IFELSE = 1;
+  public static final int IFTYPE_IF = 0;
+  public static final int IFTYPE_IFELSE = 1;
 
   public int iftype;
 
@@ -54,7 +53,7 @@ public class IfStatement extends Statement {
 
   private boolean iffflag;
 
-  private List<Exprent> headexprent = new ArrayList<Exprent>(); // contains IfExprent
+  private final List<Exprent> headexprent = new ArrayList<Exprent>(); // contains IfExprent
 
   // *****************************************************************************
   // constructors

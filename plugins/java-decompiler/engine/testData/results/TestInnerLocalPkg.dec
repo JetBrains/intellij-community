@@ -7,13 +7,13 @@ public class TestInnerLocalPkg {
 
          public Inner(String var1) {
             this.x = var1;// 24
-         }
+         }// 25
       }
 
       new Inner("test");// 27
       new TestInnerLocalPkg.Inner1Static("test");// 28
       new TestInnerLocalPkg.Inner1Static.Inner2Static("test");// 29
-   }
+   }// 30
 
    public void testMethod() {
       class Inner {
@@ -21,28 +21,28 @@ public class TestInnerLocalPkg {
 
          public Inner(String var2) {
             this.x = var2;// 36
-         }
+         }// 37
       }
 
       new Inner("test");// 39
       new TestInnerLocalPkg.Inner1Static("test");// 40
       new TestInnerLocalPkg.Inner1("test");// 41
       new TestInnerLocalPkg.Inner1Static.Inner2Static("test");// 42
-   }
+   }// 43
 
    static class Inner1Static {
       final String x;
 
       public Inner1Static(String var1) {
          this.x = var1;// 55
-      }
+      }// 56
 
       public static class Inner2Static {
          final String x;
 
          public Inner2Static(String var1) {
             this.x = var1;// 61
-         }
+         }// 62
       }
    }
 
@@ -51,13 +51,14 @@ public class TestInnerLocalPkg {
 
       public Inner1(String var2) {
          this.x = var2;// 48
-      }
+      }// 49
    }
 }
 
 class 'pkg/TestInnerLocalPkg$1Inner' {
    method '<init> (Ljava/lang/String;)V' {
       6      8
+      9      9
    }
 }
 
@@ -66,6 +67,7 @@ class 'pkg/TestInnerLocalPkg' {
       4      12
       e      13
       18      14
+      1e      15
    }
 
    method 'testMethod ()V' {
@@ -73,43 +75,61 @@ class 'pkg/TestInnerLocalPkg' {
       f      27
       1a      28
       24      29
+      2a      30
    }
 }
 
 class 'pkg/TestInnerLocalPkg$2Inner' {
    method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
       b      22
+      e      23
    }
 }
 
 class 'pkg/TestInnerLocalPkg$Inner1Static' {
    method '<init> (Ljava/lang/String;)V' {
       6      36
+      9      37
    }
 }
 
 class 'pkg/TestInnerLocalPkg$Inner1Static$Inner2Static' {
    method '<init> (Ljava/lang/String;)V' {
       6      43
+      9      44
    }
 }
 
 class 'pkg/TestInnerLocalPkg$Inner1' {
    method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
       b      52
+      e      53
    }
 }
 
 Lines mapping:
 24 <-> 9
+25 <-> 10
 27 <-> 13
 28 <-> 14
 29 <-> 15
+30 <-> 16
 36 <-> 23
+37 <-> 24
 39 <-> 27
 40 <-> 28
 41 <-> 29
 42 <-> 30
+43 <-> 31
 48 <-> 53
+49 <-> 54
 55 <-> 37
+56 <-> 38
 61 <-> 44
+62 <-> 45
+Not mapped:
+23
+35
+47
+54
+60
