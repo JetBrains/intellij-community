@@ -1099,24 +1099,17 @@ public class ListUtils {
   }
 
   public void testSuggestMembersOfStaticallyImportedClassesUnqualifiedOnly() throws Exception {
-    def old = CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE
-    CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE = true
-
-    try {
-      myFixture.addClass("""package foo;
-      public class Foo {
-        public static void foo() {}
-        public static void bar() {}
-      }
-      """)
-      configure()
-      assertOneElement(myFixture.getLookupElements())
-      myFixture.type '\t'
-      checkResult()
+    myFixture.addClass("""package foo;
+    public class Foo {
+      public static void foo() {}
+      public static void bar() {}
     }
-    finally {
-      CodeInsightSettings.instance.SHOW_STATIC_AFTER_INSTANCE = old
-    }
+    """)
+    configure()
+    complete()
+    assertOneElement(myFixture.getLookupElements())
+    myFixture.type '\t'
+    checkResult()
   }
 
   public void testInstanceMagicMethod() throws Exception { doTest() }
