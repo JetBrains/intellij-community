@@ -84,7 +84,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
   }
 
   protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
-    if (!Registry.is(getFrameworkId() + "_sm_runner")) {
+    if (!isSmRunnerUsed()) {
       return null;
     }
     getJavaParameters().getVMParametersList().addProperty("idea." + getFrameworkId() + ".sm_runner");
@@ -135,6 +135,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     return result;
+  }
+
+  protected boolean isSmRunnerUsed() {
+    return Registry.is(getFrameworkId() + "_sm_runner");
   }
 
   @Override

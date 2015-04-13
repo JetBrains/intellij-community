@@ -72,6 +72,7 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -467,6 +468,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
             if (classpath == null) {
               final JavaParameters parameters = new JavaParameters();
               configureAdditionalClasspath(parameters);
+              if (isSmRunnerUsed()) {
+                parameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
+              }
               JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                                  getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
                                                    .getAlternativeJrePath() : null);
