@@ -214,8 +214,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
   @Deprecated
   public DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper,final Window owner, final boolean canBeParent, final boolean applicationModalIfPossible) {
-      this(wrapper, owner, canBeParent,
-           applicationModalIfPossible ? DialogWrapper.IdeModalityType.IDE : DialogWrapper.IdeModalityType.PROJECT);
+      this(wrapper, owner, canBeParent, applicationModalIfPossible ? DialogWrapper.IdeModalityType.IDE : DialogWrapper.IdeModalityType.PROJECT);
   }
 
   @Override
@@ -300,6 +299,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     else {
       SwingUtilities.invokeLater(disposer);
     }
+  }
+
+  private boolean isProgressDialog() {
+    return myWrapper.isModalProgress();
   }
 
   @Override
@@ -449,7 +452,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
     final boolean appStarted = commandProcessor != null;
 
-    if (myDialog.isModal() && appStarted) {
+    boolean changeModalityState = appStarted && myDialog.isModal()
+                                  && !isProgressDialog(); // ProgressWindow starts a modality state itself
+    if (changeModalityState) {
       commandProcessor.enterModal();
       LaterInvocator.enterModal(myDialog);
     }
@@ -462,7 +467,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       myDialog.show();
     }
     finally {
-      if (myDialog.isModal() && appStarted) {
+      if (changeModalityState) {
         commandProcessor.leaveModal();
         LaterInvocator.leaveModal(myDialog);
       }
