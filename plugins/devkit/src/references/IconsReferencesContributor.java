@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -68,8 +69,6 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
 
     final PsiJavaElementPattern.Capture<PsiLiteralExpression> annotationValue
       = literalExpression().annotationParam("com.intellij.ide.presentation.Presentation", "icon");
-
-    final XmlAttributeValuePattern pluginXml = XmlPatterns.xmlAttributeValue().withLocalName("icon");
 
     registrar.registerReferenceProvider(annotationValue, new PsiReferenceProvider() {
       @NotNull
@@ -182,11 +181,16 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       }
     });
 
-    registrar.registerReferenceProvider(pluginXml, new PsiReferenceProvider() {
+    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withLocalName("icon"), new PsiReferenceProvider() {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        return new PsiReference[] {
+        if (!PsiUtil.isPluginProject(element.getProject()) ||
+            !DescriptorUtil.isPluginXml(element.getContainingFile())) {
+          return PsiReference.EMPTY_ARRAY;
+        }
+
+        return new PsiReference[]{
           new PsiReferenceBase<PsiElement>(element, true) {
             @Override
             public PsiElement resolve() {
@@ -200,7 +204,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
                 if (path.size() > 1 && path.get(0).endsWith("Icons")) {
                   Project project = element.getProject();
                   PsiClass cur = JavaPsiFacade.getInstance(project).findClass(fqnIconsClass(path.get(0)),
-                                                                             GlobalSearchScope.projectScope(project));
+                                                                              GlobalSearchScope.projectScope(project));
                   if (cur == null) return null;
 
                   for (int i = 1; i < path.size() - 1; i++) {
