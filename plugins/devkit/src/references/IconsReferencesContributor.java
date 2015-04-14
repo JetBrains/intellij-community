@@ -30,7 +30,10 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.patterns.*;
+import com.intellij.patterns.PsiJavaElementPattern;
+import com.intellij.patterns.PsiMethodPattern;
+import com.intellij.patterns.StringPattern;
+import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -44,7 +47,10 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageViewPresentation;
-import com.intellij.util.*;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
+import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
@@ -60,6 +66,7 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
  * @author Konstantin Bulenkov
  */
 public class IconsReferencesContributor extends PsiReferenceContributor implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final StringPattern methodName = string().oneOf("findIcon", "getIcon");
@@ -74,7 +81,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        if (!PsiUtil.isIdeaProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+        if (!PsiUtil.isPluginProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
         return new PsiReference[] {
           new PsiReferenceBase<PsiElement>(element, true) {
             @Override
@@ -84,8 +91,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
                 List<String> path = StringUtil.split(value, ".");
                 if (path.size() > 1 && path.get(0).endsWith("Icons")) {
                   Project project = element.getProject();
-                  PsiClass cur = JavaPsiFacade.getInstance(project).findClass(fqnIconsClass(path.get(0)),
-                                                                              GlobalSearchScope.projectScope(project));
+                  PsiClass cur = findIconClass(project, path.get(0));
                   if (cur == null) {
                     return null;
                   }
@@ -203,8 +209,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
                 List<String> path = StringUtil.split(value, ".");
                 if (path.size() > 1 && path.get(0).endsWith("Icons")) {
                   Project project = element.getProject();
-                  PsiClass cur = JavaPsiFacade.getInstance(project).findClass(fqnIconsClass(path.get(0)),
-                                                                              GlobalSearchScope.projectScope(project));
+                  PsiClass cur = findIconClass(project, path.get(0));
                   if (cur == null) return null;
 
                   for (int i = 1; i < path.size() - 1; i++) {
@@ -278,8 +283,11 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
     });
   }
 
-  private static String fqnIconsClass(String className) {
-    return "AllIcons".equals(className) ? "com.intellij.icons.AllIcons" : "icons." + className;
+  private static PsiClass findIconClass(Project project, String className) {
+    final boolean isAllIcons = "AllIcons".equals(className);
+    final String fqnClassName = isAllIcons ? "com.intellij.icons.AllIcons" : "icons." + className;
+    return JavaPsiFacade.getInstance(project)
+      .findClass(fqnClassName, isAllIcons ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project));
   }
 
   @Override
