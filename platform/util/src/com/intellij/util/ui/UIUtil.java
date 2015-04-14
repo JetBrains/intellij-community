@@ -1786,7 +1786,7 @@ public class UIUtil {
   }
 
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
-    if (DetectRetinaKit.isMacRetina(g)) {
+    if (isRetina(g)) {
       return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
