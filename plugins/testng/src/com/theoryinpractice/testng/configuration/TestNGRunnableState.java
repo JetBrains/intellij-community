@@ -55,6 +55,7 @@ import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 import org.testng.remote.strprotocol.SerializedMessageSender;
 
+import java.io.File;
 import java.io.IOException;
 
 public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGConfiguration> {
@@ -226,6 +227,12 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     return javaParameters;
   }
 
+  @NotNull
+  @Override
+  protected String getForkMode() {
+    return "none";
+  }
+
   public SearchingForTestsTask createSearchingForTestsTask() {
     return new SearchingForTestsTask(myServerSocket, config, myTempFile, client);
   }
@@ -266,5 +273,14 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @NotNull
   public TestNGConfiguration getConfiguration() {
     return config;
+  }
+
+  @Override
+  protected TestSearchScope getScope() {
+    return getConfiguration().getPersistantData().getScope();
+  }
+
+  protected void passForkMode(String forkMode, File tempFile) throws ExecutionException {
+    getJavaParameters().getProgramParametersList().add("-forkMode", forkMode + ',' + tempFile.getAbsolutePath());
   }
 }
