@@ -30,6 +30,7 @@ public class JsonQuickFixTest extends JsonTestCase {
     checkWrapInDoubleQuotes("'foo\\\"", "\"foo\\\"\"");
     checkWrapInDoubleQuotes("{\"foo\": b<caret>ar}", "{\"foo\": \"bar\"}");
     checkWrapInDoubleQuotes("{\"foo\": 'b<caret>ar'}", "{\"foo\": \"bar\"}");
+    checkWrapInDoubleQuotes("'foo\\n\\'\"\\\\\\\"bar", "\"foo\\n'\\\"\\\\\\\"bar\"");
   }
 
   private void checkWrapInDoubleQuotes(@NotNull String before, @NotNull String after) {
