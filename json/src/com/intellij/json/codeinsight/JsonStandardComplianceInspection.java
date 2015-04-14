@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -141,7 +142,9 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof JsonLiteral || element instanceof JsonReferenceExpression) {
         final String content = StringUtil.stripQuotesAroundValue(element.getText());
-        element.replace(new JsonElementGenerator(project).createStringLiteral(content));
+        // TODO: find out better way to replace element and skip reformatting step afterwards
+        final ASTNode replacement = new JsonElementGenerator(project).createStringLiteral(content).getNode();
+        element.getParent().getNode().replaceChild(element.getNode(), replacement);
       }
       else if (element != null) {
         LOG.error("Quick fix was applied to unexpected element", element.getText(), element.getParent().getText());
