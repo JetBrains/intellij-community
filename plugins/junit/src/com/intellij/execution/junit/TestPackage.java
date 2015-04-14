@@ -139,11 +139,11 @@ public class TestPackage extends TestObject {
 
   protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
     final Ref<CantRunException> ref = new Ref<CantRunException>();
-    final PsiPackage aPackage = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage>() {
+    final GlobalSearchScope aPackage = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
       @Override
-      public PsiPackage compute() {
+      public GlobalSearchScope compute() {
         try {
-          return getPackage(data);
+          return PackageScope.packageScope(getPackage(data), true);
         }
         catch (CantRunException e) {
           ref.set(e);
@@ -153,7 +153,7 @@ public class TestPackage extends TestObject {
     });
     final CantRunException exception = ref.get();
     if (exception != null) throw exception;
-    return PackageScope.packageScope(aPackage, true);
+    return aPackage;
   }
 
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
