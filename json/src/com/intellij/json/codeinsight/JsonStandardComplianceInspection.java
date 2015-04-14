@@ -9,7 +9,6 @@ import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -141,9 +140,9 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof JsonLiteral || element instanceof JsonReferenceExpression) {
-        final String content = StringUtil.stripQuotesAroundValue(element.getText());
+        final String content = JsonPsiUtil.stripQuotes(element.getText());
         // TODO: find out better way to replace element and skip reformatting step afterwards
-        final ASTNode replacement = new JsonElementGenerator(project).createStringLiteral(content).getNode();
+        final ASTNode replacement = new JsonElementGenerator(project).createValue("\"" + content + "\"").getNode();
         element.getParent().getNode().replaceChild(element.getNode(), replacement);
       }
       else if (element != null) {
