@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.process.DefaultJavaProcessHandler;
+import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -101,7 +101,7 @@ public class JavaCommandLineTest extends LightIdeaTestCase {
 
   public void testCreateProcess() {
     try {
-      new DefaultJavaProcessHandler(new GeneralCommandLine());
+      new KillableColoredProcessHandler(new GeneralCommandLine());
       fail("ExecutionException (executable is not specified) expected");
     }
     catch (ExecutionException e) {
