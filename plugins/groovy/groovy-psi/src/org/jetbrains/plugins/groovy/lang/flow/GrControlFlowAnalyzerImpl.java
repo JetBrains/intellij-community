@@ -26,7 +26,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
@@ -86,10 +88,12 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   private final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
   private final GrDfaValueFactory myFactory;
   private final PsiElement myCodeFragment;
+  private final PsiType myClosureType;
 
   public GrControlFlowAnalyzerImpl(@NotNull GrDfaValueFactory factory, @NotNull PsiElement block) {
     myFactory = factory;
     myCodeFragment = block;
+    myClosureType = PsiType.getTypeByName("groovy.lang.Closure", block.getProject(), block.getResolveScope());
   }
 
   @Override
@@ -199,23 +203,61 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
     startElement(methodCallExpression);
 
+    final int argumentsCount =
+      methodCallExpression.getArgumentList().getAllArguments().length + methodCallExpression.getClosureArguments().length;
+
     // qualifier
     final GrExpression invokedExpression = methodCallExpression.getInvokedExpression();
-    if (invokedExpression instanceof GrReferenceExpression) {
-      final GrReferenceExpression reference = (GrReferenceExpression)invokedExpression;
-      final GrExpression qualifier = reference.getQualifierExpression();
+    final PsiType invokedExpressionType = invokedExpression.getType();
+    final PsiClass psiClass = PsiTypesUtil.getPsiClass(invokedExpressionType);
+    if (myClosureType.equals(invokedExpressionType) ||
+        psiClass != null && PsiClassImplUtil.findMethodsByName(psiClass, "call", true).length > 0) {
+      // TODO
+      throw new CannotAnalyzeException();
+    }
+    else {
+      final GrReferenceExpression invokedReference = (GrReferenceExpression)invokedExpression;
+      final GrExpression qualifier = invokedReference.getQualifierExpression();
       if (qualifier != null) {
         qualifier.accept(this);
       }
       else {
         pushUnknown();
       }
-    }
-    else {
-      pushUnknown();
-    }
 
-    // arguments
+      if (invokedReference.getDotTokenType() == mOPTIONAL_DOT) {
+        addInstruction(new DupInstruction<V>()); // save qualifier for later use
+        pushNull();
+        addInstruction(new BinopInstruction(DfaRelation.EQ, invokedReference));
+        final ConditionalGotoInstruction gotoToNotNull = addInstruction(new ConditionalGotoInstruction(null, true, qualifier));
+
+        // null branch
+        // even if qualifier is null, groovy evaluates arguments
+        visitArguments(methodCallExpression);
+        for (int i = 0; i < argumentsCount; i++) {
+          pop();
+        }
+        pop();        // pop duplicated qualifier
+        pushNull();
+        final GotoInstruction<V> gotoEnd = addInstruction(new GotoInstruction<V>(null));
+
+        // not null branch
+        gotoToNotNull.setOffset(myFlow.getNextOffset());
+        // qualifier is on top of stack
+        // evaluate arguments 
+        visitArguments(methodCallExpression);
+        addInstruction(new GrMethodCallInstruction<V>(methodCallExpression, null));
+        gotoEnd.setOffset(myFlow.getNextOffset());
+      }
+      else {
+        visitArguments(methodCallExpression);
+        addInstruction(new GrMethodCallInstruction<V>(methodCallExpression, null));
+      }
+    }
+    finishElement(methodCallExpression);
+  }
+
+  protected void visitArguments(GrMethodCallExpression methodCallExpression) {
     for (GrNamedArgument argument : methodCallExpression.getNamedArguments()) {
       argument.accept(this);
     }
@@ -224,13 +266,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
     for (GrClosableBlock block : methodCallExpression.getClosureArguments()) {
       push(myFactory.createValue(block), block);
-      //addInstruction(new GotoInstruction<V>(myFlow.getEndOffset(block)));
-      //block.accept(this);
     }
-
-    addInstruction(new GrMethodCallInstruction<V>(methodCallExpression, null));
-
-    finishElement(methodCallExpression);
   }
 
   @Override
@@ -485,8 +521,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         iteratedValue.accept(this);
         addInstruction(new GrMemberReferenceInstruction<V>(
           iteratedValue,
-          myFactory.createValue(iteratedValue),
-          false
+          myFactory.createValue(iteratedValue)
         ));
       }
 
@@ -526,7 +561,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       body.accept(this);
     }
     addInstruction(new GotoInstruction<V>(myFlow.getStartOffset(whileStatement)));
-    
+
     finishElement(whileStatement);
   }
 
@@ -557,32 +592,29 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
     else {
       qualifierExpression.accept(this);
+      if (referenceExpression.getDotTokenType() == mOPTIONAL_DOT) {
+        addInstruction(new DupInstruction<V>()); // save qualifier for later use
+        pushNull();
+        addInstruction(new BinopInstruction(DfaRelation.EQ, referenceExpression));
+        final ConditionalGotoInstruction gotoToNotNull = addInstruction(new ConditionalGotoInstruction(null, true, qualifierExpression));
 
-      final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
-      final PsiElement resolved = resolveResult.getElement();
-      if (resolved instanceof PsiMethod && !(referenceExpression.getParent() instanceof GrMethodCallExpression) && !writing) {
-        // groovy property access
-        addInstruction(new GrMethodCallInstruction<V>(referenceExpression, (PsiMethod)resolved));
+        // null branch
+        pop();        // pop duplicated qualifier
+        pushNull();
+        final GotoInstruction<V> gotoEnd = addInstruction(new GotoInstruction<V>(null));
+        gotoToNotNull.setOffset(myFlow.getNextOffset());
+
+        // not null branch
+        dereference(referenceExpression, writing);
+        gotoEnd.setOffset(myFlow.getNextOffset());
       }
       else {
-        final DfaValue value = myFactory.createValue(referenceExpression);
-        if (resolved instanceof PsiMember) {
-          addInstruction(new GrMemberReferenceInstruction<V>(
-            referenceExpression, value, referenceExpression.getDotTokenType() == mOPTIONAL_DOT
-          ));
-        }
-        else {
-          // pop qualifier if cannot resolve
-          pop();
-          // push value
-          push(value, referenceExpression, writing);
-        }
+        dereference(referenceExpression, writing);
       }
     }
 
     finishElement(referenceExpression);
   }
-
 
   @Override
   public void visitUnaryExpression(GrUnaryExpression expression) {
@@ -774,6 +806,29 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       }
     }
   }
+
+  private void dereference(GrReferenceExpression referenceExpression, boolean writing) {
+    // qualifier is already on top of stack thank to duplication
+    final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
+    if (resolved instanceof PsiMethod && !(referenceExpression.getParent() instanceof GrMethodCallExpression) && !writing) {
+      // groovy property access
+      addInstruction(new GrMethodCallInstruction<V>(referenceExpression, (PsiMethod)resolved));
+    }
+    else {
+      final DfaValue value = myFactory.createValue(referenceExpression);
+      if (resolved instanceof PsiMember) {
+        addInstruction(new GrMemberReferenceInstruction<V>(referenceExpression, value));
+      }
+      else {
+        // pop qualifier if cannot resolve
+        pop();
+        // push value
+        push(value, referenceExpression, writing);
+      }
+    }
+  }
+
 
   private void boxUnbox(GrExpression context, PsiType expectedType, PsiType actualType) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(actualType)) {

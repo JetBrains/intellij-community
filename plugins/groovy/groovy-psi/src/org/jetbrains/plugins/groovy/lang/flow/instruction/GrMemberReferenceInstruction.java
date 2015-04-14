@@ -28,12 +28,10 @@ public class GrMemberReferenceInstruction<V extends GrInstructionVisitor<V>> ext
   private final GrExpression myExpression;
   @NotNull
   private final DfaValue myValue;
-  private final boolean myIsSafe;
 
-  public GrMemberReferenceInstruction(@NotNull GrExpression expression, @NotNull DfaValue value, boolean isSafe) {
+  public GrMemberReferenceInstruction(@NotNull GrExpression expression, @NotNull DfaValue value) {
     myExpression = expression;
     myValue = value;
-    myIsSafe = isSafe;
   }
 
   @NotNull
@@ -44,10 +42,6 @@ public class GrMemberReferenceInstruction<V extends GrInstructionVisitor<V>> ext
   @NotNull
   public DfaValue getValue() {
     return myValue;
-  }
-
-  public boolean isSafe() {
-    return myIsSafe;
   }
 
   @Override

@@ -10,12 +10,10 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
@@ -23,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 
 import java.util.Map;
 
-@SuppressWarnings({"MethodMayBeStatic", "UnnecessaryLocalVariable", "StatementWithEmptyBody"})
 public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
 
   private final @NotNull GrExpression myCall;
@@ -35,7 +32,6 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
   private final @Nullable PsiType myReturnType;
   private final @Nullable PsiMethod myTargetMethod;
 
-  private final boolean mySafeCall;
   private final boolean myShouldFlushFields;
 
   private final @Nullable Map<GrExpression, Pair<PsiParameter, PsiType>> argumentsToParameters;
@@ -51,7 +47,6 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     myReturnType = property.getReturnType();
     myTargetMethod = property;
 
-    mySafeCall = isSafeAccess(propertyAccess);
     myShouldFlushFields = false;
     argumentsToParameters = null;
     myPrecalculatedReturnValue = null;
@@ -68,7 +63,6 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     myReturnType = myCall.getType();
     myTargetMethod = (PsiMethod)result.getElement();
 
-    mySafeCall = call instanceof GrMethodCall && isSafeAccess(((GrMethodCall)call).getInvokedExpression());
     myShouldFlushFields = !(call instanceof GrNewExpression && myReturnType != null && myReturnType.getArrayDimensions() > 0)
                           && !isPureCall(myTargetMethod);
     argumentsToParameters = GrClosureSignatureUtil.mapArgumentsToParameters(
@@ -115,10 +109,6 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     return myTargetMethod;
   }
 
-  public boolean isSafeCall() {
-    return mySafeCall;
-  }
-
   public boolean shouldFlushFields() {
     return myShouldFlushFields;
   }
@@ -135,11 +125,6 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
 
   public String toString() {
     return "CALL METHOD " + myCall.getText();
-  }
-
-  private static boolean isSafeAccess(GrExpression referenceExpression) {
-    return referenceExpression instanceof GrReferenceExpression &&
-           ((GrReferenceExpression)referenceExpression).getDotTokenType() == GroovyTokenTypes.mOPTIONAL_DOT;
   }
 
   private static boolean isPureCall(PsiMethod myTargetMethod) {

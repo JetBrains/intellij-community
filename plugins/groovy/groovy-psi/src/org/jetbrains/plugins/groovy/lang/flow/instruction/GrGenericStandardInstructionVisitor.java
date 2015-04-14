@@ -41,12 +41,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.forceNotNull;
 import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.handleConstantComparison;
-import static com.intellij.codeInspection.dataFlow.value.DfaRelation.EQ;
 import static com.intellij.codeInspection.dataFlow.value.DfaRelation.UNDEFINED;
 
 public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstructionVisitor<V>> extends GrInstructionVisitor<V> {
@@ -129,37 +127,12 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
   public DfaInstructionState<V>[] visitMemberReference(GrMemberReferenceInstruction<V> instruction, DfaMemoryState state) {
     final DfaValue qualifier = state.pop();
     final DfaValue value = instruction.getValue();
-    if (instruction.isSafe()) {
-      final DfaConstValue nullValue = myRunner.getFactory().getConstFactory().getNull();
-
-      final DfaMemoryState notNullState = state.createCopy();
-      final DfaMemoryState nullState = state.createCopy();
-
-      final DfaValue isNullRelation = myRunner.getFactory().getRelationFactory().createRelation(qualifier, nullValue, EQ, false);
-      final DfaValue isNotNullRelation = isNullRelation.createNegated();
-
-      final List<DfaInstructionState<V>> result = new ArrayList<DfaInstructionState<V>>();
-      if (notNullState.applyCondition(isNotNullRelation)) {
-        //check(value, state, instruction.getExpression());
-        notNullState.push(instruction.getValue());
-        result.add(new DfaInstructionState<V>(myRunner.getInstruction(instruction.getIndex() + 1), notNullState));
-      }
-      if (nullState.applyCondition(isNullRelation)) {
-        //markNull(instruction.getExpression());
-        nullState.push(nullValue);
-        result.add(new DfaInstructionState<V>(myRunner.getInstruction(instruction.getIndex() + 1), nullState));
-      }
-      //noinspection unchecked
-      return result.toArray(new DfaInstructionState[result.size()]);
+    if (!checkNotNullable(state, qualifier, NullabilityProblem.fieldAccessNPE, instruction.getExpression())) {
+      forceNotNull(myRunner.getFactory(), state, qualifier);
     }
-    else {
-      if (!checkNotNullable(state, qualifier, NullabilityProblem.fieldAccessNPE, instruction.getExpression())) {
-        forceNotNull(myRunner.getFactory(), state, qualifier);
-      }
-      //check(value, state, instruction.getExpression());
-      state.push(value);
-      return nextInstruction(instruction, myRunner, state);
-    }
+    //check(value, state, instruction.getExpression());
+    state.push(value);
+    return nextInstruction(instruction, myRunner, state);
   }
 
   @Override
@@ -190,47 +163,18 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     for (final GrClosableBlock ignored : instruction.getClosureArguments()) {
       state.pop();
     }
-    
 
     final DfaValue qualifier = state.pop();
     final DfaValue methodResultValue = getMethodResultValue(instruction);
-    if (instruction.isSafeCall()) {
-      final DfaConstValue nullValue = myRunner.getFactory().getConstFactory().getNull();
-
-      final DfaMemoryState notNullState = state.createCopy();
-      final DfaMemoryState nullState = state.createCopy();
-
-      final DfaValue isNullRelation = myRunner.getFactory().getRelationFactory().createRelation(qualifier, nullValue, EQ, false);
-      final DfaValue isNotNullRelation = isNullRelation.createNegated();
-
-      final List<DfaInstructionState<V>> result = new ArrayList<DfaInstructionState<V>>();
-      if (notNullState.applyCondition(isNotNullRelation)) {
-        //check(methodResultValue, memState, instruction.getCallExpression());
-        notNullState.push(methodResultValue);
-        if (instruction.shouldFlushFields()) {
-          notNullState.flushFields();
-        }
-        result.add(new DfaInstructionState<V>(myRunner.getInstruction(instruction.getIndex() + 1), notNullState));
-      }
-      if (nullState.applyCondition(isNullRelation)) {
-        //markNull(instruction.getCall());
-        nullState.push(nullValue);
-        result.add(new DfaInstructionState<V>(myRunner.getInstruction(instruction.getIndex() + 1), nullState));
-      }
-      //noinspection unchecked
-      return result.toArray(new DfaInstructionState[result.size()]);
+    if (!checkNotNullable(state, qualifier, NullabilityProblem.callNPE, instruction.getCall())) {
+      forceNotNull(myRunner.getFactory(), state, qualifier);
     }
-    else {
-      if (!checkNotNullable(state, qualifier, NullabilityProblem.callNPE, instruction.getCall())) {
-        forceNotNull(myRunner.getFactory(), state, qualifier);
-      }
-      //check(methodResultValue, memState, instruction.getCallExpression());
-      state.push(methodResultValue);
-      if (instruction.shouldFlushFields()) {
-        state.flushFields();
-      }
-      return nextInstruction(instruction, myRunner, state);
+    //check(methodResultValue, memState, instruction.getCallExpression());
+    state.push(methodResultValue);
+    if (instruction.shouldFlushFields()) {
+      state.flushFields();
     }
+    return nextInstruction(instruction, myRunner, state);
   }
 
 
