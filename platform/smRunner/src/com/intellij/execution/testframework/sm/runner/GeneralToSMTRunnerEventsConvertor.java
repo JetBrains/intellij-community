@@ -52,6 +52,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   private final String myTestFrameworkName;
   private boolean myIsTestingFinished;
   private TestLocationProvider myLocator = null;
+  private boolean myTreeBuildBeforeStart = false;
 
   public GeneralToSMTRunnerEventsConvertor(@NotNull final SMTestProxy.SMRootTestProxy testsRootNode,
                                            @NotNull final String testFrameworkName) {
@@ -117,6 +118,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onSuiteTreeNodeAdded(final String testName, final String locationHint) {
+    myTreeBuildBeforeStart = true;
     addToInvokeLater(new Runnable() {
       @Override
       public void run() {
@@ -132,6 +134,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onSuiteTreeStarted(final String suiteName, final String locationHint) {
+    myTreeBuildBeforeStart = true;
     addToInvokeLater(new Runnable() {
       @Override
       public void run() {
@@ -229,10 +232,12 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
-  private static SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName) {
-    for (SMTestProxy proxy : parentSuite.getChildren()) {
-      if (fullName.equals(proxy.getName())) {
-        return proxy;
+  private SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName) {
+    if (myTreeBuildBeforeStart) {
+      for (SMTestProxy proxy : parentSuite.getChildren()) {
+        if (fullName.equals(proxy.getName())) {
+          return proxy;
+        }
       }
     }
     return null;
