@@ -24,6 +24,7 @@ import git4idea.commands.GitHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
+import java.util.List;
 
 /**
  * The handler for rebase editor request. The handler shows {@link git4idea.rebase.GitRebaseEditor}
@@ -115,15 +116,17 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
             }
           }
           else {
+            GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
+            List<GitRebaseEntry> entries = rebaseFile.load();
             setRebaseEditorShown();
-            GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, path);
+            GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, entries);
             if (editor.showAndGet()) {
-              editor.save();
+              rebaseFile.save(editor.getEntries());
               isSuccess.set(true);
               return;
             }
             else {
-              editor.cancel();
+              rebaseFile.cancel();
               isSuccess.set(true);
             }
           }
