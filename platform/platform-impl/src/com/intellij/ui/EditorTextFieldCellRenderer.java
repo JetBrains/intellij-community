@@ -172,14 +172,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     protected void paintComponent(Graphics g) {
-      if (getBorder() == null || !myEditor.getContentComponent().isOpaque()) return;
-
-      Color oldColor = g.getColor();
-      g.setColor(myEditor.getBackgroundColor());
-      Insets insets = getInsets();
-      g.fillRect(0, 0, insets.left, getHeight());
-      g.fillRect(getWidth() - insets.left - insets.right, 0, getWidth(), getHeight());
-      g.setColor(oldColor);
     }
 
     @Override
