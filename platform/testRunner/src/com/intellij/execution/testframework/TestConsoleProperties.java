@@ -68,7 +68,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   protected final Map<AbstractProperty, List<TestFrameworkPropertyListener>> myListeners = ContainerUtil.newHashMap();
 
-  public TestConsoleProperties(Storage storage, Project project, Executor executor) {
+  public TestConsoleProperties(@NotNull Storage storage, Project project, Executor executor) {
     super(storage);
     myProject = project;
     myExecutor = executor;
