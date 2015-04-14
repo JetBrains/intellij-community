@@ -56,6 +56,7 @@ import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.awt.*;
@@ -251,7 +252,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     Info info = null;
 
     try {
-      info = factory.create(InfoClient.class, false).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
+      info = factory.create(InfoClient.class, false).doInfo(SvnTarget.fromURL(url), SVNRevision.UNDEFINED);
     }
     catch (SvnBindException ignore) {
     }
