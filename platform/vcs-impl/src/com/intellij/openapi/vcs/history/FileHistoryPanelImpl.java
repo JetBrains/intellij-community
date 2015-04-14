@@ -578,8 +578,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     if ((virtualFile == null || !virtualFile.isValid()) && !myFilePath.getIOFile().exists()) {
       setEmptyText("File " + myFilePath.getName() + " not found");
     }
-    else {
+    else if (myInRefresh) {
       setEmptyText(CommonBundle.getLoadingTreeNodeText());
+    }
+    else {
+      setEmptyText(StatusText.DEFAULT_EMPTY_TEXT);
     }
   }
 
