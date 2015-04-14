@@ -17,6 +17,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.completion.NormalCompletionDfaTest;
 import com.intellij.codeInsight.completion.SmartTypeCompletionDfaTest;
+import com.intellij.codeInsight.daemon.quickFix.AddAssertStatementFixTest;
+import com.intellij.codeInsight.daemon.quickFix.ReplaceFromOfNullableFixTest;
+import com.intellij.codeInsight.daemon.quickFix.ReplaceWithOfNullableFixTest;
 import com.intellij.slicer.SliceBackwardTest;
 import com.intellij.slicer.SliceTreeTest;
 import junit.framework.Test;
@@ -25,20 +28,29 @@ import junit.framework.TestSuite;
 public class DataFlowInspectionTestSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite();
+
     suite.addTestSuite(DataFlowInspectionTest.class);
     suite.addTestSuite(DataFlowInspection8Test.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
     suite.addTestSuite(ContractCheckTest.class);
+
     suite.addTestSuite(ContractInferenceFromSourceTest.class);
     suite.addTestSuite(NullityInferenceFromSourceTestCase.DfaInferenceTest.class);
     suite.addTestSuite(NullityInferenceFromSourceTestCase.LightInferenceTest.class);
     suite.addTestSuite(PurityInferenceFromSourceTest.class);
+
     suite.addTestSuite(SliceTreeTest.class);
     suite.addTestSuite(SliceBackwardTest.class);
+
     suite.addTestSuite(SmartTypeCompletionDfaTest.class);
     suite.addTestSuite(NormalCompletionDfaTest.class);
+
     suite.addTestSuite(NullableStuffInspectionTest.class);
     suite.addTestSuite(NullableStuffInspection14Test.class);
+
+    suite.addTestSuite(AddAssertStatementFixTest.class);
+    suite.addTestSuite(ReplaceWithOfNullableFixTest.class);
+    suite.addTestSuite(ReplaceFromOfNullableFixTest.class);
     return suite;
   }
 }

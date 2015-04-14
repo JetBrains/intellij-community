@@ -53,7 +53,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,7 +210,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
       }
 
-      ContainerUtil.addIfNotNull(fixes, ReplaceOptionalOfWithOfNullableFix.registerReplaceOptionalOfWithOfNullableFix(qualifier));
+      ContainerUtil.addIfNotNull(fixes, DfaOptionalSupport.registerReplaceOptionalOfWithOfNullableFix(qualifier));
       return fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]);
     }
     catch (IncorrectOperationException e) {
@@ -272,8 +271,26 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       reportNullableArgumentsPassedToNonAnnotated(visitor, holder, reportedAnchors);
     }
 
+    reportOptionalOfNullableImprovements(holder, visitor, reportedAnchors);
+
+
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
+    }
+  }
+
+  private static void reportOptionalOfNullableImprovements(ProblemsHolder holder,
+                                                           DataFlowInstructionVisitor visitor,
+                                                           HashSet<PsiElement> reportedAnchors) {
+    for (PsiElement expr : visitor.getProblems(NullabilityProblem.passingNullToOptional)) {
+      if (!reportedAnchors.add(expr)) continue;
+      holder.registerProblem(expr, "Passing <code>null</code> argument to Optional",
+                             DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(expr));
+    }
+    for (PsiElement expr : visitor.getProblems(NullabilityProblem.passingNotNullToOptional)) {
+      if (!reportedAnchors.add(expr)) continue;
+      holder.registerProblem(expr, "Passing a non-null argument to Optional",
+                             DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix());
     }
   }
 
@@ -762,69 +779,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       boolean ephemeralNpe;
       boolean normalNpe;
       boolean normalOk;
-    }
-  }
-
-  private static class ReplaceOptionalOfWithOfNullableFix implements LocalQuickFix {
-
-    private static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
-    private final String myTargetMethodName;
-
-    public ReplaceOptionalOfWithOfNullableFix(final String targetMethodName) {
-      myTargetMethodName = targetMethodName;
-    }
-
-    private static LocalQuickFix registerReplaceOptionalOfWithOfNullableFix(PsiExpression qualifier) {
-      final PsiElement argList = PsiUtil.skipParenthesizedExprUp(qualifier).getParent();
-      if (argList instanceof PsiExpressionList) {
-        final PsiElement parent = argList.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          final PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
-          if (method != null) {
-            final PsiClass containingClass = method.getContainingClass();
-            if ("of".equals(method.getName()) && containingClass != null) {
-              final String qualifiedName = containingClass.getQualifiedName();
-              if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(qualifiedName)) {
-                return new ReplaceOptionalOfWithOfNullableFix("ofNullable");
-              } 
-              else if (GUAVA_OPTIONAL.equals(qualifiedName)) {
-                return new ReplaceOptionalOfWithOfNullableFix("fromNullable");
-              }
-            }
-          }
-        }
-      }
-      return null;
-    }
-    
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace with '." + myTargetMethodName + "()'";
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression
-        methodCallExpression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-      if (methodCallExpression != null) {
-        final PsiElement ofNullableExprName =
-          ((PsiMethodCallExpression)JavaPsiFacade.getElementFactory(project)
-            .createExpressionFromText("Optional.ofNullable(null)", null)).getMethodExpression();
-        final PsiElement referenceNameElement = methodCallExpression.getMethodExpression().getReferenceNameElement();
-        if (referenceNameElement != null) {
-          final PsiElement ofNullableNameElement = ((PsiReferenceExpression)ofNullableExprName).getReferenceNameElement();
-          LOG.assertTrue(ofNullableNameElement != null);
-          referenceNameElement.replace(ofNullableNameElement);
-        }
-      }
     }
   }
 }
