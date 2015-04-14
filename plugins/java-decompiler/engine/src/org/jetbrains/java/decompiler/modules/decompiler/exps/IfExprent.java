@@ -89,7 +89,7 @@ public class IfExprent extends Exprent {
       condition = stack.pop();
     }
     else {
-      condition = new FunctionExprent(FUNC_TYPES[ifType], stack, null);
+      condition = new FunctionExprent(FUNC_TYPES[ifType], stack, bytecodeOffsets);
     }
   }
 
