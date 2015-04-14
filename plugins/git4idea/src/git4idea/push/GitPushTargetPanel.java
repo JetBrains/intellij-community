@@ -390,12 +390,22 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myTargetEditor.addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        //fire only about user's changes
-        if (myTargetEditor.isShowing()) {
-          listener.onTargetInEditModeChanged(myTargetEditor.getText());
-        }
+        processActiveUserChanges(listener);
       }
     });
+    myTargetEditor.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        processActiveUserChanges(listener);
+      }
+    });
+  }
+
+  private void processActiveUserChanges(@NotNull PushTargetEditorListener listener) {
+    //fire only about user's changes
+    if (myTargetEditor.isShowing()) {
+      listener.onTargetInEditModeChanged(myTargetEditor.getText());
+    }
   }
 
   @Override
