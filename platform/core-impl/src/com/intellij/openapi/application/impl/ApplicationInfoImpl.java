@@ -210,7 +210,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @Override
   public String getApiVersion() {
     if (myApiVersion != null) {
-      return BuildNumber.fromString(myApiVersion, getProductPrefix()).asString();
+      return BuildNumber.fromString(myApiVersion, getBuild().getProductCode()).asString();
     }
     return getBuild().asString();
   }
