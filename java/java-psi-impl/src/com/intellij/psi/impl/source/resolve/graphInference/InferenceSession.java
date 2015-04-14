@@ -1252,7 +1252,7 @@ public class InferenceSession {
 
       if (methodContainingClass != null) {
         psiSubstitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, containingClass, psiSubstitutor);
-        LOG.assertTrue(psiSubstitutor != null);
+        LOG.assertTrue(psiSubstitutor != null, "derived: " + containingClass + "; super: " + methodContainingClass);
       }
 
       for (int i = 0; i < functionalMethodParameters.length; i++) {
