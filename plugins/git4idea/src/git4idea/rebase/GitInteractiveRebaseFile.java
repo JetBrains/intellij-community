@@ -42,12 +42,18 @@ class GitInteractiveRebaseFile {
   }
 
   @NotNull
-  public List<GitRebaseEntry> load() throws IOException {
+  public List<GitRebaseEntry> load() throws IOException, NoopException {
     String encoding = GitConfigUtil.getLogEncoding(myProject, myRoot);
     List<GitRebaseEntry> entries = ContainerUtil.newArrayList();
     final StringScanner s = new StringScanner(FileUtil.loadFile(new File(myFile), encoding));
+    boolean noop = false;
     while (s.hasMoreData()) {
-      if (s.isEol() || s.startsWith('#') || s.startsWith("noop")) {
+      if (s.isEol() || s.startsWith('#')) {
+        s.nextLine();
+        continue;
+      }
+      if (s.startsWith("noop")) {
+        noop = true;
         s.nextLine();
         continue;
       }
@@ -56,6 +62,9 @@ class GitInteractiveRebaseFile {
       String comment = s.line();
 
       entries.add(new GitRebaseEntry(action, hash, comment));
+    }
+    if (noop && entries.isEmpty()) {
+      throw new NoopException();
     }
     return entries;
   }
@@ -92,5 +101,8 @@ class GitInteractiveRebaseFile {
       return file.substring(prefixSize, prefixSize + 1) + ":" + file.substring(prefixSize + 1);
     }
     return file;
+  }
+
+  static class NoopException extends Exception {
   }
 }
