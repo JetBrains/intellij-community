@@ -57,7 +57,12 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
 
     final ExecutionEnvironment environment =
       ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build();
-    final TestPackage aPackage = new TestPackage(configuration, environment);
+    final TestPackage aPackage = new TestPackage(configuration, environment) {
+      @Override
+      protected boolean createTempFiles() {
+        return true;
+      }
+    };
 
     //ensure no fork if single module is selected
     aPackage.createSearchingForTestsTask().startSearch();
@@ -78,11 +83,11 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
       String file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
       assertEquals("p\n" +
                    "MODULE_1\n" +
-                   "APP_HOME/idea_rt.jar;APP_HOME/junit-rt.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
+                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T1\n" +
                    "MODULE_2\n" +
-                   "APP_HOME/idea_rt.jar;APP_HOME/junit-rt.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
+                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T2\n", file);
 
@@ -94,11 +99,11 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
       file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
       assertEquals("p\n" +
                    "MODULE_1\n" +
-                   "APP_HOME/idea_rt.jar;APP_HOME/junit-rt.jar;IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
+                   "IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T1\n" +
                    "MODULE_2\n" +
-                   "APP_HOME/idea_rt.jar;APP_HOME/junit-rt.jar;IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
+                   "IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T2\n", file);
     }
@@ -144,14 +149,19 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static String preparePathsForComparison(String fileContent, Module mod1, Module mod2) {
-    fileContent = fileContent.replaceAll(ModuleRootManager.getInstance(mod1).getContentRoots()[0].getPath(), "MODULE_1");
-    fileContent = fileContent.replaceAll(ModuleRootManager.getInstance(mod2).getContentRoots()[0].getPath(), "MODULE_2");
-    fileContent = fileContent.replaceAll(PathManager.getHomePath() + File.separator + "community", "IDEA_HOME");
-    fileContent = fileContent.replaceAll(PathManager.getHomePath(), "IDEA_HOME");
-    fileContent = fileContent.replaceAll(StringUtil.getPackageName(PathUtil.getJarPathForClass(JUnitStarter.class), File.separatorChar), "APP_HOME");
-    fileContent = fileContent.replaceAll(StringUtil.getPackageName(JavaSdkUtil.getIdeaRtJarPath(), File.separatorChar), "APP_HOME");
-    fileContent = fileContent.replaceAll(StringUtil.getPackageName(PathUtil.getJarPathForClass(ServiceMessageTypes.class), File.separatorChar), "APP_HOME");
+    fileContent = FileUtil.toSystemIndependentName(fileContent);
+    fileContent = replace(fileContent, ModuleRootManager.getInstance(mod1).getContentRoots()[0].getPath(), "MODULE_1");
+    fileContent = replace(fileContent, ModuleRootManager.getInstance(mod2).getContentRoots()[0].getPath(), "MODULE_2");
+    fileContent = fileContent.replaceAll(FileUtil.toSystemIndependentName(PathUtil.getJarPathForClass(JUnitStarter.class)) + File.pathSeparator, "");
+    fileContent = fileContent.replaceAll(FileUtil.toSystemIndependentName(JavaSdkUtil.getIdeaRtJarPath()) + File.pathSeparator, "");
+    fileContent = replace(fileContent, PathManager.getHomePath() + "/community", "IDEA_HOME");
+    fileContent = replace(fileContent, PathManager.getHomePath(), "IDEA_HOME");
+    fileContent = replace(fileContent, StringUtil.getPackageName(PathUtil.getJarPathForClass(ServiceMessageTypes.class), File.separatorChar), "APP_HOME");
     fileContent = fileContent.replaceAll(File.pathSeparator, ";");
-    return fileContent;
+    return StringUtil.convertLineSeparators(fileContent);
+  }
+
+  private static String replace(String fileContent, String regex, String home) {
+    return fileContent.replaceAll(FileUtil.toSystemIndependentName(regex), home);
   }
 }

@@ -101,11 +101,15 @@ public class TestPackage extends TestObject {
                 return null;
               }
             }
-          }, getPackageName(data), ApplicationManager.getApplication().isUnitTestMode(), getJavaParameters());
+          }, getPackageName(data), createTempFiles(), getJavaParameters());
         }
         catch (ExecutionException ignored) {}
       }
     };
+  }
+
+  protected boolean createTempFiles() {
+    return false;
   }
 
   protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
