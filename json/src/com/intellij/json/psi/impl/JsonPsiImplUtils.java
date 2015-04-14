@@ -28,7 +28,7 @@ public class JsonPsiImplUtils {
 
   @NotNull
   public static String getName(@NotNull JsonProperty property) {
-    return StringUtil.stripQuotesAroundValue(property.getNameElement().getText());
+    return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(property.getNameElement().getText()));
   }
 
   /**
@@ -210,7 +210,7 @@ public class JsonPsiImplUtils {
 
   @NotNull
   public static String getValue(@NotNull JsonStringLiteral literal) {
-    return StringUtil.unescapeStringCharacters(StringUtil.unquoteString(literal.getText()));
+    return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(literal.getText()));
   }
 
   public static boolean getValue(@NotNull JsonBooleanLiteral literal) {
