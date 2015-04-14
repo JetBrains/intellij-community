@@ -41,6 +41,9 @@ import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import java.io.File;
 
 public class TestPackage extends TestObject {
   private boolean myFoundTests = true;
@@ -98,7 +101,7 @@ public class TestPackage extends TestObject {
                 return null;
               }
             }
-          }, getPackageName(data), false, getJavaParameters());
+          }, getPackageName(data), ApplicationManager.getApplication().isUnitTestMode(), getJavaParameters());
         }
         catch (ExecutionException ignored) {}
       }
@@ -206,5 +209,10 @@ public class TestPackage extends TestObject {
     if (myFoundTests || !ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), consoleProperties.isDebug())) {
       super.notifyByBalloon(model, started, consoleProperties);
     }
+  }
+
+  @TestOnly
+  public File getWorkingDirsFile() {
+    return myWorkingDirsFile;
   }
 }
