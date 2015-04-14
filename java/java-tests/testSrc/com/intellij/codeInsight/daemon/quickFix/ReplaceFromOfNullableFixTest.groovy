@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Mar-2008
- */
 package com.intellij.codeInsight.daemon.quickFix
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.dataFlow.DataFlowInspection
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.annotations.NotNull
 
@@ -46,11 +41,7 @@ public class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTest
     return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceFromOfNullable";
   }
 
-  static void addGuavaOptional() {
-    if (JavaPsiFacade.getInstance(project).findClass("com.google.common.base.Optional", GlobalSearchScope.allScope(project))) {
-      return
-    }
-
+  static void addGuavaOptional(Disposable parent) {
     WriteCommandAction.runWriteCommandAction(project) {
       VirtualFile optional = getSourceRoot()
         .createChildDirectory(this, "com")
@@ -63,20 +54,32 @@ package com.google.common.base;
 public abstract class Optional<T> {
   public static <T> Optional<T> absent() { }
 
-  public static <T> Optional<T> of(T reference) { }
+  public static <T> Optional<T> of(@org.jetbrains.annotations.NotNull T reference) { }
 
-  public static <T> Optional<T> fromNullable(@Nullable T nullableReference) { }
+  public static <T> Optional<T> fromNullable(T nullableReference) { }
 }
 """)
+    }
+  }
+
+  static void cleanupGuava() {
+    WriteCommandAction.runWriteCommandAction(project) {
+      getSourceRoot().findChild("com")?.delete(this)
     }
   }
 
   @Override
   protected void beforeActionStarted(String testName, String contents) {
     if (testName.contains("Guava")) {
-      addGuavaOptional()
+      addGuavaOptional(testRootDisposable)
     }
     super.beforeActionStarted(testName, contents)
+  }
+
+  @Override
+  protected void afterActionCompleted(String testName, String contents) {
+    cleanupGuava()
+    super.afterActionCompleted(testName, contents)
   }
 
   @Override
