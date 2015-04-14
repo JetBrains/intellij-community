@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -226,7 +225,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected ParametersListTable createParametersListTable() {
     return new ParametersListTable() {
-      private final EditorTextFieldJBTableRowRenderer myRowRenderer = new EditorTextFieldJBTableRowRenderer(getProject(), myDisposable) {
+      private final EditorTextFieldJBTableRowRenderer myRowRenderer =
+        new EditorTextFieldJBTableRowRenderer(getProject(), JavaChangeSignatureDialog.this.getFileType(), myDisposable) {
         @Override
         protected String getText(JTable table, int row) {
           ParameterTableModelItemBase<ParameterInfoImpl> item = getRowItem(row);
@@ -248,12 +248,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             text += " //" + tail;
           }
           return " " + text;
-        }
-
-        @Nullable
-        @Override
-        protected FileType getFileType() {
-          return JavaChangeSignatureDialog.this.getFileType();
         }
       };
 

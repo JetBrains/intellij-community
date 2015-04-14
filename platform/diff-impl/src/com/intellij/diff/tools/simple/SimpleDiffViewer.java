@@ -411,12 +411,19 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return true;
   }
 
-  private void doScrollToChange(@NotNull SimpleDiffChange change, boolean animated) {
+  private void doScrollToChange(@NotNull SimpleDiffChange change, final boolean animated) {
     if (myEditor1 == null || myEditor2 == null) return;
+    assert mySyncScrollSupport != null;
 
-    EditorEx editor = getCurrentEditor();
-    int line = change.getStartLine(getCurrentSide());
-    DiffUtil.scrollEditor(editor, line, animated);
+    final int line1 = change.getStartLine(Side.LEFT);
+    final int line2 = change.getStartLine(Side.RIGHT);
+    final int endLine1 = change.getEndLine(Side.LEFT);
+    final int endLine2 = change.getEndLine(Side.RIGHT);
+
+    DiffUtil.moveCaret(myEditor1, line1);
+    DiffUtil.moveCaret(myEditor2, line2);
+
+    mySyncScrollSupport.makeVisible(getCurrentSide(), line1, endLine1, line2, endLine2, animated);
   }
 
   @Override

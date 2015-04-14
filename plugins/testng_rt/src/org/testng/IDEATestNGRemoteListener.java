@@ -47,13 +47,22 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       System.out.println("##teamcity[testSuiteStarted name =\'" + className + "\']");
       myCurrentClassName = className;
     }
-    final String methodName = result.getMethod().getMethodName();
+    String methodName = getMethodName(result);
     System.out.println("##teamcity[testStarted name=\'" +
                        methodName + "\' locationHint=\'java:test://" + className + "." + methodName + "\']");
   }
 
+  private static String getMethodName(ITestResult result) {
+    String methodName = result.getMethod().getMethodName();
+    final Object[] parameters = result.getParameters();
+    if (parameters.length > 0) {
+      methodName += "[" + parameters[0].toString() + "]";
+    }
+    return methodName;
+  }
+
   public void onTestSuccess(ITestResult result) {
-    System.out.println("##teamcity[testFinished name=\'" + result.getMethod().getMethodName() + "\']");
+    System.out.println("##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
   }
 
   public String getTrace(Throwable tr) {
@@ -68,17 +77,17 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     final Throwable ex = result.getThrowable();
     final String trace = getTrace(ex);
     final Map<String, String> attrs = new HashMap<String, String>();
-    attrs.put("name", result.getMethod().getMethodName());
+    attrs.put("name", getMethodName(result));
     final String failureMessage = ex.getMessage();
     attrs.put("message", failureMessage != null ? failureMessage : "");
     attrs.put("details", trace);
     attrs.put("error", "true");
     System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
-    System.out.println("##teamcity[testFinished name=\'" + result.getMethod().getMethodName() + "\']");
+    System.out.println("##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
   }
 
   public void onTestSkipped(ITestResult result) {
-    System.out.println("##teamcity[testFinished name=\'" + result.getMethod().getMethodName() + "\']");
+    System.out.println("##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
   }
 
   public void onTestFailedButWithinSuccessPercentage(ITestResult result) {

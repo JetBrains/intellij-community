@@ -346,6 +346,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   private void doScrollToChange(@NotNull SimpleThreesideDiffChange change, boolean animated) {
+    // TODO: use anchors to fix scrolling issue at the start/end of file
     EditorEx editor = getCurrentEditor();
     int line = change.getStartLine(getCurrentSide());
     DiffUtil.scrollEditor(editor, line, animated);

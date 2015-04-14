@@ -260,6 +260,11 @@ public class RefactoringConflictsUtil {
               !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
               !PsiSearchScopeUtil.isInScope(resolveScope, resolved) && 
               !(resolved instanceof LightElement)) {
+            if (resolved instanceof PsiMethod) {
+              for (PsiMethod superMethod : ((PsiMethod)resolved).findDeepestSuperMethods()) {
+                if (PsiSearchScopeUtil.isInScope (resolveScope, superMethod)) return;
+              }
+            }
             final String scopeDescription = RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true);
             final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
                                                              RefactoringUIUtil.getDescription(resolved, true),

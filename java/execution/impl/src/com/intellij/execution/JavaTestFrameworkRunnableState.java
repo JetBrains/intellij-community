@@ -21,10 +21,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.JavaTestLocationProvider;
-import com.intellij.execution.testframework.SearchForTestsTask;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -37,23 +34,39 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.PathUtil;
+import com.intellij.util.ui.UIUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.util.Locale;
 
 public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters> extends JavaCommandLineState {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
@@ -73,6 +86,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
   @NotNull protected abstract AbstractRerunFailedTestsAction createRerunFailedTestsAction(TestConsoleProperties testConsoleProperties, ConsoleView consoleView);
 
   @NotNull protected abstract T getConfiguration();
+
+  @Nullable protected abstract TestSearchScope getScope();
+
+  @NotNull protected abstract String getForkMode();
 
   @NotNull protected abstract OSProcessHandler createHandler(Executor executor) throws ExecutionException;
 
@@ -181,6 +198,64 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     return javaParameters;
   }
 
+  protected void appendForkInfo(Executor executor) throws ExecutionException {
+    final String forkMode = getForkMode();
+    if (Comparing.strEqual(forkMode, "none")) {
+      if (forkPerModule()) {
+        if (getRunnerSettings() != null) {
+          final String actionName = UIUtil.removeMnemonic(executor.getStartActionText());
+          throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
+                                     "Please specify single working directory, or change test scope to single module.");
+        }
+      } else {
+        return;
+      }
+    } else if (getRunnerSettings() != null) {
+      final String actionName = executor.getActionName();
+      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + actionName.toLowerCase(
+        Locale.ENGLISH) + ".");
+    }
+
+    final JavaParameters javaParameters = getJavaParameters();
+    final Sdk jdk = javaParameters.getJdk();
+    if (jdk == null) {
+      throw new ExecutionException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
+    }
+
+    try {
+      final File tempFile = FileUtil.createTempFile("command.line", "", true);
+      final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
+      try {
+        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
+          String classpath = PathUtil.getJarPathForClass(CommandLineWrapper.class);
+          final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
+          if (!classpath.equals(utilRtPath)) {
+            classpath += File.pathSeparator + utilRtPath;
+          }
+          writer.println(classpath);
+        }
+        else {
+          writer.println("");
+        }
+
+        writer.println(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
+        for (String vmParameter : javaParameters.getVMParametersList().getList()) {
+          writer.println(vmParameter);
+        }
+      }
+      finally {
+        writer.close();
+      }
+
+      passForkMode(forkMode, tempFile);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  protected abstract void passForkMode(String forkMode, File tempFile) throws ExecutionException;
+
   protected void collectListeners(JavaParameters javaParameters, StringBuilder buf, String epName, String delimiter) {
     final T configuration = getConfiguration();
     final Object[] listeners = Extensions.getExtensions(epName);
@@ -221,6 +296,37 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     catch (IOException e) {
       LOG.error(e);
     }
+  }
+
+  private boolean spansMultipleModules() {
+    final String qualifiedName = getConfiguration().getPackage();
+    if (qualifiedName != null) {
+      final Project project = getConfiguration().getProject();
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(qualifiedName);
+      if (aPackage != null) {
+        final TestSearchScope scope = getScope();
+        if (scope != null) {
+          final SourceScope sourceScope = scope.getSourceScope(getConfiguration());
+          if (sourceScope != null) {
+            final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project).intersectWith(
+              sourceScope.getGlobalSearchScope());
+            final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
+            return directories.length > 1;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Configuration based on package which spans multiple modules
+   */
+  protected boolean forkPerModule() {
+    final String workingDirectory = getConfiguration().getWorkingDirectory();
+    return getScope() != TestSearchScope.SINGLE_MODULE &&
+           ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) &&
+           spansMultipleModules();
   }
 
   protected void createTempFiles(JavaParameters javaParameters) {

@@ -191,6 +191,12 @@ public class DiffUtil {
   // Scrolling
   //
 
+  public static void moveCaret(@Nullable final Editor editor, int line) {
+    if (editor == null) return;
+    editor.getCaretModel().removeSecondaryCarets();
+    editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, 0));
+  }
+
   public static void scrollEditor(@Nullable final Editor editor, int line, boolean animated) {
     scrollEditor(editor, line, 0, animated);
   }
@@ -203,11 +209,15 @@ public class DiffUtil {
   }
 
   public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
+    scrollToPoint(editor, point, false);
+  }
+
+  public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point, boolean animated) {
     if (editor == null) return;
-    editor.getScrollingModel().disableAnimation();
+    if (!animated) editor.getScrollingModel().disableAnimation();
     editor.getScrollingModel().scrollHorizontally(point.x);
     editor.getScrollingModel().scrollVertically(point.y);
-    editor.getScrollingModel().enableAnimation();
+    if (!animated) editor.getScrollingModel().enableAnimation();
   }
 
   public static void scrollToCaret(@Nullable Editor editor, boolean animated) {

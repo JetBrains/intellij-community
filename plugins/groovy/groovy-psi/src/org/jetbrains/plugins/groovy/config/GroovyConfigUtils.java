@@ -40,7 +40,9 @@ import java.util.regex.Pattern;
  * @author ilyas
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
-  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(\\d(\\.\\d)*))?\\.jar");
+
+  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(\\d+(\\.\\d+)*))?\\.jar");
+  public static final int VERSION_GROUP_NUMBER = 3; // version will be in third group in GROOVY_ALL_JAR_PATTERN
   @NonNls public static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(\\d(\\.\\d)*))?\\.jar");
 
   public static final String NO_VERSION = "<no version>";
@@ -79,15 +81,15 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   @Override
   @NotNull
   public String getSDKVersion(@NotNull final String path) {
-    String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
+    String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH, VERSION_GROUP_NUMBER);
     if (groovyJarVersion == null) {
-      groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
+      groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH, VERSION_GROUP_NUMBER);
     }
     if (groovyJarVersion == null) {
-      groovyJarVersion = getSDKJarVersion(path + "/embeddable", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
+      groovyJarVersion = getSDKJarVersion(path + "/embeddable", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH, VERSION_GROUP_NUMBER);
     }
     if (groovyJarVersion == null) {
-      groovyJarVersion = getSDKJarVersion(path, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
+      groovyJarVersion = getSDKJarVersion(path, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH, VERSION_GROUP_NUMBER);
     }
     return groovyJarVersion == null ? UNDEFINED_VERSION : groovyJarVersion;
   }
