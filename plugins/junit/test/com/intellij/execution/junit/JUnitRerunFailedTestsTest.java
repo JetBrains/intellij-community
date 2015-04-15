@@ -18,7 +18,7 @@ package com.intellij.execution.junit;
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
-import com.intellij.execution.testframework.JavaTestLocationProvider;
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -44,7 +44,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     final SMTestProxy testProxy = new SMTestProxy("testMe", false, "java:test://ChildTest.testMe");
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
-    testProxy.setLocator(new JavaTestLocationProvider(searchScope));
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
 
     final Location location = testProxy.getLocation(project, searchScope);
     assertNotNull(location);
@@ -82,7 +82,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
 
     final Project project = getProject();
     final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
-    final JavaTestLocationProvider locationProvider = new JavaTestLocationProvider(searchScope);
+    final JavaTestLocator locationProvider = JavaTestLocator.INSTANCE;
 
     final SMTestProxy rootProxy = new SMTestProxy("MyTest", true, "java:suite://MyTest");
     rootProxy.setLocator(locationProvider);

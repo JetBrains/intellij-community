@@ -61,7 +61,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -116,8 +115,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     final TestConsoleProperties testConsoleProperties = createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
-    final BaseTestsOutputConsoleView consoleView =
-      SMTestRunnerConnectionUtil.createConsoleWithCustomLocator(getFrameworkName(), testConsoleProperties, getEnvironment(), new JavaTestLocationProvider(testConsoleProperties.getScope()));
+    final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties, getEnvironment());
     final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
     Disposer.register(getConfiguration().getProject(), consoleView);
 
@@ -140,10 +138,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
             clear();
           }
         };
-        SwingUtilities.invokeLater(runnable);
+        UIUtil.invokeLaterIfNeeded(runnable);
         handler.removeProcessListener(this);
       }
-
     });
 
     AbstractRerunFailedTestsAction rerunFailedTestsAction = createRerunFailedTestsAction(testConsoleProperties, consoleView);

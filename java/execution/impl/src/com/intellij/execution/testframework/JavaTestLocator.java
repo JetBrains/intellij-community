@@ -19,65 +19,62 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class JavaTestLocationProvider implements TestLocationProvider {
+public class JavaTestLocator implements SMTestLocator {
   public static final String SUITE_PROTOCOL = "java:suite";
   public static final String TEST_PROTOCOL = "java:test";
 
-  private final GlobalSearchScope myScope;
-
-  public JavaTestLocationProvider(@NotNull GlobalSearchScope scope) {
-    myScope = scope;
-  }
+  public static final JavaTestLocator INSTANCE = new JavaTestLocator();
 
   @NotNull
   @Override
-  public List<Location> getLocation(@NotNull String protocolId, @NotNull String locationData, Project project) {
+  public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     List<Location> results = Collections.emptyList();
 
-    final int idx = locationData.indexOf("[");
-    final String paramName = idx >= 0 ? locationData.substring(idx) : null;
+    String paramName = null;
+    int idx = path.indexOf('[');
     if (idx >= 0) {
-      locationData = locationData.substring(0, idx);
+      paramName = path.substring(idx);
+      path = path.substring(0, idx);
     }
 
-    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-    if (SUITE_PROTOCOL.equals(protocolId)) {
-      locationData = StringUtil.trimEnd(locationData, ".");
-      PsiClass[] classes = javaPsiFacade.findClasses(locationData, myScope);
+    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+    if (SUITE_PROTOCOL.equals(protocol)) {
+      path = StringUtil.trimEnd(path, ".");
+      PsiClass[] classes = javaPsiFacade.findClasses(path, scope);
       if (classes.length > 0) {
         results = ContainerUtil.newSmartList();
         for (PsiClass aClass : classes) {
-          results.add(paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName) 
+          results.add(paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName)
                                         : new PsiLocation<PsiClass>(project, aClass));
         }
       }
     }
-    else if (TEST_PROTOCOL.equals(protocolId)) {
-      final String className = StringUtil.getPackageName(locationData);
+    else if (TEST_PROTOCOL.equals(protocol)) {
+      String className = StringUtil.getPackageName(path);
       if (!StringUtil.isEmpty(className)) {
-        String methodName = StringUtil.getShortName(locationData);
-        PsiClass[] classes = javaPsiFacade.findClasses(className, myScope);
+        String methodName = StringUtil.getShortName(path);
+        PsiClass[] classes = javaPsiFacade.findClasses(className, scope);
         if (classes.length > 0) {
           results = ContainerUtil.newSmartList();
           for (PsiClass aClass : classes) {
             PsiMethod[] methods = aClass.findMethodsByName(methodName, true);
             if (methods.length > 0) {
               for (PsiMethod method : methods) {
-                results.add(paramName != null ?  new PsiMemberParameterizedLocation(project, method, aClass, paramName)
-                                              :  MethodLocation.elementInClass(method, aClass));
+                results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
+                                              : MethodLocation.elementInClass(method, aClass));
               }
             }
           }
