@@ -53,8 +53,10 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
 
   private final ResourceBundle myResourceBundle;
 
-  public ResourceBundleStructureViewComponent(final ResourceBundle resourceBundle, final ResourceBundleEditor editor) {
-    super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle));
+  public ResourceBundleStructureViewComponent(final ResourceBundle resourceBundle,
+                                              final ResourceBundleEditor editor,
+                                              final PropertiesAnchorizer anchorizer) {
+    super(resourceBundle.getProject(), editor, new ResourceBundleStructureViewModel(resourceBundle, anchorizer));
     myResourceBundle = resourceBundle;
     tunePopupActionGroup();
   }
