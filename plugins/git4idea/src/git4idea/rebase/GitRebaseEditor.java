@@ -28,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.config.GitConfigUtil;
@@ -121,6 +122,7 @@ public class GitRebaseEditor extends DialogWrapper {
     myTableModel.load(file);
     myCommitsTable.setModel(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+    myCommitsTable.setIntercellSpacing(JBUI.emptySize());
 
     final JComboBox editorComboBox = new JComboBox();
     for (Object option : GitRebaseEntry.Action.values()) {
