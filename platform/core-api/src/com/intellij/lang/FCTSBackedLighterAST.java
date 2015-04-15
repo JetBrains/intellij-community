@@ -54,7 +54,7 @@ public class FCTSBackedLighterAST extends LighterAST {
     }
     LighterASTNode[] elements = into.get();
     assert elements != null : myTreeStructure +" ("+parent+")";
-    return ContainerUtil.newArrayList(elements, 0, numKids);
+    return new LighterASTNodeList(numKids, elements);
   }
 
   public void disposeChildren(@NotNull List<LighterASTNode> children) {
