@@ -104,7 +104,7 @@ public class CmdMergeClient extends BaseSvnClient implements MergeClient {
   }
 
   private void run(File destination, ProgressTracker handler, List<String> parameters) throws VcsException {
-    BaseUpdateCommandListener listener = new BaseUpdateCommandListener(CommandUtil.correctUpToExistingParent(destination), handler);
+    BaseUpdateCommandListener listener = new BaseUpdateCommandListener(CommandUtil.requireExistingParent(destination), handler);
 
     execute(myVcs, SvnTarget.fromFile(destination), SvnCommandName.merge, parameters, listener);
 

@@ -61,9 +61,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                        boolean collectParentExternals,
                        @NotNull final StatusConsumer handler,
                        @Nullable final Collection changeLists) throws SvnBindException {
-    File base = path.isDirectory() ? path : path.getParentFile();
-    base = CommandUtil.correctUpToExistingParent(base);
-
+    File base = CommandUtil.requireExistingParent(path);
     final Info infoBase = myFactory.createInfoClient().doInfo(base, revision);
     List<String> parameters = new ArrayList<String>();
 

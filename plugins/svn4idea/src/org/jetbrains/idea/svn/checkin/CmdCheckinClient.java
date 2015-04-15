@@ -79,7 +79,7 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
     IdeaCommitHandler handler = new IdeaCommitHandler(ProgressManager.getInstance().getProgressIndicator());
     CmdCheckinClient.CommandListener listener = new CommandListener(handler);
-    listener.setBaseDirectory(CommandUtil.correctUpToExistingParent(paths.get(0)));
+    listener.setBaseDirectory(CommandUtil.requireExistingParent(paths.get(0)));
     execute(myVcs, SvnTarget.fromFile(paths.get(0)), null, command, listener);
     listener.throwExceptionIfOccurred();
 

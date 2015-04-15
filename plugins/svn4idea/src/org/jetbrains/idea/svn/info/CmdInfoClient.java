@@ -156,12 +156,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
 
   @Override
   public Info doInfo(@NotNull File path, @Nullable SVNRevision revision) throws SvnBindException {
-    File base = path.isDirectory() ? path : path.getParentFile();
-    base = CommandUtil.correctUpToExistingParent(base);
-    if (base == null) {
-      // very unrealistic
-      throw new SvnBindException("Can not find existing parent file");
-    }
+    File base = CommandUtil.requireExistingParent(path);
 
     return parseResult(base, execute(buildParameters(SvnTarget.fromFile(path), revision, Depth.EMPTY), path));
   }
@@ -180,7 +175,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     File base = ContainerUtil.getFirstItem(paths);
 
     if (base != null) {
-      base = CommandUtil.correctUpToExistingParent(base);
+      base = CommandUtil.requireExistingParent(base);
 
       List<String> parameters = ContainerUtil.newArrayList();
       for (File file : paths) {

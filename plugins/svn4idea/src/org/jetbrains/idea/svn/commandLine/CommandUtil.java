@@ -1,7 +1,9 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +24,8 @@ import java.util.List;
  * @author Konstantin Kolosovsky.
  */
 public class CommandUtil {
+
+  private static final Logger LOG = Logger.getInstance(CommandUtil.class);
 
   /**
    * Puts given value to parameters if condition is satisfied
@@ -203,11 +207,23 @@ public class CommandUtil {
     return contentsStatus;
   }
 
-  public static File correctUpToExistingParent(File base) {
-    while (base != null) {
-      if (base.exists() && base.isDirectory()) return base;
-      base = base.getParentFile();
+  @Nullable
+  public static File findExistingParent(@Nullable File file) {
+    while (file != null) {
+      if (file.exists() && file.isDirectory()) return file;
+      file = file.getParentFile();
     }
     return null;
+  }
+
+  @NotNull
+  public static File requireExistingParent(@NotNull File file) {
+    File result = findExistingParent(file);
+
+    if (result == null) {
+      LOG.error("Existing parent not found for " + file.getAbsolutePath());
+    }
+
+    return ObjectUtils.assertNotNull(result);
   }
 }
