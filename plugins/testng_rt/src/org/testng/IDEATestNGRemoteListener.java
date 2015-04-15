@@ -82,7 +82,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onTestSuccess(ITestResult result) {
-    System.out.println("##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
+    System.out.println("\n##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
   }
 
   public String getTrace(Throwable tr) {
@@ -104,11 +104,11 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     attrs.put("details", trace);
     attrs.put("error", "true");
     System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
-    System.out.println("##teamcity[testFinished name=\'" + methodName + "\']");
+    System.out.println("\n##teamcity[testFinished name=\'" + methodName + "\']");
   }
 
   public void onTestSkipped(ITestResult result) {
-    System.out.println("##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
+    System.out.println("\n##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
   }
 
   public void onTestFailedButWithinSuccessPercentage(ITestResult result) {

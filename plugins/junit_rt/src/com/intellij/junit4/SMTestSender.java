@@ -46,15 +46,15 @@ class SMTestSender extends RunListener {
 
   public void testRunStarted(Description description) throws Exception {
     myCurrentClassName = myIgnoreTopSuite ? description.toString() : null;
-    System.out.println("##teamcity[enteredTheMatrix]");
+    System.out.println("##teamcity[enteredTheMatrix]\n");
   }
 
   public void testRunFinished(Result result) throws Exception {
     if (myParamName != null) {
-      System.out.println("##teamcity[testSuiteFinished name=\'" + myParamName + "\']");
+      System.out.println("##teamcity[testSuiteFinished name=\'" + myParamName + "\']\n");
     }
     if (myCurrentClassName != null) {
-      System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
+      System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']\n");
     }
   }
 
@@ -87,7 +87,7 @@ class SMTestSender extends RunListener {
   }
 
   public void testFinished(Description description) throws Exception {
-    System.out.println("##teamcity[testFinished name=\'" + JUnit4ReflectionUtil.getMethodName(description) + "\']");
+    System.out.println("\n##teamcity[testFinished name=\'" + JUnit4ReflectionUtil.getMethodName(description) + "\']");
   }
 
   public void testFailure(Failure failure) throws Exception {
