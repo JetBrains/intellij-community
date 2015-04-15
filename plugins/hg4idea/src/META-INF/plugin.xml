@@ -70,7 +70,7 @@
       <reference ref="Annotate"/>
       <separator/>
 
-      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction"/>
+      <action id="hg4idea.pull" class="org.zmlx.hg4idea.action.HgPullAction" icon="AllIcons.Actions.CheckOut"/>
       <reference ref="Vcs.Push"/>
       <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
