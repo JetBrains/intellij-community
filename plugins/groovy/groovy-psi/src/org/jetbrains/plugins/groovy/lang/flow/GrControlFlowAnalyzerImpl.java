@@ -571,7 +571,6 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     final GrExpression initializer = parameter.getInitializerGroovy();
     if (initializer != null) {
       initialize(parameter, initializer);
-      pop();
     }
     finishElement(parameter);
   }
