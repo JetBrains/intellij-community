@@ -21,9 +21,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
@@ -53,7 +55,7 @@ public class GitRebaseEditor extends DialogWrapper {
   /**
    * The table that lists all commits
    */
-  private JTable myCommitsTable;
+  private JBTable myCommitsTable;
   /**
    * The move up button
    */
@@ -128,9 +130,9 @@ public class GitRebaseEditor extends DialogWrapper {
       public void valueChanged(final ListSelectionEvent e) {
         myViewButton.setEnabled(myCommitsTable.getSelectedRowCount() == 1);
         final ListSelectionModel selectionModel = myCommitsTable.getSelectionModel();
-        myMoveUpButton.setEnabled( selectionModel.getMinSelectionIndex() > 0);
-        myMoveDownButton.setEnabled( selectionModel.getMaxSelectionIndex() != -1 &&
-                                     selectionModel.getMaxSelectionIndex() < myTableModel.myEntries.size() - 1);
+        myMoveUpButton.setEnabled(selectionModel.getMinSelectionIndex() > 0);
+        myMoveDownButton.setEnabled(selectionModel.getMaxSelectionIndex() != -1 &&
+                                    selectionModel.getMaxSelectionIndex() < myTableModel.myEntries.size() - 1);
       }
     });
     myViewButton.addActionListener(new ActionListener() {
@@ -152,8 +154,19 @@ public class GitRebaseEditor extends DialogWrapper {
         validateFields();
       }
     });
+
+    adjustColumnWidth(0);
+    adjustColumnWidth(1);
     init();
   }
+
+  private void adjustColumnWidth(int columnIndex) {
+    int contentWidth = myCommitsTable.getExpandedColumnWidth(columnIndex) + UIUtil.DEFAULT_HGAP;
+    TableColumn column = myCommitsTable.getColumnModel().getColumn(columnIndex);
+    column.setMaxWidth(contentWidth);
+    column.setPreferredWidth(contentWidth);
+  }
+
   /**
    * Validate fields
    */
