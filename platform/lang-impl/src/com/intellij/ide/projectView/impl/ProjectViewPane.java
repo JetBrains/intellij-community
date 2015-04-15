@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -191,7 +192,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
   }
 
-  private final class ShowExcludedFilesAction extends ToggleAction {
+  private final class ShowExcludedFilesAction extends ToggleAction implements DumbAware {
     private ShowExcludedFilesAction() {
       super(IdeBundle.message("action.show.excluded.files"), IdeBundle.message("action.show.hide.excluded.files"), null);
     }
