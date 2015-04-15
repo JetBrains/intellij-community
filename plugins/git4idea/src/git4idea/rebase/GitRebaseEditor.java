@@ -21,9 +21,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.Cell;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
+import com.intellij.util.PairFunction;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
@@ -31,6 +34,7 @@ import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -155,9 +159,21 @@ public class GitRebaseEditor extends DialogWrapper {
       }
     });
 
+    installSpeedSearch();
+
     adjustColumnWidth(0);
     adjustColumnWidth(1);
     init();
+  }
+
+  private void installSpeedSearch() {
+    new TableSpeedSearch(myCommitsTable, new PairFunction<Object, Cell, String>() {
+      @Nullable
+      @Override
+      public String fun(Object o, Cell cell) {
+        return cell.column == 0 ? null : String.valueOf(o);
+      }
+    });
   }
 
   private void adjustColumnWidth(int columnIndex) {
