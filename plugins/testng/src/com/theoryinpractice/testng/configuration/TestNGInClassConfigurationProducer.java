@@ -20,12 +20,14 @@
  */
 package com.theoryinpractice.testng.configuration;
 
+import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -98,6 +100,14 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
                                                   Ref<PsiElement> sourceElement) {
     if (RunConfigurationProducer.getInstance(TestNGPatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
+    }
+
+    final Location contextLocation = context.getLocation();
+    if (contextLocation instanceof PsiMemberParameterizedLocation) {
+      final String paramSetName = getInvocationNumber(((PsiMemberParameterizedLocation)contextLocation).getParamSetName());
+      if (paramSetName != null) {
+        configuration.setProgramParameters(paramSetName);
+      }
     }
 
     PsiClass psiClass = null;
