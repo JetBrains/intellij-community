@@ -134,6 +134,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
 
     console.switchToCommandMode();
     console.getComponent(); // For some reason console does not have component until this method is called which leads to some errros.
+    console.getConsoleEditor().getSettings().setAdditionalLinesCount(1); // to prevent PY-15583
     return console;
   }
 
@@ -163,14 +164,13 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    */
   private void switchToCommandMode() {
     // "upper" and "bottom" parts of console both need padding in command mode
-    configureLeftBorder(true, getConsoleEditor(), getHistoryViewer());
     myProcessHandler = null;
     setPrompt(getTitle() + " > ");
-
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
         notifyStateChangeListeners();
+        configureLeftBorder(true, getConsoleEditor(), getHistoryViewer());
         setLanguage(CommandLineLanguage.INSTANCE);
         final CommandLineFile file = PyUtil.as(getFile(), CommandLineFile.class);
         resetConsumer(null);
@@ -190,11 +190,11 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @param processHandler process to attach to
    */
   private void switchToProcessMode(@NotNull final ProcessHandler processHandler) {
-    configureLeftBorder(false, getConsoleEditor()); // "bottom" part of console do not need padding now because it is used for user input
     myProcessHandler = processHandler;
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
+        configureLeftBorder(false, getConsoleEditor()); // "bottom" part of console do not need padding now because it is used for user inputA
         notifyStateChangeListeners();
         resetConsumer(new ProcessModeConsumer(processHandler));
         // In process mode we do not need prompt and highlighting
