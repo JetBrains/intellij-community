@@ -39,8 +39,8 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
   @Attribute("extenderClass")
   public String extenderClassName;
 
-  private Class<?> myDomClass;
-  private DomExtender myExtender;
+  private volatile Class<?> myDomClass;
+  private volatile DomExtender myExtender;
 
   @Nullable
   public DomExtensionsRegistrarImpl extend(@NotNull final Project project,
