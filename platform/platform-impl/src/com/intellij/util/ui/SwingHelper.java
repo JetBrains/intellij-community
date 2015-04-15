@@ -556,10 +556,6 @@ public class SwingHelper {
     textFieldWithHistory.setMinimumAndPreferredWidth(0);
     if (historyProvider != null) {
       addHistoryOnExpansion(textFieldWithHistory, historyProvider);
-      final List<String> strings = historyProvider.produce();
-      if (strings.size() >= 1) {
-        textFieldWithHistory.setText(strings.get(0));
-      }
     }
     installFileCompletionAndBrowseDialog(
       project,
