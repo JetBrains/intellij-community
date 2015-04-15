@@ -40,7 +40,7 @@ public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public Info doInfo(File path, SVNRevision revision) throws SvnBindException {
+  public Info doInfo(@NotNull File path, @Nullable SVNRevision revision) throws SvnBindException {
     try {
       return Info.create(getClient().doInfo(path, revision));
     }
@@ -50,7 +50,7 @@ public class SvnKitInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public Info doInfo(@NotNull SvnTarget target, SVNRevision revision) throws SvnBindException {
+  public Info doInfo(@NotNull SvnTarget target, @Nullable SVNRevision revision) throws SvnBindException {
     assertUrl(target);
 
     try {

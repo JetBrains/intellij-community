@@ -33,9 +33,9 @@ import java.util.Collection;
  */
 public interface InfoClient extends SvnClient {
 
-  Info doInfo(File path, SVNRevision revision) throws SvnBindException;
+  Info doInfo(@NotNull File path, @Nullable SVNRevision revision) throws SvnBindException;
 
-  Info doInfo(@NotNull SvnTarget target, SVNRevision revision) throws SvnBindException;
+  Info doInfo(@NotNull SvnTarget target, @Nullable SVNRevision revision) throws SvnBindException;
 
   void doInfo(@NotNull Collection<File> paths, @Nullable InfoConsumer handler) throws SvnBindException;
 }

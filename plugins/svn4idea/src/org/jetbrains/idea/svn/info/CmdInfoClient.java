@@ -155,7 +155,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public Info doInfo(File path, SVNRevision revision) throws SvnBindException {
+  public Info doInfo(@NotNull File path, @Nullable SVNRevision revision) throws SvnBindException {
     File base = path.isDirectory() ? path : path.getParentFile();
     base = CommandUtil.correctUpToExistingParent(base);
     if (base == null) {
@@ -167,7 +167,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
   }
 
   @Override
-  public Info doInfo(@NotNull SvnTarget target, SVNRevision revision) throws SvnBindException {
+  public Info doInfo(@NotNull SvnTarget target, @Nullable SVNRevision revision) throws SvnBindException {
     assertUrl(target);
 
     CommandExecutor command = execute(myVcs, target, SvnCommandName.info, buildParameters(target, revision, Depth.EMPTY), null);

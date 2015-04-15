@@ -31,7 +31,7 @@ import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
 
@@ -52,15 +52,15 @@ import java.util.*;
 public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
-  public long doStatus(final File path,
-                       final SVNRevision revision,
-                       final Depth depth,
+  public long doStatus(@NotNull final File path,
+                       @Nullable final SVNRevision revision,
+                       @NotNull final Depth depth,
                        boolean remote,
                        boolean reportAll,
                        boolean includeIgnored,
                        boolean collectParentExternals,
-                       final StatusConsumer handler,
-                       final Collection changeLists) throws SvnBindException {
+                       @NotNull final StatusConsumer handler,
+                       @Nullable final Collection changeLists) throws SvnBindException {
     File base = path.isDirectory() ? path : path.getParentFile();
     base = CommandUtil.correctUpToExistingParent(base);
 
@@ -235,7 +235,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @Override
-  public Status doStatus(File path, boolean remote) throws SvnBindException {
+  public Status doStatus(@NotNull File path, boolean remote) throws SvnBindException {
     final Status[] svnStatus = new Status[1];
     doStatus(path, SVNRevision.UNDEFINED, Depth.EMPTY, remote, false, false, false, new StatusConsumer() {
       @Override
