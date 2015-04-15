@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,8 +83,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
 
       if (elements.length != 1) {
-        if (elements.length == 0) {
-          PsiElement element = findElementToShowUsagesOf(editor, file, editor.getCaretModel().getOffset());
+        if (elements.length == 0 && suggestCandidates(TargetElementUtilBase.findReference(editor, offset)).isEmpty()) {
+          PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
           if (element != null) {
             ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
             RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
@@ -111,7 +111,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+  public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
     PsiElement elementAt = TargetElementUtilBase.getInstance().findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED, offset);
     if (elementAt instanceof PsiNameIdentifierOwner) {
       return (PsiNameIdentifierOwner)elementAt;
@@ -184,7 +184,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return false;
   }
 
-  private static Collection<PsiElement> suggestCandidates(final PsiReference reference) {
+  @NotNull
+  private static Collection<PsiElement> suggestCandidates(@Nullable PsiReference reference) {
     if (reference == null) {
       return Collections.emptyList();
     }
