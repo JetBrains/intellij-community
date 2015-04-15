@@ -81,10 +81,17 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     list.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-          Object selected = list.getSelectedValue();
-          if (selected instanceof ProjectGroupActionGroup) {
-            ProjectGroup group = ((ProjectGroupActionGroup)selected).getGroup();
+        Object selected = list.getSelectedValue();
+        final ProjectGroup group;
+        if (selected instanceof ProjectGroupActionGroup) {
+          group = ((ProjectGroupActionGroup)selected).getGroup();
+        } else {
+          group = null;
+        }
+
+        int keyCode = e.getKeyCode();
+        if (keyCode == KeyEvent.VK_RIGHT) {
+          if (group != null) {
             if (!group.isExpanded()) {
               group.setExpanded(true);
               ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
@@ -103,6 +110,14 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
                 }
               }
             }
+          }
+        } else if (keyCode == KeyEvent.VK_LEFT ) {
+          if (group != null && group.isExpanded()) {
+            group.setExpanded(false);
+            int index = list.getSelectedIndex();
+            ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
+            RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+            list.setSelectedIndex(index);
           }
         }
       }
