@@ -37,9 +37,11 @@ import com.intellij.util.config.ToggleBooleanProperty;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
 import java.util.Map;
 
@@ -194,5 +196,10 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
     Icon icon = AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun;
     return new ToggleBooleanProperty(text, null, icon, this, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+  }
+
+  @JdkConstants.TreeSelectionMode
+  protected int getSelectionMode() {
+    return TreeSelectionModel.SINGLE_TREE_SELECTION;
   }
 }
