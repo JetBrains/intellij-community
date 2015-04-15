@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,11 @@ class FakeRerunAction extends AnAction implements DumbAware {
     if (environment != null) {
       presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", environment.getRunProfile().getName()));
       presentation.setIcon(ExecutionManagerImpl.isProcessRunning(getDescriptor(event)) ? AllIcons.Actions.Restart : environment.getExecutor().getIcon());
-      presentation.setEnabledAndVisible(isEnabled(event));
+      presentation.setEnabled(isEnabled(event));
       return;
     }
 
-    presentation.setEnabledAndVisible(false);
+    presentation.setEnabled(false);
   }
 
   @Override
