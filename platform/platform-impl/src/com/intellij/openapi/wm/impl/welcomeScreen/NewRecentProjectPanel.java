@@ -27,6 +27,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -81,13 +82,25 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-          FlatWelcomeFrame frame = UIUtil.getParentOfType(FlatWelcomeFrame.class, list);
-          if (frame != null) {
-            FocusTraversalPolicy policy = frame.getFocusTraversalPolicy();
-            if (policy != null) {
-              Component next = policy.getComponentAfter(frame, list);
-              if (next != null) {
-                next.requestFocus();
+          Object selected = list.getSelectedValue();
+          if (selected instanceof ProjectGroupActionGroup) {
+            ProjectGroup group = ((ProjectGroupActionGroup)selected).getGroup();
+            if (!group.isExpanded()) {
+              group.setExpanded(true);
+              ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
+              int index = list.getSelectedIndex();
+              RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
+              list.setSelectedIndex(index);
+            }
+          } else {
+            FlatWelcomeFrame frame = UIUtil.getParentOfType(FlatWelcomeFrame.class, list);
+            if (frame != null) {
+              FocusTraversalPolicy policy = frame.getFocusTraversalPolicy();
+              if (policy != null) {
+                Component next = policy.getComponentAfter(frame, list);
+                if (next != null) {
+                  next.requestFocus();
+                }
               }
             }
           }
