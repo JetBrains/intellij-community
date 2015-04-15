@@ -119,6 +119,12 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
         }
       }
     }
+    final String sequence = text.subSequence(i + 1, end).toString();
+    final int index = sequence.indexOf('\\');
+    if (index >= 0) {
+      document.replaceString(i + 1, end, sequence.substring(0, index));
+      return i + 1 + index;
+    }
     return CANNOT_JOIN;
   }
 

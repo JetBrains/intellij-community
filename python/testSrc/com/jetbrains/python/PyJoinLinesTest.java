@@ -138,4 +138,14 @@ public class PyJoinLinesTest extends PyTestCase {
   public void testListComprehension() {
     doTest();
   }
+
+  // PY-15564
+  public void testBackslashBetweenTargetsInImport() {
+    doTest();
+  }
+
+  // PY-15564
+  public void testBackslashBetweenTargetsInFromImport() {
+    doTest();
+  }
 }
