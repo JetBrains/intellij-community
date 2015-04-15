@@ -7,6 +7,7 @@ import org.testng.internal.IResultListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,14 +17,9 @@ import java.util.Map;
 public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener{
 
   public static final String INVOCATION_NUMBER = "invocation number: ";
-  private final String myParam;
   private String myCurrentClassName;
   private String myMethodName;
   private int    myInvocationCount = 0;
-
-  public IDEATestNGRemoteListener(String param) {
-    myParam = param;
-  }
 
   public void onConfigurationSuccess(ITestResult itr) {
     //won't be called
@@ -75,7 +71,9 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       }
     }
     if (parameters.length > 0) {
-      methodName += "[" + parameters[0].toString() + (myParam == null ? (" (" + INVOCATION_NUMBER + myInvocationCount + ")") : "") + "]";
+      final List<Integer> invocationNumbers = result.getMethod().getInvocationNumbers();
+      methodName += "[" + parameters[0].toString() + " (" + INVOCATION_NUMBER + 
+                    (invocationNumbers.isEmpty() ? myInvocationCount : invocationNumbers.get(myInvocationCount)) + ")" + "]";
       if (changeCount) {
         myInvocationCount++;
       }
