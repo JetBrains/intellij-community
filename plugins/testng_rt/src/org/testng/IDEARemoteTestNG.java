@@ -73,8 +73,8 @@ public class IDEARemoteTestNG extends TestNG {
         final HashMap<String, String> map = new HashMap<String, String>();
         map.put("count", String.valueOf(testCount));
         System.out.println(ServiceMessage.asString("testCount", map));
-        addListener((ISuiteListener) new IDEATestNGRemoteListener(myParam));
-        addListener((ITestListener)  new IDEATestNGRemoteListener(myParam));
+        addListener((ISuiteListener) new IDEATestNGRemoteListener());
+        addListener((ITestListener)  new IDEATestNGRemoteListener());
         super.run();
       }
       else {

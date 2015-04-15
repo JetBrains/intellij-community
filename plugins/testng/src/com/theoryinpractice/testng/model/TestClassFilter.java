@@ -94,7 +94,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope
             return true;
           }
 
-          return includeConfig && TestNGUtil.hasConfig(psiClass); 
+          return includeConfig && TestNGUtil.hasConfig(psiClass, TestNGUtil.CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL); 
         }
       });
     }
