@@ -76,4 +76,16 @@
     <option name="PATTERN" value="org.springsource.loaded.*" />
     <option name="ENABLED" value="true" />
   </filter>
+  <filter>
+    <option name="PATTERN" value="javassist.*" />
+    <option name="ENABLED" value="true" />
+  </filter>
+  <filter>
+    <option name="PATTERN" value="org.apache.*" />
+    <option name="ENABLED" value="true" />
+  </filter>
+  <filter>
+    <option name="PATTERN" value="com.ibm.*" />
+    <option name="ENABLED" value="true" />
+  </filter>
 </component>
