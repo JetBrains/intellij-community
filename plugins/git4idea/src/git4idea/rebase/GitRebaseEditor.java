@@ -176,6 +176,12 @@ public class GitRebaseEditor extends DialogWrapper {
     });
   }
 
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myCommitsTable;
+  }
+
   private void adjustColumnWidth(int columnIndex) {
     int contentWidth = myCommitsTable.getExpandedColumnWidth(columnIndex) + UIUtil.DEFAULT_HGAP;
     TableColumn column = myCommitsTable.getColumnModel().getColumn(columnIndex);
