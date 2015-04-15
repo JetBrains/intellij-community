@@ -64,11 +64,9 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   private String getMethodName(ITestResult result, boolean changeCount) {
     String methodName = result.getMethod().getMethodName();
     final Object[] parameters = result.getParameters();
-    if (changeCount) {
-      if (!methodName.equals(myMethodName)) {
-        myInvocationCount = 0;
-        myMethodName = methodName;
-      }
+    if (!methodName.equals(myMethodName)) {
+      myInvocationCount = 0;
+      myMethodName = methodName;
     }
     if (parameters.length > 0) {
       final List<Integer> invocationNumbers = result.getMethod().getInvocationNumbers();
