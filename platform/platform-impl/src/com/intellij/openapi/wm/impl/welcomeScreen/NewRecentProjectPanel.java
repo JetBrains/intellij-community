@@ -186,7 +186,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
         return new JPanel() {
           {
             setLayout(new BorderLayout());
-            setBackground(UIUtil.getListBackground(isSelected));
+            setBackground(back);
 
             boolean isGroup = value instanceof ProjectGroupActionGroup;
             boolean isInsideGroup = false;
