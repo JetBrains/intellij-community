@@ -21,16 +21,25 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   private String myMethodName;
   private int    myInvocationCount = 0;
 
-  public void onConfigurationSuccess(ITestResult itr) {
-    //won't be called
+  public void onConfigurationSuccess(ITestResult result) {
+    final String className = result.getTestClass().getName();
+    System.out.println("##teamcity[testSuiteStarted name=\'" + className + "\']");
+    final String methodName = result.getMethod().getMethodName();
+    System.out.println("##teamcity[testStarted name=\'" + methodName + "\']");
+    onTestSuccess(result);
+    System.out.println("\n##teamcity[testSuiteFinished name=\'" + className + "\']");
   }
 
-  public void onConfigurationFailure(ITestResult itr) {
-    //won't be called
+  public void onConfigurationFailure(ITestResult result) {
+    final String className = result.getTestClass().getName();
+    System.out.println("##teamcity[testSuiteStarted name=\'" + className + "\']");
+    final String methodName = result.getMethod().getMethodName();
+    System.out.println("##teamcity[testStarted name=\'" + methodName + "\']");
+    onTestFailure(result);
+    System.out.println("\n##teamcity[testSuiteFinished name=\'" + className + "\']");
   }
 
   public void onConfigurationSkip(ITestResult itr) {
-    //won't be called
   }
 
   public void onStart(ISuite suite) {

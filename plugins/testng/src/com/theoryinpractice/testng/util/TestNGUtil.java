@@ -90,6 +90,20 @@ public class TestNGUtil {
       AfterTest.class.getName()
   };
 
+  @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL = {
+      Configuration.class.getName(),
+      Factory.class.getName(),
+      ObjectFactory.class.getName(),
+      BeforeClass.class.getName(),
+      BeforeGroups.class.getName(),
+      BeforeSuite.class.getName(),
+      BeforeTest.class.getName(),
+      AfterClass.class.getName(),
+      AfterGroups.class.getName(),
+      AfterSuite.class.getName(),
+      AfterTest.class.getName()
+  };
+
   @NonNls
   private static final String[] CONFIG_JAVADOC_TAGS = {
       "testng.configuration",
@@ -112,19 +126,24 @@ public class TestNGUtil {
   private static final String SUITE_TAG_NAME = "suite";
 
   public static boolean hasConfig(PsiModifierListOwner element) {
+    return hasConfig(element, CONFIG_ANNOTATIONS_FQN);
+  }
+
+  public static boolean hasConfig(PsiModifierListOwner element,
+                                  String[] configAnnotationsFqn) {
     if (element instanceof PsiClass) {
       for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
-        if (isConfigMethod(method)) return true;
+        if (isConfigMethod(method, configAnnotationsFqn)) return true;
       }
     } else {
       if (!(element instanceof PsiMethod)) return false;
-      return isConfigMethod((PsiMethod)element);
+      return isConfigMethod((PsiMethod)element, configAnnotationsFqn);
     }
     return false;
   }
 
-  private static boolean isConfigMethod(PsiMethod method) {
-    for (String fqn : CONFIG_ANNOTATIONS_FQN) {
+  private static boolean isConfigMethod(PsiMethod method, String[] configAnnotationsFqn) {
+    for (String fqn : configAnnotationsFqn) {
       if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
     }
 
