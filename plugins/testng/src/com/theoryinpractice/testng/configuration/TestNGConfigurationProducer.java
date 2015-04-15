@@ -69,7 +69,7 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
     return false;
   }
   
-  protected static String getInvocationNumber(String str) {
+  public static String getInvocationNumber(String str) {
     final int indexOf = str.indexOf(IDEATestNGRemoteListener.INVOCATION_NUMBER);
     if (indexOf > 0) {
       final int lastIdx = str.indexOf(")", indexOf);
