@@ -15,49 +15,21 @@
  */
 package com.intellij.tasks.jira.jql;
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.lang.reflect.Constructor;
 
 /**
  * @author Mikhail Golubev
  */
 public class JqlElementType extends IElementType {
-  private static final Class<?>[] PARAMETER_TYPES = {ASTNode.class};
-
-  private final Class<? extends PsiElement> myClass;
-  private Constructor<? extends PsiElement> myConstructor;
 
   public JqlElementType(@NotNull @NonNls String debugName) {
-    this(debugName, ASTWrapperPsiElement.class);
-  }
-
-  public JqlElementType(@NotNull @NonNls String debugName, @NotNull Class<? extends PsiElement> cls) {
     super(debugName, JqlLanguage.INSTANCE);
-    myClass = cls;
   }
 
   @Override
   public String toString() {
     return "JQL: " + super.toString();
-  }
-
-  @NotNull
-  public PsiElement createElement(@NotNull ASTNode node) {
-    try {
-      if (myConstructor == null) {
-        myConstructor = myClass.getConstructor(PARAMETER_TYPES);
-      }
-      return myConstructor.newInstance(node);
-    }
-    catch (Exception e) {
-      throw new AssertionError(
-        String.format("Class %s must have constructor accepting single ASTNode parameter", myClass.getName()));
-    }
   }
 }
