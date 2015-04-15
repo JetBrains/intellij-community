@@ -150,11 +150,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
 
-    String parameters = getConfiguration().getProgramParameters();
-    if (!StringUtil.isEmptyOrSpaces(parameters)) {
-      javaParameters.getProgramParametersList().add("@name" + parameters);
-    }
-
     final StringBuilder buf = new StringBuilder();
     collectListeners(javaParameters, buf, IDEAJUnitListener.EP_NAME, "\n");
     if (buf.length() > 0) {

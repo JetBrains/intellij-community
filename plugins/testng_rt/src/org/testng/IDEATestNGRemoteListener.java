@@ -15,7 +15,15 @@ import java.util.Map;
  */
 public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener{
 
+  public static final String INVOCATION_NUMBER = "invocation number: ";
+  private final String myParam;
   private String myCurrentClassName;
+  private String myMethodName;
+  private int    myInvocationCount = 0;
+
+  public IDEATestNGRemoteListener(String param) {
+    myParam = param;
+  }
 
   public void onConfigurationSuccess(ITestResult itr) {
     //won't be called
@@ -46,17 +54,31 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       }
       System.out.println("##teamcity[testSuiteStarted name =\'" + className + "\']");
       myCurrentClassName = className;
+      myInvocationCount = 0;
     }
-    String methodName = getMethodName(result);
+    String methodName = getMethodName(result, false);
     System.out.println("##teamcity[testStarted name=\'" +
                        methodName + "\' locationHint=\'java:test://" + className + "." + methodName + "\']");
   }
 
-  private static String getMethodName(ITestResult result) {
+  private String getMethodName(ITestResult result) {
+    return getMethodName(result, true);
+  }
+
+  private String getMethodName(ITestResult result, boolean changeCount) {
     String methodName = result.getMethod().getMethodName();
     final Object[] parameters = result.getParameters();
+    if (changeCount) {
+      if (!methodName.equals(myMethodName)) {
+        myInvocationCount = 0;
+        myMethodName = methodName;
+      }
+    }
     if (parameters.length > 0) {
-      methodName += "[" + parameters[0].toString() + "]";
+      methodName += "[" + parameters[0].toString() + (myParam == null ? (" (" + INVOCATION_NUMBER + myInvocationCount + ")") : "") + "]";
+      if (changeCount) {
+        myInvocationCount++;
+      }
     }
     return methodName;
   }
@@ -77,13 +99,14 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     final Throwable ex = result.getThrowable();
     final String trace = getTrace(ex);
     final Map<String, String> attrs = new HashMap<String, String>();
-    attrs.put("name", getMethodName(result));
+    final String methodName = getMethodName(result);
+    attrs.put("name", methodName);
     final String failureMessage = ex.getMessage();
     attrs.put("message", failureMessage != null ? failureMessage : "");
     attrs.put("details", trace);
     attrs.put("error", "true");
     System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
-    System.out.println("##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
+    System.out.println("##teamcity[testFinished name=\'" + methodName + "\']");
   }
 
   public void onTestSkipped(ITestResult result) {

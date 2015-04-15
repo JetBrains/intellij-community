@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.JavaPsiFacade;
@@ -195,6 +196,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
     configureClasspath(javaParameters);
+
+    if (!StringUtil.isEmptyOrSpaces(parameters)) {
+      javaParameters.getProgramParametersList().add("@name" + parameters);
+    }
+
     return javaParameters;
   }
 

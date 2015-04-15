@@ -83,11 +83,11 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
       String file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
       assertEquals("p\n" +
                    "MODULE_1\n" +
-                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
+                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T1\n" +
                    "MODULE_2\n" +
-                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
+                   "IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T2\n", file);
 
@@ -99,11 +99,11 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
       file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
       assertEquals("p\n" +
                    "MODULE_1\n" +
-                   "IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
+                   "IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T1\n" +
                    "MODULE_2\n" +
-                   "IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/annotations.jar;IDEA_HOME/java/mockJDK-1.7/jre/lib/rt.jar\n" +
+                   "IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T2\n", file);
     }
@@ -133,7 +133,7 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
   private Module setupModule(String moduleName, final String className) throws IOException {
     final VirtualFile root1 = myFixture.getTempDirFixture().findOrCreateDir(moduleName);
     final Module module = PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), moduleName, root1);
-    PsiTestUtil.removeAllRoots(module, IdeaTestUtil.getMockJdk17());
+    PsiTestUtil.removeAllRoots(module, IdeaTestUtil.getMockJdk18());
     PsiTestUtil.addSourceRoot(module, root1, true);
     myFixture.addFileToProject(moduleName + "/p/" + className + ".java",
                                "package p;\n" +
