@@ -25,6 +25,8 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -44,7 +46,7 @@ import java.util.List;
  * Represents a test result tree node.
  * Not thread-safe. All methods should be called in EDT only.
  *
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
  */
 public class SMTestProxy extends AbstractTestProxy {
   private static final Logger LOG = Logger.getInstance(SMTestProxy.class.getName());
@@ -69,7 +71,7 @@ public class SMTestProxy extends AbstractTestProxy {
 
   private boolean myIsEmptyIsCached = false; // is used for separating unknown and unset values
   private boolean myIsEmpty = true;
-  private TestLocationProvider myLocator = null;
+  private SMTestLocator myLocator = null;
   private Printer myPreferredPrinter = null;
 
   public SMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl) {
@@ -83,8 +85,27 @@ public class SMTestProxy extends AbstractTestProxy {
     myPreservePresentableName = preservePresentableName;
   }
 
-  public void setLocator(@NotNull TestLocationProvider locator) {
-    myLocator = locator;
+  public void setLocator(@NotNull SMTestLocator testLocator) {
+    myLocator = testLocator;
+  }
+
+  /** @deprecated use {@link #setLocator(SMTestLocator)} (to be removed in IDEA 16) */
+  @SuppressWarnings("deprecation")
+  public void setLocator(@NotNull final TestLocationProvider locator) {
+    class Adapter implements SMTestLocator, PossiblyDumbAware {
+      @NotNull
+      @Override
+      public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+        return locator.getLocation(protocol, path, project);
+      }
+
+      @Override
+      public boolean isDumbAware() {
+        return DumbService.isDumbAware(locator);
+      }
+    }
+
+    myLocator = new Adapter();
   }
 
   public void setPreferredPrinter(@NotNull Printer preferredPrinter) {
@@ -105,7 +126,6 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public int getMagnitude() {
     // Is used by some of Tests Filters
-
     //WARN: It is Hack, see PoolOfTestStates, API is necessary
     return getMagnitudeInfo().getValue();
   }
@@ -244,15 +264,17 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @Nullable
-  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
+  public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     //determines location of test proxy
     if (myLocationUrl != null && myLocator != null) {
       String protocolId = VirtualFileManager.extractProtocol(myLocationUrl);
       if (protocolId != null) {
         String path = VirtualFileManager.extractPath(myLocationUrl);
-        List<Location> locations = myLocator.getLocation(protocolId, path, project);
-        if (!locations.isEmpty()) {
-          return locations.get(0);
+        if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+          List<Location> locations = myLocator.getLocation(protocolId, path, project, searchScope);
+          if (!locations.isEmpty()) {
+            return locations.get(0);
+          }
         }
       }
     }
@@ -261,14 +283,14 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @Nullable
-  public Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties) {
+  public Navigatable getDescriptor(@Nullable Location location, @NotNull TestConsoleProperties properties) {
     // by location gets navigatable element.
     // It can be file or place in file (e.g. when OPEN_FAILURE_LINE is enabled)
     if (location == null) return null;
 
-    final String stacktrace = myStacktrace;
-    if (stacktrace != null && (testConsoleProperties instanceof SMStacktraceParser) && isLeaf()) {
-      final Navigatable result = ((SMStacktraceParser)testConsoleProperties).getErrorNavigatable(location.getProject(), stacktrace);
+    String stacktrace = myStacktrace;
+    if (stacktrace != null && properties instanceof SMStacktraceParser && isLeaf()) {
+      Navigatable result = ((SMStacktraceParser)properties).getErrorNavigatable(location.getProject(), stacktrace);
       if (result != null) {
         return result;
       }

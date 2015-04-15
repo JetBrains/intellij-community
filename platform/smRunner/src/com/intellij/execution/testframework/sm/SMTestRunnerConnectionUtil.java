@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.Location;
 import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.process.ProcessAdapter;
@@ -29,11 +30,19 @@ import com.intellij.execution.testframework.sm.runner.ui.*;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Roman Chernyatchik
@@ -98,15 +107,14 @@ public class SMTestRunnerConnectionUtil {
   public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                           @NotNull TestConsoleProperties consoleProperties,
                                                                           ExecutionEnvironment environment,
-                                                                          @Nullable TestLocationProvider locator) {
-    CompositeTestLocationProvider provider = new CompositeTestLocationProvider(locator);
-    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, provider, false, null);
+                                                                          @SuppressWarnings("deprecation") @Nullable TestLocationProvider locator) {
+    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, environment, locator, false, null);
   }
 
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                     @NotNull TestConsoleProperties consoleProperties,
                                                                     ExecutionEnvironment environment,
-                                                                    @Nullable TestLocationProvider locator,
+                                                                    @SuppressWarnings("deprecation") @Nullable TestLocationProvider locator,
                                                                     boolean idBasedTreeConstruction,
                                                                     @Nullable TestProxyFilterProvider filterProvider) {
     String splitterPropertyName = getSplitterPropertyName(testFrameworkName);
@@ -122,7 +130,7 @@ public class SMTestRunnerConnectionUtil {
 
   public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView,
                                      @NotNull final String testFrameworkName,
-                                     @Nullable final TestLocationProvider locator,
+                                     @SuppressWarnings("deprecation") @Nullable final TestLocationProvider locator,
                                      final boolean idBasedTreeConstruction,
                                      @Nullable final TestProxyFilterProvider filterProvider) {
     consoleView.addAttachToProcessListener(new AttachToProcessListener() {
@@ -132,13 +140,27 @@ public class SMTestRunnerConnectionUtil {
         if (filterProvider != null) {
           printerProvider = new TestProxyPrinterProvider(consoleView, filterProvider);
         }
+
+        TestConsoleProperties properties = consoleView.getProperties();
+
+        SMTestLocator testLocator = null;
+        if (properties instanceof SMTRunnerConsoleProperties) {
+          testLocator = ((SMTRunnerConsoleProperties)properties).getTestLocator();
+        }
+        if (testLocator != null) {
+          testLocator = new CombinedTestLocator(testLocator);  // new API in action
+        }
+        else {
+          testLocator = new CompositeTestLocationProvider(locator);  // legacy mode
+        }
+
         SMTestRunnerResultsForm resultsForm = consoleView.getResultsViewer();
-        attachEventsProcessors(consoleView.getProperties(),
+        attachEventsProcessors(properties,
                                resultsForm,
                                resultsForm.getStatisticsPane(),
                                processHandler,
                                testFrameworkName,
-                               locator,
+                               testLocator,
                                idBasedTreeConstruction,
                                printerProvider);
       }
@@ -163,7 +185,7 @@ public class SMTestRunnerConnectionUtil {
                                                        StatisticsPanel statisticsPane,
                                                        ProcessHandler processHandler,
                                                        @NotNull String testFrameworkName,
-                                                       @Nullable TestLocationProvider locator,
+                                                       @Nullable SMTestLocator locator,
                                                        boolean idBasedTreeConstruction,
                                                        @Nullable TestProxyPrinterProvider printerProvider) {
     // build messages consumer
@@ -230,6 +252,28 @@ public class SMTestRunnerConnectionUtil {
     });
 
     return processHandler;
+  }
+
+  private static class CombinedTestLocator implements SMTestLocator, DumbAware {
+    private final SMTestLocator myLocator;
+
+    public CombinedTestLocator(SMTestLocator locator) {
+      myLocator = locator;
+    }
+
+    @NotNull
+    @Override
+    public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+      if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
+        return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
+      }
+      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+        return myLocator.getLocation(protocol, path, project, scope);
+      }
+      else {
+        return Collections.emptyList();
+      }
+    }
   }
 
   /** @deprecated use {@link #createAndAttachConsole(String, ProcessHandler, TestConsoleProperties, ExecutionEnvironment)} (to be removed in IDEA 16) */

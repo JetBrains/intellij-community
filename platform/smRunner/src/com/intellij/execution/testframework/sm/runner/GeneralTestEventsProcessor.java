@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * Processes events of test runner in general text-based form.
@@ -48,6 +46,17 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
         return true;
       }
     }, getDisposedCondition(), 300);
+
+
+  // tree construction events
+
+  public void onSuiteTreeNodeAdded(String testName, String locationHint) { }
+
+  public void onSuiteTreeStarted(String suiteName, String locationHint) { }
+
+  public void onSuiteTreeEnded(String suiteName) { }
+
+  // progress events
 
   public abstract void onStartTesting();
 
@@ -73,7 +82,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   public abstract void onFinishTesting();
 
-  // Custom progress statistics
+  // custom progress statistics
 
   /**
    * @param categoryName If isn't empty then progress statistics will use only custom start/failed events.
@@ -90,7 +99,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   public abstract void onTestsReporterAttached();
 
-  public abstract void setLocator(@NotNull TestLocationProvider locator);
+  public abstract void setLocator(@NotNull SMTestLocator locator);
 
   public abstract void addEventsListener(@NotNull SMTRunnerEventsListener viewer);
 
@@ -124,12 +133,4 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
       myTransferToEDTQueue.offer(runnable);
     }
   }
-
-  //tree construction events
-
-  public void onSuiteTreeNodeAdded(String testName, String locationHint) {}
-
-  public void onSuiteTreeStarted(String suiteName, String locationHint) {}
-
-  public void onSuiteTreeEnded(String suiteName) {}
 }

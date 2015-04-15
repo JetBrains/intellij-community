@@ -714,9 +714,6 @@
     <projectService serviceInterface="com.intellij.openapi.graph.impl.builder.GraphEditModeFactory"
                     serviceImplementation="com.intellij.openapi.graph.impl.builder.GraphEditModeFactoryImpl"/>
 
-    <!-- SM Test runner tests locations -->
-    <testSrcLocator implementation="com.intellij.execution.testframework.sm.FileUrlProvider"/>
-
     <dynamicContextProvider implementation="com.intellij.openapi.paths.GenericDynamicContextProvider"/>
 
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GeneralCodeStyleSettingsProvider"/>

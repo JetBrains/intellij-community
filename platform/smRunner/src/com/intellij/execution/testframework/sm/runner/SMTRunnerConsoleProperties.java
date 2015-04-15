@@ -162,4 +162,9 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   public boolean fixEmptySuite() {
     return false;
   }
+
+  @Nullable
+  public SMTestLocator getTestLocator() {
+    return null;
+  }
 }
