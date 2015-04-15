@@ -80,6 +80,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myProject;
   }
 
+  @NotNull
   public GlobalSearchScope getScope() {
     if (myScope == null) {
       myScope = initScope();
@@ -87,6 +88,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myScope;
   }
 
+  @NotNull
   protected GlobalSearchScope initScope() {
     RunConfiguration configuration = getConfiguration();
     if (!(configuration instanceof ModuleRunProfile)) {

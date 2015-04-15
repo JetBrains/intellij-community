@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
@@ -161,7 +160,7 @@ public class TestProxy extends AbstractTestProxy {
     return !isNotPassed();
   }
 
-  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
+  public Location getLocation(@NotNull final Project project, @NotNull GlobalSearchScope searchScope) {
     if (psiElement == null) return null;
     final PsiElement element = psiElement.getElement();
     if (element == null) return null;
@@ -169,7 +168,7 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   @Nullable
-  public Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties) {
+  public Navigatable getDescriptor(@Nullable Location location, @NotNull TestConsoleProperties properties) {
     if (location == null) return null;
     return EditSourceUtil.getDescriptor(location.getPsiElement());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -53,12 +53,15 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     return JavaExecutionUtil.findMainClass(getProject(), qualifiedName, getSearchScope());
   }
 
+  @NotNull
   public GlobalSearchScope getSearchScope() {
-    final Module module = getModule();
+    Module module = getModule();
     if (module != null) {
       return myClassesInLibraries ? module.getModuleRuntimeScope(true) : GlobalSearchScope.moduleWithDependenciesScope(module);
     }
-    return myClassesInLibraries ? GlobalSearchScope.allScope(getProject()) : GlobalSearchScope.projectScope(getProject());
+    else {
+      return myClassesInLibraries ? GlobalSearchScope.allScope(getProject()) : GlobalSearchScope.projectScope(getProject());
+    }
   }
 
   public static Collection<Module> getModulesForClass(@NotNull final Project project, final String className) {
@@ -68,7 +71,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
 
     final Set<Module> modules = new THashSet<Module>();
     for (PsiClass aClass : possibleClasses) {
-      Module module = ModuleUtil.findModuleForPsiElement(aClass);
+      Module module = ModuleUtilCore.findModuleForPsiElement(aClass);
       if (module != null) {
         modules.add(module);
       }
@@ -79,7 +82,7 @@ public class JavaRunConfigurationModule extends RunConfigurationModule {
     else {
       final Set<Module> result = new HashSet<Module>();
       for (Module module : modules) {
-        ModuleUtil.collectModulesDependsOn(module, result);
+        ModuleUtilCore.collectModulesDependsOn(module, result);
       }
       return result;
     }
