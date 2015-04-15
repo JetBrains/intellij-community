@@ -90,7 +90,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               ListModel model = ((NameFilteringListModel)list.getModel()).getOriginalModel();
               int index = list.getSelectedIndex();
               RecentProjectsWelcomeScreenActionBase.rebuildRecentProjectDataModel((DefaultListModel)model);
-              list.setSelectedIndex(index);
+              list.setSelectedIndex(group.getProjects().isEmpty() ? index : index + 1);
             }
           } else {
             FlatWelcomeFrame frame = UIUtil.getParentOfType(FlatWelcomeFrame.class, list);
