@@ -124,10 +124,16 @@ public class StartupUtil {
     if (!"true".equals(System.getProperty("idea.no.jre.check"))) {
       try {
         // try to find a class from tools.jar
-        Class.forName("com.sun.jdi.Field");
+        Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
       }
       catch (ClassNotFoundException e) {
         String message = "'tools.jar' seems to be not in " + ApplicationNamesInfo.getInstance().getProductName() + " classpath.\n" +
+                         "Please ensure JAVA_HOME points to JDK rather than JRE.";
+        Main.showMessage("JDK Required", message, true);
+        return false;
+      }
+      catch (LinkageError e) {
+        String message = "Cannot load a class from 'tools.jar': " + e.getMessage() + "\n" +
                          "Please ensure JAVA_HOME points to JDK rather than JRE.";
         Main.showMessage("JDK Required", message, true);
         return false;

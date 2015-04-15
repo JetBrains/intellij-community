@@ -52,7 +52,7 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
       }
       catch (Exception e) {
         LOG.error(e);
-        return null;
+        return registrar;
       }
     }
 
@@ -67,7 +67,7 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
       }
       catch (Exception e) {
         LOG.error(e);
-        return null;
+        return registrar;
       }
     }
 
