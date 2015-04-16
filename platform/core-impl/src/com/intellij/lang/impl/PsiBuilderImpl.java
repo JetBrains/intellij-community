@@ -217,7 +217,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       ProgressIndicatorProvider.checkCanceled();
 
-      if (!doLexingOptimizationCorrectionCheck) {
+      //noinspection ConstantConditions
+      if (!doLexingOptimizationCorrectionCheck && lexemeCount != -1) {
         myLexStarts = lexStarts;
         myLexTypes = lexTypes;
         myLexemeCount = lexemeCount;
@@ -272,16 +273,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     clearCachedTokenType();
 
     //noinspection ConstantConditions
-    if (doLexingOptimizationCorrectionCheck) {
-      if (lexemeCount != -1) {
-        assert lexemeCount == myLexemeCount;
-        for(int j = 0; j < lexemeCount; ++j) {
-          if (myLexStarts[j] != lexStarts[j] || myLexTypes[j] != lexTypes[j]) {
-            assert false;
-          }
+    if (doLexingOptimizationCorrectionCheck && lexemeCount != -1) {
+      assert lexemeCount == myLexemeCount;
+      for(int j = 0; j < lexemeCount; ++j) {
+        if (myLexStarts[j] != lexStarts[j] || myLexTypes[j] != lexTypes[j]) {
+          assert false;
         }
-        assert myLexStarts[lexemeCount] == lexStarts[lexemeCount];
       }
+      assert myLexStarts[lexemeCount] == lexStarts[lexemeCount];
     }
   }
 

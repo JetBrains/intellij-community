@@ -16,6 +16,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,8 @@ public class LocalsControlFlowPolicy implements ControlFlowPolicy {
     }
     if (codeFragment == null) return null;
     if (myCodeFragment.getContainingFile() == codeFragment.getContainingFile() &&  // in order for jsp includes to work
-        !myCodeFragment.equals(codeFragment) && !(myCodeFragment.getParent() instanceof PsiLambdaExpression)) {
+        !myCodeFragment.equals(codeFragment) &&
+        !(myCodeFragment.getParent() instanceof PsiLambdaExpression && codeFragment.equals(PsiTreeUtil.getParentOfType(myCodeFragment, PsiCodeBlock.class)))) {
       return null;
     }
     return (PsiVariable)refElement;

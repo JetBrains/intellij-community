@@ -269,7 +269,7 @@ public class InferenceSession {
         }
 
         if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints)) {
-          return prepareSubstitution();
+          return prepareSubstitution().putAll(retrieveNonPrimitiveEqualsBounds(myInferenceVariables));
         }
       }
     }
