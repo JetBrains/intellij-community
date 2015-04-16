@@ -445,7 +445,9 @@ public class TestNGUtil {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               if (filter.isAccepted(psiClass)) {
-                indicator.setText2("Found test class " + psiClass.getQualifiedName());
+                if (indicator != null) {
+                  indicator.setText2("Found test class " + psiClass.getQualifiedName());
+                }
                 set.add(psiClass);
               }
             }
