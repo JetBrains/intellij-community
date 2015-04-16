@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,19 +107,19 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   protected void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
     final String workingDirectory = myConfiguration.getWorkingDirectory();
     if (!StringUtil.isEmptyOrSpaces(workingDirectory)) {
-      cmd.setWorkDirectory(workingDirectory);
+      cmd.withWorkDirectory(workingDirectory);
     }
     else if (myConfiguration instanceof AbstractPythonTestRunConfiguration) {
       final String folderName = ((AbstractPythonTestRunConfiguration)myConfiguration).getFolderName();
       if (!StringUtil.isEmptyOrSpaces(folderName)) {
-        cmd.setWorkDirectory(folderName);
+        cmd.withWorkDirectory(folderName);
       }
       else {
         final String scriptName = ((AbstractPythonTestRunConfiguration)myConfiguration).getScriptName();
         if (StringUtil.isEmptyOrSpaces(scriptName)) return;
         final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(scriptName);
         if (script == null) return;
-        cmd.setWorkDirectory(script.getParent().getPath());
+        cmd.withWorkDirectory(script.getParent().getPath());
       }
     }
   }
@@ -146,7 +146,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     });
     }
 
-    executionResult.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction(getEnvironment()));
+    executionResult.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction());
     return executionResult;
   }
 
