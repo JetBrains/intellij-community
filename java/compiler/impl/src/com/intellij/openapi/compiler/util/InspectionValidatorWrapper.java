@@ -28,7 +28,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.editor.Document;
@@ -261,7 +260,7 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   private boolean checkUnderReadAction(final PsiFile file, final CompileContext context, final Computable<Map<ProblemDescriptor, HighlightDisplayLevel>> runnable) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    return DumbService.getInstance(context.getProject()).runReadActionInSmartMode(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         if (!file.isValid()) return false;
