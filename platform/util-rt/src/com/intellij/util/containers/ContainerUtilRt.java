@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class ContainerUtilRt {
       throw new IllegalArgumentException(keys + " should have same length as " + values);
     }
 
-    Map<K, V> map = newHashMap();
+    Map<K, V> map = newHashMap(keys.size());
     for (int i = 0; i < keys.size(); ++i) {
       map.put(keys.get(i), values.get(i));
     }
@@ -68,10 +68,10 @@ public class ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K,V> newHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>[] entries) {
-    Map<K, V> map = newHashMap();
+  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>... entries) {
+    Map<K, V> map = newHashMap(entries.length + 1);
     map.put(first.getFirst(), first.getSecond());
-    for (Pair<K, V> entry : entries) {
+    for (Pair<K, ? extends V> entry : entries) {
       map.put(entry.getFirst(), entry.getSecond());
     }
     return map;
