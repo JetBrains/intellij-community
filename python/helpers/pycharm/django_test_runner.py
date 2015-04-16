@@ -12,10 +12,16 @@ if hasattr(settings, "TEST_RUNNER") and "NoseTestSuiteRunner" in settings.TEST_R
 
 from django.test.testcases import TestCase
 from django import VERSION
-try:
-  from django.utils import unittest
-except ImportError:
+
+# See: https://docs.djangoproject.com/en/1.8/releases/1.7/#django-utils-unittest
+# django.utils.unittest provided uniform access to the unittest2 library on all Python versions.
+# Since unittest2 became the standard library's unittest module in Python 2.7,
+# and Django 1.7 drops support for older Python versions, this module isn't useful anymore.
+# It has been deprecated. Use unittest instead.
+if VERSION[1] >= 7:
   import unittest
+else:
+  from django.utils import unittest
 
 def get_test_suite_runner():
   if hasattr(settings, "TEST_RUNNER"):
