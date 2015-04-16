@@ -40,6 +40,9 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testLambdaReturnExpressions1() { doTest(); }
   public void testPreventBadReturnTypeInReturnExpression() { doTest(); }
   public void testExpectedTypeByNestedArrayInitializer() { doTest(); }
+  public void testCastToPrimitive() throws Exception {
+    doTest();
+  }
 
   private void doTest() {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
