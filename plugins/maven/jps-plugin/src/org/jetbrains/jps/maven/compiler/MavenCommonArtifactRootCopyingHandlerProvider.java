@@ -18,6 +18,7 @@ package org.jetbrains.jps.maven.compiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -58,8 +59,7 @@ public class MavenCommonArtifactRootCopyingHandlerProvider extends ArtifactRootC
         projectConfiguration.moduleConfigurations.get(getModuleName(artifact.getName()));
       if (moduleResourceConfiguration != null && moduleResourceConfiguration.manifest != null) {
         try {
-          final String manifest =
-            StringUtil.unescapeXml(moduleResourceConfiguration.manifest).replaceAll("\n\r|\n|\r", "\r\n") + "\r\n\r\n";
+          final String manifest = new String(Base64.decode(moduleResourceConfiguration.manifest));
           FileUtil.writeToFile(root, manifest);
         }
         catch (IOException e) {
