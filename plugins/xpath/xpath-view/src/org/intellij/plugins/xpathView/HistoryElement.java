@@ -68,4 +68,9 @@ public final class HistoryElement implements Copyable<HistoryElement> {
     public HistoryElement changeExpression(String expression) {
         return new HistoryElement(expression, variables, namespaces);
     }
+
+    @Override
+    public String toString() {
+        return expression;
+    }
 }
