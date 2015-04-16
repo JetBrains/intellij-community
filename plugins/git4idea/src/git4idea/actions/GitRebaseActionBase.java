@@ -112,7 +112,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
         messageId = "rebase.result.success";
         break;
       default:
-        messageId = null;
+        throw new IllegalStateException("Unsupported rebase result: " + result.status);
     }
 
     String title = GitBundle.message(messageId + ".title");
