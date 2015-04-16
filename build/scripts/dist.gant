@@ -84,7 +84,7 @@ target('default': 'The default target') {
 
   indexSearchableOptions()
 
-  layoutAll([buildNumber: "IC-$snapshot",
+  layoutAll([buildNumber: snapshot,
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
             home, null, paths, true)
@@ -100,7 +100,7 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
 
   indexSearchableOptions()
 
-  layoutAll([buildNumber: "IC-$snapshot",
+  layoutAll([buildNumber: snapshot,
              system_selector: "IdeaIC${p("component.version.major")}",
              tools_jar: true],
              home, null, paths)
@@ -120,16 +120,20 @@ private void indexSearchableOptions() {
 
 def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps = false) {
   Paths paths = _paths != null ? _paths : new Paths(out)
-
-  wireBuildDate(args.buildNumber, appInfoFile())
-  ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
+  def fullBuildNumber = "IC-${args.buildNumber}"
+  wireBuildDate(fullBuildNumber, appInfoFile())
+  ant.echo(message: fullBuildNumber, file: "$paths.distAll/build.txt")
 
   def layouts = includeFile("$home/build/scripts/layouts.gant")
   LayoutInfo info = layouts.layoutFull(home, paths.distAll, null)
   layouts.layout_core(home, paths.artifacts_core)
+  ant.zip(destfile: "${paths.artifacts}/intellij-core-${args.buildNumber}.zip") {
+    fileset(dir: paths.artifacts_core)
+  }
+
   notifyArtifactBuilt(paths.artifacts_core)
   if (buildJps) {
-    layouts.layoutJps(home, paths.artifacts_jps, args.buildNumber, {})
+    layouts.layoutJps(home, paths.artifacts_jps, fullBuildNumber, {})
     notifyArtifactBuilt(paths.artifacts_jps)
   }
 
@@ -151,16 +155,16 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   layoutMac(args, home, paths)
   layoutUnix(args, home, paths)
 
-  buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin])
+  buildWinZip("$paths.artifacts/idea${fullBuildNumber}.win.zip", [paths.distAll, paths.distWin])
 
   def macAppRoot = isEap() ?
                    "IntelliJ IDEA ${p("component.version.major")} CE EAP.app/Contents" :
                    "IntelliJ IDEA ${p("component.version.major")} CE.app/Contents"
 
-  String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
+  String macZip = "$paths.artifacts/idea${fullBuildNumber}.mac.zip"
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
 
-  buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}.tar", [paths.distAll, paths.distUnix])
+  buildTarGz("idea-${fullBuildNumber}", "$paths.artifacts/idea${fullBuildNumber}.tar", [paths.distAll, paths.distUnix])
   return info
 }
 
