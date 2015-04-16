@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class InferenceSession {
   private final Set<ConstraintFormula> myConstraintsCopy = new HashSet<ConstraintFormula>();
 
   private PsiSubstitutor mySiteSubstitutor;
-  private PsiManager myManager;
+  private final PsiManager myManager;
   private int myConstraintIdx = 0;
   
   private boolean myErased = false;
@@ -72,7 +72,7 @@ public class InferenceSession {
   private final PsiElement myContext;
 
   private PsiSubstitutor myInferenceSubstitution = PsiSubstitutor.EMPTY;
-  private Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<PsiElement, InferenceSession>();
+  private final Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<PsiElement, InferenceSession>();
   public void registerNestedSession(InferenceSession session) {
     propagateVariables(session.getInferenceVariables());
     myNestedSessions.put(session.getContext(), session);

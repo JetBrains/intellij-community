@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ public class ExtractLightMethodObjectHandler {
   private static final Logger LOG = Logger.getInstance("#" + ExtractLightMethodObjectHandler.class.getName());
 
   public static class ExtractedData {
-    private String myGeneratedCallText;
-    private PsiClass myGeneratedInnerClass;
+    private final String myGeneratedCallText;
+    private final PsiClass myGeneratedInnerClass;
     private final PsiElement myAnchor;
 
     public ExtractedData(String generatedCallText, PsiClass generatedInnerClass, PsiElement anchor) {

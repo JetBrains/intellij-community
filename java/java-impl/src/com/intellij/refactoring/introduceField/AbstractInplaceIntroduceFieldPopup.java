@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,9 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
   protected final PsiClass myParentClass;
   protected final OccurrenceManager myOccurrenceManager;
 
-  private SmartPsiElementPointer<PsiElement> myAnchorElement;
+  private final SmartPsiElementPointer<PsiElement> myAnchorElement;
   private int myAnchorIdx = -1;
-  private SmartPsiElementPointer<PsiElement> myAnchorElementIfAll;
+  private final SmartPsiElementPointer<PsiElement> myAnchorElementIfAll;
   private int myAnchorIdxIfAll = -1;
 
   private final SmartPointerManager mySmartPointerManager;

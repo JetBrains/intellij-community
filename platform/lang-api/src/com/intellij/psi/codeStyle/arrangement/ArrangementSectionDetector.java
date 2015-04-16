@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,10 +91,10 @@ public class ArrangementSectionDetector {
   }
 
   public static class ArrangementSectionEntryTemplate {
-    private PsiElement myElement;
-    private ArrangementSettingsToken myToken;
-    private TextRange myTextRange;
-    private String myText;
+    private final PsiElement myElement;
+    private final ArrangementSettingsToken myToken;
+    private final TextRange myTextRange;
+    private final String myText;
 
     public ArrangementSectionEntryTemplate(@NotNull PsiElement element,
                                            @NotNull ArrangementSettingsToken token,

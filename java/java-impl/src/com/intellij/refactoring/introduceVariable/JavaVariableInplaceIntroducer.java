@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,15 +65,15 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   private SmartPsiElementPointer<PsiDeclarationStatement> myPointer;
 
   private JCheckBox myCanBeFinalCb;
-  private IntroduceVariableSettings mySettings;
-  private SmartPsiElementPointer<PsiElement> myChosenAnchor;
+  private final IntroduceVariableSettings mySettings;
+  private final SmartPsiElementPointer<PsiElement> myChosenAnchor;
   private final boolean myCantChangeFinalModifier;
-  private boolean myHasTypeSuggestion;
+  private final boolean myHasTypeSuggestion;
   private ResolveSnapshotProvider.ResolveSnapshot myConflictResolver;
-  private TypeExpression myExpression;
-  private boolean myReplaceSelf;
+  private final TypeExpression myExpression;
+  private final boolean myReplaceSelf;
   private boolean myDeleteSelf = true;
-  private boolean mySkipTypeExpressionOnStart;
+  private final boolean mySkipTypeExpressionOnStart;
 
   public JavaVariableInplaceIntroducer(final Project project,
                                        IntroduceVariableSettings settings, PsiElement chosenAnchor, final Editor editor,

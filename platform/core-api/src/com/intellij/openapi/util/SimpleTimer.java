@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class SimpleTimer {
   private TimerTask myNextProcessingTask;
 
   private final Map<Long, ArrayList<SimpleTimerTask>> myTime2Task = new TreeMap<Long, ArrayList<SimpleTimerTask>>();
-  private String myThreadName;
+  private final String myThreadName;
 
   private SimpleTimer(@NotNull String threadName) {
     myThreadName = threadName;

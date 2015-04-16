@@ -28,7 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class InlineCallFix extends InspectionGadgetsFix {
-  private String myName;
+  private final String myName;
 
   public InlineCallFix(String name) {
     myName = name;

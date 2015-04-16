@@ -168,7 +168,7 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
   }
 
   private class MyOptions {
-    private JBList myAdditionalLocalesList;
+    private final JBList myAdditionalLocalesList;
 
     public MyOptions() {
       myAdditionalLocalesList = new JBList(new MyListModel());
