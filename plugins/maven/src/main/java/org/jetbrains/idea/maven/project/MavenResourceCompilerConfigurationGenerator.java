@@ -23,6 +23,9 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -222,8 +225,9 @@ public class MavenResourceCompilerConfigurationGenerator {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       try {
         manifest.write(outputStream);
-        resourceConfig.manifest = outputStream.toString("UTF8");
-
+        MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
+        final String resolvedText = MavenPropertyResolver.resolve(outputStream.toString("UTF8"), domModel);
+        resourceConfig.manifest = StringUtil.escapeXml(resolvedText);
       }
       finally {
         StreamUtil.closeStream(outputStream);
