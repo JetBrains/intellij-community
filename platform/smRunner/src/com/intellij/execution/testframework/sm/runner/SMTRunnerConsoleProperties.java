@@ -40,12 +40,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
  */
 public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
   private final RunConfiguration myConfiguration;
-  protected final CompositeFilter myCustomFilter;
-  private final boolean myPrintTestingStartedTime;
+  private final CompositeFilter myCustomFilter;
+  private boolean myIdBasedTestTree = false;
+  private boolean myPrintTestingStartedTime = true;
 
   /**
    * @param config
@@ -53,22 +54,19 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    * @param executor
    */
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NotNull String testFrameworkName, @NotNull Executor executor) {
-    this(config, testFrameworkName, executor, true);
+    super(getStorage(testFrameworkName), config.getProject(), executor);
+    myConfiguration = config;
+    myCustomFilter = new CompositeFilter(config.getProject());
   }
 
-  /**
-   * @param config
-   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
-   * @param executor
-   */
+  /** @deprecated {@use #setPrintTestingStartedTime} (to be removed in IDEA 16) */
+  @SuppressWarnings("unused")
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config,
                                     @NotNull String testFrameworkName,
                                     @NotNull Executor executor,
                                     boolean printTestingStartedTime) {
-    super(getStorage(testFrameworkName), config.getProject(), executor);
-    myConfiguration = config;
-    myCustomFilter = new CompositeFilter(config.getProject());
-    myPrintTestingStartedTime = printTestingStartedTime;
+    this(config, testFrameworkName, executor);
+    setPrintTestingStartedTime(printTestingStartedTime);
   }
 
   @NotNull
@@ -76,12 +74,25 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     return new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance());
   }
 
+  @Override
   public RunConfiguration getConfiguration() {
     return myConfiguration;
   }
 
+  public boolean isIdBasedTestTree() {
+    return myIdBasedTestTree;
+  }
+
+  public void setIdBasedTestTree(boolean idBasedTestTree) {
+    myIdBasedTestTree = idBasedTestTree;
+  }
+
   public boolean isPrintTestingStartedTime() {
     return myPrintTestingStartedTime;
+  }
+
+  public void setPrintTestingStartedTime(boolean printTestingStartedTime) {
+    myPrintTestingStartedTime = printTestingStartedTime;
   }
 
   @Override
@@ -165,6 +176,11 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
   @Nullable
   public SMTestLocator getTestLocator() {
+    return null;
+  }
+
+  @Nullable
+  public TestProxyFilterProvider getFilterProvider() {
     return null;
   }
 }
