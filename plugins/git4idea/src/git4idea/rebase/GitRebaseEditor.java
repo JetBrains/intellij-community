@@ -22,7 +22,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Cell;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
@@ -131,6 +133,14 @@ public class GitRebaseEditor extends DialogWrapper {
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION);
     actionColumn.setCellEditor(new DefaultCellEditor(editorComboBox));
     actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
+
+    myCommitsTable.setDefaultRenderer(String.class, new ColoredTableCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        append(value.toString());
+        SpeedSearchUtil.applySpeedSearchHighlighting(myCommitsTable, this, true, selected);
+      }
+    });
 
     myCommitsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
