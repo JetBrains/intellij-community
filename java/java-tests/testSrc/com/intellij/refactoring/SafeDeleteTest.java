@@ -149,6 +149,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("A");
   }
 
+  public void testSafeDeleteImports() throws Exception {
+    doTest("B");
+  }
+
   public void testRemoveOverridersInspiteOfUnsafeUsages() throws Exception {
     try {
       BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
