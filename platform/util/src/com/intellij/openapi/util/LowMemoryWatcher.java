@@ -21,6 +21,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
+import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
@@ -66,6 +67,21 @@ public class LowMemoryWatcher {
       }
     }
   };
+  private static final NotificationListener ourLowMemoryListener = new NotificationListener() {
+    @Override
+    public void handleNotification(Notification n, Object hb) {
+      if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(n.getType()) ||
+          MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(n.getType())) {
+        synchronized (ourJanitor) {
+          if (!ourSubmitted) {
+            //noinspection AssignmentToStaticFieldFromInstanceMethod
+            ourSubmitted = true;
+            ourExecutor.submit(ourJanitor);
+          }
+        }
+      }
+    }
+  };
 
   private final Runnable myRunnable;
 
@@ -79,20 +95,7 @@ public class LowMemoryWatcher {
         }
       }
     }
-    ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(new NotificationListener() {
-      @Override
-      public void handleNotification(Notification n, Object hb) {
-        if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(n.getType()) || MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(n.getType())) {
-          synchronized (ourJanitor) {
-            if (!ourSubmitted) {
-              //noinspection AssignmentToStaticFieldFromInstanceMethod
-              ourSubmitted = true;
-              ourExecutor.submit(ourJanitor);
-            }
-          }
-        }
-      }
-    }, null, null);
+    ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(ourLowMemoryListener, null, null);
   }
 
   /**
@@ -135,6 +138,12 @@ public class LowMemoryWatcher {
   public static void stopAll() {
     ourExecutor.shutdown();
     ourInstances.clear();
+    try {
+      ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).removeNotificationListener(ourLowMemoryListener);
+    }
+    catch (ListenerNotFoundException e) {
+      LOG.error(e);
+    }
   }
 
 }
