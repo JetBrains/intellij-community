@@ -96,6 +96,11 @@ PluginManager = None
 if SUPPORT_PLUGINS:
     from pydevd_plugin_utils import PluginManager
 
+if IS_PY3K:
+    import pkgutil
+else:
+    from _pydev_imps import _pydev_pkgutil_old as pkgutil
+
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
 
@@ -1684,8 +1689,27 @@ class PyDB:
         from pydev_monkey import patch_thread_modules
         patch_thread_modules()
 
+    def get_fullname(self, mod_name):
+        try:
+            loader = pkgutil.get_loader(mod_name)
+        except:
+            return None
+        if loader is not None:
+            for attr in ("get_filename", "_get_filename"):
+                meth = getattr(loader, attr, None)
+                if meth is not None:
+                    return meth(mod_name)
+        return None
 
-    def run(self, file, globals=None, locals=None, set_trace=True):
+    def run(self, file, globals=None, locals=None, module=False, set_trace=True):
+        if module:
+            filename = self.get_fullname(file)
+            if filename is None:
+                sys.stderr.write("No module named %s\n" % file)
+                return
+            else:
+                file = filename
+
         if os.path.isdir(file):
             new_target = os.path.join(file, '__main__.py')
             if os.path.isfile(new_target):
@@ -1773,6 +1797,7 @@ def processCommandLine(argv):
     setup['save-signatures'] = False
     setup['print-in-debugger-startup'] = False
     setup['cmd-line'] = False
+    setup['module'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
@@ -1816,6 +1841,9 @@ def processCommandLine(argv):
         elif (argv[i] == '--cmd-line'):
             del argv[i]
             setup['cmd-line'] = True
+        elif (argv[i] == '--module'):
+            del argv[i]
+            setup['module'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
     return setup
@@ -2256,6 +2284,7 @@ if __name__ == '__main__':
         pass  # It's ok not having stackless there...
 
     debugger = PyDB()
+    is_module = setup['module']
 
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")
@@ -2270,7 +2299,7 @@ if __name__ == '__main__':
         sys.argv.insert(4, '--max_module_instances=1')
 
         # Run the dev_appserver
-        debugger.run(setup['file'], None, None, set_trace=False)
+        debugger.run(setup['file'], None, None, is_module, set_trace=False)
     else:
         # as to get here all our imports are already resolved, the psyco module can be
         # changed and we'll still get the speedups in the debugger, as those functions
@@ -2303,7 +2332,7 @@ if __name__ == '__main__':
 
         connected = True  # Mark that we're connected when started from inside ide.
 
-        globals = debugger.run(setup['file'], None, None)
+        globals = debugger.run(setup['file'], None, None, is_module)
 
         if setup['cmd-line']:
             debugger.wait_for_commands(globals)
