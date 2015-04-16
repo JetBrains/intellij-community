@@ -189,6 +189,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testAcceptInferredVariablesBeforeAdditionalConstraintsLeadToFail() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(false);
   }
