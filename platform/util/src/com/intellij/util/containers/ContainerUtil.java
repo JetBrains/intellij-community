@@ -2358,6 +2358,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap() {
+    //noinspection deprecation
+    return new ConcurrentWeakKeyWeakValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors(), ContainerUtil.<K>canonicalStrategy());
+  }
+
+  @NotNull
+  @Contract(pure=true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentSoftValueMap() {
     //noinspection deprecation
     return new ConcurrentSoftValueHashMap<K, V>();
