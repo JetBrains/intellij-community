@@ -580,6 +580,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFromLambdaBodyToAnonymous() throws Exception {
+    doTest();
+  }
+
   public void testFromLambdaBodyWithReturn() throws Exception {
     doTest();
   }
