@@ -64,6 +64,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
@@ -764,12 +765,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     final MyDiffAction diffAction = new MyDiffAction();
     result.add(diffAction);
     if (!popup) {
-      diffAction.registerCustomShortcutSet(new CustomShortcutSet(
-        CommonShortcuts.getDiff().getShortcuts() [0],
-        CommonShortcuts.DOUBLE_CLICK_1.getShortcuts() [0]), myDualView.getFlatView());
-      diffAction.registerCustomShortcutSet(new CustomShortcutSet(
-        CommonShortcuts.getDiff().getShortcuts() [0],
-        CommonShortcuts.DOUBLE_CLICK_1.getShortcuts() [0]), myDualView.getTreeView());
+      List<Shortcut> shortcuts = new SmartList<Shortcut>();
+      ContainerUtil.addAll(shortcuts, CommonShortcuts.getDiff().getShortcuts());
+      ContainerUtil.addAll(shortcuts, CommonShortcuts.DOUBLE_CLICK_1.getShortcuts());
+      CustomShortcutSet shortcutSet = new CustomShortcutSet(ContainerUtil.toArray(shortcuts, new Shortcut[shortcuts.size()]));
+
+      diffAction.registerCustomShortcutSet(shortcutSet, myDualView.getFlatView());
+      diffAction.registerCustomShortcutSet(shortcutSet, myDualView.getTreeView());
     }
     else {
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), this);
