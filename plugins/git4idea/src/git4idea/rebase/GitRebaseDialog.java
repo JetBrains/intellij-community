@@ -33,6 +33,7 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.GitReferenceValidator;
 import git4idea.util.GitUIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -160,6 +161,12 @@ public class GitRebaseDialog extends DialogWrapper {
     setupBranches();
     setupStrategy();
     validateFields();
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myOntoComboBox;
   }
 
   public GitLineHandler handler() {
