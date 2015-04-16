@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -91,6 +90,20 @@ public class TestNGUtil {
       AfterTest.class.getName()
   };
 
+  @SuppressWarnings("deprecation") public static final String[] CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL = {
+      Configuration.class.getName(),
+      Factory.class.getName(),
+      ObjectFactory.class.getName(),
+      BeforeClass.class.getName(),
+      BeforeGroups.class.getName(),
+      BeforeSuite.class.getName(),
+      BeforeTest.class.getName(),
+      AfterClass.class.getName(),
+      AfterGroups.class.getName(),
+      AfterSuite.class.getName(),
+      AfterTest.class.getName()
+  };
+
   @NonNls
   private static final String[] CONFIG_JAVADOC_TAGS = {
       "testng.configuration",
@@ -113,19 +126,24 @@ public class TestNGUtil {
   private static final String SUITE_TAG_NAME = "suite";
 
   public static boolean hasConfig(PsiModifierListOwner element) {
+    return hasConfig(element, CONFIG_ANNOTATIONS_FQN);
+  }
+
+  public static boolean hasConfig(PsiModifierListOwner element,
+                                  String[] configAnnotationsFqn) {
     if (element instanceof PsiClass) {
       for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
-        if (isConfigMethod(method)) return true;
+        if (isConfigMethod(method, configAnnotationsFqn)) return true;
       }
     } else {
       if (!(element instanceof PsiMethod)) return false;
-      return isConfigMethod((PsiMethod)element);
+      return isConfigMethod((PsiMethod)element, configAnnotationsFqn);
     }
     return false;
   }
 
-  private static boolean isConfigMethod(PsiMethod method) {
-    for (String fqn : CONFIG_ANNOTATIONS_FQN) {
+  private static boolean isConfigMethod(PsiMethod method, String[] configAnnotationsFqn) {
+    for (String fqn : configAnnotationsFqn) {
       if (AnnotationUtil.isAnnotated(method, fqn, false)) return true;
     }
 
@@ -191,21 +209,29 @@ public class TestNGUtil {
     if (element instanceof PsiClass) {
       PsiClass psiClass = (PsiClass) element;
       for (PsiMethod method : psiClass.getAllMethods()) {
-        if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION_FQN, false, true)) return true;
+        PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, TEST_ANNOTATION_FQN);
+        if (annotation != null) {
+          if (checkDisabled) {
+            if (isDisabled(annotation)) continue;
+          }
+          return true;
+        }
         if (AnnotationUtil.isAnnotated(method, FACTORY_ANNOTATION_FQN, false, true)) return true;
         if (hasTestJavaDoc(method, checkJavadoc)) return true;
       }
-      return AnnotationUtil.isAnnotated(element, TEST_ANNOTATION_FQN, true, true);
+      return false;
     } else if (element instanceof PsiMethod) {
       //if it's a method, we check if the class it's in has a global @Test annotation
       PsiClass psiClass = ((PsiMethod)element).getContainingClass();
       if (psiClass != null) {
-        if (AnnotationUtil.isAnnotated(psiClass, TEST_ANNOTATION_FQN, true, true)) {
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiClass, true, TEST_ANNOTATION_FQN);
+        if (annotation != null) {
+          if (checkDisabled && isDisabled(annotation)) return false;
           //even if it has a global test, we ignore private methods
           boolean isPrivate = element.hasModifierProperty(PsiModifier.PRIVATE);
           return !isPrivate && !element.hasModifierProperty(PsiModifier.STATIC) && !hasConfig(element);
         }
-        if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;
+        else if (hasTestJavaDoc(psiClass, checkJavadoc)) return true;
       }
     }
     return false;

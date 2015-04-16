@@ -105,6 +105,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
   private final Set<PropertiesFile> myBackSlashPressed     = new THashSet<PropertiesFile>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final PropertiesAnchorizer myPropertiesAnchorizer;
 
   private JPanel              myValuesPanel;
   private JPanel              myStructureViewPanel;
@@ -131,7 +132,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myResourceBundle = resourceBundle;
     myPropertiesInsertDeleteManager = ResourceBundlePropertiesInsertManagerImpl.create(resourceBundle);
 
-    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this);
+    myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
+    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
     myStructureViewPanel.setLayout(new BorderLayout());
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
 
@@ -284,10 +286,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     while (!toCheck.isEmpty()) {
       TreeElement element = toCheck.pop();
       PsiElement value = element instanceof ResourceBundlePropertyStructureViewElement
-                     ? ((ResourceBundlePropertyStructureViewElement)element).getValue()
+                     ? ((ResourceBundlePropertyStructureViewElement)element).getProperty().getPsiElement()
                      : null;
       if (value instanceof IProperty && propertyName.equals(((IProperty)value).getUnescapedKey())) {
-        myStructureViewComponent.select(value, true);
+        final PropertiesAnchorizer.PropertyAnchor anchor = myPropertiesAnchorizer.get((IProperty)value);
+        myStructureViewComponent.select(anchor, true);
         selectionChanged();
         return;
       }
@@ -361,7 +364,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             }
           }
         });
-
       }
     });
   }
@@ -596,11 +598,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
       @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-           final PsiFile file = event.getFile();
-        PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
-        if (propertiesFile == null) return;
-        if (!propertiesFile.getResourceBundle().equals(myResourceBundle)) return;
-        updateEditorsFromProperties();
+        //   final PsiFile file = event.getFile();
+        //PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+        //if (propertiesFile == null) return;
+        //if (!propertiesFile.getResourceBundle().equals(myResourceBundle)) return;
+        //updateEditorsFromProperties();
       }
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeAdapter, this);
@@ -693,10 +695,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     final ResourceBundleFileStructureViewElement root =
       (ResourceBundleFileStructureViewElement)myStructureViewComponent.getTreeModel().getRoot();
-    final Map<String, IProperty> propertiesMap =
-      ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete());
+    final Set<String> propertyKeys = ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete()).keySet();
     final boolean isAlphaSorted = myStructureViewComponent.isActionActive(Sorter.ALPHA_SORTER_ID);
-    final List<String> keysOrder = new ArrayList<String>(propertiesMap.keySet());
+    final List<String> keysOrder = new ArrayList<String>(propertyKeys);
     if (isAlphaSorted) {
       Collections.sort(keysOrder);
     }

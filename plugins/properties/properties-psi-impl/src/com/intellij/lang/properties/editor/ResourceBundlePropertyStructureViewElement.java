@@ -41,7 +41,7 @@ import java.awt.*;
 
 public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final ResourceBundle myResourceBundle;
-  private final IProperty myProperty;
+  @NotNull private final PropertiesAnchorizer.PropertyAnchor myAnchor;
   private String myPresentableName;
 
   private static final TextAttributesKey INCOMPLETE_PROPERTY_KEY;
@@ -64,18 +64,18 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     INCOMPLETE_GROUP_KEY = TextAttributesKey.createTextAttributesKey("INCOMPLETE_GROUP_KEY", incompleteGroupKeyTextAttribute);
   }
 
-  public ResourceBundlePropertyStructureViewElement(final ResourceBundle resourceBundle, final IProperty property) {
+  public ResourceBundlePropertyStructureViewElement(final ResourceBundle resourceBundle, final @NotNull PropertiesAnchorizer.PropertyAnchor anchor) {
     myResourceBundle = resourceBundle;
-    myProperty = property;
+    myAnchor = anchor;
   }
 
   public IProperty getProperty() {
-    return myProperty;
+    return getValue().getRepresentative();
   }
 
   @Override
   public PsiElement[] getPsiElements() {
-    return new PsiElement[] {getValue()};
+    return new PsiElement[] {getProperty().getPsiElement()};
   }
 
   public void setPresentableName(final String presentableName) {
@@ -83,8 +83,8 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   @Override
-  public PsiElement getValue() {
-    return myProperty.getPsiElement();
+  public PropertiesAnchorizer.PropertyAnchor getValue() {
+    return myAnchor;
   }
 
   @Override
@@ -99,7 +99,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {
-        return myPresentableName == null ? myProperty.getName() : myPresentableName.isEmpty() ? PROPERTY_GROUP_KEY_TEXT : myPresentableName;
+        return myPresentableName == null ? getProperty().getName() : myPresentableName.isEmpty() ? PROPERTY_GROUP_KEY_TEXT : myPresentableName;
       }
 
       @Override
@@ -115,11 +115,11 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
       @Override
       public TextAttributesKey getTextAttributesKey() {
         if (myPresentableName != null && myPresentableName.isEmpty()) {
-          return PropertiesUtil.isPropertyComplete(myResourceBundle, myProperty.getName())
+          return PropertiesUtil.isPropertyComplete(myResourceBundle, getProperty().getName())
                  ? GROUP_KEY
                  : INCOMPLETE_GROUP_KEY;
         }
-        return PropertiesUtil.isPropertyComplete(myResourceBundle, myProperty.getName())
+        return PropertiesUtil.isPropertyComplete(myResourceBundle, getProperty().getName())
                ? PropertiesHighlighter.PROPERTY_KEY
                : INCOMPLETE_PROPERTY_KEY;
       }

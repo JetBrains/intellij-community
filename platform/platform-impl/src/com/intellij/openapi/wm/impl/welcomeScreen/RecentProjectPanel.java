@@ -235,7 +235,8 @@ public class RecentProjectPanel extends JPanel {
       boolean myIsEngaged = false;
       @Override
       public void mouseMoved(MouseEvent e) {
-        if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (myIsEngaged && !UIUtil.isSelectionButtonDown(e) && !(focusOwner instanceof JRootPane)) {
           Point point = e.getPoint();
           int index = myList.locationToIndex(point);
           myList.setSelectedIndex(index);

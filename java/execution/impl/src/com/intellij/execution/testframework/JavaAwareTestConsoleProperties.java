@@ -30,6 +30,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreeSelectionModel;
 import java.util.Collection;
 
 public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters> extends SMTRunnerConsoleProperties {
@@ -46,6 +47,11 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   @Override
   public T getConfiguration() {
     return (T)super.getConfiguration();
+  }
+
+  @Override
+  protected int getSelectionMode() {
+    return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
   }
 
   @Override
