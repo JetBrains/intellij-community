@@ -70,13 +70,6 @@ public class DfaPsiUtil {
       return Nullness.UNKNOWN;
     }
 
-    if (NullableNotNullManager.isNullable(owner)) {
-      return Nullness.NULLABLE;
-    }
-    if (NullableNotNullManager.isNotNull(owner)) {
-      return Nullness.NOT_NULL;
-    }
-
     if (resultType != null) {
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(owner.getProject());
       for (PsiAnnotation annotation : resultType.getAnnotations()) {
@@ -93,6 +86,13 @@ public class DfaPsiUtil {
           return Nullness.NOT_NULL;
         }
       }
+    }
+
+    if (NullableNotNullManager.isNullable(owner)) {
+      return Nullness.NULLABLE;
+    }
+    if (NullableNotNullManager.isNotNull(owner)) {
+      return Nullness.NOT_NULL;
     }
 
     return Nullness.UNKNOWN;

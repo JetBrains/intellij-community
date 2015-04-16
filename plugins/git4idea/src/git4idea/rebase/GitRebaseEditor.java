@@ -17,12 +17,12 @@ package git4idea.rebase;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Cell;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
@@ -31,10 +31,8 @@ import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
-import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
-import git4idea.util.StringScanner;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,8 +44,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -81,45 +78,21 @@ public class GitRebaseEditor extends DialogWrapper {
    * Table model
    */
   private final MyTableModel myTableModel;
-  /**
-   * The file name
-   */
-  private final String myFile;
-  /**
-   * The project
-   */
-  private final Project myProject;
-  /**
-   * The git root
-   */
-  private final VirtualFile myGitRoot;
-  /**
-   * The cygwin drive prefix
-   */
-  @NonNls private static final String CYGDRIVE_PREFIX = "/cygdrive/";
 
   /**
    * The constructor
    *
    * @param project the project
    * @param gitRoot the git root
-   * @param file    the file to edit
+   * @param entries    the file to edit
    * @throws IOException if file could not be loaded
    */
-  protected GitRebaseEditor(final Project project, final VirtualFile gitRoot, String file) throws IOException {
+  protected GitRebaseEditor(final Project project, final VirtualFile gitRoot, List<GitRebaseEntry> entries) throws IOException {
     super(project, true);
-    myProject = project;
-    myGitRoot = gitRoot;
     setTitle(GitBundle.getString("rebase.editor.title"));
     setOKButtonText(GitBundle.getString("rebase.editor.button"));
 
-    if (SystemInfo.isWindows && file.startsWith(CYGDRIVE_PREFIX)) {
-      final int prefixSize = CYGDRIVE_PREFIX.length();
-      file = file.substring(prefixSize, prefixSize + 1) + ":" + file.substring(prefixSize + 1);
-    }
-    myFile = file;
-    myTableModel = new MyTableModel();
-    myTableModel.load(file);
+    myTableModel = new MyTableModel(entries);
     myCommitsTable.setModel(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     myCommitsTable.setIntercellSpacing(JBUI.emptySize());
@@ -131,6 +104,14 @@ public class GitRebaseEditor extends DialogWrapper {
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION);
     actionColumn.setCellEditor(new DefaultCellEditor(editorComboBox));
     actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
+
+    myCommitsTable.setDefaultRenderer(String.class, new ColoredTableCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        append(value.toString());
+        SpeedSearchUtil.applySpeedSearchHighlighting(myCommitsTable, this, true, selected);
+      }
+    });
 
     myCommitsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
@@ -216,15 +197,6 @@ public class GitRebaseEditor extends DialogWrapper {
   }
 
   /**
-   * Save entries back to the file
-   *
-   * @throws IOException if there is IO problem with saving
-   */
-  public void save() throws IOException {
-    myTableModel.save(myFile);
-  }
-
-  /**
    * {@inheritDoc}
    */
   protected JComponent createCenterPanel() {
@@ -247,13 +219,9 @@ public class GitRebaseEditor extends DialogWrapper {
     return "reference.VersionControl.Git.RebaseCommits";
   }
 
-  /**
-   * Cancel rebase
-   *
-   * @throws IOException if file cannot be reset to empty one
-   */
-  public void cancel() throws IOException {
-    myTableModel.cancel(myFile);
+  @NotNull
+  public List<GitRebaseEntry> getEntries() {
+    return myTableModel.myEntries;
   }
 
 
@@ -274,11 +242,12 @@ public class GitRebaseEditor extends DialogWrapper {
      */
     private static final int SUBJECT = 2;
 
-    /**
-     * The entries
-     */
-    final List<GitRebaseEntry> myEntries = new ArrayList<GitRebaseEntry>();
+    @NotNull private final List<GitRebaseEntry> myEntries;
     private int[] myLastEditableSelectedRows = new int[]{};
+
+    MyTableModel(@NotNull List<GitRebaseEntry> entries) {
+      myEntries = entries;
+    }
 
     /**
      * {@inheritDoc}
@@ -357,7 +326,7 @@ public class GitRebaseEditor extends DialogWrapper {
     }
 
     private void setSelection(ContiguousIntIntervalTracker intervalBuilder) {
-      myCommitsTable.getSelectionModel().setSelectionInterval( intervalBuilder.getMin() , intervalBuilder.getMax() );
+      myCommitsTable.getSelectionModel().setSelectionInterval(intervalBuilder.getMin(), intervalBuilder.getMax());
     }
 
     private void setRowAction(Object aValue, int rowIndex, int columnIndex) {
@@ -374,66 +343,6 @@ public class GitRebaseEditor extends DialogWrapper {
       myLastEditableSelectedRows = myCommitsTable.getSelectedRows();
       return columnIndex == ACTION;
     }
-
-    /**
-     * Load data from the file
-     *
-     * @param file the file to load
-     * @throws IOException if file could not be loaded
-     */
-    public void load(final String file) throws IOException {
-      String encoding = GitConfigUtil.getLogEncoding(myProject, myGitRoot);
-      final StringScanner s = new StringScanner(FileUtil.loadFile(new File(file), encoding));
-      while (s.hasMoreData()) {
-        if (s.isEol() || s.startsWith('#') || s.startsWith("noop")) {
-          s.nextLine();
-          continue;
-        }
-        String action = s.spaceToken();
-        String hash = s.spaceToken();
-        String comment = s.line();
-        myEntries.add(new GitRebaseEntry(action, hash, comment));
-      }
-    }
-
-    /**
-     * Save text to the file
-     *
-     * @param file the file to save to
-     * @throws IOException if there is IO problem
-     */
-    public void save(final String file) throws IOException {
-      String encoding = GitConfigUtil.getLogEncoding(myProject, myGitRoot);
-      PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), encoding));
-      try {
-        for (GitRebaseEntry e : myEntries) {
-          if (e.getAction() != GitRebaseEntry.Action.skip) {
-            out.println(e.getAction().toString() + " " + e.getCommit() + " " + e.getSubject());
-          }
-        }
-      }
-      finally {
-        out.close();
-      }
-    }
-
-    /**
-     * Save text to the file
-     *
-     * @param file the file to save to
-     * @throws IOException if there is IO problem
-     */
-    public void cancel(final String file) throws IOException {
-      PrintWriter out = new PrintWriter(new FileWriter(file));
-      try {
-        //noinspection HardCodedStringLiteral
-        out.println("# rebase is cancelled");
-      }
-      finally {
-        out.close();
-      }
-    }
-
 
     public void moveRows(int[] rows, MoveDirection direction) {
 

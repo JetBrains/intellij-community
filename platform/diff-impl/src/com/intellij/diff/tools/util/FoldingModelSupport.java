@@ -161,15 +161,18 @@ public class FoldingModelSupport {
 
     private void addRange(int[] starts, int[] ends) {
       List<FoldedBlock> result = new ArrayList<FoldedBlock>(3);
+      int[] rangeStarts = new int[myCount];
+      int[] rangeEnds = new int[myCount];
+
       for (int number = 0; ; number++) {
         int shift = getRangeShift(mySettings.range, number);
         if (shift == -1) break;
 
         for (int i = 0; i < myCount; i++) {
-          starts[i] = bound(starts[i] + shift, i);
-          ends[i] = bound(ends[i] - shift, i);
+          rangeStarts[i] = bound(starts[i] + shift, i);
+          rangeEnds[i] = bound(ends[i] - shift, i);
         }
-        ContainerUtil.addAllNotNull(result, createRange(starts, ends, myExpandSuggester.isExpanded(starts, ends)));
+        ContainerUtil.addAllNotNull(result, createRange(rangeStarts, rangeEnds, myExpandSuggester.isExpanded(rangeStarts, rangeEnds)));
       }
 
       if (result.size() > 0) {
@@ -700,20 +703,17 @@ public class FoldingModelSupport {
   //
 
   /*
-   * number:
-   * 0: unchanged -> first folding
-   * 1: first folding-> second folding
-   * ...
-   * -1 - end
+   * number - depth of folding insertion (from zero)
+   * return: number of context lines. ('-1' - end)
    */
   private static int getRangeShift(int range, int number) {
     switch (number) {
       case 0:
         return range;
       case 1:
-        return range;
-      case 2:
         return range * 2;
+      case 2:
+        return range * 4;
       default:
         return -1;
     }

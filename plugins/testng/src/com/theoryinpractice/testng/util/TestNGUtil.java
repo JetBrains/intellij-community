@@ -436,7 +436,7 @@ public class TestNGUtil {
       public void run() {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-        final Collection<PsiClass> set = new HashSet<PsiClass>();
+        final Collection<PsiClass> set = new LinkedHashSet<PsiClass>();
         PsiManager manager = PsiManager.getInstance(filter.getProject());
         GlobalSearchScope scope = filter.getScope();
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
@@ -445,7 +445,9 @@ public class TestNGUtil {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
               if (filter.isAccepted(psiClass)) {
-                indicator.setText2("Found test class " + psiClass.getQualifiedName());
+                if (indicator != null) {
+                  indicator.setText2("Found test class " + psiClass.getQualifiedName());
+                }
                 set.add(psiClass);
               }
             }

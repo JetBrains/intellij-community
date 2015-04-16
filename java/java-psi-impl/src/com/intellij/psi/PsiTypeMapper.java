@@ -42,7 +42,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
     PsiType mappedComponent = mapType(componentType);
     if (mappedComponent == null) return null;
     if (mappedComponent == componentType) return type;
-    return new PsiArrayType(mappedComponent);
+    return new PsiArrayType(mappedComponent, type.getAnnotations());
   }
 
   @Override
@@ -51,7 +51,7 @@ public abstract class PsiTypeMapper extends PsiTypeVisitorEx<PsiType> {
     PsiType mappedComponent = mapType(componentType);
     if (mappedComponent == null) return null;
     if (mappedComponent == componentType) return type;
-    return new PsiEllipsisType(mappedComponent);
+    return new PsiEllipsisType(mappedComponent, type.getAnnotations());
   }
 
   @Override

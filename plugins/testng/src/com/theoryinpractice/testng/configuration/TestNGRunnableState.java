@@ -18,9 +18,7 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
@@ -76,10 +74,10 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
-    final OSProcessHandler handler = super.startProcess();
-    createSearchingForTestsTask().attachTaskToProcess(handler);
-
-    return handler;
+    final OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine());
+    ProcessTerminatedListener.attach(processHandler);
+    createSearchingForTestsTask().attachTaskToProcess(processHandler);
+    return processHandler;
   }
 
   @NotNull

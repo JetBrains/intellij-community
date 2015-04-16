@@ -270,7 +270,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     @Override
     public void setItem(Object anObject) {
       if (anObject != null) {
-        EditorComboBox.this.setText((String)anObject);
+        EditorComboBox.this.setText(anObject.toString());
       } else {
         EditorComboBox.this.setText("");
       }

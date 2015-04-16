@@ -17,10 +17,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.ParametersList;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.segments.DeferredActionsQueue;
 import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
@@ -33,8 +30,7 @@ import com.intellij.execution.junit2.ui.model.CompletionEvent;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.model.RootTestInfo;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
@@ -173,7 +169,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (executionResult != null) {
       return executionResult;
     }
-    final JUnitProcessHandler handler = createHandler(executor);
+    final JUnitProcessHandler handler = createJUnitHandler(executor);
     final RunnerSettings runnerSettings = getRunnerSettings();
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
@@ -284,7 +280,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @NotNull
-  protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
+  protected JUnitProcessHandler createJUnitHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
     final String repeatMode = getConfiguration().getRepeatMode();
     if (!RepeatCount.ONCE.equals(repeatMode)) {
@@ -295,6 +291,27 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       getJavaParameters().getProgramParametersList().add(countString);
     }
     return JUnitProcessHandler.runCommandLine(createCommandLine());
+  }
+
+  @NotNull
+  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+    appendForkInfo(executor);
+    final String repeatMode = getConfiguration().getRepeatMode();
+    if (!RepeatCount.ONCE.equals(repeatMode)) {
+      final int repeatCount = getConfiguration().getRepeatCount();
+      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
+                                 ? RepeatCount.getCountString(repeatCount)
+                                 : repeatMode;
+      getJavaParameters().getProgramParametersList().add(countString);
+    }
+
+    final OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine());
+    ProcessTerminatedListener.attach(processHandler);
+    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
+    if (searchForTestsTask != null) {
+      searchForTestsTask.attachTaskToProcess(processHandler);
+    }
+    return processHandler;
   }
 
   @NotNull

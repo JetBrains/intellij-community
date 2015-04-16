@@ -60,8 +60,8 @@ public class TestPackage extends TestObject {
 
   @NotNull
   @Override
-  protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
-    final JUnitProcessHandler handler = super.createHandler(executor);
+  protected JUnitProcessHandler createJUnitHandler(Executor executor) throws ExecutionException {
+    final JUnitProcessHandler handler = super.createJUnitHandler(executor);
     createSearchingForTestsTask().attachTaskToProcess(handler);
     return handler;
   }

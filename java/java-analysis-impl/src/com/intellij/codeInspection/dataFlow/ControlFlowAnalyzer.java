@@ -212,7 +212,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void flushArrayElementsOnUnknownIndexAssignment(PsiExpression lExpr) {
     if (lExpr instanceof PsiArrayAccessExpression &&
-        myFactory.createValue(lExpr) == null // check for unknown index, otherwise AssignInstruction will flush only that element
+        !(myFactory.createValue(lExpr) instanceof DfaVariableValue) // check for unknown index, otherwise AssignInstruction will flush only that element
       ) {
       DfaValue arrayVar = myFactory.createValue(((PsiArrayAccessExpression)lExpr).getArrayExpression());
       if (arrayVar instanceof DfaVariableValue) {

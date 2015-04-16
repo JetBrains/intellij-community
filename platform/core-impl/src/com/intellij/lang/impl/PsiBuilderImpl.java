@@ -133,7 +133,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @Nullable ASTNode originalTree,
                         @Nullable MyTreeStructure parentLightTree) {
     this(project, containingFile, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer, charTable, text,
-         originalTree, parentLightTree, 0);
+         originalTree, parentLightTree, null);
   }
 
   public PsiBuilderImpl(Project project,
@@ -145,7 +145,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final CharSequence text,
                         @Nullable ASTNode originalTree,
                         @Nullable MyTreeStructure parentLightTree) {
-    this(project, containingFile, whiteSpaces, comments, lexer, charTable, text, originalTree, parentLightTree, 0);
+    this(project, containingFile, whiteSpaces, comments, lexer, charTable, text, originalTree, parentLightTree, null);
   }
 
   private PsiBuilderImpl(Project project,
@@ -157,7 +157,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final CharSequence text,
                         @Nullable ASTNode originalTree,
                         @Nullable MyTreeStructure parentLightTree,
-                        int offset) {
+                         LazyParseableToken parentToken) {
     myProject = project;
     myFile = containingFile;
 
@@ -170,9 +170,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myCharTable = charTable;
     myOriginalTree = originalTree;
     myParentLightTree = parentLightTree;
-    myOffset = offset;
+    myOffset = parentToken != null ? parentToken.getStartOffset() : 0;
 
-    cacheLexemes();
+    cacheLexemes(parentToken);
   }
 
   public PsiBuilderImpl(@NotNull final Project project,
@@ -190,10 +190,41 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                         @NotNull final LighterLazyParseableNode chameleon,
                         @NotNull final CharSequence text) {
     this(project, chameleon.getContainingFile(), parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer,
-         chameleon.getCharTable(), text, null, ((LazyParseableToken)chameleon).myParent, chameleon.getStartOffset());
+         chameleon.getCharTable(), text, null, ((LazyParseableToken)chameleon).myParent, ((LazyParseableToken)chameleon)
+         );
   }
 
-  private void cacheLexemes() {
+  private void cacheLexemes(LazyParseableToken parentToken) {
+    int[] lexStarts = null;
+    IElementType[] lexTypes = null;
+    int lexemeCount = -1;
+    boolean doLexingOptimizationCorrectionCheck = false;
+
+    if (parentToken != null) {
+      // there are two types of lazy parseable tokens out there: collapsed out of individual tokens or single token that needs to be expanded
+      // in first case parent PsiBuilder has all our text lexed so no need to do it again
+      int tokenCount = parentToken.myEndIndex - parentToken.myStartIndex;
+      if (tokenCount != 1) { // not expand single lazy parseable token case
+        lexStarts = new int[tokenCount + 1];
+        System.arraycopy(parentToken.myBuilder.myLexStarts, parentToken.myStartIndex, lexStarts, 0, tokenCount);
+        int diff = parentToken.myBuilder.myLexStarts[parentToken.myStartIndex];
+        for(int i = 0; i < tokenCount; ++i) lexStarts[i] -= diff;
+        lexStarts[tokenCount] = myText.length();
+
+        lexTypes = new IElementType[tokenCount];
+        System.arraycopy(parentToken.myBuilder.myLexTypes, parentToken.myStartIndex, lexTypes, 0, tokenCount);
+        lexemeCount = tokenCount;
+      }
+      ProgressIndicatorProvider.checkCanceled();
+
+      if (!doLexingOptimizationCorrectionCheck) {
+        myLexStarts = lexStarts;
+        myLexTypes = lexTypes;
+        myLexemeCount = lexemeCount;
+        return;
+      }
+    }
+
     int approxLexCount = Math.max(10, myText.length() / 5);
 
     myLexStarts = new int[approxLexCount];
@@ -216,7 +247,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         final IElementType tokenType = myLexer.getTokenType();
         sb.append("Token sequence broken")
           .append("\n  this: '").append(myLexer.getTokenText()).append("' (").append(tokenType).append(':')
-          .append(tokenType != null ? tokenType.getLanguage() : null).append(") ").append(tokenStart).append(":").append(myLexer.getTokenEnd());
+          .append(tokenType != null ? tokenType.getLanguage() : null).append(") ").append(tokenStart).append(":")
+          .append(myLexer.getTokenEnd());
         if (i > 0) {
           final int prevStart = myLexStarts[i - 1];
           sb.append("\n  prev: '").append(myText.subSequence(prevStart, offset)).append("' (").append(myLexTypes[i - 1]).append(':')
@@ -238,6 +270,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     myLexemeCount = i;
     clearCachedTokenType();
+
+    //noinspection ConstantConditions
+    if (doLexingOptimizationCorrectionCheck) {
+      if (lexemeCount != -1) {
+        assert lexemeCount == myLexemeCount;
+        for(int j = 0; j < lexemeCount; ++j) {
+          if (myLexStarts[j] != lexStarts[j] || myLexTypes[j] != lexTypes[j]) {
+            assert false;
+          }
+        }
+        assert myLexStarts[lexemeCount] == lexStarts[lexemeCount];
+      }
+    }
   }
 
   @Override
@@ -1215,8 +1260,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     CharSequence context =
       index < myLexStarts.length ? myText.subSequence(Math.max(0, myLexStarts[index] - 1000), myLexStarts[index]) : "<none>";
     String language = myFile != null ? myFile.getLanguage() + ", " : "";
-    LOG.error(UNBALANCED_MESSAGE + "\n" + 
-              "language: " + language + "\n" + 
+    LOG.error(UNBALANCED_MESSAGE + "\n" +
+              "language: " + language + "\n" +
               "context: '" + context + "'");
   }
 

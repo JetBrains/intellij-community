@@ -66,6 +66,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
   @SuppressWarnings("SpellCheckingInspection")
   public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
+  public static boolean isModule = false;
 
   @Override
   @NotNull
@@ -182,13 +183,36 @@ public class PyDebugRunner extends GenericProgramRunner {
                                                              final PythonCommandLineState pyState,
                                                              final int serverLocalPort) {
     return new CommandLinePatcher() {
+
+      private void patchExeParams(ParametersList parametersList) {
+        // we should remove '-m' parameter, but notify debugger of it
+        // but we can't remove one parameter from group, so we create new parameters group
+        ParamsGroup newExeParams = new ParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
+        int exeParamsIndex = parametersList.getParamsGroups().indexOf(
+          parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS));
+        ParamsGroup exeParamsOld = parametersList.removeParamsGroup(exeParamsIndex);
+        isModule = false;
+        for (String param: exeParamsOld.getParameters()) {
+          if (!param.equals("-m")) {
+            newExeParams.addParameter(param);
+          } else {
+            isModule = true;
+          }
+        }
+
+        parametersList.addParamsGroupAt(exeParamsIndex, newExeParams);
+      }
+
+
       @Override
       public void patchCommandLine(GeneralCommandLine commandLine) {
         // script name is the last parameter; all other params are for python interpreter; insert just before name
-        final ParametersList parametersList = commandLine.getParametersList();
+        ParametersList parametersList = commandLine.getParametersList();
 
         @SuppressWarnings("ConstantConditions") @NotNull
         ParamsGroup debugParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER);
+
+        patchExeParams(parametersList);
 
         @SuppressWarnings("ConstantConditions") @NotNull
         ParamsGroup exeParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
@@ -216,6 +240,10 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (pyState.isMultiprocessDebug()) {
       //noinspection SpellCheckingInspection
       debugParams.addParameter("--multiproc");
+    }
+
+    if (isModule) {
+      debugParams.addParameter("--module");
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {

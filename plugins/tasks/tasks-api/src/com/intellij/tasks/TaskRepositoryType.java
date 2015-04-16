@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -53,7 +53,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
   public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<T> changeListener);
 
   public List<TaskRepositorySubtype> getAvailableSubtypes() {
-    return Arrays.asList((TaskRepositorySubtype)this);
+    return Collections.singletonList((TaskRepositorySubtype)this);
   }
 
   @NotNull

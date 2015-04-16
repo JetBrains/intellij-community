@@ -415,6 +415,9 @@ public class CompileDriver {
             }
           }
         }
+        catch (ProcessCanceledException ignored) {
+          compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, ExitStatus.CANCELLED);
+        }
         catch (Throwable e) {
           LOG.error(e); // todo
         }
@@ -480,7 +483,7 @@ public class CompileDriver {
         final Set<File> genSourceRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
         final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
         for (Module module : affectedModules) {
-          if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
+          if (!module.isDisposed() && config.getAnnotationProcessingConfiguration(module).isEnabled()) {
             final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
             if (path != null) {
               genSourceRoots.add(new File(path));
