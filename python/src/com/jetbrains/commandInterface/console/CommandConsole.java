@@ -134,7 +134,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
 
     console.switchToCommandMode();
     console.getComponent(); // For some reason console does not have component until this method is called which leads to some errros.
-    console.getConsoleEditor().getSettings().setAdditionalLinesCount(1); // to prevent PY-15583
+    console.getConsoleEditor().getSettings().setAdditionalLinesCount(2); // to prevent PY-15583
     return console;
   }
 
