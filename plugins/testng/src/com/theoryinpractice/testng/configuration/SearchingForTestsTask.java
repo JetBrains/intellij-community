@@ -224,14 +224,12 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   private boolean shouldSearchForTestMethods() {
-    boolean dependantMethods = false;
     for (Map<PsiMethod, List<String>> methods : myClasses.values()) {
       if (!methods.isEmpty()) {
-        dependantMethods = true;
-        break;
+        return true;
       }
     }
-    return dependantMethods;
+    return false;
   }
 
   private void composeTestSuiteFromXml() throws CantRunException {
@@ -281,24 +279,15 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     Map<String, String> testParams = new HashMap<String, String>();
 
     // Override with those from the test runner configuration
-    testParams.putAll(convertPropertiesFileToMap(myData.PROPERTIES_FILE));
-    testParams.putAll(myData.TEST_PROPERTIES);
-
-    return testParams;
-  }
-
-  private static Map<String, String> convertPropertiesFileToMap(String properties_file) {
-    Map<String, String> params = new HashMap<String, String>();
-
-    if (properties_file != null) {
-      File propertiesFile = new File(properties_file);
+    if (myData.PROPERTIES_FILE != null) {
+      File propertiesFile = new File(myData.PROPERTIES_FILE);
       if (propertiesFile.exists()) {
 
         Properties properties = new Properties();
         try {
           properties.load(new FileInputStream(propertiesFile));
           for (Map.Entry entry : properties.entrySet()) {
-            params.put((String)entry.getKey(), (String)entry.getValue());
+            testParams.put((String)entry.getKey(), (String)entry.getValue());
           }
 
         }
@@ -307,7 +296,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         }
       }
     }
-    return params;
+    testParams.putAll(myData.TEST_PROPERTIES);
+    return testParams;
   }
-
 }
