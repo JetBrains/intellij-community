@@ -44,6 +44,14 @@ public interface Git {
   @NotNull
   GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor);
 
+  /**
+   * A generic method to run a Git command, when existing methods are not sufficient. <br/>
+   * Can be used instead of {@link #runCommand(Computable)} if the operation will not need to be repeated for sure
+   * (e.g. it is a completely local operation).
+   */
+  @NotNull
+  GitCommandResult runCommand(@NotNull GitLineHandler handler);
+
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
 
