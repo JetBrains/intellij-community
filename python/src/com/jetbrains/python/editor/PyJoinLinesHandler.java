@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
+import static com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 
 /**
  * Joins lines sanely.
@@ -228,24 +228,24 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
             (req.leftExpr instanceof PyStringLiteralExpression && req.rightExpr instanceof PyStringLiteralExpression)) {
           // two quoted strings close by
           final CharSequence text = req.document.getCharsSequence();
-          final StrMod leftMod = new StrMod(text, req.leftElem.getTextRange());
-          final StrMod rightMod = new StrMod(text, req.rightElem.getTextRange());
-          if (leftMod.isOk() && rightMod.isOk()) {
-            final String lquo = leftMod.quote();
-            if (leftMod.equals(rightMod)) {
-              return new Result("", 0, lquo.length(), rightMod.getStartPadding());
+          final StringNodeInfo leftNodeInfo = new StringNodeInfo(req.leftElem);
+          final StringNodeInfo rightNodeInfo = new StringNodeInfo(req.rightElem);
+          if (leftNodeInfo.isTerminated() && rightNodeInfo.isTerminated()) {
+            final int rightNodeContentOffset = rightNodeInfo.getContentRange().getStartOffset();
+            if (leftNodeInfo.equals(rightNodeInfo)) {
+              return new Result("", 0, leftNodeInfo.getQuote().length(), rightNodeContentOffset);
             }
-            else if (leftMod.compatibleTo(rightMod) && lquo.length() == 1 && rightMod.quote().length() == 1) {
+            if (haveSamePrefixes(leftNodeInfo, rightNodeInfo) && !leftNodeInfo.isTripleQuoted() && !rightNodeInfo.isTripleQuoted()) {
               // maybe fit one literal's quotes to match other's
-              if (!containsChar(text, rightMod.getInnerRange(), leftMod.quote().charAt(0))) {
-                final int quotePos = rightMod.getInnerRange().getEndOffset();
-                req.document.replaceString(quotePos, quotePos + 1, leftMod.quote());
-                return new Result("", 0, leftMod.quote().length(), rightMod.getStartPadding());
+              if (!rightNodeInfo.getContent().contains(leftNodeInfo.getQuote())) {
+                final int quotePos = rightNodeInfo.getAbsoluteContentRange().getEndOffset();
+                req.document.replaceString(quotePos, quotePos + 1, leftNodeInfo.getQuote());
+                return new Result("", 0, 1, rightNodeContentOffset);
               }
-              else if (!containsChar(text, leftMod.getInnerRange(), rightMod.quote().charAt(0))) {
-                final int quotePos = leftMod.getInnerRange().getStartOffset() - 1;
-                req.document.replaceString(quotePos, quotePos + 1, rightMod.quote());
-                return new Result("", 0, leftMod.quote().length(), rightMod.getStartPadding());
+              else if (!leftNodeInfo.getContent().contains(rightNodeInfo.getQuote())) {
+                final int quotePos = leftNodeInfo.getAbsoluteContentRange().getStartOffset() - 1;
+                req.document.replaceString(quotePos, quotePos + 1, rightNodeInfo.getQuote());
+                return new Result("", 0, 1, rightNodeContentOffset);
               }
             }
           }
@@ -254,109 +254,14 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
       return null;
     }
 
-    protected static boolean containsChar(@NotNull CharSequence text, @NotNull TextRange range, char c) {
-      return StringUtil.contains(text, range.getStartOffset(), range.getEndOffset(), c);
+    private static boolean haveSamePrefixes(@NotNull StringNodeInfo leftNodeInfo, @NotNull StringNodeInfo rightNodeInfo) {
+      return leftNodeInfo.isUnicode() == rightNodeInfo.isUnicode() &&
+             leftNodeInfo.isRaw() == rightNodeInfo.isRaw() &&
+             leftNodeInfo.isBytes() == rightNodeInfo.isBytes();
     }
 
-
-    private static class StrMod {
-      @NotNull private final String myPrefix; // "u", "b", or ""
-      private final boolean myRaw; // is raw or not
-      @NotNull private final String myQuote; // single or double, one or triple.
-
-      @Nullable private final TextRange myInnerRange;
-
-      public StrMod(@NotNull CharSequence text, @NotNull TextRange range) {
-        int pos = range.getStartOffset();
-        char c = text.charAt(pos);
-        if ("Uu".indexOf(c) > -1 || "Bb".indexOf(c) > -1) {
-          myPrefix = String.valueOf(c).toLowerCase(Locale.US);
-          pos += 1;
-          c = text.charAt(pos);
-        }
-        else {
-          myPrefix = "";
-        }
-        if ("Rr".indexOf(c) > -1) {
-          myRaw = true;
-          pos += 1;
-          c = text.charAt(pos);
-        }
-        else {
-          myRaw = false;
-        }
-        final char quote = c;
-        if ("'\"".indexOf(quote) < 0) {
-          myInnerRange = null;
-          myQuote = "";
-          return; // failed to find a quote
-        }
-        // TODO: we could run a simple but complete parser here, only checking escapes
-        if (range.getLength() >= 6 && text.charAt(pos + 1) == quote && text.charAt(pos + 2) == quote) {
-          myQuote = text.subSequence(pos, pos + 3).toString();
-          if (!myQuote.equals(text.subSequence(range.getEndOffset() - 3, range.getEndOffset()).toString())) {
-            myInnerRange = null;
-            return;
-          }
-        }
-        else {
-          myQuote = text.subSequence(pos, pos + 1).toString();
-          if (!myQuote.equals(text.subSequence(range.getEndOffset() - 1, range.getEndOffset()).toString())) {
-            myInnerRange = null;
-            return;
-          }
-        }
-        myInnerRange = TextRange.from(range.getStartOffset() + getStartPadding(), range.getLength() - getStartPadding() - quote().length());
-      }
-
-      public boolean isOk() {
-        return myInnerRange != null;
-      }
-
-      @NotNull
-      public String prefix() {
-        return myPrefix;
-      }
-
-      @NotNull
-      public String quote() {
-        return myQuote;
-      }
-
-      public boolean isRaw() {
-        return myRaw;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (o instanceof StrMod) {
-          final StrMod other = (StrMod)o;
-          return compatibleTo(other) && myQuote.equals(other.quote());
-        }
-        return false;
-      }
-
-      /**
-       * @return combined length of initial modifier letters and opening quotes
-       */
-      public int getStartPadding() {
-        return myQuote.length() + myPrefix.length() + (myRaw ? 1 : 0);
-      }
-
-      /**
-       * @param other
-       * @return true iff this and other have the same byte/unicode and raw prefixes.
-       */
-      public boolean compatibleTo(@NotNull StrMod other) {
-        return isOk() && other.isOk() && myRaw == other.isRaw() && myPrefix.equals(other.prefix());
-      }
-      /**
-       * @return range of text part inside quotes
-       */
-      @Nullable
-      public TextRange getInnerRange() {
-        return myInnerRange;
-      }
+    protected static boolean containsChar(@NotNull CharSequence text, @NotNull TextRange range, char c) {
+      return StringUtil.contains(text, range.getStartOffset(), range.getEndOffset(), c);
     }
   }
 
