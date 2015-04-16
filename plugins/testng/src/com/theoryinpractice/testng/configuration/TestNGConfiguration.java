@@ -29,7 +29,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -47,12 +46,12 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.theoryinpractice.testng.model.TestData;
+import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.testng.xml.Parser;
 
 import java.util.*;
 
@@ -68,7 +67,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
   
-  private static final Object PARSE_LOCK = new Object();
+
 
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
   public static final String DEFAULT_PACKAGE_CONFIGURATION_NAME = ExecutionBundle.message("default.package.configuration.name");
@@ -149,32 +148,14 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
 
   @Override
   public String suggestedName() {
-    return data.getGeneratedName(getConfigurationModule());
+    final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
+    return testObject != null ? testObject.getGeneratedName() : null;
   }
 
   @Override
   public String getActionName() {
-    if (TestType.CLASS.getType().equals(data.TEST_OBJECT)) {
-      String shortName = JavaExecutionUtil.getShortClassName(data.MAIN_CLASS_NAME);
-      return ProgramRunnerUtil.shortenName(shortName, 0);
-    }
-    if (TestType.PACKAGE.getType().equals(data.TEST_OBJECT)) {
-      String s = getName();
-      if (!isGeneratedName()) return '\"' + s + '\"';
-      if (data.getPackageName().trim().length() > 0) {
-        return "Tests in \"" + data.getPackageName() + '\"';
-      }
-      else {
-        return "All Tests";
-      }
-    }
-    if (TestType.METHOD.getType().equals(data.TEST_OBJECT)) {
-      return data.getMethodName() + "()";
-    }
-    if (TestType.SUITE.getType().equals(data.TEST_OBJECT)) {
-      return data.getSuiteName();
-    }
-    return data.getGroupName();
+    final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
+    return testObject != null ? ProgramRunnerUtil.shortenName(testObject.getActionName(), 0) : null;
   }
 
   public void setVMParameters(String value) {
@@ -299,45 +280,9 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (data.TEST_OBJECT.equals(TestType.CLASS.getType()) || data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
-      final SourceScope scope = data.getScope().getSourceScope(this);
-      if (scope == null) {
-        throw new RuntimeConfigurationException("Invalid scope specified");
-      }
-      PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(data.getMainClassName(), scope.getGlobalSearchScope());
-      if (psiClass == null) throw new RuntimeConfigurationException("Class '" + data.getMainClassName() + "' not found");
-      if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
-        PsiMethod[] methods = psiClass.findMethodsByName(data.getMethodName(), true);
-        if (methods.length == 0) {
-          throw new RuntimeConfigurationException("Method '" + data.getMethodName() + "' not found");
-        }
-        for (PsiMethod method : methods) {
-          if (!method.hasModifierProperty(PsiModifier.PUBLIC)) {
-            throw new RuntimeConfigurationException("Non public method '" + data.getMethodName() + "'specified");
-          }
-        }
-      }
-    }
-    else if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
-      PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(data.getPackageName());
-      if (psiPackage == null) throw new RuntimeConfigurationException("Package '" + data.getPackageName() + "' not found");
-    }
-    else if (data.TEST_OBJECT.equals(TestType.SUITE.getType())) {
-      try {
-        final Parser parser = new Parser(data.getSuiteName());
-        parser.setLoadClasses(false);
-        synchronized (PARSE_LOCK) {
-          parser.parse();//try to parse suite.xml
-        }
-      }
-      catch (Exception e) {
-        throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");
-      }
-    } else if (data.TEST_OBJECT.equals(TestType.PATTERN.getType())) {
-      final Set<String> patterns = data.getPatterns();
-      if (patterns.isEmpty()) {
-        throw new RuntimeConfigurationWarning("No pattern selected");
-      }
+    final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
+    if (testObject != null) {
+      testObject.checkConfiguration();
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), getConfigurationModule().getModule());

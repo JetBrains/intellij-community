@@ -33,6 +33,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestData;
+import com.theoryinpractice.testng.model.TestNGTestObject;
 import org.testng.IDEATestNGRemoteListener;
 
 public abstract class TestNGConfigurationProducer extends JavaRunConfigurationProducerBase<TestNGConfiguration> implements Cloneable {
@@ -58,7 +59,7 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
     String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
                           ? getInvocationNumber(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
     if (paramSetName != null && !Comparing.strEqual(paramSetName, testNGConfiguration.getProgramParameters())) return false;
-    TestData testobject = testNGConfiguration.getPersistantData();
+    TestNGTestObject testobject = TestNGTestObject.fromConfig(testNGConfiguration);
     if (testobject != null) {
       if (testobject.isConfiguredByElement(element)) {
         final Module configurationModule = testNGConfiguration.getConfigurationModule().getModule();

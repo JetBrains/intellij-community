@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestData;
+import com.theoryinpractice.testng.model.TestNGTestObject;
 import icons.TestngIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,7 +73,8 @@ public class TestNGConfigurationType implements ConfigurationType
             return false;
         else {
           final PsiElement element = location.getPsiElement();
-          if (testobject.isConfiguredByElement(element)) {
+          final TestNGTestObject testNGTestObject = TestNGTestObject.fromConfig(config);
+          if (testNGTestObject != null && testNGTestObject.isConfiguredByElement(element)) {
             final Module configurationModule = config.getConfigurationModule().getModule();
             if (Comparing.equal(location.getModule(), configurationModule)) return true;
 
