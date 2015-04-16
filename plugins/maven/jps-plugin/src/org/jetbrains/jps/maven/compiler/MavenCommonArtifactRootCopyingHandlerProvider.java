@@ -58,7 +58,9 @@ public class MavenCommonArtifactRootCopyingHandlerProvider extends ArtifactRootC
         projectConfiguration.moduleConfigurations.get(getModuleName(artifact.getName()));
       if (moduleResourceConfiguration != null && moduleResourceConfiguration.manifest != null) {
         try {
-          FileUtil.writeToFile(root, moduleResourceConfiguration.manifest);
+          final String manifest =
+            StringUtil.unescapeXml(moduleResourceConfiguration.manifest).replaceAll("\n\r|\n|\r", "\r\n") + "\r\n\r\n";
+          FileUtil.writeToFile(root, manifest);
         }
         catch (IOException e) {
           LOG.debug(e);
