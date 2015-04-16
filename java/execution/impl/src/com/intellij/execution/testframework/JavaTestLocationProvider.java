@@ -47,25 +47,21 @@ public class JavaTestLocationProvider implements TestLocationProvider {
   public List<Location> getLocation(@NotNull String protocolId, @NotNull String locationData, Project project) {
     List<Location> results = Collections.emptyList();
 
+    final int idx = locationData.indexOf("[");
+    final String paramName = idx >= 0 ? locationData.substring(idx) : null;
+    if (idx >= 0) {
+      locationData = locationData.substring(0, idx);
+    }
+
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
     if (SUITE_PROTOCOL.equals(protocolId)) {
+      locationData = StringUtil.trimEnd(locationData, ".");
       PsiClass[] classes = javaPsiFacade.findClasses(locationData, myScope);
       if (classes.length > 0) {
         results = ContainerUtil.newSmartList();
         for (PsiClass aClass : classes) {
-          results.add(new PsiLocation<PsiClass>(project, aClass));
-        }
-      }
-      else {
-        //parameter root for parameterized tests: ClassName.[paramName]
-        final String className = StringUtil.getPackageName(locationData);
-        classes = javaPsiFacade.findClasses(className, myScope);
-        if (classes.length > 0) {
-          final String paramName = StringUtil.getShortName(locationData);
-          results = ContainerUtil.newSmartList();
-          for (PsiClass aClass : classes) {
-            results.add(PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName));
-          }
+          results.add(paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName) 
+                                        : new PsiLocation<PsiClass>(project, aClass));
         }
       }
     }
@@ -80,18 +76,8 @@ public class JavaTestLocationProvider implements TestLocationProvider {
             PsiMethod[] methods = aClass.findMethodsByName(methodName, true);
             if (methods.length > 0) {
               for (PsiMethod method : methods) {
-                results.add(MethodLocation.elementInClass(method, aClass));
-              }
-            }
-            else {
-              //parameterized tests: ClassName.testName[paramName]
-              final int paramIdx = methodName.indexOf("[");
-              if (paramIdx > -1 && methodName.endsWith("]")) {
-                final String paramName = methodName.substring(paramIdx);
-                methods = aClass.findMethodsByName(methodName.substring(0, paramIdx), true);
-                for (PsiMethod method : methods) {
-                  results.add(new PsiMemberParameterizedLocation(project, method, aClass, paramName));
-                }
+                results.add(paramName != null ?  new PsiMemberParameterizedLocation(project, method, aClass, paramName)
+                                              :  MethodLocation.elementInClass(method, aClass));
               }
             }
           }

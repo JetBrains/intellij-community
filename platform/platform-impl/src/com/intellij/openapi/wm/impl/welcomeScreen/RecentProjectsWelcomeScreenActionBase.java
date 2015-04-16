@@ -35,7 +35,7 @@ import java.util.List;
  */
 public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAction {
   @Nullable
-  public DefaultListModel getDataModel(AnActionEvent e) {
+  public static DefaultListModel getDataModel(AnActionEvent e) {
     final JList list = getList(e);
     if (list != null) {
       ListModel model = list.getModel();
@@ -50,7 +50,7 @@ public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAct
   }
 
   @NotNull
-  public List<AnAction> getSelectedElements(AnActionEvent e) {
+  public static List<AnAction> getSelectedElements(AnActionEvent e) {
     final JList list = getList(e);
     final List<AnAction> actions = new ArrayList<AnAction>();
     if (list != null) {
@@ -64,7 +64,7 @@ public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAct
   }
 
   @Nullable
-  public JList getList(AnActionEvent e) {
+  public static JList getList(AnActionEvent e) {
     final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (component instanceof JList) {
       return (JList)component;
@@ -72,7 +72,7 @@ public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAct
     return null;
   }
 
-  public boolean hasGroupSelected(AnActionEvent e) {
+  public static boolean hasGroupSelected(AnActionEvent e) {
     for (AnAction action : getSelectedElements(e)) {
       if (action instanceof ProjectGroupActionGroup) {
         return true;
@@ -81,14 +81,18 @@ public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAct
     return false;
   }
 
-  public void rebuildRecentProjectsList(AnActionEvent e) {
+  public static void rebuildRecentProjectsList(AnActionEvent e) {
     final DefaultListModel model = getDataModel(e);
     if (model != null) {
-      model.clear();
-      for (AnAction action : RecentProjectsManager.getInstance().getRecentProjectsActions(false, FlatWelcomeFrame.isUseProjectGroups())) {
-        //noinspection unchecked
-        model.addElement(action);
-      }
+      rebuildRecentProjectDataModel(model);
+    }
+  }
+
+  public static void rebuildRecentProjectDataModel(@NotNull DefaultListModel model) {
+    model.clear();
+    for (AnAction action : RecentProjectsManager.getInstance().getRecentProjectsActions(false, FlatWelcomeFrame.isUseProjectGroups())) {
+      //noinspection unchecked
+      model.addElement(action);
     }
   }
 }

@@ -72,8 +72,8 @@ public class JUnitForkedStarter {
                             String[] args,
                             boolean isJUnit4,
                             List listeners,
-                            String params, SegmentedOutputStream out,
-                            SegmentedOutputStream err,
+                            String params, Object out,
+                            Object err,
                             String forkMode,
                             String path) throws Exception {
     final List parameters = new ArrayList();
@@ -178,8 +178,8 @@ public class JUnitForkedStarter {
   
   private static int processChildren(boolean isJUnit4,
                                      List listeners,
-                                     SegmentedOutputStream out,
-                                     SegmentedOutputStream err,
+                                     Object out,
+                                     Object err,
                                      List parameters,
                                      IdeaTestRunner testRunner,
                                      List children,
@@ -206,8 +206,8 @@ public class JUnitForkedStarter {
 
   private static int runChild(boolean isJUnit4,
                               List listeners,
-                              SegmentedOutputStream out,
-                              SegmentedOutputStream err,
+                              Object out,
+                              Object err,
                               List parameters,
                               String description,
                               File workingDir,
@@ -265,7 +265,9 @@ public class JUnitForkedStarter {
 
     final Process exec = builder.createProcess();
     final int result = exec.waitFor();
-    ForkedVMWrapper.readWrapped(testOutputPath, out.getPrintStream(), err.getPrintStream());
+    ForkedVMWrapper.readWrapped(testOutputPath,
+                                JUnitStarter.SM_RUNNER ? ((PrintStream)out) : ((SegmentedOutputStream)out).getPrintStream(),
+                                JUnitStarter.SM_RUNNER ? ((PrintStream)err) : ((SegmentedOutputStream)err).getPrintStream());
     return result;
   }
 }

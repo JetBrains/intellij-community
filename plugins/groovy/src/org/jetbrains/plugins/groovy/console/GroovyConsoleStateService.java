@@ -71,7 +71,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
         final Entry e = new Entry();
         e.url = file.getUrl();
         e.moduleName = module == null ? "" : module.getName();
-        e.title = module == null ? "" : GroovyConsoleUtil.getTitle(module);
+        e.title = pair == null ? "" : pair.second;
         result.list.add(e);
       }
       return result;

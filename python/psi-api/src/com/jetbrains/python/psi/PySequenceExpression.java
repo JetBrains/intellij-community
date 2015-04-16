@@ -23,4 +23,12 @@ import org.jetbrains.annotations.NotNull;
 public interface PySequenceExpression extends PyExpression{
   @NotNull
   PyExpression[] getElements();
+
+  /**
+   * Calling {@link #getElements()} may take too much time in case of large literals with thousands of elements. If you only need to
+   * know whether collection is empty, use this method instead.
+   *
+   * @return true if sequence expression contains no elements
+   */
+  boolean isEmpty();
 }

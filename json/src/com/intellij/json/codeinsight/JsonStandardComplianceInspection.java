@@ -6,9 +6,9 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -139,13 +139,42 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
+      final String rawText = element.getText();
       if (element instanceof JsonLiteral || element instanceof JsonReferenceExpression) {
-        final String content = StringUtil.stripQuotesAroundValue(element.getText());
-        element.replace(new JsonElementGenerator(project).createStringLiteral(content));
+        String content = JsonPsiUtil.stripQuotes(rawText);
+        if (element instanceof JsonStringLiteral && rawText.startsWith("'")) {
+          content = escapeSingleQuotedStringContent(content);
+        }
+        // TODO: find out better way to replace element and skip reformatting step afterwards
+        final ASTNode replacement = new JsonElementGenerator(project).createValue("\"" + content + "\"").getNode();
+        element.getParent().getNode().replaceChild(element.getNode(), replacement);
       }
       else if (element != null) {
-        LOG.error("Quick fix was applied to unexpected element", element.getText(), element.getParent().getText());
+        LOG.error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
       }
+    }
+
+    @NotNull
+    private static String escapeSingleQuotedStringContent(@NotNull String content) {
+      final StringBuilder result = new StringBuilder();
+      boolean nextCharEscaped = false;
+      for (int i = 0; i < content.length(); i++) {
+        final char c = content.charAt(i);
+        if ((nextCharEscaped && c != '\'') || (!nextCharEscaped && c == '"')) {
+          result.append('\\');
+        }
+        if (c != '\\' || nextCharEscaped) {
+          result.append(c);
+          nextCharEscaped = false;
+        }
+        else {
+          nextCharEscaped = true;
+        }
+      }
+      if (nextCharEscaped) {
+        result.append('\\');
+      }
+      return result.toString();
     }
   }
 }

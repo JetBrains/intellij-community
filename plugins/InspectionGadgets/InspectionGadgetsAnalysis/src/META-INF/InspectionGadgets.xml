@@ -149,6 +149,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ArrayHashCode" bundle="com.siyeh.InspectionGadgetsBundle" key="array.hash.code.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.ArrayHashCodeInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ArrayObjectsEquals" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="array.objects.equals.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.bugs.ArrayObjectsEqualsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssertWithSideEffects" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="assert.with.side.effects.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"

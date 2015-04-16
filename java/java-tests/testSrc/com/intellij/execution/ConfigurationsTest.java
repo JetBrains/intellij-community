@@ -136,8 +136,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     JUnitConfiguration configuration = createConfiguration(testA);
     JavaParameters parameters = checkCanRun(configuration);
     CHECK.empty(parameters.getVMParametersList().getList());
+    final SegmentedOutputStream notifications = new SegmentedOutputStream(System.out);
     assertTrue(JUnitStarter.checkVersion(parameters.getProgramParametersList().getArray(),
-                                         new SegmentedOutputStream(System.out)));
+                                         new PrintStream(notifications)));
     assertTrue(parameters.getProgramParametersList().getList().contains(testA.getQualifiedName()));
     assertEquals(JUnitStarter.class.getName(), parameters.getMainClass());
     assertEquals(myJdk.getHomeDirectory().getPresentableUrl(), parameters.getJdkPath());

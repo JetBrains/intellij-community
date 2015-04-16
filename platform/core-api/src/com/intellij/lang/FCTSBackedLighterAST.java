@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.AbstractList;
 import java.util.List;
 
 public class FCTSBackedLighterAST extends LighterAST {
@@ -53,6 +54,38 @@ public class FCTSBackedLighterAST extends LighterAST {
     }
     LighterASTNode[] elements = into.get();
     assert elements != null : myTreeStructure +" ("+parent+")";
-    return ContainerUtil.newArrayList(elements, 0, numKids);
+    return new LighterASTNodeList(numKids, elements);
+  }
+
+  public void disposeChildren(@NotNull List<LighterASTNode> children) {
+    if (children instanceof LighterASTNodeList) {
+      LighterASTNodeList nodes = (LighterASTNodeList)children;
+
+      myTreeStructure.disposeChildren(nodes.myElements, nodes.mySize);
+    } else {
+      LighterASTNode[] astNodes = new LighterASTNode[children.size()];
+      myTreeStructure.disposeChildren(children.toArray(astNodes), astNodes.length);
+    }
+  }
+
+  private static class LighterASTNodeList extends AbstractList<LighterASTNode> {
+    private final int mySize;
+    private final LighterASTNode[] myElements;
+
+    public LighterASTNodeList(int size, LighterASTNode[] elements) {
+      mySize = size;
+      myElements = elements;
+    }
+
+    @Override
+    public LighterASTNode get(final int index) {
+      if (index < 0 || index >= mySize) throw new IndexOutOfBoundsException("index:" + index + " size:" + mySize);
+      return myElements[index];
+    }
+
+    @Override
+    public int size() {
+      return mySize;
+    }
   }
 }

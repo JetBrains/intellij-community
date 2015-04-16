@@ -20,21 +20,20 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.*;
+import com.intellij.execution.JavaExecutionUtil;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
-import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestData;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import org.testng.IDEATestNGRemoteListener;
 
 public abstract class TestNGConfigurationProducer extends JavaRunConfigurationProducerBase<TestNGConfiguration> implements Cloneable {
 
@@ -48,13 +47,17 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
       return false;
     }
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(TestNGConfigurationType.getInstance());
-    Location location = JavaExecutionUtil.stepIntoSingleClass(context.getLocation());
+    final Location contextLocation = context.getLocation();
+    Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     final PsiElement element = location.getPsiElement();
     RunnerAndConfigurationSettings template = RunManager.getInstance(location.getProject()).getConfigurationTemplate(getConfigurationFactory());
     final Module predefinedModule = ((TestNGConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
     final String vmParameters =
       predefinedConfiguration instanceof TestNGConfiguration ? ((TestNGConfiguration)predefinedConfiguration).getVMParameters() : null;
     if (vmParameters != null && !Comparing.strEqual(vmParameters, testNGConfiguration.getVMParameters())) return false;
+    String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
+                          ? getInvocationNumber(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
+    if (paramSetName != null && !Comparing.strEqual(paramSetName, testNGConfiguration.getProgramParameters())) return false;
     TestData testobject = testNGConfiguration.getPersistantData();
     if (testobject != null) {
       if (testobject.isConfiguredByElement(element)) {
@@ -64,5 +67,16 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
       }
     }
     return false;
+  }
+  
+  public static String getInvocationNumber(String str) {
+    final int indexOf = str.indexOf(IDEATestNGRemoteListener.INVOCATION_NUMBER);
+    if (indexOf > 0) {
+      final int lastIdx = str.indexOf(")", indexOf);
+      if (lastIdx > 0) {
+        return str.substring(indexOf + IDEATestNGRemoteListener.INVOCATION_NUMBER.length(), lastIdx);
+      }
+    }
+    return null;
   }
 }

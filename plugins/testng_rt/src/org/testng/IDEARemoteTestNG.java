@@ -23,10 +23,16 @@ import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 public class IDEARemoteTestNG extends TestNG {
+
+  private final String myParam;
+  public IDEARemoteTestNG(String param) {
+    myParam = param;
+  }
 
   private static void calculateAllSuites(List<XmlSuite> suites, List<XmlSuite> outSuites) {
     for (XmlSuite s : suites) {
@@ -51,9 +57,12 @@ public class IDEARemoteTestNG extends TestNG {
           for (XmlTest test : tests) {
             for (XmlClass aClass : test.getXmlClasses()) {
               System.out.println("##teamcity[suiteTreeStarted name=\'" + aClass.getName() + "\' locationHint=\'java:suite://" + aClass.getName() +  "\']");
-              for (XmlInclude include : aClass.getIncludedMethods()) {
-                System.out.println("##teamcity[suiteTreeNode name=\'" + include.getName() + "\']");
+              if (myParam != null) {
+                for (XmlInclude include : aClass.getIncludedMethods()) {
+                  aClass.setIncludedMethods(Arrays.asList(new XmlInclude(include.getName(), Arrays.asList(Integer.parseInt(myParam)), 0)));
+                }
               }
+
               System.out.println("##teamcity[suiteTreeEnded name=\'" + aClass.getName() + "\']");
             }
             testCount += test.getClasses().size();

@@ -101,6 +101,16 @@ public class JsonFormattingTest extends FormatterTestCase {
     });
   }
 
+  // IDEA-138902
+  public void testObjectsWithSingleProperty() throws Exception {
+    withPreservedSettings(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        doTest();
+      }
+    });
+  }
+
   // Moved from JavaScript
 
   public void testWeb3830() throws Exception {

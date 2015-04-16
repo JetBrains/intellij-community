@@ -244,7 +244,9 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       scopeToDetermineTestngIn = GlobalSearchScope.allScope(project);
     }
     else {
-      scopeToDetermineTestngIn = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(config.getConfigurationModule().getModule());
+      final Module module = config.getConfigurationModule().getModule();
+      scopeToDetermineTestngIn = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) 
+                                                : GlobalSearchScope.allScope(project);
     }
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);

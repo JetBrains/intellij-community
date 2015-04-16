@@ -87,10 +87,10 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     final SMTestProxy rootProxy = new SMTestProxy("MyTest", true, "java:suite://MyTest");
     rootProxy.setLocator(locationProvider);
 
-    final SMTestProxy proxyParam = new SMTestProxy("[0]", true, "java:suite://MyTest.[0]");
+    final SMTestProxy proxyParam = new SMTestProxy("[0.java]", true, "java:suite://MyTest.[0.java]");
     proxyParam.setLocator(locationProvider);
 
-    final SMTestProxy parameterizedTestProxy = new SMTestProxy("testName1[0]", false, "java:test://MyTest.testName1[0]");
+    final SMTestProxy parameterizedTestProxy = new SMTestProxy("testName1[0.java]", false, "java:test://MyTest.testName1[0.java]");
     parameterizedTestProxy.setLocator(locationProvider);
 
     final Location rootLocation = rootProxy.getLocation(project, searchScope);
@@ -100,15 +100,15 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     final Location proxyParamLocation = proxyParam.getLocation(project, searchScope);
     assertNotNull(proxyParamLocation);
     assertInstanceOf(proxyParamLocation, PsiMemberParameterizedLocation.class);
-    assertEquals("[0]", ((PsiMemberParameterizedLocation)proxyParamLocation).getParamSetName());
+    assertEquals("[0.java]", ((PsiMemberParameterizedLocation)proxyParamLocation).getParamSetName());
     assertEquals(testClass, proxyParamLocation.getPsiElement());
 
     final Location parameterizedTestProxyLocation = parameterizedTestProxy.getLocation(project, searchScope);
     assertNotNull(parameterizedTestProxyLocation);
     assertInstanceOf(parameterizedTestProxyLocation, PsiMemberParameterizedLocation.class);
-    assertEquals("[0]", ((PsiMemberParameterizedLocation)parameterizedTestProxyLocation).getParamSetName());
+    assertEquals("[0.java]", ((PsiMemberParameterizedLocation)parameterizedTestProxyLocation).getParamSetName());
     assertEquals(testClass.getMethods()[0], parameterizedTestProxyLocation.getPsiElement());
     assertEquals(testClass, ((PsiMemberParameterizedLocation)parameterizedTestProxyLocation).getContainingClass());
-    assertEquals("MyTest,testName1[0]", TestMethods.getTestPresentation(parameterizedTestProxy, project, searchScope));
+    assertEquals("MyTest,testName1[0.java]", TestMethods.getTestPresentation(parameterizedTestProxy, project, searchScope));
   }
 }

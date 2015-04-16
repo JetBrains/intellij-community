@@ -314,12 +314,15 @@ public class UIUtil {
       }
 
       try {
-        isRetina =  (getScaleFactorMethod == null) || ((Integer)getScaleFactorMethod.invoke(device) != 1);
+        isRetina =  getScaleFactorMethod == null || (Integer)getScaleFactorMethod.invoke(device) != 1;
       } catch (IllegalAccessException e) {
         LOG.debug("CGraphicsDevice.getScaleFactor(): Access issue");
         isRetina = false;
       } catch (InvocationTargetException e) {
         LOG.debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
+        isRetina = false;
+      } catch (IllegalArgumentException e) {
+        LOG.debug("object is not an instance of declaring class: " + device.getClass().getName());
         isRetina = false;
       }
 
@@ -1783,7 +1786,7 @@ public class UIUtil {
   }
 
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
-    if (DetectRetinaKit.isMacRetina(g)) {
+    if (isRetina(g)) {
       return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
