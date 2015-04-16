@@ -415,6 +415,9 @@ public class CompileDriver {
             }
           }
         }
+        catch (ProcessCanceledException ignored) {
+          compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, ExitStatus.CANCELLED);
+        }
         catch (Throwable e) {
           LOG.error(e); // todo
         }
