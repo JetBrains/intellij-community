@@ -113,9 +113,6 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
               isSuccess.set(true);
               return;
             }
-            else {
-              isSuccess.set(false);
-            }
           }
           else {
             setRebaseEditorShown();
@@ -130,7 +127,6 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
               }
               else {
                 rebaseFile.cancel();
-                isSuccess.set(true);
               }
             }
             catch (GitInteractiveRebaseFile.NoopException e) {
