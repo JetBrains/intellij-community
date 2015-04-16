@@ -14,6 +14,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -227,8 +228,8 @@ public class MavenResourceCompilerConfigurationGenerator {
       try {
         manifest.write(outputStream);
         MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
-        final String resolvedText = MavenPropertyResolver.resolve(outputStream.toString("UTF8"), domModel);
-        resourceConfig.manifest = Base64.encode(resolvedText.getBytes("UTF8"));
+        final String resolvedText = MavenPropertyResolver.resolve(outputStream.toString(CharsetToolkit.UTF8), domModel);
+        resourceConfig.manifest = Base64.encode(resolvedText.getBytes(CharsetToolkit.UTF8));
       }
       finally {
         StreamUtil.closeStream(outputStream);
