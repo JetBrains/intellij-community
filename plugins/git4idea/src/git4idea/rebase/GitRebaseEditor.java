@@ -15,18 +15,16 @@
  */
 package git4idea.rebase;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.Cell;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
@@ -43,15 +41,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -62,48 +56,24 @@ import java.util.List;
  * the entries and changing commit status.
  */
 public class GitRebaseEditor extends DialogWrapper implements DataProvider {
-  /**
-   * The table that lists all commits
-   */
-  private JBTable myCommitsTable;
-  /**
-   * The move up button
-   */
-  private JButton myMoveUpButton;
-  /**
-   * The move down button
-   */
-  private JButton myMoveDownButton;
-  /**
-   * The view commit button
-   */
-  private JButton myViewButton;
-  /**
-   * The root panel
-   */
-  private JPanel myPanel;
-  /**
-   * Table model
-   */
-  private final MyTableModel myTableModel;
 
+  @NotNull private final Project myProject;
+  @NotNull private final VirtualFile myRoot;
+
+  @NotNull private final MyTableModel myTableModel;
+  @NotNull private final JBTable myCommitsTable;
   @NotNull private final CopyProvider myCopyProvider;
 
-  /**
-   * The constructor
-   *
-   * @param project the project
-   * @param gitRoot the git root
-   * @param entries    the file to edit
-   * @throws IOException if file could not be loaded
-   */
-  protected GitRebaseEditor(final Project project, final VirtualFile gitRoot, List<GitRebaseEntry> entries) throws IOException {
+  protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntry> entries)
+    throws IOException {
     super(project, true);
+    myProject = project;
+    myRoot = gitRoot;
     setTitle(GitBundle.getString("rebase.editor.title"));
     setOKButtonText(GitBundle.getString("rebase.editor.button"));
 
     myTableModel = new MyTableModel(entries);
-    myCommitsTable.setModel(myTableModel);
+    myCommitsTable = new JBTable(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     myCommitsTable.setIntercellSpacing(JBUI.emptySize());
 
@@ -122,29 +92,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
         SpeedSearchUtil.applySpeedSearchHighlighting(myCommitsTable, this, true, selected);
       }
     });
-
-    myCommitsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        myViewButton.setEnabled(myCommitsTable.getSelectedRowCount() == 1);
-        final ListSelectionModel selectionModel = myCommitsTable.getSelectionModel();
-        myMoveUpButton.setEnabled(selectionModel.getMinSelectionIndex() > 0);
-        myMoveDownButton.setEnabled(selectionModel.getMaxSelectionIndex() != -1 &&
-                                    selectionModel.getMaxSelectionIndex() < myTableModel.myEntries.size() - 1);
-      }
-    });
-    myViewButton.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        int row = myCommitsTable.getSelectedRow();
-        if (row < 0) {
-          return;
-        }
-        GitRebaseEntry entry = myTableModel.myEntries.get(row);
-        GitUtil.showSubmittedFiles(project, entry.getCommit(), gitRoot, false, false);
-      }
-    });
-
-    myMoveUpButton.addActionListener(new MoveUpDownActionListener(MoveDirection.up));
-    myMoveDownButton.addActionListener(new MoveUpDownActionListener(MoveDirection.down));
 
     myTableModel.addTableModelListener(new TableModelListener() {
       public void tableChanged(final TableModelEvent e) {
@@ -211,7 +158,13 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
    * {@inheritDoc}
    */
   protected JComponent createCenterPanel() {
-    return myPanel;
+    return ToolbarDecorator.createDecorator(myCommitsTable)
+      .disableAddAction()
+      .disableRemoveAction()
+      .addExtraAction(new MyDiffAction())
+      .setMoveUpAction(new MoveUpDownActionListener(MoveDirection.up))
+      .setMoveDownAction(new MoveUpDownActionListener(MoveDirection.down))
+      .createPanel();
   }
 
   /**
@@ -462,16 +415,36 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     }
   }
 
+  private class MyDiffAction extends ToolbarDecorator.ElementActionButton implements DumbAware {
+    MyDiffAction() {
+      super("View", "View commit contents", AllIcons.Actions.Diff);
+      registerCustomShortcutSet(CommonShortcuts.getDiff(), myCommitsTable);
+    }
 
-  private class MoveUpDownActionListener implements ActionListener {
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      int row = myCommitsTable.getSelectedRow();
+      assert row >= 0 && row < myTableModel.getRowCount();
+      GitRebaseEntry entry = myTableModel.myEntries.get(row);
+      GitUtil.showSubmittedFiles(myProject, entry.getCommit(), myRoot, false, false);
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return super.isEnabled() && myCommitsTable.getSelectedRowCount() == 1;
+    }
+  }
+
+  private class MoveUpDownActionListener implements AnActionButtonRunnable {
     private final MoveDirection direction;
 
     public MoveUpDownActionListener(MoveDirection direction) {
       this.direction = direction;
     }
 
-    public void actionPerformed(final ActionEvent e) {
-      myTableModel.moveRows(myCommitsTable.getSelectedRows(), direction );
+    @Override
+    public void run(AnActionButton button) {
+      myTableModel.moveRows(myCommitsTable.getSelectedRows(), direction);
     }
   }
 
