@@ -164,12 +164,12 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     }, null, new PerformAnalysisInBackgroundOption(project));
   }
 
-  @SuppressWarnings({"UnusedDeclaration", "WeakerAccess", "UnusedReturnValue"}) //used in TeamCity
-  public static InspectionResultsView showOfflineView(final Project project,
+  @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"}) //used in TeamCity
+  public static InspectionResultsView showOfflineView(@NotNull Project project,
                                                       @Nullable
                                                       final String profileName,
-                                                      final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
-                                                      final String title) {
+                                                      @NotNull final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
+                                                      @NotNull String title) {
     Profile profile;
     if (profileName != null) {
       profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName, false);
@@ -215,7 +215,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
   public static InspectionResultsView showOfflineView(@NotNull Project project,
                                                       @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                       @NotNull InspectionProfile inspectionProfile,
-                                                      final String title) {
+                                                      @NotNull String title) {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext(false);
@@ -227,9 +227,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
     view.update();
     TreeUtil.selectFirstNode(view.getTree());
-    if (context.getContentManager() != null) { //test
-      context.addView(view, title);
-    }
+    context.addView(view, title);
     return view;
   }
 }

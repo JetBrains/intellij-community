@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class RearrangeBeforeCheckinHandler extends CheckinHandler implements Che
   }
 
   @Override
-  public void runCheckinHandlers(final Runnable finishAction) {
+  public void runCheckinHandlers(@NotNull final Runnable finishAction) {
     final Runnable performCheckoutAction = new Runnable() {
       @Override
       public void run() {
