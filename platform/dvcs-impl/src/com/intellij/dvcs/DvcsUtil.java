@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -260,6 +261,66 @@ public class DvcsUtil {
       ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
       manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), newRepositoryPath, vcsName));
     }
+  }
+
+  @Nullable
+  public static <T extends Repository> T guessRepositoryForFile(@NotNull Project project,
+                                                                @NotNull RepositoryManager<T> manager,
+                                                                @Nullable AbstractVcs vcs,
+                                                                @Nullable VirtualFile file,
+                                                                @Nullable String defaultRootPathValue) {
+    T repository = manager.getRepositoryForRoot(getVcsRoot(project, file));
+    return repository != null ? repository : manager.getRepositoryForRoot(guessRootForVcs(project, vcs, defaultRootPathValue));
+  }
+
+  @Nullable
+  private static VirtualFile guessRootForVcs(@NotNull Project project, @Nullable AbstractVcs vcs, @Nullable String defaultRootPathValue) {
+    if (project.isDisposed()) return null;
+    LOG.debug("Guessing vcs root...");
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    if (vcs == null) {
+      LOG.debug("Vcs not found.");
+      return null;
+    }
+    String vcsName = vcs.getDisplayName();
+    VirtualFile[] vcsRoots = vcsManager.getRootsUnderVcs(vcs);
+    if (vcsRoots.length == 0) {
+      LOG.debug("No " + vcsName + " roots in the project.");
+      return null;
+    }
+
+    if (vcsRoots.length == 1) {
+      VirtualFile onlyRoot = vcsRoots[0];
+      LOG.debug("Only one " + vcsName + " root in the project, returning: " + onlyRoot);
+      return onlyRoot;
+    }
+
+    // get remembered last visited repository root
+    if (defaultRootPathValue != null) {
+      VirtualFile recentRoot = VcsUtil.getVirtualFile(defaultRootPathValue);
+      if (recentRoot != null) {
+        LOG.debug("Returning the recent root: " + recentRoot);
+        return recentRoot;
+      }
+    }
+
+    // otherwise return the root of the project dir or the root containing the project dir, if there is such
+    VirtualFile projectBaseDir = project.getBaseDir();
+    if (projectBaseDir == null) {
+      VirtualFile firstRoot = vcsRoots[0];
+      LOG.debug("Project base dir is null, returning the first root: " + firstRoot);
+      return firstRoot;
+    }
+    VirtualFile rootCandidate;
+    for (VirtualFile root : vcsRoots) {
+      if (root.equals(projectBaseDir) || VfsUtilCore.isAncestor(root, projectBaseDir, true)) {
+        LOG.debug("The best candidate: " + root);
+        return root;
+      }
+    }
+    rootCandidate = vcsRoots[0];
+    LOG.debug("Returning the best candidate: " + rootCandidate);
+    return rootCandidate;
   }
 
   public static class Updater implements Consumer<Object> {

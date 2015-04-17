@@ -15,7 +15,6 @@
  */
 package com.intellij.dvcs.ui;
 
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +53,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   }
 
   @Nullable
-  protected abstract T guessRepository(@NotNull Project project, @Nullable VirtualFile selectedFile);
+  protected abstract T guessCurrentRepository(@NotNull Project project);
 
   @NotNull
   protected abstract String getFullBranchName(@NotNull T repository);
@@ -66,7 +65,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   protected abstract void subscribeToRepoChangeEvents(@NotNull Project project);
 
-  protected abstract void widgetUpdated(@NotNull T repository);
+  protected abstract void rememberRecentRoot(@NotNull String path);
 
   public void activate() {
     Project project = getProject();
@@ -141,7 +140,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   public ListPopup getPopupStep() {
     Project project = getProject();
     if (project == null || project.isDisposed()) return null;
-    T repository = guessRepository(project, DvcsUtil.getSelectedFile(project));
+    T repository = guessCurrentRepository(project);
     if (repository == null) return null;
 
     return getPopup(project, repository);
@@ -171,7 +170,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
     Project project = getProject();
     if (project == null || project.isDisposed()) return;
-    T repository = guessRepository(project, DvcsUtil.getSelectedFile(project));
+    T repository = guessCurrentRepository(project);
     if (repository == null) return;
 
     int maxLength = MAX_STRING.length() - 1; // -1, because there are arrows indicating that it is a popup
@@ -180,12 +179,12 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     if (myStatusBar != null) {
       myStatusBar.updateWidget(ID());
     }
-    widgetUpdated(repository);
+    rememberRecentRoot(repository.getRoot().getPath());
   }
 
   @Nullable
   private String getToolTip(@NotNull Project project) {
-    T currentRepository = guessRepository(project, DvcsUtil.getSelectedFile(project));
+    T currentRepository = guessCurrentRepository(project);
     if (currentRepository == null) return null;
     String branchName = getFullBranchName(currentRepository);
     if (isMultiRoot(project)) {

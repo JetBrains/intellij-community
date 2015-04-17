@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.branch.HgBranchPopup;
@@ -35,21 +36,23 @@ import org.zmlx.hg4idea.util.HgUtil;
 public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
 
   @NotNull private final HgVcs myVcs;
+  @NotNull private final HgProjectSettings myProjectSettings;
 
-  public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project) {
+  public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
     super(project, "Hg");
     myVcs = vcs;
+    myProjectSettings = projectSettings;
   }
 
   @Override
   public StatusBarWidget copy() {
-    return new HgStatusWidget(myVcs, ObjectUtils.assertNotNull(getProject()));
+    return new HgStatusWidget(myVcs, ObjectUtils.assertNotNull(getProject()), myProjectSettings);
   }
 
   @Nullable
   @Override
-  protected HgRepository guessRepository(@NotNull Project project, @Nullable VirtualFile selectedFile) {
-    return HgUtil.getRepositoryForFile(project, selectedFile);
+  protected HgRepository guessCurrentRepository(@NotNull Project project) {
+    return HgUtil.getCurrentRepository(project);
   }
 
   @NotNull
@@ -80,6 +83,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  protected void widgetUpdated(@NotNull HgRepository repository) {
+  protected void rememberRecentRoot(@NotNull String path) {
+    myProjectSettings.setRecentRootPath(path);
   }
 }
