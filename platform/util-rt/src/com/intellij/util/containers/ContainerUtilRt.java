@@ -36,7 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @since 12.0
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class ContainerUtilRt {
   private static final int ARRAY_COPY_THRESHOLD = 20;
 
@@ -322,7 +322,7 @@ public class ContainerUtilRt {
 
     @NotNull
     @Override
-    public <T> T[] toArray(@NotNull T[] a) {
+    public <E> E[] toArray(@NotNull E[] a) {
       if (a.length != 0) {
         a[0] = null;
       }
