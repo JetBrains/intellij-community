@@ -1,5 +1,7 @@
 package com.intellij.diff.contents;
 
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -11,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,6 +132,10 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
 
     if (charset == null) {
       charset = currentCharset;
+    }
+
+    if (ProjectFileType.INSTANCE.equals(fileType) && EncodingManager.getInstance().isNative2AsciiForPropertiesFiles()) {
+      charset = Native2AsciiCharset.wrap(charset);
     }
 
     return charset;
