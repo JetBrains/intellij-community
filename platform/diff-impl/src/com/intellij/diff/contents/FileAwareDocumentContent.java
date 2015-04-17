@@ -1,7 +1,5 @@
 package com.intellij.diff.contents;
 
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -13,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,8 +99,6 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     @NotNull
     private Builder create(@NotNull byte[] content) {
       assert myCharset != null;
-
-      myCharset = guessCharset(content, myCharset, myFileType, myHighlightFile);
       return create(CharsetToolkit.decodeString(content, myCharset));
     }
 
@@ -112,32 +107,5 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
       if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
       return new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
     }
-  }
-
-  @NotNull
-  private static Charset guessCharset(@NotNull byte[] content,
-                                      @NotNull Charset currentCharset,
-                                      @Nullable FileType fileType,
-                                      @Nullable VirtualFile highlightFile) {
-
-    CharsetToolkit toolkit = new CharsetToolkit(content, currentCharset);
-    toolkit.setEnforce8Bit(true);
-
-    Charset charset = toolkit.guessFromBOM();
-
-    if (charset == null) {
-      CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(content.length);
-      if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) charset = CharsetToolkit.UTF8_CHARSET;
-    }
-
-    if (charset == null) {
-      charset = currentCharset;
-    }
-
-    if (ProjectFileType.INSTANCE.equals(fileType) && EncodingManager.getInstance().isNative2AsciiForPropertiesFiles()) {
-      charset = Native2AsciiCharset.wrap(charset);
-    }
-
-    return charset;
   }
 }
