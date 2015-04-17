@@ -312,6 +312,16 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
+  private static TreeModel buildModel(Component c) {
+    Component parent = c.getParent();
+    while (parent != null) {
+      c = parent;
+      parent = c.getParent();//Find root window
+    }
+    return new DefaultTreeModel(new UiInspectorAction.HierarchyTree.ComponentNode(c));
+  }
+
+
   private abstract static class HierarchyTree extends JTree implements TreeSelectionListener {
     final Component myComponent;
 
@@ -350,15 +360,6 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         Component c = ((ComponentNode)component).getComponent();
         onComponentChanged(c);
       }
-    }
-
-    private static TreeModel buildModel(Component c) {
-      Component parent = c.getParent();
-      while (parent != null) {
-        c = parent;
-        parent = c.getParent();//Find root window
-      }
-      return new DefaultTreeModel(new ComponentNode(c));
     }
 
     public abstract void onComponentChanged(Component c);
@@ -819,6 +820,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     public void showInspector(@NotNull Component c) {
       InspectorWindow window = myComponentToInspector.get(c);
       if (window != null) {
+        window.myHierarchyTree.setModel(buildModel(c));
+        window.myHierarchyTree.setCellRenderer(new ComponentTreeCellRenderer(c));
+        window.myHierarchyTree.expandPath();
+
         window.switchInfo(c);
         window.setHighlightingEnabled(true);
         window.setVisible(true);
