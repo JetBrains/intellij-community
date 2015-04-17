@@ -40,7 +40,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (isSelected || !myUiProperties.isHighlightMyCommits()) return VcsCommitStyle.DEFAULT;
+    if (!myUiProperties.isHighlightMyCommits()) return VcsCommitStyle.DEFAULT;
     Map<VirtualFile, VcsUser> users = myDataHolder.getCurrentUser();
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
