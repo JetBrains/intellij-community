@@ -249,7 +249,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class ComponentTreeCellRenderer extends ColoredTreeCellRenderer {
-    ComponentTreeCellRenderer() {
+    private final Component myInitialSelection;
+
+    ComponentTreeCellRenderer(Component initialSelection) {
+      myInitialSelection = initialSelection;
       setFont(JBUI.Fonts.label(11));
       setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
     }
@@ -266,7 +269,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       Color background = selected ? UIUtil.getTreeSelectionBackground() : null;
       if (value instanceof HierarchyTree.ComponentNode) {
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
-        Component component = componentNode.getOwnComponent();
+        Component component = componentNode.getComponent();
         Class<?> clazz0 = component.getClass();
         Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
         String name = component.getName();
@@ -284,7 +287,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             foreground = PlatformColors.BLUE;
           }
 
-          if (componentNode.getToSelect() == componentNode.getOwnComponent()) {
+          if (myInitialSelection == componentNode.getComponent()) {
             background = new Color(31, 128, 8, 58);
           }
         }
@@ -309,13 +312,23 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
   }
 
+  private static TreeModel buildModel(Component c) {
+    Component parent = c.getParent();
+    while (parent != null) {
+      c = parent;
+      parent = c.getParent();//Find root window
+    }
+    return new DefaultTreeModel(new UiInspectorAction.HierarchyTree.ComponentNode(c));
+  }
+
+
   private abstract static class HierarchyTree extends JTree implements TreeSelectionListener {
     final Component myComponent;
 
     private HierarchyTree(Component c) {
       myComponent = c;
       setModel(buildModel(c));
-      setCellRenderer(new ComponentTreeCellRenderer());
+      setCellRenderer(new ComponentTreeCellRenderer(c));
       getSelectionModel().addTreeSelectionListener(this);
       new TreeSpeedSearch(this);
     }
@@ -323,7 +336,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     public void expandPath() {
       TreeUtil.expandAll(this);
       int count = getRowCount();
-      ComponentNode node = new ComponentNode(myComponent, myComponent.getParent());
+      ComponentNode node = new ComponentNode(myComponent);
 
       for (int i = 0; i < count; i++) {
         TreePath row = getPathForRow(i);
@@ -344,59 +357,49 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       }
       Object component = path.getLastPathComponent();
       if (component instanceof ComponentNode) {
-        Component c = ((ComponentNode)component).getOwnComponent();
+        Component c = ((ComponentNode)component).getComponent();
         onComponentChanged(c);
       }
-    }
-
-    private static TreeModel buildModel(Component c) {
-      return new DefaultTreeModel(new ComponentNode(c, null));
     }
 
     public abstract void onComponentChanged(Component c);
 
     private static class ComponentNode extends DefaultMutableTreeNode  {
-      private final Component myParent;
-      private final Component myToSelect;
+      private final Component myComponent;
 
-      private ComponentNode(Object userObject, Component parent) {
-        super(userObject);
-        myParent = parent == null ? SwingUtilities.getWindowAncestor((Component) userObject) : parent;
-        myToSelect = (Component)userObject;
-        children = prepareChildren(myToSelect, parent);
+      private ComponentNode(@NotNull Component component) {
+        super(component);
+        myComponent = component;
+        children = prepareChildren(myComponent);
       }
 
-      public Component getOwnComponent() {
-        return myParent;
-      }
-
-      public Component getToSelect() {
-        return myToSelect;
+      Component getComponent() {
+        return myComponent;
       }
 
       @Override
       public String toString() {
-        return myParent.getClass().getName();
+        return myComponent.getClass().getName();
       }
 
       @Override
       public boolean equals(Object obj) {
-        return obj instanceof ComponentNode && ((ComponentNode)obj).getOwnComponent() == getOwnComponent();
+        return obj instanceof ComponentNode && ((ComponentNode)obj).getComponent() == getComponent();
       }
 
       @SuppressWarnings("UseOfObsoleteCollectionType")
-      private static Vector prepareChildren(Component toSelect, Component parent) {
+      private static Vector prepareChildren(Component parent) {
         Vector<ComponentNode> result = new Vector<ComponentNode>();
-        if (parent == null) {
-          Container root = SwingUtilities.windowForComponent(toSelect);
-          for (Component component : root.getComponents()) {
-            result.add(new ComponentNode(toSelect, component));
+        if (parent instanceof Container) {
+          for (Component component : ((Container)parent).getComponents()) {
+            result.add(new ComponentNode(component));
           }
-        } else {
-          if (parent instanceof Container) {
-            for (Component component : ((Container)parent).getComponents()) {
-              result.add(new ComponentNode(toSelect, component));
-            }
+        }
+        if (parent instanceof Window) {
+          Window[] children = ((Window)parent).getOwnedWindows();
+          for (Window child : children) {
+            if (child instanceof InspectorWindow) continue;
+            result.add(new ComponentNode(child));
           }
         }
 
@@ -817,6 +820,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     public void showInspector(@NotNull Component c) {
       InspectorWindow window = myComponentToInspector.get(c);
       if (window != null) {
+        window.myHierarchyTree.setModel(buildModel(c));
+        window.myHierarchyTree.setCellRenderer(new ComponentTreeCellRenderer(c));
+        window.myHierarchyTree.expandPath();
+
         window.switchInfo(c);
         window.setHighlightingEnabled(true);
         window.setVisible(true);

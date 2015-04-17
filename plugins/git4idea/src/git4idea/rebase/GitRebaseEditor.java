@@ -15,6 +15,11 @@
  */
 package git4idea.rebase;
 
+import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,11 +32,13 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +49,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -53,7 +61,7 @@ import java.util.List;
  * Editor for rebase entries. It allows reordering of
  * the entries and changing commit status.
  */
-public class GitRebaseEditor extends DialogWrapper {
+public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   /**
    * The table that lists all commits
    */
@@ -78,6 +86,8 @@ public class GitRebaseEditor extends DialogWrapper {
    * Table model
    */
   private final MyTableModel myTableModel;
+
+  @NotNull private final CopyProvider myCopyProvider;
 
   /**
    * The constructor
@@ -143,6 +153,7 @@ public class GitRebaseEditor extends DialogWrapper {
     });
 
     installSpeedSearch();
+    myCopyProvider = new MyCopyProvider();
 
     adjustColumnWidth(0);
     adjustColumnWidth(1);
@@ -222,6 +233,15 @@ public class GitRebaseEditor extends DialogWrapper {
   @NotNull
   public List<GitRebaseEntry> getEntries() {
     return myTableModel.myEntries;
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      return myCopyProvider;
+    }
+    return null;
   }
 
 
@@ -325,6 +345,15 @@ public class GitRebaseEditor extends DialogWrapper {
       }
     }
 
+    @Nullable
+    public String getStringToCopy(int row) {
+      if (row < 0 || row >= myEntries.size()) {
+        return null;
+      }
+      GitRebaseEntry e = myEntries.get(row);
+      return e.getCommit() + " " + e.getSubject();
+    }
+
     private void setSelection(ContiguousIntIntervalTracker intervalBuilder) {
       myCommitsTable.getSelectionModel().setSelectionInterval(intervalBuilder.getMin(), intervalBuilder.getMax());
     }
@@ -373,6 +402,7 @@ public class GitRebaseEditor extends DialogWrapper {
         assert rowIndex < myEntries.size();
       }
     }
+
   }
 
   private static class ContiguousIntIntervalTracker {
@@ -445,4 +475,24 @@ public class GitRebaseEditor extends DialogWrapper {
     }
   }
 
+  private class MyCopyProvider implements CopyProvider {
+    @Override
+    public void performCopy(@NotNull DataContext dataContext) {
+      List<String> data = ContainerUtil.newArrayList();
+      for (int row : myCommitsTable.getSelectedRows()) {
+        data.add(myTableModel.getStringToCopy(row));
+      }
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(data, "\n")));
+    }
+
+    @Override
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+      return myCommitsTable.getSelectedRowCount() > 0;
+    }
+
+    @Override
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
+      return true;
+    }
+  }
 }
