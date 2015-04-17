@@ -67,6 +67,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   protected boolean myRebaseEditorShown = false;
 
+  private boolean myNoopSituation;
+
   /**
    * The constructor from fields that is expected to be
    * accessed only from {@link git4idea.rebase.GitRebaseEditorService}.
@@ -138,6 +140,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
                                                        CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
               if (rebase == Messages.OK) {
                 isSuccess.set(true);
+                myNoopSituation = true;
                 return;
               }
             }
@@ -182,5 +185,12 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   public int getHandlerNo() {
     return myHandlerNo;
+  }
+
+  /**
+   * Tells if there was a "noop" situation during rebase (no commits were rebase, just the label was moved).
+   */
+  public boolean wasNoopSituationDetected() {
+    return myNoopSituation;
   }
 }

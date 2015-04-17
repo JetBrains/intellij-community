@@ -74,7 +74,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
           manager.updateRepository(root);
           root.refresh(false, true);
-          notifyAboutResult(result, resultListener, exceptions, project);
+          notifyAboutResult(result, resultListener, editor.wasNoopSituationDetected(), exceptions, project);
         }
         finally {
           DvcsUtil.workingTreeChangeFinished(project, token);
@@ -85,6 +85,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
 
   private static void notifyAboutResult(@NotNull GitCommandResult commandResult,
                                         @NotNull GitRebaseLineListener resultListener,
+                                        boolean noopSituation,
                                         @NotNull List<VcsException> exceptions,
                                         @NotNull Project project) {
     final GitRebaseLineListener.Result result = resultListener.getResult();
@@ -110,6 +111,9 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
       case FINISHED:
         isError = false;
         messageId = "rebase.result.success";
+        if (noopSituation) {
+          message = "Current branch was reset to the base branch";
+        }
         break;
       default:
         throw new IllegalStateException("Unsupported rebase result: " + result.status);
