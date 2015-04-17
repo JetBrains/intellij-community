@@ -394,6 +394,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   }
 
   private void checkFocus() {
+    if (!comboBox.isEnabled()) {
+      hasFocus = false;
+      return;
+    }
+
     hasFocus = hasFocus(comboBox);
     if (hasFocus) return;
 
