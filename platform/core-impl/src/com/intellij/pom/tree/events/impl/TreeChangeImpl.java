@@ -36,7 +36,8 @@ public class TreeChangeImpl implements TreeChange {
   private final List<Pair<ASTNode,Integer>> mySortedChanges = new ArrayList<Pair<ASTNode, Integer>>(); // change, oldoffset
   private final ASTNode myParent;
 
-  private static final boolean ourDoChecks = ApplicationManager.getApplication().isEAP();
+  @SuppressWarnings("FieldMayBeFinal")
+  private static boolean ourDoChecks = ApplicationManager.getApplication().isEAP();
 
   public TreeChangeImpl(ASTNode parent) {
     myParent = parent;
