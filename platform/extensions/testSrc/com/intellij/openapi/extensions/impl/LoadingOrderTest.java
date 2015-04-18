@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,32 @@ package com.intellij.openapi.extensions.impl;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.SortingException;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jmock.cglib.Mock;
-import org.jmock.cglib.MockObjectTestCase;
-import org.jmock.core.stub.ReturnStub;
+import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * @author Alexander Kireyev
  */
-public class LoadingOrderTest extends MockObjectTestCase {
+public class LoadingOrderTest {
+  @Test
   public void testSimpleSorting() {
-    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
-    target.add(createElement(LoadingOrder.ANY, null, "any"));
+    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    target.add(createElement(LoadingOrder.ANY, null, "Any"));
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
     target.add(createElement(LoadingOrder.LAST, null, "2"));
-    target.add(createElement(LoadingOrder.ANY, null, "any"));
+    target.add(createElement(LoadingOrder.ANY, null, "Any"));
     LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
-    assertSequence(array, "1anyany2");
+    assertSequence(array, "1AnyAny2");
   }
 
+  @Test
   public void testStability() {
-    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
     target.add(createElement(LoadingOrder.ANY, null, "1"));
     target.add(createElement(LoadingOrder.ANY, null, "2"));
     target.add(createElement(LoadingOrder.ANY, null, "3"));
@@ -49,10 +52,11 @@ public class LoadingOrderTest extends MockObjectTestCase {
     assertSequence(array, "1234");
   }
 
+  @Test
   public void testComplexSorting() {
-    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
-    @NonNls String idOne = "idone";
-    @NonNls String idTwo = "idTwo";
+    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    String idOne = "idOne";
+    String idTwo = "idTwo";
     target.add(createElement(LoadingOrder.before(idTwo), idOne, "2"));
     target.add(createElement(LoadingOrder.FIRST, null, "0"));
     target.add(createElement(LoadingOrder.LAST, null, "5"));
@@ -63,9 +67,10 @@ public class LoadingOrderTest extends MockObjectTestCase {
     assertSequence(array, "012345");
   }
 
+  @Test
   public void testComplexSorting2() {
-    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
-    @NonNls String idOne = "idone";
+    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    String idOne = "idOne";
     target.add(createElement(LoadingOrder.before(idOne), null, "2"));
     target.add(createElement(LoadingOrder.after(idOne), null, "4"));
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
@@ -76,7 +81,7 @@ public class LoadingOrderTest extends MockObjectTestCase {
     assertSequence(array, "123456");
   }
 
-  private static void assertSequence(LoadingOrder.Orderable[] array, @NonNls String expected) {
+  private static void assertSequence(LoadingOrder.Orderable[] array, String expected) {
     LoadingOrder.sort(array);
     StringBuffer sequence = buildSequence(array);
     assertEquals(expected, sequence.toString());
@@ -90,8 +95,9 @@ public class LoadingOrderTest extends MockObjectTestCase {
     return sequence;
   }
 
+  @Test
   public void testFailingSortingBeforeFirst() {
-    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
     target.add(createElement(LoadingOrder.ANY, null, "good"));
     target.add(createElement(LoadingOrder.FIRST, "first", "bad"));
     target.add(createElement(LoadingOrder.LAST, null, "good"));
@@ -100,8 +106,9 @@ public class LoadingOrderTest extends MockObjectTestCase {
     checkSortingFailure(array);
   }
 
+  @Test
   public void testFailingSortingFirst() {
-    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
     target.add(createElement(LoadingOrder.ANY, null, "2"));
     target.add(createElement(LoadingOrder.FIRST, "first", "1"));
     target.add(createElement(LoadingOrder.LAST, null, "3"));
@@ -123,8 +130,9 @@ public class LoadingOrderTest extends MockObjectTestCase {
     }
   }
 
+  @Test
   public void testFailingSortingAfterLast() {
-    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
     target.add(createElement(LoadingOrder.after("last"), null, "bad"));
     target.add(createElement(LoadingOrder.FIRST, null, "good"));
     target.add(createElement(LoadingOrder.LAST, "last", "bad"));
@@ -133,8 +141,9 @@ public class LoadingOrderTest extends MockObjectTestCase {
     checkSortingFailure(array);
   }
 
+  @Test
   public void testFailingSortingLast() {
-    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
     target.add(createElement(LoadingOrder.LAST, null, "3"));
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
     target.add(createElement(LoadingOrder.LAST, "last", "3"));
@@ -143,8 +152,9 @@ public class LoadingOrderTest extends MockObjectTestCase {
     assertSequence(array, "1233");
   }
 
+  @Test
   public void testFailingSortingComplex() {
-    ArrayList<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
+    List<LoadingOrder.Orderable> target = new ArrayList<LoadingOrder.Orderable>();
     target.add(createElement(LoadingOrder.after("2"), "1", "bad"));
     target.add(createElement(LoadingOrder.after("3"), "2", "bad"));
     target.add(createElement(LoadingOrder.after("1"), "3", "bad"));
@@ -152,12 +162,23 @@ public class LoadingOrderTest extends MockObjectTestCase {
     checkSortingFailure(array);
   }
 
-  private LoadingOrder.Orderable createElement(LoadingOrder order, @NonNls String idString, @NonNls String elementId) {
-    Mock mock = new Mock(LoadingOrder.Orderable.class);
-    mock.stubs().method("getOrder").withNoArguments().will(new ReturnStub(order));
-    mock.stubs().method("getOrderId").withNoArguments().will(returnValue(idString));
-    mock.stubs().method("getDescribingElement").withNoArguments().will(new ReturnStub(new MyElement(elementId)));
-    return (LoadingOrder.Orderable) mock.proxy();
+  private static LoadingOrder.Orderable createElement(final LoadingOrder order, final String idString, final String elementId) {
+    return new LoadingOrder.Orderable() {
+      @Override
+      public String getOrderId() {
+        return idString;
+      }
+
+      @Override
+      public LoadingOrder getOrder() {
+        return order;
+      }
+
+      @Override
+      public Element getDescribingElement() {
+        return new MyElement(elementId);
+      }
+    };
   }
 
   private static class MyElement extends Element {
