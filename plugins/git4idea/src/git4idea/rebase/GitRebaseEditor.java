@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,8 +54,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Editor for rebase entries. It allows reordering of
- * the entries and changing commit status.
+ * Interactive rebase editor. It allows reordering of the entries and changing commit status.
  */
 public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
@@ -78,11 +78,11 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     myCommitsTable.setIntercellSpacing(JBUI.emptySize());
 
-    final JComboBox editorComboBox = new JComboBox();
+    final JComboBox editorComboBox = new ComboBox();
     for (Object option : GitRebaseEntry.Action.values()) {
       editorComboBox.addItem(option);
     }
-    TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION);
+    TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
     actionColumn.setCellEditor(new DefaultCellEditor(editorComboBox));
     actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
 
@@ -131,9 +131,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     column.setPreferredWidth(contentWidth);
   }
 
-  /**
-   * Validate fields
-   */
   private void validateFields() {
     final List<GitRebaseEntry> entries = myTableModel.myEntries;
     if (entries.size() == 0) {
@@ -155,30 +152,21 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     setOKActionEnabled(true);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected JComponent createCenterPanel() {
     return ToolbarDecorator.createDecorator(myCommitsTable)
       .disableAddAction()
       .disableRemoveAction()
       .addExtraAction(new MyDiffAction())
-      .setMoveUpAction(new MoveUpDownActionListener(MoveDirection.up))
-      .setMoveDownAction(new MoveUpDownActionListener(MoveDirection.down))
+      .setMoveUpAction(new MoveUpDownActionListener(MoveDirection.UP))
+      .setMoveDownAction(new MoveUpDownActionListener(MoveDirection.DOWN))
       .createPanel();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.RebaseCommits";
@@ -198,23 +186,10 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     return null;
   }
 
-
-  /**
-   * The table model for the commits
-   */
   private class MyTableModel extends AbstractTableModel implements EditableModel {
-    /**
-     * The action column
-     */
-    private static final int ACTION = 0;
-    /**
-     * The commit hash column
-     */
-    private static final int COMMIT = 1;
-    /**
-     * The subject column
-     */
-    private static final int SUBJECT = 2;
+    private static final int ACTION_COLUMN = 0;
+    private static final int HASH_COLUMN = 1;
+    private static final int SUBJECT_COLUMN = 2;
 
     @NotNull private final List<GitRebaseEntry> myEntries;
     private int[] myLastEditableSelectedRows = new int[]{};
@@ -223,78 +198,60 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       myEntries = entries;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public Class<?> getColumnClass(final int columnIndex) {
-      return columnIndex == ACTION ? ListWithSelection.class : String.class;
+    public Class<?> getColumnClass(int columnIndex) {
+      return columnIndex == ACTION_COLUMN ? ListWithSelection.class : String.class;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public String getColumnName(final int column) {
+    public String getColumnName(int column) {
       switch (column) {
-        case ACTION:
+        case ACTION_COLUMN:
           return GitBundle.getString("rebase.editor.action.column");
-        case COMMIT:
+        case HASH_COLUMN:
           return GitBundle.getString("rebase.editor.commit.column");
-        case SUBJECT:
+        case SUBJECT_COLUMN:
           return GitBundle.getString("rebase.editor.comment.column");
         default:
           throw new IllegalArgumentException("Unsupported column index: " + column);
       }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public int getRowCount() {
       return myEntries.size();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public int getColumnCount() {
-      return SUBJECT + 1;
+      return SUBJECT_COLUMN + 1;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public Object getValueAt(final int rowIndex, final int columnIndex) {
+    public Object getValueAt(int rowIndex, int columnIndex) {
       GitRebaseEntry e = myEntries.get(rowIndex);
       switch (columnIndex) {
-        case ACTION:
+        case ACTION_COLUMN:
           return new ListWithSelection<GitRebaseEntry.Action>(Arrays.asList(GitRebaseEntry.Action.values()), e.getAction());
-        case COMMIT:
+        case HASH_COLUMN:
           return e.getCommit();
-        case SUBJECT:
+        case SUBJECT_COLUMN:
           return e.getSubject();
         default:
           throw new IllegalArgumentException("Unsupported column index: " + columnIndex);
       }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    @SuppressWarnings({"unchecked"})
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
-      assert columnIndex == ACTION;
+      assert columnIndex == ACTION_COLUMN;
 
-      if ( ArrayUtil.indexOf( myLastEditableSelectedRows , rowIndex ) > -1 ) {
-        final ContiguousIntIntervalTracker intervalBuilder = new ContiguousIntIntervalTracker();
+      if (ArrayUtil.indexOf(myLastEditableSelectedRows, rowIndex) > -1) {
+        ContiguousIntIntervalTracker intervalBuilder = new ContiguousIntIntervalTracker();
         for (int lastEditableSelectedRow : myLastEditableSelectedRows) {
-          intervalBuilder.track( lastEditableSelectedRow );
+          intervalBuilder.track(lastEditableSelectedRow);
           setRowAction(aValue, lastEditableSelectedRow, columnIndex);
         }
         setSelection(intervalBuilder);
-      } else {
+      }
+      else {
         setRowAction(aValue, rowIndex, columnIndex);
       }
     }
@@ -329,43 +286,39 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       return e.getCommit() + " " + e.getSubject();
     }
 
-    private void setSelection(ContiguousIntIntervalTracker intervalBuilder) {
+    private void setSelection(@NotNull ContiguousIntIntervalTracker intervalBuilder) {
       myCommitsTable.getSelectionModel().setSelectionInterval(intervalBuilder.getMin(), intervalBuilder.getMax());
     }
 
-    private void setRowAction(Object aValue, int rowIndex, int columnIndex) {
+    private void setRowAction(@NotNull Object aValue, int rowIndex, int columnIndex) {
       GitRebaseEntry e = myEntries.get(rowIndex);
       e.setAction((GitRebaseEntry.Action)aValue);
       fireTableCellUpdated(rowIndex, columnIndex);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public boolean isCellEditable(final int rowIndex, final int columnIndex) {
       myLastEditableSelectedRows = myCommitsTable.getSelectedRows();
-      return columnIndex == ACTION;
+      return columnIndex == ACTION_COLUMN;
     }
 
-    public void moveRows(int[] rows, MoveDirection direction) {
-
+    public void moveRows(@NotNull int[] rows, @NotNull MoveDirection direction) {
       myCommitsTable.removeEditor();
 
       final ContiguousIntIntervalTracker selectionInterval = new ContiguousIntIntervalTracker();
       final ContiguousIntIntervalTracker rowsUpdatedInterval = new ContiguousIntIntervalTracker();
 
-      for (int row : direction.preprocessRowIndexes( rows )) {
+      for (int row : direction.preprocessRowIndexes(rows)) {
         final int targetIndex = row + direction.offset();
-        assertIndexInRange( row , targetIndex );
+        assertIndexInRange(row, targetIndex);
 
-        Collections.swap( myEntries , row , targetIndex );
+        Collections.swap(myEntries, row, targetIndex);
 
-        rowsUpdatedInterval.track(targetIndex, row );
-        selectionInterval.track( targetIndex );
+        rowsUpdatedInterval.track(targetIndex, row);
+        selectionInterval.track(targetIndex);
       }
 
-      if ( selectionInterval.hasValues() ) {
+      if (selectionInterval.hasValues()) {
         setSelection(selectionInterval);
         fireTableRowsUpdated(rowsUpdatedInterval.getMin(), rowsUpdatedInterval.getMax());
       }
@@ -417,22 +370,17 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   }
 
   private enum MoveDirection {
-    up , down;
+    UP,
+    DOWN;
+
     public int offset() {
-      if (this == up) {
-        return -1;
-      } else {
-        return +1;
-      }
+      return this == UP ? -1 : +1;
     }
-    public int[] preprocessRowIndexes( int[] seletion ) {
-      int[] copy = seletion.clone();
-      Arrays.sort( copy );
-      if (this == up) {
-        return copy;
-      } else {
-        return ArrayUtil.reverseArray( copy );
-      }
+
+    public int[] preprocessRowIndexes(int[] selection) {
+      int[] copy = selection.clone();
+      Arrays.sort(copy);
+      return this == UP ? copy : ArrayUtil.reverseArray(copy);
     }
   }
 
@@ -459,7 +407,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   private class MoveUpDownActionListener implements AnActionButtonRunnable {
     private final MoveDirection direction;
 
-    public MoveUpDownActionListener(MoveDirection direction) {
+    public MoveUpDownActionListener(@NotNull MoveDirection direction) {
       this.direction = direction;
     }
 
