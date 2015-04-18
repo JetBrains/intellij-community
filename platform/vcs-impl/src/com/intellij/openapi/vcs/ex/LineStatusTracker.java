@@ -526,10 +526,10 @@ public class LineStatusTracker {
       return Collections.emptyList();
     }
     if (changedLine1 == changedLine2) {
-      return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2, Range.DELETED));
+      return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2));
     }
     if (vcsLine1 == vcsLine2) {
-      return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2, Range.INSERTED));
+      return Collections.singletonList(new Range(changedLine1, changedLine2, vcsLine1, vcsLine2));
     }
 
     List<String> lines = new DocumentWrapper(myDocument).getLines(changedLine1, changedLine2 - 1);
