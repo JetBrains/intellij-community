@@ -98,14 +98,14 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="junit" />
     <orderEntry type="module" module-name="smRunner" />
     <orderEntry type="library" name="Kryo" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>
 </module>
