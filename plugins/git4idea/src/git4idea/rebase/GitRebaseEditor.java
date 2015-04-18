@@ -32,6 +32,7 @@ import com.intellij.util.ListWithSelection;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
+import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
@@ -201,7 +202,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   /**
    * The table model for the commits
    */
-  private class MyTableModel extends AbstractTableModel {
+  private class MyTableModel extends AbstractTableModel implements EditableModel {
     /**
      * The action column
      */
@@ -298,6 +299,27 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       }
     }
 
+    @Override
+    public void addRow() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void exchangeRows(int oldIndex, int newIndex) {
+      Collections.swap(myEntries, oldIndex, newIndex);
+      fireTableRowsUpdated(Math.min(oldIndex, newIndex), Math.max(oldIndex, newIndex));
+    }
+
+    @Override
+    public boolean canExchangeRows(int oldIndex, int newIndex) {
+      return true;
+    }
+
+    @Override
+    public void removeRow(int idx) {
+      throw new UnsupportedOperationException();
+    }
+
     @Nullable
     public String getStringToCopy(int row) {
       if (row < 0 || row >= myEntries.size()) {
@@ -355,7 +377,6 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
         assert rowIndex < myEntries.size();
       }
     }
-
   }
 
   private static class ContiguousIntIntervalTracker {
