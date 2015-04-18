@@ -16,6 +16,5 @@
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="xml-psi-impl" />
-    <orderEntry type="module" module-name="javascript-psi-impl" />
   </component>
 </module>
