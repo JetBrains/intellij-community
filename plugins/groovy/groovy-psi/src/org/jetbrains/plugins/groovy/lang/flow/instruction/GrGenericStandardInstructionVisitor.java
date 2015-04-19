@@ -112,7 +112,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
 
   @Override
   public DfaInstructionState<V>[] visitCheckReturnValue(CheckReturnValueInstruction<V> instruction, DfaMemoryState state) {
-    final DfaValue retValue = state.pop();
+    final DfaValue retValue = state.peek();
     final PsiElement instructionReturn = instruction.getReturn();
     final GrMethod containingMethod = PsiTreeUtil.getParentOfType(instructionReturn, GrMethod.class);
     if (containingMethod != null) {
