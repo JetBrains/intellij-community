@@ -1145,7 +1145,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return getAnnotationsAreaOffset() + getAnnotationsAreaWidthEx();
   }
 
-  private int getLineMarkerFreePaintersAreaOffset() {
+  @Override
+  public int getLineMarkerFreePaintersAreaOffset() {
     return getLineMarkerAreaOffset() + myIconsAreaWidth + GAP_BETWEEN_ICONS_AND_FREE_PAINTERS_AREA;
   }
   
@@ -1372,7 +1373,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {
       return null;
     }
-    if (e.isConsumed() || e.getX() > getWhitespaceSeparatorOffset() || e.getX() < getLineMarkerFreePaintersAreaOffset()) {
+    if (e.isConsumed() || e.getX() > getWhitespaceSeparatorOffset()) {
       return null;
     }
     final ActiveGutterRenderer[] gutterRenderer = {null};
