@@ -62,7 +62,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -70,6 +69,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.jetbrains.plugins.groovy.lang.flow.GrControlFlowHelper.shouldCheckReturn;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL_DOT;
 
 public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
@@ -703,7 +703,51 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
   @Override
   public void visitElvisExpression(GrElvisExpression expression) {
-    super.visitElvisExpression(expression);
+    startElement(expression);
+
+    final GrExpression condition = expression.getCondition();
+    condition.accept(this);
+    addInstruction(new DupInstruction<V>());
+    addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(expression), false, condition));
+    pop();
+    final GrExpression elseBranch = expression.getElseBranch();
+    if (elseBranch == null) {
+      pushUnknown();
+    }
+    else {
+      elseBranch.accept(this);
+    }
+
+    finishElement(expression);
+  }
+
+  @Override
+  public void visitConditionalExpression(GrConditionalExpression expression) {
+    startElement(expression);
+
+    final GrExpression condition = expression.getCondition();
+    final GrExpression thenBranch = expression.getThenBranch();
+    final GrExpression elseBranch = expression.getElseBranch();
+    condition.accept(this);
+    final ConditionalGotoInstruction<V> gotoElse = addInstruction(new ConditionalGotoInstruction<V>(null, true, condition));
+
+    if (thenBranch == null) {
+      pushUnknown();
+    }
+    else {
+      thenBranch.accept(this);
+    }
+    addInstruction(new GotoInstruction<V>(myFlow.getEndOffset(expression)));
+
+    gotoElse.setOffset(myFlow.getNextOffset());
+    if (elseBranch == null) {
+      pushUnknown();
+    }
+    else {
+      elseBranch.accept(this);
+    }
+
+    finishElement(expression);
   }
 
   @Override
@@ -826,6 +870,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     else {
       pushUnknown();
     }
+    pop();
 
     finishElement(returnStatement);
   }
@@ -980,7 +1025,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (element != popped) {
       throw new AssertionError("Expected " + element + ", popped " + popped);
     }
-    if (element instanceof GrExpression && ControlFlowBuilderUtil.isCertainlyReturnStatement((GrStatement)element)) {
+    if (shouldCheckReturn(element)) {
       addInstruction(new CheckReturnValueInstruction<V>(
         element instanceof GrReturnStatement
         ? ((GrReturnStatement)element).getReturnValue()
@@ -988,7 +1033,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       ));
       //addInstruction(new ReturnInstruction<V>(false, element));
     }
-    else if (element instanceof GrStatement && element.getParent() instanceof GrStatementOwner) {
+    if (element instanceof GrStatement && element.getParent() instanceof GrStatementOwner) {
       if (element instanceof GrExpression) {
         pop();
       }
