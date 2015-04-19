@@ -55,7 +55,6 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.*;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -331,9 +330,11 @@ public class HighlightUtil extends HighlightUtilBase {
                 .descriptionAndTooltip("Unexpected type: class is expected").create();
             }
             if (!erasures.add(TypeConversionUtil.erasure(conjType))) {
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(conjunct)
                 .descriptionAndTooltip("Repeated interface").create();
+              QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteRepeatedInterfaceFix(conjunct, conjList), null);
+              return highlightInfo;
             }
           }
 
