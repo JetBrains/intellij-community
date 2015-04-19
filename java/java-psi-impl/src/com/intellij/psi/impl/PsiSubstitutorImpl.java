@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -353,15 +354,24 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           }
         }
       }
-    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper() && !(oldSubstituted instanceof PsiCapturedWildcardType)) {
-      final PsiType erasure = TypeConversionUtil.erasure(((PsiWildcardType)substituted).getBound());
-      if (erasure != null) {
-        final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
-        for (PsiType boundType : boundTypes) {
-          if (TypeConversionUtil.isAssignable(erasure, boundType)) {
-            return boundType.accept(mySimpleSubstitutionVisitor);
+    } else if (substituted instanceof PsiWildcardType && ((PsiWildcardType)substituted).isSuper()) {
+      final PsiType[] boundTypes = typeParameter.getExtendsListTypes();
+      PsiType glb = null;
+      for (PsiType boundType : boundTypes) {
+        final PsiType substitutedBound = boundType.accept(mySimpleSubstitutionVisitor);
+        if (substitutedBound != null) {
+          if (glb == null) {
+            glb = substitutedBound;
+          }
+          else {
+            glb = GenericsUtil.getGreatestLowerBound(glb, substitutedBound);
           }
         }
+      }
+      if (glb != null && captureContext != null) {
+        final PsiCapturedWildcardType capturedWildcardType = PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext, typeParameter);
+        capturedWildcardType.setUpperBound(glb);
+        return capturedWildcardType;
       }
     }
 
