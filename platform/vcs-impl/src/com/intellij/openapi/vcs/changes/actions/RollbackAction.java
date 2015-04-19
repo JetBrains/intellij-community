@@ -65,11 +65,11 @@ public class RollbackAction extends AnAction implements DumbAware {
 
     final Change[] leadSelection = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
     boolean isEnabled = (leadSelection != null && leadSelection.length > 0) ||
+                              currentChangelistNotEmpty(project) ||
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES)) ||
-                              hasReversibleFiles(e, project) ||
-                              currentChangelistNotEmpty(project);
+                              possiblyHasReversibleFiles(e, project);
     e.getPresentation().setEnabled(isEnabled);
     String operationName = RollbackUtil.getRollbackOperationName(project);
     e.getPresentation().setText(operationName + "...");
@@ -78,15 +78,18 @@ public class RollbackAction extends AnAction implements DumbAware {
     }
   }
 
-  private static boolean hasReversibleFiles(AnActionEvent e, Project project) {
+  private static boolean possiblyHasReversibleFiles(AnActionEvent e, Project project) {
+    final int MAX_FILES_TO_CHECK = 100;
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null) {
       ChangeListManager clManager = ChangeListManager.getInstance(project);
       Set<VirtualFile> modifiedWithoutEditing = ContainerUtil.newHashSet(clManager.getModifiedWithoutEditing());
+      int checkedFiles = 0;
       for (VirtualFile file : files) {
-        if (!clManager.getChangesIn(file).isEmpty() || modifiedWithoutEditing.contains(file)) {
+        if (!clManager.getChangesIn(file).isEmpty() || modifiedWithoutEditing.contains(file) || checkedFiles > MAX_FILES_TO_CHECK) {
           return true;
         }
+        checkedFiles++;
       }
     }
     return false;
