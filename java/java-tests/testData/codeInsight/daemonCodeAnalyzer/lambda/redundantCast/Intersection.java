@@ -9,6 +9,6 @@ class Test {
   
   {
     Predicate<String> mh1 = (Predicate<String> & Serializable)Test::test;
-    Predicate<String> mh0 = (<warning descr="Casting 'Test::test' to 'Predicate<String> & Predicate<String>' is redundant">Predicate<String> & Predicate<String></warning>)Test::test;
+    Predicate<String> mh0 = (Predicate<String> & <error descr="Repeated interface">Predicate<String></error>)Test::test;
   }
 }

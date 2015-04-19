@@ -44,8 +44,15 @@ public class PsiIntersectionType extends PsiType.Stub {
 
   @NotNull
   public static PsiType createIntersection(PsiType... conjuncts) {
+    return createIntersection(true, conjuncts);
+  }
+
+  @NotNull
+  public static PsiType createIntersection(boolean flatten, PsiType... conjuncts) {
     assert conjuncts.length > 0;
-    conjuncts = flattenAndRemoveDuplicates(conjuncts);
+    if (flatten) {
+      conjuncts = flattenAndRemoveDuplicates(conjuncts);
+    }
     if (conjuncts.length == 1) return conjuncts[0];
     return new PsiIntersectionType(conjuncts);
   }
