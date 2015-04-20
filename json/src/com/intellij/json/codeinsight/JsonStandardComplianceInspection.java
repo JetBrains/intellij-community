@@ -6,13 +6,13 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -145,9 +145,13 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         if (element instanceof JsonStringLiteral && rawText.startsWith("'")) {
           content = escapeSingleQuotedStringContent(content);
         }
-        // TODO: find out better way to replace element and skip reformatting step afterwards
-        final ASTNode replacement = new JsonElementGenerator(project).createValue("\"" + content + "\"").getNode();
-        element.getParent().getNode().replaceChild(element.getNode(), replacement);
+        final PsiElement replacement = new JsonElementGenerator(project).createValue("\"" + content + "\"");
+        CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
+          @Override
+          public void run() {
+            element.replace(replacement);
+          }
+        });
       }
       else if (element != null) {
         LOG.error("Quick fix was applied to unexpected element", rawText, element.getParent().getText());
