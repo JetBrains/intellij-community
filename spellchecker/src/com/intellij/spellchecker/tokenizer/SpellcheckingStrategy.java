@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.tokenizer;
 
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
@@ -73,8 +74,14 @@ public class SpellcheckingStrategy {
       }
       return TEXT_TOKENIZER;
     }
-    if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
-      return TEXT_TOKENIZER;
+    if (element instanceof XmlToken) {
+      if (((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
+        PsiElement injection = InjectedLanguageManager.getInstance(element.getProject()).findInjectedElementAt(element.getContainingFile(), element.getTextOffset());
+        if (injection == null) {
+          return TEXT_TOKENIZER;
+        }
+      }
+
     }
     return EMPTY_TOKENIZER;
   }
