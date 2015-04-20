@@ -493,7 +493,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   private void runGlobalTools(@NotNull final AnalysisScope scope, @NotNull final InspectionManager inspectionManager, @NotNull List<Tools> globalTools) {
-    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed(), "Must not run under read action, too unresponsive");
+    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || ApplicationManager.getApplication().isHeadlessEnvironment(), "Must not run under read action, too unresponsive");
     final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
 
     final boolean canBeExternalUsages = scope.getScopeType() != AnalysisScope.PROJECT;
