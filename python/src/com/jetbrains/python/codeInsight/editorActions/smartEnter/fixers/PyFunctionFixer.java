@@ -41,10 +41,14 @@ public class PyFunctionFixer extends PyFixer<PyFunction> {
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyFunction function)
     throws IncorrectOperationException {
     final PsiElement colon = PyUtil.getFirstChildOfType(function, PyTokenTypes.COLON);
-    if (colon == null) {
+    if (!isFakeFunction(function) && colon == null) {
       final PyParameterList parameterList = function.getParameterList();
       final Document document = editor.getDocument();
       document.insertString(parameterList.getTextRange().getEndOffset(), ":");
     }
+  }
+
+  private static boolean isFakeFunction(PyFunction function) {
+    return function.getNode().findChildByType(PyTokenTypes.DEF_KEYWORD) == null;
   }
 }
