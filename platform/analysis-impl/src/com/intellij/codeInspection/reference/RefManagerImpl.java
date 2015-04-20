@@ -59,6 +59,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RefManagerImpl extends RefManager {
@@ -85,7 +86,7 @@ public class RefManagerImpl extends RefManager {
   private final Map<Key, RefManagerExtension> myExtensions = new HashMap<Key, RefManagerExtension>();
   private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<Language, RefManagerExtension>();
 
-  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
+  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
@@ -533,9 +534,9 @@ public class RefManagerImpl extends RefManager {
   protected <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, 
                                                             @NotNull NullableFactory<T> factory,
                                                             @Nullable Consumer<T> whenCached) {
-    T result;
 
     myLock.readLock().lock();
+    T result;
     try {
       //noinspection unchecked
       result = (T)myRefTable.get(ApplicationManager.getApplication().runReadAction(
@@ -621,6 +622,26 @@ public class RefManagerImpl extends RefManager {
     }
     finally {
       myLock.writeLock().unlock();
+    }
+  }
+
+  public void doWrite(@NotNull Runnable runnable) {
+    myLock.writeLock().lock();
+    try {
+      runnable.run();
+    }
+    finally {
+      myLock.writeLock().unlock();
+    }
+  }
+
+  public <T> T doRead(@NotNull Computable<T> runnable) {
+    myLock.readLock().lock();
+    try {
+      return runnable.compute();
+    }
+    finally {
+      myLock.readLock().unlock();
     }
   }
 
