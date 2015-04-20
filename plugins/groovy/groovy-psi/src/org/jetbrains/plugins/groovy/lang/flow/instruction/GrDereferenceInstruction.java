@@ -18,20 +18,17 @@ package org.jetbrains.plugins.groovy.lang.flow.instruction;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GrMemberReferenceInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
+public class GrDereferenceInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
 
-  @NotNull
-  private final GrExpression myExpression;
-  @NotNull
-  private final DfaValue myValue;
+  private final @NotNull GrExpression myExpression;
+  private final @NotNull String myText;
 
-  public GrMemberReferenceInstruction(@NotNull GrExpression expression, @NotNull DfaValue value) {
+  public GrDereferenceInstruction(@NotNull GrExpression expression) {
     myExpression = expression;
-    myValue = value;
+    myText = expression.getText();
   }
 
   @NotNull
@@ -39,18 +36,13 @@ public class GrMemberReferenceInstruction<V extends GrInstructionVisitor<V>> ext
     return myExpression;
   }
 
-  @NotNull
-  public DfaValue getValue() {
-    return myValue;
-  }
-
   @Override
   public DfaInstructionState<V>[] accept(@NotNull DfaMemoryState stateBefore, @NotNull V visitor) {
-    return visitor.visitMemberReference(this, stateBefore);
+    return visitor.visitDereference(this, stateBefore);
   }
 
   @Override
   public String toString() {
-    return "MEMBER_REFERENCE: " + getExpression().getText();
+    return "DEREFERENCE: " + myText;
   }
 }

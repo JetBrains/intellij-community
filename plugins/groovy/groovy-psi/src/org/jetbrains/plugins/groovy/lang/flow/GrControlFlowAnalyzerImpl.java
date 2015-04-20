@@ -537,10 +537,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       final GrExpression iteratedValue = forInClause.getIteratedExpression();
       if (iteratedValue != null) {
         iteratedValue.accept(this);
-        addInstruction(new GrMemberReferenceInstruction<V>(
-          iteratedValue,
-          myFactory.createValue(iteratedValue)
-        ));
+        addInstruction(new GrDereferenceInstruction<V>(iteratedValue));
       }
 
       final ControlFlowImpl.ControlFlowOffset loopStartOffset = myFlow.getNextOffset();
@@ -997,16 +994,15 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       addInstruction(new GrMethodCallInstruction<V>(referenceExpression, (PsiMethod)resolved));
     }
     else {
-      final DfaValue value = myFactory.createValue(referenceExpression);
       if (resolved instanceof PsiMember) {
-        addInstruction(new GrMemberReferenceInstruction<V>(referenceExpression, value));
+        addInstruction(new GrDereferenceInstruction<V>(referenceExpression));
       }
       else {
         // pop qualifier if cannot resolve
         pop();
-        // push value
-        push(value, referenceExpression, writing);
       }
+      // push value
+      push(myFactory.createValue(referenceExpression), referenceExpression, writing);
     }
   }
 

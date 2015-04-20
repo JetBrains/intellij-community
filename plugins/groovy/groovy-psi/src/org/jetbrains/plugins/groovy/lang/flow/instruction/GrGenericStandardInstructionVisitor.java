@@ -124,14 +124,12 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
   }
 
   @Override
-  public DfaInstructionState<V>[] visitMemberReference(GrMemberReferenceInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState<V>[] visitDereference(GrDereferenceInstruction<V> instruction, DfaMemoryState state) {
     final DfaValue qualifier = state.pop();
-    final DfaValue value = instruction.getValue();
     if (!checkNotNullable(state, qualifier, NullabilityProblem.fieldAccessNPE, instruction.getExpression())) {
       forceNotNull(myRunner.getFactory(), state, qualifier);
     }
     //check(value, state, instruction.getExpression());
-    state.push(value);
     return nextInstruction(instruction, myRunner, state);
   }
 

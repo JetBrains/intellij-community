@@ -43,10 +43,6 @@ public abstract class GrInstructionVisitor extends InstructionVisitor {
     boolean wasNamed = false;
     for (final GrNamedArgument ignored : instruction.getNamedArguments()) {
       state.pop();
-      wasNamed = true;
-    }
-    if (wasNamed) {
-      state.push(DfaUnknownValue.getInstance());
     }
     for (final GrExpression ignored : instruction.getExpressionArguments()) {
       state.pop();
@@ -59,7 +55,7 @@ public abstract class GrInstructionVisitor extends InstructionVisitor {
     return nextInstruction(instruction, state);
   }
 
-  public DfaInstructionState[] visitMemberReference(GrMemberReferenceInstruction instruction, DfaMemoryState state) {
+  public DfaInstructionState<V>[] visitMemberReference(GrMemberReferenceInstruction<V> instruction, DfaMemoryState state) {
     state.pop();
     return nextInstruction(instruction, state);
   }
