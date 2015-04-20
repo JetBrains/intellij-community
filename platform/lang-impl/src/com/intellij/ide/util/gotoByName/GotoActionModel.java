@@ -157,6 +157,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return ((ActionWrapper)value).getAction().getTemplatePresentation().getText();
     }
 
+    @Override
+    public String toString() {
+      return getMatchingDegree() + " " + getValueText();
+    }
+
     private int getMatchingDegree() {
       String text = getValueText();
       if (text != null) {
@@ -200,9 +205,14 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
       int diff = o.getMatchingDegree() - getMatchingDegree();
       if (diff != 0) return diff;
+
+      diff = StringUtil.notNullize(getValueText()).length() - StringUtil.notNullize(o.getValueText()).length();
+      if (diff != 0) return diff;
+      
       //noinspection unchecked
-      int compare = value.compareTo(o.value);
-      if (compare != 0) return compare;
+      diff = value.compareTo(o.value);
+      if (diff != 0) return diff;
+      
       return o.hashCode() - hashCode(); 
     }
   }
@@ -609,6 +619,11 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     @Override
     public int hashCode() {
       return myAction.getTemplatePresentation().getText().hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return myAction.toString();
     }
   }
 
