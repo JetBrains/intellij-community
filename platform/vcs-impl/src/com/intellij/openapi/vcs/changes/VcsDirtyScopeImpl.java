@@ -16,8 +16,10 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -270,8 +272,13 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     }
   }
 
-  private void addFilePathToMap(MultiMap<VirtualFile, FileOrDir> perRoot, FilePath dir, final boolean recursively) {
-    final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(dir);
+  private void addFilePathToMap(MultiMap<VirtualFile, FileOrDir> perRoot, final FilePath dir, final boolean recursively) {
+    VirtualFile vcsRoot = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        return myVcsManager.getVcsRootFor(dir);
+      }
+    });
     if (vcsRoot != null) {
       perRoot.putValue(vcsRoot, new FileOrDir(dir, recursively));
     }
