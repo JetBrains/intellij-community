@@ -312,4 +312,47 @@ public class DiffIterableUtil {
       return create(myFirstChange, myLength1, myLength2);
     }
   }
+
+  //
+  // Debug
+  //
+
+  @SuppressWarnings("unused")
+  @NotNull
+  public static <T> List<LineRangeData> extractDataRanges(@NotNull List<T> objects1,
+                                                          @NotNull List<T> objects2,
+                                                          @NotNull DiffIterable iterable) {
+    List<LineRangeData> result = ContainerUtil.newArrayList();
+
+    for (Pair<Range, Boolean> pair : iterateAll(iterable)) {
+      Range range = pair.first;
+      boolean equals = pair.second;
+
+      List<T> data1 = new ArrayList<T>();
+      List<T> data2 = new ArrayList<T>();
+
+      for (int i = range.start1; i < range.end1; i++) {
+        data1.add(objects1.get(i));
+      }
+      for (int i = range.start2; i < range.end2; i++) {
+        data2.add(objects2.get(i));
+      }
+
+      result.add(new LineRangeData<T>(data1, data2, equals));
+    }
+
+    return result;
+  }
+
+  public static class LineRangeData<T> {
+    public final boolean equals;
+    @NotNull public final List<T> objects1;
+    @NotNull public final List<T> objects2;
+
+    public LineRangeData(@NotNull List<T> objects1, @NotNull List<T> objects2, boolean equals) {
+      this.equals = equals;
+      this.objects1 = objects1;
+      this.objects2 = objects2;
+    }
+  }
 }
