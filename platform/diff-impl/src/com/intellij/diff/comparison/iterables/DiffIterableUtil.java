@@ -16,6 +16,7 @@
 package com.intellij.diff.comparison.iterables;
 
 import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.comparison.TrimUtil;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.DiffFragmentImpl;
 import com.intellij.diff.util.Range;
@@ -261,7 +262,7 @@ public class DiffIterableUtil {
       myLength2 = length2;
     }
 
-    private void addChange(int start1, int start2, int end1, int end2) {
+    protected void addChange(int start1, int start2, int end1, int end2) {
       Diff.Change change = new Diff.Change(start1, start2, end1 - start1, end2 - start2, null);
       if (myLastChange != null) {
         myLastChange.link = change;
@@ -297,7 +298,7 @@ public class DiffIterableUtil {
       myIndex2 = end2;
     }
 
-    private void finish(int length1, int length2) {
+    protected void finish(int length1, int length2) {
       assert myIndex1 <= length1;
       assert myIndex2 <= length2;
 
@@ -310,6 +311,23 @@ public class DiffIterableUtil {
     public DiffIterable finish() {
       finish(myLength1, myLength2);
       return create(myFirstChange, myLength1, myLength2);
+    }
+  }
+
+  public static class TrimChangeBuilder extends ChangeBuilder {
+    @NotNull private final List<?> myObjects1;
+    @NotNull private final List<?> myObjects2;
+
+    public TrimChangeBuilder(@NotNull List<?> objects1, @NotNull List<?> objects2) {
+      super(objects1.size(), objects2.size());
+      myObjects1 = objects1;
+      myObjects2 = objects2;
+    }
+
+    @Override
+    protected void addChange(int start1, int start2, int end1, int end2) {
+      Range range = TrimUtil.expand(myObjects1, myObjects2, start1, start2, end1, end2);
+      super.addChange(range.start1, range.start2, range.end1, range.end2);
     }
   }
 
