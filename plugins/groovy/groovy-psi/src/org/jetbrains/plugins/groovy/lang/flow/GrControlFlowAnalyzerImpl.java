@@ -209,12 +209,22 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   @Override
   public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
     startElement(methodCallExpression);
+    processMethodCall(methodCallExpression);
+    finishElement(methodCallExpression);
+  }
 
-    final int argumentsCount =
-      methodCallExpression.getArgumentList().getAllArguments().length + methodCallExpression.getClosureArguments().length;
+  @Override
+  public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+    startElement(applicationStatement);
+    processMethodCall(applicationStatement);
+    finishElement(applicationStatement);
+  }
+
+  private void processMethodCall(GrMethodCall methodCall) {
+    final int argumentsCount = methodCall.getArgumentList().getAllArguments().length + methodCall.getClosureArguments().length;
 
     // qualifier
-    final GrExpression invokedExpression = methodCallExpression.getInvokedExpression();
+    final GrExpression invokedExpression = methodCall.getInvokedExpression();
     final PsiType invokedExpressionType = invokedExpression.getType();
     final PsiClass psiClass = PsiTypesUtil.getPsiClass(invokedExpressionType);
     if (myClosureType.equals(invokedExpressionType) ||
@@ -240,7 +250,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
         // null branch
         // even if qualifier is null, groovy evaluates arguments
-        visitArguments(methodCallExpression);
+        visitArguments(methodCall);
         for (int i = 0; i < argumentsCount; i++) {
           pop();
         }
@@ -252,29 +262,30 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         gotoToNotNull.setOffset(myFlow.getNextOffset());
         // qualifier is on top of stack
         // evaluate arguments 
-        visitArguments(methodCallExpression);
-        addInstruction(new GrMethodCallInstruction<V>(methodCallExpression, null));
+        visitArguments(methodCall);
+        addInstruction(new GrMethodCallInstruction<V>(methodCall, null));
         gotoEnd.setOffset(myFlow.getNextOffset());
       }
       else {
-        visitArguments(methodCallExpression);
-        addInstruction(new GrMethodCallInstruction<V>(methodCallExpression, null));
+        visitArguments(methodCall);
+        addInstruction(new GrMethodCallInstruction<V>(methodCall, null));
       }
     }
-    finishElement(methodCallExpression);
   }
 
-  protected void visitArguments(GrMethodCallExpression methodCallExpression) {
-    for (GrNamedArgument argument : methodCallExpression.getNamedArguments()) {
+
+  protected void visitArguments(GrMethodCall methodCall) {
+    for (GrNamedArgument argument : methodCall.getNamedArguments()) {
       argument.accept(this);
     }
-    for (GrExpression expression : methodCallExpression.getExpressionArguments()) {
+    for (GrExpression expression : methodCall.getExpressionArguments()) {
       expression.accept(this);
     }
-    for (GrClosableBlock block : methodCallExpression.getClosureArguments()) {
+    for (GrClosableBlock block : methodCall.getClosureArguments()) {
       push(myFactory.createValue(block), block);
     }
   }
+
 
   @Override
   public void visitNewExpression(GrNewExpression expression) {
