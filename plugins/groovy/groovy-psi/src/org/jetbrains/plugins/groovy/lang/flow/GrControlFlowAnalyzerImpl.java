@@ -475,10 +475,10 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       fallbackGoto.setOffset(myFlow.getEndOffset(switchStatement));
     }
 
+    finishElement(switchStatement);
+
     // now pop switch condition
     pop();
-
-    finishElement(switchStatement);
   }
 
   @Override
