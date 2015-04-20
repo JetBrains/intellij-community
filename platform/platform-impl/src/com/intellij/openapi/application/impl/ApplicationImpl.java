@@ -170,7 +170,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @NotNull
-  public synchronized IApplicationStore getStateStore() {
+  public IApplicationStore getStateStore() {
     if (myComponentStore == null) {
       myComponentStore = (IApplicationStore)getPicoContainer().getComponentInstance(IComponentStore.class);
     }
