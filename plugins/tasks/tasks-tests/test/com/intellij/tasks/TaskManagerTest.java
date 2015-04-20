@@ -100,7 +100,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     configuration.loadState(XmlSerializer.deserialize(element, TaskProjectConfiguration.class));
     assertEquals(1, state.servers.size());
 
-    myTaskManager.projectOpened();
+    ((TaskManagerImpl)myTaskManager).projectOpened();
 
     TaskRepository[] repositories = myTaskManager.getAllRepositories();
     assertEquals(1, repositories.length);
