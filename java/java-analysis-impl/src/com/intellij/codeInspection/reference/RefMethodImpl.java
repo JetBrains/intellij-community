@@ -67,7 +67,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   // To be used only from RefImplicitConstructor.
-  protected RefMethodImpl(String name, @NotNull RefClass ownerClass) {
+  protected RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
     super(name, ownerClass);
     myOwnerClass = ownerClass;
     ((RefClassImpl)ownerClass).add(this);
@@ -79,7 +79,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  public void add(RefEntity child) {
+  public void add(@NotNull RefEntity child) {
     if (child instanceof RefParameter) {
       return;
     }
