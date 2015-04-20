@@ -242,9 +242,11 @@ final class PaintersHelper implements Painter.Listener {
         UIUtil.drawImage(g, scaled, x, y, null);
       }
       else if (fillType == FillType.TILE) {
-        for (int x = i.left; x < cw; x+=w)
-          for (int y = i.top; y < ch; y+=h)
+        for (int x = i.left; x < cw; x += w) {
+          for (int y = i.top; y < ch; y += h) {
             UIUtil.drawImage(g, scaled, x, y, null);
+          }
+        }
       }
       cfg.restore();
     }

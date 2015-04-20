@@ -170,11 +170,10 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     myApplication.editorPaintStart();
 
     try {
-      UIUtil.setupComposite((Graphics2D)g);
-      UISettings.setupAntialiasing(g);
-      myEditor.paint((Graphics2D)g);
-
-      IdeBackgroundUtil.paintEditorBackground(g, this);
+      Graphics2D gg = IdeBackgroundUtil.withEditorBackground(g, this);
+      UIUtil.setupComposite(gg);
+      UISettings.setupAntialiasing(gg);
+      myEditor.paint(gg);
     }
     finally {
       myApplication.editorPaintFinish();
