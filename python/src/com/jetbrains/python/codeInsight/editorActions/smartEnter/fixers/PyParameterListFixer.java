@@ -21,9 +21,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,7 +43,7 @@ public class PyParameterListFixer extends PyFixer<PyParameterList> {
   public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParameterList psiElement) throws IncorrectOperationException {
     final PsiElement lBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.OPEN_BRACES, 0);
     final PsiElement rBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.CLOSE_BRACES, 0);
-    if (lBrace == null || rBrace == null) {
+    if (!isFakeParameterList(psiElement) && (lBrace == null || rBrace == null)) {
       final Document document = editor.getDocument();
       if (lBrace == null) {
         document.insertString(psiElement.getTextRange().getStartOffset(), "(");
@@ -49,5 +52,10 @@ public class PyParameterListFixer extends PyFixer<PyParameterList> {
         document.insertString(psiElement.getTextRange().getEndOffset(), ")");
       }
     }
+  }
+
+  private static boolean isFakeParameterList(@NotNull PyParameterList parameterList) {
+    final PyFunction pyFunction = as(parameterList.getParent(), PyFunction.class);
+    return pyFunction != null && pyFunction.getNode().findChildByType(PyTokenTypes.DEF_KEYWORD) == null;
   }
 }
