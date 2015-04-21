@@ -69,6 +69,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -4719,21 +4720,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       g.setColor(myScheme.getColor(EditorColors.CARET_COLOR));
 
+      Graphics2D originalG = IdeBackgroundUtil.getOriginalGraphics(g);
       if (!paintBlockCaret()) {
         if (UIUtil.isRetina()) {
-          g.fillRect(x, y, mySettings.getLineCursorWidth(), lineHeight);
-        } else {
+          originalG.fillRect(x, y, mySettings.getLineCursorWidth(), lineHeight);
+        }
+        else {
           for (int i = 0; i < mySettings.getLineCursorWidth(); i++) {
             UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
           }
         }
-
       }
       else {
         Color caretColor = myScheme.getColor(EditorColors.CARET_COLOR);
         if (caretColor == null) caretColor = new JBColor(Gray._0, Gray._255);
         g.setColor(caretColor);
-        g.fillRect(x, y, width, lineHeight - 1);
+        originalG.fillRect(x, y, width, lineHeight - 1);
         final LogicalPosition startPosition = caret == null ? getCaretModel().getLogicalPosition() : caret.getLogicalPosition();
         final int offset = logicalPositionToOffset(startPosition);
         CharSequence chars = myDocument.getImmutableCharSequence();

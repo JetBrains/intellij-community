@@ -25,12 +25,16 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.*;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.IterationState2;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Processor;
@@ -619,7 +623,8 @@ class EditorPainter {
     }
   }
   
-  private void paintCaretAt(Graphics2D g, int x, int y, int width) {
+  private void paintCaretAt(Graphics2D g_, int x, int y, int width) {
+    Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(g_);
     Rectangle viewRectangle = myEditor.getScrollingModel().getVisibleArea();
     if (x - viewRectangle.x < 0) {
       return;

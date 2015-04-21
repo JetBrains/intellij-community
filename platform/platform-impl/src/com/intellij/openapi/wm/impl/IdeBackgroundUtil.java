@@ -43,6 +43,11 @@ public class IdeBackgroundUtil {
   }
 
   @NotNull
+  public static Graphics2D getOriginalGraphics(@NotNull Graphics g) {
+    return g instanceof MyGraphics? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
+  }
+
+  @NotNull
   public static Graphics2D withNamedPainters(@NotNull Graphics g, @NotNull String paintersName, @NotNull final JComponent component) {
     JRootPane rootPane = component.getRootPane();
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
