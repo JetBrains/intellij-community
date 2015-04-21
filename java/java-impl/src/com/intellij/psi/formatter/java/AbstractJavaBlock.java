@@ -927,8 +927,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     PsiExpression[] arguments = ((PsiExpressionList)myNode.getPsi()).getExpressions();
-    return (JavaFormatterUtil.hasMultilineArguments(arguments) || JavaFormatterUtil.canHaveMultilineArgumentsAfterWrap(arguments, mySettings))
-           && (JavaFormatterUtil.isMultilineExceptArguments(arguments) || JavaFormatterUtil.canBeMultilineExceptArgumentsAfterWrap(arguments, mySettings));
+    return JavaFormatterUtil.hasMultilineArguments(arguments) && JavaFormatterUtil.isMultilineExceptArguments(arguments);
   }
 
   private static boolean isAnonymousClass(@Nullable ASTNode node) {
