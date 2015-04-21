@@ -48,9 +48,10 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
     myImportMap.load();    
   }
 
+  @NotNull
   @Override
-  public String getSourceExtension() {
-    return "xml";
+  public String[] getSourceExtensions() {
+    return new String[]{"xml"};
   }
 
   @NotNull

@@ -15,7 +15,8 @@ public interface SchemeImporter <T extends Scheme> {
   /**
    * @return An extension of a source file which can be imported, for example, "xml".
    */
-  String getSourceExtension();
+  @NotNull
+  String[] getSourceExtensions();
 
   /**
    * Attempts to read scheme names from the given stream. The stream may contain several schemes in which case all the available
