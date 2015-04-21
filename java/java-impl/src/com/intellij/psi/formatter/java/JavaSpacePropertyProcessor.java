@@ -1222,10 +1222,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private void createSpaceWithLinefeedIfListWrapped(@NotNull PsiExpressionList list, boolean space) {
     PsiExpression[] expressions = list.getExpressions();
-    assert expressions.length > 1;
+    int length = expressions.length;
+    assert length > 1;
 
-    int startOffset = expressions[0].getTextRange().getEndOffset();
-    int endOffset = expressions[1].getTextRange().getStartOffset();
+    int startOffset = expressions[length - 2].getTextRange().getEndOffset();
+    int endOffset = expressions[length - 1].getTextRange().getStartOffset();
     createParenthSpace(true, space, new TextRange(startOffset, endOffset));
   }
 

@@ -530,4 +530,15 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                  "    int a = 2;\n" +
                  "});");
   }
+
+  public void test_WrapIfLong_ActivatesPlaceNewLineAfterParenthesis() {
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccccccccccccccccccccccc\");",
+                 "fuun(\n" +
+                 "        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccccccccccccccccccccccc\");");
+
+  }
 }
