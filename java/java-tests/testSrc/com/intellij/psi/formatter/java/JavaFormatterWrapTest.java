@@ -264,9 +264,9 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
     doClassTest(
-      "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"}) public void doSomething(int x, int y) {}",
-      "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"})\n" +
-      "public void doSomething(int x, int y) {\n}"
+        "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"}) public void doSomething(int x, int y) {}",
+        "@SuppressWarnings({\"SomeInspectionIWantToIgnore\"})\n" +
+        "public void doSomething(int x, int y) {\n}"
     );
   }
 
@@ -281,9 +281,9 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = false;
     doMethodTest(
-      "int i = 1; int j = 2;",
-      "int i = 1;\n" +
-      "int j = 2;"
+        "int i = 1; int j = 2;",
+        "int i = 1;\n" +
+        "int j = 2;"
     );
   }
 
@@ -292,8 +292,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     getSettings().FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     doClassTest(
-      "@NotNull Comparable<String>",
-      "@NotNull Comparable<String>"
+        "@NotNull Comparable<String>",
+        "@NotNull Comparable<String>"
     );
   }
 
@@ -432,34 +432,34 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "//@formatter:on\n\n";
 
     doTextTest(
-      prefix + "interface C {\n" +
-      "    @TA(0)String m();\n" +
-      "    @A  @TA(1)  @TA(2)String m();\n" +
-      "    @A  public  @TA String m();\n" +
-      "}",
+        prefix + "interface C {\n" +
+        "    @TA(0)String m();\n" +
+        "    @A  @TA(1)  @TA(2)String m();\n" +
+        "    @A  public  @TA String m();\n" +
+        "}",
 
-      prefix + "interface C {\n" +
-      "    @TA(0) String m();\n\n" +
-      "    @A\n" +
-      "    @TA(1) @TA(2) String m();\n\n" +
-      "    @A\n" +
-      "    public @TA String m();\n" +
-      "}");
+        prefix + "interface C {\n" +
+        "    @TA(0) String m();\n\n" +
+        "    @A\n" +
+        "    @TA(1) @TA(2) String m();\n\n" +
+        "    @A\n" +
+        "    public @TA String m();\n" +
+        "}");
   }
 
   public void testKeepSingleFieldAnnotationOnSameLine() {
     getJavaSettings().DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = true;
     doClassTest(
-      "@NotNull public String result = \"OK\"\n" +
-      "@NotNull String newResult = \"OK\"\n" +
-      "@NotNull\n" +
-      "@Deprecated public String bad = \"bad\"",
+        "@NotNull public String result = \"OK\"\n" +
+        "@NotNull String newResult = \"OK\"\n" +
+        "@NotNull\n" +
+        "@Deprecated public String bad = \"bad\"",
 
-      "@NotNull public String result = \"OK\"\n" +
-      "@NotNull String newResult = \"OK\"\n" +
-      "@NotNull\n" +
-      "@Deprecated\n" +
-      "public String bad = \"bad\""
+        "@NotNull public String result = \"OK\"\n" +
+        "@NotNull String newResult = \"OK\"\n" +
+        "@NotNull\n" +
+        "@Deprecated\n" +
+        "public String bad = \"bad\""
     );
   }
 
@@ -509,5 +509,25 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     doMethodTest("call(aaaaaaaaaaabbbbbbbbbbbbsdfsdfsdfsdfsdfsdfsdfb, 1 + call(111111111, 32213123123, 123123123123, 234234234234324234234));",
                  "call(aaaaaaaaaaabbbbbbbbbbbbsdfsdfsdfsdfsdfsdfsdfb,\n" +
                  "        1 + call(111111111, 32213123123, 123123123123, 234234234234324234234));");
+  }
+
+  public void test_PlaceOnNewLineParenth_DoNotWork_IfLineNotExceedsRightMargin() {
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+
+    doMethodTest("run(new Runnable() {\n" +
+                 "public void run() {\n" +
+                 "}\n" +
+                 "});",
+                 "run(new Runnable() {\n" +
+                 "    public void run() {\n" +
+                 "    }\n" +
+                 "});");
+
+    doMethodTest("run(() -> {\n" +
+                 "int a = 2;\n" +
+                 "});",
+                 "run(() -> {\n" +
+                 "    int a = 2;\n" +
+                 "});");
   }
 }

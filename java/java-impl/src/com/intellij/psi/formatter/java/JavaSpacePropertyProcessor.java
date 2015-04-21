@@ -1194,14 +1194,23 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitExpressionList(PsiExpressionList list) {
     if (myRole1 == ChildRole.LPARENTH && myRole2 == ChildRole.RPARENTH) {
-      createParenthSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
+      createSpaceInCode(mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
     }
     else if (myRole2 == ChildRole.RPARENTH) {
-      createParenthSpace(mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE,
-                         myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+      boolean space = myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
+      if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressions().length > 1) {
+        createSpaceWithLinefeedIfListWrapped(list, space);
+        return;
+      }
+      createSpaceInCode(space);
     }
     else if (myRole1 == ChildRole.LPARENTH) {
-      createParenthSpace(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+      boolean space = mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
+      if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressions().length > 1) {
+        createSpaceWithLinefeedIfListWrapped(list, space);
+        return;
+      }
+      createSpaceInCode(space);
     }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
@@ -1209,6 +1218,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(false);
     }
+  }
+
+  private void createSpaceWithLinefeedIfListWrapped(@NotNull PsiExpressionList list, boolean space) {
+    PsiExpression[] expressions = list.getExpressions();
+    assert expressions.length > 1;
+
+    int startOffset = expressions[0].getTextRange().getEndOffset();
+    int endOffset = expressions[1].getTextRange().getStartOffset();
+    createParenthSpace(true, space, new TextRange(startOffset, endOffset));
   }
 
   @Override
