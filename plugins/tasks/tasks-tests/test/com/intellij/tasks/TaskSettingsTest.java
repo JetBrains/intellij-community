@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,15 +36,15 @@ public class TaskSettingsTest extends TaskManagerTestCase {
     TaskRepository repository = new YouTrackRepository();
     String format = "foo \n bar";
     repository.setCommitMessageFormat(format);
-    myTaskManager.setRepositories(Collections.singletonList(repository));
-    TaskManagerImpl.Config config = myTaskManager.getState();
+    ((TaskManagerImpl)myTaskManager).setRepositories(Collections.singletonList(repository));
+    TaskManagerImpl.Config config = ((TaskManagerImpl)myTaskManager).getState();
     Element element = XmlSerializer.serialize(config);
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     JDOMUtil.writeDocument(new Document(element), stream, "\n");
 
     Element element1 = JDOMUtil.load(new ByteArrayInputStream(stream.toByteArray()));
     TaskManagerImpl.Config deserialize = XmlSerializer.deserialize(element1, TaskManagerImpl.Config.class);
-    myTaskManager.loadState(deserialize);
+    ((TaskManagerImpl)myTaskManager).loadState(deserialize);
 
     TaskRepository[] repositories = myTaskManager.getAllRepositories();
     assertEquals(format, repositories[0].getCommitMessageFormat());
