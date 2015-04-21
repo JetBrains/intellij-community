@@ -16,6 +16,7 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
@@ -55,7 +56,7 @@ public class NewColorAndFontPanel extends JPanel {
     top.add(myOptionsPanel.getPanel(), BorderLayout.CENTER);
     if (optionsPanel instanceof ConsoleFontOptions) {
       JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.TRAILING));
-      wrapper.add(new JButton(new AbstractAction("Apply editor font settings") {
+      wrapper.add(new JButton(new AbstractAction(ApplicationBundle.message("action.apply.editor.font.settings")) {
         @Override
         public void actionPerformed(ActionEvent e) {
           EditorColorsScheme scheme = ((ConsoleFontOptions)myOptionsPanel).getCurrentScheme();
