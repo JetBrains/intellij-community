@@ -66,7 +66,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   private String myModuleType;
 
-  private ModuleStoreImpl myComponentStore;
   private final ModuleScopeProvider myModuleScopeProvider;
 
   public ModuleImpl(@NotNull String filePath, @NotNull Project project) {
@@ -89,11 +88,8 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @NotNull
-  public synchronized ModuleStoreImpl getStateStore() {
-    if (myComponentStore == null) {
-      myComponentStore = (ModuleStoreImpl)getPicoContainer().getComponentInstance(IComponentStore.class);
-    }
-    return myComponentStore;
+  public ModuleStoreImpl getStateStore() {
+    return (ModuleStoreImpl)getPicoContainer().getComponentInstance(IComponentStore.class);
   }
 
   @Override
@@ -177,7 +173,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     isModuleAdded = false;
     disposeComponents();
     Extensions.disposeArea(this);
-    myComponentStore = null;
     super.dispose();
   }
 
