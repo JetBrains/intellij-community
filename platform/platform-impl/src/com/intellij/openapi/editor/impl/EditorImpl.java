@@ -4027,6 +4027,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     int lineStartOffset = myDocument.getLineStartOffset(lineIndex);
     if (lineStartOffset == offset) return 0;
+    int lineEndOffset = myDocument.getLineEndOffset(lineIndex);
+    if (lineEndOffset < offset) offset = lineEndOffset; // handling the case when offset is inside non-normalized line terminator
     int column = EditorUtil.calcColumnNumber(this, documentCharSequence, lineStartOffset, offset);
 
     if (softWrapAware) {
