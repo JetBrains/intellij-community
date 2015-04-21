@@ -157,7 +157,13 @@ public class NewScratchFileAction extends DumbAwareAction {
   @NotNull
   public static ListPopup buildLanguageSelectionPopup(@NotNull Project project, @NotNull String title,
                                                       @Nullable Language context, @NotNull final Consumer<Language> onChosen) {
-    List<Language> languages = LanguageUtil.getFileLanguages();
+    return buildLanguageSelectionPopup(project, title, context, LanguageUtil.getFileLanguages(), onChosen);
+  }
+
+  @NotNull
+  public static ListPopup buildLanguageSelectionPopup(@NotNull Project project, @NotNull String title,
+                                                      @Nullable Language context, @NotNull List<Language> languages,
+                                                      @NotNull final Consumer<Language> onChosen) {
     final List<String> ids = ContainerUtil.newArrayList(restoreLRULanguages(project));
     if (context != null) {
       ids.add(context.getID());
