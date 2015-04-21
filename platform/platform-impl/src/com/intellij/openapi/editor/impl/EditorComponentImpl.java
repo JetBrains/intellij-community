@@ -170,7 +170,8 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     myApplication.editorPaintStart();
 
     try {
-      Graphics2D gg = IdeBackgroundUtil.withEditorBackground(g, this);
+      Graphics2D gg = !EditorUtil.isRealFileEditor(myEditor) ? (Graphics2D)g :
+                      IdeBackgroundUtil.withEditorBackground(g, this);
       UIUtil.setupComposite(gg);
       UISettings.setupAntialiasing(gg);
       myEditor.paint(gg);
