@@ -12,7 +12,8 @@
                            implementationClass="com.jetbrains.commandInterface.commandLine.CommandLineParserDefinition"/>
     <lang.syntaxHighlighterFactory key="CommandLine"
                                    implementationClass="com.jetbrains.commandInterface.commandLine.CommandLineSyntaxHighlighterFactory"/>
-    <psi.referenceContributor implementation="com.jetbrains.commandInterface.commandLine.CommandLineReferenceContributor"/>
+    <psi.referenceContributor language="CommandLine"
+                              implementation="com.jetbrains.commandInterface.commandLine.CommandLineReferenceContributor"/>
     <lang.elementManipulator forClass="com.jetbrains.commandInterface.commandLine.CommandLineElement"
                              implementationClass="com.jetbrains.commandInterface.commandLine.CommandLineElementManipulator"/>
     <localInspection language="CommandLine" shortName="CommandLineInspection" displayName="Command-line inspection"
