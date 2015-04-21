@@ -231,6 +231,4 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     }
     return set;
   }
-
-
 }

@@ -82,14 +82,15 @@ public class RollbackAction extends AnAction implements DumbAware {
     final int MAX_FILES_TO_CHECK = 100;
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null) {
+      if (files.length > MAX_FILES_TO_CHECK) {
+        return true;
+      }
       ChangeListManager clManager = ChangeListManager.getInstance(project);
       Set<VirtualFile> modifiedWithoutEditing = ContainerUtil.newHashSet(clManager.getModifiedWithoutEditing());
-      int checkedFiles = 0;
       for (VirtualFile file : files) {
-        if (!clManager.getChangesIn(file).isEmpty() || modifiedWithoutEditing.contains(file) || checkedFiles > MAX_FILES_TO_CHECK) {
+        if (!clManager.getChangesIn(file).isEmpty() || modifiedWithoutEditing.contains(file)) {
           return true;
         }
-        checkedFiles++;
       }
     }
     return false;

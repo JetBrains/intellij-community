@@ -89,7 +89,7 @@ public class TrimUtil {
   //
 
   @NotNull
-  public static Range expand(@NotNull List<? extends Object> text1, @NotNull List<? extends Object> text2,
+  public static Range expand(@NotNull List<?> text1, @NotNull List<?> text2,
                              int start1, int start2, int end1, int end2) {
     int count1 = expandForward(text1, text2, start1, start2, end1, end2);
     start1 += count1;
@@ -144,7 +144,7 @@ public class TrimUtil {
     return start1 - oldStart1;
   }
 
-  public static int expandForward(@NotNull List<? extends Object> text1, @NotNull List<? extends Object> text2,
+  public static int expandForward(@NotNull List<?> text1, @NotNull List<?> text2,
                                   int start1, int start2, int end1, int end2) {
     int oldStart1 = start1;
     while (start1 < end1 && start2 < end2) {
@@ -186,7 +186,7 @@ public class TrimUtil {
     return oldEnd1 - end1;
   }
 
-  public static int expandBackward(@NotNull List<? extends Object> text1, @NotNull List<? extends Object> text2,
+  public static int expandBackward(@NotNull List<?> text1, @NotNull List<?> text2,
                                    int start1, int start2, int end1, int end2) {
     int oldEnd1 = end1;
     while (start1 < end1 && start2 < end2) {

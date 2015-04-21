@@ -1,0 +1,14 @@
+PyFile:MissingFunctionNameAndThenParametersList.py
+  PyFunction('null')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiErrorElement:Identifier expected
+      <empty list>
+    PsiWhiteSpace(' ')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n    ')
+    PyStatementList
+      PyPassStatement
+        PsiElement(Py:PASS_KEYWORD)('pass')

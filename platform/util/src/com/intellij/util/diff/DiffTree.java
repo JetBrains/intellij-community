@@ -263,6 +263,7 @@ public class DiffTree<OT, NT> {
       if (c11 == CompareResult.DRILL_DOWN_NEEDED) {
         CharSequence oldText = myOldTree.toString(oldChild);
         CharSequence newText = myNewTree.toString(newChild);
+        // drill down only if node texts match, but when they do, match all the way down unconditionally
         c11 = StringUtil.equals(oldText, newText)
               ? build(oldChild, newChild, level + 1, DiffTree.<OT, NT>emptyConsumer())
               : CompareResult.NOT_EQUAL;

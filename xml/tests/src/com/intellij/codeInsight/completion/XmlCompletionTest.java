@@ -712,5 +712,22 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     "xml:lang",
     "xml:space");
   }
+
+  public void testSchemaLocation() throws Exception {
+    myFixture.configureByFiles("spring-beans.xsd");
+    myFixture.testCompletionVariants("SchemaLocation.xml", "http://www.springframework.org/schema/beans ",
+                                     "http://www.w3.org/2001/XMLSchema ", "http://www.w3.org/2001/XMLSchema-instance ");
+    myFixture.testCompletionVariants("SchemaLocation2.xml", "http://www.w3.org/2001/XMLSchema.xsd");
+  }
+
+  public void testNamespaceCompletion() throws Exception {
+    myFixture.configureByText("foo.xml", "<schema xmlns=\"<caret>\"/>");
+    myFixture.completeBasic();
+    assertSameElements(myFixture.getLookupElementStrings(), "http://www.w3.org/2001/XMLSchema");
+
+    myFixture.configureByText("unknown.xml", "<unknown_tag_name xmlns=\"<caret>\"/>");
+    myFixture.completeBasic();
+    assertTrue(myFixture.getLookupElementStrings().size() > 3); // all standard schemas actually
+  }
 }
 

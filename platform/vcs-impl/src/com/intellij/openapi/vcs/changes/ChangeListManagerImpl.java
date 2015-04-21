@@ -25,9 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -1215,19 +1213,24 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
-          Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
+          final Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
           Set<VirtualFile> parents =
             vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.<VirtualFile>emptySet();
 
           // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
           // (inside the method) - so common add logic just needs to refresh statuses of parents
-          List<VcsException> result = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+          final List<VcsException> result = ContainerUtil.newArrayList();
+          ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding files to VCS...", true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              indicator.setIndeterminate(true);
+              ContainerUtil.addAll(result, environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants)));
+            }
+          });
 
           allProcessedFiles.addAll(descendants);
           allProcessedFiles.addAll(parents);
-          if (result != null) {
-            exceptions.addAll(result);
-          }
+          exceptions.addAll(result);
         }
       }
     });

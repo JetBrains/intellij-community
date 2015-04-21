@@ -130,4 +130,15 @@ public class EditorImplTest extends AbstractEditorTest {
     
     assertEquals(new LogicalPosition(3, 0), myEditor.visualToLogicalPosition(new VisualPosition(2, 0)));
   }
+  
+  public void testNavigationInsideNonNormalizedLineTerminator() throws Exception {
+    initText("");
+    ((DocumentImpl)myEditor.getDocument()).setAcceptSlashR(true);
+    myEditor.getDocument().insertString(0, "abc\r\ndef");
+    
+    myEditor.getCaretModel().moveToOffset(4);
+    
+    assertEquals(new LogicalPosition(0, 3), myEditor.getCaretModel().getLogicalPosition());
+    assertEquals(new VisualPosition(0, 3), myEditor.getCaretModel().getVisualPosition());
+  }
 }

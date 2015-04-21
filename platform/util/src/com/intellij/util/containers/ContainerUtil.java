@@ -667,8 +667,10 @@ public class ContainerUtil extends ContainerUtilRt {
     return list.subList(from, list.size());
   }
 
-  public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterable<? extends T> appendix) {
-    addAll(collection, appendix.iterator());
+  public static <T> void addAll(@NotNull Collection<T> collection, @Nullable Iterable<? extends T> appendix) {
+    if (appendix != null) {
+      addAll(collection, appendix.iterator());
+    }
   }
 
   public static <T> void addAll(@NotNull Collection<T> collection, @NotNull Iterator<? extends T> iterator) {

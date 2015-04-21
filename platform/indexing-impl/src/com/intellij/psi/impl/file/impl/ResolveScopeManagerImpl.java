@@ -31,6 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +61,13 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       return scope;
     }
   };
+  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache = new ConcurrentFactoryMap<List<OrderEntry>, GlobalSearchScope>() {
+    @Nullable
+    @Override
+    protected GlobalSearchScope create(List<OrderEntry> key) {
+      return calcLibraryScope(key);
+    }
+  };
 
   public ResolveScopeManagerImpl(Project project, ProjectRootManager projectRootManager, PsiManager psiManager) {
     myProject = project;
@@ -86,44 +94,46 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       boolean includeTests = projectFileIndex.isInTestSourceContent(vFile);
       return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
     }
-    else {
-      // resolve references in libraries in context of all modules which contain it
-      List<Module> modulesLibraryUsedIn = new ArrayList<Module>();
-      List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
+    
+    return myLibraryResolveScopeCache.get(projectFileIndex.getOrderEntriesForFile(vFile));
+  }
 
-      LibraryOrderEntry lib = null;
-      for (OrderEntry entry : orderEntries) {
-        if (entry instanceof JdkOrderEntry) {
-          return LibraryScopeCache.getInstance(myProject).getScopeForSdk((JdkOrderEntry)entry);
-        }
+  // resolve references in libraries in context of all modules which contain it
+  private GlobalSearchScope calcLibraryScope(List<OrderEntry> orderEntries) {
+    List<Module> modulesLibraryUsedIn = new ArrayList<Module>();
 
-        if (entry instanceof LibraryOrderEntry) {
-          lib = (LibraryOrderEntry)entry;
-          modulesLibraryUsedIn.add(entry.getOwnerModule());
-        }
-        else if (entry instanceof ModuleOrderEntry) {
-          modulesLibraryUsedIn.add(entry.getOwnerModule());
-        }
+    LibraryOrderEntry lib = null;
+    for (OrderEntry entry : orderEntries) {
+      if (entry instanceof JdkOrderEntry) {
+        return LibraryScopeCache.getInstance(myProject).getScopeForSdk((JdkOrderEntry)entry);
       }
 
-      GlobalSearchScope allCandidates = LibraryScopeCache.getInstance(myProject).getScopeForLibraryUsedIn(modulesLibraryUsedIn);
-      if (lib != null) {
-        final LibraryRuntimeClasspathScope preferred = new LibraryRuntimeClasspathScope(myProject, lib);
-        // prefer current library
-        return new DelegatingGlobalSearchScope(allCandidates, preferred) {
-          @Override
-          public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-            boolean c1 = preferred.contains(file1);
-            boolean c2 = preferred.contains(file2);
-            if (c1 && !c2) return 1;
-            if (c2 && !c1) return -1;
-
-            return super.compare(file1, file2);
-          }
-        };
+      if (entry instanceof LibraryOrderEntry) {
+        lib = (LibraryOrderEntry)entry;
+        modulesLibraryUsedIn.add(entry.getOwnerModule());
       }
-      return allCandidates;
+      else if (entry instanceof ModuleOrderEntry) {
+        modulesLibraryUsedIn.add(entry.getOwnerModule());
+      }
     }
+
+    GlobalSearchScope allCandidates = LibraryScopeCache.getInstance(myProject).getScopeForLibraryUsedIn(modulesLibraryUsedIn);
+    if (lib != null) {
+      final LibraryRuntimeClasspathScope preferred = new LibraryRuntimeClasspathScope(myProject, lib);
+      // prefer current library
+      return new DelegatingGlobalSearchScope(allCandidates, preferred) {
+        @Override
+        public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+          boolean c1 = preferred.contains(file1);
+          boolean c2 = preferred.contains(file2);
+          if (c1 && !c2) return 1;
+          if (c2 && !c1) return -1;
+
+          return super.compare(file1, file2);
+        }
+      };
+    }
+    return allCandidates;
   }
 
   @Override
