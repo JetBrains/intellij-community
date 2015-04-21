@@ -17,7 +17,9 @@ import java.net.*;
 import java.util.*;
 
 /**
-* @author vlan
+ * @author vlan
+ *
+ * To be removed
 */
 public class IpnbConnection {
   protected static final String API_URL = "/api";
