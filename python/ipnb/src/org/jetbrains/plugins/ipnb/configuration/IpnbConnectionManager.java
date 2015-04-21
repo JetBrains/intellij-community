@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ipnb.configuration;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.notification.Notification;
@@ -33,6 +34,7 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.IpnbConsole;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
@@ -222,23 +224,31 @@ public final class IpnbConnectionManager implements ProjectComponent {
     catch (ExecutionException ignored) {
     }
     final Map<String, String> env = ImmutableMap.of("PYCHARM_EP_DIST", "ipython", "PYCHARM_EP_NAME", "ipython");
+
+    final Pair<String, String> hostPort = getHostPortFromUrl(url);
+    final String ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
+    final ArrayList<String> parameters = Lists.newArrayList(sdk.getHomePath(), ipython, "notebook", "--no-browser");
+    if (hostPort.getFirst() != null) {
+      parameters.add("--ip");
+      parameters.add(hostPort.getFirst());
+    }
+    if (hostPort.getSecond() != null) {
+      parameters.add("--port");
+      parameters.add(hostPort.getSecond());
+    }
+    final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath()).
+      withEnvironment(env);
+
     try {
-      final Pair<String, String> hostPort = getHostPortFromUrl(url);
-      final String ipython = PythonHelpersLocator.getHelperPath("pycharm/pycharm_load_entry_point.py");
-      final ArrayList<String> parameters = Lists.newArrayList(sdk.getHomePath(), ipython, "notebook", "--no-browser");
-      if (hostPort.getFirst() != null) {
-        parameters.add("--ip");
-        parameters.add(hostPort.getFirst());
-      }
-      if (hostPort.getSecond() != null) {
-        parameters.add("--port");
-        parameters.add(hostPort.getSecond());
-      }
-      final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(myProject.getBasePath()).
-        withEnvironment(env);
-
       myProcessHandler = new KillableColoredProcessHandler(commandLine);
-
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          new RunContentExecutor(myProject, myProcessHandler)
+            .withConsole(new IpnbConsole(myProject, myProcessHandler))
+            .run();
+        }
+      });
       return true;
     }
     catch (ExecutionException e) {
