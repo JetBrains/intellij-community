@@ -74,59 +74,67 @@ public final class IpnbConnectionManager implements ProjectComponent {
     final VirtualFile virtualFile = fileEditor.getVirtualFile();
     final String path = virtualFile.getPath();
     if (!myKernels.containsKey(path)) {
-      String url = IpnbSettings.getInstance(myProject).getURL();
-      if (StringUtil.isEmptyOrSpaces(url)) {
-        showWarning(fileEditor, "Please, specify IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
-                    new HyperlinkAdapter() {
-                      @Override
-                      protected void hyperlinkActivated(HyperlinkEvent e) {
-                        ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "IPython Notebook");
-                      }
-                    });
-        return;
-      }
-      if (startConnection(codePanel, path, url, false)) {
-        return;
-      }
-      url = showDialogUrl(url);
-      if (url == null) return;
-      IpnbSettings.getInstance(myProject).setURL(url);
-      boolean connectionStarted = startConnection(codePanel, path, url, false);
-      if (!connectionStarted) {
-        final String finalUrl = url;
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            final boolean serverStarted = startIpythonServer(finalUrl, fileEditor);
-            if (!serverStarted) {
-              return;
-            }
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                new Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(new Runnable() {
-                  @Override
-                  public void run() {
-                    final Notification notification =
-                      new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + finalUrl +
-                                                              "\">" + finalUrl + "</a></html>", NotificationType.INFORMATION,
-                                       NotificationListener.URL_OPENING_LISTENER);
-                    notification.notify(myProject);
-                    startConnection(codePanel, path, finalUrl, true);
-                  }
-                }, 3000);
-              }
-            });
-          }
-        });
-      }
+      startConnection(codePanel, fileEditor, path);
     }
     else {
-      final IpnbConnection connection = myKernels.get(path);
-      if (connection != null) {
+      IpnbConnection connection = myKernels.get(path);
+      if (!connection.isAlive()) {
+        myKernels.remove(path);
+        startConnection(codePanel, fileEditor, path);
+      }
+      else {
         final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
         myUpdateMap.put(messageId, codePanel);
       }
+    }
+  }
+
+  private void startConnection(@NotNull final IpnbCodePanel codePanel, final IpnbFileEditor fileEditor, final String path) {
+    String url = IpnbSettings.getInstance(myProject).getURL();
+    if (StringUtil.isEmptyOrSpaces(url)) {
+      showWarning(fileEditor, "Please, specify IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
+                  new HyperlinkAdapter() {
+                    @Override
+                    protected void hyperlinkActivated(HyperlinkEvent e) {
+                      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "IPython Notebook");
+                    }
+                  });
+      return;
+    }
+    if (startConnection(codePanel, path, url, false)) {
+      return;
+    }
+    url = showDialogUrl(url);
+    if (url == null) return;
+    IpnbSettings.getInstance(myProject).setURL(url);
+    boolean connectionStarted = startConnection(codePanel, path, url, false);
+    if (!connectionStarted) {
+      final String finalUrl = url;
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          final boolean serverStarted = startIpythonServer(finalUrl, fileEditor);
+          if (!serverStarted) {
+            return;
+          }
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              new Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(new Runnable() {
+                @Override
+                public void run() {
+                  final Notification notification =
+                    new Notification("IPythonNotebook", "", "<html>IPython notebook started at <a href=\"" + finalUrl +
+                                                            "\">" + finalUrl + "</a></html>", NotificationType.INFORMATION,
+                                     NotificationListener.URL_OPENING_LISTENER);
+                  notification.notify(myProject);
+                  startConnection(codePanel, path, finalUrl, true);
+                }
+              }, 3000);
+            }
+          });
+        }
+      });
     }
   }
 

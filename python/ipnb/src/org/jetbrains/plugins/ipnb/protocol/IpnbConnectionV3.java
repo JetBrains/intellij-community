@@ -112,4 +112,9 @@ public class IpnbConnectionV3 extends IpnbConnection{
   public URI getChannelsURI() throws URISyntaxException {
     return new URI(getWebSocketURIBase() + "/channels");
   }
+
+  @Override
+  public boolean isAlive() {
+    return myChannelsClient.isOpen();
+  }
 }
