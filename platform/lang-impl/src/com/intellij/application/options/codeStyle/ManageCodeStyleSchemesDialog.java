@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.application.options.ImportSchemeChooserDialog;
 import com.intellij.application.options.ImportSourceChooserDialog;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
@@ -39,6 +38,7 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.PairConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,8 +51,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.List;
 
@@ -184,82 +182,40 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
   private String importExternalCodeStyle(String importerName) throws SchemeImportException {
     final SchemeImporter<CodeStyleScheme> importer = SchemeImporterEP.getImporter(importerName, CodeStyleScheme.class);
     if (importer != null) {
-      final Set<String> extensions = new HashSet<String>(Arrays.asList(importer.getSourceExtensions()));
-      FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-        .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
-          @Override
-          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-            return file.isDirectory() || extensions.contains(file.getExtension());
-          }
-          @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return !file.isDirectory() && extensions.contains(file.getExtension());
-          }
-        }, null, myContentPane);
-      VirtualFile[] selection = fileChooser.choose(null, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
-      if (selection.length == 1) {
-        VirtualFile selectedFile = selection[0];
-        selectedFile.refresh(false, false);
+      final VirtualFile selectedFile = selectImportSource(importer.getSourceExtensions());
+      if (selectedFile != null) {
         CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
-        try {
-          InputStream nameInputStream = selectedFile.getInputStream();
-          String[] schemeNames;
-          try {
-            schemeNames = importer.readSchemeNames(nameInputStream);
-          }
-          finally {
-            nameInputStream.close();
-          }
-          CodeStyleScheme currScheme = myModel.getSelectedScheme();
-          ImportSchemeChooserDialog schemeChooserDialog =
-            new ImportSchemeChooserDialog(myContentPane, schemeNames, !currScheme.isDefault() ? currScheme.getName() : null);
-          if (schemeChooserDialog.showAndGet()) {
-            String schemeName = schemeChooserDialog.getSelectedName();
-            String targetName = schemeChooserDialog.getTargetName();
-            CodeStyleScheme targetScheme = null;
-            if (schemeChooserDialog.isUseCurrentScheme()) {
-              targetScheme = myModel.getSelectedScheme();
-            }
-            else {
-              if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
-              for (CodeStyleScheme scheme : myModel.getSchemes()) {
-                if (targetName.equals(scheme.getName())) {
-                  targetScheme = scheme;
-                  break;
-                }
-              }
-              if (targetScheme == null) {
-                int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), targetName);
-                mySchemesTable.getSelectionModel().setSelectionInterval(row, row);
-                targetScheme = mySchemesTableModel.getSchemeAt(row);
-              }
-              else {
-                int result = Messages.showYesNoDialog(myContentPane,
-                                                      ApplicationBundle.message("message.code.style.scheme.already.exists", targetName),
-                                                      ApplicationBundle.message("title.code.style.settings.import"),
-                                                      Messages.getQuestionIcon());
-                if (result != Messages.YES) {
-                  return null;
-                }
-              }
-            }
-            InputStream dataInputStream = selectedFile.getInputStream();
-            try {
-              importer.importScheme(dataInputStream, schemeName, targetScheme);
-              myModel.fireSchemeChanged(targetScheme);
-            }
-            finally {
-              dataInputStream.close();
-            }
-            return targetScheme.getName();
-          }
+        final SchemeCreator schemeCreator = new SchemeCreator();
+        final boolean schemeImported = importer.importScheme(myModel.getProject(), selectedFile, myModel.getSelectedScheme(), schemeCreator);
+        if (schemeImported) {
+          final CodeStyleScheme targetScheme = schemeCreator.getTargetScheme();
+          myModel.fireSchemeChanged(targetScheme);
+          return targetScheme.getName();
         }
-        catch (IOException e) {
-          throw new SchemeImportException(e);
-        } 
       }
     }
     return null;
+  }
+
+  @Nullable
+  private VirtualFile selectImportSource(final String[] sourceExtensions) {
+    final Set<String> extensions = new HashSet<String>(Arrays.asList(sourceExtensions));
+    FileChooserDialog fileChooser = FileChooserFactory.getInstance()
+      .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
+        @Override
+        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+          return file.isDirectory() || extensions.contains(file.getExtension());
+        }
+
+        @Override
+        public boolean isFileSelectable(VirtualFile file) {
+          return !file.isDirectory() && extensions.contains(file.getExtension());
+        }
+      }, null, myContentPane);
+    final VirtualFile[] virtualFiles = fileChooser.choose(null, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
+    if (virtualFiles.length != 1) return null;
+    virtualFiles[0].refresh(false, false);
+    return virtualFiles[0];
   }
 
   private void updateActions() {
@@ -300,6 +256,39 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
 
   private void createUIComponents() {
     mySchemesTable = new MySchemesTable();
+  }
+
+  private class SchemeCreator implements PairConvertor<String, Boolean, CodeStyleScheme> {
+    private CodeStyleScheme myTargetScheme;
+
+    @Override
+    public CodeStyleScheme convert(String targetName, final Boolean useCurrent) {
+      if (Boolean.TRUE.equals(useCurrent)) {
+        myTargetScheme = myModel.getSelectedScheme();
+      } else {
+        if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
+
+        for (CodeStyleScheme scheme : myModel.getSchemes()) {
+          if (targetName.equals(scheme.getName())) {
+            int result = Messages.showYesNoDialog(myContentPane,
+                                                  ApplicationBundle.message("message.code.style.scheme.already.exists", targetName),
+                                                  ApplicationBundle.message("title.code.style.settings.import"),
+                                                  Messages.getQuestionIcon());
+            if (result != Messages.YES) {
+              return null;
+            }
+          }
+        }
+        int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), targetName);
+        mySchemesTable.getSelectionModel().setSelectionInterval(row, row);
+        myTargetScheme = mySchemesTableModel.getSchemeAt(row);
+      }
+      return myTargetScheme;
+    }
+
+    public CodeStyleScheme getTargetScheme() {
+      return myTargetScheme;
+    }
   }
 
   private class MySchemesTable extends JBTable {
