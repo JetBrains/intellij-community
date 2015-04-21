@@ -46,6 +46,23 @@ class TypeCorrector extends PsiTypeMapper {
     return super.visitType(type);
   }
 
+  @Nullable
+  public <T extends PsiType> T correctType(@NotNull T type) {
+    if (type instanceof PsiClassType) {
+      PsiClassType classType = (PsiClassType)type;
+      if (classType.getParameterCount() == 0) {
+        final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
+        final PsiClass psiClass = classResolveResult.getElement();
+        if (psiClass != null && classResolveResult.getSubstitutor() == PsiSubstitutor.EMPTY) {
+          final PsiClass mappedClass = mapClass(psiClass);
+          if (mappedClass == null || mappedClass == psiClass) return (T) classType;
+        }
+      }
+    }
+
+    return (T)type.accept(this);
+  }
+
   @Override
   public PsiType visitClassType(final PsiClassType classType) {
     PsiClassType alreadyComputed = myResultMap.get(classType);
@@ -70,7 +87,7 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedType;
   }
 
-  @Nullable 
+  @Nullable
   private PsiClass mapClass(@NotNull PsiClass psiClass) {
     String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) {
@@ -85,7 +102,7 @@ class TypeCorrector extends PsiTypeMapper {
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, myResolveScope);
   }
 
-  @NotNull 
+  @NotNull
   private PsiSubstitutor mapSubstitutor(PsiClass originalClass, PsiClass mappedClass, PsiSubstitutor substitutor) {
     PsiTypeParameter[] typeParameters = mappedClass.getTypeParameters();
     PsiTypeParameter[] originalTypeParameters = originalClass.getTypeParameters();

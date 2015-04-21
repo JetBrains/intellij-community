@@ -717,7 +717,7 @@ public class PsiClassImplUtil {
       return originalType;
     }
 
-    return new TypeCorrector(resolveScope).mapType(originalType);
+    return new TypeCorrector(resolveScope).correctType(originalType);
   }
 
   private static List<PsiClassType.ClassResolveResult> getScopeCorrectedSuperTypes(final PsiClass aClass, GlobalSearchScope resolveScope) {
