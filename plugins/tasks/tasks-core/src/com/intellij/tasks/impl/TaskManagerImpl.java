@@ -747,7 +747,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   private static LocalTaskImpl createDefaultTask() {
-    return new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
+    LocalTaskImpl task = new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
+    Date date = new Date();
+    task.setCreated(date);
+    task.setUpdated(date);
+    return task;
   }
 
   public void disposeComponent() {
