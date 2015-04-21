@@ -25,22 +25,16 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
-import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.forceNotNull;
@@ -51,6 +45,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
 
   public GrGenericStandardInstructionVisitor(GrDataFlowRunner<V> runner) {
     super(runner);
+    myHelper = new GrMethodCallHelper<V>(this);
   }
 
   private static final Object ANY_VALUE = new Object();
@@ -58,20 +53,8 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
   //private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
   private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
+  private final GrMethodCallHelper<V> myHelper;
   //private final Set<JavaInstanceofInstruction> myUsefulInstanceofs = new THashSet<JavaInstanceofInstruction>();
-
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final FactoryMap<GrMethodCallInstruction, Nullness> myReturnTypeNullability =
-    new FactoryMap<GrMethodCallInstruction, Nullness>() {
-      @Override
-      protected Nullness create(GrMethodCallInstruction key) {
-        final GrExpression callExpression = key.getCall();
-        if (callExpression instanceof GrNewExpression) {
-          return Nullness.NOT_NULL;
-        }
-        return DfaPsiUtil.getElementNullability(key.getReturnType(), key.getTargetMethod());
-      }
-    };
 
   @Override
   public DfaInstructionState<V>[] visitAssignGroovy(GrAssignInstruction<V> instruction, DfaMemoryState memState) {
@@ -141,61 +124,36 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
 
   @Override
   public DfaInstructionState<V>[] visitMethodCallGroovy(final GrMethodCallInstruction<V> instruction, final DfaMemoryState state) {
-    for (final GrNamedArgument ignored : instruction.getNamedArguments()) {
-      state.pop();
-    }
-
-    for (final GrExpression expression : instruction.getExpressionArguments()) {
-      final DfaValue arg = state.pop();
-      final Nullness nullability = instruction.getParameterNullability(expression);
-      if (nullability == Nullness.NOT_NULL) {
-        if (!checkNotNullable(state, arg, NullabilityProblem.passingNullableToNotNullParameter, expression)) {
-          forceNotNull(myRunner.getFactory(), state, arg);
-        }
-      }
-      else if (nullability == Nullness.UNKNOWN) {
-        checkNotNullable(state, arg, NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter, expression);
-      }
-    }
-
-    for (final GrClosableBlock ignored : instruction.getClosureArguments()) {
-      state.pop();
-    }
-
+    final DfaValue[] argValues = myHelper.popAndCheckCallArguments(instruction, state);
     final DfaValue qualifier = state.pop();
-    final DfaValue methodResultValue = getMethodResultValue(instruction);
     if (!checkNotNullable(state, qualifier, NullabilityProblem.callNPE, instruction.getCall())) {
       forceNotNull(myRunner.getFactory(), state, qualifier);
     }
-    //check(methodResultValue, memState, instruction.getCallExpression());
-    state.push(methodResultValue);
-    if (instruction.shouldFlushFields()) {
-      state.flushFields();
-    }
-    return nextInstruction(instruction, myRunner, state);
-  }
 
-
-  @NotNull
-  private DfaValue getMethodResultValue(GrMethodCallInstruction instruction) {
-    final GrDfaValueFactory factory = myRunner.getFactory();
-    DfaValue precalculated = instruction.getPrecalculatedReturnValue();
-    if (precalculated != null) {
-      return precalculated;
-    }
-
-    final PsiType type = instruction.getReturnType();
-
-    if (type != null && (type instanceof PsiClassType || type.getArrayDimensions() > 0)) {
-      Nullness nullability = myReturnTypeNullability.get(instruction);
-      if (nullability == Nullness.UNKNOWN && factory.isUnknownMembersAreNullable()) {
-        nullability = Nullness.NULLABLE;
+    final Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
+    LinkedHashSet<DfaMemoryState> currentStates = ContainerUtil.newLinkedHashSet(state);
+    final PsiMethod method = instruction.getTargetMethod();
+    if (method != null) {
+      for (MethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
+        currentStates = myHelper.addContractResults(argValues, contract, currentStates, instruction, finalStates);
       }
-      return factory.createTypeValue(type, nullability);
     }
-    return DfaUnknownValue.getInstance();
-  }
+    for (DfaMemoryState currentState : currentStates) {
+      currentState.push(myHelper.getMethodResultValue(instruction));
+      finalStates.add(currentState);
+    }
 
+    @SuppressWarnings("unchecked")
+    DfaInstructionState<V>[] result = new DfaInstructionState[finalStates.size()];
+    int i = 0;
+    for (DfaMemoryState finalState : finalStates) {
+      if (instruction.shouldFlushFields()) {
+        finalState.flushFields();
+      }
+      result[i++] = new DfaInstructionState<V>(myRunner.getInstruction(instruction.getIndex() + 1), finalState);
+    }
+    return result;
+  }
 
   protected boolean checkNotNullable(DfaMemoryState state,
                                      DfaValue value,

@@ -221,8 +221,6 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   }
 
   private void processMethodCall(GrMethodCall methodCall) {
-    final int argumentsCount = methodCall.getArgumentList().getAllArguments().length + methodCall.getClosureArguments().length;
-
     // qualifier
     final GrExpression invokedExpression = methodCall.getInvokedExpression();
     final PsiType invokedExpressionType = invokedExpression.getType();
@@ -250,8 +248,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
         // null branch
         // even if qualifier is null, groovy evaluates arguments
-        visitArguments(methodCall);
-        for (int i = 0; i < argumentsCount; i++) {
+        final int argumentsToPop = visitArguments(methodCall);
+        for (int i = 0; i < argumentsToPop; i++) {
           pop();
         }
         pop();        // pop duplicated qualifier
@@ -274,16 +272,26 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   }
 
 
-  protected void visitArguments(GrMethodCall methodCall) {
-    for (GrNamedArgument argument : methodCall.getNamedArguments()) {
+  protected int visitArguments(@NotNull GrCall methodCall) {
+    int counter = 0;
+    final GrNamedArgument[] namedArguments = methodCall.getNamedArguments();
+    for (GrNamedArgument argument : namedArguments) {
       argument.accept(this);
+      pop();
+    }
+    if (namedArguments.length > 0) {
+      push(myFactory.createTypeValue(TypesUtil.createType("java.util.Map", methodCall), Nullness.NOT_NULL));
+      counter++;
     }
     for (GrExpression expression : methodCall.getExpressionArguments()) {
       expression.accept(this);
+      counter++;
     }
     for (GrClosableBlock block : methodCall.getClosureArguments()) {
       push(myFactory.createValue(block), block);
+      counter++;
     }
+    return counter;
   }
 
 
