@@ -8,12 +8,9 @@ import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,13 +32,6 @@ public class IpnbConsole extends ConsoleViewImpl {
     Disposer.register(this, descriptor);
     actions.add(new StopAction());
     ExecutionManager.getInstance(getProject()).getContentManager().showRunContent(executor, descriptor);
-
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.RUN).activate(null);
-      }
-    });
   }
 
   private JComponent createConsolePanel(ActionGroup actions) {
