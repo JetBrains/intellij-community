@@ -185,6 +185,12 @@ public class PySmartEnterTest extends PyTestCase {
     doTest();
   }
 
+
+  // PY-15656
+  public void testUnclosedParametersListAndTrailingEmptyLines() {
+    doTest();
+  }
+
   // PY-12877
   public void testWithTargetOmitted() {
     doTest();
