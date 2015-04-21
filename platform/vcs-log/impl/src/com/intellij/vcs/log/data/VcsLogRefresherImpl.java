@@ -200,6 +200,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(true);
       DataPack dataPack = myCurrentDataPack;
       while (true) {
         List<RefreshRequest> requests = mySingleTaskController.popRequests();

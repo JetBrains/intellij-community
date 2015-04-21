@@ -218,10 +218,11 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     return myContainingBranchesGetter;
   }
 
-  void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
-    myDataLoaderQueue.run(new Task.Backgroundable(myProject, title) {
+  private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
+    myDataLoaderQueue.run(new Task.Backgroundable(myProject, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
         try {
           task.consume(indicator);
         }
