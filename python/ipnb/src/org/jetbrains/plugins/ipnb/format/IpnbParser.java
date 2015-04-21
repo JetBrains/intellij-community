@@ -3,7 +3,12 @@ package org.jetbrains.plugins.ipnb.format;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.TypeAdapter;
+import com.google.gson.TypeAdapterFactory;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -28,7 +33,7 @@ public class IpnbParser {
 
   @NotNull
   private static Gson initGson() {
-    final GsonBuilder builder = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping();
+    final GsonBuilder builder = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapterFactory(new ExecutionCountAdapterFactory());
     return builder.create();
   }
 
@@ -121,6 +126,7 @@ public class IpnbParser {
     }
   }
 
+  @SuppressWarnings("unused")
   public static class IpnbFileRaw {
     IpnbWorksheet[] worksheets;
     List<IpnbCellRaw> cells = new ArrayList<IpnbCellRaw>();
@@ -133,9 +139,18 @@ public class IpnbParser {
     List<IpnbCellRaw> cells = new ArrayList<IpnbCellRaw>();
   }
 
+  private static class ExecutionCount {
+    Integer count;
+
+    public ExecutionCount(Integer integer) {
+      count = integer;
+    }
+  }
+
+  @SuppressWarnings("unused")
   private static class IpnbCellRaw {
     String cell_type;
-    Integer execution_count;
+    ExecutionCount execution_count;
     Map<String, Object> metadata = new HashMap<String, Object>();
     Integer level;
     CellOutputRaw[] outputs;
@@ -159,7 +174,7 @@ public class IpnbParser {
         raw.outputs = outputRaws.toArray(new CellOutputRaw[outputRaws.size()]);
         final Integer promptNumber = ((IpnbCodeCell)cell).getPromptNumber();
         if (nbformat == 4) {
-          raw.execution_count = promptNumber != null && promptNumber >= 0 ? promptNumber : null;
+          raw.execution_count = new ExecutionCount(promptNumber != null && promptNumber >= 0 ? promptNumber : null);
           raw.source = ((IpnbCodeCell)cell).getSource();
         }
         else {
@@ -189,8 +204,9 @@ public class IpnbParser {
         for (CellOutputRaw outputRaw : outputs) {
           outputCells.add(outputRaw.createOutput());
         }
+        final Integer prompt = (prompt_number != null) ? prompt_number : ((execution_count != null) ? execution_count.count : null);
         cell = new IpnbCodeCell(language == null ? "python" : language, input == null ? source : input,
-                                prompt_number == null ? execution_count : prompt_number, outputCells);
+                                prompt, outputCells);
       }
       else if (cell_type.equals("raw")) {
         cell = new IpnbRawCell();
@@ -364,4 +380,35 @@ public class IpnbParser {
     @SerializedName("image/jpeg") String[] jpeg;
     @SerializedName("text/latex") String[] latex;
   }
+
+  public static class ExecutionCountAdapterFactory implements TypeAdapterFactory {
+    @SuppressWarnings("unchecked")
+    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
+      Class<T> rawType = (Class<T>) type.getRawType();
+      if (rawType != ExecutionCount.class) {
+        return null;
+      }
+      return (TypeAdapter<T>)new ExecutionCountAdapter();
+    }
+  }
+
+  public static class ExecutionCountAdapter extends TypeAdapter<ExecutionCount> {
+    public ExecutionCount read(JsonReader reader) throws IOException {
+      if (reader.peek() == JsonToken.NULL) {
+        reader.nextNull();
+        return new ExecutionCount(null);
+      }
+      return new ExecutionCount(reader.nextInt());
+    }
+    public void write(JsonWriter writer, ExecutionCount value) throws IOException {
+      if (value == null || value.count == null) {
+        writer.setSerializeNulls(true);
+        writer.nullValue();
+        writer.setSerializeNulls(false);
+        return;
+      }
+      writer.value(value.count);
+    }
+  }
+
 }
