@@ -172,7 +172,7 @@ public class CommittedChangesBrowser extends JPanel {
 
     selectFirstIfAny();
 
-    myChangesView.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangeListsView);
+    myChangesView.getDiffAction().registerCustomShortcutSet(myChangesView.getDiffAction().getShortcutSet(), myChangeListsView);
   }
 
   public void selectFirstIfAny() {

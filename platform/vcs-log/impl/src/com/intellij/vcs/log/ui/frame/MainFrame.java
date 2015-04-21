@@ -83,7 +83,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
-    myChangesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), getGraphTable());
+    myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     myChangesBrowser.getEditSourceAction().registerCustomShortcutSet(CommonShortcuts.getEditSource(), getGraphTable());
     setDefaultEmptyText(myChangesBrowser);
     myChangesLoadingPane = new JBLoadingPanel(new BorderLayout(), project);

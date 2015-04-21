@@ -121,9 +121,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     } else {
       myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
     }
-    
-    final AnAction anAction = ActionManager.getInstance().getAction("CommittedChanges.Refresh");
-    anAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
+
+    EmptyAction.registerWithShortcutSet("CommittedChanges.Refresh", CommonShortcuts.getRerun(), this);
     myBrowser.addFilter(myFilterComponent);
     myIfNotCachedReloader = myLocation == null ? null : new Consumer<String>() {
       @Override
