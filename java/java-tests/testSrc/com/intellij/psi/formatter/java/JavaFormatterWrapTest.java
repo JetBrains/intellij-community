@@ -381,14 +381,17 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
     getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
-    doMethodTest(before, after);
+    doMethodTest(before,
+                 "processingEnv.getMessenger().printMessage(\n" +
+                 "        Diagnostic.Kind.ERROR,\n" +
+                 "        String.format(\"Could not process annotations: %s%n%s\", e.toString(), writer.toString())\n" +
+                 ");");
 
     String literal = "\"" + StringUtil.repeatSymbol('A', 128) + "\"";
     before = "processingEnv.getMessenger().printMessage(Diagnostic.Kind.ERROR, call(" + literal + "));\n";
     after = "processingEnv.getMessenger().printMessage(\n" +
-            "        Diagnostic.Kind.ERROR, call(\n" +
-            "                " + literal + "\n" +
-            "        )\n" +
+            "        Diagnostic.Kind.ERROR,\n" +
+            "        call(" + literal + ")\n" +
             ");\n";
 
     doMethodTest(before, after);
@@ -497,5 +500,14 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
         "            (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
         "}"
     );
+  }
+
+  public void test_Do_Not_Wrap_On_Nested_Call_Arguments_If_Not_Needed() {
+    getSettings().PREFER_PARAMETERS_WRAP = true;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+
+    doMethodTest("call(aaaaaaaaaaabbbbbbbbbbbbsdfsdfsdfsdfsdfsdfsdfb, 1 + call(111111111, 32213123123, 123123123123, 234234234234324234234));",
+                 "call(aaaaaaaaaaabbbbbbbbbbbbsdfsdfsdfsdfsdfsdfsdfb,\n" +
+                 "        1 + call(111111111, 32213123123, 123123123123, 234234234234324234234));");
   }
 }
