@@ -153,7 +153,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
         myDataPackUpdateHandler.consume(dataPack);
         initSw.report();
       }
-    }, "Loading recent history...");
+    }, "Loading History...");
   }
 
   private void readCurrentUser() {
