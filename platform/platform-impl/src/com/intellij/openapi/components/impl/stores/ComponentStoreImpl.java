@@ -299,7 +299,7 @@ public abstract class ComponentStoreImpl implements IComponentStore.Reloadable {
     }
 
     Class<T> stateClass = ComponentSerializationUtil.getStateClass(component.getClass());
-    if (LOG.isDebugEnabled() && getDefaultState(component, name, stateClass) != null) {
+    if (!stateSpec.defaultStateAsResource() && LOG.isDebugEnabled() && getDefaultState(component, name, stateClass) != null) {
       LOG.error(name + " has default state, but not marked to load it");
     }
 
