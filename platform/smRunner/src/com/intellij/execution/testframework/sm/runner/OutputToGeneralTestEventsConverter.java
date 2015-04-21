@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,28 +32,26 @@ import java.util.Map;
 import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor.getTFrameworkPrefix;
 
 /**
+ * This implementation also supports messages split in parts by early flush.
+ * Implementation assumes that buffer is being flushed on line end or by timer,
+ * i.e. incoming text contains no more than one line's end marker ('\r', '\n', or "\r\n")
+ * (e.g. process was run with IDEA program's runner)
+ *
  * @author Roman Chernyatchik
- *         <p/>
- *         This implementation also supports messages splitted in parts by early flush.
- *         Implementation assumes that buffer is being flushed on line end or by timer,
- *         i.e. incomming text contains no more than one line's end marker ('\r', '\n', or "\r\n")
- *         (e.g. process was run with IDEA program's runner)
  */
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
 
-  private GeneralTestEventsProcessor myProcessor;
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
-
   private final OutputLineSplitter mySplitter;
+
+  private GeneralTestEventsProcessor myProcessor;
   private boolean myPendingLineBreakFlag;
 
-  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName,
-                                            @NotNull final TestConsoleProperties consoleProperties) {
+  public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-
     mySplitter = new OutputLineSplitter(consoleProperties.isEditable()) {
       @Override
       protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
@@ -209,6 +207,28 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  private void fireOnSuiteTreeNodeAdded(String testName, String locationHint) {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onSuiteTreeNodeAdded(testName, locationHint);
+    }
+  }
+
+  private void fireOnSuiteTreeStarted(String suiteName, String locationHint) {
+
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onSuiteTreeStarted(suiteName, locationHint);
+    }
+  }
+
+  private void fireOnSuiteTreeEnded(String suiteName) {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onSuiteTreeEnded(suiteName);
+    }
+  }
+
   private void fireOnTestOutput(@NotNull TestOutputEvent testOutputEvent) {
     // local variable is used to prevent concurrent modification
     final GeneralTestEventsProcessor processor = myProcessor;
@@ -285,11 +305,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
     @NonNls private static final String MESSAGE = "message";
     @NonNls private static final String TEST_REPORTER_ATTACHED = "enteredTheMatrix";
+    @NonNls private static final String SUITE_TREE_STARTED = "suiteTreeStarted";
+    @NonNls private static final String SUITE_TREE_ENDED = "suiteTreeEnded";
+    @NonNls private static final String SUITE_TREE_NODE = "suiteTreeNode";
     @NonNls private static final String ATTR_KEY_STATUS = "status";
     @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
     @NonNls private static final String ATTR_VALUE_STATUS_WARNING = "WARNING";
     @NonNls private static final String ATTR_KEY_TEXT = "text";
     @NonNls private static final String ATTR_KEY_ERROR_DETAILS = "errorDetails";
+    @NonNls private static final String ATTR_KEY_EXPECTED_FILE_PATH = "expectedFile";
 
     @NonNls public static final String CUSTOM_STATUS = "customProgressStatus";
     @NonNls private static final String ATTR_KEY_TEST_TYPE = "type";
@@ -367,8 +391,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
-      final boolean testError = testFailed.getAttributes().get(ATTR_KEY_TEST_ERROR) != null;
-      TestFailedEvent testFailedEvent = new TestFailedEvent(testFailed, testError);
+      final Map<String, String> attributes = testFailed.getAttributes();
+      final boolean testError = attributes.get(ATTR_KEY_TEST_ERROR) != null;
+      TestFailedEvent testFailedEvent = new TestFailedEvent(testFailed, testError, attributes.get(ATTR_KEY_EXPECTED_FILE_PATH));
       fireOnTestFailure(testFailedEvent);
     }
 
@@ -454,6 +479,15 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
       else if (TEST_REPORTER_ATTACHED.equals(name)) {
         fireOnTestFrameworkAttached();
+      }
+      else if (SUITE_TREE_STARTED.equals(name)) {
+        fireOnSuiteTreeStarted(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
+      }
+      else if (SUITE_TREE_ENDED.equals(name)) {
+        fireOnSuiteTreeEnded(msg.getAttributes().get("name"));
+      }
+      else if (SUITE_TREE_NODE.equals(name)) {
+        fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
       }
       else {
         GeneralToSMTRunnerEventsConvertor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);

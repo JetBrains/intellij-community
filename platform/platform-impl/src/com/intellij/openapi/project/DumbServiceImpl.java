@@ -269,7 +269,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           runnable.run();
         }
         catch (Throwable e) {
-          LOG.error(e);
+          LOG.error("Error executing task " + runnable, e);
         }
       }
     }

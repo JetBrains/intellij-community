@@ -314,12 +314,15 @@ public class UIUtil {
       }
 
       try {
-        isRetina =  (getScaleFactorMethod == null) || ((Integer)getScaleFactorMethod.invoke(device) != 1);
+        isRetina =  getScaleFactorMethod == null || (Integer)getScaleFactorMethod.invoke(device) != 1;
       } catch (IllegalAccessException e) {
         LOG.debug("CGraphicsDevice.getScaleFactor(): Access issue");
         isRetina = false;
       } catch (InvocationTargetException e) {
         LOG.debug("CGraphicsDevice.getScaleFactor(): Invocation issue");
+        isRetina = false;
+      } catch (IllegalArgumentException e) {
+        LOG.debug("object is not an instance of declaring class: " + device.getClass().getName());
         isRetina = false;
       }
 
@@ -483,7 +486,7 @@ public class UIUtil {
     component.putClientProperty(key, value);
   }
 
-  public static String getHtmlBody(String text) {
+  public static String getHtmlBody(@NotNull String text) {
     int htmlIndex = 6 + text.indexOf("<html>");
     if (htmlIndex < 6) {
       return text.replaceAll("\n", "<br>");
@@ -1783,7 +1786,7 @@ public class UIUtil {
   }
 
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
-    if (DetectRetinaKit.isMacRetina(g)) {
+    if (isRetina(g)) {
       return RetinaImage.create(width, height, type);
     }
     //noinspection UndesirableClassUsage
@@ -3279,6 +3282,11 @@ public class UIUtil {
   @NotNull
   public static String rightArrow() {
     return FontUtil.rightArrow(getLabelFont());
+  }
+
+  @NotNull
+  public static String upArrow(@NotNull String defaultValue) {
+    return FontUtil.upArrow(getLabelFont(), defaultValue);
   }
 
   public static EmptyBorder getTextAlignBorder(@NotNull JToggleButton alignSource) {

@@ -1478,20 +1478,20 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         new1.getArrayDimensions().length == 0 &&
         new1.getArrayInitializer() != null
       ) {
+      final MatchContext matchContext = myMatchingVisitor.getMatchContext();
+      final MatchingHandler handler = matchContext.getPattern().getHandler(classReference);
       final boolean looseMatching = myMatchingVisitor.getMatchContext().getOptions().isLooseMatching();
-      final boolean typedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(classReference);
-      if ((typedVar || !looseMatching) && !allowsAbsenceOfMatch(classReference)) {
+      if ((handler instanceof SubstitutionHandler && ((SubstitutionHandler)handler).getMinOccurs() != 0) || !looseMatching) {
         myMatchingVisitor.setResult(false);
         return;
       }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(other.getProject());
-      final PsiType otherType = ((PsiVariable)other.getParent()).getType();
-      final PsiTypeElement otherTypeElement = factory.createTypeElement(otherType.getDeepComponentType());
-      final MatchContext matchContext = myMatchingVisitor.getMatchContext();
-      final MatchingHandler handler = matchContext.getPattern().getHandler(classReference);
-      if (handler instanceof SubstitutionHandler) {
+      final PsiType otherType = ((PsiArrayInitializerExpression)other).getType();
+      if (handler instanceof SubstitutionHandler && otherType != null) {
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(other.getProject());
+        final PsiTypeElement otherTypeElement = factory.createTypeElement(otherType.getDeepComponentType());
         final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
-        myMatchingVisitor.setResult(substitutionHandler.handle(otherTypeElement, matchContext));
+        final MatchPredicate predicate = substitutionHandler.getPredicate();
+        myMatchingVisitor.setResult(predicate == null || predicate.match(null, otherTypeElement, matchContext));
       }
       else {
         final PsiType type = new1.getType();

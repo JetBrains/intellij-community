@@ -340,11 +340,16 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         throw new IllegalArgumentException(scrollToPolicy.name());
     }
 
-    EditorEx editor = getCurrentEditor();
-    int line = targetChange.getStartLine(getCurrentSide());
-    DiffUtil.scrollEditor(editor, line);
+    doScrollToChange(targetChange, false);
 
     return true;
+  }
+
+  private void doScrollToChange(@NotNull SimpleThreesideDiffChange change, boolean animated) {
+    // TODO: use anchors to fix scrolling issue at the start/end of file
+    EditorEx editor = getCurrentEditor();
+    int line = change.getStartLine(getCurrentSide());
+    DiffUtil.scrollEditor(editor, line, animated);
   }
 
   @NotNull
@@ -427,8 +432,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       }
 
       assert next != null;
-
-      DiffUtil.scrollToLineAnimated(editor, getCurrentStartLine(next));
+      doScrollToChange(next, true);
     }
 
     @Override
@@ -464,8 +468,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       }
 
       assert prev != null;
-
-      DiffUtil.scrollToLineAnimated(editor, getCurrentStartLine(prev));
+      doScrollToChange(prev, true);
     }
   }
 

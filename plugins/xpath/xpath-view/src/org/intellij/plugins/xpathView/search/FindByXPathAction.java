@@ -20,6 +20,7 @@ import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,6 +35,7 @@ import org.intellij.plugins.xpathView.XPathEvalAction;
 import org.intellij.plugins.xpathView.XPathProjectComponent;
 import org.intellij.plugins.xpathView.support.XPathSupport;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
+import org.intellij.plugins.xpathView.util.Namespace;
 import org.jaxen.JaxenException;
 import org.jaxen.XPathSyntaxException;
 import org.jetbrains.annotations.NotNull;
@@ -43,12 +45,12 @@ import java.util.Collections;
 public class FindByXPathAction extends AnAction {
 
     public void update(AnActionEvent e) {
-        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
+        final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
         e.getPresentation().setEnabled(project != null);
     }
 
     public void actionPerformed(AnActionEvent e) {
-        final Project project = LangDataKeys.PROJECT.getData(e.getDataContext());
+        final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
         final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
 
         if (project != null) {
@@ -141,7 +143,7 @@ public class FindByXPathAction extends AnAction {
     private static boolean validateExpression(Project project, String expression) {
         try {
             //noinspection unchecked
-            XPathSupport.getInstance().createXPath(null, expression, Collections.<org.intellij.plugins.xpathView.util.Namespace>emptyList());
+            XPathSupport.getInstance().createXPath(null, expression, Collections.<Namespace>emptyList());
             return true;
         } catch (XPathSyntaxException e) {
             Messages.showErrorDialog(project, e.getMultilineMessage(), "XPath Syntax Error");

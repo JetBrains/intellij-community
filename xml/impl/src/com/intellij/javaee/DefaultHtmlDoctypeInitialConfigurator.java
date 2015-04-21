@@ -11,7 +11,7 @@ import com.intellij.xml.Html5SchemaProvider;
  * @author Eugene.Kudelevsky
  */
 public class DefaultHtmlDoctypeInitialConfigurator {
-  public static final int VERSION = 1;
+  public static final int VERSION = 2;
 
   public DefaultHtmlDoctypeInitialConfigurator(ProjectManager projectManager,
                                                PropertiesComponent propertiesComponent) {

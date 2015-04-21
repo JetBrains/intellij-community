@@ -71,7 +71,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
       return new FormattingDocumentModelImpl(document, file);
     }
     else {
-      return new FormattingDocumentModelImpl(new DocumentImpl(file.getViewProvider().getContents()), file);
+      return new FormattingDocumentModelImpl(new DocumentImpl(file.getViewProvider().getContents(), true), file);
     }
   }
 

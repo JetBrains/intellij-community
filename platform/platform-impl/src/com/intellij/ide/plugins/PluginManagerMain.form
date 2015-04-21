@@ -54,7 +54,10 @@
                 <constraints>
                   <splitpane position="right"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <minimumSize width="50" height="50"/>
+                  <preferredSize width="300" height="200"/>
+                </properties>
                 <border type="none">
                   <size top="2" left="4" bottom="2" right="4"/>
                 </border>
@@ -91,7 +94,10 @@
                 <constraints>
                   <splitpane position="left"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <minimumSize width="50" height="50"/>
+                  <preferredSize width="300" height="200"/>
+                </properties>
                 <border type="none"/>
                 <children/>
               </grid>

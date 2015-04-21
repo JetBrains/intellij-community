@@ -392,6 +392,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @Override
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     if (myDiffChanges.isEmpty()) return false;
+    if (myEditor1 == null || myEditor2 == null) return true;
 
     SimpleDiffChange targetChange;
     switch (scrollToPolicy) {
@@ -405,11 +406,24 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         throw new IllegalArgumentException(scrollToPolicy.name());
     }
 
-    EditorEx editor = getCurrentEditor();
-    int line = targetChange.getStartLine(getCurrentSide());
-    DiffUtil.scrollEditor(editor, line);
+    doScrollToChange(targetChange, false);
 
     return true;
+  }
+
+  private void doScrollToChange(@NotNull SimpleDiffChange change, final boolean animated) {
+    if (myEditor1 == null || myEditor2 == null) return;
+    assert mySyncScrollSupport != null;
+
+    final int line1 = change.getStartLine(Side.LEFT);
+    final int line2 = change.getStartLine(Side.RIGHT);
+    final int endLine1 = change.getEndLine(Side.LEFT);
+    final int endLine2 = change.getEndLine(Side.RIGHT);
+
+    DiffUtil.moveCaret(myEditor1, line1);
+    DiffUtil.moveCaret(myEditor2, line2);
+
+    mySyncScrollSupport.makeVisible(getCurrentSide(), line1, endLine1, line2, endLine2, animated);
   }
 
   @Override
@@ -522,8 +536,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
 
       assert next != null;
-
-      DiffUtil.scrollToLineAnimated(editor, next.getStartLine(getCurrentSide()));
+      doScrollToChange(next, true);
     }
 
     @Override
@@ -559,8 +572,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
 
       assert prev != null;
-
-      DiffUtil.scrollToLineAnimated(editor, prev.getStartLine(getCurrentSide()));
+      doScrollToChange(prev, true);
     }
   }
 
@@ -819,12 +831,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return getTextSettings().isEnableSyncScroll();
     }
 
-    public int transfer(@NotNull Side side, int line) {
+    public int transfer(@NotNull Side baseSide, int line) {
       if (myDiffChanges.isEmpty()) {
         return line;
       }
 
-      return super.transfer(side, line);
+      return super.transfer(baseSide, line);
     }
 
     @Override

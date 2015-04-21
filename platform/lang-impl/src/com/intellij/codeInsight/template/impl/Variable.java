@@ -17,20 +17,23 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Variable implements Cloneable {
   private final String myName;
   private boolean myAlwaysStopAt;
 
-  private String myExpressionString;
+  @Nullable private String myExpressionString;
   private Expression myExpression = null;
 
   private String myDefaultValueString;
   private Expression myDefaultValueExpression;
   private final boolean mySkipOnStart;
 
-  public Variable(@NotNull String name, Expression expression, Expression defaultValueExpression, boolean alwaysStopAt, boolean skipOnStart) {
+  public Variable(@NotNull String name, @Nullable Expression expression, @Nullable Expression defaultValueExpression, 
+                  boolean alwaysStopAt, boolean skipOnStart) {
     myName = name;
     myExpression = expression;
     myDefaultValueExpression = defaultValueExpression;
@@ -38,23 +41,25 @@ public class Variable implements Cloneable {
     mySkipOnStart = skipOnStart;
   }
 
-  public Variable(String name, String expression, String defaultValueString, boolean alwaysStopAt) {
+  public Variable(@NotNull String name, @Nullable String expression, @Nullable String defaultValueString, boolean alwaysStopAt) {
     myName = name;
-    myExpressionString = expression;
-    myDefaultValueString = defaultValueString;
+    myExpressionString = StringUtil.notNullize(expression);
+    myDefaultValueString = StringUtil.notNullize(defaultValueString);
     myAlwaysStopAt = alwaysStopAt;
     mySkipOnStart = false;
   }
 
+  @NotNull
   public String getExpressionString() {
-    return myExpressionString;
+    return StringUtil.notNullize(myExpressionString);
   }
 
-  public void setExpressionString(String expressionString) {
+  public void setExpressionString(@Nullable String expressionString) {
     myExpressionString = expressionString;
     myExpression = null;
   }
 
+  @NotNull
   public Expression getExpression() {
     if (myExpression == null) {
       if (myName.equals(TemplateImpl.SELECTION)) {
@@ -67,15 +72,17 @@ public class Variable implements Cloneable {
     return myExpression;
   }
 
+  @NotNull
   public String getDefaultValueString() {
-    return myDefaultValueString;
+    return StringUtil.notNullize(myDefaultValueString);
   }
 
-  public void setDefaultValueString(String defaultValueString) {
+  public void setDefaultValueString(@Nullable String defaultValueString) {
     myDefaultValueString = defaultValueString;
     myDefaultValueExpression = null;
   }
 
+  @NotNull
   public Expression getDefaultValueExpression() {
     if (myDefaultValueExpression == null) {
       myDefaultValueExpression = MacroParser.parse(myDefaultValueString);
@@ -112,14 +119,14 @@ public class Variable implements Cloneable {
     if (mySkipOnStart != variable.mySkipOnStart) return false;
     if (myDefaultValueString != null ? !myDefaultValueString.equals(variable.myDefaultValueString) : variable.myDefaultValueString != null) return false;
     if (myExpressionString != null ? !myExpressionString.equals(variable.myExpressionString) : variable.myExpressionString != null) return false;
-    if (myName != null ? !myName.equals(variable.myName) : variable.myName != null) return false;
+    if (!myName.equals(variable.myName)) return false;
 
     return true;
   }
 
   public int hashCode() {
     int result;
-    result = (myName != null ? myName.hashCode() : 0);
+    result = myName.hashCode();
     result = 29 * result + (myAlwaysStopAt ? 1 : 0);
     result = 29 * result + (mySkipOnStart ? 1 : 0);
     result = 29 * result + (myExpressionString != null ? myExpressionString.hashCode() : 0);

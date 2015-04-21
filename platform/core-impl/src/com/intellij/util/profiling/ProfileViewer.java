@@ -17,7 +17,10 @@ package com.intellij.util.profiling;
 
 import com.intellij.util.containers.ContainerUtil;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -25,13 +28,13 @@ import java.util.*;
  */
 class ProfileViewer {
   private class Ref {
-    private String text;
-    private String fileName;
-    private int hashcode;
+    private final String text;
+    private final String fileName;
+    private final int hashcode;
 
     private int totalTime;
 
-    private List<Occurrence> occurrences = new ArrayList<Occurrence>();
+    private final List<Occurrence> occurrences = new ArrayList<Occurrence>();
 
     Ref(String text, int hashcode, String filename) {
       this.text = text;
@@ -65,7 +68,7 @@ class ProfileViewer {
     private int time;
     private String type;
 
-    private List<Occurrence> subOccurrences = new ArrayList<Occurrence>();
+    private final List<Occurrence> subOccurrences = new ArrayList<Occurrence>();
 
     void setData(String line) {
       String[] split = line.split(" :: ");

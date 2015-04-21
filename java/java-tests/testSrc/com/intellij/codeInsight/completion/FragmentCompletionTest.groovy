@@ -118,5 +118,16 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult("map.entrySet()<caret>");
   }
 
+  public void "test no static after instance in expression fragment"() {
+    def ctxFile = myFixture.addClass("package foo; public class Class {{\n int a = 2; }}").containingFile
+    def context = ctxFile.findElementAt(ctxFile.text.indexOf('int'))
+
+    def text = "Double.valueOf(2).v<caret>"
+    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, context, null, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    myFixture.completeBasic()
+    assert !myFixture.lookupElementStrings.contains('valueOf')
+  }
+
 
 }

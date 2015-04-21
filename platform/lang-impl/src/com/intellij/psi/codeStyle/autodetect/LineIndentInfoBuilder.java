@@ -31,10 +31,12 @@ public class LineIndentInfoBuilder {
   private final CharSequence myText;
   private final int myLength;
   private final Commenter myCommenter;
+  private ContinuationIndentDetector myContinuationIndentDetector;
 
   public LineIndentInfoBuilder(@NotNull CharSequence text, @Nullable Language language) {
     myText = text;
     myLength = text.length();
+    myContinuationIndentDetector = new ContinuationIndentDetector(text);
     myCommenter = language != null ? LanguageCommenters.INSTANCE.forLanguage(language) : null;
   }
 
@@ -68,11 +70,14 @@ public class LineIndentInfoBuilder {
       return LineIndentInfo.LINE_WITH_COMMENT;
     }
     else if (CharArrayUtil.indexOf(myText, "\t", lineStartOffset, textStartOffset) > 0) {
+      myContinuationIndentDetector.feedLineStartingAt(lineStartOffset);
       return LineIndentInfo.LINE_WITH_TABS;
     }
     else {
-      int indentSize = textStartOffset - lineStartOffset;
-      return LineIndentInfo.newWhiteSpaceIndent(indentSize);
+      boolean isContinuationIndent = myContinuationIndentDetector.isContinuationIndent();
+      myContinuationIndentDetector.feedLineStartingAt(lineStartOffset);
+      return isContinuationIndent ? LineIndentInfo.LINE_WITH_CONTINUATION_INDENT
+                                  : LineIndentInfo.newWhiteSpaceIndent(textStartOffset - lineStartOffset);
     }
   }
 

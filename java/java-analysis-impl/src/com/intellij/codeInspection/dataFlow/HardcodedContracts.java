@@ -50,6 +50,11 @@ public class HardcodedContracts {
         constraints[0] = NULL_VALUE;
         return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
       }
+      if (("checkArgument".equals(methodName) || "checkState".equals(methodName)) && paramCount > 0) {
+        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+        constraints[0] = FALSE_VALUE;
+        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+      }
     }
     else if ("java.util.Objects".equals(className)) {
       if ("requireNonNull".equals(methodName) && paramCount > 0) {
@@ -70,6 +75,7 @@ public class HardcodedContracts {
     else if ("junit.framework.Assert".equals(className) ||
              "org.junit.Assert".equals(className) ||
              "junit.framework.TestCase".equals(className) ||
+             "com.google.common.truth.Truth".equals(className) ||
              "org.testng.Assert".equals(className) ||
              "org.testng.AssertJUnit".equals(className)) {
       return handleTestFrameworks(paramCount, className, methodName, call);
@@ -109,6 +115,14 @@ public class HardcodedContracts {
             MethodContract.ValueConstraint[] constraints = createConstraintArray(args.length);
             constraints[i - 1] = NULL_VALUE;
             return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+          }
+        }
+        if (args.length == 1) {
+          final PsiElement parent = call.getParent();
+          if (parent instanceof PsiReferenceExpression && 
+              "isNotNull".equals(((PsiReferenceExpression)parent).getReferenceName()) && 
+              parent.getParent() instanceof PsiMethodCallExpression) {
+            return Collections.singletonList(new MethodContract(new MethodContract.ValueConstraint[]{NULL_VALUE}, THROW_EXCEPTION));
           }
         }
       }

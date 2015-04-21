@@ -4,7 +4,7 @@ namespace rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 
 include "xhtml10/xhtml-strict.rnc"
 include "svg11/svg11-inc.rnc"
-include "inkscape/inkscape.rnc"
+include "svg11/inkscape.rnc"
 include "mml3/mathml3-inc.rnc"
 include "rdf/rdf.rnc"
 include "xhtml10/ruby.rnc"

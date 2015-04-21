@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
@@ -191,45 +192,40 @@ public class DiffUtil {
   // Scrolling
   //
 
-  public static void scrollEditor(@Nullable final Editor editor, int line) {
-    scrollEditor(editor, line, 0);
-  }
-
-  public static void scrollEditor(@Nullable final Editor editor, int line, int column) {
-    scrollEditor(editor, new LogicalPosition(line, column));
-  }
-
-  public static void scrollEditor(@Nullable final Editor editor, @NotNull LogicalPosition position) {
-    if (editor == null) return;
-    editor.getCaretModel().removeSecondaryCarets();
-    editor.getCaretModel().moveToLogicalPosition(position);
-    ScrollingModel scrollingModel = editor.getScrollingModel();
-    scrollingModel.disableAnimation();
-    scrollingModel.scrollToCaret(ScrollType.CENTER);
-    scrollingModel.enableAnimation();
-  }
-
-  public static void scrollToLineAnimated(@Nullable final Editor editor, int line) {
+  public static void moveCaret(@Nullable final Editor editor, int line) {
     if (editor == null) return;
     editor.getCaretModel().removeSecondaryCarets();
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, 0));
-    ScrollingModel scrollingModel = editor.getScrollingModel();
-    scrollingModel.scrollToCaret(ScrollType.CENTER);
+  }
+
+  public static void scrollEditor(@Nullable final Editor editor, int line, boolean animated) {
+    scrollEditor(editor, line, 0, animated);
+  }
+
+  public static void scrollEditor(@Nullable final Editor editor, int line, int column, boolean animated) {
+    if (editor == null) return;
+    editor.getCaretModel().removeSecondaryCarets();
+    editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, column));
+    scrollToCaret(editor, animated);
   }
 
   public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point) {
-    if (editor == null) return;
-    editor.getScrollingModel().disableAnimation();
-    editor.getScrollingModel().scrollHorizontally(point.x);
-    editor.getScrollingModel().scrollVertically(point.y);
-    editor.getScrollingModel().enableAnimation();
+    scrollToPoint(editor, point, false);
   }
 
-  public static void scrollToCaret(@Nullable Editor editor) {
+  public static void scrollToPoint(@Nullable Editor editor, @NotNull Point point, boolean animated) {
     if (editor == null) return;
-    editor.getScrollingModel().disableAnimation();
+    if (!animated) editor.getScrollingModel().disableAnimation();
+    editor.getScrollingModel().scrollHorizontally(point.x);
+    editor.getScrollingModel().scrollVertically(point.y);
+    if (!animated) editor.getScrollingModel().enableAnimation();
+  }
+
+  public static void scrollToCaret(@Nullable Editor editor, boolean animated) {
+    if (editor == null) return;
+    if (!animated) editor.getScrollingModel().disableAnimation();
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-    editor.getScrollingModel().enableAnimation();
+    if (!animated) editor.getScrollingModel().enableAnimation();
   }
 
   @NotNull
@@ -827,7 +823,7 @@ public class DiffUtil {
   public static WindowWrapper.Mode getWindowMode(@NotNull DiffDialogHints hints) {
     WindowWrapper.Mode mode = hints.getMode();
     if (mode == null) {
-      boolean isUnderDialog = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof JDialog;
+      boolean isUnderDialog = LaterInvocator.isInModalContext();
       mode = isUnderDialog ? WindowWrapper.Mode.MODAL : WindowWrapper.Mode.FRAME;
     }
     return mode;
@@ -860,6 +856,20 @@ public class DiffUtil {
   //
   // UserData
   //
+
+  public static <T> UserDataHolderBase createUserDataHolder(@NotNull Key<T> key, @Nullable T value) {
+    UserDataHolderBase holder = new UserDataHolderBase();
+    holder.putUserData(key, value);
+    return holder;
+  }
+
+  public static <T> UserDataHolderBase createUserDataHolder(@NotNull Key<T> key1, @Nullable T value1,
+                                                            @NotNull Key<T> key2, @Nullable T value2) {
+    UserDataHolderBase holder = new UserDataHolderBase();
+    holder.putUserData(key1, value1);
+    holder.putUserData(key2, value2);
+    return holder;
+  }
 
   public static boolean isUserDataFlagSet(@NotNull Key<Boolean> key, UserDataHolder... holders) {
     for (UserDataHolder holder : holders) {

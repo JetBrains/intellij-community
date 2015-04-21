@@ -286,6 +286,7 @@ libraryLicense(name: "Objenesis", libraryName: "objenesis-1.2.jar", version: "1.
 libraryLicense(name: "EditorConfig Java Core", libraryName: "editorconfig-core-java.jar", version: "1.0", license: "Apache 2.0", url: "https://github.com/editorconfig/editorconfig-core-java/", licenseUrl: "https://github.com/editorconfig/editorconfig-core-java/blob/master/LICENSE")
 libraryLicense(name: "Fest", libraryName: "fest", version: "", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://code.google.com/p/fest/")
 libraryLicense(name: "Gherkin", libraryName: "Gherkin", version: "2.12.2", license: "MIT", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/cucumber/gherkin")
+libraryLicense(name: "imgscalr", libraryName: "imgscalr", version: "4.2", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/thebuzzmedia/imgscalr")
 jetbrainsLibrary("Coverage")
 jetbrainsLibrary("CoverageReport")
 jetbrainsLibrary("JPS")

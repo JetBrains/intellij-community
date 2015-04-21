@@ -80,9 +80,12 @@ public class OnePixelDivider extends Divider {
     }
 
     boolean isInDragZone(MouseEvent e) {
-      final MouseEvent event = getTargetEvent(e);
-      final Point p = event.getPoint();
-      final int r = Math.abs(isVertical() ? p.y : p.x);
+      MouseEvent event = getTargetEvent(e);
+      Point p = event.getPoint();
+      boolean vertical = isVertical();
+      OnePixelDivider d = OnePixelDivider.this;
+      if ((vertical ? p.x : p.y) < 0 || vertical && p.x > d.getWidth() || !vertical && p.y > d.getHeight()) return false;
+      int r = Math.abs(vertical ? p.y : p.x);
       return r < JBUI.scale(6);
     }
 

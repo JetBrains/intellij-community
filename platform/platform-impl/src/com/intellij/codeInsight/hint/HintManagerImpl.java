@@ -141,11 +141,22 @@ public class HintManagerImpl extends HintManager implements Disposable {
       public void focusLost(final FocusEvent e) {
         //if (UIUtil.isFocusProxy(e.getOppositeComponent())) return;
         myHideAlarm.addRequest(new Runnable() {
+          private boolean myNotFocused; // previous focus state
+
           @Override
           public void run() {
-            if (!JBPopupFactory.getInstance().isChildPopupFocused(e.getComponent())) {
+            // see implementation here: com.intellij.ui.popup.AbstractPopup.isFocused(java.awt.Component[])
+            // the following method may return null while switching focus between popups:
+            // KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()
+            // http://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-Desktop/html/awt.html#gdabn
+            boolean notFocused = !JBPopupFactory.getInstance().isChildPopupFocused(e.getComponent());
+            if (myNotFocused && notFocused) {
+              // hide all hints if a child popup is not focused now
+              // and if it was not focused 200 milliseconds ago
               hideAllHints();
             }
+            // TODO: find a way to replace this hack with com.intellij.openapi.wm.IdeFocusManager
+            myNotFocused = notFocused;
           }
         }, 200);
       }

@@ -25,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
+ * Please use {@link SkipDefaultsSerializationFilter},
+ */
 public class SkipDefaultValuesSerializationFilters extends SerializationFilterBase {
   private final Map<Class<?>, Object> myDefaultBeans = new THashMap<Class<?>, Object>();
 

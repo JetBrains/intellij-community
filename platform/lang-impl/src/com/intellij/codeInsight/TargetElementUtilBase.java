@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -336,10 +336,11 @@ public class TargetElementUtilBase {
     }
   }
 
+  @NotNull
   public Collection<PsiElement> getTargetCandidates(PsiReference reference) {
     if (reference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
-      final ArrayList<PsiElement> navigatableResults = new ArrayList<PsiElement>(results.length);
+      List<PsiElement> navigatableResults = new ArrayList<PsiElement>(results.length);
 
       for(ResolveResult r:results) {
         PsiElement element = r.getElement();

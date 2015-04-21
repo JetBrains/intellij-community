@@ -464,4 +464,13 @@ public class PyEditingTest extends PyTestCase {
     doTestEnter("(\"some <caret>string\", 1)", "(\"some \"\n" +
                                                " \"string\", 1)");
   }
+
+  // PY-15609
+  public void testEnterInStringInTupleWithoutParenthesis() {
+    doTestEnter("def hello_world():\n" +
+                "    return bar, 'so<caret>me'",
+                "def hello_world():\n" +
+                "    return bar, 'so' \\\n" +
+                "                'me'");
+  }
 }

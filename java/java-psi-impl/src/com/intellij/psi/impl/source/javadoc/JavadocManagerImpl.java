@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.CustomJavadocTagProvider;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,11 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new ExceptionTagInfo("exception"));
     myInfos.add(new ExceptionTagInfo("throws"));
     myInfos.add(new ValueDocTagInfo());
+
     Collections.addAll(myInfos, Extensions.getExtensions(JavadocTagInfo.EP_NAME, project));
+    for (CustomJavadocTagProvider extension : Extensions.getExtensions(CustomJavadocTagProvider.EP_NAME)) {
+      myInfos.addAll(extension.getSupportedTags());
+    }
   }
 
   @Deprecated

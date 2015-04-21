@@ -157,11 +157,11 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   @Override
   protected void paintComponent(Graphics g) {
     if (showEmptyText()) {
-      super.paintComponent(g);
+      Graphics2D gg = IdeBackgroundUtil.withFrameBackground(g, this);
+      super.paintComponent(gg);
       g.setColor(UIUtil.isUnderDarcula() ? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
       g.drawLine(0, 0, getWidth(), 0);
 
-      IdeBackgroundUtil.paintFrameBackground(g, this);
       ourPainter.paintEmptyText(this, g);
     }
   }

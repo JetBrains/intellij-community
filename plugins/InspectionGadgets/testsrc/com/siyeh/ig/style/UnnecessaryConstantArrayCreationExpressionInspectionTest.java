@@ -1,11 +1,18 @@
 package com.siyeh.ig.style;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryConstantArrayCreationExpressionInspectionTest extends IGInspectionTestCase {
+public class UnnecessaryConstantArrayCreationExpressionInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/style/unnecessary_constant_array_creation_expression",
-           new UnnecessaryConstantArrayCreationExpressionInspection());
+  public void testUnnecessaryConstantArrayCreationExpression() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new UnnecessaryConstantArrayCreationExpressionInspection();
   }
 }

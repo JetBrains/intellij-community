@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,11 +73,11 @@ public class RefManagerImpl extends RefManager {
   private Map<PsiAnchor, RefElement> myRefTable = new THashMap<PsiAnchor, RefElement>();
 
   private Map<Module, RefModule> myModules;
-  private final ProjectIterator myProjectIterator;
+  private final ProjectIterator myProjectIterator = new ProjectIterator();
   private volatile boolean myDeclarationsFound;
   private final PsiManager myPsiManager;
 
-  private volatile boolean myIsInProcess = false;
+  private volatile boolean myIsInProcess;
 
   private final List<RefGraphAnnotator> myGraphAnnotators = new ArrayList<RefGraphAnnotator>();
   private GlobalInspectionContext myContext;
@@ -88,13 +88,11 @@ public class RefManagerImpl extends RefManager {
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
-    myDeclarationsFound = false;
     myProject = project;
     myScope = scope;
     myContext = context;
     myPsiManager = PsiManager.getInstance(project);
     myRefProject = new RefProjectImpl(this);
-    myProjectIterator = new ProjectIterator();
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
       final RefManagerExtension extension = factory.createRefManagerExtension(this);
       if (extension != null) {

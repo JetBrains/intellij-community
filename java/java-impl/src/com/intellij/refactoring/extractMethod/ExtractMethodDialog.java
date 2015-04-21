@@ -66,7 +66,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   private final PsiTypeParameterList myTypeParameterList;
   private final PsiType[] myExceptions;
   private final boolean myStaticFlag;
-  private boolean myCanBeStatic;
+  private final boolean myCanBeStatic;
   private final Nullness myNullness;
   private final PsiElement[] myElementsToExtract;
   private final String myHelpId;

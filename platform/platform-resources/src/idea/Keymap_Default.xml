@@ -547,6 +547,12 @@
   <action id="NextDiff">
     <keyboard-shortcut first-keystroke="F7"/>
   </action>
+  <action id="Diff.FocusOppositePane">
+    <keyboard-shortcut first-keystroke="control TAB"/>
+  </action>
+  <action id="Diff.FocusOppositePaneAndScroll">
+    <keyboard-shortcut first-keystroke="control shift TAB"/>
+  </action>
   <action id="Move">
     <keyboard-shortcut first-keystroke="F6"/>
   </action>

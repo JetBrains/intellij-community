@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ProjectPathMacroManager extends BasePathMacroManager {
@@ -31,6 +32,7 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
     myProject = project;
   }
 
+  @NotNull
   @Override
   public ExpandMacroToPathMap getExpandMacroMap() {
     final ExpandMacroToPathMap result = super.getExpandMacroMap();
@@ -38,6 +40,7 @@ public class ProjectPathMacroManager extends BasePathMacroManager {
     return result;
   }
 
+  @NotNull
   @Override
   public ReplacePathToMacroMap getReplacePathMap() {
     final ReplacePathToMacroMap result = super.getReplacePathMap();

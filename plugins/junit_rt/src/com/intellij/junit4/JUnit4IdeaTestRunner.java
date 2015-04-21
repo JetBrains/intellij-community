@@ -17,7 +17,7 @@ package com.intellij.junit4;
 
 import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
+import com.intellij.rt.execution.junit.segments.PacketProcessor;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.requests.FilterRequest;
 import org.junit.runner.*;
@@ -52,6 +52,9 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
         description = getFilteredDescription(request, description);
       }
       TreeSender.sendTree(this, description, sendTree);
+      if (myTestsListener instanceof SMTestSender) {
+        ((SMTestSender)myTestsListener).sendTree(this, description);
+      }
     }
     catch (Exception e) {
       //noinspection HardCodedStringLiteral
@@ -179,11 +182,11 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   }
 
 
-  public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx) {
+  public void setStreams(Object segmentedOut, Object segmentedErr, int lastIdx) {
     if (JUnitStarter.SM_RUNNER) {
       myTestsListener = new SMTestSender();
     } else {
-      myRegistry = new JUnit4OutputObjectRegistry(segmentedOut, lastIdx);
+      myRegistry = new JUnit4OutputObjectRegistry((PacketProcessor)segmentedOut, lastIdx);
       myTestsListener = new JUnit4TestResultsSender(myRegistry);
     }
   }

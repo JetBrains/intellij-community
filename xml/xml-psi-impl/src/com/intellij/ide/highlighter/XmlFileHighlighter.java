@@ -153,16 +153,12 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
 
   public static void registerEmbeddedTokenAttributes(Map<IElementType, TextAttributesKey> _keys1,
                                                            Map<IElementType, TextAttributesKey> _keys2) {
-    if (_keys1!=null) {
-      for (IElementType iElementType : _keys1.keySet()) {
-        keys1.put(iElementType, _keys1.get(iElementType));
-      }
+    if (_keys1 != null) {
+      keys1.putAll(_keys1);
     }
 
-    if (_keys2!=null) {
-      for (IElementType iElementType : _keys2.keySet()) {
-        keys2.put(iElementType, _keys2.get(iElementType));
-      }
+    if (_keys2 != null) {
+      keys2.putAll(_keys2);
     }
   }
 }

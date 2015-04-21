@@ -1130,7 +1130,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public Component getFocusedDescendantFor(Component comp) {
-    final Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    final Component focused = getFocusOwner();
     if (focused == null) return null;
 
     if (focused == comp || SwingUtilities.isDescendingFrom(focused, comp)) return focused;

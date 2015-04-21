@@ -19,6 +19,7 @@ package org.zmlx.hg4idea.log;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -201,9 +202,10 @@ public class HgLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getUserFilter() != null) {
-      for (String authorName : filterCollection.getUserFilter().getUserNames(root)) {
-        filterParameters.add(HgHistoryUtil.prepareParameter("user", authorName));
-      }
+      filterParameters.add("-r");
+      String authorFilter =
+        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.INSTANCE), "|");
+      filterParameters.add("user('re:" + authorFilter + "')");
     }
 
     if (filterCollection.getDateFilter() != null) {

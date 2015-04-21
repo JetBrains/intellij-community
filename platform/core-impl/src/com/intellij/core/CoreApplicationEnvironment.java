@@ -281,7 +281,11 @@ public class CoreApplicationEnvironment {
     Disposer.register(myParentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        extensionPoint.unregisterExtension(extension);
+        // There is a possible case that particular extension was replaced in particular environment, e.g. Upsource
+        // replaces some IntelliJ extensions.
+        if (extensionPoint.hasExtension(extension)) {
+          extensionPoint.unregisterExtension(extension);
+        }
       }
     });
   }

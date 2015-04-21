@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,7 +26,6 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
@@ -67,7 +66,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final Object myInputLock = new Object();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
-  @SuppressWarnings("FieldCanBeLocal")
+  @SuppressWarnings({"FieldCanBeLocal", "unused"})
   private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
@@ -234,9 +233,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Nullable
   private static DataInputStream readContent(@NotNull VirtualFile file) {
-    if (StringUtil.endsWith(file.getNameSequence(), ".java")) {
-      int a = 1;
-    }
     return FSRecords.readContent(getFileId(file));
   }
 
@@ -510,7 +506,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         FSRecords.setLength(fileId, content.length);
       }
 
-      ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+      Application application = ApplicationManager.getApplication();
       // we should cache every local files content
       // because the local history feature is currently depends on this cache,
       // perforce offline mode as well
@@ -795,7 +791,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     publisher.after(validated);
   }
 
-  private void applyChildrenChangeEvents(VirtualFile parent, List<VFileEvent> events) {
+  private void applyChildrenChangeEvents(@NotNull VirtualFile parent, @NotNull List<VFileEvent> events) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
     TIntArrayList childrenIdsUpdated = new TIntArrayList();
     List<VirtualFile> childrenToBeUpdated = new SmartList<VirtualFile>();
@@ -1294,7 +1290,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
 
   private abstract static class AbstractRoot extends VirtualDirectoryImpl {
-    public AbstractRoot(int id, VfsData.Segment segment, VfsData.DirectoryData data, NewVirtualFileSystem fs) {
+    private AbstractRoot(int id, VfsData.Segment segment, VfsData.DirectoryData data, NewVirtualFileSystem fs) {
       super(id, segment, data, null, fs);
     }
 

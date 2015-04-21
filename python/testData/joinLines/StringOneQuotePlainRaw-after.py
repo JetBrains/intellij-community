@@ -1,2 +1,1 @@
-print (r"See, \n separates two lines: "
-       "this and\nthe other")
+print (r"See, \n separates two lines: " "this and\nthe other")

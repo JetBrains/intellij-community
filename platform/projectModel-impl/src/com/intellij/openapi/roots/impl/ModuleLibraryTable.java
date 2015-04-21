@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,10 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ConvertingIterator;
@@ -41,7 +44,9 @@ import java.util.Iterator;
 public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.ModifiableModelEx {
   private static final ModuleLibraryOrderEntryCondition MODULE_LIBRARY_ORDER_ENTRY_FILTER = new ModuleLibraryOrderEntryCondition();
   private static final OrderEntryToLibraryConvertor ORDER_ENTRY_TO_LIBRARY_CONVERTOR = new OrderEntryToLibraryConvertor();
+  @NotNull
   private final RootModelImpl myRootModel;
+  @NotNull
   private final ProjectRootManagerImpl myProjectRootManager;
   public static final LibraryTablePresentation MODULE_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     @Override
@@ -60,7 +65,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     }
   };
 
-  ModuleLibraryTable(RootModelImpl rootModel, ProjectRootManagerImpl projectRootManager) {
+  ModuleLibraryTable(@NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     myRootModel = rootModel;
     myProjectRootManager = projectRootManager;
   }
@@ -86,7 +91,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
 
   @Override
   public Library createLibrary(String name, @Nullable PersistentLibraryKind kind) {
-    final ModuleLibraryOrderEntryImpl orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager);
+    LibraryOrderEntry orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();
   }
@@ -144,24 +149,24 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
   }
 
   @Override
-  public void addListener(Listener listener) {
+  public void addListener(@NotNull Listener listener) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void addListener(Listener listener, Disposable parentDisposable) {
+  public void addListener(@NotNull Listener listener, @NotNull Disposable parentDisposable) {
     throw new UnsupportedOperationException("Method addListener is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public void removeListener(Listener listener) {
+  public void removeListener(@NotNull Listener listener) {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   public Module getModule() {
     return myRootModel.getModule();
   }
-
 
   private static class ModuleLibraryOrderEntryCondition implements Condition<OrderEntry> {
     @Override
@@ -186,6 +191,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
     return myRootModel.isChanged();
   }
 
+  @NotNull
   @Override
   public ModifiableModel getModifiableModel() {
     return this;

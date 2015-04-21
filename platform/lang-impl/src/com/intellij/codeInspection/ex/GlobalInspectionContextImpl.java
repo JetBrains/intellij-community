@@ -325,12 +325,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     appendPairedInspectionsForUnfairTools(globalTools, globalSimpleTools, localTools);
 
     ((RefManagerImpl)getRefManager()).initializeAnnotators();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        runGlobalTools(scope, inspectionManager, globalTools);
-      }
-    });
+    runGlobalTools(scope, inspectionManager, globalTools);
 
     if (runGlobalToolsOnly) return;
 
@@ -497,15 +492,16 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
-  private void runGlobalTools(@NotNull AnalysisScope scope, @NotNull InspectionManager inspectionManager, @NotNull List<Tools> globalTools) {
+  private void runGlobalTools(@NotNull final AnalysisScope scope, @NotNull final InspectionManager inspectionManager, @NotNull List<Tools> globalTools) {
+    LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed() || ApplicationManager.getApplication().isHeadlessEnvironment(), "Must not run under read action, too unresponsive");
     final List<InspectionToolWrapper> needRepeatSearchRequest = new ArrayList<InspectionToolWrapper>();
 
-    final boolean surelyNoExternalUsages = scope.getScopeType() == AnalysisScope.PROJECT;
+    final boolean canBeExternalUsages = scope.getScopeType() != AnalysisScope.PROJECT;
     for (Tools tools : globalTools) {
       for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = state.getTool();
-        GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
-        InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
+        final InspectionToolWrapper toolWrapper = state.getTool();
+        final GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
+        final InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
         try {
           if (tool.isGraphNeeded()) {
             try {
@@ -516,11 +512,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               throw e;
             }
           }
-          tool.runInspection(scope, inspectionManager, this, toolPresentation);
-          //skip phase when we are sure that scope already contains everything
-          if (!surelyNoExternalUsages && tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
-            needRepeatSearchRequest.add(toolWrapper);
-          }
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              tool.runInspection(scope, inspectionManager, GlobalInspectionContextImpl.this, toolPresentation);
+              //skip phase when we are sure that scope already contains everything
+              if (canBeExternalUsages &&
+                  tool.queryExternalUsagesRequests(inspectionManager, GlobalInspectionContextImpl.this, toolPresentation)) {
+                needRepeatSearchRequest.add(toolWrapper);
+              }
+            }
+          });
         }
         catch (ProcessCanceledException e) {
           throw e;

@@ -30,8 +30,7 @@ import com.intellij.execution.junit2.ui.model.CompletionEvent;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.model.RootTestInfo;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
@@ -45,31 +44,21 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -87,7 +76,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private final JUnitConfiguration myConfiguration;
   protected File myWorkingDirsFile = null;
-  public File myListenersFile;
+  protected File myListenersFile;
 
   public static TestObject fromString(final String id,
                                       final JUnitConfiguration configuration,
@@ -157,11 +146,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
 
-    String parameters = getConfiguration().getProgramParameters();
-    if (!StringUtil.isEmptyOrSpaces(parameters)) {
-      javaParameters.getProgramParametersList().add("@name" + parameters);
-    }
-
     final StringBuilder buf = new StringBuilder();
     collectListeners(javaParameters, buf, IDEAJUnitListener.EP_NAME, "\n");
     if (buf.length() > 0) {
@@ -185,7 +169,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (executionResult != null) {
       return executionResult;
     }
-    final JUnitProcessHandler handler = createHandler(executor);
+    final JUnitProcessHandler handler = createJUnitHandler(executor);
     final RunnerSettings runnerSettings = getRunnerSettings();
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     final TestProxy unboundOutputRoot = new TestProxy(new RootTestInfo());
@@ -235,12 +219,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       @Override
       public void processTerminated(ProcessEvent event) {
         handler.removeProcessListener(this);
-        if (myTempFile != null) {
-          FileUtil.delete(myTempFile);
-        }
-        if (myListenersFile != null) {
-          FileUtil.delete(myListenersFile);
-        }
+        deleteTempFiles();
         final Runnable runnable = new Runnable() {
           @Override
           public void run() {
@@ -301,7 +280,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @NotNull
-  protected JUnitProcessHandler createHandler(Executor executor) throws ExecutionException {
+  protected JUnitProcessHandler createJUnitHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
     final String repeatMode = getConfiguration().getRepeatMode();
     if (!RepeatCount.ONCE.equals(repeatMode)) {
@@ -315,93 +294,36 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @NotNull
+  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+    appendForkInfo(executor);
+    final String repeatMode = getConfiguration().getRepeatMode();
+    if (!RepeatCount.ONCE.equals(repeatMode)) {
+      final int repeatCount = getConfiguration().getRepeatCount();
+      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
+                                 ? RepeatCount.getCountString(repeatCount)
+                                 : repeatMode;
+      getJavaParameters().getProgramParametersList().add(countString);
+    }
+
+    final OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine());
+    ProcessTerminatedListener.attach(processHandler);
+    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
+    if (searchForTestsTask != null) {
+      searchForTestsTask.attachTaskToProcess(processHandler);
+    }
+    return processHandler;
+  }
+
+  @NotNull
   @Override
   protected SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
     return new JUnitConsoleProperties(getConfiguration(), executor);
   }
 
-  private boolean forkPerModule() {
-    final String workingDirectory = getConfiguration().getWorkingDirectory();
-    return JUnitConfiguration.TEST_PACKAGE.equals(getConfiguration().getPersistentData().TEST_OBJECT) &&
-           getConfiguration().getPersistentData().getScope() != TestSearchScope.SINGLE_MODULE &&
-           ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) &&
-           spansMultipleModules();
-  }
-
-  private boolean spansMultipleModules() {
-    final String qualifiedName = getConfiguration().getPackage();
-    if (qualifiedName != null) {
-      final Project project = getConfiguration().getProject();
-      final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(qualifiedName);
-      if (aPackage != null) {
-        final TestSearchScope scope = getConfiguration().getPersistentData().getScope();
-        if (scope != null) {
-          final SourceScope sourceScope = scope.getSourceScope(getConfiguration());
-          if (sourceScope != null) {
-            final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project).intersectWith(
-              sourceScope.getGlobalSearchScope());
-            final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
-            return directories.length > 1;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  private void appendForkInfo(Executor executor) throws ExecutionException {
-    final String forkMode = getConfiguration().getForkMode();
-    if (Comparing.strEqual(forkMode, "none")) {
-      if (forkPerModule()) {
-        if (getRunnerSettings() != null) {
-          final String actionName = UIUtil.removeMnemonic(executor.getStartActionText());
-          throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
-                                     "Please specify single working directory, or change test scope to single module.");
-        }
-      } else {
-        return;
-      }
-    } else if (getRunnerSettings() != null) {
-      final String actionName = executor.getActionName();
-      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + actionName.toLowerCase(Locale.ENGLISH) + ".");
-    }
-
-    final JavaParameters javaParameters = getJavaParameters();
-    final Sdk jdk = javaParameters.getJdk();
-    if (jdk == null) {
-      throw new ExecutionException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
-    }
-
-    try {
-      final File tempFile = FileUtil.createTempFile("command.line", "", true);
-      final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
-      try {
-        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
-          String classpath = PathUtil.getJarPathForClass(CommandLineWrapper.class);
-          final String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
-          if (!classpath.equals(utilRtPath)) {
-            classpath += File.pathSeparator + utilRtPath;
-          }
-          writer.println(classpath);
-        }
-        else {
-          writer.println("");
-        }
-
-        writer.println(((JavaSdkType)jdk.getSdkType()).getVMExecutablePath(jdk));
-        for (String vmParameter : javaParameters.getVMParametersList().getList()) {
-          writer.println(vmParameter);
-        }
-      }
-      finally {
-        writer.close();
-      }
-
-      getJavaParameters().getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
+  @NotNull
+  @Override
+  protected String getForkMode() {
+    return getConfiguration().getForkMode();
   }
 
   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
@@ -457,7 +379,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       JUnitStarter.printClassesList(testNames, packageName, category, myTempFile);
 
       if (perModule != null && perModule.size() > 1) {
-        final String classpath = getConfiguration().getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT
+        final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                  ? null : javaParameters.getClassPath().getPathsString();
 
         final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
@@ -470,6 +392,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
             if (classpath == null) {
               final JavaParameters parameters = new JavaParameters();
               configureAdditionalClasspath(parameters);
+              if (isSmRunnerUsed()) {
+                parameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
+              }
               JavaParametersUtil.configureModule(module, parameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                                  getConfiguration().isAlternativeJrePathEnabled() ? getConfiguration()
                                                    .getAlternativeJrePath() : null);
@@ -506,7 +431,16 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
-  public void clear() {
+  @Override
+  protected void deleteTempFiles() {
+    super.deleteTempFiles();
+    if (myListenersFile != null) {
+      FileUtil.delete(myListenersFile);
+    }
+    
+    if (myWorkingDirsFile != null) {
+      FileUtil.delete(myWorkingDirsFile);
+    }
   }
 
   @NotNull
@@ -532,5 +466,14 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   public JUnitConfiguration getConfiguration() {
     return myConfiguration;
+  }
+
+  @Override
+  protected TestSearchScope getScope() {
+    return getConfiguration().getPersistentData().getScope();
+  }
+
+  protected void passForkMode(String forkMode, File tempFile) throws ExecutionException {
+    getJavaParameters().getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
   }
 }

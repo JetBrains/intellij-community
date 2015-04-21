@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -87,20 +88,18 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
     return new Function<PsiElement, String>() {
       @Override
       public String fun(PsiElement element) {
-        Set<String> tooltips = ContainerUtil.map2Set(infos, new Function<MergeableLineMarkerInfo, String>() {
+        Set<String> tooltips = new HashSet<String>(ContainerUtil.mapNotNull(infos, new Function<MergeableLineMarkerInfo, String>() {
           @Override
           public String fun(MergeableLineMarkerInfo info) {
             return info.getLineMarkerTooltip();
           }
-        });
+        }));
         StringBuilder tooltip = new StringBuilder();
         for (String info : tooltips) {
           if (tooltip.length() > 0) {
             tooltip.append(UIUtil.BORDER_LINE);
           }
-          if (info != null) {
-            tooltip.append(UIUtil.getHtmlBody(info));
-          }
+          tooltip.append(UIUtil.getHtmlBody(info));
         }
         return XmlStringUtil.wrapInHtml(tooltip);
       }

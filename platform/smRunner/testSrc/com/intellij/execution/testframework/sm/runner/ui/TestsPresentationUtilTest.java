@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,11 +97,11 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     category.clear();
     category.add("Cucumbers");
-    category.add("Tomatos");
+    category.add("Tomatoes");
     category.add(TestsPresentationUtil.DEFAULT_TESTS_CATEGORY);
-    assertEquals("Running: Cucumbers, tomatos, tests 0 of <...>  ",
+    assertEquals("Running: Cucumbers, tomatoes, tests 0 of <...>  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, false));
-    assertEquals("Running: Cucumbers, tomatos, tests 0 of 0  ",
+    assertEquals("Running: Cucumbers, tomatoes, tests 0 of 0  ",
                  TestsPresentationUtil.getProgressStatus_Text(0, 0, 0, 0, 0, category, true));
 
     category.clear();
@@ -285,7 +285,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
   public void testFormatTestProxyTest_WithErrors_LegacyApi() {
     mySimpleTest.setStarted();
-    mySimpleTest.addError("msg", "stacktrace");
+    mySimpleTest.addError("msg", "stacktrace", true);
     mySimpleTest.setFinished();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
@@ -298,7 +298,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySimpleTest.setFinished();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, myRenderer);
 
-    assertEquals(SMPoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
+    assertEquals(PoolOfTestIcons.PASSED_ICON, myRenderer.getIcon());
   }
 
   public void testFormatRootNodeWithChildren_Started() {
@@ -531,7 +531,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
 
     final MyRenderer renderer2 = new MyRenderer(false, myFragContainer = new UITestUtil.FragmentsContainer());
     TestsPresentationUtil.formatTestProxy(mySimpleTest, renderer2);
-    assertEquals(SMPoolOfTestIcons.PASSED_ICON, renderer2.getIcon());
+    assertEquals(PoolOfTestIcons.PASSED_ICON, renderer2.getIcon());
   }
 
   public void testFormatRootNodeWithoutChildren() {
@@ -713,7 +713,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     return createTestProxy(FAKE_TEST_NAME);
   }
 
-  private void assertIsAnimatorProgressIcon(final Icon icon) {
+  private static void assertIsAnimatorProgressIcon(final Icon icon) {
     for (Icon frame : TestsProgressAnimator.FRAMES) {
       if (icon == frame) {
         return;

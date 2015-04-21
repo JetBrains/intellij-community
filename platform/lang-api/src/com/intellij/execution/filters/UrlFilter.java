@@ -20,6 +20,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,10 +36,22 @@ public class UrlFilter implements Filter {
   public Result applyFilter(String line, int entireLength) {
     int textStartOffset = entireLength - line.length();
     Matcher m = URL_PATTERN.matcher(line);
-    if (m.find()) {
-      return new Result(textStartOffset + m.start(), textStartOffset + m.end(), new BrowserHyperlinkInfo(m.group()));
+    ResultItem item = null;
+    List<ResultItem> items = null;
+    while (m.find()) {
+      if (item == null) {
+        item = new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), new BrowserHyperlinkInfo(m.group()));
+      } else {
+        if (items == null) {
+          items = new ArrayList<ResultItem>(2);
+          items.add(item);
+        }
+        items.add(new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), new BrowserHyperlinkInfo(m.group())));
+      }
     }
-    return null;
+    return items != null ? new Result(items)
+                         : item != null ? new Result(item.getHighlightStartOffset(), item.getHighlightEndOffset(), item.getHyperlinkInfo())
+                                        : null;
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {

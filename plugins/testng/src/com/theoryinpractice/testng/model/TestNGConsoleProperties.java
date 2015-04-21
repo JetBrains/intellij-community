@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,31 +18,39 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
+import com.intellij.execution.testframework.JavaTestLocator;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties {
+public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<TestNGConfiguration> {
   private final TestNGConfiguration myConfiguration;
 
-    public TestNGConsoleProperties(TestNGConfiguration config, Executor executor)
-    {
-      super("TestNG", config, executor);
-      myConfiguration = config;
-    }
+  public TestNGConsoleProperties(TestNGConfiguration config, Executor executor) {
+    super("TestNG", config, executor);
+    myConfiguration = config;
+  }
 
-
+  @NotNull
   @Override
   protected GlobalSearchScope initScope() {
     return myConfiguration.getPersistantData().getScope().getSourceScope(myConfiguration).getGlobalSearchScope();
   }
 
   @Override
-  protected void appendAdditionalActions(DefaultActionGroup actionGroup,
-                                         ExecutionEnvironment environment, JComponent parent) {
+  protected void appendAdditionalActions(DefaultActionGroup actionGroup, ExecutionEnvironment environment, JComponent parent) {
     super.appendAdditionalActions(actionGroup, environment, parent);
     actionGroup.addAction(createIncludeNonStartedInRerun()).setAsSecondary(true);
+  }
+
+  @Nullable
+  @Override
+  public SMTestLocator getTestLocator() {
+    return JavaTestLocator.INSTANCE;
   }
 }

@@ -305,6 +305,17 @@ public class DataManagerImpl extends DataManager {
     return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
   }
 
+  @Nullable
+  public static Editor validateEditor(Editor editor) {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner instanceof JComponent) {
+      final JComponent jComponent = (JComponent)focusOwner;
+      if (jComponent.getClientProperty("AuxEditorComponent") != null) return null; // Hack for EditorSearchComponent
+    }
+
+    return editor;
+  }
+
   private static class NullResult {
     public static final NullResult INSTANCE = new NullResult();
   }
@@ -381,17 +392,6 @@ public class DataManagerImpl extends DataManager {
         return validateEditor(editor);
       }
       return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
-    }
-
-    @Nullable
-    private static Editor validateEditor(Editor editor) {
-      Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      if (focusOwner instanceof JComponent) {
-        final JComponent jComponent = (JComponent)focusOwner;
-        if (jComponent.getClientProperty("AuxEditorComponent") != null) return null; // Hack for EditorSearchComponent
-      }
-
-      return editor;
     }
 
     @NonNls

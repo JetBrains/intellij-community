@@ -18,6 +18,7 @@ package org.jetbrains.jps.maven.compiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -58,7 +59,7 @@ public class MavenCommonArtifactRootCopyingHandlerProvider extends ArtifactRootC
         projectConfiguration.moduleConfigurations.get(getModuleName(artifact.getName()));
       if (moduleResourceConfiguration != null && moduleResourceConfiguration.manifest != null) {
         try {
-          FileUtil.writeToFile(root, moduleResourceConfiguration.manifest);
+          FileUtil.writeToFile(root, Base64.decode(moduleResourceConfiguration.manifest));
         }
         catch (IOException e) {
           LOG.debug(e);

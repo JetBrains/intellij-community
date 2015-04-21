@@ -367,6 +367,11 @@ common.attrs.other =
         string
 #		w:default-style
 
+## X-UA-Compatible
+
+	common.data.x-ua-compatible =
+		string
+
 ## Media Queries
 
 	common.data.mediaquery =

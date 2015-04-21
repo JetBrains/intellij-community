@@ -231,7 +231,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
 
       if (!chosenElements.isEmpty()) {
-        final String enteredText = getEnteredText();
+        final String enteredText = getTrimmedText();
         if (enteredText.indexOf('*') >= 0) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.wildcards");
         }
@@ -385,7 +385,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private int getLineOrColumn(final boolean line) {
-    final Matcher matcher = patternToDetectLinesAndColumns.matcher(getEnteredText());
+    final Matcher matcher = patternToDetectLinesAndColumns.matcher(getTrimmedText());
     if (matcher.matches()) {
       final int groupNumber = line ? 2 : 3;
       try {
@@ -404,7 +404,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   @Nullable
   public String getPathToAnonymous() {
-    final Matcher matcher = patternToDetectAnonymousClasses.matcher(getEnteredText());
+    final Matcher matcher = patternToDetectAnonymousClasses.matcher(getTrimmedText());
     if (matcher.matches()) {
       String path = matcher.group(2);
       if (path != null) {
@@ -425,12 +425,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   @Nullable
   public String getMemberPattern() {
-    final int index = getEnteredText().lastIndexOf('#');
+    final String enteredText = getTrimmedText();
+    final int index = enteredText.lastIndexOf('#');
     if (index == -1) {
       return null;
     }
 
-    String name = getEnteredText().substring(index + 1).trim();
+    String name = enteredText.substring(index + 1).trim();
     return StringUtil.isEmpty(name) ? null : name;
   }
 

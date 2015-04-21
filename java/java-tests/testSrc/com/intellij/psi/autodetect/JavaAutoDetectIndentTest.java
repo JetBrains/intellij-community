@@ -36,4 +36,15 @@ public class JavaAutoDetectIndentTest extends AbstractIndentAutoDetectionTest {
   public void testNotIndentedComment() {
     doTestIndentSize(3);
   }
+
+  public void testContinuationIndents_DoNotCount() {
+    doTestIndentSize(4);
+    //actual indent is 2, and 4 is the default value
+    //todo: do not count brackets in string literals
+  }
+
+  public void testContinuationIndents_InMethodParameters_DoNotCount() {
+    doTestIndentSize(4);
+  }
+
 }

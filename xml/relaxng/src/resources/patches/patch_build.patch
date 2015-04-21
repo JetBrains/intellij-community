@@ -1,56 +1,13 @@
-diff --git a/build.py b/build.py
-index ac7ecb3..db7de9c 100755
---- a/build.py
-+++ b/build.py
-@@ -153,13 +153,13 @@ dependencyJars = runDependencyJars + buildOnlyDependencyJars
- 
- moduleNames = [
-   "syntax",
--  "util",
--  "xmlparser",
-+  # "util",
-+  # "xmlparser",
-   "validator",
--  "jing-trang",
--  "htmlparser",
--  "nu-validator-site",
--  "tests",
-+  # "jing-trang",
-+  # "htmlparser",
-+  # "nu-validator-site",
-+  # "tests",
- ]
- 
- javaSafeNamePat = re.compile(r'[^a-zA-Z0-9]')
-@@ -926,19 +926,19 @@ def downloadDependencies():
-     downloadDependency(url, md5sum)
- 
- def buildAll():
--  if 'JAVA_HOME' not in os.environ:
--    print "Error: The JAVA_HOME environment variable is not set."
--    print "Set the JAVA_HOME environment variable to the pathname of the directory where your JDK is installed."
--    sys.exit(1)
--  prepareLocalEntityJar()
--  buildJing()
--  buildDatatypeLibrary()
--  buildNonSchema()
-+  # if 'JAVA_HOME' not in os.environ:
-+  #   print "Error: The JAVA_HOME environment variable is not set."
-+  #   print "Set the JAVA_HOME environment variable to the pathname of the directory where your JDK is installed."
-+  #   sys.exit(1)
-+  # prepareLocalEntityJar()
-+  # buildJing()
-+  # buildDatatypeLibrary()
-+  # buildNonSchema()
-   buildSchemaDrivers()
--  buildHtmlParser()
--  buildUtil()
--  buildXmlParser()
--  buildValidator()
-+  # buildHtmlParser()
-+  # buildUtil()
-+  # buildXmlParser()
-+  # buildValidator()
- 
- def gitCloneOrUpdate(mod, baseUrl):
-   if os.path.exists(mod):
+diff --git a/build/build.py b/build/build.py
+index 2bd74f0..0184b45 100755
+--- a/build/build.py
++++ b/build/build.py
+@@ -1354,7 +1354,7 @@ else:
+     elif arg == 'checkout':
+       pass
+     elif arg == 'build':
+-      buildAll()
++      buildSchemaDrivers()
+     elif arg == 'bundle':
+       release = Release()
+       release.createBundle()

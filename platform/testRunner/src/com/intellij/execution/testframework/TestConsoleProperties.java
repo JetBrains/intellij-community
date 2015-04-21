@@ -37,9 +37,11 @@ import com.intellij.util.config.ToggleBooleanProperty;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +70,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   protected final Map<AbstractProperty, List<TestFrameworkPropertyListener>> myListeners = ContainerUtil.newHashMap();
 
-  public TestConsoleProperties(Storage storage, Project project, Executor executor) {
+  public TestConsoleProperties(@NotNull Storage storage, Project project, Executor executor) {
     super(storage);
     myProject = project;
     myExecutor = executor;
@@ -78,6 +80,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myProject;
   }
 
+  @NotNull
   public GlobalSearchScope getScope() {
     if (myScope == null) {
       myScope = initScope();
@@ -85,6 +88,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myScope;
   }
 
+  @NotNull
   protected GlobalSearchScope initScope() {
     RunConfiguration configuration = getConfiguration();
     if (!(configuration instanceof ModuleRunProfile)) {
@@ -194,5 +198,10 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
     Icon icon = AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun;
     return new ToggleBooleanProperty(text, null, icon, this, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+  }
+
+  @JdkConstants.TreeSelectionMode
+  protected int getSelectionMode() {
+    return TreeSelectionModel.SINGLE_TREE_SELECTION;
   }
 }

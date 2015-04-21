@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -97,12 +96,14 @@ public class ExternalSystemShortcutsManager implements Disposable {
   }
 
   private class ExternalSystemKeyMapListener implements KeymapManagerListener, Keymap.Listener {
-    private Keymap myCurrentKeymap = null;
+    private Keymap myCurrentKeymap;
 
-    public ExternalSystemKeyMapListener() {
+    private ExternalSystemKeyMapListener() {
       KeymapManager keymapManager = KeymapManager.getInstance();
-      listenTo(keymapManager.getActiveKeymap());
-      keymapManager.addKeymapManagerListener(this);
+      if (keymapManager != null) {
+        listenTo(keymapManager.getActiveKeymap());
+        keymapManager.addKeymapManagerListener(this);
+      }
     }
 
     @Override
@@ -126,9 +127,12 @@ public class ExternalSystemShortcutsManager implements Disposable {
       fireShortcutsUpdated();
     }
 
-    public void stopListen() {
+    private void stopListen() {
       listenTo(null);
-      KeymapManagerEx.getInstanceEx().removeKeymapManagerListener(this);
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager != null) {
+        keymapManager.removeKeymapManagerListener(this);
+      }
     }
   }
 

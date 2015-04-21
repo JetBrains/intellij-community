@@ -36,7 +36,7 @@ public class TestTryCatchFinally {
          System.out.println("Finally");// 55
       }
 
-      return -1;// 56
+      return -1;// 56 57
    }
 }
 

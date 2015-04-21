@@ -41,7 +41,7 @@ public class AssociationsGroup extends ActionGroup {
         if (psiFile == null) return AnAction.EMPTY_ARRAY;
 
         final FileAssociationsManager fileAssociationsManager = FileAssociationsManager.getInstance(project);
-        final PsiFile[] associationsFor = fileAssociationsManager.getAssociationsFor(psiFile, FileAssociationsManager.XML_FILES);
+        final PsiFile[] associationsFor = fileAssociationsManager.getAssociationsFor(psiFile, FileAssociationsManager.Holder.XML_FILES);
         final AnAction[] children;
         if (associationsFor.length == 0) {
             children = new AnAction[2];

@@ -47,7 +47,7 @@ public class RngCompactLanguage extends Language {
   public static final RngCompactLanguage INSTANCE = new RngCompactLanguage();
 
   private RngCompactLanguage() {
-    super(ID);
+    super(ID, "application/relax-ng-compact-syntax");
   }
 
   public static class MyCommenter implements Commenter {

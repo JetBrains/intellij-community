@@ -1503,14 +1503,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Strips quotes around the value.
-   * Quotes are removed even if leading and trailing quotes are different or if there is only one quote (leading or trailing).
-   * @deprecated use {@link com.intellij.openapi.util.text.StringUtil#unquoteString(String)} instead
-   * To be removed in IDEA 17
+   * Consider using {@link StringUtil#unquoteString(String)} instead.
+   * Note: this method has an odd behavior:
+   *   Quotes are removed even if leading and trailing quotes are different or
+   *                           if there is only one quote (leading or trailing).
    */
   @NotNull
   @Contract(pure = true)
-  @Deprecated
   public static String stripQuotesAroundValue(@NotNull String text) {
     final int len = text.length();
     if (len > 0) {
@@ -1992,8 +1991,16 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String escapeChar(@NotNull final String str, final char character) {
+    return escapeChars(str, character);
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static String escapeChars(@NotNull final String str, final char... character) {
     final StringBuilder buf = new StringBuilder(str);
-    escapeChar(buf, character);
+    for (char c : character) {
+      escapeChar(buf, c);
+    }
     return buf.toString();
   }
 

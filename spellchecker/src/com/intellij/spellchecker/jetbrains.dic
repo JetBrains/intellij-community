@@ -277,7 +277,6 @@ llvm
 localhost
 localtime
 localtimestamp
-locator
 logfile
 login
 logoff
@@ -543,6 +542,7 @@ sqlerror
 sqlexception
 sqlstate
 sqlwarning
+stacktrace
 startup
 stateful
 stdarg

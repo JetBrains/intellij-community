@@ -22,26 +22,39 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 
 /**
  * Joins lines sanely.
- * - statement lines: add a semicolon;
- * - list-like lines: keep one space after comma;
- * - lines inside a multiline string: remove excess indentation;
- * - multi-constant string like "a" "b": join into one;
- * - comment and comment: remove indentation and hash sign;
- * - second line is 'class' or 'def': fail.
- * <br/>
- * User: dcheryasov
- * Date: Sep 6, 2010 2:25:48 AM
+ * <ul>
+ * <li>statement lines: add a semicolon;</li>
+ * <li>list-like lines: keep one space after comma;</li>
+ * <li>lines inside a multiline string: remove excess indentation;</li>
+ * <li>multi-constant string like "a" "b": join into one;</li>
+ * <li>comment and comment: remove indentation and hash sign;</li>
+ * <li>second line is 'class' or 'def': fail.</li>
+ * </ul>
+ *
+ * @author dcheryasov
  */
 public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
+  private final static Joiner[] JOINERS = {
+    new OpenBracketJoiner(),
+    new CloseBracketJoiner(),
+    new StringLiteralJoiner(),
+    new StmtJoiner(), // strings before stmts to let doc strings join
+    new BinaryExprJoiner(),
+    new CommentJoiner(),
+    new StripBackslashJoiner()
+  };
+
 
   @Override
   public int tryJoinLines(Document document, PsiFile file, int start, int end) {
@@ -49,203 +62,117 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   }
 
   @Override
-  public int tryJoinRawLines(Document document, PsiFile file, int start, int end) {
+  public int tryJoinRawLines(@NotNull Document document, PsiFile file, int start, int end) {
     if (!(file instanceof PyFile)) return CANNOT_JOIN;
 
     // step back the probable "\" and space before it.
-    int i = start;
-    CharSequence text = document.getCharsSequence();
-    if (i>= 0 && text.charAt(i) == '\n') i -=1;
-    if (i>= 0 && text.charAt(i) == '\\') i -=1;
-    while (i>=0 && text.charAt(i) == ' ' || text.charAt(i) == '\t') i -=1;
-    if (i < 0) return CANNOT_JOIN; // TODO: join with empty BOF, too
+    final CharSequence text = document.getCharsSequence();
+    if (start >= 0 && text.charAt(start) == '\n') start -= 1;
+    if (start >= 0 && text.charAt(start) == '\\') start -= 1;
+    while (start >= 0 && text.charAt(start) == ' ' || text.charAt(start) == '\t') {
+      start -= 1;
+    }
+    if (start < 0) {
+      return CANNOT_JOIN; // TODO: join with empty BOF, too
+    }
 
     // detect elements around the join
-    PsiElement left_element = file.findElementAt(i);
-    PsiElement right_element = file.findElementAt(end);
-    if (left_element != null && right_element != null) {
-      PyExpression left_expr = PsiTreeUtil.getParentOfType(left_element, PyExpression.class);
-      if (left_expr instanceof PsiFile) left_expr = null;
-      PyExpression right_expr = PsiTreeUtil.getParentOfType(right_element, PyExpression.class);
-      if (right_expr instanceof PsiFile) right_expr = null;
+    final PsiElement leftElement = file.findElementAt(start);
+    final PsiElement rightElement = file.findElementAt(end);
+    if (leftElement != null && rightElement != null) {
+      final PyExpression leftExpr = PsiTreeUtil.getParentOfType(leftElement, PyExpression.class);
+      final PyExpression rightExpr = PsiTreeUtil.getParentOfType(rightElement, PyExpression.class);
 
-      Joiner[] joiners = { // these are featherweight, will create and gc instantly
-        new OpenBracketJoiner(), new CloseBracketJoiner(),
-        new StringLiteralJoiner(), new StmtJoiner(), // strings before stmts to let doc strings join
-        new BinaryExprJoiner(), new ListLikeExprJoiner(),
-        new CommentJoiner(),
-      };
+      final Request request = new Request(document, start, end, leftElement, leftExpr, rightElement, rightExpr);
 
-      Request request = new Request(document, left_element, left_expr, right_element, right_expr);
-
-      for (Joiner joiner : joiners) {
-        Result res = joiner.join(request);
+      for (Joiner joiner : JOINERS) {
+        final Result res = joiner.join(request);
         if (res != null) {
-          final int cut_start = i + 1 - res.getCutFromLeft();
-          document.deleteString(cut_start, end + res.getCutIntoRight());
-          document.insertString(cut_start, res.getInsert());
-          return cut_start + res.getCursorOffset();
-        }
-      }
-
-      // single string case PY-4375
-      final PyExpression leftExpression = request.leftExpr();
-      final PyExpression rightExpression = request.rightExpr();
-      if (request.leftElem() == request.rightElem()) {
-        IElementType type = request.leftElem().getNode().getElementType();
-        if (PyTokenTypes.SINGLE_QUOTED_STRING == type || PyTokenTypes.SINGLE_QUOTED_UNICODE == type) {
-          if (leftExpression == null) return CANNOT_JOIN;
-          if (removeBackSlash(document, leftExpression, false)) {
-            return leftExpression.getTextOffset();
-          }
-        }
-      }
-      PsiElement expression = null;
-      if (leftExpression != null && rightExpression != null) {
-        if (PsiTreeUtil.isAncestor(leftExpression, rightExpression, false))
-          expression = leftExpression;
-        else if (PsiTreeUtil.isAncestor(rightExpression, leftExpression, false))
-          expression = rightExpression;
-        if (expression != null && !(expression instanceof PyStringLiteralExpression)) {
-          if (removeBackSlash(document, expression, true)) {
-            return expression.getTextOffset();
-          }
+          final int cutStart = start + 1 - res.cutFromLeft;
+          document.replaceString(cutStart, end + res.cutIntoRight, res.replacement);
+          return cutStart + res.caretOffset;
         }
       }
     }
     return CANNOT_JOIN;
   }
 
-  private static boolean removeBackSlash(Document document, PsiElement element, boolean trim) {
-    String[] substrings = element.getText().split("\n");
-    if (substrings.length != 1) {
-      StringBuilder replacement = new StringBuilder();
-      for (int i = 0; i < substrings.length; i++) {
-        String string = substrings[i];
-        if (trim) {
-          string = StringUtil.trimLeading(string);
-        }
-        if (string.trim().endsWith("\\")) {
-          replacement.append(string.substring(0, string.length() - 1));
-        }
-        else {
-          replacement.append(string);
-        }
-
-        if (i != substrings.length - 1 && !(element instanceof PyReferenceExpression) &&
-            !(element instanceof PyStringLiteralExpression)) {
-          replacement.append(" ");
-        }
-      }
-      document.replaceString(element.getTextOffset(), element.getTextOffset()+element.getTextLength(), replacement);
-      return true;
-    }
-    return false;
-  }
-
   // a dumb immutable result holder
   private static class Result {
-    final String myInsert;
-    final int myOffset;
-    final int myCutFromLeft;
-    final int myCutIntoRight;
+    final String replacement;
+    final int caretOffset;
+    final int cutFromLeft;
+    final int cutIntoRight;
 
     /**
      * Result of a join operation.
-     * @param insert: what string to insert at start position
+     *
+     * @param replacement:       what string to insert at start position
      * @param cursorOffset: how to move cursor relative to start (0 = stand at start)
      */
-    Result(String insert, int cursorOffset) {
-      myInsert = insert;
-      myOffset = cursorOffset;
-      myCutFromLeft = 0;
-      myCutIntoRight = 0;
+    Result(@NotNull String replacement, int cursorOffset) {
+      this(replacement, cursorOffset, 0, 0);
     }
 
     /**
      * Result of a join operation.
-     * @param insert what to insert into the cut place
+     *
+     * @param replacement       what to insert into the cut place
      * @param cursorOffset where to put cursor, relative to the start cursorOffset of cutting
-     * @param cutFromLeft how many chars to cut from the end on left string, >0 moves start cursorOffset of cutting to the left.
+     * @param cutFromLeft  how many chars to cut from the end on left string, >0 moves start cursorOffset of cutting to the left.
      * @param cutIntoRight how many chars to cut from the beginning on right string, >0 moves start cursorOffset of cutting to the right.
      */
-    private Result(String insert, int cursorOffset, int cutFromLeft, int cutIntoRight) {
-      myCutFromLeft = cutFromLeft;
-      myCutIntoRight = cutIntoRight;
-      myInsert = insert;
-      myOffset = cursorOffset;
-    }
-
-    public String getInsert() {
-      return myInsert;
-    }
-
-    public int getCursorOffset() {
-      return myOffset;
-    }
-
-    public int getCutFromLeft() {
-      return myCutFromLeft;
-    }
-
-    public int getCutIntoRight() {
-      return myCutIntoRight;
+    Result(@NotNull String replacement, int cursorOffset, int cutFromLeft, int cutIntoRight) {
+      this.cutFromLeft = cutFromLeft;
+      this.cutIntoRight = cutIntoRight;
+      this.replacement = replacement;
+      caretOffset = cursorOffset;
     }
   }
 
   // a dumb immutable request items holder
   private static class Request {
-    final Document myDocument;
-    final PsiElement myLeftElem;
-    final PsiElement myRightElem;
-    final PyExpression myLeftExpr;
-    final PyExpression myRightExpr;
+    final Document document;
+    final PsiElement leftElem;
+    final PsiElement rightElem;
+    final PyExpression leftExpr;
+    final PyExpression rightExpr;
+    final int secondLineStartOffset;
+    final int firstLineEndOffset;
 
-    private Request(Document document, PsiElement leftElem, PyExpression leftExpr, PsiElement rightElem, PyExpression rightExpr) {
-      myDocument = document;
-      myLeftElem = leftElem;
-      myLeftExpr = leftExpr;
-      myRightElem = rightElem;
-      myRightExpr = rightExpr;
+    private Request(@NotNull Document document,
+                    int firstLineEndOffset,
+                    int secondLineStartOffset,
+                    @NotNull PsiElement leftElem,
+                    @Nullable PyExpression leftExpr,
+                    @NotNull PsiElement rightElem,
+                    @Nullable PyExpression rightExpr) {
+      this.document = document;
+      this.firstLineEndOffset = firstLineEndOffset;
+      this.secondLineStartOffset = secondLineStartOffset;
+      this.leftElem = leftElem;
+      this.rightElem = rightElem;
+      this.leftExpr = leftExpr;
+      this.rightExpr = rightExpr;
     }
-
-    public Document document() {
-      return myDocument;
-    }
-
-    public PsiElement leftElem() {
-      return myLeftElem;
-    }
-
-    public PyExpression leftExpr() {
-      return myLeftExpr;
-    }
-
-    public PsiElement rightElem() {
-      return myRightElem;
-    }
-
-    public PyExpression rightExpr() {
-      return myRightExpr;
-    }
-
   }
 
-  private static abstract class Joiner {
+  private interface Joiner {
     /**
      * Try to join lines.
      *
      * @param req@return null if cannot join, or ("what to insert", cursor_offset).
      */
     @Nullable
-    abstract public Result join(Request req);
+    Result join(@NotNull Request req);
   }
 
-  private static class OpenBracketJoiner extends Joiner {
-    private static TokenSet OPENS = TokenSet.create(PyTokenTypes.LBRACKET, PyTokenTypes.LBRACE, PyTokenTypes.LPAR);
+  private static class OpenBracketJoiner implements Joiner {
+    private static final TokenSet OPENS = TokenSet.create(PyTokenTypes.LBRACKET, PyTokenTypes.LBRACE, PyTokenTypes.LPAR);
+
     @Override
-    public Result join(Request req) {
-      if (OPENS.contains(req.leftElem().getNode().getElementType())) {
+    public Result join(@NotNull Request req) {
+      if (OPENS.contains(req.leftElem.getNode().getElementType())) {
         // TODO: look at settings for space after opening paren
         return new Result("", 0);
       }
@@ -253,11 +180,12 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     }
   }
 
-  private static class CloseBracketJoiner extends Joiner {
-    private static TokenSet CLOSES = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.RBRACE, PyTokenTypes.RPAR);
+  private static class CloseBracketJoiner implements Joiner {
+    private static final TokenSet CLOSES = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.RBRACE, PyTokenTypes.RPAR);
+
     @Override
-    public Result join(Request req) {
-      if (CLOSES.contains(req.rightElem().getNode().getElementType())) {
+    public Result join(@NotNull Request req) {
+      if (CLOSES.contains(req.rightElem.getNode().getElementType())) {
         // TODO: look at settings for space before closing paren
         return new Result("", 0);
       }
@@ -265,10 +193,10 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     }
   }
 
-  private static class BinaryExprJoiner extends Joiner {
+  private static class BinaryExprJoiner implements Joiner {
     @Override
-    public Result join(Request req) {
-      if (req.leftExpr() instanceof PyBinaryExpression || req.rightExpr() instanceof PyBinaryExpression) {
+    public Result join(@NotNull Request req) {
+      if (req.leftExpr instanceof PyBinaryExpression || req.rightExpr instanceof PyBinaryExpression) {
         // TODO: look at settings for space around binary exprs
         return new Result(" ", 1);
       }
@@ -276,29 +204,13 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     }
   }
 
-  private static class ListLikeExprJoiner extends Joiner {
+  private static class StmtJoiner implements Joiner {
     @Override
-    public Result join(Request req) {
-      final boolean left_is_list_like = PyUtil.instanceOf(req.leftExpr(), PyListLiteralExpression.class, PyTupleExpression.class);
-      if (left_is_list_like || PyUtil.instanceOf(req.rightExpr(), PyListLiteralExpression.class, PyTupleExpression.class)
-      ) {
-        String insert = "";
-        if (left_is_list_like) { // we join "a, \n b", not "a \n ,b"
-          insert = " "; // TODO: look at settings for space after commas in lists
-        }
-        return new Result(insert, insert.length());
-      }
-      return null;
-    }
-  }
-
-  private static class StmtJoiner extends Joiner {
-    @Override
-    public Result join(Request req) {
-      PyStatement left_stmt = PsiTreeUtil.getParentOfType(req.leftExpr(), PyStatement.class);
-      if (left_stmt != null) {
-        PyStatement right_stmt = PsiTreeUtil.getParentOfType(req.rightExpr(), PyStatement.class);
-        if (right_stmt != null && right_stmt != left_stmt) {
+    public Result join(@NotNull Request req) {
+      final PyStatement leftStmt = PsiTreeUtil.getParentOfType(req.leftExpr, PyStatement.class);
+      if (leftStmt != null) {
+        final PyStatement rightStmt = PsiTreeUtil.getParentOfType(req.rightExpr, PyStatement.class);
+        if (rightStmt != null && rightStmt != leftStmt) {
           // TODO: look at settings for space after semicolon
           return new Result("; ", 1); // cursor after semicolon
         }
@@ -307,34 +219,33 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     }
   }
 
-  private static class StringLiteralJoiner extends Joiner {
+  private static class StringLiteralJoiner implements Joiner {
     @Override
-    public Result join(Request req) {
-      if (req.leftElem() != req.rightElem()) {
-        final PsiElement parent = req.rightElem().getParent();
-        if ((req.leftElem().getParent() == parent && parent instanceof PyStringLiteralExpression) ||
-            (req.leftExpr() instanceof PyStringLiteralExpression && req.rightExpr() instanceof PyStringLiteralExpression)
-        ) {
+    public Result join(@NotNull Request req) {
+      if (req.leftElem != req.rightElem) {
+        final PsiElement parent = req.rightElem.getParent();
+        if ((req.leftElem.getParent() == parent && parent instanceof PyStringLiteralExpression) ||
+            (req.leftExpr instanceof PyStringLiteralExpression && req.rightExpr instanceof PyStringLiteralExpression)) {
           // two quoted strings close by
-          CharSequence text = req.document().getCharsSequence();
-          StrMod left_mod = new StrMod(text, req.leftElem().getTextRange());
-          StrMod right_mod = new StrMod(text, req.rightElem().getTextRange());
-          if (left_mod.isOk() && right_mod.isOk()) {
-            final String lquo = left_mod.quote();
-            if (left_mod.equals(right_mod)) {
-              return new Result("", 0, lquo.length(), right_mod.getStartPadding());
+          final CharSequence text = req.document.getCharsSequence();
+          final StringNodeInfo leftNodeInfo = new StringNodeInfo(req.leftElem);
+          final StringNodeInfo rightNodeInfo = new StringNodeInfo(req.rightElem);
+          if (leftNodeInfo.isTerminated() && rightNodeInfo.isTerminated()) {
+            final int rightNodeContentOffset = rightNodeInfo.getContentRange().getStartOffset();
+            if (leftNodeInfo.equals(rightNodeInfo)) {
+              return new Result("", 0, leftNodeInfo.getQuote().length(), rightNodeContentOffset);
             }
-            else if (left_mod.compatibleTo(right_mod) && lquo.length() == 1 && right_mod.quote().length() == 1) {
+            if (haveSamePrefixes(leftNodeInfo, rightNodeInfo) && !leftNodeInfo.isTripleQuoted() && !rightNodeInfo.isTripleQuoted()) {
               // maybe fit one literal's quotes to match other's
-              if (! containsChar(text, right_mod.getInnerRange(), left_mod.quote().charAt(0))) {
-                int quote_pos = right_mod.getInnerRange().getEndOffset();
-                req.document().replaceString(quote_pos, quote_pos+1, left_mod.quote());
-                return new Result("", 0, left_mod.quote().length(), right_mod.getStartPadding());
+              if (!rightNodeInfo.getContent().contains(leftNodeInfo.getQuote())) {
+                final int quotePos = rightNodeInfo.getAbsoluteContentRange().getEndOffset();
+                req.document.replaceString(quotePos, quotePos + 1, leftNodeInfo.getQuote());
+                return new Result("", 0, 1, rightNodeContentOffset);
               }
-              else if (! containsChar(text, left_mod.getInnerRange(), right_mod.quote().charAt(0))) {
-                int quote_pos = left_mod.getInnerRange().getStartOffset()-1;
-                req.document().replaceString(quote_pos, quote_pos+1, right_mod.quote());
-                return new Result("", 0, left_mod.quote().length(), right_mod.getStartPadding());
+              else if (!leftNodeInfo.getContent().contains(rightNodeInfo.getQuote())) {
+                final int quotePos = leftNodeInfo.getAbsoluteContentRange().getStartOffset() - 1;
+                req.document.replaceString(quotePos, quotePos + 1, rightNodeInfo.getQuote());
+                return new Result("", 0, 1, rightNodeContentOffset);
               }
             }
           }
@@ -343,135 +254,51 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
       return null;
     }
 
-    protected static boolean containsChar(CharSequence text, TextRange range, char c) {
-      for (int i=range.getStartOffset(); i <= range.getEndOffset(); i+=1) {
-        if (text.charAt(i) == c) return true;
-      }
-      return false;
+    private static boolean haveSamePrefixes(@NotNull StringNodeInfo leftNodeInfo, @NotNull StringNodeInfo rightNodeInfo) {
+      return leftNodeInfo.isUnicode() == rightNodeInfo.isUnicode() &&
+             leftNodeInfo.isRaw() == rightNodeInfo.isRaw() &&
+             leftNodeInfo.isBytes() == rightNodeInfo.isBytes();
     }
 
-    private static class StrMod {
-      private final String myPrefix; // "u", "b", or ""
-      private final boolean myRaw; // is raw or not
-      private final String myQuote; // single or double, one or triple.
-      private final boolean myOk; // true if parsing went ok
-      private final TextRange myInnerRange;
-
-      public StrMod(CharSequence text, TextRange range) {
-        int pos = range.getStartOffset();
-        char c = text.charAt(pos);
-        if ("Uu".indexOf(c) > -1 || "Bb".indexOf(c) > -1) {
-          myPrefix = String.valueOf(c).toLowerCase();
-          pos +=1;
-          c = text.charAt(pos);
-        }
-        else myPrefix = "";
-        if ("Rr".indexOf(c) > -1) {
-          myRaw = true;
-          pos +=1;
-          c = text.charAt(pos);
-        }
-        else myRaw = false;
-        char quote = c;
-        if ("'\"".indexOf(quote) < 0) {
-          myInnerRange = null;
-          myQuote = "";
-          myOk = false;
-          return; // failed to find a quote
-        }
-        // TODO: we could run a simple but complete parser here, only checking escapes
-        if (range.getLength() >= 6 && text.charAt(pos+1) == quote && text.charAt(pos+2) == quote) {
-          myQuote = text.subSequence(pos, pos+3).toString();
-          if (!myQuote.equals(text.subSequence(range.getEndOffset()-3, range.getEndOffset()).toString())) {
-            myInnerRange = null;
-            myOk = false;
-            return;
-          }
-        }
-        else {
-          myQuote = text.subSequence(pos, pos+1).toString();
-          if (!myQuote.equals(text.subSequence(range.getEndOffset()-1, range.getEndOffset()).toString())) {
-            myInnerRange = null;
-            myOk = false;
-            return;
-          }
-        }
-        myInnerRange = TextRange.from(range.getStartOffset()+getStartPadding(), range.getLength()-getStartPadding()-quote().length());
-        myOk = true;
-      }
-
-      public boolean isOk() {
-        return myOk;
-      }
-
-      public String prefix() {
-        return myPrefix;
-      }
-
-      public String quote() {
-        return myQuote;
-      }
-
-      public boolean isRaw() {
-        return myRaw;
-      }
-
-      @Override
-      public boolean equals(Object o) {
-        if (o instanceof StrMod) {
-          final StrMod other = (StrMod)o;
-          return (
-            myOk && other.isOk() &&
-            myRaw == other.isRaw() &&
-            myPrefix.equals(other.prefix()) &&
-            myQuote.equals(other.quote())
-          );
-        }
-        return false;
-      }
-
-      /**
-       * @return combined length of initial modifier letters and opening quotes
-       */
-      public int getStartPadding() {
-        return myQuote.length() + myPrefix.length() + (myRaw? 1 : 0);
-      }
-
-      /**
-       * @param other
-       * @return true iff this and other have the same byte/unicode and raw prefixes.
-       */
-      public boolean compatibleTo(StrMod other) {
-        return myOk && other.isOk() && myRaw == other.isRaw() && myPrefix.equals(other.prefix());
-      }
-
-      /**
-       * @return range of text part inside quotes
-       */
-      public TextRange getInnerRange() {
-        return myInnerRange;
-      }
+    protected static boolean containsChar(@NotNull CharSequence text, @NotNull TextRange range, char c) {
+      return StringUtil.contains(text, range.getStartOffset(), range.getEndOffset(), c);
     }
-
   }
 
-
-  private static class CommentJoiner extends Joiner {
+  private static class CommentJoiner implements Joiner {
     @Override
-    public Result join(Request req) {
-      if (req.leftElem() instanceof PsiComment && req.rightElem() instanceof PsiComment) {
-        CharSequence text = req.document().getCharsSequence();
-        final TextRange right_range = req.rightElem().getTextRange();
-        int initial_pos = right_range.getStartOffset() + 1;
-        int pos = initial_pos; // cut '#'
-        int last = right_range.getEndOffset();
+    public Result join(@NotNull Request req) {
+      if (req.leftElem instanceof PsiComment && req.rightElem instanceof PsiComment) {
+        final CharSequence text = req.document.getCharsSequence();
+        final TextRange rightRange = req.rightElem.getTextRange();
+        final int initialPos = rightRange.getStartOffset() + 1;
+        int pos = initialPos; // cut '#'
+        final int last = rightRange.getEndOffset();
         while (pos < last && " \t".indexOf(text.charAt(pos)) >= 0) pos += 1;
-        int right = pos - initial_pos + 1; // account for the '#'
+        final int right = pos - initialPos + 1; // account for the '#'
         return new Result(" ", 0, 0, right);
       }
       return null;
     }
   }
 
+  private static class StripBackslashJoiner implements Joiner {
+    static final TokenSet SINGLE_QUOTED_STRINGS = TokenSet.create(PyTokenTypes.SINGLE_QUOTED_STRING, PyTokenTypes.SINGLE_QUOTED_UNICODE);
 
+    @Nullable
+    @Override
+    public Result join(@NotNull Request req) {
+      final String gap = req.document.getText(new TextRange(req.firstLineEndOffset + 1, req.secondLineStartOffset));
+      final int index = gap.indexOf('\\');
+      if (index >= 0) {
+        if (req.leftElem == req.rightElem && SINGLE_QUOTED_STRINGS.contains(req.leftElem.getNode().getElementType())) {
+          return new Result(gap.replaceFirst("\\\\\\n", ""), 0);
+        }
+        else {
+          return new Result(gap.substring(0, index), 0);
+        }
+      }
+      return null;
+    }
+  }
 }

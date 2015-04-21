@@ -20,19 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
 public abstract class HgAbstractGlobalSingleRepoAction extends HgAbstractGlobalAction {
-
-  public HgAbstractGlobalSingleRepoAction(Icon icon) {
-    super(icon);
-  }
-
-  public HgAbstractGlobalSingleRepoAction() {
-    super();
-  }
 
   @Override
   protected void execute(@NotNull Project project,

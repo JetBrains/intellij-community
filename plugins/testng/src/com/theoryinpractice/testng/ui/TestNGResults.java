@@ -23,14 +23,11 @@
 package com.theoryinpractice.testng.ui;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.project.Project;
@@ -44,7 +41,6 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.config.ToggleBooleanProperty;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -389,7 +385,6 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
           myStatusLine.setStatusColor(ColorProgressBar.GREEN);
         }
         rootNode.setInProgress(false);
-        TestStatusListener.notifySuiteFinished(rootNode, project);
         if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(myProperties)) {
           selectTest(rootNode.getFirstDefect());
         }

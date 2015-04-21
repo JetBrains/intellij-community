@@ -43,8 +43,6 @@ import java.util.List;
 public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   private static final Logger LOG = Logger.getInstance(CacheChangeProcessor.class);
 
-  @NotNull private final Project myProject;
-
   @NotNull private final SoftHardCacheMap<Change, Pair<Change, DiffRequest>> myRequestCache =
     new SoftHardCacheMap<Change, Pair<Change, DiffRequest>>(5, 5);
 
@@ -54,7 +52,10 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
 
   public CacheChangeProcessor(@NotNull Project project) {
     super(project);
-    myProject = project;
+  }
+
+  public CacheChangeProcessor(@NotNull Project project, @NotNull String place) {
+    super(project, place);
   }
 
   //
@@ -128,7 +129,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   @NotNull
   @CalledInBackground
   private DiffRequest loadRequest(@NotNull Change change, @NotNull ProgressIndicator indicator) {
-    ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(myProject, change);
+    ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(getProject(), change);
     if (presentable == null) return new ErrorDiffRequest("Can't show diff");
     try {
       return presentable.process(getContext(), indicator);
@@ -155,6 +156,12 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
     super.onDispose();
     myTaskExecutor.abort();
     myRequestCache.clear();
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    return super.getProject();
   }
 
   //

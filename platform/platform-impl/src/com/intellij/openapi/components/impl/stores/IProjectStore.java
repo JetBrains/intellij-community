@@ -51,11 +51,14 @@ public interface IProjectStore extends IComponentStore.Reloadable {
   @Nullable
   VirtualFile getProjectFile();
 
+  @NotNull
+  String getProjectFilePath();
+
   @Nullable
   VirtualFile getWorkspaceFile();
 
-  void loadProjectFromTemplate(@NotNull ProjectImpl project);
+  @Nullable
+  String getWorkspaceFilePath();
 
-  @NotNull
-  String getProjectFilePath();
+  void loadProjectFromTemplate(@NotNull ProjectImpl project);
 }
