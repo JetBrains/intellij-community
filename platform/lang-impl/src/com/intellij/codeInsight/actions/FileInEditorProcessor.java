@@ -18,7 +18,11 @@ package com.intellij.codeInsight.actions;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,12 +33,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
 import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
@@ -91,7 +98,18 @@ class FileInEditorProcessor {
         public void run() {
           String message = prepareMessage();
           if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
-            showHint(myEditor, message);
+            HyperlinkListener hyperlinkListener = new HyperlinkAdapter() {
+              @Override
+              protected void hyperlinkActivated(HyperlinkEvent e) {
+                AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
+                DataManager manager = DataManager.getInstance();
+                if (manager != null) {
+                  DataContext context = manager.getDataContext(myEditor.getContentComponent());
+                  action.actionPerformed(new AnActionEvent(null, context, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0));
+                }
+              }
+            };
+            showHint(myEditor, message, hyperlinkListener);
           }
         }
       });
@@ -172,7 +190,7 @@ class FileInEditorProcessor {
     String color = ColorUtil.toHex(JBColor.gray);
 
     builder.append("<span style='color:#").append(color).append("'>")
-           .append("Show reformat dialog: ").append(shortcutText).append("</span>")
+           .append("<a href=''>Show</a> reformat dialog: ").append(shortcutText).append("</span>")
            .append("</html>");
 
     return builder.toString();
@@ -188,8 +206,8 @@ class FileInEditorProcessor {
     return firstNotificationLine;
   }
 
-  public static void showHint(@NotNull Editor editor, @NotNull String info) {
-    JComponent component = HintUtil.createInformationLabel(info);
+  public static void showHint(@NotNull Editor editor, @NotNull String info, @Nullable HyperlinkListener hyperlinkListener) {
+    JComponent component = HintUtil.createInformationLabel(info, hyperlinkListener, null, null);
     LightweightHint hint = new LightweightHint(component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,
                                                      HintManager.HIDE_BY_ANY_KEY |
