@@ -40,19 +40,22 @@ public class PyParameterListFixer extends PyFixer<PyParameterList> {
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParameterList psiElement)
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParameterList parameters)
     throws IncorrectOperationException {
-    final PsiElement lBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.OPEN_BRACES, 0);
-    final PsiElement rBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.CLOSE_BRACES, 0);
-    final PyFunction pyFunction = as(psiElement.getParent(), PyFunction.class);
+    final PsiElement lBrace = PyUtil.getChildByFilter(parameters, PyTokenTypes.OPEN_BRACES, 0);
+    final PsiElement rBrace = PyUtil.getChildByFilter(parameters, PyTokenTypes.CLOSE_BRACES, 0);
+    final PyFunction pyFunction = as(parameters.getParent(), PyFunction.class);
     if (pyFunction != null && !PyFunctionFixer.isFakeFunction(pyFunction) && (lBrace == null || rBrace == null)) {
       final Document document = editor.getDocument();
       if (lBrace == null) {
         final String textToInsert = pyFunction.getNameNode() == null ? " (" : "(";
-        document.insertString(psiElement.getTextOffset(), textToInsert);
+        document.insertString(parameters.getTextOffset(), textToInsert);
+      }
+      else if (parameters.getParameters().length == 0) {
+        document.insertString(lBrace.getTextRange().getEndOffset(), ")");
       }
       else {
-        document.insertString(psiElement.getTextRange().getEndOffset(), ")");
+        document.insertString(parameters.getTextRange().getEndOffset(), ")");
       }
     }
   }
