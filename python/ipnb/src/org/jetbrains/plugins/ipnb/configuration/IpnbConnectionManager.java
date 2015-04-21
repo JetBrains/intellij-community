@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Alarm;
+import com.intellij.util.io.HttpRequests;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -40,6 +41,7 @@ import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
+import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionV3;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
@@ -150,10 +152,10 @@ public final class IpnbConnectionManager implements ProjectComponent {
     return url == null ? null : StringUtil.trimEnd(url, "/");
   }
 
-  private boolean startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String url,
-                                  boolean showNotification) {
+  private boolean startConnection(@NotNull final IpnbCodePanel codePanel, @NotNull final String path, @NotNull final String urlString,
+                                  final boolean showNotification) {
     try {
-      final IpnbConnection connection = new IpnbConnection(new URI(url), new IpnbConnectionListenerBase() {
+      final IpnbConnectionListenerBase listener = new IpnbConnectionListenerBase() {
         @Override
         public void onOpen(@NotNull IpnbConnection connection) {
           final String messageId = connection.execute(codePanel.getCell().getSourceAsString());
@@ -170,8 +172,31 @@ public final class IpnbConnectionManager implements ProjectComponent {
           cell.getCell().setPromptNumber(execCount);
           cell.updatePanel(outputs);
         }
+      };
+      final URI url = new URI(urlString);
+
+      HttpRequests.request(urlString + "/api").connect(new HttpRequests.RequestProcessor<Object>() {
+        @Override
+        public Object process(@NotNull HttpRequests.Request request) throws IOException {
+          final IpnbConnection connection;
+          try {
+            if (request.isSuccessful()) {
+              connection = new IpnbConnectionV3(url, listener);
+            }
+            else {
+              connection = new IpnbConnection(url, listener);
+            }
+            myKernels.put(path, connection);
+          }
+          catch (URISyntaxException e) {
+            if (showNotification) {
+              showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused");
+            }
+            LOG.warn("IPython Notebook connection refused: " + e.getMessage());
+          }
+          return null;
+        }
       });
-      myKernels.put(path, connection);
     }
     catch (URISyntaxException e) {
       if (showNotification)
