@@ -40,22 +40,20 @@ public class PyParameterListFixer extends PyFixer<PyParameterList> {
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParameterList psiElement) throws IncorrectOperationException {
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParameterList psiElement)
+    throws IncorrectOperationException {
     final PsiElement lBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.OPEN_BRACES, 0);
     final PsiElement rBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.CLOSE_BRACES, 0);
-    if (!isFakeParameterList(psiElement) && (lBrace == null || rBrace == null)) {
+    final PyFunction pyFunction = as(psiElement.getParent(), PyFunction.class);
+    if (pyFunction != null && !PyFunctionFixer.isFakeFunction(pyFunction) && (lBrace == null || rBrace == null)) {
       final Document document = editor.getDocument();
       if (lBrace == null) {
-        document.insertString(psiElement.getTextRange().getStartOffset(), "(");
+        final String textToInsert = pyFunction.getNameNode() == null ? " (" : "(";
+        document.insertString(psiElement.getTextOffset(), textToInsert);
       }
       else {
         document.insertString(psiElement.getTextRange().getEndOffset(), ")");
       }
     }
-  }
-
-  private static boolean isFakeParameterList(@NotNull PyParameterList parameterList) {
-    final PyFunction pyFunction = as(parameterList.getParent(), PyFunction.class);
-    return pyFunction != null && pyFunction.getNode().findChildByType(PyTokenTypes.DEF_KEYWORD) == null;
   }
 }

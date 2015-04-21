@@ -170,6 +170,16 @@ public class PySmartEnterTest extends PyTestCase {
     }
   }
 
+  // PY-15653
+  public void testClassKeywordOnly() {
+    doTest();
+  }
+
+  // PY-15653
+  public void testDefKeywordOnly() {
+    doTest();
+  }
+
   // PY-12877
   public void testWithTargetOmitted() {
     doTest();
