@@ -53,7 +53,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -184,15 +184,16 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
   private String importExternalCodeStyle(String importerName) throws SchemeImportException {
     final SchemeImporter<CodeStyleScheme> importer = SchemeImporterEP.getImporter(importerName, CodeStyleScheme.class);
     if (importer != null) {
+      final Set<String> extensions = new HashSet<String>(Arrays.asList(importer.getSourceExtensions()));
       FileChooserDialog fileChooser = FileChooserFactory.getInstance()
         .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
           public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-            return file.isDirectory() || importer.getSourceExtension().equals(file.getExtension());
+            return file.isDirectory() || extensions.contains(file.getExtension());
           }
           @Override
           public boolean isFileSelectable(VirtualFile file) {
-            return !file.isDirectory() && importer.getSourceExtension().equals(file.getExtension());
+            return !file.isDirectory() && extensions.contains(file.getExtension());
           }
         }, null, myContentPane);
       VirtualFile[] selection = fileChooser.choose(null, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
