@@ -20,25 +20,25 @@ import java.util.*;
 * @author vlan
 */
 public class IpnbConnection {
-  private static final String API_URL = "/api";
-  private static final String KERNELS_URL = API_URL + "/kernels";
-  private static final String HTTP_POST = "POST";
+  protected static final String API_URL = "/api";
+  protected static final String KERNELS_URL = API_URL + "/kernels";
+  protected static final String HTTP_POST = "POST";
   // TODO: Serialize cookies for the authentication message
-  private static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}}";
+  protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}}";
   public static final String HTTP_DELETE = "DELETE";
 
-  @NotNull private final URI myURI;
-  @NotNull private final String myKernelId;
-  @NotNull private final String mySessionId;
-  @NotNull private final IpnbConnectionListener myListener;
-  @NotNull private final WebSocketClient myShellClient;
-  @NotNull private final WebSocketClient myIOPubClient;
-  @NotNull private final Thread myShellThread;
-  @NotNull private final Thread myIOPubThread;
+  @NotNull protected final URI myURI;
+  @NotNull protected final String myKernelId;
+  @NotNull protected final String mySessionId;
+  @NotNull protected final IpnbConnectionListener myListener;
+  private WebSocketClient myShellClient;
+  private WebSocketClient myIOPubClient;
+  private Thread myShellThread;
+  private Thread myIOPubThread;
 
   private volatile boolean myIsShellOpen = false;
   private volatile boolean myIsIOPubOpen = false;
-  private volatile boolean myIsOpened = false;
+  protected volatile boolean myIsOpened = false;
 
   public IpnbConnection(@NotNull URI uri, @NotNull IpnbConnectionListener listener) throws IOException, URISyntaxException {
     myURI = uri;
@@ -46,6 +46,10 @@ public class IpnbConnection {
     mySessionId = UUID.randomUUID().toString();
     myKernelId = startKernel();
 
+    initializeClients();
+  }
+
+  protected void initializeClients() throws URISyntaxException {
     final Draft draft = new Draft17WithOrigin();
 
     myShellClient = new WebSocketClient(getShellURI(), draft) {
@@ -130,7 +134,7 @@ public class IpnbConnection {
     myIOPubThread.start();
   }
 
-  private void notifyOpen() {
+  protected void notifyOpen() {
     if (!myIsOpened && myIsShellOpen && myIsIOPubOpen) {
       myIsOpened = true;
       myListener.onOpen(this);
@@ -168,7 +172,7 @@ public class IpnbConnection {
     return kernel.getId();
   }
 
-  private void shutdownKernel() throws IOException {
+  protected void shutdownKernel() throws IOException {
     httpRequest(myURI + KERNELS_URL + "/" + myKernelId, HTTP_DELETE);
   }
 
@@ -183,7 +187,7 @@ public class IpnbConnection {
   }
 
   @NotNull
-  private String getWebSocketURIBase() {
+  protected String getWebSocketURIBase() {
     return "ws://" + myURI.getAuthority() + KERNELS_URL + "/" + myKernelId;
   }
 
@@ -245,7 +249,7 @@ public class IpnbConnection {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private static class Header {
+  protected static class Header {
     private String msg_id;
     private String username;
     private String session;
@@ -279,11 +283,12 @@ public class IpnbConnection {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private static class Message {
+  protected static class Message {
     private Header header;
     private JsonObject parent_header;
     private JsonObject metadata;
     private JsonObject content;
+    private JsonPrimitive channel;
 
     public static Message create(Header header, JsonObject parentHeader, JsonObject metadata, JsonObject content) {
       final Message message = new Message();
@@ -291,6 +296,7 @@ public class IpnbConnection {
       message.parent_header = parentHeader;
       message.metadata = metadata;
       message.content = content;
+      message.channel = new JsonPrimitive("shell");
       return message;
     }
 
@@ -311,7 +317,7 @@ public class IpnbConnection {
     }
   }
 
-  private static void addCellOutput(@NotNull final PyContent content, ArrayList<IpnbOutputCell> output) {
+  protected static void addCellOutput(@NotNull final PyContent content, ArrayList<IpnbOutputCell> output) {
     if (content instanceof PyErrContent) {
       output.add(new IpnbErrorOutputCell(((PyErrContent)content).getEvalue(),
                                  ((PyErrContent)content).getEname(), ((PyErrContent)content).getTraceback(), null));
@@ -357,7 +363,7 @@ public class IpnbConnection {
   private interface PyContent {}
 
   @SuppressWarnings("UnusedDeclaration")
-  private static class PyOutContent implements PyContent {
+  protected static class PyOutContent implements PyContent {
     private int execution_count;
     private HashMap<String, String> data;
     private JsonObject metadata;
@@ -376,7 +382,7 @@ public class IpnbConnection {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private static class PyErrContent implements PyContent {
+  protected static class PyErrContent implements PyContent {
     private String ename;
     private String evalue;
     private String[] traceback;
@@ -395,7 +401,7 @@ public class IpnbConnection {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private static class PyStreamContent implements PyContent {
+  protected static class PyStreamContent implements PyContent {
     private String text;
     private String data;
     private String name;
@@ -410,7 +416,7 @@ public class IpnbConnection {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private static class PyStatusContent {
+  protected static class PyStatusContent {
     private String execution_state;
 
     public String getExecutionState() {
@@ -418,7 +424,7 @@ public class IpnbConnection {
     }
   }
 
-  private class Draft17WithOrigin extends Draft_17 {
+  protected class Draft17WithOrigin extends Draft_17 {
     @Override
     public Draft copyInstance() {
       return new Draft17WithOrigin();
