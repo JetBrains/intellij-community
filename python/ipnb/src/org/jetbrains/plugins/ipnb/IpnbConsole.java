@@ -27,7 +27,7 @@ public class IpnbConsole extends ConsoleViewImpl {
     final DefaultActionGroup actions = new DefaultActionGroup();
 
     final JComponent consolePanel = createConsolePanel(actions);
-    final RunContentDescriptor descriptor = new RunContentDescriptor(this, myProcess, consolePanel, "Ipython Notebook");
+    final RunContentDescriptor descriptor = new RunContentDescriptor(this, myProcess, consolePanel, "IPython Notebook");
 
     Disposer.register(this, descriptor);
     actions.add(new StopAction());
