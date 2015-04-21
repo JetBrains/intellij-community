@@ -24,7 +24,8 @@ public class IpnbConnection {
   protected static final String KERNELS_URL = API_URL + "/kernels";
   protected static final String HTTP_POST = "POST";
   // TODO: Serialize cookies for the authentication message
-  protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}}";
+  protected static final String authMessage = "{\"header\":{\"msg_id\":\"\", \"msg_type\":\"connect_request\"}, \"parent_header\":\"\", \"metadata\":{}," +
+                                              "\"channel\":\"shell\" }";
   public static final String HTTP_DELETE = "DELETE";
 
   @NotNull protected final URI myURI;
@@ -139,6 +140,10 @@ public class IpnbConnection {
       myIsOpened = true;
       myListener.onOpen(this);
     }
+  }
+
+  public boolean isAlive() {
+    return myShellClient.isOpen() && myIOPubClient.isOpen() ;
   }
 
   @NotNull
