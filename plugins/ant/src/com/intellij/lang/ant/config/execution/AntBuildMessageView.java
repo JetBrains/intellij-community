@@ -841,11 +841,16 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       }
     });
     //noinspection SSBasedInspection
-    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (!myIsOutputPaused) {
-          new OutputFlusher().doFlush();
-        }
+        DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+          @Override
+          public void run() {
+            if (!myIsOutputPaused) {
+              new OutputFlusher().doFlush();
+            }
+          }
+        });
       }
     });
   }
