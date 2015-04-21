@@ -7,7 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.PlatformTestCase;
-import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter;
+import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleImportWorker;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,7 +24,6 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
   
   public void testImportCodeStyleSettingsFromXmlProfile() throws Exception {
     File input = new File(getTestDataPath() + "eclipse_exported.xml");
-    EclipseCodeStyleSchemeImporter codeStyleSchemeImporter = new EclipseCodeStyleSchemeImporter();
     CodeStyleSchemes schemes = CodeStyleSchemes.getInstance();
     CodeStyleScheme scheme = schemes.createNewScheme(getTestName(false), null);
     CodeStyleSettings settings = scheme.getCodeStyleSettings();
@@ -147,7 +146,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
 
     InputStream inputStream = new FileInputStream(input);
     try {
-      codeStyleSchemeImporter.importScheme(inputStream, null, scheme);
+      new EclipseCodeStyleImportWorker().importScheme(inputStream, null, scheme);
 
       assertTrue(javaSettings.SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS);
       assertTrue(javaSettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES);
