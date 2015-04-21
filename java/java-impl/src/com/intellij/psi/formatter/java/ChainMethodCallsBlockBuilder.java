@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@ import java.util.List;
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
 
 class ChainMethodCallsBlockBuilder {
-  private CommonCodeStyleSettings mySettings;
-  private CommonCodeStyleSettings.IndentOptions myIndentSettings;
-  private JavaCodeStyleSettings myJavaSettings;
+  private final CommonCodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings.IndentOptions myIndentSettings;
+  private final JavaCodeStyleSettings myJavaSettings;
 
-  private Wrap myBlockWrap;
-  private Alignment myBlockAlignment;
-  private Indent myBlockIndent;
+  private final Wrap myBlockWrap;
+  private final Alignment myBlockAlignment;
+  private final Indent myBlockIndent;
 
   private Wrap myWrap;
   private Alignment myChainedCallsAlignment;

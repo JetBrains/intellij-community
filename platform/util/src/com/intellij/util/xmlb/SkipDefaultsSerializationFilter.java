@@ -22,6 +22,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * If class doesn't provide "equals" implementation, will be compared by serializable members.
+ */
 public final class SkipDefaultsSerializationFilter extends SkipDefaultValuesSerializationFilters {
   boolean equal(@NotNull Binding binding, @NotNull Object bean) {
     Accessor accessor = binding.getAccessor();

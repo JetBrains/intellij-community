@@ -193,7 +193,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     if (configurable != null) {
       String id = configurable.getId();
       if (!loaded) {
-        LOG.warn("XML does not provide id for " + configurable.getClass());
+        LOG.debug("XML does not provide id for " + configurable.getClass());
       }
       return id;
     }

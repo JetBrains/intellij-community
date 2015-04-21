@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class InferenceSession {
   private final Set<ConstraintFormula> myConstraintsCopy = new HashSet<ConstraintFormula>();
 
   private PsiSubstitutor mySiteSubstitutor;
-  private PsiManager myManager;
+  private final PsiManager myManager;
   private int myConstraintIdx = 0;
   
   private boolean myErased = false;
@@ -72,7 +72,7 @@ public class InferenceSession {
   private final PsiElement myContext;
 
   private PsiSubstitutor myInferenceSubstitution = PsiSubstitutor.EMPTY;
-  private Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<PsiElement, InferenceSession>();
+  private final Map<PsiElement, InferenceSession> myNestedSessions = new HashMap<PsiElement, InferenceSession>();
   public void registerNestedSession(InferenceSession session) {
     propagateVariables(session.getInferenceVariables());
     myNestedSessions.put(session.getContext(), session);
@@ -569,7 +569,7 @@ public class InferenceSession {
     return false;
   }
 
-  private boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
+  private static boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
     if (!FunctionalInterfaceParameterizationUtil.isWildcardParameterized(targetType)) {
       final List<PsiType> bounds = inferenceVariable.getBounds(InferenceBound.LOWER);
       final Processor<Pair<PsiType, PsiType>> differentParameterizationProcessor = new Processor<Pair<PsiType, PsiType>>() {
@@ -578,7 +578,7 @@ public class InferenceSession {
           return pair.first == null || pair.second == null || !TypesDistinctProver.provablyDistinct(pair.first, pair.second);
         }
       };
-      if (findParameterizationOfTheSameGenericClass(bounds, differentParameterizationProcessor)) return true;
+      if (findParameterizationOfTheSameGenericClass(bounds, differentParameterizationProcessor) != null) return true;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       for (PsiType lowBound : bounds) {
         if (FunctionalInterfaceParameterizationUtil.isWildcardParameterized(lowBound)) {
@@ -1582,8 +1582,8 @@ public class InferenceSession {
     return originalContext != null && originalContext == p2.getUserData(ORIGINAL_CONTEXT);
   }
 
-  public boolean findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds,
-                                                           Processor<Pair<PsiType, PsiType>> processor) {
+  public static PsiClass findParameterizationOfTheSameGenericClass(List<PsiType> upperBounds,
+                                                                   Processor<Pair<PsiType, PsiType>> processor) {
     for (int i = 0; i < upperBounds.size(); i++) {
       final PsiType sBound = upperBounds.get(i);
       final PsiClass sClass = PsiUtil.resolveClassInClassTypeOnly(sBound);
@@ -1605,14 +1605,15 @@ public class InferenceSession {
             for (PsiTypeParameter typeParameter : gClass.getTypeParameters()) {
               final PsiType sType = sSubstitutor.substitute(typeParameter);
               final PsiType tType = tSubstitutor.substitute(typeParameter);
-              if (!processor.process(Pair.create(sType, tType))) {
-                return true;
+              final Pair<PsiType, PsiType> typePair = Pair.create(sType, tType);
+              if (!processor.process(typePair)) {
+                return gClass;
               }
             }
           }
         }
       }
     }
-    return false;
+    return null;
   }
 }

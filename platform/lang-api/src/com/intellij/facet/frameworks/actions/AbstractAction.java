@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import java.net.URL;
 public abstract class AbstractAction {
   private static final Logger LOG = Logger.getInstance(AbstractAction.class.getName());
 
-  private static String SERVER_URL = Registry.get("frameworks.download.libraries.server.url").asString();
-  private Pair<String, String>[] myParams;
+  private static final String SERVER_URL = Registry.get("frameworks.download.libraries.server.url").asString();
+  private final Pair<String, String>[] myParams;
 
   protected AbstractAction(Pair<String, String>... params) {
     myParams = params;

@@ -300,8 +300,16 @@ public class NotificationsManagerImpl extends NotificationsManager {
     text.setSize(preferredSize);
     
     Dimension paneSize = new Dimension(text.getPreferredSize());
-    int maxHeight = Math.min(400, window.getComponent().getHeight() - 20);
-    int maxWidth = Math.min(600, window.getComponent().getWidth() - 20);
+    JComponent windowComponent = window.getComponent();
+
+    int maxHeight = 400;
+    int maxWidth = 600;
+
+    if (windowComponent != null) {
+      maxHeight = Math.min(maxHeight, windowComponent.getHeight() - 20);
+      maxWidth = Math.min(maxWidth, windowComponent.getWidth() - 20);
+    }
+
     if (paneSize.height > maxHeight) {
       pane.setPreferredSize(new Dimension(Math.min(maxWidth, paneSize.width + UIUtil.getScrollBarWidth()), maxHeight));
     } else if (paneSize.width > maxWidth) {

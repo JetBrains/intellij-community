@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -31,20 +32,28 @@ import java.net.URL;
  */
 public class IdeBackgroundUtil {
 
-  public static void paintEditorBackground(@NotNull Graphics g, @NotNull JComponent component) {
-    JRootPane rootPane = component.getRootPane();
-    Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    if (glassPane instanceof IdeGlassPaneImpl) {
-      ((IdeGlassPaneImpl)glassPane).getNamedPainters("editor").paint(g, component);
-    }
+  @NotNull
+  public static Graphics2D withEditorBackground(@NotNull Graphics g, @NotNull final JComponent component) {
+    return withNamedPainters(g, "editor", component);
   }
 
-  public static void paintFrameBackground(@NotNull Graphics g, @NotNull JComponent component) {
+  @NotNull
+  public static Graphics2D withFrameBackground(@NotNull Graphics g, @NotNull final JComponent component) {
+    return withNamedPainters(g, "ide", component);
+  }
+
+  @NotNull
+  public static Graphics2D getOriginalGraphics(@NotNull Graphics g) {
+    return g instanceof MyGraphics? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
+  }
+
+  @NotNull
+  public static Graphics2D withNamedPainters(@NotNull Graphics g, @NotNull String paintersName, @NotNull final JComponent component) {
     JRootPane rootPane = component.getRootPane();
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    if (glassPane instanceof IdeGlassPaneImpl) {
-      ((IdeGlassPaneImpl)glassPane).getNamedPainters("ide").paint(g, component);
-    }
+    final PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
+    if (helper == null || !helper.hasPainters()) return (Graphics2D)g;
+    return new MyGraphics(g, helper, component);
   }
 
   public static void initEditorPainters(@NotNull PaintersHelper painters) {
@@ -70,4 +79,41 @@ public class IdeBackgroundUtil {
     return UIUtil.isUnderDarcula() ? new Color(40, 40, 41) : UIUtil.getSlightlyDarkerColor(UIUtil.getSlightlyDarkerColor(result));
   }
 
+  private static class MyGraphics extends Graphics2DDelegate {
+    private final PaintersHelper myHelper;
+    private final JComponent myComponent;
+
+    public MyGraphics(Graphics g, PaintersHelper helper, JComponent component) {
+      super((Graphics2D)g);
+      myHelper = helper;
+      myComponent = component;
+    }
+
+    @NotNull
+    @Override
+    public Graphics create() {
+      return new MyGraphics(super.create(), myHelper, myComponent);
+    }
+
+    @Override
+    public void clearRect(int x, int y, int width, int height) {
+      super.clearRect(x, y, width, height);
+      processPainters(x, y, width, height);
+    }
+
+    @Override
+    public void fillRect(int x, int y, int width, int height) {
+      super.fillRect(x, y, width, height);
+      processPainters(x, y, width, height);
+    }
+
+    void processPainters(int x, int y, int width, int height) {
+      Shape s = getClip();
+      Rectangle newClip = s == null ? new Rectangle(x, y, width, height) :
+                          SwingUtilities.computeIntersection(x, y, width, height, s.getBounds());
+      setClip(newClip);
+      myHelper.paint(getDelegate(), myComponent);
+      setClip(s);
+    }
+  }
 }

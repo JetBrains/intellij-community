@@ -40,7 +40,7 @@ import java.util.Set;
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
 
   private CustomFoldingProvider myDefaultProvider;
-  private final RegistryValue myMaxLookupDepth = Registry.get("custom.folding.max.lookup.depth");
+  private static final RegistryValue myMaxLookupDepth = Registry.get("custom.folding.max.lookup.depth");
   private static final ThreadLocal<Set<ASTNode>> ourCustomRegionElements = new ThreadLocal<Set<ASTNode>>();
 
   @NotNull

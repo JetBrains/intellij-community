@@ -575,7 +575,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       setUI((StatusBarUI)UIManager.getUI(this));
     }
     else {
-      setUI(SystemInfo.isMac && !UIUtil.isUnderDarcula() ? new MacStatusBarUI() : new StatusBarUI());
+      setUI(new StatusBarUI());
     }
   }
 
@@ -750,7 +750,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private static final class TextPresentationWrapper extends TextPanel implements StatusBarWrapper {
     private final StatusBarWidget.TextPresentation myPresentation;
     private final Consumer<MouseEvent> myClickConsumer;
-    private boolean myMouseOver;
 
     private TextPresentationWrapper(@NotNull final StatusBarWidget.TextPresentation presentation) {
       super();
@@ -772,12 +771,10 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
         @Override
         public void mouseEntered(MouseEvent e) {
-          myMouseOver = true;
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-          myMouseOver = false;
         }
       });
 
@@ -824,10 +821,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     @Override
     public void beforeUpdate() {
       myIcon = myPresentation.getIcon();
-    }
-
-    private StatusBarWidget.IconPresentation getPresentation() {
-      return myPresentation;
     }
 
     @Override

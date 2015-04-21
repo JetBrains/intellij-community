@@ -188,6 +188,7 @@
     </extensionPoint>
 
     <extensionPoint name="javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
+    <extensionPoint name="customJavadocTagProvider" interface="com.intellij.psi.javadoc.CustomJavadocTagProvider"/>
 
     <extensionPoint name="refactoring.introduceParameterMethodUsagesProcessor" interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor"/>
 

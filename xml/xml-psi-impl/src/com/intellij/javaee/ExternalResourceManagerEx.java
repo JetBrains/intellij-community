@@ -17,6 +17,7 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,4 +73,6 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   public abstract void setCatalogPropertiesFile(@Nullable String filePath);
 
   public abstract long getModificationCount(@NotNull Project project);
+
+  public abstract MultiMap<String, String> getUrlsByNamespace(Project project);
 }

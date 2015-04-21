@@ -146,6 +146,15 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @Override
+  public JComponent getPreferredFocusedComponent() {
+    if (myConfigurable instanceof BaseConfigurable) {
+      JComponent preferred = ((BaseConfigurable)myConfigurable).getPreferredFocusedComponent();
+      if (preferred != null) return preferred;
+    }
+    return super.getPreferredFocusedComponent();
+  }
+
+  @Override
   public final void eventDispatched(AWTEvent event) {
     switch (event.getID()) {
       case MouseEvent.MOUSE_PRESSED:

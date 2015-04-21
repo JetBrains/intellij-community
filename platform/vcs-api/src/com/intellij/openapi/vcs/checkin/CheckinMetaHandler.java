@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Implemented by checkin handlers that need to control the process of running other
  * checkin handlers.
@@ -22,5 +24,5 @@ package com.intellij.openapi.vcs.checkin;
  * @author yole
  */
 public interface CheckinMetaHandler {
-  void runCheckinHandlers(Runnable runnable);
+  void runCheckinHandlers(@NotNull Runnable runnable);
 }

@@ -188,20 +188,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  public void paint(Graphics g) {
+  public void paint(Graphics g_) {
     ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
     try {
-      Rectangle clip = g.getClipBounds();
+      Rectangle clip = g_.getClipBounds();
       if (clip.height < 0) return;
 
-      final Graphics2D g2 = (Graphics2D)g;
-      final AffineTransform old = g2.getTransform();
+      Graphics2D g = IdeBackgroundUtil.withEditorBackground(g_, this);
+      AffineTransform old = g.getTransform();
 
       if (isMirrored()) {
         final AffineTransform transform = new AffineTransform(old);
         transform.scale(-1, 1);
         transform.translate(-getWidth(), 0);
-        g2.setTransform(transform);
+        g.setTransform(transform);
       }
 
       UISettings.setupAntialiasing(g);
@@ -209,8 +209,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintLineNumbersBackground(g, clip, backgroundColor);
       paintAnnotationsBackground(g, clip, backgroundColor);
 
-      Object hint = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      if (!UIUtil.isRetina()) g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+      Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+      if (!UIUtil.isRetina()) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
       try {
         int firstVisibleOffset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(new Point(0, clip.y - myEditor.getLineHeight())));
@@ -226,12 +226,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         paintLineNumbers(g, clip);
       }
       finally {
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
       }
 
-      g2.setTransform(old);
-
-      IdeBackgroundUtil.paintEditorBackground(g, this);
+      g.setTransform(old);
     }
     finally {
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
@@ -1145,7 +1143,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return getAnnotationsAreaOffset() + getAnnotationsAreaWidthEx();
   }
 
-  private int getLineMarkerFreePaintersAreaOffset() {
+  @Override
+  public int getLineMarkerFreePaintersAreaOffset() {
     return getLineMarkerAreaOffset() + myIconsAreaWidth + GAP_BETWEEN_ICONS_AND_FREE_PAINTERS_AREA;
   }
   
@@ -1372,7 +1371,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {
       return null;
     }
-    if (e.isConsumed() || e.getX() > getWhitespaceSeparatorOffset() || e.getX() < getLineMarkerFreePaintersAreaOffset()) {
+    if (e.isConsumed() || e.getX() > getWhitespaceSeparatorOffset()) {
       return null;
     }
     final ActiveGutterRenderer[] gutterRenderer = {null};

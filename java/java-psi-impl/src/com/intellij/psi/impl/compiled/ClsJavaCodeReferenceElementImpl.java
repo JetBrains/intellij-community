@@ -16,10 +16,8 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -202,25 +200,10 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)element)) {
       if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
-    return resolveClassPreferringMyJar(containingFile);
-  }
 
-  @Nullable
-  private PsiClass resolveClassPreferringMyJar(@NotNull PsiFile containingFile) {
     Project project = containingFile.getProject();
     GlobalSearchScope scope = ResolveScopeManager.getInstance(project).getResolveScope(this);
-    PsiClass[] classes = JavaPsiFacade.getInstance(project).findClasses(myQualifiedName, scope);
-    if (classes.length == 0) return null;
-
-    if (classes.length > 1) {
-      VirtualFile jarFile = PsiUtil.getJarFile(containingFile);
-      if (jarFile != null) {
-        for (PsiClass aClass : classes) {
-          if (Comparing.equal(PsiUtil.getJarFile(aClass), jarFile)) return aClass;
-        }
-      }
-    }
-    return classes[0];
+    return JavaPsiFacade.getInstance(project).findClass(myQualifiedName, scope);
   }
 
   @Override

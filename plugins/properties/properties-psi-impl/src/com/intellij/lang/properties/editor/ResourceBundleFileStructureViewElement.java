@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,16 @@ import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final ResourceBundle myResourceBundle;
 
   private boolean myShowOnlyIncomplete;
-  private PropertiesAnchorizer myAnchorizer;
+  private final PropertiesAnchorizer myAnchorizer;
 
   public ResourceBundleFileStructureViewElement(final ResourceBundle resourceBundle, PropertiesAnchorizer anchorizer) {
     myResourceBundle = resourceBundle;

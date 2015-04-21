@@ -70,7 +70,9 @@ class ProgressDialog implements Disposable {
       myTitlePanel.setText(myProgressWindow.getTitle() != null && !myProgressWindow.getTitle().isEmpty() ? myProgressWindow.getTitle() : " ");
 
       myLastTimeDrawn = System.currentTimeMillis();
-      myRepaintedFlag = true;
+      synchronized (ProgressDialog.this) {
+        myRepaintedFlag = true;
+      }
     }
   };
 
@@ -101,7 +103,7 @@ class ProgressDialog implements Disposable {
   private JButton myBackgroundButton;
 
   private JProgressBar myProgressBar;
-  private boolean myRepaintedFlag = true;
+  private boolean myRepaintedFlag = true; // guarded by this
   private TitlePanel myTitlePanel;
   private JPanel myInnerPanel;
   DialogWrapper myPopup;

@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(StaticPseudoFunctionalStyleMethodInspection.class);
-  private StaticPseudoFunctionalStyleMethodOptions myOptions = new StaticPseudoFunctionalStyleMethodOptions();
+  private final StaticPseudoFunctionalStyleMethodOptions myOptions = new StaticPseudoFunctionalStyleMethodOptions();
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {

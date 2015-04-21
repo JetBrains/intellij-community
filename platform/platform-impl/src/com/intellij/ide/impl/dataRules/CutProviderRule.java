@@ -15,15 +15,15 @@
  */
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 
 public class CutProviderRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataProvider);
+    final Editor editor = DataManagerImpl.validateEditor(CommonDataKeys.EDITOR.getData(dataProvider));
     if (editor instanceof EditorEx) {
       return ((EditorEx) editor).getCutProvider();
     }

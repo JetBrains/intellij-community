@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -206,6 +207,14 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   @NotNull
   public Object[] getVariants() {
     final XmlFile file = (XmlFile)myElement.getContainingFile();
+    PsiElement parent = myElement.getParent();
+    if (parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName())) {
+      XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
+      Set<String> strings = helper.guessUnboundNamespaces(parent.getParent(), file);
+      if (!strings.isEmpty()) {
+        return strings.toArray();
+      }
+    }
     Set<String> list = new HashSet<String>();
     for (XmlSchemaProvider provider : Extensions.getExtensions(XmlSchemaProvider.EP_NAME)) {
       if (provider.isAvailable(file)) {
@@ -215,7 +224,7 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     if (!list.isEmpty()) {
       return ArrayUtil.toObjectArray(list);
     }
-    String[] resourceUrls = ExternalResourceManager.getInstance().getResourceUrls(null, true);
+    Object[] resourceUrls = ExternalResourceManagerEx.getInstanceEx().getUrlsByNamespace(myElement.getProject()).keySet().toArray();
     final XmlDocument document = file.getDocument();
     assert document != null;
     XmlTag rootTag = document.getRootTag();
