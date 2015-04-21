@@ -199,15 +199,15 @@ public final class IpnbConnectionManager implements ProjectComponent {
           catch (URISyntaxException e) {
             if (showNotification) {
               showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused");
+              LOG.warn("IPython Notebook connection refused: " + e.getMessage());
             }
-            LOG.warn("IPython Notebook connection refused: " + e.getMessage());
           }
           return null;
         }
       });
     }
     catch (URISyntaxException e) {
-      if (showNotification)
+      if (showNotification) {
         showWarning(codePanel.getFileEditor(), "Please, check IPython Notebook URL in <a href=\"\">Settings->Tools->IPython Notebook</a>",
                     new HyperlinkAdapter() {
                       @Override
@@ -215,13 +215,15 @@ public final class IpnbConnectionManager implements ProjectComponent {
                         ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "IPython Notebook");
                       }
                     });
-      LOG.warn("IPython Notebook URI Syntax Error: " + e.getMessage());
+        LOG.warn("IPython Notebook URI Syntax Error: " + e.getMessage());
+      }
       return false;
     }
     catch (IOException e) {
-      if (showNotification)
+      if (showNotification) {
         showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused");
-      LOG.warn("IPython Notebook connection refused: " + e.getMessage());
+        LOG.warn("IPython Notebook connection refused: " + e.getMessage());
+      }
       return false;
     }
     return true;
