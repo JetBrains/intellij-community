@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.UIUtil;
@@ -170,8 +171,8 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     myApplication.editorPaintStart();
 
     try {
-      Graphics2D gg = !EditorUtil.isRealFileEditor(myEditor) ? (Graphics2D)g :
-                      IdeBackgroundUtil.withEditorBackground(g, this);
+      Graphics2D gg = !Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(myEditor)) ?
+                      IdeBackgroundUtil.withEditorBackground(g, this) : (Graphics2D)g;
       UIUtil.setupComposite(gg);
       UISettings.setupAntialiasing(gg);
       myEditor.paint(gg);
