@@ -81,7 +81,7 @@ public class ReachableNodes {
     walk(headIds, true, consumer);
   }
 
-  public void walk(@NotNull Collection<Integer> startNodes, final boolean goDown, @NotNull final Consumer<Integer> consumer) {
+  private void walk(@NotNull Collection<Integer> startNodes, final boolean goDown, @NotNull final Consumer<Integer> consumer) {
     synchronized (myTempFlags) {
 
       myTempFlags.setAll(false);
