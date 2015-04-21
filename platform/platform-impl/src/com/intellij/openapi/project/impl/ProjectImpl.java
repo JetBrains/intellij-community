@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
   private ProjectManager myManager;
-  private volatile IProjectStore myComponentStore;
   private MyProjectManagerListener myProjectManagerListener;
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   public boolean myOptimiseTestLoadSpeed;
@@ -177,17 +176,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NotNull
   @Override
   public IProjectStore getStateStore() {
-    IProjectStore componentStore = myComponentStore;
-    if (componentStore != null) return componentStore;
-
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      componentStore = myComponentStore;
-      if (componentStore == null) {
-        myComponentStore = componentStore = (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
-      }
-      return componentStore;
-    }
+    return (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
   }
 
   @Override
@@ -380,8 +369,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     Extensions.disposeArea(this);
     myManager = null;
     myProjectManagerListener = null;
-
-    myComponentStore = null;
 
     super.dispose();
 
