@@ -17,15 +17,16 @@ package org.jetbrains.idea.eclipse.importer;
 
 
 import com.intellij.application.options.ImportSchemeChooserDialog;
+import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PairConvertor;
 import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,17 +43,19 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
     return new String[]{"xml"};
   }
 
+  @Nullable
   @Override
-  public boolean importScheme(@NotNull final Project project,
-                              @NotNull final VirtualFile selectedFile,
-                              final CodeStyleScheme currentScheme,
-                              @NotNull final PairConvertor<String, Boolean, CodeStyleScheme> schemeCreator) throws SchemeImportException {
+  public CodeStyleScheme importScheme(@NotNull Project project,
+                                      @NotNull VirtualFile selectedFile,
+                                      CodeStyleScheme currentScheme,
+                                      SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
     final String[] schemeNames = readSchemeNames(selectedFile);
     final ImportSchemeChooserDialog schemeChooserDialog =
       new ImportSchemeChooserDialog(project, schemeNames, !currentScheme.isDefault() ? currentScheme.getName() : null);
-    if (! schemeChooserDialog.showAndGet()) return false;
-    final CodeStyleScheme scheme = schemeCreator.convert(schemeChooserDialog.getTargetName(), schemeChooserDialog.isUseCurrentScheme());
-    if (scheme == null) return false;
+    if (! schemeChooserDialog.showAndGet()) return null;
+    final CodeStyleScheme scheme = schemeChooserDialog.isUseCurrentScheme() && (! currentScheme.isDefault()) ? currentScheme :
+      schemeFactory.createNewScheme(schemeChooserDialog.getTargetName());
+    if (scheme == null) return null;
     readFromStream(selectedFile, new ThrowableConsumer<InputStream, SchemeImportException>() {
       @Override
       public void consume(InputStream stream) throws SchemeImportException {
@@ -60,7 +63,7 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
       }
     });
 
-    return true;
+    return scheme;
   }
 
   /**
