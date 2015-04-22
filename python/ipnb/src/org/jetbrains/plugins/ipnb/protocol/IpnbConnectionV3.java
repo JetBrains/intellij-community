@@ -19,7 +19,7 @@ public class IpnbConnectionV3 extends IpnbConnection{
   private WebSocketClient myChannelsClient;
   private Thread myChannelsThread;
 
-  public IpnbConnectionV3(@NotNull URI uri, @NotNull IpnbConnectionListener listener) throws IOException, URISyntaxException {
+  public IpnbConnectionV3(@NotNull String uri, @NotNull IpnbConnectionListener listener) throws IOException, URISyntaxException {
     super(uri, listener);
   }
 
