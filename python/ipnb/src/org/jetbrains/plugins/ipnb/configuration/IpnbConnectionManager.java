@@ -334,7 +334,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
     }
     myKernels.clear();
-    if (myProcessHandler != null) {
+    if (myProcessHandler != null && !myProcessHandler.isProcessTerminated()) {
       myProcessHandler.killProcess();
     }
   }
