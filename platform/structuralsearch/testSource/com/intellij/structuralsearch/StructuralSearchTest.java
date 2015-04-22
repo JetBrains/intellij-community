@@ -3189,4 +3189,39 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern12 = "@x";
     assertEquals("should find annotation case insensitively", 1, findMatchesCount(source, pattern12));
   }
+
+  public void testFindTry() {
+    String source = "class A {{\n" +
+                    "  try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
+                    "  }\n" +
+                    "  try {\n" +
+                    "  } catch (FileNotFoundException e) {\n" +
+                    "  } finally {}\n" +
+                    "  try {\n" +
+                    "  } catch(NullPointerException  | UnsupportedOperationException e) {\n" +
+                    "    throw e;\n" +
+                    "  } catch(Exception e) {\n" +
+                    "     throw new RuntimeException(e);\n" +
+                    "  } finally {}\n" +
+                    "  try {\n" +
+                    "    throw new NoRouteToHostException();\n" +
+                    "  } catch (NoRouteToHostException e) {\n" +
+                    "    System.out.println();\n" +
+                    "  } catch (SocketException e) {\n" +
+                    "    System.out.println();\n" +
+                    "  } catch (IOException e) {\n" +
+                    "  } catch (RuntimeException e) {\n" +
+                    "    System.out.println();\n" +
+                    "  } finally {}\n" +
+                    "}}";
+
+    String pattern1 = "try ('_Resource) { '_Statement*; }";
+    assertEquals("Find try-with-resources", 1, findMatchesCount(source, pattern1));
+
+    String pattern2 = "try { '_St1*; } catch ('_ExceptionType1 '_e1) { '_St2*; } catch ('_ExceptionType2 '_e2) { '_St3*; }";
+    assertEquals("Find try with two or more catch blocks", 2, findMatchesCount(source, pattern2));
+
+    String pattern3 = "try { '_St1*; } finally { '_St2*; }";
+    assertEquals("Find try with finally block", 3, findMatchesCount(source, pattern3));
+  }
 }

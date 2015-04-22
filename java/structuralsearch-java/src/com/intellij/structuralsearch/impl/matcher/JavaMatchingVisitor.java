@@ -1384,11 +1384,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiCatchSection[] catches2 = try2.getCatchSections();
     final PsiCodeBlock finally2 = try2.getFinallyBlock();
 
-    final boolean looseMatching = myMatchingVisitor.getMatchContext().getOptions().isLooseMatching();
-    if (!looseMatching &&
+    if (!myMatchingVisitor.getMatchContext().getOptions().isLooseMatching() &&
         ((catches1.length == 0 && catches2.length != 0) ||
          (finally1 == null && finally2 != null) ||
-         (resourceList1 == null && resourceList2 != null))
+         (resourceList1 == null && resourceList2 != null)) ||
+        catches2.length < catches1.length
       ) {
       myMatchingVisitor.setResult(false);
     }
@@ -1410,17 +1410,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
       ContainerUtil.addAll(unmatchedCatchSections, catches2);
 
-      for (int i = 0, j; i < catches1.length; ++i) {
-        MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(catches1[i]);
+      for (PsiCatchSection catchSection : catches1) {
+        final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(catchSection);
         final PsiElement pinnedNode = handler.getPinnedNode(null);
 
         if (pinnedNode != null) {
-          myMatchingVisitor.setResult(handler.match(catches1[i], pinnedNode, myMatchingVisitor.getMatchContext()));
+          myMatchingVisitor.setResult(handler.match(catchSection, pinnedNode, myMatchingVisitor.getMatchContext()));
           if (!myMatchingVisitor.getResult()) return;
         }
         else {
+          int j;
           for (j = 0; j < unmatchedCatchSections.size(); ++j) {
-            if (handler.match(catches1[i], unmatchedCatchSections.get(j), myMatchingVisitor.getMatchContext())) {
+            if (handler.match(catchSection, unmatchedCatchSections.get(j), myMatchingVisitor.getMatchContext())) {
               unmatchedCatchSections.remove(j);
               break;
             }
