@@ -140,7 +140,10 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   public void apply() throws ConfigurationException {
     super.apply();
     List<VirtualFile> templateRoots = getCurrentState();
-    TemplatesService.getInstance(myModule).setTemplateFolders(templateRoots.toArray(new VirtualFile[templateRoots.size()]));
+    final TemplatesService templatesService = TemplatesService.getInstance(myModule);
+    if (templatesService != null) {
+      templatesService.setTemplateFolders(templateRoots.toArray(new VirtualFile[templateRoots.size()]));
+    }
   }
 
   private List<VirtualFile> getCurrentState() {

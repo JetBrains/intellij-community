@@ -258,13 +258,8 @@ class CheckOutputThread(PyDBDaemonThread):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
         self.setName('pydevd.CheckAliveThread')
+        self.daemon = False
         pyDb.output_checker = self
-
-    def start(self):
-        # it should be non daemon
-        thread = threading.Thread(target=self.run)
-        thread.daemon = False
-        thread.start()
 
     def OnRun(self):
             if self.dontTraceMe:
@@ -2034,13 +2029,14 @@ def _locked_settrace(
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
+
+        PyDBCommandThread(debugger).start()
+        CheckOutputThread(debugger).start()
         
         #Suspend as the last thing after all tracing is in place.
         if suspend:
             debugger.setSuspend(t, CMD_THREAD_SUSPEND)
 
-        PyDBCommandThread(debugger).start()
-        CheckOutputThread(debugger).start()
 
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break

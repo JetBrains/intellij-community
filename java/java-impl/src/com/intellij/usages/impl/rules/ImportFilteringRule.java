@@ -31,8 +31,8 @@ import org.jetbrains.annotations.NotNull;
 public class ImportFilteringRule extends com.intellij.usages.rules.ImportFilteringRule {
   @Override
   public boolean isVisible(@NotNull Usage usage) {
-    if (usage instanceof PsiElementUsage) {
-      final PsiElement psiElement = ((PsiElementUsage)usage).getElement();
+    final PsiElement psiElement = usage instanceof PsiElementUsage? ((PsiElementUsage)usage).getElement() : null;
+    if (psiElement != null) {
       final PsiFile containingFile = psiElement.getContainingFile();
       if (containingFile instanceof PsiJavaFile) {
         // check whether the element is in the import list

@@ -267,7 +267,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     Point oldLocationOnScreen;
 
     public AccessibleEditor() {
-      getEditor().getDocument().addDocumentListener(this);
+      getEditor().getDocument().addDocumentListener(this, myEditor.getDisposable());
       getEditor().getCaretModel().addCaretListener(this);
       caretPos = getCaretPosition();
 

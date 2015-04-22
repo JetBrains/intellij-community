@@ -1,5 +1,5 @@
 /**
- * \W  \u03A9
+ * \W \n
  */
 class Pattern {
 }
