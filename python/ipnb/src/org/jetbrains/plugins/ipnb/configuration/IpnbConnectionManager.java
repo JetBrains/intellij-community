@@ -275,7 +275,13 @@ public final class IpnbConnectionManager implements ProjectComponent {
       withEnvironment(env);
 
     try {
-      myProcessHandler = new KillableColoredProcessHandler(commandLine);
+      myProcessHandler = new KillableColoredProcessHandler(commandLine) {
+        @Override
+        public boolean isSilentlyDestroyOnClose() {
+          return true;
+        }
+      };
+      myProcessHandler.setShouldDestroyProcessRecursively(true);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
