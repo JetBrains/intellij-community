@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
@@ -49,8 +50,9 @@ public class IpnbConsole extends ConsoleViewImpl {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      if (myProcess.isProcessTerminating()) return;
+      if (myProcess.isProcessTerminated()) return;
       myProcess.destroyProcess();
+      UnixProcessManager.sendSigIntToProcessTree(myProcess.getProcess());
     }
 
     @Override
