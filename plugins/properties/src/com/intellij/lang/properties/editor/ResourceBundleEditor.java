@@ -425,22 +425,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       gc.weighty = 1;
       gc.anchor = GridBagConstraints.CENTER;
 
-      Locale locale = propertiesFile.getLocale();
-      List<String> names = new ArrayList<String>();
-      if (!Comparing.strEqual(locale.getDisplayLanguage(), null)) {
-        names.add(locale.getDisplayLanguage());
-      }
-      if (!Comparing.strEqual(locale.getDisplayCountry(), null)) {
-        names.add(locale.getDisplayCountry());
-      }
-      if (!Comparing.strEqual(locale.getDisplayVariant(), null)) {
-        names.add(locale.getDisplayVariant());
-      }
-
       String title = propertiesFile.getName();
-      if (!names.isEmpty()) {
-        title += " ("+StringUtil.join(names, "/")+")";
-      }
+      title += PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
       JComponent comp = new JPanel(new BorderLayout()) {
         @Override
         public Dimension getPreferredSize() {
