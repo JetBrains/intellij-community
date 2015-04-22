@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
@@ -28,23 +27,30 @@ import com.intellij.psi.xml.XmlText;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class HtmlScriptLanguageInjector implements MultiHostInjector {
+
+
+
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement host) {
     if (!host.isValid() || !(host instanceof XmlText) || !HtmlUtil.isHtmlTagContainingFile(host)) {
       return;
     }
     XmlTag scriptTag = ((XmlText)host).getParentTag();
-    if (scriptTag == null || !HtmlUtil.isScriptTag(scriptTag)) {
+
+    if (scriptTag == null) {
       return;
     }
-    String mimeType = scriptTag.getAttributeValue("type");
-    Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
-    Language language = !languages.isEmpty() ? languages.iterator().next() : Language.ANY;
+
+    final InjectionInfo injectAndProtection = HtmlScriptInjectionBlockerExtension.getInjectionInfo(scriptTag);
+    if (injectAndProtection == null || injectAndProtection.isDeniedByExtensionPoint()) {
+      return; // Not even a script tag, or language injection denied by EP
+    }
+    final Language language = injectAndProtection.getLanguage();
+
     if (LanguageUtil.isInjectableLanguage(language)) {
       registrar
         .startInjecting(language)
