@@ -1437,7 +1437,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         myMatchingVisitor.setResult(myMatchingVisitor.matchSons(finally1, finally2));
       }
 
-      if (myMatchingVisitor.getResult() && unmatchedCatchSections.size() > 0 && !looseMatching) {
+      if (myMatchingVisitor.getResult() && unmatchedCatchSections.size() > 0) {
         try2.putUserData(UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY, unmatchedCatchSections);
       }
     }
