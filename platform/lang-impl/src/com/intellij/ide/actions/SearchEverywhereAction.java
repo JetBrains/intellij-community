@@ -1477,8 +1477,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
           else if (actions && !isToolWindowAction(object) && isActionValue(object)) {
             AnAction action = object instanceof AnAction ? ((AnAction)object) : ((GotoActionModel.ActionWrapper)object).getAction();
-            if (isEnabled(action)) {
-              result.add(object);
+            Object lock = myCalcThread;
+            if (lock != null) {
+              synchronized (lock) {
+                if (isEnabled(action)) {
+                  result.add(object);
+                }
+              }
             }
           }
           return result.size() <= max;
@@ -2070,20 +2075,30 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             Disposer.register(myPopup, new Disposable() {
               @Override
               public void dispose() {
-                callback.setDone();
-                resetFields();
-                myNonProjectCheckBox.setSelected(false);
-                ActionToolbarImpl.updateAllToolbarsImmediately();
-                if (myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
-                  final Component component = myActionEvent.getInputEvent().getComponent();
-                  if (component != null) {
-                    final JLabel label = UIUtil.getParentOfType(JLabel.class, component);
-                    if (label != null) {
-                      label.setIcon(AllIcons.Actions.FindPlain);
+                ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+                  public void run() {
+                    callback.setDone();
+                    resetFields();
+                    myNonProjectCheckBox.setSelected(false);
+                    //noinspection SSBasedInspection
+                    SwingUtilities.invokeLater(new Runnable() {
+                      @Override
+                      public void run() {
+                        ActionToolbarImpl.updateAllToolbarsImmediately();
+                      }
+                    });
+                    if (myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
+                      final Component component = myActionEvent.getInputEvent().getComponent();
+                      if (component != null) {
+                        final JLabel label = UIUtil.getParentOfType(JLabel.class, component);
+                        if (label != null) {
+                          label.setIcon(AllIcons.Actions.FindPlain);
+                        }
+                      }
                     }
+                    myActionEvent = null;
                   }
-                }
-                myActionEvent = null;
+                });
               }
             });
             updatePopupBounds();
