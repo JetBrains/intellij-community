@@ -1389,7 +1389,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s81_5, "HashMap<String, Integer>")
     );
 
-    String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; }";
+    String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; private Comparator e; }";
     String target1 = "java.util.Comparator 'a;";
     assertEquals(
       "qualified type should not match 1",
@@ -1402,6 +1402,24 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       "qualified type should not match 2",
       0,
       findMatchesCount(source1, target2)
+    );
+
+    assertEquals(
+      "unparameterized type query should match",
+      3,
+      findMatchesCount(source1, "Comparator 'a;")
+    );
+
+    assertEquals(
+      "parameterized type query should only match parameterized",
+      1,
+      findMatchesCount(source1, "Comparator<'_a> 'b;")
+    );
+
+    assertEquals(
+      "should find unparameterized only",
+      2,
+      findMatchesCount(source1, "Comparator<'_a{0,0}> 'b;")
     );
 
     String source2 = "class A<@Q T> {}\n" +
