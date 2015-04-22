@@ -19,6 +19,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ApplyIntentionAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -638,6 +639,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     public Component getListCellRendererComponent(@NotNull final JList list,
                                                   final Object matchedValue,
                                                   final int index, final boolean isSelected, final boolean cellHasFocus) {
+      boolean showIcon = UISettings.getInstance().SHOW_ICONS_IN_MENUS;
       final JPanel panel = new JPanel(new BorderLayout());
       panel.setBorder(IdeBorderFactory.createEmptyBorder(2));
       panel.setOpaque(true);
@@ -646,7 +648,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
       if (matchedValue instanceof String) { //...
         final JBLabel label = new JBLabel((String)matchedValue);
-        label.setIcon(EMPTY_ICON);
+        if (showIcon) {
+          label.setIcon(EMPTY_ICON);
+        }
         panel.add(label, BorderLayout.WEST);
         return panel;
       }
@@ -667,7 +671,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
         boolean toggle = anAction instanceof ToggleAction;
         String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
         final Color fg = defaultActionForeground(isSelected, actionWithParentGroup.getPresentation());
-        panel.add(createIconLabel(presentation.getIcon()), BorderLayout.WEST);
+        if (showIcon) {
+          panel.add(createIconLabel(presentation.getIcon()), BorderLayout.WEST);
+        }
         appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
 
         final Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(ActionManager.getInstance().getId(anAction)));
@@ -680,7 +686,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((ActionWrapper)value).myDataContext);
           button.setSelected(((ToggleAction)anAction).isSelected(event));
           panel.add(button, BorderLayout.EAST);
-          panel.setBorder(IdeBorderFactory.createEmptyBorder());
         }
         else {
           if (groupName != null) {
@@ -710,14 +715,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
         appendWithColoredMatches(nameComponent, hit.trim(), pattern, fg, isSelected);
 
-        panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
+        if (showIcon) {
+          panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
+        }
         panel.setToolTipText(fullHit);
 
         if (value instanceof BooleanOptionDescription) {
           final OnOffButton button = new OnOffButton();
           button.setSelected(((BooleanOptionDescription)value).isOptionEnabled());
           panel.add(button, BorderLayout.EAST);
-          panel.setBorder(IdeBorderFactory.createEmptyBorder());
         }
         else {
           final JLabel settingsLabel = new JLabel(myGroupNamer.fun((OptionDescription)value));
