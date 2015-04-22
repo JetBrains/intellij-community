@@ -43,8 +43,8 @@ public class IpnbConnection {
   private volatile boolean myIsIOPubOpen = false;
   protected volatile boolean myIsOpened = false;
 
-  public IpnbConnection(@NotNull URI uri, @NotNull IpnbConnectionListener listener) throws IOException, URISyntaxException {
-    myURI = uri;
+  public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener) throws IOException, URISyntaxException {
+    myURI = new URI(uri);
     myListener = listener;
     mySessionId = UUID.randomUUID().toString();
     myKernelId = startKernel();
