@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.options.SchemeImporterEP;
@@ -38,7 +39,6 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.PairConvertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,11 +186,11 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       if (selectedFile != null) {
         CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
         final SchemeCreator schemeCreator = new SchemeCreator();
-        final boolean schemeImported = importer.importScheme(myModel.getProject(), selectedFile, myModel.getSelectedScheme(), schemeCreator);
-        if (schemeImported) {
-          final CodeStyleScheme targetScheme = schemeCreator.getTargetScheme();
-          myModel.fireSchemeChanged(targetScheme);
-          return targetScheme.getName();
+        final CodeStyleScheme
+          schemeImported = importer.importScheme(myModel.getProject(), selectedFile, myModel.getSelectedScheme(), schemeCreator);
+        if (schemeImported != null) {
+          myModel.fireSchemeChanged(schemeImported);
+          return schemeImported.getName();
         }
       }
     }
@@ -258,36 +258,25 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     mySchemesTable = new MySchemesTable();
   }
 
-  private class SchemeCreator implements PairConvertor<String, Boolean, CodeStyleScheme> {
-    private CodeStyleScheme myTargetScheme;
-
+  private class SchemeCreator implements SchemeFactory<CodeStyleScheme> {
     @Override
-    public CodeStyleScheme convert(String targetName, final Boolean useCurrent) {
-      if (Boolean.TRUE.equals(useCurrent)) {
-        myTargetScheme = myModel.getSelectedScheme();
-      } else {
-        if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
+    public CodeStyleScheme createNewScheme(@Nullable String targetName) {
+      if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
 
-        for (CodeStyleScheme scheme : myModel.getSchemes()) {
-          if (targetName.equals(scheme.getName())) {
-            int result = Messages.showYesNoDialog(myContentPane,
-                                                  ApplicationBundle.message("message.code.style.scheme.already.exists", targetName),
-                                                  ApplicationBundle.message("title.code.style.settings.import"),
-                                                  Messages.getQuestionIcon());
-            if (result != Messages.YES) {
-              return null;
-            }
+      for (CodeStyleScheme scheme : myModel.getSchemes()) {
+        if (targetName.equals(scheme.getName())) {
+          int result = Messages.showYesNoDialog(myContentPane,
+                                                ApplicationBundle.message("message.code.style.scheme.already.exists", targetName),
+                                                ApplicationBundle.message("title.code.style.settings.import"),
+                                                Messages.getQuestionIcon());
+          if (result != Messages.YES) {
+            return null;
           }
         }
-        int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), targetName);
-        mySchemesTable.getSelectionModel().setSelectionInterval(row, row);
-        myTargetScheme = mySchemesTableModel.getSchemeAt(row);
       }
-      return myTargetScheme;
-    }
-
-    public CodeStyleScheme getTargetScheme() {
-      return myTargetScheme;
+      int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), targetName);
+      mySchemesTable.getSelectionModel().setSelectionInterval(row, row);
+      return mySchemesTableModel.getSchemeAt(row);
     }
   }
 

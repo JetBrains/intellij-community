@@ -2,8 +2,8 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConvertor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides functionality to import a scheme from another non-IntelliJ IDEA format.
@@ -20,13 +20,14 @@ public interface SchemeImporter <T extends Scheme> {
 
   /**
    * Import a scheme from the given virtual file
-   * @param project
+   * @param project project
    * @param selectedFile  The input file to import from.
-   * @param currentScheme
-   * @param schemeCreator Callback that provides the target scheme receiving data.
+   * @param currentScheme source scheme to be updated or to base import on
+   * @param schemeFactory
+   * @return created/updated scheme, or null if action was cancelled
    */
-  boolean importScheme(@NotNull Project project,
-                       @NotNull VirtualFile selectedFile,
-                       T currentScheme,
-                       @NotNull PairConvertor<String, Boolean, T> schemeCreator) throws SchemeImportException;
+  @Nullable
+  T importScheme(@NotNull Project project,
+                 @NotNull VirtualFile selectedFile,
+                 T currentScheme, SchemeFactory<T> schemeFactory) throws SchemeImportException;
 }
