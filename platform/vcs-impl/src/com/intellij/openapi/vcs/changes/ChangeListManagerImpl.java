@@ -1224,7 +1224,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               indicator.setIndeterminate(true);
-              ContainerUtil.addAll(result, environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants)));
+              List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+              if (exs != null) {
+                ContainerUtil.addAll(result, exs);
+              }
             }
           });
 
