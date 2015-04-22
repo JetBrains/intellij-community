@@ -258,13 +258,8 @@ class CheckOutputThread(PyDBDaemonThread):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
         self.setName('pydevd.CheckAliveThread')
+        self.daemon = False
         pyDb.output_checker = self
-
-    def start(self):
-        # it should be non daemon
-        thread = threading.Thread(target=self.run)
-        thread.daemon = False
-        thread.start()
 
     def OnRun(self):
             if self.dontTraceMe:
