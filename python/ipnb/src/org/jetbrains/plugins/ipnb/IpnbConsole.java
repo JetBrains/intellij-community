@@ -49,6 +49,7 @@ public class IpnbConsole extends ConsoleViewImpl {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      if (myProcess.isProcessTerminating()) return;
       myProcess.destroyProcess();
     }
 
