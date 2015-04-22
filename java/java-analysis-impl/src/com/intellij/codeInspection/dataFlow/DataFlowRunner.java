@@ -141,40 +141,6 @@ public class DataFlowRunner extends AbstractDataFlowRunner {
     return new MultiMap<PsiElement, DfaMemoryState>(myNestedClosures);
   }
 
-  public Pair<Set<Instruction>,Set<Instruction>> getConstConditionalExpressions() {
-    Set<Instruction> trueSet = new HashSet<Instruction>();
-    Set<Instruction> falseSet = new HashSet<Instruction>();
-
-    for (Instruction instruction : getInstructions()) {
-      if (instruction instanceof BranchingInstruction) {
-        BranchingInstruction branchingInstruction = (BranchingInstruction)instruction;
-        if (branchingInstruction.getPsiAnchor() != null && branchingInstruction.isConditionConst()) {
-          if (!branchingInstruction.isTrueReachable()) {
-            falseSet.add(branchingInstruction);
-          }
-
-          if (!branchingInstruction.isFalseReachable()) {
-            trueSet.add(branchingInstruction);
-          }
-        }
-      }
-    }
-
-    for (Instruction instruction : getInstructions()) {
-      if (instruction instanceof BranchingInstruction) {
-        BranchingInstruction branchingInstruction = (BranchingInstruction)instruction;
-        if (branchingInstruction.isTrueReachable()) {
-          falseSet.remove(branchingInstruction);
-        }
-        if (branchingInstruction.isFalseReachable()) {
-          trueSet.remove(branchingInstruction);
-        }
-      }
-    }
-
-    return Pair.create(trueSet, falseSet);
-  }
-
   private static DfaMemoryStateImpl createClosureState(DfaMemoryState memState) {
     DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
     copy.flushFields();

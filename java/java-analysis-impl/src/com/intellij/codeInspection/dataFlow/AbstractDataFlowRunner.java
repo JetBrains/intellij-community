@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.EmptyStackException;
+import java.util.HashSet;
 import java.util.Set;
 
 public abstract class AbstractDataFlowRunner {
@@ -192,5 +194,39 @@ public abstract class AbstractDataFlowRunner {
 
   public final Instruction getInstruction(int index) {
     return myInstructions[index];
+  }
+
+  public Pair<Set<Instruction>, Set<Instruction>> getConstConditionalExpressions() {
+    Set<Instruction> trueSet = new HashSet<Instruction>();
+    Set<Instruction> falseSet = new HashSet<Instruction>();
+
+    for (Instruction instruction : getInstructions()) {
+      if (instruction instanceof BranchingInstruction) {
+        BranchingInstruction branchingInstruction = (BranchingInstruction)instruction;
+        if (branchingInstruction.getPsiAnchor() != null && branchingInstruction.isConditionConst()) {
+          if (!branchingInstruction.isTrueReachable()) {
+            falseSet.add(branchingInstruction);
+          }
+
+          if (!branchingInstruction.isFalseReachable()) {
+            trueSet.add(branchingInstruction);
+          }
+        }
+      }
+    }
+
+    for (Instruction instruction : getInstructions()) {
+      if (instruction instanceof BranchingInstruction) {
+        BranchingInstruction branchingInstruction = (BranchingInstruction)instruction;
+        if (branchingInstruction.isTrueReachable()) {
+          falseSet.remove(branchingInstruction);
+        }
+        if (branchingInstruction.isFalseReachable()) {
+          trueSet.remove(branchingInstruction);
+        }
+      }
+    }
+
+    return Pair.create(trueSet, falseSet);
   }
 }

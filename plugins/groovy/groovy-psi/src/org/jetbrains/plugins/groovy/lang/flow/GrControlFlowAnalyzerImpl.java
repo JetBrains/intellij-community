@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -310,34 +309,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       }
     }
     else {
-      final GrArgumentList args = expression.getArgumentList();
-      final PsiMethod ctr = expression.resolveMethod();
-      if (args != null) {
-        final GrNamedArgument[] namedArguments = args.getNamedArguments();
-        for (GrNamedArgument argument : namedArguments) {
-          GrExpression argumentExpression = argument.getExpression();
-          if (argumentExpression != null) {
-            argumentExpression.accept(this);
-            pop();
-          }
-        }
-        if (namedArguments.length > 0) {
-          pushUnknown();
-        }
-
-        final GrExpression[] expressionArguments = args.getExpressionArguments();
-        final PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
-        for (int i = 0; i < expressionArguments.length; i++) {
-          final GrExpression argument = expressionArguments[i];
-          argument.accept(this);
-          if (parameters != null && i < parameters.length) {
-            boxUnbox(argument, parameters[i].getType(), argument.getType());
-          }
-        }
-      }
-
+      visitArguments(expression);
       addInstruction(new GrMethodCallInstruction(expression, null));
-
       //if (!myCatchStack.isEmpty()) {
       //  addMethodThrows(ctr, expression);
       //}
@@ -372,6 +345,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     if (condition != null) {
       condition.accept(this);
+      addInstruction(new GrCoerceToBooleanInstruction<V>());
       addInstruction(new ConditionalGotoInstruction(ifFalseOffset, true, condition));
     }
 
@@ -723,6 +697,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     final GrExpression condition = expression.getCondition();
     condition.accept(this);
+    addInstruction(new GrCoerceToBooleanInstruction<V>());
     addInstruction(new DupInstruction<V>());
     addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(expression), false, condition));
     pop();
@@ -745,6 +720,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     final GrExpression thenBranch = expression.getThenBranch();
     final GrExpression elseBranch = expression.getElseBranch();
     condition.accept(this);
+    addInstruction(new GrCoerceToBooleanInstruction<V>());
     final ConditionalGotoInstruction<V> gotoElse = addInstruction(new ConditionalGotoInstruction<V>(null, true, condition));
 
     if (thenBranch == null) {
@@ -790,11 +766,11 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         gotoToNotNull.setOffset(myFlow.getNextOffset());
 
         // not null branch
-        dereference(referenceExpression, writing);
+        dereference(qualifierExpression, referenceExpression, writing);
         gotoEnd.setOffset(myFlow.getNextOffset());
       }
       else {
-        dereference(referenceExpression, writing);
+        dereference(qualifierExpression, referenceExpression, writing);
       }
     }
 
@@ -810,6 +786,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       operand.accept(this);
       IElementType tokenType = expression.getOperationTokenType();
       if (tokenType == GroovyTokenTypes.mLNOT) {
+        addInstruction(new GrCoerceToBooleanInstruction<V>());
         addInstruction(new NotInstruction<V>());
       }
       else if (tokenType == GroovyTokenTypes.mBNOT) {
@@ -993,7 +970,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
   }
 
-  private void dereference(GrReferenceExpression referenceExpression, boolean writing) {
+  private void dereference(@NotNull GrExpression qualifier, GrReferenceExpression referenceExpression, boolean writing) {
     // qualifier is already on top of stack thank to duplication
     final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
@@ -1003,7 +980,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
     else {
       if (resolved instanceof PsiMember) {
-        addInstruction(new GrDereferenceInstruction<V>(referenceExpression));
+        addInstruction(new GrDereferenceInstruction<V>(qualifier));
       }
       else {
         // pop qualifier if cannot resolve

@@ -29,6 +29,8 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
+import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaConstValueFactory;
+import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -43,18 +45,25 @@ import static com.intellij.codeInspection.dataFlow.value.DfaRelation.UNDEFINED;
 
 public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstructionVisitor<V>> extends GrInstructionVisitor<V> {
 
-  public GrGenericStandardInstructionVisitor(GrDataFlowRunner<V> runner) {
-    super(runner);
-    myHelper = new GrMethodCallHelper<V>(this);
-  }
-
-  private static final Object ANY_VALUE = new Object();
+  //private static final Object ANY_VALUE = new Object();
   //private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
   //private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
   private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
-  private final GrMethodCallHelper<V> myHelper;
   //private final Set<JavaInstanceofInstruction> myUsefulInstanceofs = new THashSet<JavaInstanceofInstruction>();
+
+  private final GrDfaValueFactory myFactory;
+  private final GrMethodCallHelper<V> myHelper;
+
+  public GrGenericStandardInstructionVisitor(GrDataFlowRunner<V> runner) {
+    super(runner);
+    myFactory = runner.getFactory();
+    myHelper = new GrMethodCallHelper<V>(this);
+  }
+
+  public GrDfaValueFactory getFactory() {
+    return myFactory;
+  }
 
   @Override
   public DfaInstructionState<V>[] visitAssignGroovy(GrAssignInstruction<V> instruction, DfaMemoryState memState) {
@@ -64,12 +73,11 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)dfaDest;
 
-      DfaValueFactory factory = myRunner.getFactory();
-      if (dfaSource instanceof DfaVariableValue && factory.getVarFactory().getAllQualifiedBy(var).contains(dfaSource)) {
+      if (dfaSource instanceof DfaVariableValue && myFactory.getVarFactory().getAllQualifiedBy(var).contains(dfaSource)) {
         Nullness nullability = memState.isNotNull(dfaSource)
                                ? Nullness.NOT_NULL
                                : ((DfaVariableValue)dfaSource).getInherentNullability();
-        dfaSource = factory.createTypeValue(((DfaVariableValue)dfaSource).getVariableType(), nullability);
+        dfaSource = myFactory.createTypeValue(((DfaVariableValue)dfaSource).getVariableType(), nullability);
       }
 
       if (var.getInherentNullability() == Nullness.NOT_NULL) {
@@ -90,7 +98,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
 
     memState.push(dfaDest);
 
-    return nextInstruction(instruction, myRunner, memState);
+    return nextInstruction(instruction, memState);
   }
 
   @Override
@@ -103,7 +111,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
         checkNotNullable(state, retValue, NullabilityProblem.nullableReturn, instructionReturn);
       }
     }
-    return nextInstruction(instruction, myRunner, state);
+    return nextInstruction(instruction, state);
   }
 
   @Override
@@ -113,7 +121,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
       forceNotNull(myRunner.getFactory(), state, qualifier);
     }
     //check(value, state, instruction.getExpression());
-    return nextInstruction(instruction, myRunner, state);
+    return nextInstruction(instruction, state);
   }
 
   @Override
@@ -203,7 +211,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     instruction.setTrueReachable();  // Not a branching instruction actually.
     instruction.setFalseReachable();
 
-    return nextInstruction(instruction, myRunner.getInstructions(), memState);
+    return nextInstruction(instruction, memState);
   }
 
   @Nullable
@@ -274,6 +282,30 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
       checkNotNullable(state, to, NullabilityProblem.passingNullableToNotNullParameter, expression.getRightOperand());
     }
     state.push(myRunner.getFactory().createTypeValue(TypesUtil.createType("groovy.lang.Range", expression), Nullness.NOT_NULL));
-    return nextInstruction(instruction, myRunner.getInstructions(), state);
+    return nextInstruction(instruction, state);
+  }
+
+  @Override
+  public DfaInstructionState<V>[] visitCoerceToBoolean(GrCoerceToBooleanInstruction<V> instruction, DfaMemoryState state) {
+    state.push(coerceToBoolean(state.pop(), state));
+    return nextInstruction(instruction, state);
+  }
+
+  private DfaValue coerceToBoolean(DfaValue value, DfaMemoryState state) {
+    final GrDfaConstValueFactory constFactory = myFactory.getConstFactory();
+    //final DfaRelationValue relation = myFactory.getRelationFactory().createRelation(value, constFactory.getNull(), EQ, false);
+    if (value instanceof DfaConstValue) {
+      final DfaConstValue constValue = (DfaConstValue)value;
+      if (constValue == constFactory.getFalse() || constValue == constFactory.getTrue()) {
+        return constValue;
+      }
+      else if (constValue == constFactory.getNull()) {
+        return constFactory.getFalse();
+      }
+    }
+    else if (state.isNull(value)) {
+      return constFactory.getFalse();
+    }
+    return DfaUnknownValue.getInstance();
   }
 }

@@ -55,7 +55,7 @@ public class GrMethodCallHelper<V extends GrGenericStandardInstructionVisitor<V>
 
   public GrMethodCallHelper(GrGenericStandardInstructionVisitor<V> visitor) {
     myVisitor = visitor;
-    myFactory = visitor.myRunner.getFactory();
+    myFactory = visitor.getFactory();
   }
 
 

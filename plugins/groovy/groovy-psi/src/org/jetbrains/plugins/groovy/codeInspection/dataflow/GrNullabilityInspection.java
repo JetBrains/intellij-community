@@ -21,10 +21,11 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
+import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
@@ -127,6 +128,22 @@ public class GrNullabilityInspection extends GroovySuppressableInspectionTool {
                             ? "Passing <code>null</code> argument to non annotated parameter"
                             : "Argument <code>#ref</code> #loc might be null but passed to non annotated parameter";
         holder.registerProblem(element, text);
+      }
+
+      final Pair<Set<Instruction>, Set<Instruction>> constConditionalExpressions = dfaRunner.getConstConditionalExpressions();
+      for (Instruction instruction : constConditionalExpressions.first) {
+        if (instruction instanceof ConditionalGotoInstruction) {
+          final PsiElement element = ((ConditionalGotoInstruction)instruction).getPsiAnchor();
+          final boolean negated = ((ConditionalGotoInstruction)instruction).isNegated();
+          holder.registerProblem(element, "Condition <code>#ref</code> is always " + (negated ? "false" : "true"));
+        }
+      }
+      for (Instruction instruction : constConditionalExpressions.second) {
+        if (instruction instanceof ConditionalGotoInstruction) {
+          final PsiElement element = ((ConditionalGotoInstruction)instruction).getPsiAnchor();
+          final boolean negated = ((ConditionalGotoInstruction)instruction).isNegated();
+          holder.registerProblem(element, "Condition <code>#ref</code> is always " + (negated ? "true" : "false"));
+        }
       }
     }
     else if (rc == RunnerResult.TOO_COMPLEX) {

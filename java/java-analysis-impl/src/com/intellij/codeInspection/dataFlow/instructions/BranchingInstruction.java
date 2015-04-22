@@ -69,7 +69,7 @@ public abstract class BranchingInstruction extends Instruction {
   }
 
   public static boolean isBoolConst(PsiElement condition) {
-    if (!(condition instanceof PsiLiteralExpression)) return false;
+    //if (!(condition instanceof PsiLiteralExpression)) return false;
     @NonNls String text = condition.getText();
     return "true".equals(text) || "false".equals(text);
   }
