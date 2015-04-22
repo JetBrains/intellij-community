@@ -3223,5 +3223,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern3 = "try { '_St1*; } finally { '_St2*; }";
     assertEquals("Find try with finally block", 3, findMatchesCount(source, pattern3));
+
+    String pattern4 = "try { '_St1*; } catch (NullPointerException | IllegalArgumentException '_e) { '_St2*; }";
+    assertEquals("Match multi catch correctly", 0, findMatchesCount(source, pattern4));
+
+    String pattern5 = "try { '_St1*; } catch (UnsupportedOperationException | NullPointerException '_e) { '_St2*; }";
+    assertEquals("Find multi catch", 1, findMatchesCount(source, pattern5));
+
+    String pattern6 = "try { '_St1*; } catch ('_E1 | '_E2 '_e) { '_St2*; }";
+    assertEquals("Find multi catch with variables", 1, findMatchesCount(source, pattern6));
   }
 }

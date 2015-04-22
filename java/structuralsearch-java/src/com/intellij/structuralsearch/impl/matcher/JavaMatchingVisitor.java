@@ -1614,7 +1614,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(annotations2 != null && myMatchingVisitor.matchInAnyOrder(annotations, annotations2));
       if (!myMatchingVisitor.getResult()) return;
     }
-    myMatchingVisitor.setResult(matchType(typeElement, other));
+    final PsiTypeElement[] typeElementChildren = PsiTreeUtil.getChildrenOfType(typeElement, PsiTypeElement.class);
+    if (typeElementChildren != null && typeElementChildren.length > 1) {
+      // multi catch type element
+      final PsiTypeElement[] typeElementChildren2 = PsiTreeUtil.getChildrenOfType(other, PsiTypeElement.class);
+      myMatchingVisitor.setResult(
+        typeElementChildren2 != null && myMatchingVisitor.matchInAnyOrder(typeElementChildren, typeElementChildren2));
+    }
+    else {
+      myMatchingVisitor.setResult(matchType(typeElement, other));
+    }
   }
 
   @Override
