@@ -110,14 +110,15 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    final ModuleEditor moduleEditor = getModuleEditor();
-    return moduleEditor != null ? moduleEditor.getHelpTopic() : null;
+    ModuleEditor editor = getModuleEditor();
+    return editor == null ? null : editor.getHelpTopic();
   }
 
 
   @Override
   public JComponent createOptionsPanel() {
-    return getModuleEditor().getPanel();
+    ModuleEditor editor = getModuleEditor();
+    return editor == null ? null : editor.getPanel();
   }
 
   @Override
@@ -146,7 +147,8 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
 
   @Override
   public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
-    return getModuleEditor().navigateTo(place, requestFocus);
+    ModuleEditor editor = getModuleEditor();
+    return editor == null ? ActionCallback.REJECTED : editor.navigateTo(place, requestFocus);
   }
 
   @Override
