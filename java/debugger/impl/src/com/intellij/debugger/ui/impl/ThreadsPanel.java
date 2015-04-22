@@ -86,6 +86,9 @@ public class ThreadsPanel extends DebuggerTreePanel{
   }
 
   private void startLabelsUpdate() {
+    if (myUpdateLabelsAlarm.isDisposed()) {
+      return;
+    }
     myUpdateLabelsAlarm.cancelAllRequests();
     myUpdateLabelsAlarm.addRequest(new Runnable() {
       @Override
@@ -127,7 +130,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
 
       private void reschedule() {
         final DebuggerSession session = getContext().getDebuggerSession();
-        if (session != null && session.isAttached() && !session.isPaused()) {
+        if (session != null && session.isAttached() && !session.isPaused() && !myUpdateLabelsAlarm.isDisposed()) {
           myUpdateLabelsAlarm.addRequest(this, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
         }
       }
