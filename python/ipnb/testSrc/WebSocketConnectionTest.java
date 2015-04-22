@@ -7,7 +7,6 @@ import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
@@ -105,12 +104,7 @@ public class WebSocketConnectionTest extends TestCase {
   }
 
   @NotNull
-  public static URI getTestServerURI() {
-    try {
-      return new URI("http://127.0.0.1:8888");
-    }
-    catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
+  public static String getTestServerURI() {
+    return "http://127.0.0.1:8888";
   }
 }

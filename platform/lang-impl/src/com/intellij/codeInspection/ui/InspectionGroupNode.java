@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,23 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 /**
  * @author max
  */
-public class InspectionGroupNode extends InspectionTreeNode {
+class InspectionGroupNode extends InspectionTreeNode {
   private static final Icon EMPTY = new EmptyIcon(0, IconUtil.getEmptyIcon(false).getIconHeight());
 
-  public InspectionGroupNode(String groupTitle) {
+  InspectionGroupNode(@NotNull String groupTitle) {
     super(groupTitle);
   }
 
-  public String getGroupTitle() {
+  String getGroupTitle() {
     return (String) getUserObject();
   }
 

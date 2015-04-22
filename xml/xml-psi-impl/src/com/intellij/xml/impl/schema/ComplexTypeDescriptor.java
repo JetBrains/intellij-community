@@ -19,6 +19,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
@@ -193,13 +194,19 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     visited.add(nsDescriptor);
     for (XmlTag tag : nsDescriptor.getTag().getSubTags()) {
       if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "include")) {
-        PsiElement element = XmlSchemaTagsProcessor.resolveReference(tag.getAttribute("schemaLocation"));
-        if (element instanceof XmlFile) {
-          XmlDocument document = ((XmlFile)element).getDocument();
-          if (document != null) {
-            PsiMetaData metaData = document.getMetaData();
-            if (metaData instanceof XmlNSDescriptorImpl && !visited.contains(metaData)) {
-              addSubstitutionGroups(result, (XmlNSDescriptorImpl)metaData, visited);
+        XmlAttribute location = tag.getAttribute("schemaLocation");
+        if (location != null) {
+          XmlAttributeValue valueElement = location.getValueElement();
+          if (valueElement != null) {
+            PsiElement element = new FileReferenceSet(valueElement).resolve();
+            if (element instanceof XmlFile) {
+              XmlDocument document = ((XmlFile)element).getDocument();
+              if (document != null) {
+                PsiMetaData metaData = document.getMetaData();
+                if (metaData instanceof XmlNSDescriptorImpl && !visited.contains(metaData)) {
+                  addSubstitutionGroups(result, (XmlNSDescriptorImpl)metaData, visited);
+                }
+              }
             }
           }
         }
