@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,15 +97,23 @@ public class DirectoryUtil {
     StringTokenizer tokenizer = new StringTokenizer(subDirName, delim);
     PsiDirectory dir = baseDirectory;
     while (tokenizer.hasMoreTokens()) {
-      String packName = tokenizer.nextToken();
+      String dirName = tokenizer.nextToken();
       if (tokenizer.hasMoreTokens()) {
-        PsiDirectory existingDir = dir.findSubdirectory(packName);
+        if ("..".equals(dirName)) {
+          dir = dir.getParentDirectory();
+          if (dir == null) throw new IncorrectOperationException("Not a valid directory");
+          continue;
+        }
+        else if (".".equals(dirName)) {
+          continue;
+        }
+        PsiDirectory existingDir = dir.findSubdirectory(dirName);
         if (existingDir != null) {
           dir = existingDir;
           continue;
         }
       }
-      dir = dir.createSubdirectory(packName);
+      dir = dir.createSubdirectory(dirName);
     }
     return dir;
   }
