@@ -119,9 +119,26 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @param other a configuration created by another producer.
    * @return true if the configuration created by this producer is at least as good as the other one; false if this configuration
    * should be discarded and the other one should be used instead.
+   * @see #shouldReplace(ConfigurationFromContext, ConfigurationFromContext)
    */
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
     return true;
+  }
+
+  /**
+   * When two configurations are created from the same context by two different producers, checks if the configuration created by
+   * this producer should replace the other one, that is if the other one should be discarded.
+   *
+   * <p>This is the same relationship as {@link #isPreferredConfiguration(ConfigurationFromContext, ConfigurationFromContext)} but
+   * specified from the "replacement" side.
+   *
+   * @param self  a configuration created by this producer.
+   * @param other a configuration created by another producer.
+   * @return true if the other configuration should be discarded, false otherwise.
+   * @see #isPreferredConfiguration(ConfigurationFromContext, ConfigurationFromContext)
+   */
+  public boolean shouldReplace(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return false;
   }
 
   /**
