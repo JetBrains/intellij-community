@@ -236,10 +236,10 @@ public class MavenResourceCompilerConfigurationGenerator {
       }
     }
     catch (ManifestBuilder.ManifestBuilderException e) {
-      LOG.error("Unable to generate artifact manifest", e);
+      LOG.warn("Unable to generate artifact manifest", e);
     }
-    catch (IOException e) {
-      LOG.error("Unable to save generated artifact manifest", e);
+    catch (Exception e) {
+      LOG.warn("Unable to save generated artifact manifest", e);
     }
   }
 
