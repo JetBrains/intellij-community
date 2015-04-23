@@ -546,11 +546,19 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testAlignmentInListLiteralWhereFirstItemIsEmptyTuple() {
+    doTest();
+  }
+
   public void testHangingIndentInNamedArgumentValue() {
     doTest();
   }
 
   public void testHangingIndentInParameterDefaultValue() {
+    doTest();
+  }
+
+  public void testAlignmentOfEmptyCollectionLiterals() {
     doTest();
   }
 

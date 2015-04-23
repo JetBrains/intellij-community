@@ -514,12 +514,7 @@ public class PyBlock implements ASTBlock {
 
   private boolean needListAlignment(ASTNode child) {
     final IElementType childType = child.getElementType();
-    final ASTNode firstGrandchild = child.getFirstChildNode();
-    final IElementType firstGrandchildType = firstGrandchild == null ? null : firstGrandchild.getElementType();
     if (PyTokenTypes.OPEN_BRACES.contains(childType)) {
-      return false;
-    }
-    if (PyTokenTypes.OPEN_BRACES.contains(firstGrandchildType) && isEmptySequence(child)) {
       return false;
     }
     if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
@@ -549,7 +544,7 @@ public class PyBlock implements ASTBlock {
     if (child.getElementType() == PyTokenTypes.COMMA) {
       return false;
     }
-    return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS;
+    return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS && !hasHangingIndent(myNode.getPsi());
   }
 
   @Nullable
