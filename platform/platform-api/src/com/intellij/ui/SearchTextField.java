@@ -29,6 +29,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -409,9 +410,7 @@ public class SearchTextField extends JPanel {
     Dimension size = super.getPreferredSize();
     Border border = super.getBorder();
     if (border != null && UIUtil.isUnderAquaLookAndFeel()) {
-      Insets insets = border.getBorderInsets(this);
-      size.height += insets.top + insets.bottom;
-      size.width += insets.left + insets.right;
+      JBInsets.addTo(size, border.getBorderInsets(this));
     }
     return size;
   }

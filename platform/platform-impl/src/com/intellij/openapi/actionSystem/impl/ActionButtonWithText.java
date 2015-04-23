@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import sun.swing.SwingUtilities2;
@@ -72,11 +73,7 @@ public class ActionButtonWithText extends ActionButton {
     Icon icon = getIcon();
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = new Rectangle(getSize());
-    Insets i = getInsets();
-    viewRect.x += i.left;
-    viewRect.y += i.top;
-    viewRect.width -= (i.right + viewRect.x);
-    viewRect.height -= (i.bottom + viewRect.y);
+    JBInsets.removeFrom(viewRect, getInsets());
 
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
