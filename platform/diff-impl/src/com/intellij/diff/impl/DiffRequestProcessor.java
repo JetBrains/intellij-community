@@ -668,8 +668,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       if (!isNavigationEnabled() || !hasNextChange() || !getSettings().isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.NEXT) {
-        // TODO: provide "change" word in chain UserData - for tests/etc
-        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), "Press again to go to the next file", true);
+        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), true);
         myIterationState = IterationState.NEXT;
         return;
       }
@@ -718,7 +717,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       if (!isNavigationEnabled() || !hasPrevChange() || !getSettings().isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.PREV) {
-        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), "Press again to go to the previous file", false);
+        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), false);
         myIterationState = IterationState.PREV;
         return;
       }
@@ -727,7 +726,10 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private void notifyMessage(@Nullable Editor editor, @NotNull String message, boolean next) {
+  private void notifyMessage(@Nullable Editor editor, boolean next) {
+    // TODO: provide "change" word in chain UserData - for tests/etc
+    String message = next ? "Press again to go to the next file" : "Press again to go to the previous file";
+
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
     Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUI.scale(40) : JBUI.scale(40));
 
