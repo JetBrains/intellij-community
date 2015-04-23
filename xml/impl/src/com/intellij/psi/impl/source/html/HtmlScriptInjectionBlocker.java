@@ -16,7 +16,6 @@
 package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,5 +30,5 @@ public interface HtmlScriptInjectionBlocker {
    * @param language  language that should be injected according to <pre>type</pre> attribute
    * @return true if language <strong>should not</strong> be injected
    */
-  boolean isDenyLanguageInjection(@NotNull XmlTag scriptTag, @NotNull Language language);
+  boolean isLanguageInjectionDenied(@NotNull XmlTag scriptTag, @NotNull Language language);
 }
