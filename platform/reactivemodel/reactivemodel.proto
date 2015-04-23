@@ -1,0 +1,46 @@
+option java_package = "com.jetbrains.reactiveidea";
+option java_outer_classname = "Protocol";
+
+message Model {
+    optional ListModel vec = 1;
+    optional MapModel map = 2;
+    optional int32 i = 3;
+    optional bool b = 4;
+    optional string str = 5;
+}
+
+message ListModel {
+    repeated Model items = 1;
+}
+
+message MapModel {
+    repeated string keys = 1;
+    repeated Model values = 2;
+}
+
+message Diff {
+  optional PrimitiveDiff primitive = 1;
+  optional ValueDiff value = 2;
+  optional MapDiff map = 3;
+  optional ListDiff list = 4;
+}
+
+message PrimitiveDiff {
+  optional int32 intValue = 1;
+  optional bool boolValue = 2;
+  optional string stringValue = 3;
+}
+
+message ValueDiff {
+  optional Model newValue = 1;
+}
+
+message MapDiff {
+  repeated string keys = 1;
+  repeated Diff diffs = 2;
+}
+
+message ListDiff {
+  repeated Model neue = 1;
+}
+
