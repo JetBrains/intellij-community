@@ -28,12 +28,11 @@
  * <p>Generation based on Grammar-Kit, see .bnf file, do not edit parser nor lexer manually.
  * When parsed, {@link com.jetbrains.commandInterface.commandLine.psi.CommandLineFile} is root element for
  * {@link com.jetbrains.commandInterface.commandLine.CommandLineLanguage}.
- * <strong>Warning</strong>: always fill {@link com.jetbrains.commandInterface.commandLine.psi.CommandLineFile#setCommands(java.util.List)}
+ * <strong>Warning</strong>: always fill {@link com.jetbrains.commandInterface.commandLine.psi.CommandLineFile#setCommandsAndDefaultExecutor(java.util.List, com.jetbrains.commandInterface.command.CommandExecutor)}
  * if possible.
  * </p>
  * <h2>Extension points</h2>
  * <p>This package has a a lot of extension points (language, inspection etc). Make sure all of them are registered</p>
- *
  *
  * @author Ilya.Kazakevich
  */

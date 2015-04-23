@@ -28,8 +28,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.command.CommandExecutor;
 import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.psi.PyUtil;
@@ -75,9 +77,10 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   static final int BORDER_SIZE_PX = 3;
   /**
    * List of commands (to be injected into {@link CommandLineFile}) if any
+   * and executor to be used when user executes unknown command
    */
   @Nullable
-  private final List<Command> myCommandList;
+  private final Pair<List<Command>, CommandExecutor> myCommandsAndDefaultExecutor;
   @NotNull
   private final Module myModule;
   /**
@@ -106,15 +109,16 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   private volatile ProcessHandler myProcessHandler;
 
   /**
-   * @param module      module console runs on
-   * @param title       console title
-   * @param commandList List of commands (to be injected into {@link CommandLineFile}) if any
+   * @param module                     module console runs on
+   * @param title                      console title
+   * @param commandsAndDefaultExecutor List of commands (to be injected into {@link CommandLineFile}) if any
+   *                                   and executor to be used when user executes unknown command
    */
   private CommandConsole(@NotNull final Module module,
                          @NotNull final String title,
-                         @Nullable final List<Command> commandList) {
+                         @Nullable final Pair<List<Command>, CommandExecutor> commandsAndDefaultExecutor) {
     super(module.getProject(), title, CommandLineLanguage.INSTANCE);
-    myCommandList = commandList;
+    myCommandsAndDefaultExecutor = commandsAndDefaultExecutor;
     myModule = module;
   }
 
@@ -122,12 +126,13 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @param module      module console runs on
    * @param title       console title
    * @param commandList List of commands (to be injected into {@link CommandLineFile}) if any
+   *                    and executor to be used when user executes unknown command
    * @return console
    */
   @NotNull
   static CommandConsole createConsole(@NotNull final Module module,
                                       @NotNull final String title,
-                                      @Nullable final List<Command> commandList) {
+                                      @Nullable final Pair<List<Command>, CommandExecutor> commandList) {
     final CommandConsole console = new CommandConsole(module, title, commandList);
     console.setEditable(true);
     LanguageConsoleBuilder.registerExecuteAction(console, console, title, title, console);
@@ -174,12 +179,12 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
         setLanguage(CommandLineLanguage.INSTANCE);
         final CommandLineFile file = PyUtil.as(getFile(), CommandLineFile.class);
         resetConsumer(null);
-        if (file == null || myCommandList == null) {
+        if (file == null || myCommandsAndDefaultExecutor == null) {
           return;
         }
-        file.setCommands(myCommandList);
+        file.setCommandsAndDefaultExecutor(myCommandsAndDefaultExecutor);
         final CommandConsole console = CommandConsole.this;
-        resetConsumer(new CommandModeConsumer(myCommandList, myModule, console));
+        resetConsumer(new CommandModeConsumer(myCommandsAndDefaultExecutor.first, myModule, console, myCommandsAndDefaultExecutor.second));
       }
     }, ModalityState.NON_MODAL);
   }
@@ -194,7 +199,8 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        configureLeftBorder(false, getConsoleEditor()); // "bottom" part of console do not need padding now because it is used for user inputA
+        configureLeftBorder(false,
+                            getConsoleEditor()); // "bottom" part of console do not need padding now because it is used for user inputA
         notifyStateChangeListeners();
         resetConsumer(new ProcessModeConsumer(processHandler));
         // In process mode we do not need prompt and highlighting
