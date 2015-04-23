@@ -20,7 +20,10 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.text.StringUtil;
@@ -100,7 +103,7 @@ public class FileBasedStorage extends XmlElementStorage {
     return new FileSaveSession(storageData);
   }
 
-  public void forceSave() {
+  public void forceSave() throws IOException {
     XmlElementStorageSaveSession externalizationSession = startExternalization();
     if (externalizationSession != null) {
       externalizationSession.forceSave();
@@ -120,7 +123,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
       BufferExposingByteArrayOutputStream content = element == null ? null : StorageUtil.writeToBytes(element, myLineSeparator.getSeparatorString());
       if (ApplicationManager.getApplication().isUnitTestMode() && StringUtil.startsWithChar(myFile.getPath(), '$')) {
-        throw new StateStorageException("It seems like some macros were not expanded for path: " + myFile);
+        throw new IOException("It seems like some macros were not expanded for path: " + myFile);
       }
 
       try {

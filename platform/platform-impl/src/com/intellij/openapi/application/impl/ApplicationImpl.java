@@ -482,7 +482,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       store.load();
     }
     catch (StateStorageException e) {
-      throw new IOException(e.getMessage());
+      throw new IOException(e);
     }
     finally {
       token.finish();
