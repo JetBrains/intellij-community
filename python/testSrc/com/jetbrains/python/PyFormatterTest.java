@@ -541,6 +541,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-15530
+  public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
+    doTest();
+  }
+
   private CommonCodeStyleSettings getCommonSettings() {
     return settings().getCommonSettings(PythonLanguage.getInstance());
   }
