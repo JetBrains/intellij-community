@@ -536,6 +536,11 @@ public class PyFormatterTest extends PyTestCase {
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
   }
 
+  // PY-11552
+  public void testDeleteTrailingBlankLines() {
+    doTest();
+  }
+
   private CommonCodeStyleSettings getCommonSettings() {
     return settings().getCommonSettings(PythonLanguage.getInstance());
   }
