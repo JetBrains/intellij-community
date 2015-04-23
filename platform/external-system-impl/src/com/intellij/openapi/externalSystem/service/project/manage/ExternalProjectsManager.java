@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -90,11 +91,15 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   }
 
   public void registerView(@NotNull ExternalProjectsView externalProjectsView) {
+    assert getExternalProjectsView(externalProjectsView.getSystemId()) == null;
+
     init();
     myProjectsViews.add(externalProjectsView);
-    externalProjectsView.loadState(
-      myState.getExternalSystemsState().get(externalProjectsView.getSystemId().getId()).getProjectsViewState());
-    externalProjectsView.init();
+    if (externalProjectsView instanceof ExternalProjectsViewImpl) {
+      ExternalProjectsViewImpl view = (ExternalProjectsViewImpl)externalProjectsView;
+      view.loadState(myState.getExternalSystemsState().get(externalProjectsView.getSystemId().getId()).getProjectsViewState());
+      view.init();
+    }
   }
 
   @Nullable
@@ -153,6 +158,7 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
 
   public void forgetExternalProjectData(@NotNull ProjectSystemId projectSystemId, @NotNull String linkedProjectPath) {
     ExternalProjectsDataStorage.getInstance(myProject).remove(projectSystemId, linkedProjectPath);
+    ExternalSystemUtil.scheduleExternalViewStructureUpdate(myProject, projectSystemId);
   }
 
   @NotNull
@@ -160,10 +166,12 @@ public class ExternalProjectsManager implements PersistentStateComponent<Externa
   public ExternalProjectsState getState() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     for (ExternalProjectsView externalProjectsView : myProjectsViews) {
-      final ExternalProjectsViewState externalProjectsViewState = externalProjectsView.getState();
-      final ExternalProjectsState.State state = myState.getExternalSystemsState().get(externalProjectsView.getSystemId().getId());
-      assert state != null;
-      state.setProjectsViewState(externalProjectsViewState);
+      if (externalProjectsView instanceof ExternalProjectsViewImpl) {
+        final ExternalProjectsViewState externalProjectsViewState = ((ExternalProjectsViewImpl)externalProjectsView).getState();
+        final ExternalProjectsState.State state = myState.getExternalSystemsState().get(externalProjectsView.getSystemId().getId());
+        assert state != null;
+        state.setProjectsViewState(externalProjectsViewState);
+      }
     }
     return myState;
   }
