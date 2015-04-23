@@ -589,15 +589,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   private Dimension getContentSizeFor(AbstractPosition position) {
-    Insets insets = position.createBorder(this).getBorderInsets();
-    if (insets == null) {
-      insets = new Insets(0, 0, 0, 0);
-    }
-
     Dimension size = myContent.getPreferredSize();
-    size.width += insets.left + insets.right;
-    size.height += insets.top + insets.bottom;
-
+    JBInsets.addTo(size, position.createBorder(this).getBorderInsets());
     return size;
   }
 
@@ -1361,12 +1354,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     @Override
     public void doLayout() {
-      Insets insets = getInsets();
-      if (insets == null) {
-        insets = new Insets(0, 0, 0, 0);
-      }
+      Rectangle bounds = new Rectangle(getWidth(), getHeight());
+      JBInsets.removeFrom(bounds, getInsets());
 
-      myContent.setBounds(insets.left, insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.top - insets.bottom);
+      myContent.setBounds(bounds);
     }
 
     @Override
@@ -1380,12 +1371,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     private Dimension addInsets(Dimension size) {
-      final Insets insets = getInsets();
-      if (insets != null) {
-        size.width += insets.left + insets.right;
-        size.height += insets.top + insets.bottom;
-      }
-
+      JBInsets.addTo(size, getInsets());
       return size;
     }
 

@@ -50,6 +50,7 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1055,9 +1056,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               }
               else {
                 myLastMinimumSize = new Dimension(size);
-                Insets insets = window.getInsets();
-                size.width += insets.left + insets.right;
-                size.height += insets.top + insets.bottom;
+                JBInsets.addTo(size, window.getInsets());
               }
               window.setMinimumSize(size);
             }

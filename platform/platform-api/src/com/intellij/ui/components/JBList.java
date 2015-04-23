@@ -22,10 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,11 +148,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   public Dimension getPreferredSize() {
     if (getModel().getSize() == 0 && !StringUtil.isEmpty(getEmptyText().getText())) {
       Dimension s = getEmptyText().getPreferredSize();
-      Insets insets = getInsets();
-      if (insets != null) {
-        s.width += (insets.left + insets.right);
-        s.height += (insets.top + insets.bottom);
-      }
+      JBInsets.addTo(s, getInsets());
       return s;
     } else {
       return super.getPreferredSize();
