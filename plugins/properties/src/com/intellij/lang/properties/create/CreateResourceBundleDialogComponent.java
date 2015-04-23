@@ -244,7 +244,7 @@ public class CreateResourceBundleDialogComponent {
         myLocalesModel.removeRow(localesToAddList.getSelectedIndices());
       }
     }).disableUpDownActions().createPanel();
-    myNewBundleLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("New resource bundle locales"));
+    myNewBundleLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("Locales to add"));
 
     myAddLocaleFromExistButton = new JButton(AllIcons.Actions.Forward);
     new ClickListener(){
@@ -291,7 +291,12 @@ public class CreateResourceBundleDialogComponent {
   }
 
   private static class MyLocalesToAddModel extends AbstractListModel {
-    private final List<Locale> myLocales = new SmartList<Locale>();
+    private final List<Locale> myLocales;
+
+    private MyLocalesToAddModel() {
+      myLocales = new ArrayList<Locale>();
+      myLocales.add(PropertiesUtil.DEFAULT_LOCALE);
+    }
 
     public List<Locale> getLocales() {
       return myLocales;
