@@ -2365,9 +2365,22 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     @NotNull
     @Override
     public List<VirtualFile> getFiles() {
+      List<VirtualFile> files;
       synchronized (myFiles) {
-        return myFiles;
+        files = myFiles;
       }
+
+      // When processing roots concurrently myFiles looses the local order of local vs archive files
+      // If we process the roots in 2 threads we can just separate local vs archive
+      List<VirtualFile> localFileSystemFiles = new ArrayList<VirtualFile>(files.size() / 2);
+      List<VirtualFile> archiveFiles = new ArrayList<VirtualFile>(files.size() / 2);
+      for(VirtualFile file:files) {
+        if (file.getFileSystem() instanceof LocalFileSystem) localFileSystemFiles.add(file);
+        else archiveFiles.add(file);
+      }
+
+      localFileSystemFiles.addAll(archiveFiles);
+      return localFileSystemFiles;
     }
 
     @Override
