@@ -18,9 +18,7 @@ package com.intellij.psi.impl.source.html;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -39,31 +37,26 @@ public final class HtmlScriptInjectionBlockerExtension extends LanguageExtension
 
 
   /**
-   * Finds language to be injected into script tag and checks if is blocked by some extension point
+   * Checks if language injection to this tag is explicitly denied by one or more @link HtmlScriptInjectionBlocker extension points}
    *
-   * @param xmlTag tag that may be script tag.
-   * @return null if tag is not script tag at all, info otherwise
+   * @param xmlTag   &lt;script&gt; tag
+   * @param language lang user wants to inject (probably obtained via {@link HtmlScriptLanguageInjector}
+   * @return true if injection denied by extension point
    */
-  @Nullable
-  public static InjectionInfo getInjectionInfo(@NotNull XmlTag xmlTag) {
-    if (!HtmlUtil.isScriptTag(xmlTag)) {
-      return null;
-    }
-    String mimeType = xmlTag.getAttributeValue("type");
-    Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
-    Language language = !languages.isEmpty() ? languages.iterator().next() : Language.ANY;
 
+  public static boolean isInjectionBlocked(@NotNull XmlTag xmlTag, @NotNull Language language) {
 
     Collection<Language> allFileLanguages = xmlTag.getContainingFile().getViewProvider().getLanguages();
+
     for (Language fileLanguage : allFileLanguages) {
-      for (final HtmlScriptInjectionBlocker blocker : INSTANCE.allForLanguage(fileLanguage)) {
-        if (blocker.isDenyLanguageInjection(xmlTag, language)) {
+      for (HtmlScriptInjectionBlocker blocker : INSTANCE.allForLanguage(fileLanguage)) {
+        if (blocker.isLanguageInjectionDenied(xmlTag, language)) {
           // Language exists, but denied by EP
-          return new InjectionInfo(true, language);
+          return true;
         }
       }
     }
     // Language exists and not denied
-    return new InjectionInfo(false, language);
+    return false;
   }
 }
