@@ -87,6 +87,8 @@ public class Conditions {
   }
 
   public static <T> Condition<T> and2(Condition<? super T> c1, Condition<? super T> c2) {
+    if (c1 == alwaysTrue() || c2 == alwaysFalse()) return (Condition<T>)c2;
+    if (c2 == alwaysTrue() || c1 == alwaysFalse()) return (Condition<T>)c1;
     return new And<T>(c1, c2);
   }
 
@@ -95,6 +97,8 @@ public class Conditions {
   }
 
   public static <T> Condition<T> or2(Condition<? super T> c1, Condition<? super T> c2) {
+    if (c1 == alwaysFalse() || c2 == alwaysTrue()) return (Condition<T>)c2;
+    if (c2 == alwaysFalse() || c1 == alwaysFalse()) return (Condition<T>)c1;
     return new Or<T>(c1, c2);
   }
 

@@ -58,7 +58,7 @@ import java.util.*;
 public abstract class FluentIterable<E> implements Iterable<E> {
   // We store 'iterable' and use it instead of 'this' to allow Iterables to perform instanceof
   // checks on the _original_ iterable when FluentIterable.from is used.
-  private final Iterable<E> myIterable;
+  final Iterable<E> myIterable;
 
   /**
    * Constructor for use by subclasses.
@@ -75,12 +75,12 @@ public abstract class FluentIterable<E> implements Iterable<E> {
    * Returns a fluent iterable that wraps {@code iterable}, or {@code iterable} itself if it
    * is already a {@code FluentIterable}.
    */
-  public static <E> FluentIterable<E> from(final Iterable<E> iterable) {
+  public static <E> FluentIterable<E> from(Iterable<? extends E> iterable) {
     return iterable instanceof FluentIterable ? (FluentIterable<E>)iterable :
-           new FluentIterable<E>(iterable) {
+           new FluentIterable<E>((Iterable<E>)iterable) {
              @Override
              public Iterator<E> iterator() {
-               return iterable.iterator();
+               return myIterable.iterator();
              }
            };
   }
@@ -202,8 +202,7 @@ public abstract class FluentIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns an {@link Optional} containing the first element in this fluent iterable.
-   * If the iterable is empty, {@code Optional.absent()} is returned.
+   * Returns the first element in this fluent iterable or null.
    */
   @Nullable
   public final E first() {
@@ -212,8 +211,7 @@ public abstract class FluentIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns an {@link Optional} containing the last element in this fluent iterable.
-   * If the iterable is empty, {@code Optional.absent()} is returned.
+   * Returns the last element in this fluent iterable or null.
    */
   @Nullable
   public final E last() {
@@ -268,7 +266,7 @@ public abstract class FluentIterable<E> implements Iterable<E> {
    * @param collection the collection to copy elements to
    * @return {@code collection}, for convenience
    */
-  public final <C extends Collection<? super E>> C copyInto(@NotNull C collection) {
+  public final <C extends Collection<? super E>> C addAllTo(@NotNull C collection) {
     if (myIterable instanceof Collection) {
       collection.addAll((Collection<E>)myIterable);
     }
