@@ -30,4 +30,7 @@ public interface SchemeImporter <T extends Scheme> {
   T importScheme(@NotNull Project project,
                  @NotNull VirtualFile selectedFile,
                  T currentScheme, SchemeFactory<T> schemeFactory) throws SchemeImportException;
+
+  @Nullable
+  String getAdditionalImportInfo(T scheme);
 }

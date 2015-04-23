@@ -66,6 +66,12 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
     return scheme;
   }
 
+  @Nullable
+  @Override
+  public String getAdditionalImportInfo(CodeStyleScheme scheme) {
+    return null;
+  }
+
   /**
    * Attempts to read scheme names from the given stream. The stream may contain several schemes in which case all the available
    * names are returned.
