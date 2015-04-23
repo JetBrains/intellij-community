@@ -203,7 +203,7 @@ public class CreateResourceBundleDialogComponent {
       .disableRemoveAction()
       .disableUpDownActions()
       .createPanel();
-    myProjectExistLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("Project locales"));
+    myProjectExistLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("Project locales", false));
 
     final JBList localesToAddList = new JBList();
     myLocalesModel = new MyLocalesToAddModel();
@@ -244,7 +244,7 @@ public class CreateResourceBundleDialogComponent {
         myLocalesModel.removeRow(localesToAddList.getSelectedIndices());
       }
     }).disableUpDownActions().createPanel();
-    myNewBundleLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("Locales to add"));
+    myNewBundleLocalesPanel.setBorder(IdeBorderFactory.createTitledBorder("Locales to add", false));
 
     myAddLocaleFromExistButton = new JButton(AllIcons.Actions.Forward);
     new ClickListener(){
