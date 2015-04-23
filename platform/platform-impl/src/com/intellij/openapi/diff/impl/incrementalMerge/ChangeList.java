@@ -200,6 +200,11 @@ public class ChangeList {
     return myChanges.size();
   }
 
+  public LineBlocks getNonAppliedLineBlocks() {
+    ArrayList<Change> changes = new ArrayList<Change>(myChanges);
+    return LineBlocks.fromChanges(changes);
+  }
+
   public LineBlocks getLineBlocks() {
     ArrayList<Change> changes = new ArrayList<Change>(myChanges);
     changes.addAll(myAppliedChanges);

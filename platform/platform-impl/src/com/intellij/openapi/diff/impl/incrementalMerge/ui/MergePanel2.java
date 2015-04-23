@@ -580,7 +580,7 @@ public class MergePanel2 implements DiffViewer {
     }
 
     public int[] getFragmentStartingLines() {
-      return myMergeList.getChanges(mySide).getLineBlocks().getBeginnings(MergeList.BRANCH_SIDE);
+      return myMergeList.getChanges(mySide).getNonAppliedLineBlocks().getBeginnings(MergeList.BRANCH_SIDE);
     }
   }
 
@@ -594,7 +594,7 @@ public class MergePanel2 implements DiffViewer {
       if (myMergeList != null) {
         for (int i = 0; i < 2; i++) {
           FragmentSide branchSide = FragmentSide.fromIndex(i);
-          beginnings.addAll(myMergeList.getChanges(branchSide).getLineBlocks().getBeginnings(MergeList.BASE_SIDE));
+          beginnings.addAll(myMergeList.getChanges(branchSide).getNonAppliedLineBlocks().getBeginnings(MergeList.BASE_SIDE));
         }
       }
       int[] result = beginnings.toArray();
