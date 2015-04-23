@@ -263,19 +263,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     @Override
     public CodeStyleScheme createNewScheme(@Nullable String targetName) {
       if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
-
-      for (CodeStyleScheme scheme : myModel.getSchemes()) {
-        if (targetName.equals(scheme.getName())) {
-          int result = Messages.showYesNoDialog(myContentPane,
-                                                ApplicationBundle.message("message.code.style.scheme.already.exists", targetName),
-                                                ApplicationBundle.message("title.code.style.settings.import"),
-                                                Messages.getQuestionIcon());
-          if (result != Messages.YES) {
-            return null;
-          }
-        }
-      }
-      int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), targetName);
+      final int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), targetName);
       mySchemesTable.getSelectionModel().setSelectionInterval(row, row);
       return mySchemesTableModel.getSchemeAt(row);
     }
