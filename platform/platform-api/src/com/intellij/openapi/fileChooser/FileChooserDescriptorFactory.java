@@ -22,7 +22,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileChooserDescriptorFactory {
-  private FileChooserDescriptorFactory() { }
+  private FileChooserDescriptorFactory() {
+  }
 
   public static FileChooserDescriptor createAllButJarContentsDescriptor() {
     return new FileChooserDescriptor(true, true, true, true, false, true);
@@ -51,6 +52,10 @@ public class FileChooserDescriptorFactory {
 
   public static FileChooserDescriptor createSingleLocalFileDescriptor() {
     return new FileChooserDescriptor(true, true, true, true, false, false);
+  }
+
+  public static FileChooserDescriptor createSingleFileDescriptor() {
+    return createSingleLocalFileDescriptor();
   }
 
   public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType) {
@@ -92,31 +97,41 @@ public class FileChooserDescriptorFactory {
     });
   }
 
-  /** @deprecated use {@link #createSingleFileDescriptor(FileType)} or {@link #createSingleFileOrFolderDescriptor(FileType)} (to be removed in IDEA 14) */
+  /**
+   * @deprecated use {@link #createSingleFileDescriptor(FileType)} or {@link #createSingleFileOrFolderDescriptor(FileType)} (to be removed in IDEA 14)
+   */
   @SuppressWarnings("UnusedDeclaration")
   public static FileChooserDescriptor createSingleFileDescriptor(final FileType fileType, final boolean supportDirectories) {
     return supportDirectories ? createSingleFileOrFolderDescriptor(fileType) : createSingleFileDescriptor(fileType);
   }
 
-  /** @deprecated not very useful (to be removed in IDEA 15) */
+  /**
+   * @deprecated not very useful (to be removed in IDEA 15)
+   */
   @SuppressWarnings("UnusedDeclaration")
   public static FileChooserDescriptor getDirectoryChooserDescriptor(String objectName) {
     return createSingleFolderDescriptor().withTitle("Select " + objectName);
   }
 
-  /** @deprecated not very useful (to be removed in IDEA 15) */
+  /**
+   * @deprecated not very useful (to be removed in IDEA 15)
+   */
   @SuppressWarnings("UnusedDeclaration")
   public static FileChooserDescriptor getFileChooserDescriptor(String objectName) {
     return createSingleFileNoJarsDescriptor().withTitle("Select " + objectName);
   }
 
-  /** @deprecated use {@link #createSingleFileNoJarsDescriptor()} (to be removed in IDEA 15) */
+  /**
+   * @deprecated use {@link #createSingleFileNoJarsDescriptor()} (to be removed in IDEA 15)
+   */
   @SuppressWarnings({"UnusedDeclaration", "deprecation"})
   public static FileChooserDescriptorBuilder onlyFiles() {
     return FileChooserDescriptorBuilder.onlyFiles();
   }
 
-  /** @deprecated use {@link #createSingleFileOrFolderDescriptor()} ()} (to be removed in IDEA 15) */
+  /**
+   * @deprecated use {@link #createSingleFileOrFolderDescriptor()} ()} (to be removed in IDEA 15)
+   */
   @SuppressWarnings({"UnusedDeclaration", "deprecation"})
   public static FileChooserDescriptorBuilder filesAndFolders() {
     return FileChooserDescriptorBuilder.filesAndFolders();
