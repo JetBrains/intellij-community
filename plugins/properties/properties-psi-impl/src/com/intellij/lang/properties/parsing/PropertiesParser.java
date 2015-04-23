@@ -53,13 +53,19 @@ public class PropertiesParser implements PsiParser {
 
   private static CharSequence findKeyCharacters(LighterASTNode newNode, FlyweightCapableTreeStructure<LighterASTNode> structure) {
     Ref<LighterASTNode[]> childrenRef = Ref.create(null);
-    structure.getChildren(newNode, childrenRef);
+    int childrenCount = structure.getChildren(newNode, childrenRef);
     LighterASTNode[] children = childrenRef.get();
-    for (int i = 0; i < children.length; ++i) {
-      if (children[i].getTokenType() == PropertiesTokenTypes.KEY_CHARACTERS)
-        return ((LighterASTTokenNode) children[i]).getText();
+
+    try {
+      for (int i = 0; i < children.length; ++i) {
+        if (children[i].getTokenType() == PropertiesTokenTypes.KEY_CHARACTERS)
+          return ((LighterASTTokenNode) children[i]).getText();
+      }
+      return null;
     }
-    return null;
+    finally {
+      structure.disposeChildren(children, childrenCount);
+    }
   }
 
 
