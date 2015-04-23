@@ -69,7 +69,8 @@ trove4j.jar
 velocity.jar
 winp-1.23.jar
 xbean.jar
-xerces.jar
+xercesImpl.jar
+xml-apis.jar
 xmlrpc-2.0.jar
 xpp3-1.1.4-min.jar
 xstream-1.4.3.jar
