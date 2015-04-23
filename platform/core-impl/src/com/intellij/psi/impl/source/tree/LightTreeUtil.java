@@ -130,5 +130,6 @@ public class LightTreeUtil {
     for (int i = 0, size = children.size(); i < size; ++i) {
       toBuffer(tree, children.get(i), buffer, skipTypes);
     }
+    tree.disposeChildren(children);
   }
 }

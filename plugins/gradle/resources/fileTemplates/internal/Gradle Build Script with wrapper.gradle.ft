@@ -1,7 +1,13 @@
 apply plugin: 'java'
 
 sourceCompatibility = 1.5
-version = '1.0'
+
+#if (${MODULE_GROUP} && ${MODULE_GROUP} != "")
+group '${MODULE_GROUP}'
+#end
+#if (${MODULE_VERSION} && ${MODULE_VERSION} != "")
+version '${MODULE_VERSION}'
+#end
 
 task wrapper(type: Wrapper) {
   gradleVersion = '1.9'

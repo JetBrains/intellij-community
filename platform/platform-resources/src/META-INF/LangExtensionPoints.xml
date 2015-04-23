@@ -514,6 +514,8 @@
                     interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"/>
     <extensionPoint name="typeDeclarationProvider"
                     interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider"/>
+    <extensionPoint name="gotoTargetConfigurator"
+                    interface="com.intellij.codeInsight.navigation.GotoTargetConfigurator"/>
     <extensionPoint name="gotoTargetRendererProvider"
                     interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider"/>
 
@@ -718,6 +720,7 @@
     <extensionPoint name="templateCompletionProcessor"
                     interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
 
+    <extensionPoint name="targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender"/>
     <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
     </extensionPoint>

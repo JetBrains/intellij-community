@@ -31,6 +31,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
@@ -47,6 +48,7 @@ import java.io.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -188,6 +190,22 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent {
           myExternalRootProjects.put(key, externalProjectInfo);
 
           changed.set(true);
+        }
+
+        // restore linked project sub-modules
+        ExternalProjectSettings linkedProjectSettings =
+          manager.getSettingsProvider().fun(myProject).getLinkedProjectSettings(externalProjectPath);
+        if (linkedProjectSettings != null && ContainerUtil.isEmpty(linkedProjectSettings.getModules())) {
+
+          final Set<String> modulePaths = ContainerUtil.map2Set(
+            ExternalSystemApiUtil.findAllRecursively(externalProjectInfo.getExternalProjectStructure(), ProjectKeys.MODULE),
+            new Function<DataNode<ModuleData>, String>() {
+              @Override
+              public String fun(DataNode<ModuleData> node) {
+                return node.getData().getLinkedExternalProjectPath();
+              }
+            });
+          linkedProjectSettings.setModules(modulePaths);
         }
       }
     }

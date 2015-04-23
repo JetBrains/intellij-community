@@ -52,7 +52,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
   @Nullable
   @Override
   public String[] getSupportedExtensions() {
-    return BUILD_FILE_EXTENSIONS;
+    return new String[] {GradleConstants.DEFAULT_SCRIPT_NAME, GradleConstants.SETTINGS_FILE_NAME};
   }
 
   @Override

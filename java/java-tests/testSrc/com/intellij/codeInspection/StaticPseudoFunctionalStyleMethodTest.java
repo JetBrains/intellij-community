@@ -83,6 +83,14 @@ public class StaticPseudoFunctionalStyleMethodTest extends JavaCodeInsightFixtur
     doTest();
   }
 
+  public void testFindWithDefaultValue() {
+    doTest();
+  }
+
+  public void testFilterWithInstanceOf() {
+    doTest();
+  }
+
   public void _testReplaceWithMethodReference() {
     doTest();
   }

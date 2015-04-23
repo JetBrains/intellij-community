@@ -171,66 +171,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @TestOnly
   public boolean stripTrailingSpaces(Project project) {
-    return stripTrailingSpaces(project, false, false, -1, -1);
-  }
-
-  /**
-   * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret being in the way
-   *
-   * @deprecated should be replaced with {@link #stripTrailingSpaces(com.intellij.openapi.project.Project, boolean, boolean, int[])}
-   * once multicaret logic will become unconditional (not controlled by configuration flag)
-   */
-  boolean stripTrailingSpaces(@Nullable final Project project,
-                              boolean inChangedLinesOnly,
-                              boolean virtualSpaceEnabled,
-                              int caretLine,
-                              int caretOffset) {
-    if (!isStripTrailingSpacesEnabled) {
-      return true;
-    }
-
-    boolean markAsNeedsStrippingLater = false;
-    CharSequence text = myText;
-    RangeMarker caretMarker = caretOffset < 0 || caretOffset > getTextLength() ? null : createRangeMarker(caretOffset, caretOffset);
-    try {
-      LineSet lineSet = getLineSet();
-      for (int line = 0; line < lineSet.getLineCount(); line++) {
-        if (inChangedLinesOnly && !lineSet.isModified(line)) continue;
-        int whiteSpaceStart = -1;
-        final int lineEnd = lineSet.getLineEnd(line) - lineSet.getSeparatorLength(line);
-        int lineStart = lineSet.getLineStart(line);
-        for (int offset = lineEnd - 1; offset >= lineStart; offset--) {
-          char c = text.charAt(offset);
-          if (c != ' ' && c != '\t') {
-            break;
-          }
-          whiteSpaceStart = offset;
-        }
-        if (whiteSpaceStart == -1) continue;
-        if (!virtualSpaceEnabled && caretLine == line && caretMarker != null &&
-            caretMarker.getStartOffset() >= 0 && whiteSpaceStart < caretMarker.getStartOffset()) {
-          // mark this as a document that needs stripping later
-          // otherwise the caret would jump madly
-          markAsNeedsStrippingLater = true;
-        }
-        else {
-          final int finalStart = whiteSpaceStart;
-          // document must be unblocked by now. If not, some Save handler attempted to modify PSI
-          // which should have been caught by assertion in com.intellij.pom.core.impl.PomModelImpl.runTransaction
-          DocumentUtil.writeInRunUndoTransparentAction(new DocumentRunnable(DocumentImpl.this, project) {
-            @Override
-            public void run() {
-              deleteString(finalStart, lineEnd);
-            }
-          });
-          text = myText;
-        }
-      }
-    }
-    finally {
-      if (caretMarker != null) caretMarker.dispose();
-    }
-    return markAsNeedsStrippingLater;
+    return stripTrailingSpaces(project, false, false, new int[0]);
   }
 
   /**
@@ -640,13 +581,13 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
    * <pre>
    * <ol>
    *   <li>
-   *     All {@link #addDocumentListener(com.intellij.openapi.editor.event.DocumentListener) registered listeners} are notified
-   *     {@link com.intellij.openapi.editor.event.DocumentListener#beforeDocumentChange(com.intellij.openapi.editor.event.DocumentEvent) before the change};
+   *     All {@link #addDocumentListener(DocumentListener) registered listeners} are notified
+   *     {@link DocumentListener#beforeDocumentChange(DocumentEvent) before the change};
    *   </li>
    *   <li>The change is performed </li>
    *   <li>
-   *     All {@link #addDocumentListener(com.intellij.openapi.editor.event.DocumentListener) registered listeners} are notified
-   *     {@link com.intellij.openapi.editor.event.DocumentListener#documentChanged(com.intellij.openapi.editor.event.DocumentEvent) after the change};
+   *     All {@link #addDocumentListener(DocumentListener) registered listeners} are notified
+   *     {@link DocumentListener#documentChanged(DocumentEvent) after the change};
    *   </li>
    * </ol>
    * </pre>
