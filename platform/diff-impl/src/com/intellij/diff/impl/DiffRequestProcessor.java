@@ -34,6 +34,7 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.LineRange;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -41,6 +42,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -668,7 +670,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       if (!isNavigationEnabled() || !hasNextChange() || !getSettings().isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.NEXT) {
-        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), true);
+        notifyMessage(e, true);
         myIterationState = IterationState.NEXT;
         return;
       }
@@ -717,7 +719,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       if (!isNavigationEnabled() || !hasPrevChange() || !getSettings().isGoToNextFileOnNextDifference()) return;
 
       if (myIterationState != IterationState.PREV) {
-        notifyMessage(e.getData(DiffDataKeys.CURRENT_EDITOR), false);
+        notifyMessage(e, false);
         myIterationState = IterationState.PREV;
         return;
       }
@@ -726,30 +728,52 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private void notifyMessage(@Nullable Editor editor, boolean next) {
+  private void notifyMessage(@NotNull AnActionEvent e, boolean next) {
+    Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
+
     // TODO: provide "change" word in chain UserData - for tests/etc
     String message = next ? "Press again to go to the next file" : "Press again to go to the previous file";
 
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
     Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUI.scale(40) : JBUI.scale(40));
 
-    final HintHint hintHint = new HintHint(myContentPanel, point)
-      .setPreferredPosition(next ? Balloon.Position.above : Balloon.Position.below)
-      .setAwtTooltip(true)
-      .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
-      .setTextBg(HintUtil.INFORMATION_COLOR)
-      .setShowImmediately(true);
-
     if (editor == null) {
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      final HintHint hintHint = createNotifyHint(myContentPanel, point, next);
       hint.show(myContentPanel, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
     }
     else {
-      Point editorPoint = SwingUtilities.convertPoint(myContentPanel, point, editor.getComponent());
+      int x = SwingUtilities.convertPoint(myContentPanel, point, editor.getComponent()).x;
+
+      JComponent header = editor.getHeaderComponent();
+      int shift = editor.getScrollingModel().getVerticalScrollOffset() - (header != null ? header.getHeight() : 0);
+
+      LogicalPosition position;
+      LineRange changeRange = e.getData(DiffDataKeys.CURRENT_CHANGE_RANGE);
+      if (changeRange == null) {
+        position = new LogicalPosition(editor.getCaretModel().getLogicalPosition().line + (next ? 1 : 0), 0);
+      }
+      else {
+        position = new LogicalPosition(next ? changeRange.end : changeRange.start, 0);
+      }
+      int y = editor.logicalPositionToXY(position).y - shift;
+
+      Point editorPoint = new Point(x, y);
+      final HintHint hintHint = createNotifyHint(editor.getComponent(), editorPoint, !next);
       HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, editorPoint, HintManager.HIDE_BY_ANY_KEY |
                                                                                   HintManager.HIDE_BY_TEXT_CHANGE |
                                                                                   HintManager.HIDE_BY_SCROLLING, 0, false, hintHint);
     }
+  }
+
+  @NotNull
+  private static HintHint createNotifyHint(@NotNull JComponent component, @NotNull Point point, boolean above) {
+    return new HintHint(component, point)
+      .setPreferredPosition(above ? Balloon.Position.above : Balloon.Position.below)
+      .setAwtTooltip(true)
+      .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setTextBg(HintUtil.INFORMATION_COLOR)
+      .setShowImmediately(true);
   }
 
   // Iterate requests
