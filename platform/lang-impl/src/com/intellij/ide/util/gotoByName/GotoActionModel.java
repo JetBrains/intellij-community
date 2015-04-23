@@ -53,6 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -663,6 +664,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       final Object value = ((MatchedValue) matchedValue).value;
       String pattern = ((MatchedValue)matchedValue).pattern;
 
+      Border eastBorder = IdeBorderFactory.createEmptyBorder(0, 0, 0, 2);
       if (value instanceof ActionWrapper) {
         final ActionWrapper actionWithParentGroup = (ActionWrapper)value;
         final AnAction anAction = actionWithParentGroup.getAction();
@@ -677,7 +679,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
         final Shortcut shortcut = preferKeyboardShortcut(KeymapManager.getInstance().getActiveKeymap().getShortcuts(ActionManager.getInstance().getId(anAction)));
         if (shortcut != null) {
-          nameComponent.append(" (" + KeymapUtil.getShortcutText(shortcut) + ")", new SimpleTextAttributes(STYLE_PLAIN, groupFg));
+          nameComponent.append(" " + KeymapUtil.getShortcutText(shortcut), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, groupFg));
         }
 
         if (toggle) {
@@ -690,6 +692,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           if (groupName != null) {
             final JLabel groupLabel = new JLabel(groupName);
             groupLabel.setBackground(bg);
+            groupLabel.setBorder(eastBorder);
             groupLabel.setForeground(groupFg);
             panel.add(groupLabel, BorderLayout.EAST);
           }
@@ -728,6 +731,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           final JLabel settingsLabel = new JLabel(myGroupNamer.fun((OptionDescription)value));
           settingsLabel.setForeground(groupFg);
           settingsLabel.setBackground(bg);
+          settingsLabel.setBorder(eastBorder);
           panel.add(settingsLabel, BorderLayout.EAST);
         }
       }
