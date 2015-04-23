@@ -182,6 +182,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public void init() {
     loadComponents();
+
+    for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
+      try {
+        listener.beforeApplicationLoaded(this);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
     super.init();
   }
 
