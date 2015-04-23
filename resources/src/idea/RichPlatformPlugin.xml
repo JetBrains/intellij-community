@@ -326,8 +326,6 @@
 
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
-    <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.CopyPasteFoldingProcessor"/>
-
     <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
