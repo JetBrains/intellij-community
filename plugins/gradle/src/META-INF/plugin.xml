@@ -47,6 +47,7 @@
     <extensionPoint name="taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>
     <extensionPoint name="resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"/>
     <extensionPoint name="settingsControlProvider" interface="org.jetbrains.plugins.gradle.service.settings.GradleSettingsControlProvider"/>
+    <extensionPoint name="importCustomizer" interface="org.jetbrains.plugins.gradle.service.project.GradleImportCustomizer"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">

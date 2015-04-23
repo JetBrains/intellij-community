@@ -15,7 +15,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <html.scriptContentProvider language="JSON" implementationClass="com.intellij.json.JsonScriptContentProvider"/>
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>

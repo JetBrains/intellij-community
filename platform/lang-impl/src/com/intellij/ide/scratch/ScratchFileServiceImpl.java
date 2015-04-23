@@ -28,10 +28,12 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
@@ -116,10 +118,24 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     final FileEditorManagerAdapter editorListener = new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        if (!isEditable(file)) return;
         RootType rootType = getRootType(file);
-        if (rootType != null) {
-          rootType.fileOpened(file, source);
-        }
+        if (rootType == null) return;
+        rootType.fileOpened(file, source);
+      }
+
+      @Override
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        if (Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) return;
+        if (!isEditable(file)) return;
+
+        RootType rootType = getRootType(file);
+        if (rootType == null) return;
+        rootType.fileClosed(file, source);
+      }
+
+      boolean isEditable(@NotNull VirtualFile file) {
+        return FileDocumentManager.getInstance().getDocument(file) != null;
       }
     };
     ProjectManagerAdapter projectListener = new ProjectManagerAdapter() {

@@ -45,13 +45,13 @@ import com.intellij.ui.components.JBLoadingPanelListener;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
@@ -100,11 +100,11 @@ public class DirDiffPanel implements Disposable, DataProvider {
     myDiffWindow = wnd;
     mySourceDirField.setText(model.getSourceDir().getPath());
     myTargetDirField.setText(model.getTargetDir().getPath());
-    mySourceDirField.setBorder(new EmptyBorder(0, 0, 0, 8));
-    myTargetDirField.setBorder(new EmptyBorder(0, 0, 0, 12));
+    mySourceDirField.setBorder(JBUI.Borders.emptyRight(8));
+    myTargetDirField.setBorder(JBUI.Borders.emptyRight(12));
     mySourceDirLabel.setIcon(model.getSourceDir().getIcon());
     myTargetDirLabel.setIcon(model.getTargetDir().getIcon());
-    myTargetDirLabel.setBorder(new EmptyBorder(0, 8, 0, 0));
+    myTargetDirLabel.setBorder(JBUI.Borders.emptyLeft(8));
     myModel.setTable(myTable);
     myModel.setPanel(this);
     Disposer.register(this, myModel);
@@ -202,17 +202,17 @@ public class DirDiffPanel implements Disposable, DataProvider {
     });
     final TableColumnModel columnModel = myTable.getColumnModel();
     final TableColumn operationColumn = columnModel.getColumn((columnModel.getColumnCount() - 1) / 2);
-    operationColumn.setMaxWidth(25);
-    operationColumn.setMinWidth(25);
+    operationColumn.setMaxWidth(JBUI.scale(25));
+    operationColumn.setMinWidth(JBUI.scale(25));
     for (int i = 0; i < columnModel.getColumnCount(); i++) {
       final String name = myModel.getColumnName(i);
       final TableColumn column = columnModel.getColumn(i);
       if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
-        column.setMaxWidth(90);
-        column.setMinWidth(90);
+        column.setMaxWidth(JBUI.scale(90));
+        column.setMinWidth(JBUI.scale(90));
       } else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
-        column.setMaxWidth(120);
-        column.setMinWidth(120);
+        column.setMaxWidth(JBUI.scale(120));
+        column.setMinWidth(JBUI.scale(120));
       }
     }
     final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, myDiffPanel);
@@ -244,7 +244,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
           if (count < 3) {
             JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(" Use Space button to change operation"))
               .setFadeoutTime(5000)
-              .setContentInsets(new Insets(15, 15, 15, 15))
+              .setContentInsets(JBUI.insets(15))
               .createBalloon().show(new RelativePoint(myTable, new Point(myTable.getWidth() / 2, 0)), Balloon.Position.above);
             PropertiesComponent.getInstance().setValue("dir.diff.space.button.info", String.valueOf(count + 1));
           }

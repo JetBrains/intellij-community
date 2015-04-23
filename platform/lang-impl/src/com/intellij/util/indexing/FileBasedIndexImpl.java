@@ -2217,6 +2217,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void releaseForceUpdateSemaphore(UpdateSemaphore semaphore) {
       myUpdateSemaphoreRef.compareAndSet(semaphore, null);
     }
+    private static final int MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT = 2;
 
     private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo) {
       myChangedFilesCollector.tryToEnsureAllInvalidateTasksCompleted();
@@ -2226,17 +2227,22 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       do {
         updateSemaphore = obtainForceUpdateSemaphore();
         try {
+          int filesFromOtherProjectUpdated = 0;
           for (VirtualFile file : getAllFilesToUpdate()) {
+            boolean fileOutOfCurrentProject = false;
+
             if (indexableFilesFilter != null && file instanceof VirtualFileWithId && !indexableFilesFilter.containsFileId(
               ((VirtualFileWithId)file).getId())) {
-              continue;
+              if (filesFromOtherProjectUpdated >= MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT || restrictedTo != null) continue;
+              fileOutOfCurrentProject = true;
             }
 
-            if (filter == null || filter.accept(file) || Comparing.equal(file, restrictedTo)) {
+            if (filter == null || filter.accept(file) || fileOutOfCurrentProject || Comparing.equal(file, restrictedTo)) {
               try {
                 updateSemaphore.down();
                 // process only files that can affect result
-                processFileImpl(project, new com.intellij.ide.caches.FileContent(file));
+                boolean processed = processFileImpl(project, new com.intellij.ide.caches.FileContent(file));
+                if (fileOutOfCurrentProject && processed) ++filesFromOtherProjectUpdated;
               }
               catch (ProcessCanceledException e) {
                 updateSemaphore.reportUpdateCanceled();
@@ -2268,7 +2274,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       while (updateSemaphore.isUpdateCanceled());
     }
 
-    private void processFileImpl(Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
+    private boolean processFileImpl(Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
       final VirtualFile file = fileContent.getVirtualFile();
       final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
@@ -2290,7 +2296,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         finally {
           IndexingStamp.flushCache(file);
         }
+        return true;
       }
+      return false;
     }
 
     @Override

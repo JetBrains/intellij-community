@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
@@ -28,13 +30,14 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -87,31 +90,39 @@ public class EclipseUserLibrariesHelper {
   }
 
 
-  public static void readProjectLibrariesContent(File exportedFile, Project project, Collection<String> unknownLibraries)
+  public static void readProjectLibrariesContent(@NotNull VirtualFile exportedFile, Project project, Collection<String> unknownLibraries)
     throws IOException, JDOMException {
-    if (exportedFile.exists()) {
-      final LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
-      final Element rootElement = JDOMUtil.loadDocument(exportedFile).getRootElement();
-      for (Object o : rootElement.getChildren("library")) {
-        final Element libElement = (Element)o;
-        final String libName = libElement.getAttributeValue("name");
+    if (!exportedFile.isValid()) {
+      return;
+    }
+
+    LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
+    Element element = JDOMUtil.load(exportedFile.getInputStream());
+    AccessToken token = WriteAction.start();
+    try {
+      for (Element libElement : element.getChildren("library")) {
+        String libName = libElement.getAttributeValue("name");
         Library libraryByName = libraryTable.getLibraryByName(libName);
         if (libraryByName == null) {
-          final LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
+          LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
           libraryByName = model.createLibrary(libName);
           model.commit();
         }
         if (libraryByName != null) {
-          final Library.ModifiableModel model = libraryByName.getModifiableModel();
-          for (Object a : libElement.getChildren("archive")) {
-            String rootPath = ((Element)a).getAttributeValue("path");
-            if (rootPath.startsWith("/")) { //relative to workspace root
+          Library.ModifiableModel model = libraryByName.getModifiableModel();
+          for (Element a : libElement.getChildren("archive")) {
+            String rootPath = a.getAttributeValue("path");
+            // IDEA-138039 Eclipse import: Unix file system: user library gets wrong paths
+            LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+            VirtualFile localFile = fileSystem.findFileByPath(rootPath);
+            if (rootPath.startsWith("/") && (localFile == null || !localFile.isValid())) {
+              // relative to workspace root
               rootPath = project.getBaseDir().getPath() + rootPath;
+              localFile = fileSystem.findFileByPath(rootPath);
             }
-            String url = VfsUtil.pathToUrl(rootPath);
-            final VirtualFile localFile = VirtualFileManager.getInstance().findFileByUrl(url);
+            String url = localFile == null ? VfsUtilCore.pathToUrl(rootPath) : localFile.getUrl();
             if (localFile != null) {
-              final VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
+              VirtualFile jarFile = JarFileSystem.getInstance().getJarRootForLocalFile(localFile);
               if (jarFile != null) {
                 url = jarFile.getUrl();
               }
@@ -122,6 +133,9 @@ public class EclipseUserLibrariesHelper {
         }
         unknownLibraries.remove(libName);  //ignore finally found libraries
       }
+    }
+    finally {
+      token.finish();
     }
   }
 }

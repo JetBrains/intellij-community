@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
        storages = {@Storage(file = StoragePathMacros.PROJECT_FILE)}
 )
 public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
-  public String URL = "http://127.0.0.1:8888";
+  public static String DEFAULT_URL = "http://127.0.0.1:8888";
+  public String URL = DEFAULT_URL;
 
   public static IpnbSettings getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, IpnbSettings.class);

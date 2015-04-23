@@ -514,6 +514,8 @@
                     interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"/>
     <extensionPoint name="typeDeclarationProvider"
                     interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider"/>
+    <extensionPoint name="gotoTargetConfigurator"
+                    interface="com.intellij.codeInsight.navigation.GotoTargetConfigurator"/>
     <extensionPoint name="gotoTargetRendererProvider"
                     interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider"/>
 

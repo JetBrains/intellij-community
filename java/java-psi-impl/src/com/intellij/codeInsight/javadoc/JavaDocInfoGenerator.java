@@ -1269,7 +1269,7 @@ public class JavaDocInfoGenerator {
         }
       }
       else {
-        buffer.append(element.getText());
+        buffer.append(StringUtil.replaceUnicodeEscapeSequences(element.getText()));
       }
     }
   }
@@ -1291,7 +1291,7 @@ public class JavaDocInfoGenerator {
     text = text.replaceAll("<", LT);
     text = text.replaceAll(">", GT);
 
-    buffer.append(text);
+    buffer.append(StringUtil.replaceUnicodeEscapeSequences(text));
   }
 
   private static void generateLinkValue(PsiInlineDocTag tag, StringBuilder buffer, boolean plainLink) {

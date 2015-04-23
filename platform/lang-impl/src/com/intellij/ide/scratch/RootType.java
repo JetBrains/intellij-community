@@ -106,6 +106,9 @@ public abstract class RootType {
   public void fileOpened(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
   }
 
+  public void fileClosed(@NotNull VirtualFile file, @NotNull FileEditorManager source) {
+  }
+
   @Nullable
   protected static Language substituteLanguageImpl(Language language, VirtualFile file, Project project) {
     return language != null && language != ScratchFileType.INSTANCE.getLanguage() ?

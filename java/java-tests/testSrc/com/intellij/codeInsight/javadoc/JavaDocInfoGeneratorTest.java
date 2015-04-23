@@ -77,6 +77,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     verifyJavaDoc(getTestClass());
   }
   
+  public void testUnicodeEscapes() throws Exception {
+    verifyJavaDoc(getTestClass());
+  }
+  
   public void testEnumValueOf() throws Exception {
     doTestMethod();
   }

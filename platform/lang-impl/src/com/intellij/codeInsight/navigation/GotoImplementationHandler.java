@@ -21,6 +21,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -63,7 +64,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
           return false;
         }
       }.searchImplementations(editor, source, offset), Collections.<AdditionalAction>emptyList());
-      
+
       gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference);
     } else {
       gotoData = new GotoData(source, new ImplementationSearcher(){
@@ -80,7 +81,14 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       }.searchImplementations(editor, source, offset),
                               Collections.<AdditionalAction>emptyList());
     }
+    postConfigure(editor, gotoData);
     return gotoData;
+  }
+
+  private static void postConfigure(@NotNull Editor editor, @NotNull GotoTargetHandler.GotoData gotoData) {
+    for (GotoTargetConfigurator configurator : Extensions.getExtensions(GotoTargetConfigurator.EP_NAME)) {
+      configurator.postConfigure(editor, gotoData);
+    }
   }
 
   @NotNull

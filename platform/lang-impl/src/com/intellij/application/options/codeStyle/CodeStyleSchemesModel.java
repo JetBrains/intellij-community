@@ -279,4 +279,8 @@ public class CodeStyleSchemesModel {
     });
     return schemes;
   }
+
+  public Project getProject() {
+    return myProject;
+  }
 }
