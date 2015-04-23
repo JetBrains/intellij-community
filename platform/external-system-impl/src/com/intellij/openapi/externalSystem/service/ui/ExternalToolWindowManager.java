@@ -5,7 +5,10 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -41,6 +44,25 @@ public class ExternalToolWindowManager {
           if (toolWindow != null) {
             toolWindow.setAvailable(true, null);
           }
+          else {
+            StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
+              @Override
+              public void run() {
+                if (project.isDisposed()) return;
+
+                ExternalSystemUtil.ensureToolWindowInitialized(project, manager.getSystemId());
+                ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
+                  public void run() {
+                    if (project.isDisposed()) return;
+                    ToolWindow toolWindow = getToolWindow(project, manager.getSystemId());
+                    if (toolWindow != null) {
+                      toolWindow.setAvailable(true, null);
+                    }
+                  }
+                });
+              }
+            });
+          }
         }
 
         @Override
@@ -53,7 +75,7 @@ public class ExternalToolWindowManager {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
               @Override
               public void run() {
-                toolWindow.setAvailable(false, null); 
+                toolWindow.setAvailable(false, null);
               }
             });
           }

@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.action.task;
-
-import com.intellij.openapi.externalSystem.action.ExternalSystemViewGearAction;
-import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
-import org.jetbrains.annotations.NotNull;
+package com.intellij.openapi.externalSystem.model.project;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/31/2014
+ * @since 4/14/2015
  */
-public class ShowInheritedTasksAction extends ExternalSystemViewGearAction {
-  @Override
-  protected boolean isSelected(@NotNull ExternalProjectsViewImpl view) {
-    return view.showInheritedTasks();
-  }
+public interface ProjectCoordinate {
+  String getGroupId();
 
-  @Override
-  protected void setSelected(@NotNull ExternalProjectsViewImpl view, boolean value) {
-    view.setShowInheritedTasks(value);
-  }
+  String getArtifactId();
+
+  String getVersion();
 }

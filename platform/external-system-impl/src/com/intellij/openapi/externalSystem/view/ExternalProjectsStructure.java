@@ -19,11 +19,9 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.ui.treeStructure.SimpleTreeBuilder;
-import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import com.intellij.ui.treeStructure.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -42,21 +40,23 @@ import java.util.Map;
  */
 public class ExternalProjectsStructure extends SimpleTreeStructure {
   private final Project myProject;
-  private final ExternalProjectsView myExternalProjectsView;
+  private ExternalProjectsView myExternalProjectsView;
   private final SimpleTreeBuilder myTreeBuilder;
-  private final RootNode myRoot;
+  private RootNode myRoot;
 
   private final Map<String, ExternalSystemNode> myNodeMapping = new THashMap<String, ExternalSystemNode>();
 
-  public ExternalProjectsStructure(Project project, ExternalProjectsView externalProjectsView, SimpleTree tree) {
+  public ExternalProjectsStructure(Project project, SimpleTree tree) {
     myProject = project;
-    myExternalProjectsView = externalProjectsView;
 
     configureTree(tree);
 
     myTreeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
     Disposer.register(myProject, myTreeBuilder);
+  }
 
+  public void init(ExternalProjectsView externalProjectsView) {
+    myExternalProjectsView = externalProjectsView;
     myRoot = new RootNode();
     myTreeBuilder.initRoot();
     myTreeBuilder.expand(myRoot, null);
@@ -66,11 +66,11 @@ public class ExternalProjectsStructure extends SimpleTreeStructure {
     return myProject;
   }
 
-  void updateFrom(SimpleNode node) {
+  public void updateFrom(SimpleNode node) {
     myTreeBuilder.addSubtreeToUpdateByElement(node);
   }
 
-  void updateUpTo(SimpleNode node) {
+  public void updateUpTo(SimpleNode node) {
     SimpleNode each = node;
     while (each != null) {
       updateFrom(each);
@@ -88,16 +88,40 @@ public class ExternalProjectsStructure extends SimpleTreeStructure {
     tree.setShowsRootHandles(true);
   }
 
+  public void accept(@NotNull SimpleNodeVisitor visitor) {
+    if (myTreeBuilder.getTree() instanceof SimpleTree) {
+      ((SimpleTree)myTreeBuilder.getTree()).accept(myTreeBuilder, visitor);
+    }
+  }
+
+  public void select(SimpleNode node) {
+    myTreeBuilder.select(node, null);
+  }
+
+  protected Class<? extends ExternalSystemNode>[] getVisibleNodesClasses() {
+    return null;
+  }
+
   public void updateProjects(Collection<DataNode<ProjectData>> toImport) {
+    List<String> orphanProjects = ContainerUtil.mapNotNull(
+      myNodeMapping.entrySet(), new Function<Map.Entry<String, ExternalSystemNode>, String>() {
+        @Override
+        public String fun(Map.Entry<String, ExternalSystemNode> entry) {
+          return entry.getValue() instanceof ProjectNode ? entry.getKey() : null;
+        }
+      });
     for (DataNode<ProjectData> each : toImport) {
       final ProjectData projectData = each.getData();
-      ExternalSystemNode projectNode = findNodeFor(projectData.getLinkedExternalProjectPath());
+      final String projectPath = projectData.getLinkedExternalProjectPath();
+      orphanProjects.remove(projectPath);
+
+      ExternalSystemNode projectNode = findNodeFor(projectPath);
 
       if (projectNode instanceof ProjectNode) {
         doMergeChildrenChanges(projectNode, each, new ProjectNode(myExternalProjectsView, each));
       }
       else {
-        ExternalSystemNode node = myNodeMapping.remove(projectData.getLinkedExternalProjectPath());
+        ExternalSystemNode node = myNodeMapping.remove(projectPath);
         if (node != null) {
           SimpleNode parent = node.getParent();
           if (parent instanceof ExternalSystemNode) {
@@ -106,12 +130,24 @@ public class ExternalProjectsStructure extends SimpleTreeStructure {
         }
 
         projectNode = new ProjectNode(myExternalProjectsView, each);
-        myNodeMapping.put(projectData.getLinkedExternalProjectPath(), projectNode);
+        myNodeMapping.put(projectPath, projectNode);
       }
       if (toImport.size() == 0) {
         myTreeBuilder.expand(projectNode, null);
       }
       doUpdateProject((ProjectNode)projectNode);
+    }
+
+    //remove orphan projects from view
+    for (String orphanProjectPath : orphanProjects) {
+      ExternalSystemNode projectNode = myNodeMapping.remove(orphanProjectPath);
+      if (projectNode instanceof ProjectNode) {
+        SimpleNode parent = projectNode.getParent();
+        if (parent instanceof ExternalSystemNode) {
+          ((ExternalSystemNode)parent).remove(projectNode);
+          updateUpTo(projectNode);
+        }
+      }
     }
   }
 
