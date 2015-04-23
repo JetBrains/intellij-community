@@ -398,7 +398,16 @@ public class PyBlock implements ASTBlock {
         return !PyTokenTypes.CLOSE_BRACES.contains(elem.getLastChild().getNode().getElementType());
       }
       else {
-        return hasHangingIndent(items[0]);
+        final PsiElement firstItem = items[0];
+        if (firstItem instanceof PyNamedParameter) {
+          final PyExpression defaultValue = ((PyNamedParameter)firstItem).getDefaultValue();
+          return defaultValue != null && hasHangingIndent(defaultValue);
+        }
+        else if (firstItem instanceof PyKeywordArgument) {
+          final PyExpression valueExpression = ((PyKeywordArgument)firstItem).getValueExpression();
+          return valueExpression != null && hasHangingIndent(valueExpression);
+        }
+        return hasHangingIndent(firstItem);
       }
     }
     else {
