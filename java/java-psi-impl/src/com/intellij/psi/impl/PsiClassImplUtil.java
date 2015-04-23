@@ -378,6 +378,14 @@ public class PsiClassImplUtil {
       ElementClassFilter filter = key == MemberType.CLASS ? ElementClassFilter.CLASS :
                                   key == MemberType.METHOD ? ElementClassFilter.METHOD :
                                   ElementClassFilter.FIELD;
+      final ElementClassHint classHint = new ElementClassHint() {
+        @Override
+        public boolean shouldProcess(DeclarationKind kind) {
+          return key == MemberType.CLASS && kind == DeclarationKind.CLASS ||
+                 key == MemberType.FIELD && (kind == DeclarationKind.FIELD || kind == DeclarationKind.ENUM_CONST) ||
+                 key == MemberType.METHOD && kind == DeclarationKind.METHOD;
+        }
+      };
       FilterScopeProcessor<MethodCandidateInfo> processor = new FilterScopeProcessor<MethodCandidateInfo>(filter) {
         @Override
         protected void add(@NotNull PsiElement element, @NotNull PsiSubstitutor substitutor) {
@@ -394,6 +402,12 @@ public class PsiClassImplUtil {
             }
             listByName.add(info);
           }
+        }
+
+        @Override
+        public <K> K getHint(@NotNull Key<K> hintKey) {
+          //noinspection unchecked
+          return ElementClassHint.KEY == hintKey ? (K)classHint : super.getHint(hintKey);
         }
       };
 
