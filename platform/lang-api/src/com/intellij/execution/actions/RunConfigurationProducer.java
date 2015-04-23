@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,20 @@
  */
 package com.intellij.execution.actions;
 
-import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Supports creating run configurations from context (by right-clicking a code element in the source editor or the project view). Typically,
@@ -41,6 +39,22 @@ import java.util.List;
  */
 public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   public static final ExtensionPointName<RunConfigurationProducer> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationProducer");
+
+  @NotNull
+  public static List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
+    RunConfigurationProducerService runConfigurationProducerService = RunConfigurationProducerService.getInstance(project);
+    RunConfigurationProducer[] allProducers = Extensions.getExtensions(EP_NAME);
+
+    List<RunConfigurationProducer<?>> result = ContainerUtil.newArrayListWithCapacity(allProducers.length);
+    for (RunConfigurationProducer producer : allProducers) {
+      if (!runConfigurationProducerService.isIgnored(producer)) {
+        result.add(producer);
+      }
+    }
+
+    return result;
+  }
+
   private final ConfigurationFactory myConfigurationFactory;
 
   protected RunConfigurationProducer(final ConfigurationFactory configurationFactory) {
