@@ -387,13 +387,19 @@ public class PyBlock implements ASTBlock {
     if (firstChild == null) {
       return false;
     }
-    if (PyTokenTypes.OPEN_BRACES.contains(firstChild.getNode().getElementType()) && hasLineBreaksAfter(firstChild.getNode(), 1)) {
-      return true;
-    }
-
-    if (ourHangingIndentOwners.contains(elem.getNode().getElementType())) {
+    final IElementType elementType = elem.getNode().getElementType();
+    final ASTNode firstChildNode = firstChild.getNode();
+    if (ourHangingIndentOwners.contains(elementType) && PyTokenTypes.OPEN_BRACES.contains(firstChildNode.getElementType())) {
+      if (hasLineBreaksAfter(firstChildNode, 1)) {
+        return true;
+      }
       final PsiElement[] items = getItems(elem);
-      return items.length == 0 || hasHangingIndent(items[0]);
+      if (items.length == 0) {
+        return !PyTokenTypes.CLOSE_BRACES.contains(elem.getLastChild().getNode().getElementType());
+      }
+      else {
+        return hasHangingIndent(items[0]);
+      }
     }
     else {
       return false;
