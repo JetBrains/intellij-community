@@ -546,6 +546,14 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testHangingIndentInNamedArgumentValue() {
+    doTest();
+  }
+
+  public void testHangingIndentInParameterDefaultValue() {
+    doTest();
+  }
+
   private CommonCodeStyleSettings getCommonSettings() {
     return settings().getCommonSettings(PythonLanguage.getInstance());
   }
