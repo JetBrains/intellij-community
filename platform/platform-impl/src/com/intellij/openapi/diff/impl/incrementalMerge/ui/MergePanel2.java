@@ -238,10 +238,9 @@ public class MergePanel2 implements DiffViewer {
 
     myMergeList.setMarkups(left, base, right);
     EditingSides[] sides = {getFirstEditingSide(), getSecondEditingSide()};
-    EditingSides[] sidesWithApplied = {getFirstEditingSide(true), getSecondEditingSide(true)};
     myScrollSupport.install(sides);
     for (int i = 0; i < myDividers.length; i++) {
-      myDividers[i].listenEditors(sidesWithApplied[i]);
+      myDividers[i].listenEditors(sides[i]);
     }
     if (myScrollToFirstDiff) {
       myPanel.requestScrollEditors();
@@ -257,22 +256,12 @@ public class MergePanel2 implements DiffViewer {
 
   @NotNull
   EditingSides getFirstEditingSide() {
-    return getFirstEditingSide(false);
-  }
-
-  @NotNull
-  EditingSides getFirstEditingSide(boolean appliedLineBlocks) {
-    return new MyEditingSides(FragmentSide.SIDE1, appliedLineBlocks);
+    return new MyEditingSides(FragmentSide.SIDE1);
   }
 
   @NotNull
   EditingSides getSecondEditingSide() {
-    return getSecondEditingSide(false);
-  }
-
-  @NotNull
-  EditingSides getSecondEditingSide(boolean appliedLineBlocks) {
-    return new MyEditingSides(FragmentSide.SIDE2, appliedLineBlocks);
+    return new MyEditingSides(FragmentSide.SIDE2);
   }
 
   public void setAutoScrollEnabled(boolean enabled) {
@@ -449,11 +438,9 @@ public class MergePanel2 implements DiffViewer {
 
   private class MyEditingSides implements EditingSides {
     private final FragmentSide mySide;
-    private final boolean myAppliedLineBlocks;
 
-    private MyEditingSides(FragmentSide side, boolean appliedLineBlocks) {
+    private MyEditingSides(FragmentSide side) {
       mySide = side;
-      myAppliedLineBlocks = appliedLineBlocks;
     }
 
     @Nullable
@@ -462,11 +449,7 @@ public class MergePanel2 implements DiffViewer {
     }
 
     public LineBlocks getLineBlocks() {
-      if (myAppliedLineBlocks) {
-        return myMergeList.getChanges(mySide).getAllLineBlocks();
-      } else {
-        return myMergeList.getChanges(mySide).getLineBlocks();
-      }
+      return myMergeList.getChanges(mySide).getLineBlocks();
     }
   }
 
