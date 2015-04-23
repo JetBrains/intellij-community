@@ -63,6 +63,7 @@ public abstract class XmlElementStorage extends StateStorageBase<StorageData> {
     return storageData.getStateAndArchive(componentName);
   }
 
+  @Override
   @NotNull
   protected StorageData loadData() {
     StorageData result = createStorageData();

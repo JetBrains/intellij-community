@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -165,7 +164,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  public void load() throws IOException {
+  public void load() {
     if (myProjectManager.getDefaultProjectRootElement() != null) {
       super.load();
     }

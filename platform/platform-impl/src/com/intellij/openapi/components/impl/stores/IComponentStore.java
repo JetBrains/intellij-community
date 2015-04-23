@@ -22,7 +22,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +36,7 @@ public interface IComponentStore {
 
   boolean isReloadPossible(@NotNull Set<String> componentNames);
 
-  void load() throws IOException;
+  void load();
 
   @NotNull
   StateStorageManager getStateStorageManager();
