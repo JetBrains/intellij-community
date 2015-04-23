@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
@@ -353,7 +352,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     MapDataContext context = new MapDataContext();
     context.put(CommonDataKeys.EDITOR, getEditor(f));
     context.put(CommonDataKeys.PSI_FILE, getTestPsiFile(f));
-    context.put(CommonDataKeys.PSI_ELEMENT, TargetElementUtil.findTargetElement(getEditor(f),
+    context.put(CommonDataKeys.PSI_ELEMENT, TargetElementUtilBase.findTargetElement(getEditor(f),
                                                                               TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
                                                                               | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED));
     return context;
