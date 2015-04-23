@@ -16,6 +16,7 @@
 package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
@@ -108,7 +109,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.swing.*;
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
@@ -1016,12 +1018,13 @@ public class BuildManager implements ApplicationComponent{
       vmExecutablePath = new File(forcedCompiledJdkHome, "bin/java").getAbsolutePath();
     }
 
+    final CompilerConfiguration projectConfig = CompilerConfiguration.getInstance(project);
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
     final GeneralCommandLine cmdLine = new GeneralCommandLine();
     cmdLine.setExePath(vmExecutablePath);
     //cmdLine.addParameter("-XX:MaxPermSize=150m");
     //cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
-    final int heapSize = config.getProcessHeapSize(JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
+    final int heapSize = projectConfig.getBuildProcessHeapSize(JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
 
     cmdLine.addParameter("-Xmx" + heapSize + "m");
 
@@ -1060,8 +1063,9 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" + ThreadLocalRandom.getInitialSeedUniquifier());
 
     boolean isProfilingMode = false;
-    final String additionalOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
-    if (!StringUtil.isEmpty(additionalOptions)) {
+    final String userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
+    final String additionalOptions = !StringUtil.isEmptyOrSpaces(userAdditionalVMOptions)? userAdditionalVMOptions : projectConfig.getBuildProcessVMOptions();
+    if (!StringUtil.isEmptyOrSpaces(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
       while (tokenizer.hasMoreTokens()) {
         final String option = tokenizer.nextToken();
