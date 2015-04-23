@@ -286,9 +286,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return event;
   }
 
-  protected static Color defaultActionForeground(boolean isSelected, Presentation presentation) {
+  protected static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
     if (isSelected) return UIUtil.getListSelectionForeground();
-    if (!presentation.isEnabled() || !presentation.isVisible()) return UIUtil.getInactiveTextColor();
+    if (presentation != null && (!presentation.isEnabled() || !presentation.isVisible())) return UIUtil.getInactiveTextColor();
     return UIUtil.getListForeground();
   }
 
@@ -646,12 +646,15 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       Color bg = UIUtil.getListBackground(isSelected);
       panel.setBackground(bg);
 
+      SimpleColoredComponent nameComponent = new SimpleColoredComponent();
+      nameComponent.setBackground(bg);
+      panel.add(nameComponent, BorderLayout.CENTER);
+      
       if (matchedValue instanceof String) { //...
-        final JBLabel label = new JBLabel((String)matchedValue);
+        nameComponent.append((String)matchedValue, new SimpleTextAttributes(STYLE_PLAIN, defaultActionForeground(isSelected, null)));
         if (showIcon) {
-          label.setIcon(EMPTY_ICON);
+          panel.add(new JBLabel(EMPTY_ICON), BorderLayout.WEST);
         }
-        panel.add(label, BorderLayout.WEST);
         return panel;
       }
 
@@ -659,10 +662,6 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
 
       final Object value = ((MatchedValue) matchedValue).value;
       String pattern = ((MatchedValue)matchedValue).pattern;
-
-      SimpleColoredComponent nameComponent = new SimpleColoredComponent();
-      nameComponent.setBackground(bg);
-      panel.add(nameComponent, BorderLayout.CENTER);
 
       if (value instanceof ActionWrapper) {
         final ActionWrapper actionWithParentGroup = (ActionWrapper)value;
