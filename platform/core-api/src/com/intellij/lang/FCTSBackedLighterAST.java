@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,12 +57,13 @@ public class FCTSBackedLighterAST extends LighterAST {
     return new LighterASTNodeList(numKids, elements);
   }
 
+  @Override
   public void disposeChildren(@NotNull List<LighterASTNode> children) {
     if (children instanceof LighterASTNodeList) {
       LighterASTNodeList nodes = (LighterASTNodeList)children;
-
       myTreeStructure.disposeChildren(nodes.myElements, nodes.mySize);
-    } else {
+    }
+    else {
       LighterASTNode[] astNodes = new LighterASTNode[children.size()];
       myTreeStructure.disposeChildren(children.toArray(astNodes), astNodes.length);
     }
