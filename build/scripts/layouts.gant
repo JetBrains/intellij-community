@@ -776,12 +776,15 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
       jar("jps-plugin-system.jar") {
         module("jps-plugin-system")
       }
+      //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
       jar("groovy-jps-plugin.jar") {
         module("groovy-jps-plugin")
-        module("groovy-rt-constants")
       }
       jar("groovy_rt.jar") {
         module("groovy_rt")
+      }
+      jar("groovy-rt-constants.jar") {
+        module("groovy-rt-constants")
       }
       jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
 

@@ -79,7 +79,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  private static final int VERSION = 13;
+  private static final int VERSION = 14;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and autoDetectedAsText, autoDetectedAsBinary and autoDetectWasRun sets are used instead.
@@ -88,7 +88,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @NonNls
   private static final String DEFAULT_IGNORED =
-    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;_svn;rcs;vssver.scc;vssver2.scc;";
+    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;.tox;_svn;rcs;vssver.scc;vssver2.scc;";
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
@@ -906,6 +906,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       for (String each : masks) {
         myIgnoredPatterns.addIgnoreMask(each);
       }
+    }
+
+    if (savedVersion < 14) {
+      addIgnore(".tox");
     }
 
     myIgnoredFileCache.clearCache();

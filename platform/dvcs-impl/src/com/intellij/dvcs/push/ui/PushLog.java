@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.ui.EditSourceForDialogAction;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ArrayUtil;
@@ -233,6 +234,10 @@ public class PushLog extends JPanel implements DataProvider {
         }
       }
     };
+    if (syncStrategyPanel != null) {
+      myScrollPane.setViewport(new MyTreeViewPort(myTree, syncStrategyPanel.getPreferredSize().height));
+    }
+    myScrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
     myScrollPane.setOpaque(false);
     if (syncStrategyPanel != null) {
       myScrollPane.add(syncStrategyPanel);
@@ -651,6 +656,23 @@ public class PushLog extends JPanel implements DataProvider {
           return dimensions;
         }
       };
+    }
+  }
+
+  private static class MyTreeViewPort extends JBViewport {
+
+    final int myHeightToReduce;
+
+    public MyTreeViewPort(@Nullable Component view, int heightToReduce) {
+      super();
+      setView(view);
+      myHeightToReduce = heightToReduce;
+    }
+
+    @Override
+    public Dimension getExtentSize() {
+      Dimension defaultSize = super.getExtentSize();
+      return new Dimension(defaultSize.width, defaultSize.height - myHeightToReduce);
     }
   }
 }

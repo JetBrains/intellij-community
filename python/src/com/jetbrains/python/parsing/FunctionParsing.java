@@ -45,7 +45,7 @@ public class FunctionParsing extends Parsing {
 
   protected void parseFunctionInnards(PsiBuilder.Marker functionMarker) {
     myBuilder.advanceLexer();
-    parseIdentifierOrSkip();
+    parseIdentifierOrSkip(PyTokenTypes.LPAR);
     parseParameterList();
     parseReturnTypeAnnotation();
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));
@@ -53,18 +53,13 @@ public class FunctionParsing extends Parsing {
   }
 
   public void parseReturnTypeAnnotation() {
-    if (myContext.getLanguageLevel().isPy3K() && myBuilder.getTokenType() == PyTokenTypes.MINUS) {
+    if (myContext.getLanguageLevel().isPy3K() && myBuilder.getTokenType() == PyTokenTypes.RARROW) {
       PsiBuilder.Marker maybeReturnAnnotation = myBuilder.mark();
       nextToken();
-      if (matchToken(PyTokenTypes.GT)) {
-        if (!myContext.getExpressionParser().parseSingleExpression(false)) {
-          myBuilder.error(message("PARSE.expected.expression"));
-        }
-        maybeReturnAnnotation.done(PyElementTypes.ANNOTATION);
+      if (!myContext.getExpressionParser().parseSingleExpression(false)) {
+        myBuilder.error(message("PARSE.expected.expression"));
       }
-      else {
-        maybeReturnAnnotation.rollbackTo();
-      }
+      maybeReturnAnnotation.done(PyElementTypes.ANNOTATION);
     }
   }
 
@@ -218,7 +213,7 @@ public class FunctionParsing extends Parsing {
         return false;
       }
       PsiBuilder.Marker invalidElements = myBuilder.mark();
-      while (!atToken(endToken) && !atToken(PyTokenTypes.LINE_BREAK) && !atToken(PyTokenTypes.COMMA) && !atToken(null)) {
+      while (!atToken(endToken) && !atAnyOfTokens(PyTokenTypes.LINE_BREAK, PyTokenTypes.COMMA, null)) {
         nextToken();
       }
       invalidElements.error(message("PARSE.expected.formal.param.name"));

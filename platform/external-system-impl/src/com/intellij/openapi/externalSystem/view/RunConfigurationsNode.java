@@ -60,7 +60,7 @@ public class RunConfigurationsNode extends ExternalSystemNode<Void> {
 
   @Override
   public boolean isVisible() {
-    return hasChildren() && super.isVisible();
+    return super.isVisible() && hasChildren();
   }
 
   @NotNull

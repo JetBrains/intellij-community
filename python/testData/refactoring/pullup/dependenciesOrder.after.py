@@ -22,8 +22,6 @@ class Parent:
 
 class Child(Parent):  # Try to pull members up
 
-
-
     def __init__(self):
         super(Child, self).__init__()
         self.a = 12

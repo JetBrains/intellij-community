@@ -14,8 +14,7 @@ PyFile:Annotations.py
       PsiElement(Py:RPAR)(')')
     PsiWhiteSpace(' ')
     PyAnnotation
-      PsiElement(Py:MINUS)('-')
-      PsiElement(Py:GT)('>')
+      PsiElement(Py:RARROW)('->')
       PsiWhiteSpace(' ')
       PyReferenceExpression: list
         PsiElement(Py:IDENTIFIER)('list')

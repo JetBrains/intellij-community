@@ -59,7 +59,7 @@ public class PyReplaceTupleWithListQuickFix implements LocalQuickFix {
   }
 
   private static void replaceWithListLiteral(PsiElement element, PyTupleExpression expression) {
-    final String expressionText = expression.getElements().length == 0 ? "" :expression.getText();
+    final String expressionText = expression.isEmpty() ? "" :expression.getText();
     final PyExpression literal = PyElementGenerator.getInstance(element.getProject()).
       createExpressionFromText(LanguageLevel.forElement(element),
                                "[" + expressionText + "]");

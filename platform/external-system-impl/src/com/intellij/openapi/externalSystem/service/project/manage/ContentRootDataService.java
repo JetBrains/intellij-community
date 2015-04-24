@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -24,7 +25,7 @@ import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData.SourceRoot;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
@@ -64,15 +65,9 @@ import java.util.Map;
  * @since 2/7/12 3:20 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ContentRootDataService implements ProjectDataService<ContentRootData, ContentEntry> {
+public class ContentRootDataService implements ProjectDataServiceEx<ContentRootData, ContentEntry> {
 
   private static final Logger LOG = Logger.getInstance("#" + ContentRootDataService.class.getName());
-
-  @NotNull private final ProjectStructureHelper myProjectStructureHelper;
-
-  public ContentRootDataService(@NotNull ProjectStructureHelper helper) {
-    myProjectStructureHelper = helper;
-  }
 
   @NotNull
   @Override
@@ -80,17 +75,25 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
     return ProjectKeys.CONTENT_ROOT;
   }
 
+  public void importData(@NotNull final Collection<DataNode<ContentRootData>> toImport,
+                         @NotNull final Project project,
+                         final boolean synchronous) {
+    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    importData(toImport, project, platformFacade, synchronous);
+  }
+
   @Override
   public void importData(@NotNull final Collection<DataNode<ContentRootData>> toImport,
                          @NotNull final Project project,
-                         boolean synchronous) {
+                         @NotNull final PlatformFacade platformFacade,
+                         final boolean synchronous) {
     if (toImport.isEmpty()) {
       return;
     }
 
     Map<DataNode<ModuleData>, List<DataNode<ContentRootData>>> byModule = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
     for (Map.Entry<DataNode<ModuleData>, List<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
-      final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
+      final Module module = platformFacade.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {
         LOG.warn(String.format(
           "Can't import content roots. Reason: target module (%s) is not found at the ide. Content roots: %s",
@@ -235,6 +238,13 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
 
   @Override
   public void removeData(@NotNull Collection<? extends ContentEntry> toRemove, @NotNull Project project, boolean synchronous) {
+  }
+
+  @Override
+  public void removeData(@NotNull Collection<? extends ContentEntry> toRemove,
+                         @NotNull Project project,
+                         @NotNull PlatformFacade platformFacade,
+                         boolean synchronous) {
   }
 
   private static String toVfsUrl(@NotNull String path) {

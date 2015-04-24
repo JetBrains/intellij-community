@@ -96,6 +96,11 @@ PluginManager = None
 if SUPPORT_PLUGINS:
     from pydevd_plugin_utils import PluginManager
 
+if IS_PY3K:
+    import pkgutil
+else:
+    from _pydev_imps import _pydev_pkgutil_old as pkgutil
+
 threadingEnumerate = threading.enumerate
 threadingCurrentThread = threading.currentThread
 
@@ -134,6 +139,7 @@ DONT_TRACE = {
               'pydev_monkey_qt.py':PYDEV_FILE,
               'pydevd.py':PYDEV_FILE,
               'pydevd_additional_thread_info.py':PYDEV_FILE,
+              'pydevd_breakpoints.py':PYDEV_FILE,
               'pydevd_comm.py':PYDEV_FILE,
               'pydevd_console.py':PYDEV_FILE,
               'pydevd_constants.py':PYDEV_FILE,
@@ -252,13 +258,8 @@ class CheckOutputThread(PyDBDaemonThread):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
         self.setName('pydevd.CheckAliveThread')
+        self.daemon = False
         pyDb.output_checker = self
-
-    def start(self):
-        # it should be non daemon
-        thread = threading.Thread(target=self.run)
-        thread.daemon = False
-        thread.start()
 
     def OnRun(self):
             if self.dontTraceMe:
@@ -372,7 +373,10 @@ class PyDB:
         self.has_plugin_line_breaks = False
         self.has_plugin_exception_breaks = False
 
-        self.use_hooks_in_debug_console = False
+        # matplotlib support in debugger and debug console
+        self.mpl_in_use = False
+        self.mpl_hooks_in_debug_console = False
+        self.mpl_modules_for_patching = {}
         
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
@@ -510,29 +514,33 @@ class PyDB:
 
 
     def init_matplotlib_in_debug_console(self):
-        # import hook and patches for matplotlib support
-        class _DebugConsoleHelper:
+        # import hook and patches for matplotlib support in debug console
+        from pydev_import_hook import import_hook_manager
+        for module in DictKeys(self.mpl_modules_for_patching):
+            import_hook_manager.add_module_name(module, DictPop(self.mpl_modules_for_patching, module))
+
+    def init_matplotlib_support(self):
+        # prepare debugger for integration with matplotlib GUI event loop
+        from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot, do_enable_gui
+        # enable_gui_function in activate_matplotlib should be called in main thread. Unlike integrated console,
+        # in the debug console we have no interpreter instance with exec_queue, but we run this code in the main
+        # thread and can call it directly.
+        class _MatplotlibHelper:
             _return_control_osc = False
 
         def return_control():
             # Some of the input hooks (e.g. Qt4Agg) check return control without doing
             # a single operation, so we don't return True on every
             # call when the debug hook is in place to allow the GUI to run
-            _DebugConsoleHelper._return_control_osc = not _DebugConsoleHelper._return_control_osc
-            return _DebugConsoleHelper._return_control_osc
+            _MatplotlibHelper._return_control_osc = not _MatplotlibHelper._return_control_osc
+            return _MatplotlibHelper._return_control_osc
 
         from pydev_ipython.inputhook import set_return_control_callback
         set_return_control_callback(return_control)
 
-        from pydev_import_hook import import_hook_manager
-        from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot, do_enable_gui
-        import_hook_manager.add_module_name("matplotlib", lambda: activate_matplotlib(do_enable_gui))
-        # enable_gui_function in activate_matplotlib should be called in main thread. Unlike integrated console,
-        # in the debug console we have no interpreter instance with exec_queue, but we run this code in the main
-        # thread and can call it directly.
-        import_hook_manager.add_module_name("pylab", activate_pylab)
-        import_hook_manager.add_module_name("pyplot", activate_pyplot)
-        self.use_hooks_in_debug_console = True
+        self.mpl_modules_for_patching = {"matplotlib": lambda: activate_matplotlib(do_enable_gui),
+                            "matplotlib.pyplot": activate_pyplot,
+                            "pylab": activate_pylab }
 
 
     def processInternalCommands(self):
@@ -576,13 +584,15 @@ class PyDB:
                             while True:
                                 int_cmd = queue.get(False)
 
-                                if not self.use_hooks_in_debug_console and isinstance(int_cmd, InternalConsoleExec):
-                                    # patch matplotlib if only debug console was started
+                                if not self.mpl_hooks_in_debug_console and isinstance(int_cmd, InternalConsoleExec):
+                                    # add import hooks for matplotlib patches if only debug console was started
                                     try:
                                         self.init_matplotlib_in_debug_console()
+                                        self.mpl_hooks_in_debug_console = True
+                                        self.mpl_in_use = True
                                     except:
-                                        sys.stderr.write("Matplotlib support in debug console failed\n")
-                                        pydev_log.error("Error in matplotlib init %s\n" % sys.exc_info()[0])
+                                        pydev_log.error("Matplotlib support in debug console failed\n")
+                                        traceback.print_exc()
 
                                 if int_cmd.canBeExecutedBy(curr_thread_id):
                                     PydevdLog(2, "processing internal command ", str(int_cmd))
@@ -1423,9 +1433,19 @@ class PyDB:
 
         imported = False
         info = thread.additionalInfo
+
+        if info.pydev_state == STATE_SUSPEND and not self._finishDebuggingSession:
+            # before every stop check if matplotlib modules were imported inside script code
+            if len(self.mpl_modules_for_patching) > 0:
+                for module in DictKeys(self.mpl_modules_for_patching):
+                    if module in sys.modules:
+                        activate_function = DictPop(self.mpl_modules_for_patching, module)
+                        activate_function()
+                        self.mpl_in_use = True
+
         while info.pydev_state == STATE_SUSPEND and not self._finishDebuggingSession:
-            if self.use_hooks_in_debug_console:
-                # import and call input hooks if only debug console was started
+            if self.mpl_in_use:
+                # call input hooks if only matplotlib is in use
                 try:
                     if not imported:
                         from pydev_ipython.inputhook import get_inputhook
@@ -1434,7 +1454,7 @@ class PyDB:
                     if inputhook:
                         inputhook()
                 except:
-                    pydev_log.error("Error while calling matplotlib input hooks in debug console %s\n" % sys.exc_info()[0])
+                    pass
 
             self.processInternalCommands()
             time.sleep(0.01)
@@ -1683,8 +1703,27 @@ class PyDB:
         from pydev_monkey import patch_thread_modules
         patch_thread_modules()
 
+    def get_fullname(self, mod_name):
+        try:
+            loader = pkgutil.get_loader(mod_name)
+        except:
+            return None
+        if loader is not None:
+            for attr in ("get_filename", "_get_filename"):
+                meth = getattr(loader, attr, None)
+                if meth is not None:
+                    return meth(mod_name)
+        return None
 
-    def run(self, file, globals=None, locals=None, set_trace=True):
+    def run(self, file, globals=None, locals=None, module=False, set_trace=True):
+        if module:
+            filename = self.get_fullname(file)
+            if filename is None:
+                sys.stderr.write("No module named %s\n" % file)
+                return
+            else:
+                file = filename
+
         if os.path.isdir(file):
             new_target = os.path.join(file, '__main__.py')
             if os.path.isfile(new_target):
@@ -1727,6 +1766,11 @@ class PyDB:
             while not self.readyToRun:
                 time.sleep(0.1)  # busy wait until we receive run command
 
+        try:
+            self.init_matplotlib_support()
+        except:
+            sys.stderr.write("Matplotlib support in debugger failed\n")
+            traceback.print_exc()
 
         pydev_imports.execfile(file, globals, locals)  # execute the script
 
@@ -1772,6 +1816,7 @@ def processCommandLine(argv):
     setup['save-signatures'] = False
     setup['print-in-debugger-startup'] = False
     setup['cmd-line'] = False
+    setup['module'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
@@ -1815,6 +1860,9 @@ def processCommandLine(argv):
         elif (argv[i] == '--cmd-line'):
             del argv[i]
             setup['cmd-line'] = True
+        elif (argv[i] == '--module'):
+            del argv[i]
+            setup['module'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
     return setup
@@ -1981,13 +2029,14 @@ def _locked_settrace(
 
         # Stop the tracing as the last thing before the actual shutdown for a clean exit.
         atexit.register(stoptrace)
+
+        PyDBCommandThread(debugger).start()
+        CheckOutputThread(debugger).start()
         
         #Suspend as the last thing after all tracing is in place.
         if suspend:
             debugger.setSuspend(t, CMD_THREAD_SUSPEND)
 
-        PyDBCommandThread(debugger).start()
-        CheckOutputThread(debugger).start()
 
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break
@@ -2255,6 +2304,7 @@ if __name__ == '__main__':
         pass  # It's ok not having stackless there...
 
     debugger = PyDB()
+    is_module = setup['module']
 
     if fix_app_engine_debug:
         sys.stderr.write("pydev debugger: google app engine integration enabled\n")
@@ -2269,7 +2319,7 @@ if __name__ == '__main__':
         sys.argv.insert(4, '--max_module_instances=1')
 
         # Run the dev_appserver
-        debugger.run(setup['file'], None, None, set_trace=False)
+        debugger.run(setup['file'], None, None, is_module, set_trace=False)
     else:
         # as to get here all our imports are already resolved, the psyco module can be
         # changed and we'll still get the speedups in the debugger, as those functions
@@ -2302,7 +2352,7 @@ if __name__ == '__main__':
 
         connected = True  # Mark that we're connected when started from inside ide.
 
-        globals = debugger.run(setup['file'], None, None)
+        globals = debugger.run(setup['file'], None, None, is_module)
 
         if setup['cmd-line']:
             debugger.wait_for_commands(globals)

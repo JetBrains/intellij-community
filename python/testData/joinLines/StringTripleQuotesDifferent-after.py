@@ -1,3 +1,2 @@
-<caret>'''This doc comment
-is quite separate'''
+'''This doc comment is quite separate'''
 """from the literal below"""

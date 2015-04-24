@@ -23,17 +23,27 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
+import com.jetbrains.commandInterface.command.CommandExecutor;
 import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.toolWindowWithActions.ConsoleWithProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import javax.swing.border.Border;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -60,12 +70,17 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 @SuppressWarnings({"DeserializableClassInSecureContext", "SerializableClassInSecureContext"}) // Nobody will serialize console
-final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>,Condition<LanguageConsoleView> {
+final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>, Condition<LanguageConsoleView>, ConsoleWithProcess {
+  /**
+   * Width of border to create around console
+   */
+  static final int BORDER_SIZE_PX = 3;
   /**
    * List of commands (to be injected into {@link CommandLineFile}) if any
+   * and executor to be used when user executes unknown command
    */
   @Nullable
-  private final List<Command> myCommandList;
+  private final Pair<List<Command>, CommandExecutor> myCommandsAndDefaultExecutor;
   @NotNull
   private final Module myModule;
   /**
@@ -81,15 +96,29 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   private final Object myConsumerSemaphore = new Object();
 
   /**
-   * @param module      module console runs on
-   * @param title       console title
-   * @param commandList List of commands (to be injected into {@link CommandLineFile}) if any
+   * Listener that will be notified when console state (mode?) changed.
+   */
+  @NotNull
+  private final Collection<Runnable> myStateChangeListeners = new ArrayList<Runnable>();
+  /**
+   * Process handler currently running on console (if any)
+   *
+   * @see #switchToProcessMode(ProcessHandler)
+   */
+  @Nullable
+  private volatile ProcessHandler myProcessHandler;
+
+  /**
+   * @param module                     module console runs on
+   * @param title                      console title
+   * @param commandsAndDefaultExecutor List of commands (to be injected into {@link CommandLineFile}) if any
+   *                                   and executor to be used when user executes unknown command
    */
   private CommandConsole(@NotNull final Module module,
                          @NotNull final String title,
-                         @Nullable final List<Command> commandList) {
+                         @Nullable final Pair<List<Command>, CommandExecutor> commandsAndDefaultExecutor) {
     super(module.getProject(), title, CommandLineLanguage.INSTANCE);
-    myCommandList = commandList;
+    myCommandsAndDefaultExecutor = commandsAndDefaultExecutor;
     myModule = module;
   }
 
@@ -97,18 +126,36 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @param module      module console runs on
    * @param title       console title
    * @param commandList List of commands (to be injected into {@link CommandLineFile}) if any
+   *                    and executor to be used when user executes unknown command
    * @return console
    */
   @NotNull
   static CommandConsole createConsole(@NotNull final Module module,
                                       @NotNull final String title,
-                                      @Nullable final List<Command> commandList) {
+                                      @Nullable final Pair<List<Command>, CommandExecutor> commandList) {
     final CommandConsole console = new CommandConsole(module, title, commandList);
     console.setEditable(true);
     LanguageConsoleBuilder.registerExecuteAction(console, console, title, title, console);
 
     console.switchToCommandMode();
+    console.getComponent(); // For some reason console does not have component until this method is called which leads to some errros.
+    console.getConsoleEditor().getSettings().setAdditionalLinesCount(2); // to prevent PY-15583
     return console;
+  }
+
+  /**
+   * Enables/disables left border {@link #BORDER_SIZE_PX} width for certain editors.
+   *
+   * @param editors editors to enable/disable border
+   * @param enable  whether border should be enabled
+   */
+  private static void configureLeftBorder(final boolean enable, @NotNull final EditorEx... editors) {
+    for (final EditorEx editor : editors) {
+      final Color backgroundColor = editor.getBackgroundColor(); // Border have the same color console background has
+      final int thickness = enable ? BORDER_SIZE_PX : 0;
+      final Border border = BorderFactory.createMatteBorder(0, thickness, 0, 0, backgroundColor);
+      editor.getComponent().setBorder(border);
+    }
   }
 
   @Override
@@ -121,20 +168,23 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * Switches console to "command-mode" (see class doc for details)
    */
   private void switchToCommandMode() {
+    // "upper" and "bottom" parts of console both need padding in command mode
+    myProcessHandler = null;
     setPrompt(getTitle() + " > ");
-
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
+        notifyStateChangeListeners();
+        configureLeftBorder(true, getConsoleEditor(), getHistoryViewer());
         setLanguage(CommandLineLanguage.INSTANCE);
         final CommandLineFile file = PyUtil.as(getFile(), CommandLineFile.class);
         resetConsumer(null);
-        if (file == null || myCommandList == null) {
+        if (file == null || myCommandsAndDefaultExecutor == null) {
           return;
         }
-        file.setCommands(myCommandList);
+        file.setCommandsAndDefaultExecutor(myCommandsAndDefaultExecutor);
         final CommandConsole console = CommandConsole.this;
-        resetConsumer(new CommandModeConsumer(myCommandList, myModule, console));
+        resetConsumer(new CommandModeConsumer(myCommandsAndDefaultExecutor.first, myModule, console, myCommandsAndDefaultExecutor.second));
       }
     }, ModalityState.NON_MODAL);
   }
@@ -145,11 +195,14 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    * @param processHandler process to attach to
    */
   private void switchToProcessMode(@NotNull final ProcessHandler processHandler) {
+    myProcessHandler = processHandler;
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       @Override
       public void run() {
+        configureLeftBorder(false,
+                            getConsoleEditor()); // "bottom" part of console do not need padding now because it is used for user inputA
+        notifyStateChangeListeners();
         resetConsumer(new ProcessModeConsumer(processHandler));
-
         // In process mode we do not need prompt and highlighting
         setLanguage(PlainTextLanguage.INSTANCE);
         setPrompt("");
@@ -157,12 +210,30 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     }, ModalityState.NON_MODAL);
   }
 
+  /**
+   * Notify listeners that state has been changed
+   */
+  private void notifyStateChangeListeners() {
+    for (final Runnable listener : myStateChangeListeners) {
+      listener.run();
+    }
+  }
+
+  /**
+   * @return process handler currently running on console (if any) or null if in {@link #switchToCommandMode() command mode}
+   * @see #switchToProcessMode(ProcessHandler)
+   */
+  @Override
+  @Nullable
+  public ProcessHandler getProcessHandler() {
+    return myProcessHandler;
+  }
 
   /**
    * Chooses consumer to delegate execute action to.
    *
    * @param newConsumer new consumer to register to delegate execution to
-   *                  or null if just reset consumer
+   *                    or null if just reset consumer
    */
   private void resetConsumer(@Nullable final Consumer<String> newConsumer) {
     synchronized (myConsumerSemaphore) {
@@ -188,6 +259,16 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     }
   }
 
+  /**
+   * Adds listener that will be notified when console state (mode?) changed.
+   * <strong>Called on EDT</strong>
+   *
+   * @param listener listener to notify
+   */
+  void addStateChangeListener(@NotNull final Runnable listener) {
+    myStateChangeListeners.add(listener);
+  }
+
 
   /**
    * Listens for process to switch between modes
@@ -204,5 +285,14 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
       super.startNotified(event);
       switchToProcessMode(event.getProcessHandler());
     }
+  }
+
+  @Override
+  protected void setupEditorDefault(@NotNull final EditorEx editor) {
+    super.setupEditorDefault(editor);
+    // We do not need spaces here, because it leads to PY-15557
+    final EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setAdditionalLinesCount(0);
+    editorSettings.setAdditionalColumnsCount(0);
   }
 }
