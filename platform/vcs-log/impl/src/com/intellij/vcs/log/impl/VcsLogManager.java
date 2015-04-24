@@ -165,6 +165,8 @@ public class VcsLogManager implements Disposable {
 
   @Override
   public void dispose() {
+    myLogRefresher = null;
+    myUi = null;
   }
 
   private static class PostponeableLogRefresher implements VcsLogRefresher, Disposable {
