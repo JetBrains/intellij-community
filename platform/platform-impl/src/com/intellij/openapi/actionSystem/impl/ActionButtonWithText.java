@@ -87,11 +87,15 @@ public class ActionButtonWithText extends ActionButton {
     look.paintBorder(g, this);
 
     UIUtil.applyRenderingHints(g);
-    g.setColor(isButtonEnabled() ? getForeground() : UIUtil.getInactiveTextColor());
+    g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
     SwingUtilities2.drawStringUnderlineCharAt(this, g, text,
                                               getMnemonicCharIndex(text),
                                               textRect.x,
                                               textRect.y + fm.getAscent());
+  }
+
+  public Color getInactiveTextColor() {
+    return UIUtil.getInactiveTextColor();
   }
 
   public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {
