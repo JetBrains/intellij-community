@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -348,18 +347,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         case CLASS: {
           EnumSet<ClassHint.ResolveKind> kinds = kind == ReferenceKind.CLASS
                                                  ? ClassHint.RESOLVE_KINDS_CLASS : ClassHint.RESOLVE_KINDS_CLASS_PACKAGE;
-          ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds) {
-            @Override
-            public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-              if (element instanceof ClsClassImpl) {
-                final PsiClass mirrorClass = ((ClsClassImpl)element).getSourceMirrorClass();
-                if (mirrorClass != null) {
-                  return super.execute(mirrorClass, state);
-                }
-              }
-              return super.execute(element, state);
-            }
-          };
+          ResolverProcessor processor = new ClassResolverProcessor(refName, ref, kinds);
           GrCodeReferenceElement qualifier = ref.getQualifier();
           if (qualifier != null) {
             PsiElement qualifierResolved = qualifier.resolve();
