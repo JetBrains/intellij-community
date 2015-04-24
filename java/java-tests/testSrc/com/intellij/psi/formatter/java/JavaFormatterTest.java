@@ -26,7 +26,10 @@ import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -949,14 +952,13 @@ public class JavaFormatterTest extends AbstractJavaFormatterTest {
   public void testFirstArgumentWrapping() throws Exception {
     getSettings().RIGHT_MARGIN = 20;
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
-    doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1);" + "    }\n" + "}",
-               "class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(\n" + "                1);\n" + "    }\n" + "}");
+    doTextTest("class Foo {\n" + "    void foo() {\n" + "            fooFooFooFoo(1);" + "    }\n" + "}",
+               "class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1);\n" + "    }\n" + "}");
 
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     doTextTest("class Foo {\n" + "    void foo() {\n" + "        fooFooFooFoo(1,2);" + "    }\n" + "}", "class Foo {\n" +
                                                                                                         "    void foo() {\n" +
-                                                                                                        "        fooFooFooFoo(\n" +
-                                                                                                        "                1,\n" +
+                                                                                                        "        fooFooFooFoo(1,\n" +
                                                                                                         "                2);\n" +
                                                                                                         "    }\n" +
                                                                                                         "}");

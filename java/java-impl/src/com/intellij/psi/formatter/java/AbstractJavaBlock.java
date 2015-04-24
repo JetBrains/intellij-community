@@ -446,7 +446,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       if (nodeType == JavaElementType.POLYADIC_EXPRESSION) nodeType = JavaElementType.BINARY_EXPRESSION;
 
       if (childType == JavaTokenType.LBRACE && nodeType == JavaElementType.ARRAY_INITIALIZER_EXPRESSION) {
-        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
+        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), true);
         child = processParenthesisBlock(JavaTokenType.LBRACE, JavaTokenType.RBRACE,
                                   result,
                                   child,
@@ -454,7 +454,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
       }
       else if (childType == JavaTokenType.LBRACE && nodeType == JavaElementType.ANNOTATION_ARRAY_INITIALIZER) {
-        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), false);
+        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.ARRAY_INITIALIZER_WRAP), true);
         child = processParenthesisBlock(JavaTokenType.LBRACE, JavaTokenType.RBRACE,
                                   result,
                                   child,
@@ -462,7 +462,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
                                   mySettings.ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.EXPRESSION_LIST) {
-        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
+        final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), true);
         if (mySettings.PREFER_PARAMETERS_WRAP && !isInsideMethodCall(myNode.getPsi())) {
             wrap.ignoreParentWraps();
         }
@@ -478,13 +478,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         child = processParenthesisBlock(result, child, wrapStrategy, mySettings.ALIGN_MULTILINE_PARAMETERS);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.RESOURCE_LIST) {
-        Wrap wrap = Wrap.createWrap(getWrapType(mySettings.RESOURCE_LIST_WRAP), false);
+        Wrap wrap = Wrap.createWrap(getWrapType(mySettings.RESOURCE_LIST_WRAP), true);
         child = processParenthesisBlock(result, child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   mySettings.ALIGN_MULTILINE_RESOURCES);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.ANNOTATION_PARAMETER_LIST) {
-        Wrap wrap = Wrap.createWrap(getWrapType(myJavaSettings.ANNOTATION_PARAMETER_WRAP), false);
+        Wrap wrap = Wrap.createWrap(getWrapType(myJavaSettings.ANNOTATION_PARAMETER_WRAP), true);
         child = processParenthesisBlock(result, child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   myJavaSettings.ALIGN_MULTILINE_ANNOTATION_PARAMETERS);
@@ -560,9 +560,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private Wrap getMethodParametersWrap() {
     Wrap preferredWrap = getModifierListWrap();
     if (preferredWrap == null) {
-      return Wrap.createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
+      return Wrap.createWrap(getWrapType(mySettings.METHOD_PARAMETERS_WRAP), true);
     } else {
-      return Wrap.createChildWrap(preferredWrap, getWrapType(mySettings.METHOD_PARAMETERS_WRAP), false);
+      return Wrap.createChildWrap(preferredWrap, getWrapType(mySettings.METHOD_PARAMETERS_WRAP), true);
     }
   }
 
@@ -840,6 +840,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     ASTNode prev = child;
     boolean afterAnonymousClass = false;
     final boolean enforceIndent = shouldEnforceIndentToChildren();
+    boolean isFirstParam = true;
     while (child != null) {
       isAfterIncomplete = isAfterIncomplete || child.getElementType() == TokenType.ERROR_ELEMENT ||
                           child.getElementType() == JavaElementType.EMPTY_EXPRESSION;
@@ -859,7 +860,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           final IElementType elementType = child.getElementType();
           Indent indentToUse = enforceIndent ? internalIndentEnforcedToChildren : internalIndent;
           AlignmentStrategy alignmentStrategyToUse = canUseAnonymousClassAlignment(child) ? anonymousClassStrategy : alignmentStrategy;
-          processChild(result, child, alignmentStrategyToUse.getAlignment(elementType), wrappingStrategy.getWrap(elementType), indentToUse);
+
+          processChild(result, child, alignmentStrategyToUse.getAlignment(elementType),
+                       isFirstParam ? Wrap.createWrap(WrapType.NONE, true) : wrappingStrategy.getWrap(elementType), indentToUse);
+          isFirstParam = false;
+
           if (to == null) {//process only one statement
             return child;
           }
