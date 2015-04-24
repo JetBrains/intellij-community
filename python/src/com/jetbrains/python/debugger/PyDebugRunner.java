@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,19 +82,17 @@ public class PyDebugRunner extends GenericProgramRunner {
   }
 
   @Override
-  protected RunContentDescriptor doExecute(@NotNull final Project project, @NotNull RunProfileState profileState,
-                                           RunContentDescriptor contentToReuse,
-                                           @NotNull ExecutionEnvironment env) throws ExecutionException {
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final PythonCommandLineState pyState = (PythonCommandLineState)profileState;
+    final PythonCommandLineState pyState = (PythonCommandLineState)state;
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
     final int serverLocalPort = serverSocket.getLocalPort();
-    RunProfile profile = env.getRunProfile();
-    final ExecutionResult result = pyState.execute(env.getExecutor(), createCommandLinePatchers(project, pyState, profile, serverLocalPort));
+    RunProfile profile = environment.getRunProfile();
+    final ExecutionResult result = pyState.execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
 
-    final XDebugSession session = XDebuggerManager.getInstance(project).
-      startSession(this, env, contentToReuse, new XDebugProcessStarter() {
+    final XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
+      startSession(environment, new XDebugProcessStarter() {
         @Override
         @NotNull
         public XDebugProcess start(@NotNull final XDebugSession session) {
@@ -102,7 +100,7 @@ public class PyDebugRunner extends GenericProgramRunner {
             new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
                                pyState.isMultiprocessDebug());
 
-          createConsoleCommunicationAndSetupActions(project, result, pyDebugProcess, session);
+          createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
 
 
           return pyDebugProcess;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,20 +48,6 @@ public class RunContentBuilder extends RunTab {
 
   private final List<AnAction> myRunnerActions = new SmartList<AnAction>();
   private final ExecutionResult myExecutionResult;
-
-  /**
-   * @deprecated use {@link #RunContentBuilder(com.intellij.execution.ExecutionResult, ExecutionEnvironment)}
-   * to remove in IDEA 14
-   */
-  @SuppressWarnings("UnusedParameters")
-  public RunContentBuilder(@NotNull Project project,
-                           ProgramRunner runner,
-                           Executor executor,
-                           ExecutionResult executionResult,
-                           @NotNull ExecutionEnvironment environment) {
-    //noinspection deprecation
-    this(runner, executionResult, environment);
-  }
 
   /**
    * @deprecated use {@link #RunContentBuilder(com.intellij.execution.ExecutionResult, ExecutionEnvironment)}

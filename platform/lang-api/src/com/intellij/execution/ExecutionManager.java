@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -83,26 +81,6 @@ public abstract class ExecutionManager {
                                          @NotNull ExecutionTarget target,
                                          @Nullable RunnerAndConfigurationSettings configuration,
                                          @Nullable ProcessHandler processHandler);
-
-  /**
-   * currentDescriptor is null for toolbar/popup action and not null for actions in run/debug toolwindows
-   * @deprecated use {@link #restartRunProfile(com.intellij.execution.runners.ExecutionEnvironment)}
-   * to remove in IDEA 15
-   */
-  public abstract void restartRunProfile(@NotNull Project project,
-                                         @NotNull Executor executor,
-                                         @NotNull ExecutionTarget target,
-                                         @Nullable RunnerAndConfigurationSettings configuration,
-                                         @Nullable RunContentDescriptor currentDescriptor);
-
-  /**
-   * currentDescriptor is null for toolbar/popup action and not null for actions in run/debug toolwindows
-   * @deprecated use {@link #restartRunProfile(com.intellij.execution.runners.ExecutionEnvironment)}
-   * to remove in IDEA 15
-   */
-  public abstract void restartRunProfile(@Nullable ProgramRunner runner,
-                                         @NotNull ExecutionEnvironment environment,
-                                         @Nullable RunContentDescriptor currentDescriptor);
 
   public abstract void restartRunProfile(@NotNull ExecutionEnvironment environment);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,26 +162,6 @@ public class RunContentDescriptor implements Disposable {
 
   public void setAttachedContent(@NotNull Content content) {
     myContent = content;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Nullable
-  @Deprecated
-  /**
-   * @deprecated Use {@link com.intellij.execution.runners.ExecutionUtil#restart(RunContentDescriptor)} instead
-   * to remove in IDEA 15
-   */
-  public Runnable getRestarter() {
-    return myRestarter;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  public void setRestarter(@Nullable Runnable runnable) {
-    myRestarter = runnable;
   }
 
   public boolean isActivateToolWindowWhenAdded() {

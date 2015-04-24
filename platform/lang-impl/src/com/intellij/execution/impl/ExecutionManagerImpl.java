@@ -216,7 +216,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         try {
           project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(executor.getId(), environment);
 
-          final RunContentDescriptor descriptor = starter.execute(project, executor, state, environment.getContentToReuse(), environment);
+          final RunContentDescriptor descriptor = starter.execute(state, environment);
           if (descriptor != null) {
             environment.setContentToReuse(descriptor);
             final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
@@ -298,27 +298,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       builder.runnerAndSettings(runner, configuration);
     }
     return builder;
-  }
-
-  @Override
-  public void restartRunProfile(@NotNull Project project,
-                                @NotNull Executor executor,
-                                @NotNull ExecutionTarget target,
-                                @Nullable RunnerAndConfigurationSettings configuration,
-                                @Nullable RunContentDescriptor currentDescriptor) {
-    ExecutionEnvironmentBuilder builder = createEnvironmentBuilder(project, executor, configuration);
-    restartRunProfile(builder.target(target).contentToReuse(currentDescriptor).build());
-  }
-
-  @Override
-  public void restartRunProfile(@Nullable ProgramRunner runner,
-                                @NotNull ExecutionEnvironment environment,
-                                @Nullable RunContentDescriptor currentDescriptor) {
-    ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(environment).contentToReuse(currentDescriptor);
-    if (runner != null) {
-      builder.runner(runner);
-    }
-    restartRunProfile(builder.build());
   }
 
   public static boolean isProcessRunning(@Nullable RunContentDescriptor descriptor) {

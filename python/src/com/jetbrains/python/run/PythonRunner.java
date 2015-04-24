@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,12 +42,7 @@ public class PythonRunner extends DefaultProgramRunner {
   }
 
   @Override
-  protected RunContentDescriptor doExecute(
-    @NotNull Project project,
-    @NotNull RunProfileState state,
-    RunContentDescriptor contentToReuse,
-    @NotNull ExecutionEnvironment env
-  ) throws ExecutionException {
+  protected RunContentDescriptor doExecute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     ExecutionResult executionResult;
@@ -59,6 +53,6 @@ public class PythonRunner extends DefaultProgramRunner {
     else {
       executionResult = state.execute(env.getExecutor(), this);
     }
-    return executionResult == null ? null : new RunContentBuilder(executionResult, env).showRunContent(contentToReuse);
+    return executionResult == null ? null : new RunContentBuilder(executionResult, env).showRunContent(env.getContentToReuse());
   }
 }
