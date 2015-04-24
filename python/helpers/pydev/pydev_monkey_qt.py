@@ -122,7 +122,7 @@ def _internal_patch_qt():
     class ThreadWrapper(QtCore.QThread):  # Wrapper for QThread
 
         def __init__(self, *args, **kwargs):
-            _original_thread_init(self)
+            _original_thread_init(self, *args, **kwargs)
 
             # In PyQt5 the program hangs when we try to call original run method of QThread class.
             # So we need to distinguish instances of QThread class and instances of QThread inheritors.
@@ -145,7 +145,7 @@ def _internal_patch_qt():
     class RunnableWrapper(QtCore.QRunnable):  # Wrapper for QRunnable
         
         def __init__(self, *args, **kwargs):
-            _original_runnable_init(self)
+            _original_runnable_init(self, *args, **kwargs)
     
             self._original_run = self.run
             self.run = self._new_run
