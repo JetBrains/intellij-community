@@ -407,6 +407,10 @@ public class PyBlock implements ASTBlock {
           final PyExpression valueExpression = ((PyKeywordArgument)firstItem).getValueExpression();
           return valueExpression != null && hasHangingIndent(valueExpression);
         }
+        else if (firstItem instanceof PyKeyValueExpression) {
+          final PyExpression value = ((PyKeyValueExpression)firstItem).getValue();
+          return value != null && hasHangingIndent(value);
+        }
         return hasHangingIndent(firstItem);
       }
     }
