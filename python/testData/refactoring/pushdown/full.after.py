@@ -11,7 +11,6 @@ class Parent(object):
     def __init__(self):
         pass
 
-
     def method_2(self):
         i = 1
 

@@ -537,7 +537,8 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   // PY-11552
-  public void testDeleteTrailingBlankLines() {
+  public void testExtraBlankLinesBetweenMethodsAndAtTheEnd() {
+    getCommonSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
     doTest();
   }
 
