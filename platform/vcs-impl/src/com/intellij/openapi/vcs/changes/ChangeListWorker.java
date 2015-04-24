@@ -31,6 +31,7 @@ import com.intellij.util.PlusMinusModify;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -426,10 +427,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public List<File> getAffectedPaths() {
-    final SortedSet<String> set = myIdx.getAffectedPaths();
+    final SortedSet<FilePath> set = myIdx.getAffectedPaths();
     final List<File> result = new ArrayList<File>(set.size());
-    for (String path : set) {
-      result.add(new File(path));
+    for (FilePath path : set) {
+      result.add(path.getIOFile());
     }
     return result;
   }
@@ -495,7 +496,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myIdx.getStatus(file);
   }
 
-  public FileStatus getStatus(final File file) {
+  public FileStatus getStatus(final FilePath file) {
     return myIdx.getStatus(file);
   }
 
@@ -692,14 +693,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return null;
   }
 
-  @NotNull
   public ThreeState haveChangesUnder(@NotNull VirtualFile virtualFile) {
-    final String absolutePath = new File(virtualFile.getPath()).getAbsolutePath();
-    final SortedSet<String> tailSet = myIdx.getAffectedPaths().tailSet(absolutePath);
-    for (String path : tailSet) {
-      return FileUtil.isAncestorThreeState(absolutePath, path, false);
+    FilePath dir = VcsUtil.getFilePath(virtualFile);
+    FilePath changeCandidate = myIdx.getAffectedPaths().ceiling(dir);
+    if (changeCandidate == null) {
+      return ThreeState.NO;
     }
-    return ThreeState.NO;
+    return FileUtil.isAncestorThreeState(changeCandidate.getPath(), dir.getPath(), false);
   }
 
   @NotNull
@@ -782,9 +782,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       return myWorker.getStatus(file);
     }
 
+    @Deprecated
     @Override
     public FileStatus getStatus(File file) {
-      return myWorker.getStatus(file);
+      return myWorker.getStatus(new FilePathImpl(file, file.isDirectory()));
+    }
+
+    @Override
+    public FileStatus getStatus(@NotNull FilePath filePath) {
+      return myWorker.getStatus(filePath);
     }
 
     @Override

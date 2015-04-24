@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,15 @@ public interface ChangeListManagerGate {
 
   void setListsToDisappear(final Collection<String> names);
   FileStatus getStatus(final VirtualFile file);
+
+  @Nullable
+  FileStatus getStatus(@NotNull FilePath filePath);
+
+  /**
+   * Use {@link #getStatus(FilePath)
+   * @deprecated to remove in IDEA 16
+   */
+  @Deprecated
   FileStatus getStatus(final File file);
 
   void setDefaultChangeList(@NotNull String list);

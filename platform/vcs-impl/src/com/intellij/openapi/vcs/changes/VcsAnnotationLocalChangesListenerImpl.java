@@ -234,7 +234,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       @Override
       public void dirty(BaseRevision currentRevision) {
         synchronized (myLock) {
-          myDirtyChanges.put(currentRevision.getPath(), currentRevision.getRevision());
+          myDirtyChanges.put(currentRevision.getPath().getPath(), currentRevision.getRevision());
         }
         myUpdater.queue(myUpdateStuff);
       }

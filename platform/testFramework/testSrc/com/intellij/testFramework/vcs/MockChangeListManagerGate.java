@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.vcs;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
@@ -81,5 +82,11 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
   }
 
   @Override
-  public void setDefaultChangeList(@NotNull String list) { }
+  public FileStatus getStatus(@NotNull FilePath filePath) {
+    return null;
+  }
+
+  @Override
+  public void setDefaultChangeList(@NotNull String list) {
+  }
 }

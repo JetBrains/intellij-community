@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
@@ -25,17 +26,17 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
  * Time: 4:39 PM
  */
 public class BaseRevision {
-  private final String myPath;
+  private final FilePath myPath;
   private VcsRevisionNumber myRevision;
   private final VcsKey myVcs;
 
-  public BaseRevision(VcsKey vcs, VcsRevisionNumber revision, String path) {
+  public BaseRevision(VcsKey vcs, VcsRevisionNumber revision, FilePath path) {
     myVcs = vcs;
     myRevision = revision;
     myPath = path;
   }
 
-  public String getPath() {
+  public FilePath getPath() {
     return myPath;
   }
 
