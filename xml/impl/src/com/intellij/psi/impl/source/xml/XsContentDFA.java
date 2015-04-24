@@ -89,7 +89,8 @@ class XsContentDFA extends XmlContentDFA {
     myHandler = new SubstitutionGroupHandler(new XSElementDeclHelper() {
           @Override
           public XSElementDecl getGlobalElementDecl(QName name) {
-            return bucket.getGrammar(name.uri).getGlobalElementDecl(name.localpart, name.prefix);
+            SchemaGrammar grammar = bucket.getGrammar(name.uri);
+            return grammar == null ? null : grammar.getGlobalElementDecl(name.localpart, name.prefix);
           }
         });
     myState = myContentModel.startContentModel();

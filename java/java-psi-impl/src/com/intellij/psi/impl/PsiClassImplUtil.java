@@ -480,15 +480,11 @@ public class PsiClassImplUtil {
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     isRaw = isRaw || PsiUtil.isRawSubstitutor(aClass, substitutor);
 
-    ParameterizedCachedValue<Map<GlobalSearchScope, MembersMap>, PsiClass> cache = getValues(aClass); //aClass.getUserData(MAP_IN_CLASS_KEY);
-    boolean upToDate = cache.hasUpToDateValue();
-    if (/*true || */upToDate) {
-      final NameHint nameHint = processor.getHint(NameHint.KEY);
-      if (nameHint != null) {
-        String name = nameHint.getName(state);
-        return processCachedMembersByName(aClass, processor, state, visited, last, place, isRaw, substitutor,
-                                          cache.getValue(aClass).get(resolveScope), name,languageLevel);
-      }
+    final NameHint nameHint = processor.getHint(NameHint.KEY);
+    if (nameHint != null) {
+      String name = nameHint.getName(state);
+      return processCachedMembersByName(aClass, processor, state, visited, last, place, isRaw, substitutor,
+                                        getValues(aClass).getValue(aClass).get(resolveScope), name,languageLevel);
     }
     return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw, languageLevel, resolveScope);
   }

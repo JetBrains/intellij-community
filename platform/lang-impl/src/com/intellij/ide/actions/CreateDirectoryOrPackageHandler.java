@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.StringTokenizer;
 
 public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   @Nullable private final Project myProject;
@@ -72,22 +73,38 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
 
   @Override
   public boolean checkInput(String inputString) {
-    boolean firstToken = true;
-    for (String token : StringUtil.tokenize(inputString, myDelimiters)) {
-      if (token.equals(".") || token.equals("..")) {
+    final StringTokenizer tokenizer = new StringTokenizer(inputString, myDelimiters);
+    VirtualFile vFile = myDirectory.getVirtualFile();
+
+    while (tokenizer.hasMoreTokens()) {
+      final String token = tokenizer.nextToken();
+      if (!tokenizer.hasMoreTokens() && (token.equals(".") || token.equals(".."))) {
         myErrorText = "Can't create a directory with name '" + token + "'";
         return false;
       }
-      if (firstToken) {
-        final VirtualFile vFile = myDirectory.getVirtualFile();
-        final VirtualFile child = vFile.findChild(token);
-        if (child != null) {
-          myErrorText = "A " + (child.isDirectory() ? "directory" : "file") +
-                        " with name '" + token + "' already exists";
-          return false;
+      if (vFile != null) {
+        if ("..".equals(token)) {
+          vFile = vFile.getParent();
+          if (vFile == null) {
+            myErrorText = "Not a valid directory";
+            return false;
+          }
+        }
+        else if (!".".equals(token)){
+          final VirtualFile child = vFile.findChild(token);
+          if (child != null) {
+            if (!child.isDirectory()) {
+              myErrorText = "A file with name '" + token + "' already exists";
+              return false;
+            }
+            else if (!tokenizer.hasMoreTokens()) {
+              myErrorText = "A directory with name '" + token + "' already exists";
+              return false;
+            }
+          }
+          vFile = child;
         }
       }
-      firstToken = false;
       if (FileTypeManager.getInstance().isFileIgnored(token)) {
         myErrorText = "Trying to create a " + (myIsDirectory ? "directory" : "package") +
                       " with an ignored name, the result will not be visible";

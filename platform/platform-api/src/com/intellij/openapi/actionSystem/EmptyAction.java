@@ -79,6 +79,11 @@ public final class EmptyAction extends AnAction {
     }
   }
 
+  public static void registerWithShortcutSet(@NotNull String id, @NotNull ShortcutSet shortcutSet, @NotNull JComponent component) {
+    AnAction newAction = wrap(ActionManager.getInstance().getAction(id));
+    newAction.registerCustomShortcutSet(shortcutSet, component);
+  }
+
   public static AnAction wrap(final AnAction action) {
     return action instanceof ActionGroup ? new ActionGroup() {
       {

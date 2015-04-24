@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.Pair;
@@ -466,6 +467,9 @@ public final class EditorUtil {
   }
 
   public static int calcColumnNumber(@Nullable Editor editor, @NotNull CharSequence text, final int start, final int offset, final int tabSize) {
+    if (editor instanceof TextComponentEditor) {
+      return offset - start;
+    }
     boolean useOptimization = true;
     if (editor != null) {
       SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(start);

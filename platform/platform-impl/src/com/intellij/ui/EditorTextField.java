@@ -46,6 +46,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -655,13 +656,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
         preferredSize.width = myPreferredWidth;
       }
 
-      final Insets insets = getInsets();
-      if (insets != null) {
-        preferredSize.width += insets.left;
-        preferredSize.width += insets.right;
-        preferredSize.height += insets.top;
-        preferredSize.height += insets.bottom;
-      }
+      JBInsets.addTo(preferredSize, getInsets());
       size = preferredSize;
     } else if (myPassivePreferredSize != null) {
       size = myPassivePreferredSize;
@@ -685,8 +680,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (myEditor != null) {
       size.height = myEditor.getLineHeight();
 
-      size = UIUtil.addInsets(size, getInsets());
-      size = UIUtil.addInsets(size, myEditor.getInsets());
+      JBInsets.addTo(size, getInsets());
+      JBInsets.addTo(size, myEditor.getInsets());
     }
 
     return size;

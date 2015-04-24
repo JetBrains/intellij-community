@@ -20,6 +20,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
@@ -349,9 +351,7 @@ class FormatProcessor {
   {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
-    if (document == null) {
-      return false;
-    }
+    CaretOffsetUpdater caretOffsetUpdater = new CaretOffsetUpdater(document);
 
     List<TextChange> changes = new ArrayList<TextChange>();
     int shift = 0;
@@ -363,6 +363,7 @@ class FormatProcessor {
         whiteSpace.getEndOffset(), block.getNode(), false
       );
       if (changes.size() > 10000) {
+        caretOffsetUpdater.update(changes);
         CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
         document.replaceString(0, document.getTextLength(), mergeResult);
         shift += currentIterationShift;
@@ -373,8 +374,10 @@ class FormatProcessor {
       currentIterationShift += change.getDiff();
       changes.add(change);
     }
+    caretOffsetUpdater.update(changes);
     CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
     document.replaceString(0, document.getTextLength(), mergeResult);
+    caretOffsetUpdater.restoreCaretLocations();
     cleanupBlocks(blocksToModify);
     return true;
   }
@@ -1484,6 +1487,30 @@ class FormatProcessor {
             myModel.commitChanges();
           }
         });
+      }
+    }
+  }
+  
+  private static class CaretOffsetUpdater {
+    private final Map<Editor, Integer> myCaretOffsets = new HashMap<Editor, Integer>();
+    
+    private CaretOffsetUpdater(@NotNull Document document) {
+      Editor[] editors = EditorFactory.getInstance().getEditors(document);
+      for (Editor editor : editors) {
+        myCaretOffsets.put(editor, editor.getCaretModel().getOffset());
+      }
+    }
+    
+    private void update(@NotNull List<? extends TextChange> changes) {
+      BulkChangesMerger merger = BulkChangesMerger.INSTANCE;
+      for (Map.Entry<Editor, Integer> entry : myCaretOffsets.entrySet()) {
+        entry.setValue(merger.updateOffset(entry.getValue(), changes));
+      }
+    }
+    
+    private void restoreCaretLocations() {
+      for (Map.Entry<Editor, Integer> entry : myCaretOffsets.entrySet()) {
+        entry.getKey().getCaretModel().moveToOffset(entry.getValue());
       }
     }
   }

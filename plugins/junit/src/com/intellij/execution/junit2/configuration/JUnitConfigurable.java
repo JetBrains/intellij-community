@@ -494,7 +494,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       getTestLocation(i).setEnabled(enabledFields.contains(i));
     /*if (newType == JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(false);
-    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE && newType != JUnitConfigurationModel.PATTERN) {
+    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE &&
+                 newType != JUnitConfigurationModel.PATTERN &&
+                 newType != JUnitConfigurationModel.CATEGORY) {
       myModule.setEnabled(true);
     }
     else {
@@ -545,7 +547,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
 
   private void onScopeChanged() {
     final Integer selectedItem = (Integer)myTypeChooser.getSelectedItem();
-    final boolean allInPackageAllInProject = (selectedItem == JUnitConfigurationModel.ALL_IN_PACKAGE || selectedItem == JUnitConfigurationModel.PATTERN) && myWholeProjectScope.isSelected();
+    final boolean allInPackageAllInProject = (selectedItem == JUnitConfigurationModel.ALL_IN_PACKAGE ||
+                                              selectedItem == JUnitConfigurationModel.PATTERN ||
+                                              selectedItem == JUnitConfigurationModel.CATEGORY) && myWholeProjectScope.isSelected();
     myModule.setEnabled(!allInPackageAllInProject);
     if (allInPackageAllInProject) {
       myModule.getComponent().setSelectedItem(null);

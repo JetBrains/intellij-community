@@ -125,9 +125,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     new TreeLinkMouseListener(new ShelfTreeCellRenderer(project, myMoveRenameInfo)).installOn(myTree);
 
     final AnAction showDiffAction = ActionManager.getInstance().getAction("ShelvedChanges.Diff");
-    showDiffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), myTree);
+    showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), myTree);
     final EditSourceAction editSourceAction = new EditSourceAction();
-    editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree);
+    editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);
 
     PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", ActionPlaces.UNKNOWN);
 

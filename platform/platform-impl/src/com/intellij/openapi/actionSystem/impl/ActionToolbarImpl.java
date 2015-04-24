@@ -42,6 +42,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -784,9 +785,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       }
     }
 
-    final Insets i = getInsets();
+    JBInsets.addTo(dimension, getInsets());
 
-    return new Dimension(dimension.width + i.left + i.right, dimension.height + i.top + i.bottom);
+    return dimension;
   }
 
   @Override
