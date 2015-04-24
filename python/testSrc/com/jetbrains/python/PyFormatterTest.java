@@ -559,6 +559,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-15171
+  public void testHangingIndentInKeyValuePair() {
+    doTest();
+  }
+
   public void testAlignmentOfEmptyCollectionLiterals() {
     doTest();
   }
