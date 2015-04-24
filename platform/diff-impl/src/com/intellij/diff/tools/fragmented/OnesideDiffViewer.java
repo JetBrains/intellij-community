@@ -93,11 +93,16 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
   @Nullable private ChangedBlockData myChangedBlockData;
 
+  private final boolean[] myForceReadOnlyFlags;
+  private boolean myReadOnlyLockSet = false;
+
   public OnesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
+
+    myForceReadOnlyFlags = checkForceReadOnly();
 
 
     List<DiffContent> contents = myRequest.getContents();
@@ -155,7 +160,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
-    group.add(new ReadOnlyLockAction());
+    group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     return group;
@@ -557,6 +562,19 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return myStatusPanel;
   }
 
+  public boolean isEditable(@NotNull Side side, boolean respectReadOnlyLock) {
+    if (myReadOnlyLockSet && respectReadOnlyLock) return false;
+    if (side.select(myForceReadOnlyFlags)) return false;
+    Document document = getDocument(side);
+    return document != null && DiffUtil.canMakeWritable(document);
+  }
+
+  @Nullable
+  public Document getDocument(@NotNull Side side) {
+    DocumentContent content = side.select(myActualContent1, myActualContent2);
+    return content != null ? content.getDocument() : null;
+  }
+
   //
   // Misc
   //
@@ -728,6 +746,28 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       ArrayList<IgnorePolicy> settings = ContainerUtil.newArrayList(IgnorePolicy.values());
       settings.remove(IgnorePolicy.IGNORE_WHITESPACES_CHUNKS);
       return settings;
+    }
+  }
+
+  private class MyReadOnlyLockAction extends ReadOnlyLockAction {
+    public MyReadOnlyLockAction() {
+      init();
+    }
+
+    @Override
+    protected void doApply(boolean readOnly) {
+      myReadOnlyLockSet = readOnly;
+      if (myChangedBlockData != null) {
+        for (OnesideDiffChange onesideDiffChange : myChangedBlockData.getDiffChanges()) {
+          onesideDiffChange.updateGutterActions();
+        }
+      }
+    }
+
+    @Override
+    protected boolean canEdit() {
+      return myActualContent1 != null && !myForceReadOnlyFlags[0] && DiffUtil.canMakeWritable(myActualContent1.getDocument()) ||
+             myActualContent2 != null && !myForceReadOnlyFlags[1] && DiffUtil.canMakeWritable(myActualContent2.getDocument());
     }
   }
 
