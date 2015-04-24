@@ -215,7 +215,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor1(), null);
 
-        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false, false);
       }
 
       if (myActualContent2 == null) {
@@ -241,7 +241,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor2(), null);
 
-        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false, false);
       }
 
       final DocumentContent content1 = myActualContent1;
@@ -257,6 +257,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         }
       });
 
+      final boolean innerFragments = getDiffConfig().innerFragments;
       final List<LineFragment> fragments = DiffUtil.compareWithCache(myRequest, documentData, getDiffConfig(), indicator);
 
       indicator.checkCanceled();
@@ -264,9 +265,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         @Override
         public TwosideDocumentData compute() {
           indicator.checkCanceled();
-          OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2,
-                                                                      getHighlightPolicy().isFineFragments(),
-                                                                      myMasterSide);
+          OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2, myMasterSide);
           builder.exec();
 
           indicator.checkCanceled();
@@ -292,7 +291,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(), fileType,
                                                              convertor.createConvertor1(), convertor.createConvertor2());
 
-      return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual);
+      return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual, innerFragments);
     }
     catch (DiffTooBigException ignore) {
       return new Runnable() {
@@ -352,7 +351,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor,
                          @NotNull final List<LineRange> changedLines,
-                         final boolean isEqual) {
+                         final boolean isEqual, final boolean innerFragments) {
     return new Runnable() {
       @Override
       public void run() {
@@ -380,7 +379,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
         ArrayList<OnesideDiffChange> diffChanges = new ArrayList<OnesideDiffChange>(blocks.size());
         for (ChangedBlock block : blocks) {
-          diffChanges.add(new OnesideDiffChange(myEditor, block));
+          diffChanges.add(new OnesideDiffChange(OnesideDiffViewer.this, block, innerFragments));
         }
 
         myChangedBlockData = new ChangedBlockData(diffChanges, convertor);
@@ -522,6 +521,11 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   //
   // Getters
   //
+
+  @NotNull
+  public EditorEx getEditor() {
+    return myEditor;
+  }
 
   @NotNull
   @Override

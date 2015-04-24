@@ -16,18 +16,19 @@
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OnesideDiffChange {
+  @NotNull private final OnesideDiffViewer myViewer;
   @NotNull private final EditorEx myEditor;
 
   private final int myStartOffset1;
@@ -38,21 +39,23 @@ public class OnesideDiffChange {
   private final int myLine1;
   private final int myLine2;
 
-  @Nullable private final List<DiffFragment> myInnerFragments;
+  @NotNull private final LineFragment myLineFragment;
 
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<RangeHighlighter>();
 
-  public OnesideDiffChange(@NotNull EditorEx editor, @NotNull ChangedBlock block) {
-    myEditor = editor;
+  public OnesideDiffChange(@NotNull OnesideDiffViewer viewer, @NotNull ChangedBlock block, boolean innerFragments) {
+    myViewer = viewer;
+    myEditor = viewer.getEditor();
+
     myStartOffset1 = block.getStartOffset1();
     myEndOffset1 = block.getEndOffset1();
     myStartOffset2 = block.getStartOffset2();
     myEndOffset2 = block.getEndOffset2();
     myLine1 = block.getLine1();
     myLine2 = block.getLine2();
-    myInnerFragments = block.getInnerFragments();
+    myLineFragment = block.getLineFragment();
 
-    installHighlighter();
+    installHighlighter(innerFragments);
   }
 
   public void destroyHighlighter() {
@@ -62,10 +65,10 @@ public class OnesideDiffChange {
     myHighlighters.clear();
   }
 
-  public void installHighlighter() {
+  public void installHighlighter(boolean innerFragments) {
     assert myHighlighters.isEmpty();
 
-    if (myInnerFragments != null) {
+    if (innerFragments && myLineFragment.getInnerFragments() != null) {
       doInstallHighlighterWithInner();
     }
     else {
@@ -78,11 +81,12 @@ public class OnesideDiffChange {
   }
 
   private void doInstallHighlighterWithInner() {
-    assert myInnerFragments != null;
+    List<DiffFragment> innerFragments = myLineFragment.getInnerFragments();
+    assert innerFragments != null;
 
     createLineHighlighters(true);
 
-    for (DiffFragment fragment : myInnerFragments) {
+    for (DiffFragment fragment : innerFragments) {
       createInlineHighlighter(TextDiffType.DELETED,
                               getStartOffset1() + fragment.getStartOffset1(),
                               getStartOffset1() + fragment.getEndOffset1());
