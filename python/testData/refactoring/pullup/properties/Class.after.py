@@ -7,7 +7,6 @@ class AnyClass(SuperClass):
     def __init__(self):
         super(AnyClass, self).__init__()
 
-
     def foo(self):
         pass
 
