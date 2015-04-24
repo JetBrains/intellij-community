@@ -791,4 +791,32 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void test_Keep_P_Tags() {
+    getSettings().getRootSettings().JD_P_AT_EMPTY_LINES = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+
+    doClassTest(
+      "/**\n" +
+      " * <pre>new\n" +
+      " * code</pre>\n" +
+      " * <p>\n" +
+      " * Whatever.\n" +
+      " * <p>\n" +
+      " * Whatever.\n" +
+      "    */\n" +
+      "public static void main(String[] args) {\n" +
+      "     }",
+      "/**\n" +
+      " * <pre>new\n" +
+      " * code</pre>\n" +
+      " * <p>\n" +
+      " * Whatever.\n" +
+      " * <p>\n" +
+      " * Whatever.\n" +
+      " */\n" +
+      "public static void main(String[] args) {\n" +
+      "}"
+    );
+  }
+
 }

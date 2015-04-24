@@ -596,10 +596,10 @@ public class JDParser {
           sb.append(line);
 
           // We want to track if we're inside <pre>...</pre> in order to not generate <p/> there.
-          if (PRE_TAG_START.equals(line)) {
+          if (line.startsWith(PRE_TAG_START)) {
             insidePreTag = true;
           }
-          else if (PRE_TAG_END.equals(line)) {
+          else if (line.endsWith(PRE_TAG_END)) {
             insidePreTag = false;
           }
         }
