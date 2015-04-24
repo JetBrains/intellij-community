@@ -65,7 +65,6 @@ class ClassFieldsManager extends FieldsManager {
       result.addAll(PyClassRefactoringUtil.copyFieldDeclarationToStatement(statements, destClass.getStatementList(), destClass));
     }
     deleteElements(statements);
-    PyClassRefactoringUtil.insertPassIfNeeded(from);
     return result;
   }
 

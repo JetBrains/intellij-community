@@ -60,7 +60,6 @@ class InstanceFieldsManager extends FieldsManager {
     if (fromInitMethod != null) { // If class has no init method that means all its fields declared in other methods, so nothing to remove
       deleteElements(Collections2.filter(statements, new InitsOnly(fromInitMethod)));
       //We can't leave class constructor with empty body
-      PyClassRefactoringUtil.insertPassIfNeeded(fromInitMethod);
     }
     return result;
   }

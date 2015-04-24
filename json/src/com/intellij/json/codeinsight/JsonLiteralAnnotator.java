@@ -37,7 +37,7 @@ public class JsonLiteralAnnotator implements Annotator {
       final int length = text.length();
 
       // Check that string literal is closed properly
-      if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || quoteEscaped(text, length - 1)) {
+      if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || JsonPsiUtil.isEscapedChar(text, length - 1)) {
         holder.createErrorAnnotation(element, JsonBundle.message("msg.missing.closing.quote"));
       }
 
@@ -61,13 +61,5 @@ public class JsonLiteralAnnotator implements Annotator {
         holder.createErrorAnnotation(element, JsonBundle.message("msg.illegal.floating.point.literal"));
       }
     }
-  }
-
-  private static boolean quoteEscaped(String text, int quotePos) {
-    int count = 0;
-    for (int i = quotePos - 1; i >= 0 && text.charAt(i) == '\\'; i--) {
-      count++;
-    }
-    return count % 2 != 0;
   }
 }

@@ -11,4 +11,3 @@ class Boo(Foo):
     this is boo
     very long boo
     '''
-    

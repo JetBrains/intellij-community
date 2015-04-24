@@ -534,11 +534,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return name != null ? name.getStartOffset() : super.getTextOffset();
   }
 
-  public void delete() throws IncorrectOperationException {
-    ASTNode node = getNode();
-    node.getTreeParent().removeChild(node);
-  }
-
   public PyStringLiteralExpression getDocStringExpression() {
     final PyStatementList stmtList = getStatementList();
     return DocStringUtil.findDocStringExpression(stmtList);

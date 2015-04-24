@@ -76,7 +76,7 @@ public class PyConvertStaticMethodToFunctionIntention extends BaseIntentionActio
     }
 
     final PsiElement copy = problemFunction.copy();
-    PyUtil.deleteElementSafely(problemFunction);
+    problemFunction.delete();
     file.addAfter(copy, containingClass);
 
     for (UsageInfo usage : usages) {

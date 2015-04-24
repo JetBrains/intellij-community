@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveStatementQuickFix implements LocalQuickFix {
@@ -40,7 +39,7 @@ public class PyRemoveStatementQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PyStatement statement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyStatement.class, false);
     if (statement != null) {
-      PyUtil.deleteElementSafely(statement);
+      statement.delete();
     }
   }
 }

@@ -21,9 +21,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Created by IntelliJ IDEA.
@@ -37,16 +40,22 @@ public class PyParameterListFixer extends PyFixer<PyParameterList> {
   }
 
   @Override
-  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParameterList psiElement) throws IncorrectOperationException {
-    final PsiElement lBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.OPEN_BRACES, 0);
-    final PsiElement rBrace = PyUtil.getChildByFilter(psiElement, PyTokenTypes.CLOSE_BRACES, 0);
-    if (lBrace == null || rBrace == null) {
+  public void doApply(@NotNull Editor editor, @NotNull PySmartEnterProcessor processor, @NotNull PyParameterList parameters)
+    throws IncorrectOperationException {
+    final PsiElement lBrace = PyUtil.getChildByFilter(parameters, PyTokenTypes.OPEN_BRACES, 0);
+    final PsiElement rBrace = PyUtil.getChildByFilter(parameters, PyTokenTypes.CLOSE_BRACES, 0);
+    final PyFunction pyFunction = as(parameters.getParent(), PyFunction.class);
+    if (pyFunction != null && !PyFunctionFixer.isFakeFunction(pyFunction) && (lBrace == null || rBrace == null)) {
       final Document document = editor.getDocument();
       if (lBrace == null) {
-        document.insertString(psiElement.getTextRange().getStartOffset(), "(");
+        final String textToInsert = pyFunction.getNameNode() == null ? " (" : "(";
+        document.insertString(parameters.getTextOffset(), textToInsert);
+      }
+      else if (parameters.getParameters().length == 0) {
+        document.insertString(lBrace.getTextRange().getEndOffset(), ")");
       }
       else {
-        document.insertString(psiElement.getTextRange().getEndOffset(), ")");
+        document.insertString(parameters.getTextRange().getEndOffset(), ")");
       }
     }
   }

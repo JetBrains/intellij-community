@@ -21,11 +21,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.editor.PythonDocCommentUtil;
 import com.jetbrains.python.psi.*;
@@ -89,16 +87,6 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
       }
     }
 
-    final PsiElement nextSibling = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
-    final PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
     element.delete();
-    if (nextSibling != null && nextSibling.getNode().getElementType().equals(PyTokenTypes.COMMA)) {
-      nextSibling.delete();
-      return;
-    }
-    if (prevSibling != null && prevSibling.getNode().getElementType().equals(PyTokenTypes.COMMA)) {
-      prevSibling.delete();
-    }
-
   }
 }

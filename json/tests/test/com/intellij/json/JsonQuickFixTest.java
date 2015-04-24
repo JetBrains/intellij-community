@@ -27,8 +27,10 @@ public class JsonQuickFixTest extends JsonTestCase {
     checkWrapInDoubleQuotes("{4<caret>2: false}", "{\"42\": false}");
     checkWrapInDoubleQuotes("{fo<caret>o: false}", "{\"foo\": false}");
     checkWrapInDoubleQuotes("{'fo<caret>o': false}", "{\"foo\": false}");
+    checkWrapInDoubleQuotes("'foo\\\"", "\"foo\\\"\"");
     checkWrapInDoubleQuotes("{\"foo\": b<caret>ar}", "{\"foo\": \"bar\"}");
     checkWrapInDoubleQuotes("{\"foo\": 'b<caret>ar'}", "{\"foo\": \"bar\"}");
+    checkWrapInDoubleQuotes("'foo\\n\\'\"\\\\\\\"bar", "\"foo\\n'\\\"\\\\\\\"bar\"");
   }
 
   private void checkWrapInDoubleQuotes(@NotNull String before, @NotNull String after) {

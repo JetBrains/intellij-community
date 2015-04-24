@@ -20,8 +20,8 @@ class ToClass(object):
 
 
 class FromClass(ToClass):
-    def __init__(self): pass
-
+    def __init__(self):
+        pass
 
     def lala(self):
         pass

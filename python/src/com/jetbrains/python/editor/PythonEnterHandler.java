@@ -48,7 +48,9 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   private int myPostprocessShift = 0;
 
   public static final Class[] IMPLICIT_WRAP_CLASSES = new Class[] {
-    PySequenceExpression.class,
+    PyListLiteralExpression.class,
+    PySetLiteralExpression.class,
+    PyDictLiteralExpression.class,
     PyDictLiteralExpression.class,
     PyParenthesizedExpression.class,
     PyArgumentList.class,
@@ -66,7 +68,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     PyListLiteralExpression.class,
     PyArgumentList.class,
     PyParameterList.class,
-    PyFunction.class,
+    PyDecoratorList.class,
     PySliceExpression.class,
     PySubscriptionExpression.class,
     PyGeneratorExpression.class
@@ -248,7 +250,10 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (wrappableBefore instanceof PsiComment || wrappableAfter instanceof PsiComment) {
       return false;
     }
-    return wrappableAfter == null || wrappableBefore != wrappableAfter;
+    if (wrappableAfter == null) {
+      return !(wrappableBefore instanceof PyDecoratorList);
+    }
+    return wrappableBefore != wrappableAfter;
   }
 
   private static void insertDocStringStub(Editor editor, PsiElement element) {
