@@ -30,10 +30,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,8 +97,16 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       if (newName.contains("/")) {
         final List<String> subDirs = StringUtil.split(newName, "/");
         newName = subDirs.remove(subDirs.size() - 1);
+        boolean firstToken = true;
         for (String dir : subDirs) {
-          if ("..".equals(dir)) {
+          if (firstToken && "~".equals(dir)) {
+            final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
+            if (userHomeDir == null) throw new IncorrectOperationException("User home directory not found");
+            final PsiDirectory directory1 = directory.getManager().findDirectory(userHomeDir);
+            if (directory1 == null) throw new IncorrectOperationException("User home directory not found");
+            directory = directory1;
+          }
+          else if ("..".equals(dir)) {
             final PsiDirectory parentDirectory = directory.getParentDirectory();
             if (parentDirectory == null) throw new IncorrectOperationException("Not a valid directory");
             directory = parentDirectory;
@@ -105,6 +115,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
             final PsiDirectory sub = directory.findSubdirectory(dir);
             directory = sub == null ? directory.createSubdirectory(dir) : sub;
           }
+          firstToken = false;
         }
       }
 
@@ -151,6 +162,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     public boolean checkInput(String inputString) {
       final StringTokenizer tokenizer = new StringTokenizer(inputString, "\\/");
       VirtualFile vFile = getDirectory().getVirtualFile();
+      boolean firstToken = true;
       while (tokenizer.hasMoreTokens()) {
         final String token = tokenizer.nextToken();
         if ((token.equals(".") || token.equals("..")) && !tokenizer.hasMoreTokens()) {
@@ -158,7 +170,15 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
           return false;
         }
         if (vFile != null) {
-          if ("..".equals(token)) {
+          if (firstToken && "~".equals(token)) {
+            final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
+            if (userHomeDir == null) {
+              myErrorText = "User home directory not found";
+              return false;
+            }
+            vFile = userHomeDir;
+          }
+          else if ("..".equals(token)) {
             vFile = vFile.getParent();
             if (vFile == null) {
               myErrorText = "Not a valid directory";
@@ -184,6 +204,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
           myErrorText = "'" + token + "' is an ignored name (Settings | Editor | File Types | Ignore files and folders)";
           return true;
         }
+        firstToken = false;
       }
       myErrorText = null;
       return true;

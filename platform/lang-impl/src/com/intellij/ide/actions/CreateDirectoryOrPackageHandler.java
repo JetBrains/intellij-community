@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -75,7 +76,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   public boolean checkInput(String inputString) {
     final StringTokenizer tokenizer = new StringTokenizer(inputString, myDelimiters);
     VirtualFile vFile = myDirectory.getVirtualFile();
-
+    boolean firstToken = true;
     while (tokenizer.hasMoreTokens()) {
       final String token = tokenizer.nextToken();
       if (!tokenizer.hasMoreTokens() && (token.equals(".") || token.equals(".."))) {
@@ -83,7 +84,15 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
         return false;
       }
       if (vFile != null) {
-        if ("..".equals(token)) {
+        if (firstToken && "~".equals(token)) {
+          final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
+          if (userHomeDir == null) {
+            myErrorText = "User home directory not found";
+            return false;
+          }
+          vFile = userHomeDir;
+        }
+        else if ("..".equals(token)) {
           vFile = vFile.getParent();
           if (vFile == null) {
             myErrorText = "Not a valid directory";
@@ -114,6 +123,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
         myErrorText = "Not a valid package name, it will not be possible to create a class inside";
         return true;
       }
+      firstToken = false;
     }
     myErrorText = null;
     return true;

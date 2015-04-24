@@ -19,10 +19,12 @@ package com.intellij.ide.util;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.StringTokenizer;
@@ -96,10 +98,19 @@ public class DirectoryUtil {
   public static PsiDirectory createSubdirectories(final String subDirName, PsiDirectory baseDirectory, final String delim) throws IncorrectOperationException {
     StringTokenizer tokenizer = new StringTokenizer(subDirName, delim);
     PsiDirectory dir = baseDirectory;
+    boolean firstToken = true;
     while (tokenizer.hasMoreTokens()) {
       String dirName = tokenizer.nextToken();
       if (tokenizer.hasMoreTokens()) {
-        if ("..".equals(dirName)) {
+        if (firstToken && "~".equals(dirName)) {
+          final VirtualFile userHomeDir = VfsUtil.getUserHomeDir();
+          if (userHomeDir == null) throw new IncorrectOperationException("User home directory not found");
+          final PsiDirectory directory1 = baseDirectory.getManager().findDirectory(userHomeDir);
+          if (directory1 == null) throw new IncorrectOperationException("User home directory not found");
+          dir = directory1;
+          continue;
+        }
+        else if ("..".equals(dirName)) {
           dir = dir.getParentDirectory();
           if (dir == null) throw new IncorrectOperationException("Not a valid directory");
           continue;
@@ -114,6 +125,7 @@ public class DirectoryUtil {
         }
       }
       dir = dir.createSubdirectory(dirName);
+      firstToken = false;
     }
     return dir;
   }
