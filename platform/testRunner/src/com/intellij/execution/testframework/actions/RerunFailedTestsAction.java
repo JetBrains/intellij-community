@@ -16,12 +16,12 @@
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,27 +29,49 @@ import javax.swing.*;
 
 class RerunFailedTestsAction extends AnAction {
   @Override
+  public void update(AnActionEvent e) {
+   e.getPresentation().setEnabled(getAction(e, false));
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    getAction(e, true);
+  }
+
+  private static boolean getAction(@NotNull AnActionEvent e, boolean execute) {
     Project project = e.getProject();
     if (project == null) {
-      return;
+      return false;
     }
 
-    RunContentDescriptor content = ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
-    if (content == null) {
-      return;
+    RunContentDescriptor contentDescriptor = ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
+    if (contentDescriptor == null) {
+      return false;
     }
 
-    JComponent component = content.getComponent();
+    JComponent component = contentDescriptor.getComponent();
     if (component == null) {
-      return;
+      return false;
     }
 
-    @SuppressWarnings("ConstantConditions")
-    DataContext dataContext = DataManager.getInstance().getDataContext(component);
-    ViewContext viewContext = ViewContext.CONTEXT_KEY.getData(dataContext);
-    if (viewContext != null) {
-
+    ExecutionEnvironment environment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
+    if (environment == null) {
+      return false;
     }
+
+    AnAction[] actions = contentDescriptor.getRestartActions();
+    if (actions.length == 0) {
+      return false;
+    }
+
+    for (AnAction action : actions) {
+      if (action instanceof AbstractRerunFailedTestsAction) {
+        if (execute) {
+          ((AbstractRerunFailedTestsAction)action).execute(e, environment);
+        }
+        return true;
+      }
+    }
+    return false;
   }
 }
