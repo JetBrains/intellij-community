@@ -16,11 +16,9 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.testFramework.vcs.MockContentRevision;
+import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -28,12 +26,7 @@ import java.io.File;
 
 import static junit.framework.Assert.assertEquals;
 
-/**
- * Testing only tree-view, because the list view is obvious.
- *
- * @author Kirill Likhodedov
- */
-public class ChangesComparatorTest {
+public class HierarchicalFilePathComparatorTest {
 
   @Test
   public void testInOneDirectory() throws Exception {
@@ -90,23 +83,21 @@ public class ChangesComparatorTest {
     assertEquals(1, compare("/folder/aaa-qwerty/qwerty", "/folder/aaa/qwerty/"));
   }
 
-  private static int compare(String path1, String path2) throws Exception {
-    int compare1 = compare(change(path1), change(path2));
-    int compare2 = compare(change(path2), change(path1));
+  private static int compare(@NotNull String path1, @NotNull String path2) throws Exception {
+    int compare1 = compare(filePath(path1), filePath(path2));
+    int compare2 = compare(filePath(path2), filePath(path1));
     assert compare1 == -compare2;
     return compare1;
   }
 
-  private static int compare(Change c1, Change c2) {
-    int result = ChangesComparator.getInstance(false).compare(c1, c2);
+  private static int compare(FilePath path1, FilePath path2) {
+    int result = HierarchicalFilePathComparator.IGNORE_CASE.compare(path1, path2);
     return Integer.signum(result);
   }
 
   @NotNull
-  private static Change change(@NotNull String path) throws Exception {
-    ContentRevision before = new MockContentRevision(new FilePathImpl(new File(path), StringUtil.endsWithChar(path, '/')), VcsRevisionNumber.NULL);
-    ContentRevision after = new MockContentRevision(new FilePathImpl(new File(path), StringUtil.endsWithChar(path, '/')), VcsRevisionNumber.NULL);
-    return new Change(before, after);
+  private static FilePath filePath(@NotNull String path) throws Exception {
+    return new FilePathImpl(new File(path), StringUtil.endsWithChar(path, '/'));
   }
 
 }
