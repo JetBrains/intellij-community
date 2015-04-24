@@ -46,7 +46,6 @@ public class RunContentDescriptor implements Disposable {
   private boolean myAutoFocusContent = false;
 
   private Content myContent;
-  private Runnable myRestarter;
   @NotNull
   private AnAction[] myRestartActions = AnAction.EMPTY_ARRAY;
 
@@ -115,7 +114,6 @@ public class RunContentDescriptor implements Disposable {
   public void dispose() {
     myExecutionConsole = null;
     myComponent = null;
-    myRestarter = null;
     myProcessHandler = null;
     myContent = null;
   }
