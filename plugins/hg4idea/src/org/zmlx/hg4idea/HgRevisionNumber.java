@@ -13,7 +13,7 @@
 package org.zmlx.hg4idea;
 
 import com.google.common.base.Objects;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -69,7 +69,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
                           @NotNull String commitMessage,
                           @NotNull List<HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
-    Pair<String, String> authorArgs = HgUtil.parseUserNameAndEmail(authorInfo);
+    Couple<String> authorArgs = HgUtil.parseUserNameAndEmail(authorInfo);
     this.author = authorArgs.getFirst();
     this.email = authorArgs.getSecond();
     this.parents = parents;

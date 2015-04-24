@@ -1,5 +1,6 @@
 package org.testng;
 
+import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.testng.internal.IResultListener;
@@ -21,22 +22,26 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   private String myMethodName;
   private int    myInvocationCount = 0;
 
+  private static String escapeName(String str) {
+    return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
+  }
+
   public void onConfigurationSuccess(ITestResult result) {
     final String className = result.getTestClass().getName();
-    System.out.println("##teamcity[testSuiteStarted name=\'" + className + "\']");
+    System.out.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\']");
     final String methodName = result.getMethod().getMethodName();
-    System.out.println("##teamcity[testStarted name=\'" + methodName + "\']");
+    System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\']");
     onTestSuccess(result);
-    System.out.println("\n##teamcity[testSuiteFinished name=\'" + className + "\']");
+    System.out.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(className) + "\']");
   }
 
   public void onConfigurationFailure(ITestResult result) {
     final String className = result.getTestClass().getName();
-    System.out.println("##teamcity[testSuiteStarted name=\'" + className + "\']");
+    System.out.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\']");
     final String methodName = result.getMethod().getMethodName();
-    System.out.println("##teamcity[testStarted name=\'" + methodName + "\']");
+    System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\']");
     onTestFailure(result);
-    System.out.println("\n##teamcity[testSuiteFinished name=\'" + className + "\']");
+    System.out.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(className) + "\']");
   }
 
   public void onConfigurationSkip(ITestResult itr) {
@@ -44,26 +49,26 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   public void onStart(ISuite suite) {
     System.out.println("##teamcity[enteredTheMatrix]");
-    System.out.println("##teamcity[testSuiteStarted name =\'" + suite.getName() + "\']");
+    System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(suite.getName()) + "\']");
   }
 
   public void onFinish(ISuite suite) {
-    System.out.println("##teamcity[testSuiteFinished name=\'" + suite.getName() + "\']");
+    System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(suite.getName()) + "\']");
   }
 
   public void onTestStart(ITestResult result) {
     final String className = result.getTestClass().getName();
     if (myCurrentClassName == null || !myCurrentClassName.equals(className)) {
       if (myCurrentClassName != null) {
-        System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
+        System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
       }
-      System.out.println("##teamcity[testSuiteStarted name =\'" + className + "\']");
+      System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(className) + "\']");
       myCurrentClassName = className;
       myInvocationCount = 0;
     }
     String methodName = getMethodName(result, false);
-    System.out.println("##teamcity[testStarted name=\'" +
-                       methodName + "\' locationHint=\'java:test://" + className + "." + methodName + "\']");
+    System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) +
+                       "\' locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\']");
   }
 
   private String getMethodName(ITestResult result) {
@@ -89,7 +94,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onTestSuccess(ITestResult result) {
-    System.out.println("\n##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
+    System.out.println("\n##teamcity[testFinished name=\'" + escapeName(getMethodName(result)) + "\']");
   }
 
   public String getTrace(Throwable tr) {
@@ -111,25 +116,20 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     attrs.put("details", trace);
     attrs.put("error", "true");
     System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
-    System.out.println("\n##teamcity[testFinished name=\'" + methodName + "\']");
+    System.out.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) + "\']");
   }
 
   public void onTestSkipped(ITestResult result) {
-    System.out.println("\n##teamcity[testFinished name=\'" + getMethodName(result) + "\']");
+    System.out.println("\n##teamcity[testFinished name=\'" + escapeName(getMethodName(result)) + "\']");
   }
 
-  public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
+  public void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
 
-  }
-
-  public void onStart(ITestContext context) {
-    //System.out.println("##teamcity[testSuiteStarted name =\'" + context.getName() + "\']");
-  }
+  public void onStart(ITestContext context) {}
 
   public void onFinish(ITestContext context) {
     if (myCurrentClassName != null) {
-      System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
+      System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
     }
-    //System.out.println("##teamcity[testSuiteFinished name=\'" + context.getName() + "\']");
   }
 }

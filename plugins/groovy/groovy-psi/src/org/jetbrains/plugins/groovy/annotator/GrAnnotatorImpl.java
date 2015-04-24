@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -44,6 +45,7 @@ public class GrAnnotatorImpl implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (FileIndexFacade.getInstance(element.getProject()).isInLibrarySource(element.getContainingFile().getVirtualFile())) return;
     if (element instanceof GroovyPsiElement) {
       final GroovyAnnotator annotator = new GroovyAnnotator(holder);
       ((GroovyPsiElement)element).accept(annotator);

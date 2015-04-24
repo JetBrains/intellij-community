@@ -48,10 +48,13 @@ public class JavaGenericsUtil {
       }
       PsiType[] parameters = classType.getParameters();
 
-      for (PsiType parameter : parameters) {
-        if (parameter instanceof PsiWildcardType && ((PsiWildcardType)parameter).getBound() == null) {
-          return true;
+      if (parameters.length > 0) {
+        for (PsiType parameter : parameters) {
+          if (!(parameter instanceof PsiWildcardType && ((PsiWildcardType)parameter).getBound() == null)) {
+            return false;
+          }
         }
+        return true;
       }
       final PsiClass resolved = ((PsiClassType)PsiUtil.convertAnonymousToBaseType(classType)).resolve();
       if (resolved instanceof PsiTypeParameter) {

@@ -566,6 +566,18 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return getOpenFileDescriptor(myEditor.getCaretModel().getOffset());
   }
 
+  @CalledInAwt
+  @Nullable
+  protected OnesideDiffChange getCurrentChange() {
+    if (myChangedBlockData == null) return null;
+    int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
+
+    for (OnesideDiffChange change : myChangedBlockData.getDiffChanges()) {
+      if (DiffUtil.isSelectedByLine(caretLine, change.getLine1(), change.getLine2())) return change;
+    }
+    return null;
+  }
+
   @Nullable
   protected OpenFileDescriptor getOpenFileDescriptor(int offset) {
     assert myActualContent1 != null || myActualContent2 != null;
@@ -806,9 +818,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     else if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return myEditor;
     }
-    else {
-      return super.getData(dataId);
+    else if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
+      OnesideDiffChange change = getCurrentChange();
+      if (change != null) {
+        return new LineRange(change.getLine1(), change.getLine2());
+      }
     }
+    return super.getData(dataId);
   }
 
   private class MyStatusPanel extends StatusPanel {

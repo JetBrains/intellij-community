@@ -25,6 +25,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -77,7 +78,13 @@ public class ImplementationSearcher {
       }
       return filterElements(element, all, offset);
     }
-    return (includeSelfAlways || includeSelfIfNoOthers) && element.getTextRange() != null ?
+    return (includeSelfAlways || includeSelfIfNoOthers) &&
+           ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
+             @Override
+             public TextRange compute() {
+               return element.getTextRange();
+             }
+           }) != null ?
            new PsiElement[] {element} :
            PsiElement.EMPTY_ARRAY;
   }

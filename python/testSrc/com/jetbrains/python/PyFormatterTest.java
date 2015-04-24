@@ -541,6 +541,27 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-15530
+  public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
+    doTest();
+  }
+
+  public void testAlignmentInListLiteralWhereFirstItemIsEmptyTuple() {
+    doTest();
+  }
+
+  public void testHangingIndentInNamedArgumentValue() {
+    doTest();
+  }
+
+  public void testHangingIndentInParameterDefaultValue() {
+    doTest();
+  }
+
+  public void testAlignmentOfEmptyCollectionLiterals() {
+    doTest();
+  }
+
   private CommonCodeStyleSettings getCommonSettings() {
     return settings().getCommonSettings(PythonLanguage.getInstance());
   }

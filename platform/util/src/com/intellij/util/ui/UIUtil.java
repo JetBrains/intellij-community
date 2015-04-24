@@ -3022,16 +3022,6 @@ public class UIUtil {
     addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
   }
 
-  public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
-    Dimension ans = new Dimension(dimension);
-    ans.width += insets.left;
-    ans.width += insets.right;
-    ans.height += insets.top;
-    ans.height += insets.bottom;
-
-    return ans;
-  }
-
   public static void adjustWindowToMinimumSize(final Window window) {
     if (window == null) return;
     final Dimension minSize = window.getMinimumSize();

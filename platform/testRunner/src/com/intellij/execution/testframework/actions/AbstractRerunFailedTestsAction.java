@@ -137,6 +137,10 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return;
     }
 
+    execute(e, environment);
+  }
+
+  void execute(@NotNull AnActionEvent e, @NotNull ExecutionEnvironment environment) {
     MyRunProfile profile = getRunProfile(environment);
     if (profile == null) {
       return;
