@@ -83,8 +83,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   private final boolean myHighlightProblems;
   private boolean myShowFlatten;
 
-  private final Collection<T> myIncludedChanges;
-  private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
+  private final Set<T> myIncludedChanges;
+  @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myAlwaysExpandList;
 
   @NonNls private static final String TREE_CARD = "Tree";
@@ -94,13 +94,17 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
-  private final Runnable myInclusionListener;
+  @Nullable private final Runnable myInclusionListener;
   @Nullable private ChangeNodeDecorator myChangeDecorator;
   private Runnable myGenericSelectionListener;
   @NotNull private final CopyProvider myCopyProvider;
 
-  public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
-                         final boolean highlightProblems, @Nullable final Runnable inclusionListener, @Nullable final ChangeNodeDecorator decorator) {
+  public ChangesTreeList(@NotNull final Project project,
+                         @NotNull Collection<T> initiallyIncluded,
+                         final boolean showCheckboxes,
+                         final boolean highlightProblems,
+                         @Nullable final Runnable inclusionListener,
+                         @Nullable final ChangeNodeDecorator decorator) {
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
