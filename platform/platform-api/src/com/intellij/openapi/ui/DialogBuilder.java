@@ -464,4 +464,8 @@ public class DialogBuilder implements Disposable {
       return actions.toArray(new Action[actions.size()]);
     }
   }
+
+  public void setErrorText(@Nullable final String text) {
+    myDialogWrapper.setErrorText(text);
+  }
 }
