@@ -56,6 +56,7 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   public void testTypeArgumentsParam() throws Exception { doTest("Clazz", "IntF", false); }
   public void testTryWithResources1() throws Exception { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
   public void testTryWithResources2() throws Exception { doTest("Test.MyResourceImpl", "Test.MyResource", false); }
+  public void testDifferentNumberOfParams() throws Exception { doTest("Bar", "SuperBar", false); }
 
   //todo[ann] fix and uncomment
   //public void testStaticCallArguments() throws Exception { doTest("Impl", "Int", false); }
