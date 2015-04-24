@@ -1,6 +1,7 @@
 public class BrokenAlignment {
 
     public BrokenAlignment(String errorMessage) {
-        if (StringUtils.contains(errorMessage, "'UK_ACCOUNT_USERNAME'")
+        if (StringUtils.contains(<caret>errorMessage,
+                "'UK_ACCOUNT_USERNAME'")
     }
 }

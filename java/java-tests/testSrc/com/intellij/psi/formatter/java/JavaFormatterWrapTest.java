@@ -43,7 +43,8 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "class Foo {\n" +
       "}",
 
-      "@AttributeOverrides({@AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
+      "@AttributeOverrides({\n" +
+      "        @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\")),\n" +
       "        @AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\")),\n" +
       "        @AttributeOverride(name = \"eventDate\", column = @Column(name = \"recovery_date\")),\n" +
       "        @AttributeOverride(name = \"amount\", column = @Column(name = \"recovery_amount\")),\n" +
