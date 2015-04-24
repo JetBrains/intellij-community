@@ -152,10 +152,14 @@ public class FileManagerImpl implements FileManager {
 
     VirtualFile dir = vFile.getParent();
     PsiDirectory parentDir = dir == null ? null : getCachedDirectory(dir);
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
     if (parentDir != null) {
-      PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-      treeEvent.setParent(parentDir);
-      myManager.childrenChanged(treeEvent);
+      event.setParent(parentDir);
+      myManager.childrenChanged(event);
+    } else {
+      event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
+      myManager.beforePropertyChange(event);
+      myManager.propertyChanged(event);
     }
   }
 
