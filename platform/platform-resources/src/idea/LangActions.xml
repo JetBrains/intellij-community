@@ -850,7 +850,7 @@
 
     <group>
       <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction"
-              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="CompareTwoFiles"/>
+              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="Diff.ShowDiff"/>
       <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>
