@@ -874,7 +874,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
           // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
           // After that we have to select opened editor.
-          EditorWithProviderComposite composite = new EditorWithProviderComposite(file, newEditors, newProviders, FileEditorManagerImpl.this);
+          EditorWithProviderComposite composite = createComposite(file, newEditors, newProviders);
+          if (composite == null) return;
 
           if (index >= 0) {
             composite.getFile().putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
@@ -960,7 +961,30 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     });
-    return Pair.create(compositeRef.get().getEditors(), compositeRef.get().getProviders());
+    EditorWithProviderComposite composite = compositeRef.get();
+    return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
+                       composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
+  }
+  
+  @Nullable
+  private EditorWithProviderComposite createComposite(@NotNull VirtualFile file, 
+                                                      @NotNull FileEditor[] editors, @NotNull FileEditorProvider[] providers) {
+    if (NullUtils.hasNull(editors) || NullUtils.hasNull(providers)) {
+      List<FileEditor> editorList = new ArrayList<FileEditor>(editors.length);
+      List<FileEditorProvider> providerList = new ArrayList<FileEditorProvider>(providers.length);
+      for (int i = 0; i < editors.length; i++) {
+        FileEditor editor = editors[i];
+        FileEditorProvider provider = providers[i];
+        if (editor != null && provider != null) {
+          editorList.add(editor);
+          providerList.add(provider);
+        }
+      }
+      if (editorList.isEmpty()) return null;
+      editors = editorList.toArray(new FileEditor[editorList.size()]);
+      providers = providerList.toArray(new FileEditorProvider[providerList.size()]);
+    }
+    return new EditorWithProviderComposite(file, editors, providers, this);
   }
 
   private static void clearWindowIfNeeded(@NotNull EditorWindow window) {

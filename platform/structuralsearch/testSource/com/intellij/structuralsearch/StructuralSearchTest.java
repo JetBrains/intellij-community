@@ -551,13 +551,36 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String s9 = "int a[] = new int[] { 1,2,3,4};\n" +
                 "int b[] = { 2,3,4,5 };\n" +
-                "Object[] c = new Object[] { \"\", null};";
+                "Object[] c = new Object[] { \"\", null};\n" +
+                "Object[] d = {null, null};\n" +
+                "Object[] e = {};\n" +
+                "Object[] f = new Object[]{}\n" +
+                "String[] g = new String[]{}\n" +
+                "String[] h = new String[]{new String()}";
 
-    assertEquals("Find array instantiation 1", 2, findMatchesCount(s9, "new '_ []{ '_* }"));
-    assertEquals("Find array instantiation 2", 2, findMatchesCount(s9, "new int []{ '_* }"));
-    assertEquals("Find array instantiation 3", 2, findMatchesCount(s9, "new 'a?:int [] { '_* }"));
-    assertEquals("Find array instantiation 4", 3, findMatchesCount(s9, "new '_? []{ '_* }"));
-    assertEquals("Find array instantiation 5", 1, findMatchesCount(s9, "new Object[] { '_* }"));
+    assertEquals("Find new array expressions, but no array initializer expressions", 5,
+                 findMatchesCount(s9, "new '_ []{ '_* }"));
+
+    assertEquals("Find new int array expressions, including array initializer expressions", 2,
+                 findMatchesCount(s9, "new int []{ '_* }"));
+
+    assertEquals("Find new int array expressions, including array initializer expressions using variable ", 2,
+                 findMatchesCount(s9, "new 'a?:int [] { '_* }"));
+
+    assertEquals("Find all new array expressions, including array initializers", 8,
+                 findMatchesCount(s9, "new '_? []{ '_* }"));
+
+    assertEquals("Find new Object array expressions, including array initializer expressions", 4,
+                 findMatchesCount(s9, "new Object[] { '_* }"));
+
+    assertEquals("Find only array initializer expressions", 3,
+                 findMatchesCount(s9, "new '_{0,0}[] { '_* }"));
+
+    assertEquals("Find only int array initializer expressions", 1,
+                 findMatchesCount(s9, "new '_{0,0}:int [] { '_* }"));
+
+    assertEquals("Try to find String array initializer expressions", 0,
+                 findMatchesCount(s9, "new '_{0,0}:String [] { '_* }"));
   }
 
   public void testLiteral() {
@@ -1366,7 +1389,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s81_5, "HashMap<String, Integer>")
     );
 
-    String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; }";
+    String source1 = "class Comparator<T> { private Comparator<String> c; private Comparator d; private Comparator e; }";
     String target1 = "java.util.Comparator 'a;";
     assertEquals(
       "qualified type should not match 1",
@@ -1379,6 +1402,24 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       "qualified type should not match 2",
       0,
       findMatchesCount(source1, target2)
+    );
+
+    assertEquals(
+      "unparameterized type query should match",
+      3,
+      findMatchesCount(source1, "Comparator 'a;")
+    );
+
+    assertEquals(
+      "parameterized type query should only match parameterized",
+      1,
+      findMatchesCount(source1, "Comparator<'_a> 'b;")
+    );
+
+    assertEquals(
+      "should find unparameterized only",
+      2,
+      findMatchesCount(source1, "Comparator<'_a{0,0}> 'b;")
     );
 
     String source2 = "class A<@Q T> {}\n" +
@@ -3147,5 +3188,49 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should find qualified reference case insensitively", 1, findMatchesCount(source, pattern11));
     String pattern12 = "@x";
     assertEquals("should find annotation case insensitively", 1, findMatchesCount(source, pattern12));
+  }
+
+  public void testFindTry() {
+    String source = "class A {{\n" +
+                    "  try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
+                    "  }\n" +
+                    "  try {\n" +
+                    "  } catch (FileNotFoundException e) {\n" +
+                    "  } finally {}\n" +
+                    "  try {\n" +
+                    "  } catch(NullPointerException  | UnsupportedOperationException e) {\n" +
+                    "    throw e;\n" +
+                    "  } catch(Exception e) {\n" +
+                    "     throw new RuntimeException(e);\n" +
+                    "  } finally {}\n" +
+                    "  try {\n" +
+                    "    throw new NoRouteToHostException();\n" +
+                    "  } catch (NoRouteToHostException e) {\n" +
+                    "    System.out.println();\n" +
+                    "  } catch (SocketException e) {\n" +
+                    "    System.out.println();\n" +
+                    "  } catch (IOException e) {\n" +
+                    "  } catch (RuntimeException e) {\n" +
+                    "    System.out.println();\n" +
+                    "  } finally {}\n" +
+                    "}}";
+
+    String pattern1 = "try ('_Resource) { '_Statement*; }";
+    assertEquals("Find try-with-resources", 1, findMatchesCount(source, pattern1));
+
+    String pattern2 = "try { '_St1*; } catch ('_ExceptionType1 '_e1) { '_St2*; } catch ('_ExceptionType2 '_e2) { '_St3*; }";
+    assertEquals("Find try with two or more catch blocks", 2, findMatchesCount(source, pattern2));
+
+    String pattern3 = "try { '_St1*; } finally { '_St2*; }";
+    assertEquals("Find try with finally block", 3, findMatchesCount(source, pattern3));
+
+    String pattern4 = "try { '_St1*; } catch (NullPointerException | IllegalArgumentException '_e) { '_St2*; }";
+    assertEquals("Match multi catch correctly", 0, findMatchesCount(source, pattern4));
+
+    String pattern5 = "try { '_St1*; } catch (UnsupportedOperationException | NullPointerException '_e) { '_St2*; }";
+    assertEquals("Find multi catch", 1, findMatchesCount(source, pattern5));
+
+    String pattern6 = "try { '_St1*; } catch ('_E1 | '_E2 '_e) { '_St2*; }";
+    assertEquals("Find multi catch with variables", 1, findMatchesCount(source, pattern6));
   }
 }

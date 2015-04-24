@@ -26,13 +26,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlSchemaProvider;
+import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -70,6 +75,31 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     @Override
     protected Map<String, Map<String, Resource>> compute() {
       return computeStdResources();
+    }
+  };
+
+  private final CachedValueProvider<MultiMap<String, String>> myUrlByNamespaceProvider = new CachedValueProvider<MultiMap<String, String>>() {
+    @Nullable
+    @Override
+    public CachedValueProvider.Result<MultiMap<String, String>> compute() {
+      MultiMap<String, String> result = new MultiMap<String, String>();
+
+      Collection<Map<String, Resource>> values = myStandardResources.getValue().values();
+      for (Map<String, Resource> map : values) {
+        for (Map.Entry<String, Resource> entry : map.entrySet()) {
+          String url = entry.getValue().getResourceUrl();
+          if (url != null) {
+            VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
+            if (file != null) {
+              String namespace = XmlNamespaceIndex.computeNamespace(file);
+              if (namespace != null) {
+                result.putValue(namespace, entry.getKey());
+              }
+            }
+          }
+        }
+      }
+      return CachedValueProvider.Result.create(result, ExternalResourceManagerExImpl.this);
     }
   };
 
@@ -533,6 +563,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     myCatalogManager = null;
     myCatalogPropertiesFile = filePath;
     incModificationCount();
+  }
+
+  @Override
+  public MultiMap<String, String> getUrlsByNamespace(Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, myUrlByNamespaceProvider);
   }
 
   @Nullable

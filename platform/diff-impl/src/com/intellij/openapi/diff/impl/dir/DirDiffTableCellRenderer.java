@@ -21,6 +21,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
@@ -60,8 +62,9 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
     final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
     if (c instanceof JLabel) {
       final JLabel label = (JLabel)c;
-      if (hasFocus || isSelected) {
-        label.setBorder(noFocusBorder);
+      Border border = label.getBorder();
+      if ((hasFocus || isSelected) && border != null) {
+        label.setBorder(new EmptyBorder(border.getBorderInsets(label)));
       }
       label.setIcon(null);
 

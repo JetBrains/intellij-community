@@ -2217,6 +2217,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private void releaseForceUpdateSemaphore(UpdateSemaphore semaphore) {
       myUpdateSemaphoreRef.compareAndSet(semaphore, null);
     }
+    private static final int MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT = 2;
 
     private void forceUpdate(@Nullable Project project, @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedTo) {
       myChangedFilesCollector.tryToEnsureAllInvalidateTasksCompleted();
@@ -2226,17 +2227,22 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       do {
         updateSemaphore = obtainForceUpdateSemaphore();
         try {
+          int filesFromOtherProjectUpdated = 0;
           for (VirtualFile file : getAllFilesToUpdate()) {
+            boolean fileOutOfCurrentProject = false;
+
             if (indexableFilesFilter != null && file instanceof VirtualFileWithId && !indexableFilesFilter.containsFileId(
               ((VirtualFileWithId)file).getId())) {
-              continue;
+              if (filesFromOtherProjectUpdated >= MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT || restrictedTo != null) continue;
+              fileOutOfCurrentProject = true;
             }
 
-            if (filter == null || filter.accept(file) || Comparing.equal(file, restrictedTo)) {
+            if (filter == null || filter.accept(file) || fileOutOfCurrentProject || Comparing.equal(file, restrictedTo)) {
               try {
                 updateSemaphore.down();
                 // process only files that can affect result
-                processFileImpl(project, new com.intellij.ide.caches.FileContent(file));
+                boolean processed = processFileImpl(project, new com.intellij.ide.caches.FileContent(file));
+                if (fileOutOfCurrentProject && processed) ++filesFromOtherProjectUpdated;
               }
               catch (ProcessCanceledException e) {
                 updateSemaphore.reportUpdateCanceled();
@@ -2268,7 +2274,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       while (updateSemaphore.isUpdateCanceled());
     }
 
-    private void processFileImpl(Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
+    private boolean processFileImpl(Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
       final VirtualFile file = fileContent.getVirtualFile();
       final boolean reallyRemoved = myFilesToUpdate.remove(file);
       if (reallyRemoved && file.isValid()) {
@@ -2290,7 +2296,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         finally {
           IndexingStamp.flushCache(file);
         }
+        return true;
       }
+      return false;
     }
 
     @Override
@@ -2357,9 +2365,22 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     @NotNull
     @Override
     public List<VirtualFile> getFiles() {
+      List<VirtualFile> files;
       synchronized (myFiles) {
-        return myFiles;
+        files = myFiles;
       }
+
+      // When processing roots concurrently myFiles looses the local order of local vs archive files
+      // If we process the roots in 2 threads we can just separate local vs archive
+      List<VirtualFile> localFileSystemFiles = new ArrayList<VirtualFile>(files.size() / 2);
+      List<VirtualFile> archiveFiles = new ArrayList<VirtualFile>(files.size() / 2);
+      for(VirtualFile file:files) {
+        if (file.getFileSystem() instanceof LocalFileSystem) localFileSystemFiles.add(file);
+        else archiveFiles.add(file);
+      }
+
+      localFileSystemFiles.addAll(archiveFiles);
+      return localFileSystemFiles;
     }
 
     @Override
@@ -2456,14 +2477,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private boolean isTooLarge(@NotNull VirtualFile file) {
     if (SingleRootFileViewProvider.isTooLargeForIntelligence(file)) {
-      return !myNoLimitCheckTypes.contains(file.getFileType()) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file);
+      return !myNoLimitCheckTypes.contains(file.getFileType()) || SingleRootFileViewProvider.isTooLargeForContentLoading(file);
     }
     return false;
   }
 
   private boolean isTooLarge(@NotNull VirtualFile file, long contentSize) {
     if (SingleRootFileViewProvider.isTooLargeForIntelligence(file, contentSize)) {
-      return !myNoLimitCheckTypes.contains(file.getFileType()) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file, contentSize);
+      return !myNoLimitCheckTypes.contains(file.getFileType()) || SingleRootFileViewProvider.isTooLargeForContentLoading(file, contentSize);
     }
     return false;
   }

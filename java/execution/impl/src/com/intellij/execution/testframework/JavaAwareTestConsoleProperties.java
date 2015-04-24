@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,13 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreeSelectionModel;
 import java.util.Collection;
 
 public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters> extends SMTRunnerConsoleProperties {
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
-    super(configuration, testFrameworkName, executor, false);
+    super(configuration, testFrameworkName, executor);
+    setPrintTestingStartedTime(false);
   }
 
   @Override
@@ -46,6 +48,11 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   @Override
   public T getConfiguration() {
     return (T)super.getConfiguration();
+  }
+
+  @Override
+  protected int getSelectionMode() {
+    return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
   }
 
   @Override

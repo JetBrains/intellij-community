@@ -74,7 +74,7 @@ public class StandardDataFlowRunner extends DataFlowRunner {
     }
 
     PsiType returnType = method.getReturnType();
-    return returnType != null && returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID);
+    return returnType != null && (returnType == PsiType.VOID || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID));
   }
 
   public void onInstructionProducesCCE(Instruction instruction) {

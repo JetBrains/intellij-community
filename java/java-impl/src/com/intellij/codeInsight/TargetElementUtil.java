@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,52 +34,52 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TargetElementUtil extends TargetElementUtilBase {
+public class TargetElementUtil extends TargetElementEvaluatorEx2 implements TargetElementUtilExtender{
   public static final int NEW_AS_CONSTRUCTOR = 0x04;
   public static final int THIS_ACCEPTED = 0x10;
   public static final int SUPER_ACCEPTED = 0x20;
 
   @Override
-  public int getAllAccepted() {
-    return super.getAllAccepted() | NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
+  public int getAdditionalAccepted() {
+    return NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
   @Override
-  public int getDefinitionSearchFlags() {
-    return super.getDefinitionSearchFlags() | THIS_ACCEPTED | SUPER_ACCEPTED;
+  public int getAdditionalDefinitionSearchFlags() {
+    return THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
   @Override
-  public int getReferenceSearchFlags() {
-    return super.getReferenceSearchFlags() | NEW_AS_CONSTRUCTOR;
+  public int getAdditionalReferenceSearchFlags() {
+    return NEW_AS_CONSTRUCTOR;
   }
 
   @Nullable
   @Override
-  public PsiElement findTargetElement(@NotNull final Editor editor, final int flags, final int offset) {
-    final PsiElement element = super.findTargetElement(editor, flags, offset);
-    if (element instanceof PsiKeyword) {
-      if (element.getParent() instanceof PsiThisExpression) {
+  public PsiElement adjustTargetElement(Editor editor, int offset, int flags, @NotNull PsiElement targetElement) {
+    if (targetElement instanceof PsiKeyword) {
+      if (targetElement.getParent() instanceof PsiThisExpression) {
         if ((flags & THIS_ACCEPTED) == 0) return null;
-        PsiType type = ((PsiThisExpression)element.getParent()).getType();
+        PsiType type = ((PsiThisExpression)targetElement.getParent()).getType();
         if (!(type instanceof PsiClassType)) return null;
         return ((PsiClassType)type).resolve();
       }
 
-      if (element.getParent() instanceof PsiSuperExpression) {
+      if (targetElement.getParent() instanceof PsiSuperExpression) {
         if ((flags & SUPER_ACCEPTED) == 0) return null;
-        PsiType type = ((PsiSuperExpression)element.getParent()).getType();
+        PsiType type = ((PsiSuperExpression)targetElement.getParent()).getType();
         if (!(type instanceof PsiClassType)) return null;
         return ((PsiClassType)type).resolve();
       }
     }
-    return element;
+    return super.adjustTargetElement(editor, offset, flags, targetElement);
   }
 
   @Override
-  protected boolean isAcceptableReferencedElement(final PsiElement element, final PsiElement referenceOrReferencedElement) {
-    return super.isAcceptableReferencedElement(element, referenceOrReferencedElement) &&
-           !isEnumConstantReference(element, referenceOrReferencedElement);
+  @NotNull
+  public Answer isAcceptableReferencedElement(@NotNull final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    if (isEnumConstantReference(element, referenceOrReferencedElement)) return Answer.NO;
+    return super.isAcceptableReferencedElement(element, referenceOrReferencedElement);
   }
 
   private static boolean isEnumConstantReference(final PsiElement element, final PsiElement referenceOrReferencedElement) {
@@ -89,10 +89,19 @@ public class TargetElementUtil extends TargetElementUtilBase {
            ((PsiMethod)referenceOrReferencedElement).isConstructor();
   }
 
-  @Override
   @Nullable
-  protected PsiElement getReferenceOrReferencedElement(PsiFile file, Editor editor, int flags, int offset) {
-    PsiElement refElement = super.getReferenceOrReferencedElement(file, editor, flags, offset);
+  @Override
+  public PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement adjustReferenceOrReferencedElement(PsiFile file,
+                                                       Editor editor,
+                                                       int offset,
+                                                       int flags,
+                                                       @Nullable PsiElement refElement) {
     PsiReference ref = null;
     if (refElement == null) {
       ref = TargetElementUtilBase.findReference(editor, offset);
@@ -144,45 +153,37 @@ public class TargetElementUtil extends TargetElementUtilBase {
         }
       }
     }
-    return refElement;
+    return super.adjustReferenceOrReferencedElement(file, editor, offset, flags, refElement);
   }
 
 
   @Nullable
   @Override
-  protected PsiElement getNamedElement(final PsiElement element) {
+  public PsiElement getNamedElement(@NotNull final PsiElement element) {
     PsiElement parent = element.getParent();
     if (element instanceof PsiIdentifier) {
-      if (parent instanceof PsiClass && element.equals(((PsiClass)parent).getNameIdentifier())) {
-        return parent;
-      }
-      else if (parent instanceof PsiVariable && element.equals(((PsiVariable)parent).getNameIdentifier())) {
-        return parent;
-      }
-      else if (parent instanceof PsiMethod && element.equals(((PsiMethod)parent).getNameIdentifier())) {
-        return parent;
-      }
-      else if (parent instanceof PsiLabeledStatement && element.equals(((PsiLabeledStatement)parent).getLabelIdentifier())) {
-        return parent;
-      }
-    }
-    //TODO: Code below this comment is very similar to parent code. We probably need to use "super()" instead, to prevent copy/paste in inheritors
-    else if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
-      // A bit hacky depends on navigation offset correctly overridden
-      if (parent.getTextOffset() == element.getTextRange().getStartOffset() && !(parent instanceof XmlAttribute)
-        && !(parent instanceof PsiFile && InjectedLanguageManager.getInstance(parent.getProject()).isInjectedFragment((PsiFile)parent))) {
+      if (parent instanceof PsiClass && element.equals(((PsiClass)parent).getNameIdentifier())
+        || parent instanceof PsiVariable && element.equals(((PsiVariable)parent).getNameIdentifier())
+        || parent instanceof PsiMethod && element.equals(((PsiMethod)parent).getNameIdentifier())
+        || parent instanceof PsiLabeledStatement && element.equals(((PsiLabeledStatement)parent).getLabelIdentifier())) {
         return parent;
       }
     }
     return null;
   }
 
+  public boolean isAcceptableNamedParent(@NotNull PsiElement parent) {
+    return !(parent instanceof XmlAttribute)
+        && !(parent instanceof PsiFile && InjectedLanguageManager.getInstance(parent.getProject()).isInjectedFragment((PsiFile)parent));
+  }
+
   @Nullable
   public static PsiReferenceExpression findReferenceExpression(Editor editor) {
-    final PsiReference ref = findReference(editor);
+    final PsiReference ref = TargetElementUtilBase.findReference(editor);
     return ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
   }
 
+  @Nullable
   @Override
   public PsiElement adjustReference(@NotNull final PsiReference ref) {
     final PsiElement parent = ref.getElement().getParent();
@@ -192,7 +193,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Nullable
   @Override
-  public PsiElement adjustElement(final Editor editor, final int flags, final PsiElement element, final PsiElement contextElement) {
+  public PsiElement adjustElement(Editor editor, int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     if (element != null) {
       if (element instanceof PsiAnonymousClass) {
         return ((PsiAnonymousClass)element).getBaseClassType().resolve();
@@ -213,7 +214,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Override
-  public Collection<PsiElement> getTargetCandidates(final PsiReference reference) {
+  @Nullable
+  public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     PsiElement parent = reference.getElement().getParent();
     if (parent instanceof PsiMethodCallExpression || parent instanceof PsiNewExpression && 
                                                      ((PsiNewExpression)parent).getArrayDimensions().length == 0 &&
@@ -250,12 +252,13 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Override
-  public PsiElement getGotoDeclarationTarget(final PsiElement element, final PsiElement navElement) {
+  @Nullable
+  public PsiElement getGotoDeclarationTarget(@NotNull final PsiElement element, @Nullable final PsiElement navElement) {
     if (navElement == element && element instanceof PsiCompiledElement && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
         PsiClass aClass = method.getContainingClass();
-        PsiElement navClass = aClass.getNavigationElement();
+        PsiElement navClass = aClass == null ? null : aClass.getNavigationElement();
         if (aClass != navClass) return navClass;
       }
     }
@@ -271,7 +274,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Override
-  public boolean acceptImplementationForReference(final PsiReference reference, final PsiElement element) {
+  public boolean acceptImplementationForReference(@Nullable PsiReference reference, @NotNull PsiElement element) {
     if (reference instanceof PsiReferenceExpression && element instanceof PsiMember) {
       return getMemberClass(reference, element) != null;
     }
@@ -316,8 +319,10 @@ public class TargetElementUtil extends TargetElementUtilBase {
     });
   }
 
+  
   @Override
-  public SearchScope getSearchScope(Editor editor, PsiElement element) {
+  @Nullable
+  public SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
     final PsiReferenceExpression referenceExpression = editor != null ? findReferenceExpression(editor) : null;
     if (referenceExpression != null && element instanceof PsiMethod) {
       final PsiClass[] memberClass = getMemberClass(referenceExpression, element);

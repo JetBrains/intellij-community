@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,32 +34,32 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 /**
- * @author: Roman Chernyatchik
+ * This class fires events to SMTRunnerEventsListener in event dispatch thread.
  *
- * This class fires events to RTestUnitEventsListener in EventDispatch thread
+ * @author: Roman Chernyatchik
  */
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
   private static final Logger LOG = Logger.getInstance(GeneralToSMTRunnerEventsConvertor.class.getName());
 
   private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, SMTestProxy>();
-
   private final Set<AbstractTestProxy> myFailedTestsSet = new HashSet<AbstractTestProxy>();
-
   private final TestSuiteStack mySuitesStack = new TestSuiteStack();
   private final List<SMTRunnerEventsListener> myEventsListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
   private final String myTestFrameworkName;
-  private boolean myIsTestingFinished;
-  private TestLocationProvider myLocator = null;
 
-  public GeneralToSMTRunnerEventsConvertor(@NotNull final SMTestProxy.SMRootTestProxy testsRootNode,
-                                           @NotNull final String testFrameworkName) {
+  private boolean myIsTestingFinished;
+  private SMTestLocator myLocator = null;
+  private boolean myTreeBuildBeforeStart = false;
+
+  public GeneralToSMTRunnerEventsConvertor(@NotNull SMTestProxy.SMRootTestProxy testsRootNode, @NotNull String testFrameworkName) {
     myTestsRootNode = testsRootNode;
     myTestFrameworkName = testFrameworkName;
   }
 
-  public void setLocator(@NotNull TestLocationProvider customLocator) {
-    myLocator = customLocator;
+  @Override
+  public void setLocator(@NotNull SMTestLocator locator) {
+    myLocator = locator;
   }
 
   public void addEventsListener(@NotNull final SMTRunnerEventsListener listener) {
@@ -117,6 +116,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onSuiteTreeNodeAdded(final String testName, final String locationHint) {
+    myTreeBuildBeforeStart = true;
     addToInvokeLater(new Runnable() {
       @Override
       public void run() {
@@ -132,6 +132,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   @Override
   public void onSuiteTreeStarted(final String suiteName, final String locationHint) {
+    myTreeBuildBeforeStart = true;
     addToInvokeLater(new Runnable() {
       @Override
       public void run() {
@@ -173,23 +174,24 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         if (myRunningTestsFullNameToProxy.containsKey(fullName)) {
           //Duplicated event
           logProblem("Test [" + fullName + "] has been already started");
-
           if (SMTestRunnerConnectionUtil.isInDebugMode()) {
             return;
           }
         }
 
-        final SMTestProxy parentSuite = getCurrentSuite();
+        SMTestProxy parentSuite = getCurrentSuite();
         SMTestProxy testProxy = findChildByName(parentSuite, fullName);
         if (testProxy == null) {
           // creates test
-
           testProxy = new SMTestProxy(testName, false, locationUrl);
+
           if (myLocator != null) {
             testProxy.setLocator(myLocator);
           }
+
           parentSuite.addChild(testProxy);
         }
+
         // adds to running tests map
         myRunningTestsFullNameToProxy.put(fullName, testProxy);
 
@@ -207,14 +209,17 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       public void run() {
         final String suiteName = suiteStartedEvent.getName();
         final String locationUrl = suiteStartedEvent.getLocationUrl();
-        final SMTestProxy parentSuite = getCurrentSuite();
-        //new suite
+
+        SMTestProxy parentSuite = getCurrentSuite();
         SMTestProxy newSuite = findChildByName(parentSuite, suiteName);
         if (newSuite == null) {
+          //new suite
           newSuite = new SMTestProxy(suiteName, true, locationUrl);
+
           if (myLocator != null) {
             newSuite.setLocator(myLocator);
           }
+
           parentSuite.addChild(newSuite);
         }
 
@@ -229,10 +234,12 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
-  private static SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName) {
-    for (SMTestProxy proxy : parentSuite.getChildren()) {
-      if (fullName.equals(proxy.getName())) {
-        return proxy;
+  private SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName) {
+    if (myTreeBuildBeforeStart) {
+      for (SMTestProxy proxy : parentSuite.getChildren()) {
+        if (fullName.equals(proxy.getName())) {
+          return proxy;
+        }
       }
     }
     return null;

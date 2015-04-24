@@ -1664,7 +1664,6 @@
             text="Groovy Console..." description="Launch Groovy Console"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
-      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </action>
     
     <action id="Groovy.Shell"

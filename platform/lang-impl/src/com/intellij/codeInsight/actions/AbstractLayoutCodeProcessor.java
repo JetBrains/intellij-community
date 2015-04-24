@@ -60,6 +60,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
@@ -344,6 +345,8 @@ public abstract class AbstractLayoutCodeProcessor {
         task.run();
         try {
           task.get();
+        }
+        catch (CancellationException ignored) {
         }
         catch (Exception e) {
           LOG.error(e);

@@ -45,6 +45,10 @@ public class CastConflictsWithInstanceofFixesTest extends IGQuickFixesTestCase {
     doTest("replaceInstanceofMethod", "Replace 'String' with 'Integer' in instanceof");
   }
 
+  public void testIgnoreUncheckedCastToTypeParameter() throws Exception {
+    assertQuickfixNotAvailable("Replace 'E' with 'String' in cast");
+  }
+
   @Override
   protected String getRelativePath() {
     return "bugs/castConflicts";

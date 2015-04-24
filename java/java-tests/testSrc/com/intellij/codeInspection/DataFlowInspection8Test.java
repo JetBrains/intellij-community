@@ -77,9 +77,18 @@ public class DataFlowInspection8Test extends LightCodeInsightFixtureTestCase {
   }
 
   public void testMethodReferenceOnNullable() { doTest(); }
+  public void testNullableVoidLambda() { doTest(); }
 
   public void testNullableForeachVariable() {
     setupCustomAnnotations();
     doTest();
+  }
+
+  public void testNullableArrayComponent() {
+    setupCustomAnnotations();
+    final DataFlowInspection inspection = new DataFlowInspection();
+    inspection.IGNORE_ASSERT_STATEMENTS = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 }

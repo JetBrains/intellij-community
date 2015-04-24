@@ -185,7 +185,7 @@ public class LineStatusTrackerDrawing {
 
       public boolean canDoAction(final MouseEvent e) {
         final EditorGutterComponentEx gutter = (EditorGutterComponentEx)e.getComponent();
-        return e.getX() > gutter.getLineMarkerAreaOffset() + gutter.getIconsAreaWidth();
+        return e.getX() > gutter.getLineMarkerFreePaintersAreaOffset();
       }
     };
   }

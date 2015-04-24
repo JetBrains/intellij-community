@@ -2114,6 +2114,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  public void testStackOverflowInSchema() throws Exception {
+    configureByFiles(null, BASE_PATH + "XMLSchema_1_1.xsd");
+    doHighlighting();
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

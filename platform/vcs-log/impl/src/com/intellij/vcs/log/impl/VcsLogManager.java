@@ -165,6 +165,8 @@ public class VcsLogManager implements Disposable {
 
   @Override
   public void dispose() {
+    myLogRefresher = null;
+    myUi = null;
   }
 
   private static class PostponeableLogRefresher implements VcsLogRefresher, Disposable {
@@ -185,7 +187,7 @@ public class VcsLogManager implements Disposable {
       myToolWindow = (ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
       myTabName = contentTabName;
 
-      Disposer.register(myToolWindow.getContentManager(), this);
+      Disposer.register(dataHolder, this);
 
       myPostponedEventsListener = new MyRefreshPostponedEventsListener();
       myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);

@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -36,8 +39,15 @@ import java.util.Map;
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public abstract class AbstractDependencyDataService<E extends AbstractDependencyData<?>, I extends ExportableOrderEntry>
-  implements ProjectDataService<E, I>
+  implements ProjectDataServiceEx<E, I>
 {
+
+  public void importData(@NotNull final Collection<DataNode<E>> toImport,
+                         @NotNull final Project project,
+                         final boolean synchronous) {
+    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    importData(toImport, project, platformFacade, synchronous);
+  }
 
   public void setScope(@NotNull final DependencyScope scope, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(dependency.getOwnerModule()) {
@@ -69,8 +79,8 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
   
   private static void doForDependency(@NotNull ExportableOrderEntry entry, @NotNull Consumer<ExportableOrderEntry> consumer) {
     // We need to get an up-to-date modifiable model to work with.
-    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(entry.getOwnerModule());
-    final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+    final ModifiableRootModel moduleRootModel =
+      ModifiableModelsProvider.SERVICE.getInstance().getModuleModifiableModel(entry.getOwnerModule());
     try {
       // The thing is that intellij created order entry objects every time new modifiable model is created,
       // that's why we can't use target dependency object as is but need to get a reference to the current
@@ -89,13 +99,22 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
 
   @Override
   public void removeData(@NotNull Collection<? extends I> toRemove, @NotNull Project project, boolean synchronous) {
+    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    removeData(toRemove, project, platformFacade, synchronous);
+  }
+
+  @Override
+  public void removeData(@NotNull Collection<? extends I> toRemove,
+                         @NotNull Project project,
+                         @NotNull final PlatformFacade platformFacade,
+                         boolean synchronous) {
     if (toRemove.isEmpty()) {
       return;
     }
 
     Map<Module, Collection<ExportableOrderEntry>> byModule = groupByModule(toRemove);
     for (Map.Entry<Module, Collection<ExportableOrderEntry>> entry : byModule.entrySet()) {
-      removeData(entry.getValue(), entry.getKey(), synchronous);
+      removeData(entry.getValue(), entry.getKey(), platformFacade, synchronous);
     }
   }
 
@@ -111,8 +130,11 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     }
     return result;
   }
-  
-  public void removeData(@NotNull Collection<? extends ExportableOrderEntry> toRemove, @NotNull final Module module, boolean synchronous) {
+
+  protected void removeData(@NotNull Collection<? extends ExportableOrderEntry> toRemove,
+                         @NotNull final Module module,
+                         @NotNull final PlatformFacade platformFacade,
+                         boolean synchronous) {
     if (toRemove.isEmpty()) {
       return;
     }
@@ -120,8 +142,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
       ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(dependency.getOwnerModule()) {
         @Override
         public void execute() {
-          ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-          final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+          final ModifiableRootModel moduleRootModel = platformFacade.getModuleModifiableModel(module);
           try {
             // The thing is that intellij created order entry objects every time new modifiable model is created,
             // that's why we can't use target dependency object as is but need to get a reference to the current

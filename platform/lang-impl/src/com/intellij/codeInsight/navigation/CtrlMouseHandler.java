@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -558,26 +558,28 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
-    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, file, offset);
+    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, offset);
     if (element != null) {
       PsiElement identifier = element.getNameIdentifier();
-      return new Info(identifier){
-        @Override
-        public void showDocInfo(@NotNull DocumentationManager docManager) {
-        }
-
-        @NotNull
-        @Override
-        public DocInfo getInfo() {
-          String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
-          return new DocInfo("Show usages of "+name, null, element);
-        }
-
-        @Override
-        public boolean isValid(@NotNull Document document) {
-          return element.isValid();
-        }
-      };
+      if (identifier != null && identifier.isValid()) {
+        return new Info(identifier){
+          @Override
+          public void showDocInfo(@NotNull DocumentationManager docManager) {
+          }
+  
+          @NotNull
+          @Override
+          public DocInfo getInfo() {
+            String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
+            return new DocInfo("Show usages of "+name, null, element);
+          }
+  
+          @Override
+          public boolean isValid(@NotNull Document document) {
+            return element.isValid();
+          }
+        };
+      }
     }
     return null;
   }

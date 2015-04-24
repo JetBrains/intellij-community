@@ -17,7 +17,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -56,7 +55,7 @@ public class QuickChangeInspectionProfileAction extends QuickSwitchSchemeAction 
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    e.getPresentation().setEnabled(project != null && InspectionProjectProfileManager.getInstance(project).getProfiles().size() > 1);
+    final Project project = getEventProject(e);
+    e.getPresentation().setEnabledAndVisible(project != null && InspectionProjectProfileManager.getInstance(project).getProfiles().size() > 1);
   }
 }

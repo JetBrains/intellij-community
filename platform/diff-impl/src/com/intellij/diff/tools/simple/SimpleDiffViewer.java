@@ -27,12 +27,9 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
-import com.intellij.diff.util.DiffDividerDrawUtil;
-import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.DocumentData;
-import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -411,12 +408,19 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return true;
   }
 
-  private void doScrollToChange(@NotNull SimpleDiffChange change, boolean animated) {
+  private void doScrollToChange(@NotNull SimpleDiffChange change, final boolean animated) {
     if (myEditor1 == null || myEditor2 == null) return;
+    assert mySyncScrollSupport != null;
 
-    EditorEx editor = getCurrentEditor();
-    int line = change.getStartLine(getCurrentSide());
-    DiffUtil.scrollEditor(editor, line, animated);
+    final int line1 = change.getStartLine(Side.LEFT);
+    final int line2 = change.getStartLine(Side.RIGHT);
+    final int endLine1 = change.getEndLine(Side.LEFT);
+    final int endLine2 = change.getEndLine(Side.RIGHT);
+
+    DiffUtil.moveCaret(myEditor1, line1);
+    DiffUtil.moveCaret(myEditor2, line2);
+
+    mySyncScrollSupport.makeVisible(getCurrentSide(), line1, endLine1, line2, endLine2, animated);
   }
 
   @Override
@@ -492,6 +496,23 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       }
     }
     return affectedChanges;
+  }
+
+  @Nullable
+  @CalledInAwt
+  private SimpleDiffChange getSelectedChange(@NotNull Side side) {
+    EditorEx editor = side.select(myEditor1, myEditor2);
+    if (editor == null) return null;
+
+    int caretLine = editor.getCaretModel().getLogicalPosition().line;
+
+    for (SimpleDiffChange change : myDiffChanges) {
+      int line1 = change.getStartLine(side);
+      int line2 = change.getEndLine(side);
+
+      if (DiffUtil.isSelectedByLine(caretLine, line1, line2)) return change;
+    }
+    return null;
   }
 
   //
@@ -813,9 +834,13 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
     }
-    else {
-      return super.getData(dataId);
+    else if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
+      SimpleDiffChange change = getSelectedChange(getCurrentSide());
+      if (change != null) {
+        return new LineRange(change.getStartLine(getCurrentSide()), change.getEndLine(getCurrentSide()));
+      }
     }
+    return super.getData(dataId);
   }
 
   private class MySyncScrollable extends BaseSyncScrollable {

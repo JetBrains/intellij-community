@@ -16,17 +16,10 @@
 package org.jetbrains.plugins.gradle.codeInsight;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -35,7 +28,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -120,32 +112,9 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
           public void run() {
             updateDefaultWrapperConfiguration(rootProjectPath);
             EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
-            final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
             ExternalSystemUtil.refreshProject(
-              module.getProject(), GradleConstants.SYSTEM_ID, settings.getExternalProjectPath(),
-              new ExternalProjectRefreshCallback() {
-                @Override
-                public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
-                  if (externalProject == null) {
-                    return;
-                  }
-                  ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(module.getProject()) {
-                    @Override
-                    public void execute() {
-                      ProjectRootManagerEx.getInstanceEx(module.getProject()).mergeRootsChangesDuring(new Runnable() {
-                        @Override
-                        public void run() {
-                          projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), module.getProject(), true);
-                        }
-                      });
-                    }
-                  });
-                }
-
-                @Override
-                public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-                }
-              }, true, ProgressExecutionMode.START_IN_FOREGROUND_ASYNC);
+              module.getProject(), GradleConstants.SYSTEM_ID, settings.getExternalProjectPath(), true,
+              ProgressExecutionMode.START_IN_FOREGROUND_ASYNC);
           }
         });
         return panel;

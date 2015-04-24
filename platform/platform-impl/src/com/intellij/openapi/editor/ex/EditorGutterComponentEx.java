@@ -50,6 +50,8 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract void revalidateMarkup();
 
   public abstract int getLineMarkerAreaOffset();
+  
+  public abstract int getLineMarkerFreePaintersAreaOffset();
 
   public abstract int getIconsAreaWidth();
 

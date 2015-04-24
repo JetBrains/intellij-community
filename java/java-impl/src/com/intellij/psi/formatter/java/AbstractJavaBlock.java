@@ -463,15 +463,17 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.EXPRESSION_LIST) {
         final Wrap wrap = Wrap.createWrap(getWrapType(mySettings.CALL_PARAMETERS_WRAP), false);
-        if (mySettings.PREFER_PARAMETERS_WRAP) {
-          wrap.ignoreParentWraps();
+        if (mySettings.PREFER_PARAMETERS_WRAP && !isInsideMethodCall(myNode.getPsi())) {
+            wrap.ignoreParentWraps();
         }
         child = processParenthesisBlock(result, child,
                                   WrappingStrategy.createDoNotWrapCommaStrategy(wrap),
                                   mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS);
       }
       else if (childType == JavaTokenType.LPARENTH && nodeType == JavaElementType.PARAMETER_LIST) {
-        Wrap wrapToUse = getMethodParametersWrap();
+        ASTNode parent = myNode.getTreeParent();
+        boolean isLambdaParameterList = parent != null && parent.getElementType() == JavaElementType.LAMBDA_EXPRESSION;
+        Wrap wrapToUse = isLambdaParameterList ? null : getMethodParametersWrap();
         WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrapToUse);
         child = processParenthesisBlock(result, child, wrapStrategy, mySettings.ALIGN_MULTILINE_PARAMETERS);
       }
@@ -539,6 +541,19 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     return child;
+  }
+
+  private boolean isInsideMethodCall(@NotNull PsiElement element) {
+    PsiElement e = element.getParent();
+    int parentsVisited = 0;
+    while (e != null && !(e instanceof PsiStatement) && parentsVisited < 5) {
+      if (e instanceof PsiExpressionList) {
+        return true;
+      }
+      e = e.getParent();
+      parentsVisited++;
+    }
+    return false;
   }
 
   @NotNull
@@ -912,8 +927,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
 
     PsiExpression[] arguments = ((PsiExpressionList)myNode.getPsi()).getExpressions();
-    return (JavaFormatterUtil.hasMultilineArguments(arguments) || JavaFormatterUtil.canHaveMultilineArgumentsAfterWrap(arguments, mySettings))
-           && (JavaFormatterUtil.isMultilineExceptArguments(arguments) || JavaFormatterUtil.canBeMultilineExceptArgumentsAfterWrap(arguments, mySettings));
+    return JavaFormatterUtil.hasMultilineArguments(arguments) && JavaFormatterUtil.isMultilineExceptArguments(arguments);
   }
 
   private static boolean isAnonymousClass(@Nullable ASTNode node) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
@@ -24,8 +25,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.testIntegration.TestLocationProvider;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,16 +38,15 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class FileUrlProvider implements TestLocationProvider, DumbAware {
+public class FileUrlProvider implements SMTestLocator, DumbAware {
   private static final Logger LOG = Logger.getInstance(FileUrlProvider.class.getName());
 
-  @NonNls private static final String FILE_PROTOCOL_ID = "file";
+  public static final FileUrlProvider INSTANCE = new FileUrlProvider();
 
   @NotNull
-  public List<Location> getLocation(@NotNull final String protocolId, @NotNull final String path,
-                                    final Project project) {
-
-    if (!FILE_PROTOCOL_ID.equals(protocolId)) {
+  @Override
+  public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    if (!URLUtil.FILE_PROTOCOL.equals(protocol)) {
       return Collections.emptyList();
     }
 
@@ -63,7 +63,7 @@ public class FileUrlProvider implements TestLocationProvider, DumbAware {
       try {
         lineNum = Integer.parseInt(lineNumStr);
       } catch (NumberFormatException e) {
-        LOG.warn(protocolId + ": Malformed location path: " + path, e);
+        LOG.warn(protocol + ": Malformed location path: " + path, e);
       }
 
       filePath = normalizedPath.substring(0, lineNoSeparatorIndex);
@@ -84,7 +84,7 @@ public class FileUrlProvider implements TestLocationProvider, DumbAware {
     if (lineNumber < 0) {
       LOG.warn("Tests location provider: line number should be >= 1. Path: " + path);
     }
-    
+
     final List<Location> locations = new ArrayList<Location>(2);
     for (VirtualFile file : virtualFiles) {
       locations.add(createLocationFor(project, file, lineNumber < 1 ? 1 : lineNumber));
@@ -93,8 +93,7 @@ public class FileUrlProvider implements TestLocationProvider, DumbAware {
   }
 
   @Nullable
-  public static Location createLocationFor(final Project project,
-                                           @NotNull final VirtualFile virtualFile, final int lineNum) {
+  public static Location createLocationFor(Project project, @NotNull VirtualFile virtualFile, int lineNum) {
     assert lineNum > 0;
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);

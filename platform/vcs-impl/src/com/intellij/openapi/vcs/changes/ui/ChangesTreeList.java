@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CopyProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
@@ -96,6 +97,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   private final Runnable myInclusionListener;
   @Nullable private ChangeNodeDecorator myChangeDecorator;
   private Runnable myGenericSelectionListener;
+  @NotNull private final CopyProvider myCopyProvider;
 
   public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
                          final boolean highlightProblems, @Nullable final Runnable inclusionListener, @Nullable final ChangeNodeDecorator decorator) {
@@ -226,6 +228,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     setEmptyText(emptyText);
+    myCopyProvider = new ChangesBrowserNodeCopyProvider(myTree);
   }
 
   public void setEmptyText(@NotNull String emptyText) {
@@ -970,6 +973,9 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
   @Override
   public void calcData(DataKey key, DataSink sink) {
+    if (PlatformDataKeys.COPY_PROVIDER == key) {
+      sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+    }
   }
 
   private class MyTree extends Tree implements TypeSafeDataProvider {

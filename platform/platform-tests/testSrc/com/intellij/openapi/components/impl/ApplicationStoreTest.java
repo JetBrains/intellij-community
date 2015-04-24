@@ -215,7 +215,7 @@ public class ApplicationStoreTest extends LightPlatformLangTestCase {
     }
 
     @Override
-    public void load() throws IOException {
+    public void load() {
     }
 
     @NotNull

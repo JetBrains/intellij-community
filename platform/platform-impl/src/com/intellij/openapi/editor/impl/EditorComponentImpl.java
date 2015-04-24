@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.util.ui.UIUtil;
@@ -170,11 +171,11 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     myApplication.editorPaintStart();
 
     try {
-      UIUtil.setupComposite((Graphics2D)g);
-      UISettings.setupAntialiasing(g);
-      myEditor.paint((Graphics2D)g);
-
-      IdeBackgroundUtil.paintEditorBackground(g, this);
+      Graphics2D gg = !Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(myEditor)) ?
+                      IdeBackgroundUtil.withEditorBackground(g, this) : (Graphics2D)g;
+      UIUtil.setupComposite(gg);
+      UISettings.setupAntialiasing(gg);
+      myEditor.paint(gg);
     }
     finally {
       myApplication.editorPaintFinish();
@@ -266,7 +267,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
     Point oldLocationOnScreen;
 
     public AccessibleEditor() {
-      getEditor().getDocument().addDocumentListener(this);
+      getEditor().getDocument().addDocumentListener(this, myEditor.getDisposable());
       getEditor().getCaretModel().addCaretListener(this);
       caretPos = getCaretPosition();
 

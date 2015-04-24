@@ -346,6 +346,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   private void doScrollToChange(@NotNull SimpleThreesideDiffChange change, boolean animated) {
+    // TODO: use anchors to fix scrolling issue at the start/end of file
     EditorEx editor = getCurrentEditor();
     int line = change.getStartLine(getCurrentSide());
     DiffUtil.scrollEditor(editor, line, animated);
@@ -390,6 +391,22 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   //
   // Misc
   //
+
+  @Nullable
+  @CalledInAwt
+  private SimpleThreesideDiffChange getSelectedChange(@NotNull ThreeSide side) {
+    EditorEx editor = side.select(myEditors);
+
+    int caretLine = editor.getCaretModel().getLogicalPosition().line;
+
+    for (SimpleThreesideDiffChange change : myDiffChanges) {
+      int line1 = change.getStartLine(side);
+      int line2 = change.getEndLine(side);
+
+      if (DiffUtil.isSelectedByLine(caretLine, line1, line2)) return change;
+    }
+    return null;
+  }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -504,9 +521,14 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
     }
-    else {
-      return super.getData(dataId);
+    else if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
+      SimpleThreesideDiffChange change = getSelectedChange(getCurrentSide());
+      if (change != null) {
+        return new LineRange(change.getStartLine(getCurrentSide()), change.getEndLine(getCurrentSide()));
+      }
     }
+
+    return super.getData(dataId);
   }
 
   private class MySyncScrollable extends BaseSyncScrollable {

@@ -145,7 +145,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       if (PsiUtil.isJavaToken(child, JavaTokenType.AND)) {
         List<PsiType> types = collectTypes();
         assert !types.isEmpty() : this;
-        type = PsiIntersectionType.createIntersection(types);
+        type = PsiIntersectionType.createIntersection(false, types.toArray(PsiType.createArray(types.size())));
         break;
       }
 

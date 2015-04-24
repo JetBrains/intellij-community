@@ -13,10 +13,7 @@
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="JMock1" level="project" />
-    <orderEntry type="library" scope="TEST" name="asm" level="project" />
-    <orderEntry type="library" scope="TEST" name="CGLIB" level="project" />
-    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="library" scope="TEST" name="Xerces" level="project" />
   </component>
   <component name="copyright">
     <Base>
@@ -171,4 +168,3 @@
     </LanguageOptions>
   </component>
 </module>
-

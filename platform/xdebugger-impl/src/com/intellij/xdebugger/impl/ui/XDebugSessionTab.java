@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -137,8 +138,18 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     mySession = session;
     mySessionData = session.getSessionData();
     myConsole = session.getConsoleView();
+
+    AnAction[] restartActions;
+    List<AnAction> restartActionsList = session.getRestartActions();
+    if (ContainerUtil.isEmpty(restartActionsList)) {
+      restartActions = AnAction.EMPTY_ARRAY;
+    }
+    else {
+      restartActions = restartActionsList.toArray(new AnAction[restartActionsList.size()]);
+    }
+
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(),
-                                                      myUi.getComponent(), session.getSessionName(), icon, myRebuildWatchesRunnable);
+                                                      myUi.getComponent(), session.getSessionName(), icon, myRebuildWatchesRunnable, restartActions);
     Disposer.register(myRunContentDescriptor, this);
     Disposer.register(myProject, myRunContentDescriptor);
   }

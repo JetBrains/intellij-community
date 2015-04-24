@@ -58,7 +58,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>... entries) {
+  public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>... entries) {
     return ContainerUtilRt.newHashMap(first, entries);
   }
 
@@ -213,6 +213,22 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     };
   }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <T> List<T> newUnmodifiableList(List<? extends T> originalList) {
+    int size = originalList.size();
+    if (size == 0) {
+      return emptyList();
+    }
+    else if (size == 1) {
+      return Collections.singletonList(originalList.get(0));
+    }
+    else {
+      return Collections.unmodifiableList(newArrayList(originalList));
+    }
+  }
+
 
   @NotNull
   @Contract(pure=true)
@@ -1095,8 +1111,8 @@ public class ContainerUtil extends ContainerUtilRt {
       @Override
       public Iterator<T> iterator() {
         return new Iterator<T>() {
-          Iterator<? extends T> impl = collection.iterator();
-          T next = findNext();
+          private Iterator<? extends T> impl = collection.iterator();
+          private T next = findNext();
 
           @Override
           public boolean hasNext() {
@@ -1137,7 +1153,7 @@ public class ContainerUtil extends ContainerUtilRt {
       @Override
       public Iterator<T> iterator() {
         return new Iterator<T>() {
-          ListIterator<? extends T> it = list.listIterator(list.size());
+          private ListIterator<? extends T> it = list.listIterator(list.size());
 
           @Override
           public boolean hasNext() {
@@ -1296,11 +1312,11 @@ public class ContainerUtil extends ContainerUtilRt {
     if (list1.isEmpty() && list2.isEmpty()) {
       return Collections.emptyList();
     }
-    else if (list1.isEmpty()) {
+    if (list1.isEmpty()) {
       //noinspection unchecked
       return (List<T>)list2;
     }
-    else if (list2.isEmpty()) {
+    if (list2.isEmpty()) {
       //noinspection unchecked
       return (List<T>)list1;
     }

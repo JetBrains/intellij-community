@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.junit2.ui.properties;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,7 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
     myConfiguration = configuration;
   }
 
+  @NotNull
   @Override
   protected GlobalSearchScope initScope() {
     final SourceScope sourceScope = myConfiguration.getPersistentData().getScope().getSourceScope(myConfiguration);
@@ -47,5 +49,10 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
                                          ExecutionEnvironment environment, JComponent parent) {
     super.appendAdditionalActions(actionGroup, environment, parent);
     actionGroup.addAction(createIncludeNonStartedInRerun()).setAsSecondary(true);
+  }
+
+  @Override
+  public SMTestLocator getTestLocator() {
+    return JavaTestLocator.INSTANCE;
   }
 }

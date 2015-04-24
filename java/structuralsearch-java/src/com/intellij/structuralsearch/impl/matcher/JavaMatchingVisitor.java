@@ -1384,11 +1384,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiCatchSection[] catches2 = try2.getCatchSections();
     final PsiCodeBlock finally2 = try2.getFinallyBlock();
 
-    final boolean looseMatching = myMatchingVisitor.getMatchContext().getOptions().isLooseMatching();
-    if (!looseMatching &&
+    if (!myMatchingVisitor.getMatchContext().getOptions().isLooseMatching() &&
         ((catches1.length == 0 && catches2.length != 0) ||
          (finally1 == null && finally2 != null) ||
-         (resourceList1 == null && resourceList2 != null))
+         (resourceList1 == null && resourceList2 != null)) ||
+        catches2.length < catches1.length
       ) {
       myMatchingVisitor.setResult(false);
     }
@@ -1410,17 +1410,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
       ContainerUtil.addAll(unmatchedCatchSections, catches2);
 
-      for (int i = 0, j; i < catches1.length; ++i) {
-        MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(catches1[i]);
+      for (PsiCatchSection catchSection : catches1) {
+        final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(catchSection);
         final PsiElement pinnedNode = handler.getPinnedNode(null);
 
         if (pinnedNode != null) {
-          myMatchingVisitor.setResult(handler.match(catches1[i], pinnedNode, myMatchingVisitor.getMatchContext()));
+          myMatchingVisitor.setResult(handler.match(catchSection, pinnedNode, myMatchingVisitor.getMatchContext()));
           if (!myMatchingVisitor.getResult()) return;
         }
         else {
+          int j;
           for (j = 0; j < unmatchedCatchSections.size(); ++j) {
-            if (handler.match(catches1[i], unmatchedCatchSections.get(j), myMatchingVisitor.getMatchContext())) {
+            if (handler.match(catchSection, unmatchedCatchSections.get(j), myMatchingVisitor.getMatchContext())) {
               unmatchedCatchSections.remove(j);
               break;
             }
@@ -1437,7 +1438,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         myMatchingVisitor.setResult(myMatchingVisitor.matchSons(finally1, finally2));
       }
 
-      if (myMatchingVisitor.getResult() && unmatchedCatchSections.size() > 0 && !looseMatching) {
+      if (myMatchingVisitor.getResult() && unmatchedCatchSections.size() > 0) {
         try2.putUserData(UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY, unmatchedCatchSections);
       }
     }
@@ -1478,20 +1479,20 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         new1.getArrayDimensions().length == 0 &&
         new1.getArrayInitializer() != null
       ) {
+      final MatchContext matchContext = myMatchingVisitor.getMatchContext();
+      final MatchingHandler handler = matchContext.getPattern().getHandler(classReference);
       final boolean looseMatching = myMatchingVisitor.getMatchContext().getOptions().isLooseMatching();
-      final boolean typedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(classReference);
-      if ((typedVar || !looseMatching) && !allowsAbsenceOfMatch(classReference)) {
+      if ((handler instanceof SubstitutionHandler && ((SubstitutionHandler)handler).getMinOccurs() != 0) || !looseMatching) {
         myMatchingVisitor.setResult(false);
         return;
       }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(other.getProject());
-      final PsiType otherType = ((PsiVariable)other.getParent()).getType();
-      final PsiTypeElement otherTypeElement = factory.createTypeElement(otherType.getDeepComponentType());
-      final MatchContext matchContext = myMatchingVisitor.getMatchContext();
-      final MatchingHandler handler = matchContext.getPattern().getHandler(classReference);
-      if (handler instanceof SubstitutionHandler) {
+      final PsiType otherType = ((PsiArrayInitializerExpression)other).getType();
+      if (handler instanceof SubstitutionHandler && otherType != null) {
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(other.getProject());
+        final PsiTypeElement otherTypeElement = factory.createTypeElement(otherType.getDeepComponentType());
         final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
-        myMatchingVisitor.setResult(substitutionHandler.handle(otherTypeElement, matchContext));
+        final MatchPredicate predicate = substitutionHandler.getPredicate();
+        myMatchingVisitor.setResult(predicate == null || predicate.match(null, otherTypeElement, matchContext));
       }
       else {
         final PsiType type = new1.getType();
@@ -1613,7 +1614,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(annotations2 != null && myMatchingVisitor.matchInAnyOrder(annotations, annotations2));
       if (!myMatchingVisitor.getResult()) return;
     }
-    myMatchingVisitor.setResult(matchType(typeElement, other));
+    final PsiTypeElement[] typeElementChildren = PsiTreeUtil.getChildrenOfType(typeElement, PsiTypeElement.class);
+    if (typeElementChildren != null && typeElementChildren.length > 1) {
+      // multi catch type element
+      final PsiTypeElement[] typeElementChildren2 = PsiTreeUtil.getChildrenOfType(other, PsiTypeElement.class);
+      myMatchingVisitor.setResult(
+        typeElementChildren2 != null && myMatchingVisitor.matchInAnyOrder(typeElementChildren, typeElementChildren2));
+    }
+    else {
+      myMatchingVisitor.setResult(matchType(typeElement, other));
+    }
   }
 
   @Override

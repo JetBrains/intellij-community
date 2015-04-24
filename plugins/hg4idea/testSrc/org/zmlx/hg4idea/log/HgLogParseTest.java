@@ -15,7 +15,7 @@
  */
 package org.zmlx.hg4idea.log;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import org.junit.Test;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -49,9 +49,15 @@ public class HgLogParseTest {
   @Test
   public void testParseUserNameAndEmail() {
     assertEquals(HgUtil.parseUserNameAndEmail("Vasya Pavlovich Pupkin <asdasd@localhost>"),
-                 new Pair<String, String>("Vasya Pavlovich Pupkin", "asdasd@localhost"));
-    assertEquals(HgUtil.parseUserNameAndEmail("Vasya Pavlovich Pupkin"), new Pair<String, String>("Vasya Pavlovich Pupkin", ""));
+                 new Couple<String>("Vasya Pavlovich Pupkin", "asdasd@localhost"));
+    assertEquals(HgUtil.parseUserNameAndEmail("Vasya Pavlovich Pupkin"), new Couple<String>("Vasya Pavlovich Pupkin", ""));
     assertEquals(HgUtil.parseUserNameAndEmail("vasya.pupkin@localhost.com"),
-                 new Pair<String, String>("vasya.pupkin", "vasya.pupkin@localhost.com"));
+                 new Couple<String>("vasya.pupkin", "vasya.pupkin@localhost.com"));
+    assertEquals(HgUtil.parseUserNameAndEmail("<vasya.pupkin@localhost.com>"),
+                 new Couple<String>("vasya.pupkin", "vasya.pupkin@localhost.com"));
+    assertEquals(HgUtil.parseUserNameAndEmail("<vasya@localhost.com>"),
+                 new Couple<String>("vasya", "vasya@localhost.com"));
+    assertEquals(HgUtil.parseUserNameAndEmail("Vasya <vas@localhost.com>"),
+                 new Couple<String>("Vasya", "vas@localhost.com"));
   }
 }

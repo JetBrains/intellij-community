@@ -34,8 +34,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerWorkspaceConfiguration");
   
-  public static final int DEFAULT_COMPILE_PROCESS_HEAP_SIZE = 700;
-  public static final String DEFAULT_COMPILE_PROCESS_VM_OPTIONS = "";
   static {
     LOG.info("Available processors: " + Runtime.getRuntime().availableProcessors());
   }
@@ -46,8 +44,7 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
   public boolean MAKE_PROJECT_ON_SAVE = false; // until we fix problems with several open projects (IDEA-104064), daemon slowness (IDEA-104666)
   public boolean PARALLEL_COMPILATION = false;
-  public int COMPILER_PROCESS_HEAP_SIZE = DEFAULT_COMPILE_PROCESS_HEAP_SIZE;
-  public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = DEFAULT_COMPILE_PROCESS_VM_OPTIONS;
+  public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "";
   public boolean REBUILD_ON_DEPENDENCY_CHANGE = true;
 
   public static CompilerWorkspaceConfiguration getInstance(Project project) {
@@ -64,14 +61,5 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
 
   public boolean allowAutoMakeWhileRunningApplication() {
     return false;/*ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION*/
-  }
-
-  public int getProcessHeapSize(final int javacPreferredHeapSize) {
-    final int heapSize = COMPILER_PROCESS_HEAP_SIZE;
-    if (heapSize != DEFAULT_COMPILE_PROCESS_HEAP_SIZE) {
-      return heapSize;
-    }
-    // compatibility with older builds: if javac is set to use larger heap, and if so, use it.
-    return Math.max(heapSize, javacPreferredHeapSize);
   }
 }

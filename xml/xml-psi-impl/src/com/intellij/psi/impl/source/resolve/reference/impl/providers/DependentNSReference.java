@@ -20,20 +20,22 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DependentNSReference extends BasicAttributeValueReference {
+  @NotNull
   private final URLReference myReference;
   private final boolean myForceFetchResultValid;
 
-  public DependentNSReference(final PsiElement element, TextRange range, URLReference ref) {
+  public DependentNSReference(final PsiElement element, TextRange range, @NotNull URLReference ref) {
     this(element, range, ref, false);
   }
 
   public DependentNSReference(final PsiElement element,
                               TextRange range,
-                              URLReference ref,
+                              @NotNull URLReference ref,
                               boolean valid) {
     super(element, range);
     myReference = ref;
@@ -46,7 +48,9 @@ public class DependentNSReference extends BasicAttributeValueReference {
     final String canonicalText = getCanonicalText();
     final PsiFile file = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, myElement.getContainingFile(), null);
     if (file != null) return file;
-    return myReference.resolve();
+    PsiElement element = myReference.resolve();
+    if (element == null && !myForceFetchResultValid && !XmlUtil.isUrlText(canonicalText, myElement.getProject())) return myElement;  // file reference will highlight it
+    return element;
   }
 
   @Override
@@ -62,5 +66,10 @@ public class DependentNSReference extends BasicAttributeValueReference {
 
   public boolean isForceFetchResultValid() {
     return myForceFetchResultValid;
+  }
+
+  @NotNull
+  public URLReference getNamespaceReference() {
+    return myReference;
   }
 }

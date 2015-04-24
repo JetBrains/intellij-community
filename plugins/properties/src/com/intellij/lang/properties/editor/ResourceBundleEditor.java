@@ -24,6 +24,7 @@ import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.smartTree.CachingChildrenTreeNode;
@@ -36,7 +37,8 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -45,8 +47,12 @@ import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
@@ -61,10 +67,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Alarm;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
@@ -82,6 +85,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
@@ -105,6 +109,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
   private final Set<PropertiesFile> myBackSlashPressed     = new THashSet<PropertiesFile>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final PropertiesAnchorizer myPropertiesAnchorizer;
 
   private JPanel              myValuesPanel;
   private JPanel              myStructureViewPanel;
@@ -131,7 +136,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     myResourceBundle = resourceBundle;
     myPropertiesInsertDeleteManager = ResourceBundlePropertiesInsertManagerImpl.create(resourceBundle);
 
-    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this);
+    myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
+    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
     myStructureViewPanel.setLayout(new BorderLayout());
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
 
@@ -284,10 +290,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     while (!toCheck.isEmpty()) {
       TreeElement element = toCheck.pop();
       PsiElement value = element instanceof ResourceBundlePropertyStructureViewElement
-                     ? ((ResourceBundlePropertyStructureViewElement)element).getValue()
+                     ? ((ResourceBundlePropertyStructureViewElement)element).getProperty().getPsiElement()
                      : null;
       if (value instanceof IProperty && propertyName.equals(((IProperty)value).getUnescapedKey())) {
-        myStructureViewComponent.select(value, true);
+        final PropertiesAnchorizer.PropertyAnchor anchor = myPropertiesAnchorizer.get((IProperty)value);
+        myStructureViewComponent.select(anchor, true);
         selectionChanged();
         return;
       }
@@ -361,7 +368,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             }
           }
         });
-
       }
     });
   }
@@ -423,22 +429,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       gc.weighty = 1;
       gc.anchor = GridBagConstraints.CENTER;
 
-      Locale locale = propertiesFile.getLocale();
-      List<String> names = new ArrayList<String>();
-      if (!Comparing.strEqual(locale.getDisplayLanguage(), null)) {
-        names.add(locale.getDisplayLanguage());
-      }
-      if (!Comparing.strEqual(locale.getDisplayCountry(), null)) {
-        names.add(locale.getDisplayCountry());
-      }
-      if (!Comparing.strEqual(locale.getDisplayVariant(), null)) {
-        names.add(locale.getDisplayVariant());
-      }
-
       String title = propertiesFile.getName();
-      if (!names.isEmpty()) {
-        title += " ("+StringUtil.join(names, "/")+")";
-      }
+      title += PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
       JComponent comp = new JPanel(new BorderLayout()) {
         @Override
         public Dimension getPreferredSize() {
@@ -596,11 +588,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
       @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-           final PsiFile file = event.getFile();
-        PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
-        if (propertiesFile == null) return;
-        if (!propertiesFile.getResourceBundle().equals(myResourceBundle)) return;
-        updateEditorsFromProperties();
+        //   final PsiFile file = event.getFile();
+        //PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+        //if (propertiesFile == null) return;
+        //if (!propertiesFile.getResourceBundle().equals(myResourceBundle)) return;
+        //updateEditorsFromProperties();
       }
     };
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeAdapter, this);
@@ -693,10 +685,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     final ResourceBundleFileStructureViewElement root =
       (ResourceBundleFileStructureViewElement)myStructureViewComponent.getTreeModel().getRoot();
-    final Map<String, IProperty> propertiesMap =
-      ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete());
+    final Set<String> propertyKeys = ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete()).keySet();
     final boolean isAlphaSorted = myStructureViewComponent.isActionActive(Sorter.ALPHA_SORTER_ID);
-    final List<String> keysOrder = new ArrayList<String>(propertiesMap.keySet());
+    final List<String> keysOrder = new ArrayList<String>(propertyKeys);
     if (isAlphaSorted) {
       Collections.sort(keysOrder);
     }
@@ -919,6 +910,17 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
     editor.setHighlighter(new LexerEditorHighlighter(new PropertiesValueHighlighter(), scheme));
     editor.setVerticalScrollbarVisible(true);
+    editor.addEditorMouseListener(new EditorPopupHandler() {
+          @Override
+          public void invokePopup(EditorMouseEvent event) {
+            if (!event.isConsumed() && event.getArea() == EditorMouseEventArea.EDITING_AREA) {
+              ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_CUT_COPY_PASTE);
+              EditorPopupHandler handler = EditorActionUtil.createEditorPopupHandler(group);
+              handler.invokePopup(event);
+              event.consume();
+            }
+          }
+      });
   }
 
   private class DataProviderPanel extends JPanel implements DataProvider {

@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="junit" scope="TEST" />
     <orderEntry type="module" module-name="java-indexing-api" />
     <orderEntry type="module" module-name="java-psi-impl" />
+    <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="core-impl" />
     <orderEntry type="module" module-name="extensions" />
     <orderEntry type="module" module-name="annotations" />

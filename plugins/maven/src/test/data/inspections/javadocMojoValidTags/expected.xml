@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>TestMojo.java</file>
+    <line>13</line>
+    <description>Wrong tag &lt;code&gt;ololo&lt;/code&gt;</description>
+  </problem>
+</problems>

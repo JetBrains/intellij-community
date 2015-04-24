@@ -536,6 +536,32 @@ public class PyFormatterTest extends PyTestCase {
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
   }
 
+  // PY-11552
+  public void testDeleteTrailingBlankLines() {
+    doTest();
+  }
+
+  // PY-15530
+  public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
+    doTest();
+  }
+
+  public void testAlignmentInListLiteralWhereFirstItemIsEmptyTuple() {
+    doTest();
+  }
+
+  public void testHangingIndentInNamedArgumentValue() {
+    doTest();
+  }
+
+  public void testHangingIndentInParameterDefaultValue() {
+    doTest();
+  }
+
+  public void testAlignmentOfEmptyCollectionLiterals() {
+    doTest();
+  }
+
   private CommonCodeStyleSettings getCommonSettings() {
     return settings().getCommonSettings(PythonLanguage.getInstance());
   }

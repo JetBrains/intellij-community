@@ -1,6 +1,5 @@
 package com.intellij.tasks.jira.jql;
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
@@ -10,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -58,11 +56,7 @@ public class JqlParserDefinition implements ParserDefinition {
   @NotNull
   @Override
   public PsiElement createElement(ASTNode node) {
-    final IElementType type = node.getElementType();
-    if (type instanceof JqlElementType) {
-      return ((JqlElementType)type).createElement(node);
-    }
-    return new ASTWrapperPsiElement(node);
+    return JqlElementTypes.Factory.createElement(node);
   }
 
   @Override

@@ -18,9 +18,7 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
@@ -55,6 +53,7 @@ import org.testng.remote.RemoteArgs;
 import org.testng.remote.RemoteTestNG;
 import org.testng.remote.strprotocol.SerializedMessageSender;
 
+import java.io.File;
 import java.io.IOException;
 
 public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGConfiguration> {
@@ -75,10 +74,10 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
-    final OSProcessHandler handler = super.startProcess();
-    createSearchingForTestsTask().attachTaskToProcess(handler);
-
-    return handler;
+    final OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine());
+    ProcessTerminatedListener.attach(processHandler);
+    createSearchingForTestsTask().attachTaskToProcess(processHandler);
+    return processHandler;
   }
 
   @NotNull
@@ -226,6 +225,12 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     return javaParameters;
   }
 
+  @NotNull
+  @Override
+  protected String getForkMode() {
+    return "none";
+  }
+
   public SearchingForTestsTask createSearchingForTestsTask() {
     return new SearchingForTestsTask(myServerSocket, config, myTempFile, client);
   }
@@ -237,7 +242,9 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       scopeToDetermineTestngIn = GlobalSearchScope.allScope(project);
     }
     else {
-      scopeToDetermineTestngIn = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(config.getConfigurationModule().getModule());
+      final Module module = config.getConfigurationModule().getModule();
+      scopeToDetermineTestngIn = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) 
+                                                : GlobalSearchScope.allScope(project);
     }
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
@@ -266,5 +273,14 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @NotNull
   public TestNGConfiguration getConfiguration() {
     return config;
+  }
+
+  @Override
+  protected TestSearchScope getScope() {
+    return getConfiguration().getPersistantData().getScope();
+  }
+
+  protected void passForkMode(String forkMode, File tempFile) throws ExecutionException {
+    getJavaParameters().getProgramParametersList().add("-forkMode", forkMode + ',' + tempFile.getAbsolutePath());
   }
 }

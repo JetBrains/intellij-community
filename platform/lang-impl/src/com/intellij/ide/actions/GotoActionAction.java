@@ -62,7 +62,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     GotoActionCallback<Object> callback = new GotoActionCallback<Object>() {
       @Override
       public void elementChosen(@NotNull ChooseByNamePopup popup, @NotNull Object element) {
-        String enteredText = popup.getEnteredText();
+        String enteredText = popup.getTrimmedText();
         openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component, e);
       }
     };

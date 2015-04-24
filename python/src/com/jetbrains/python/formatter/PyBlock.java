@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -82,7 +83,7 @@ public class PyBlock implements ASTBlock {
   private final PyBlockContext myContext;
   private List<PyBlock> mySubBlocks = null;
   private Alignment myChildAlignment;
-  private final boolean myEmptyList;
+  private final boolean myEmptySequence;
 
   public PyBlock(final PyBlock parent,
                  final ASTNode node,
@@ -96,7 +97,7 @@ public class PyBlock implements ASTBlock {
     myNode = node;
     myWrap = wrap;
     myContext = context;
-    myEmptyList = node.getPsi() instanceof PySequenceExpression && ((PySequenceExpression)node.getPsi()).getElements().length == 0;
+    myEmptySequence = isEmptySequence(node);
   }
 
   @NotNull
@@ -133,7 +134,7 @@ public class PyBlock implements ASTBlock {
 
       final IElementType childType = child.getElementType();
 
-      if (child.getTextRange().getLength() == 0) continue;
+      if (child.getTextRange().isEmpty()) continue;
 
       if (childType == TokenType.WHITE_SPACE) {
         continue;
@@ -160,7 +161,7 @@ public class PyBlock implements ASTBlock {
       while (p != null) {
         final ASTNode pNode = p.getNode();
         if (ourListElementTypes.contains(pNode.getElementType())) {
-          if (needListAlignment(child) && !myEmptyList) {
+          if (needListAlignment(child) && !myEmptySequence) {
 
             childAlignment = p.getChildAlignment();
             break;
@@ -198,7 +199,7 @@ public class PyBlock implements ASTBlock {
           !isSliceOperand(child) /*&& !isSubscriptionOperand(child)*/) {
         wrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
-      if (needListAlignment(child) && !myEmptyList) {
+      if (needListAlignment(child) && !myEmptySequence) {
         childAlignment = getAlignmentForChildren();
       }
       if (childType == PyTokenTypes.END_OF_LINE_COMMENT) {
@@ -349,6 +350,10 @@ public class PyBlock implements ASTBlock {
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
   }
 
+  private static boolean isEmptySequence(@NotNull ASTNode node) {
+    return node.getPsi() instanceof PySequenceExpression && ((PySequenceExpression)node.getPsi()).isEmpty();
+  }
+
   private boolean argumentMayHaveSameIndentAsFollowingStatementList() {
     // This check is supposed to prevent PEP8's error: Continuation line with the same indent as next logical line
     final PsiElement header = getControlStatementHeader(myNode);
@@ -382,13 +387,28 @@ public class PyBlock implements ASTBlock {
     if (firstChild == null) {
       return false;
     }
-    if (PyTokenTypes.OPEN_BRACES.contains(firstChild.getNode().getElementType()) && hasLineBreaksAfter(firstChild.getNode(), 1)) {
-      return true;
-    }
-
-    if (ourHangingIndentOwners.contains(elem.getNode().getElementType())) {
+    final IElementType elementType = elem.getNode().getElementType();
+    final ASTNode firstChildNode = firstChild.getNode();
+    if (ourHangingIndentOwners.contains(elementType) && PyTokenTypes.OPEN_BRACES.contains(firstChildNode.getElementType())) {
+      if (hasLineBreaksAfter(firstChildNode, 1)) {
+        return true;
+      }
       final PsiElement[] items = getItems(elem);
-      return items.length == 0 || hasHangingIndent(items[0]);
+      if (items.length == 0) {
+        return !PyTokenTypes.CLOSE_BRACES.contains(elem.getLastChild().getNode().getElementType());
+      }
+      else {
+        final PsiElement firstItem = items[0];
+        if (firstItem instanceof PyNamedParameter) {
+          final PyExpression defaultValue = ((PyNamedParameter)firstItem).getDefaultValue();
+          return defaultValue != null && hasHangingIndent(defaultValue);
+        }
+        else if (firstItem instanceof PyKeywordArgument) {
+          final PyExpression valueExpression = ((PyKeywordArgument)firstItem).getValueExpression();
+          return valueExpression != null && hasHangingIndent(valueExpression);
+        }
+        return hasHangingIndent(firstItem);
+      }
     }
     else {
       return false;
@@ -494,16 +514,8 @@ public class PyBlock implements ASTBlock {
 
   private boolean needListAlignment(ASTNode child) {
     final IElementType childType = child.getElementType();
-    final ASTNode firstGrandchild = child.getFirstChildNode();
-    final IElementType firstGrandchildType = firstGrandchild == null ? null : firstGrandchild.getElementType();
     if (PyTokenTypes.OPEN_BRACES.contains(childType)) {
       return false;
-    }
-    if (PyTokenTypes.OPEN_BRACES.contains(firstGrandchildType)) {
-      final PsiElement psi = child.getPsi();
-      if (psi instanceof PySequenceExpression && ((PySequenceExpression)psi).getElements().length == 0) {
-        return false;
-      }
     }
     if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
       final ASTNode prevNonSpace = findPrevNonSpaceNode(child);
@@ -532,7 +544,7 @@ public class PyBlock implements ASTBlock {
     if (child.getElementType() == PyTokenTypes.COMMA) {
       return false;
     }
-    return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS;
+    return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS && !hasHangingIndent(myNode.getPsi());
   }
 
   @Nullable
@@ -757,12 +769,8 @@ public class PyBlock implements ASTBlock {
         return null;
       }
       if (myNode.getPsi() instanceof PyDictLiteralExpression) {
-        final PyKeyValueExpression[] elements = ((PyDictLiteralExpression)myNode.getPsi()).getElements();
-        if (elements.length == 0) {
-          return null;
-        }
-        final PyKeyValueExpression last = elements[elements.length - 1];
-        if (last.getValue() == null) { // incomplete
+        final PyKeyValueExpression lastElement = ArrayUtil.getLastElement(((PyDictLiteralExpression)myNode.getPsi()).getElements());
+        if (lastElement == null || lastElement.getValue() == null /* incomplete */) {
           return null;
         }
       }

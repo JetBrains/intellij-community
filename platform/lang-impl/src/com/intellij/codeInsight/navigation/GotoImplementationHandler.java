@@ -63,7 +63,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
           return false;
         }
       }.searchImplementations(editor, source, offset), Collections.<AdditionalAction>emptyList());
-      
+
       gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference);
     } else {
       gotoData = new GotoData(source, new ImplementationSearcher(){

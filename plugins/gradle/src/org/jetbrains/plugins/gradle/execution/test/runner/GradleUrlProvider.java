@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,12 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.openapi.project.DumbService;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testIntegration.TestLocationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,29 +34,30 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 2/24/14
  */
-public class GradleUrlProvider implements TestLocationProvider {
+public class GradleUrlProvider implements SMTestLocator {
   public static final String PROTOCOL_ID = "gradle";
   public static final String METHOD_PREF = "methodName";
   public static final String CLASS_PREF = "className";
 
-  @NotNull
-  public List<Location> getLocation(@NotNull String protocolId, @NotNull String locationData, Project project) {
-    if (!PROTOCOL_ID.equals(protocolId)) return Collections.emptyList();
-    if (DumbService.isDumb(project)) return Collections.emptyList();
+  public static final GradleUrlProvider INSTANCE = new GradleUrlProvider();
 
-    final String className = extractFullClassName(locationData);
+  @NotNull
+  @Override
+  public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    if (!PROTOCOL_ID.equals(protocol)) return Collections.emptyList();
+
+    final String className = extractFullClassName(path);
     if (className == null) return Collections.emptyList();
     final PsiClass testClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
     if (testClass == null) return Collections.emptyList();
 
-    final String methodName = extractMethodName(locationData);
+    final String methodName = extractMethodName(path);
     if (methodName == null) {
       return Collections.<Location>singletonList(new PsiLocation<PsiClass>(project, testClass));
     }
 
     final PsiMethod[] methods = testClass.findMethodsByName(methodName, true);
-
-    List<Location> list = new ArrayList<Location>(methods.length);
+    final List<Location> list = new ArrayList<Location>(methods.length);
     for (PsiMethod method : methods) {
       list.add(new PsiLocation<PsiMethod>(project, method));
     }
@@ -90,5 +90,4 @@ public class GradleUrlProvider implements TestLocationProvider {
     }
     return null;
   }
-
 }

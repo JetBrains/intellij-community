@@ -17,7 +17,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    options.getMatchOptions().setFileType(StdFileTypes.JAVA);
+    final MatchOptions matchOptions = this.options.getMatchOptions();
+    matchOptions.setFileType(StdFileTypes.JAVA);
+    matchOptions.setLooseMatching(true);
   }
 
   public void testReplaceInLiterals() {
@@ -449,13 +451,24 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                               "  aaa5();\n" +
                               "}\n";
 
-    actualResult = replacer.testReplace(s52,s53,s54,options);
+    options.getMatchOptions().setLooseMatching(false);
+    try {
+      actualResult = replacer.testReplace(s52, s53, s54, options);
+      assertEquals("Try/finally unwrapped with strict matching", expectedResult19, actualResult);
+    } finally {
+      options.getMatchOptions().setLooseMatching(true);
+    }
 
-    assertEquals(
-      "Try/ catch/ finally is replace with try/finally",
-      expectedResult19,
-      actualResult
-    );
+    String expectedResult19Loose = "aaa();\n" +
+                                   "aaa2();\n" +
+                                   "try {\n" +
+                                   "  aaa4();\n" +
+                                   "} catch(Exception ex) {\n" +
+                                   "  aaa5();\n" +
+                                   "}\n";
+    actualResult = replacer.testReplace(s52, s53, s54, options);
+    assertEquals("Try/finally unwrapped with loose matching", expectedResult19Loose, actualResult);
+
 
     String s55 = "for(Iterator<String> iterator = stringlist.iterator(); iterator.hasNext();) {\n" +
                  "      String str = iterator.next();\n" +
@@ -523,7 +536,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s61 = "try { 1=1; } catch(Exception e) { 1=1; } catch(Throwable t) { 2=2; }";
     String s62 = "try { '_a; } catch(Exception e) { '_b; }";
     String s63 = "try { $a$; } catch(Exception1 e) { $b$; } catch(Exception2 e) { $b$; }";
-    String expectedResult22 = "try { 1=1; } catch(Exception1 e) { 1=1; } catch(Exception2 e) { 1=1; } catch (Throwable t) { 2=2; }";
+    String expectedResult22 = "try { 1=1; } catch(Exception1 e) { 1=1; } catch(Exception2 e) { 1=1; } catch(Throwable t) { 2=2; }";
 
     actualResult = replacer.testReplace(s61,s62,s63,options);
 
@@ -1971,6 +1984,37 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       expected,
       actualResult
     );
+
+    final String in1 = "try {\n" +
+                       "  System.out.println(1);\n" +
+                       "} catch (RuntimeException e) {\n" +
+                       "  System.out.println(2);\n" +
+                       "} finally {\n" +
+                       "  System.out.println(3);\n" +
+                       "}\n";
+    final String what1 = "try {\n" +
+                         "  '_Statement1;\n" +
+                         "} finally {\n" +
+                         "  '_Statement2;\n" +
+                         "}";
+    final String by1 = "try {\n" +
+                       "  // comment1\n" +
+                       "  $Statement1$;\n" +
+                       "} finally {\n" +
+                       "  // comment2\n" +
+                       "  $Statement2$;\n" +
+                       "}";
+    final String expected1 = "try {\n" +
+                             "  // comment1\n" +
+                             "  System.out.println(1);\n" +
+                             "} catch (RuntimeException e) {\n" +
+                             "  System.out.println(2);\n" +
+                             "} finally {\n" +
+                             "  // comment2\n" +
+                             "  System.out.println(3);\n" +
+                             "}\n";
+    final String actualResult1 = replacer.testReplace(in1, what1, by1, options);
+    assertEquals("Replacing try/finally should leave unmatched catch sections alone", expected1, actualResult1);
   }
 
   public void testReplaceExtraSemicolon() {

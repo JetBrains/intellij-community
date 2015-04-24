@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
  */
 public class LiteralExpressionTokenizerTest {
   private static class TokenCollector extends TokenConsumer {
-    private List<String> myTokenTexts = new ArrayList<String>();
+    private final List<String> myTokenTexts = new ArrayList<String>();
 
     @Override
     public void consumeToken(PsiElement element, String text, boolean useRename, int offset, TextRange rangeToCheck, Splitter splitter) {

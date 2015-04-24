@@ -1503,14 +1503,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Strips quotes around the value.
-   * Quotes are removed even if leading and trailing quotes are different or if there is only one quote (leading or trailing).
-   * @deprecated use {@link com.intellij.openapi.util.text.StringUtil#unquoteString(String)} instead
-   * To be removed in IDEA 17
+   * Consider using {@link StringUtil#unquoteString(String)} instead.
+   * Note: this method has an odd behavior:
+   *   Quotes are removed even if leading and trailing quotes are different or
+   *                           if there is only one quote (leading or trailing).
    */
   @NotNull
   @Contract(pure = true)
-  @Deprecated
   public static String stripQuotesAroundValue(@NotNull String text) {
     final int len = text.length();
     if (len > 0) {
@@ -3170,6 +3169,28 @@ public class StringUtil extends StringUtilRt {
         return false;
     }
 
+
+  private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-eA-E]{4}");
+
+  public static String replaceUnicodeEscapeSequences(String text) {
+    if (text == null) return null;
+    
+    final Matcher matcher = UNICODE_CHAR.matcher(text);
+    if (!matcher.find()) return text; // fast path
+
+    matcher.reset();
+    int lastEnd = 0;
+    final StringBuilder sb = new StringBuilder(text.length());
+    while (matcher.find()) {
+      sb.append(text.substring(lastEnd, matcher.start()));
+      final char c = (char)Integer.parseInt(matcher.group().substring(2), 16);
+      sb.append(c);
+      lastEnd = matcher.end();
+    }
+    sb.append(text.substring(lastEnd, text.length()));
+    return sb.toString();
+  }
+  
   /**
    * Expirable CharSequence. Very useful to control external library execution time,
    * i.e. when java.util.regex.Pattern match goes out of control.

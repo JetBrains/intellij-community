@@ -98,8 +98,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
 
-  private IApplicationStore myComponentStore;
-
   private final boolean myTestModeFlag;
   private final boolean myHeadlessMode;
   private final boolean myCommandLineMode;
@@ -172,11 +170,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @NotNull
-  public synchronized IApplicationStore getStateStore() {
-    if (myComponentStore == null) {
-      myComponentStore = (IApplicationStore)getPicoContainer().getComponentInstance(IComponentStore.class);
-    }
-    return myComponentStore;
+  public IApplicationStore getStateStore() {
+    return (IApplicationStore)getPicoContainer().getComponentInstance(IComponentStore.class);
   }
 
   @Override
@@ -187,6 +182,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   public void init() {
     loadComponents();
+
+    for (ApplicationLoadListener listener : ApplicationLoadListener.EP_NAME.getExtensions()) {
+      try {
+        listener.beforeApplicationLoaded(this);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
     super.init();
   }
 
@@ -487,7 +492,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       store.load();
     }
     catch (StateStorageException e) {
-      throw new IOException(e.getMessage());
+      throw new IOException(e);
     }
     finally {
       token.finish();
@@ -522,7 +527,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     disposeComponents();
 
     ourThreadExecutorsService.shutdownNow();
-    myComponentStore = null;
     super.dispose();
     Disposer.dispose(myLastDisposable); // dispose it last
   }

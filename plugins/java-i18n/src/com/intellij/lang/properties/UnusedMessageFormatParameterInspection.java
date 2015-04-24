@@ -39,7 +39,7 @@ import java.util.Set;
  * User: anna
  * Date: 07-Sep-2005
  */
-public class UnusedMessageFormatParameterInspection extends BaseLocalInspectionTool {
+public class UnusedMessageFormatParameterInspection extends PropertySuppressableInspectionBase {
   public static final String REGEXP = "regexp";
   @NotNull
   public String getGroupDisplayName() {

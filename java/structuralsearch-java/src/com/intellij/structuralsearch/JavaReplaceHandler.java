@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -257,7 +256,6 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     PsiElement elementToReplace = info.getMatch(0);
     PsiElement elementParent = elementToReplace.getParent();
     String replacementToMake = info.getReplacement();
-    Project project = myContext.getProject();
     PsiElement el = findRealSubstitutionElement(elementToReplace);
     boolean listContext = isListContext(el);
 
@@ -298,21 +296,13 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
 
         if (replacement instanceof PsiTryStatement) {
           final List<PsiCatchSection> unmatchedCatchSections = el.getUserData(JavaMatchingVisitor.UNMATCHED_CATCH_SECTION_CONTENT_VAR_KEY);
-          final PsiCatchSection[] catches = ((PsiTryStatement)replacement).getCatchSections();
-
           if (unmatchedCatchSections != null) {
+            final PsiTryStatement tryStatement = (PsiTryStatement)replacement;
+            final PsiCatchSection[] catches = tryStatement.getCatchSections();
+            final PsiElement anchor = catches.length == 0 ? tryStatement.getTryBlock() : catches[catches.length - 1];
             for (int i = unmatchedCatchSections.size() - 1; i >= 0; --i) {
-              final PsiParameter parameter = unmatchedCatchSections.get(i).getParameter();
-              final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-              final PsiCatchSection catchSection = elementFactory.createCatchSection(parameter.getType(), parameter.getName(), null);
-
-              catchSection.getCatchBlock().replace(
-                unmatchedCatchSections.get(i).getCatchBlock()
-              );
-              replacement.addAfter(
-                catchSection, catches[catches.length - 1]
-              );
-              replacement.addBefore(createWhiteSpace(replacement), replacement.getLastChild());
+              replacement.addAfter(unmatchedCatchSections.get(i), anchor);
+              replacement.addAfter(createWhiteSpace(replacement), anchor);
             }
           }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private final Module myModule;
   protected static final int IS_REACHABLE_MASK = 0x40;
 
-  protected RefElementImpl(String name, @NotNull RefElement owner) {
+  protected RefElementImpl(@NotNull String name, @NotNull RefElement owner) {
     super(name, owner.getRefManager());
     myID = null;
     myFlags = 0;
@@ -75,7 +75,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     this(file.getName(), file, manager);
   }
 
-  protected RefElementImpl(String name, @NotNull PsiElement element, @NotNull RefManager manager) {
+  protected RefElementImpl(@NotNull String name, @NotNull PsiElement element, @NotNull RefManager manager) {
     super(name, manager);
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(element);
     myFlags = 0;

@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -110,9 +111,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     updateBySelectionChange();
 
-    ActionManager.getInstance().getAction("CommittedChanges.Details").registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_QUICK_JAVADOC)),
-      this);
+    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    CustomShortcutSet quickdocShortcuts = new CustomShortcutSet(keymap.getShortcuts(IdeActions.ACTION_QUICK_JAVADOC));
+    EmptyAction.registerWithShortcutSet("CommittedChanges.Details", quickdocShortcuts, this);
 
     myCopyProvider = new TreeCopyProvider(myChangesTree);
     myTreeExpander = new DefaultTreeExpander(myChangesTree);
@@ -120,7 +121,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     myHelpId = ourHelpId;
 
-    myDetailsView.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myChangesTree);
+    myDetailsView.getDiffAction().registerCustomShortcutSet(myDetailsView.getDiffAction().getShortcutSet(), myChangesTree);
 
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ITEMS_RELOADED, new CommittedChangesReloadListener() {

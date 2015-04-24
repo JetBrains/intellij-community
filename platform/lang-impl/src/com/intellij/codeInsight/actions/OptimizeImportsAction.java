@@ -142,7 +142,7 @@ public class OptimizeImportsAction extends AnAction {
               String info = collector.getOptimizeImportsNotification();
               if (!editor.isDisposed() && editor.getComponent().isShowing()) {
                 String message = info != null ? info : NO_IMPORTS_OPTIMIZED;
-                FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message));
+                FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message), null);
               }
             }
           }

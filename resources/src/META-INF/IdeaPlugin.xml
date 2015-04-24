@@ -188,6 +188,7 @@
     </extensionPoint>
 
     <extensionPoint name="javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
+    <extensionPoint name="customJavadocTagProvider" interface="com.intellij.psi.javadoc.CustomJavadocTagProvider"/>
 
     <extensionPoint name="refactoring.introduceParameterMethodUsagesProcessor" interface="com.intellij.refactoring.introduceParameter.IntroduceParameterMethodUsagesProcessor"/>
 
@@ -1362,8 +1363,12 @@
 
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JavaIndexPatternBuilder"/>
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JspIndexPatternBuilder"/>
+
     <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtilBase"
-                        serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
+                        serviceImplementation="com.intellij.codeInsight.TargetElementUtilBase"/>
+    <targetElementUtilExtender implementation="com.intellij.codeInsight.TargetElementUtil"/>
+    <targetElementEvaluator language="JAVA" implementationClass="com.intellij.codeInsight.TargetElementUtil"/>
+
     <gotoClassContributor implementation="com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor"/>
     <scopeTreeExpander implementation="com.intellij.ide.scopeView.ClassesScopeTreeStructureExpander"/>
