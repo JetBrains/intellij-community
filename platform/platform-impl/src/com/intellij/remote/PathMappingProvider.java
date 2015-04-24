@@ -28,6 +28,9 @@ public abstract class PathMappingProvider {
       }));
   }
 
+  @NotNull
+  public abstract String getProviderPresentableName(@NotNull RemoteSdkAdditionalData data);
+
   public abstract boolean accepts(@Nullable RemoteSdkAdditionalData data);
 
   @NotNull

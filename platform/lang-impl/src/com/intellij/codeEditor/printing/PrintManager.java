@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -140,8 +141,9 @@ class PrintManager {
             printerJob.cancel();
           }
           catch (PrinterException e) {
-            Notifications.Bus.notify(new Notification("Print", CommonBundle.getErrorTitle(), e.getMessage(), NotificationType.ERROR));
             LOG.warn(e);
+            String message = ObjectUtils.notNull(e.getMessage(), e.getClass().getName());
+            Notifications.Bus.notify(new Notification("Print", CommonBundle.getErrorTitle(), message, NotificationType.ERROR));
           }
           catch (Exception e) {
             LOG.error(e);

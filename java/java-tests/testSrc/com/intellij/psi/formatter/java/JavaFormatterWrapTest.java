@@ -15,12 +15,9 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-
-import java.util.Calendar;
 
 /**
  * Is intended to hold specific java formatting tests for 'wrapping' settings.
@@ -475,5 +472,30 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void test_Wrap_On_Method_Parameter_Declaration() {
+    getSettings().METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doClassTest(
+        "      public static void main(String[] args) {\n" +
+        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
+        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
+        "}",
+        "public static void main(String[] args) {\n" +
+        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
+        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
+        "}"
+    );
 
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+    doClassTest(
+        "      public static void main(String[] args) {\n" +
+        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
+        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa, (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
+        "}",
+        "public static void main(String[] args) {\n" +
+        "    boolean ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa = false;\n" +
+        "    soo.ifTrue(ssuuuuuuuuuuuuuuuuuuupaaaaaaaaaaaaa,\n" +
+        "            (v) -> v.setText(\"syyycuuuuuuuuurrrrrrrrrrrrrrennnnnnnnnnnnnnnnnnnnnt\"));\n" +
+        "}"
+    );
+  }
 }

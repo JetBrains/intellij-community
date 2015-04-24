@@ -1,17 +1,20 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -22,30 +25,28 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * GoF builder for gradle-backed projects.
@@ -77,7 +78,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
   @Override
   public List<DataNode<ProjectData>> getList() {
-    return Arrays.asList(myExternalProjectNode);
+    return Collections.singletonList(myExternalProjectNode);
   }
 
   @Override
@@ -100,6 +101,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   public void prepare(@NotNull WizardContext context) {
+    myControl.setShowProjectFormatPanel(context.isCreatingNewProject());
     myControl.reset();
     String pathToUse = getFileToImport();
     myControl.setLinkedProjectPath(pathToUse);
@@ -110,71 +112,97 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
   @Override
   public List<Module> commit(final Project project,
-                             ModifiableModuleModel model,
-                             ModulesProvider modulesProvider,
-                             ModifiableArtifactModel artifactModel)
+                             final ModifiableModuleModel model,
+                             final ModulesProvider modulesProvider,
+                             final ModifiableArtifactModel artifactModel)
   {
     project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
     final DataNode<ProjectData> externalProjectNode = getExternalProjectNode();
     if (externalProjectNode != null) {
       beforeCommit(externalProjectNode, project);
     }
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-      @SuppressWarnings("unchecked")
+
+    boolean isFromUI = model != null;
+
+    final List<Module> modules = ContainerUtil.newSmartList();
+    final PlatformFacade platformFacade = isFromUI ? new PlatformFacadeImpl() {
+      @NotNull
       @Override
-      public void run() {
-        AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
-        final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
-        Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
-        // add current importing project settings to linked projects settings or replace if similar already exist
-        projects.remove(projectSettings);
-        projects.add(projectSettings);
+      public Collection<Module> getModules(@NotNull Project project) {
+        return ContainerUtil.list(modulesProvider.getModules());
+      }
 
-        systemSettings.copyFrom(myControl.getSystemSettings());
-        systemSettings.setLinkedProjectsSettings(projects);
+      @Override
+      public Module newModule(Project project, @NotNull @NonNls String filePath, String moduleTypeId) {
+        final Module module = model.newModule(filePath, moduleTypeId);
+        modules.add(module);
+        return module;
+      }
+    } : ServiceManager.getService(PlatformFacade.class);
+    AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
+    final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
 
-        if (externalProjectNode != null) {
-          ExternalSystemUtil.ensureToolWindowInitialized(project, myExternalSystemId);
-          ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
-            @Override
-            public void execute() {
-              ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
-                @Override
-                public void run() {
-                  myProjectDataManager.importData(externalProjectNode.getKey(), Collections.singleton(externalProjectNode), project, true);
-                  myExternalProjectNode = null;
-                }
-              });
-            }
-          });
+    //noinspection unchecked
+    Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
+    // add current importing project settings to linked projects settings or replace if similar already exist
+    projects.remove(projectSettings);
+    projects.add(projectSettings);
 
-          final Runnable resolveDependenciesTask = new Runnable() {
+    //noinspection unchecked
+    systemSettings.copyFrom(myControl.getSystemSettings());
+    //noinspection unchecked
+    systemSettings.setLinkedProjectsSettings(projects);
+
+    if (externalProjectNode != null) {
+      ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
+        @Override
+        public void execute() {
+          ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
             @Override
             public void run() {
-              String progressText = ExternalSystemBundle.message("progress.resolve.libraries", myExternalSystemId.getReadableName());
-              ProgressManager.getInstance().run(
-                new Task.Backgroundable(project, progressText, false) {
-                  @Override
-                  public void run(@NotNull final ProgressIndicator indicator) {
-                    if(project.isDisposed()) return;
-                    ExternalSystemResolveProjectTask task
-                      = new ExternalSystemResolveProjectTask(myExternalSystemId, project, projectSettings.getExternalProjectPath(), false);
-                    task.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
-                    DataNode<ProjectData> projectWithResolvedLibraries = task.getExternalProject();
-                    if (projectWithResolvedLibraries == null) {
-                      return;
-                    }
-
-                    setupLibraries(projectWithResolvedLibraries, project);
-                  }
-                });
+              myProjectDataManager.importData(
+                externalProjectNode.getKey(), Collections.singleton(externalProjectNode), project, platformFacade, true);
+              myExternalProjectNode = null;
             }
-          };
-          UIUtil.invokeLaterIfNeeded(resolveDependenciesTask);
+          });
         }
+      });
+
+      // resolve dependencies
+      final Runnable resolveDependenciesTask = new Runnable() {
+        @Override
+        public void run() {
+          ExternalSystemUtil.refreshProject(
+            project, myExternalSystemId, projectSettings.getExternalProjectPath(), false,
+            ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+        }
+      };
+      if (!isFromUI) {
+        resolveDependenciesTask.run();
       }
-    });
-    return Collections.emptyList();
+      else {
+        // execute when current dialog is closed
+        ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, new Runnable() {
+          @Override
+          public void run() {
+            final Module[] committedModules = ModuleManager.getInstance(project).getModules();
+            if (ContainerUtil.list(committedModules).containsAll(modules)) {
+              resolveDependenciesTask.run();
+            }
+            else {
+              ExternalSystemApiUtil.getLocalSettings(project, myExternalSystemId).forgetExternalProjects(
+                Collections.singleton(projectSettings.getExternalProjectPath()));
+              ExternalSystemApiUtil.getSettings(project, myExternalSystemId).unlinkExternalProject(
+                projectSettings.getExternalProjectPath());
+
+              ExternalProjectsManager.getInstance(project).forgetExternalProjectData(
+                myExternalSystemId, projectSettings.getExternalProjectPath());
+            }
+          }
+        });
+      }
+    }
+    return modules;
   }
 
   @NotNull
@@ -188,62 +216,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   protected abstract void beforeCommit(@NotNull DataNode<ProjectData> dataNode, @NotNull Project project);
-
-  /**
-   * The whole import sequence looks like below:
-   * <p/>
-   * <pre>
-   * <ol>
-   *   <li>Get project view from the gradle tooling api without resolving dependencies (downloading libraries);</li>
-   *   <li>Allow to adjust project settings before importing;</li>
-   *   <li>Create IJ project and modules;</li>
-   *   <li>Ask gradle tooling api to resolve library dependencies (download the if necessary);</li>
-   *   <li>Configure libraries used by the gradle project at intellij;</li>
-   *   <li>Configure library dependencies;</li>
-   * </ol>
-   * </pre>
-   * <p/>
-   *
-   * @param projectWithResolvedLibraries  gradle project with resolved libraries (libraries have already been downloaded and
-   *                                      are available at file system under gradle service directory)
-   * @param project                       current intellij project which should be configured by libraries and module library
-   *                                      dependencies information available at the given gradle project
-   */
-  private void setupLibraries(@NotNull final DataNode<ProjectData> projectWithResolvedLibraries, final Project project) {
-    ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
-          @Override
-          public void run() {
-            if (ExternalSystemApiUtil.isNewProjectConstruction()) {
-              // Clean existing libraries (if any).
-              LibraryTable projectLibraryTable = ProjectLibraryTable.getInstance(project);
-              if (projectLibraryTable == null) {
-                LOG.warn(
-                  "Can't resolve external dependencies of the target gradle project (" + project + "). Reason: project "
-                  + "library table is undefined"
-                );
-                return;
-              }
-              LibraryTable.ModifiableModel model = projectLibraryTable.getModifiableModel();
-              try {
-                for (Library library : model.getLibraries()) {
-                  model.removeLibrary(library);
-                }
-              }
-              finally {
-                model.commit();
-              }
-            }
-
-            // Register libraries.
-            myProjectDataManager.importData(Collections.<DataNode<?>>singletonList(projectWithResolvedLibraries), project, false);
-          }
-        });
-      }
-    });
-  }
 
   @Nullable
   private File getProjectFile() {
@@ -323,11 +295,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
   @SuppressWarnings("unchecked")
   private void executeAndRestoreDefaultProjectSettings(@NotNull Project project, @NotNull Runnable task) {
-    if (!project.isDefault()) {
-      task.run();
-      return;
-    }
-
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
     Object systemStateToRestore = null;
     if (systemSettings instanceof PersistentStateComponent) {

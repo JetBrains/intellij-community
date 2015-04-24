@@ -16,11 +16,13 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,14 +34,25 @@ import javax.swing.*;
  */
 public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> extends ModuleWizardStep {
 
+  public static final Key<Boolean> SKIP_STEP_KEY = Key.create("SKIP_STEP_KEY");
+
   @NotNull private final AbstractExternalModuleBuilder<S> myExternalModuleBuilder;
   @NotNull private final AbstractExternalProjectSettingsControl<S> myControl;
+  @Nullable private final WizardContext myContext;
   
   @Nullable private PaintAwarePanel myComponent;
 
-  public ExternalModuleSettingsStep(@NotNull AbstractExternalModuleBuilder<S> externalModuleBuilder, @NotNull AbstractExternalProjectSettingsControl<S> control) {
+  public ExternalModuleSettingsStep(@Nullable WizardContext context,
+                                    @NotNull AbstractExternalModuleBuilder<S> externalModuleBuilder,
+                                    @NotNull AbstractExternalProjectSettingsControl<S> control) {
     myExternalModuleBuilder = externalModuleBuilder;
     myControl = control;
+    myContext = context;
+  }
+
+  public ExternalModuleSettingsStep(@NotNull AbstractExternalModuleBuilder<S> externalModuleBuilder,
+                                    @NotNull AbstractExternalProjectSettingsControl<S> control) {
+    this(null, externalModuleBuilder, control);
   }
 
   @Override
@@ -82,5 +95,10 @@ public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> exten
   public void disposeUIResources() {
     super.disposeUIResources();
     myControl.disposeUIResources();
+  }
+
+  @Override
+  public boolean isStepVisible() {
+    return myContext == null || !Boolean.TRUE.equals(myContext.getUserData(SKIP_STEP_KEY));
   }
 }

@@ -16,7 +16,7 @@
 package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.openapi.externalSystem.action.ExternalSystemViewGearAction;
-import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ShowInheritedTasksAction extends ExternalSystemViewGearAction {
   @Override
-  protected boolean isSelected(@NotNull ExternalProjectsView view) {
+  protected boolean isSelected(@NotNull ExternalProjectsViewImpl view) {
     return view.showInheritedTasks();
   }
 
   @Override
-  protected void setSelected(@NotNull ExternalProjectsView view, boolean value) {
+  protected void setSelected(@NotNull ExternalProjectsViewImpl view, boolean value) {
     view.setShowInheritedTasks(value);
   }
 }

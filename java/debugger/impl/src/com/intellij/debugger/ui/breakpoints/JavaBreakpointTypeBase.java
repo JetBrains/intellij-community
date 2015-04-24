@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -62,9 +65,18 @@ public abstract class JavaBreakpointTypeBase<T extends JavaBreakpointProperties>
   public XSourcePosition getSourcePosition(@NotNull XBreakpoint<T> breakpoint) {
     Breakpoint javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
-      PsiClass aClass = javaBreakpoint.getPsiClass();
-      if (aClass != null && aClass.getContainingFile() != null && aClass.getTextOffset() >= 0) {
-        return XDebuggerUtil.getInstance().createPositionByOffset(aClass.getContainingFile().getVirtualFile(), aClass.getTextOffset());
+      final PsiClass aClass = javaBreakpoint.getPsiClass();
+      if (aClass != null) {
+        return ApplicationManager.getApplication().runReadAction(new Computable<XSourcePosition>() {
+          @Override
+          public XSourcePosition compute() {
+            PsiFile containingFile = aClass.getContainingFile();
+            if (containingFile != null && aClass.getTextOffset() >= 0) {
+              return XDebuggerUtil.getInstance().createPositionByOffset(containingFile.getVirtualFile(), aClass.getTextOffset());
+            }
+            return null;
+          }
+        });
       }
     }
     return null;
