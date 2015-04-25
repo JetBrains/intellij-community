@@ -16,9 +16,11 @@
 
 package com.jetbrains.reactiveidea
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentAdapter
 import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Key
 import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
@@ -28,7 +30,7 @@ import com.jetbrains.reactivemodel.signals.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
 
-public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val doc: DocumentImpl) {
+public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val doc: Document) {
   private val TIMESTAMP: Key<Int> = Key("com.jetbrains.reactiveidea.timestamp")
   private val recursionGuard = Guard()
 
@@ -58,9 +60,11 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
 
     reaction(true, "init document text", textSignal) { text ->
       if (text != null) {
-        doc.setText(text)
+        ApplicationManager.getApplication().runWriteAction {
+          doc.setText(text)
+        }
       }
-    }.lifetime.terminate()
+    }
 
     doc.addDocumentListener(listener)
     lifetime += {
@@ -87,9 +91,13 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
         }
         doc.putUserData(TIMESTAMP, evts.size())
         recursionGuard.lock {
-          for (i in (timestamp..evts.size() - 1)) {
-            val eventModel = evts[i]
-            play(eventModel, doc)
+          ApplicationManager.getApplication().runWriteAction {
+            CommandProcessor.getInstance().executeCommand(null, {
+              for (i in (timestamp..evts.size() - 1)) {
+                val eventModel = evts[i]
+                play(eventModel, doc)
+              }
+            }, null, null)
           }
         }
       }
@@ -102,7 +110,7 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
   }
 }
 
-private fun play(event: Model, doc: DocumentImpl) {
+private fun play(event: Model, doc: Document) {
   if (event !is MapModel) {
     throw AssertionError()
   }

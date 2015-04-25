@@ -1,0 +1,17 @@
+<component name="libraryTable">
+  <library name="com.github.nkzawa:socket.io-client:0.4.2" type="repository">
+    <properties maven-id="com.github.nkzawa:socket.io-client:0.4.2" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/socket.io-client-0.4.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/engine.io-client-0.4.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/json-20090211.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/Java-WebSocket-1.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/socket.io-client-0.4.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/socket.io-client-0.4.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

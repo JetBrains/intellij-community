@@ -6,6 +6,8 @@ import com.jetbrains.reactivemodel.*
 import java.util.HashMap
 
 public data class MapModel(val map: PersistentMap<String, Model> = Persistents.hashMap()): AssocModel<String, MapModel>, Map<String, Model?> by map {
+    override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitMapModel(this)
+
     public constructor(m: Map<String, Model>): this(Persistents.hashMap(m))
 
     public override fun assoc(key: String, value: Model?) : MapModel =
@@ -70,7 +72,9 @@ public data class MapModel(val map: PersistentMap<String, Model> = Persistents.h
     }
 }
 
-public data class MapDiff(val diff: Map<String, Diff<Model>>): Diff<MapModel>
+public data class MapDiff(val diff: Map<String, Diff<Model>>): Diff<MapModel> {
+    override fun <T> acceptVisitor(visitor: DiffVisitor<T>): T = visitor.visitMapDiff(this)
+}
 
 public fun assocModelWithPath(p: Path, m: Model) : MapModel =
     p.components.foldRight(m) { comp, m ->

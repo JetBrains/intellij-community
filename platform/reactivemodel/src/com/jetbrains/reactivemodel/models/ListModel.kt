@@ -2,11 +2,11 @@ package com.jetbrains.reactivemodel.models
 
 import com.github.krukow.clj_ds.PersistentVector
 import com.github.krukow.clj_ds.Persistents
-import com.jetbrains.reactivemodel.AssocModel
-import com.jetbrains.reactivemodel.Diff
-import com.jetbrains.reactivemodel.Model
+import com.jetbrains.reactivemodel.*
 
 public data class ListModel(val list: PersistentVector<Model> = Persistents.vector()): AssocModel<Int, ListModel>, List<Model> by list {
+    override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitListModel(this)
+
     public constructor(l: List<Model>): this(Persistents.vector(l))
 
     override fun assoc(key: Int, value: Model?): ListModel = ListModel(list.plusN(key, value))
@@ -46,5 +46,7 @@ public data class ListModel(val list: PersistentVector<Model> = Persistents.vect
     }
 }
 
-public data class ListDiff(val nueu: List<Model>, val index: Int): Diff<ListModel>
+public data class ListDiff(val nueu: List<Model>, val index: Int): Diff<ListModel> {
+    override fun <T> acceptVisitor(visitor: DiffVisitor<T>): T = visitor.visitListDiff(this)
+}
 

@@ -1,0 +1,30 @@
+<component name="libraryTable">
+  <library name="com.corundumstudio.socketio:netty-socketio:1.7.6" type="repository">
+    <properties maven-id="com.corundumstudio.socketio:netty-socketio:1.7.6" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.7.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jackson-core-2.4.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jackson-databind-2.4.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/jackson-annotations-2.4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/spring-beans-4.1.6.RELEASE.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/spring-core-4.1.6.RELEASE.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/redisson-1.1.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/hazelcast-client-3.1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/hazelcast-3.1.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-socketio-1.7.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-buffer-4.0.25.Final.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-codec-4.0.25.Final.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-codec-http-4.0.25.Final.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-common-4.0.25.Final.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-handler-4.0.25.Final.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-transport-4.0.25.Final.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-transport-native-epoll-4.0.25.Final.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/netty-socketio-1.7.6-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/netty-socketio-1.7.6-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
