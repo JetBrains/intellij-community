@@ -7,11 +7,7 @@ import com.jetbrains.reactivemodel.ModelVisitor
 public data class AbsentModel: Model {
     override fun <T> acceptVisitor(visitor: ModelVisitor<T>): T = visitor.visitAbsentModel(this)
 
-    override fun patch(diff: Diff<Model>): Model {
-        throw AssertionError()
-    }
+    override fun patch(diff: Diff<Model>): Model = this
 
-    override fun diffImpl(other: Model): Diff<Model>? {
-        throw AssertionError()
-    }
+    override fun diffImpl(other: Model): Diff<Model>?  = null
 }

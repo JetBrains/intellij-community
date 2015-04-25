@@ -15,37 +15,73 @@
  */
 package com.jetbrains.reactiveidea
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ProjectComponent
-import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.reactivemodel.Path
 import com.jetbrains.reactivemodel.util.Lifetime
+import java.util.HashMap
 
-public class DocumentsSynchronizer(val project: Project): ProjectComponent {
+public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
   val lifetime = Lifetime.create(Lifetime.Eternal)
-  var bJavaHost: DocumentHost? = null
-  var aTxtHost: DocumentHost? = null
+  var bJavaHost: EditorHost? = null
+  var aTxtHost: EditorHost? = null
 
 
   override fun getComponentName(): String = "DocumentsSynchronizer"
 
+  private val messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect()
+
   override fun initComponent() {
+
     UIUtil.invokeLaterIfNeeded {
       val aTxt = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled/src/A.txt")
-      val aTxtDoc = FileDocumentManager.getInstance().getDocument(aTxt!!)
-
-      serverModel(lifetime.lifetime, 12346) { m ->
-        aTxtHost = DocumentHost(lifetime.lifetime, m, Path("document"), aTxtDoc!!)
-      }
-
-      val clientModel = clientModel("http://localhost:12346", Lifetime.Eternal)
-
       val bJava = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled/src/B.java")
-      val bTxtDoc = FileDocumentManager.getInstance().getDocument(bJava!!)
-      bJavaHost = DocumentHost(lifetime.lifetime, clientModel, Path("document"), bTxtDoc!!)
+      val openedEditors = HashMap<VirtualFile, Editor>()
+
+      FileEditorManager.getInstance(project).getSelectedTextEditor()
+      messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
+          object : FileEditorManagerListener {
+            override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+              if (file.equals(aTxt) || file.equals(bJava)) {
+                val editor = (FileEditorManager.getInstance(project).getAllEditors(file).first() as TextEditor).getEditor()
+                openedEditors[file] = editor
+                if (openedEditors.size() == 2) {
+                  messageBusConnection.disconnect()
+                  initSync(openedEditors[aTxt], openedEditors[bJava])
+                }
+              }
+            }
+
+            override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+
+            }
+
+            override fun selectionChanged(event: FileEditorManagerEvent) {
+
+            }
+
+          })
     }
+  }
+
+  private fun initSync(aTxtEditor: Editor, bJavaEditor: Editor) {
+    serverModel(lifetime.lifetime, 12345) { m ->
+      aTxtHost = EditorHost(lifetime.lifetime, m, Path("editor"), aTxtEditor, false)
+    }
+
+    val clientModel = clientModel("http://localhost:12345", Lifetime.Eternal)
+
+    bJavaHost = EditorHost(lifetime.lifetime, clientModel, Path("editor"), bJavaEditor, true)
+
   }
 
   override fun disposeComponent() {

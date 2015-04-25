@@ -62,6 +62,7 @@ fun serverModel(lifetime: Lifetime, port: Int, onConnect: (ReactiveModel) -> Uni
   server.addEventListener("diff", javaClass<JsonNode>(), { socketIOClient, json, ackRequest ->
     val diff = toDiff(JSONObject(json.toString()))
     UIUtil.invokeLaterIfNeeded {
+//      println("applying diff on server $diff")
       reactiveModel.performTransaction { m ->
         m.patch(diff)
       }
@@ -82,10 +83,8 @@ fun serverModel(lifetime: Lifetime, port: Int, onConnect: (ReactiveModel) -> Uni
 }
 
 fun clientModel(url: String, lifetime: Lifetime): ReactiveModel {
-  val opts = IO.Options()
-  opts.forceNew = true;
-  opts.reconnection = false;
-  val socket = IO.socket(url, opts);
+
+  val socket = IO.socket(url);
 
   val reactiveModel = ReactiveModel(lifetime) { diff ->
     socket.emit("diff", toJson(diff))
@@ -103,7 +102,7 @@ fun clientModel(url: String, lifetime: Lifetime): ReactiveModel {
           val diff = toDiff(json)
           UIUtil.invokeLaterIfNeeded {
             reactiveModel.performTransaction { m ->
-              println("apply diff $diff")
+//              println("apply diff $diff")
               m.patch(diff)
             }
           }

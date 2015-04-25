@@ -47,7 +47,7 @@ object ReactGraph {
     val updatesGuard = Guard()
     val silentUpdateGuard = Guard()
 
-    fun <T> register(s: Signal<T>, parents: List<Signal<Any>>, handler: (List<Any>) -> T) : Signal<T> {
+    fun <T, S : Signal<T>> register(s: S, parents: List<Signal<Any>>, handler: (List<Any>) -> T) : S {
         parents.forEach {
             children.putValue(it, s)
         }
@@ -133,14 +133,14 @@ inline fun updates(inline t: () -> Unit) {
     }
 }
 
-fun <T1, T> reaction(immediate:Boolean = false, name: String = "anonymous", s1 : Signal<T1>, handler: (T1) -> T) : Signal<T> {
+fun <T1, T> reaction(immediate:Boolean = false, name: String = "anonymous", s1 : Signal<T1>, handler: (T1) -> T) : VariableSignal<T> {
     return ReactGraph.register(VariableSignal<T>(Lifetime.create(s1.lifetime), name,
             if (immediate) handler(s1.value) else null as T),
             arrayListOf(s1),
             { handler(it[0] as T1) })
 }
 
-fun <T1, T2, T> reaction(immediate: Boolean = false, name: String, s1 : Signal<T1>, s2: Signal<T2>, handler: (T1, T2) -> T) : Signal<T> {
+fun <T1, T2, T> reaction(immediate: Boolean = false, name: String, s1 : Signal<T1>, s2: Signal<T2>, handler: (T1, T2) -> T) : VariableSignal<T> {
     return ReactGraph.register(VariableSignal<T>(Lifetime.create(s1.lifetime, s2.lifetime), name,
             if (immediate) handler(s1.value, s2.value)
             else null as T),
@@ -148,7 +148,7 @@ fun <T1, T2, T> reaction(immediate: Boolean = false, name: String, s1 : Signal<T
             { handler(it[0] as T1, it[1] as T2) })
 }
 
-fun <T1, T2, T3, T> reaction(immediate: Boolean = false, name: String, s1 : Signal<T1>, s2: Signal<T2>, s3: Signal<T3>, handler: (T1, T2, T3) -> T) : Signal<T> {
+fun <T1, T2, T3, T> reaction(immediate: Boolean = false, name: String, s1 : Signal<T1>, s2: Signal<T2>, s3: Signal<T3>, handler: (T1, T2, T3) -> T) : VariableSignal<T> {
     return ReactGraph.register(VariableSignal<T>(
             Lifetime.create(s1.lifetime, s2.lifetime, s3.lifetime),
             name,
@@ -157,7 +157,7 @@ fun <T1, T2, T3, T> reaction(immediate: Boolean = false, name: String, s1 : Sign
             { handler(it[0] as T1, it[1] as T2, it[2] as T3) })
 }
 
-fun <T1, T2, T3, T4, T> reaction(immediate: Boolean = false, name: String, s1 : Signal<T1>, s2: Signal<T2>, s3: Signal<T3>, s4: Signal<T4>, handler: (T1, T2, T3, T4) -> T) : Signal<T> {
+fun <T1, T2, T3, T4, T> reaction(immediate: Boolean = false, name: String, s1 : Signal<T1>, s2: Signal<T2>, s3: Signal<T3>, s4: Signal<T4>, handler: (T1, T2, T3, T4) -> T) : VariableSignal<T> {
     return ReactGraph.register(VariableSignal<T>(Lifetime.create(s1.lifetime, s2.lifetime, s3.lifetime, s4.lifetime),
             name,
             if (immediate) handler(s1.value, s2.value, s3.value, s4.value) else null as T),

@@ -26,6 +26,7 @@ import com.jetbrains.reactivemodel.*
 import com.jetbrains.reactivemodel.models.ListModel
 import com.jetbrains.reactivemodel.models.MapModel
 import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel.signals.Signal
 import com.jetbrains.reactivemodel.signals.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
@@ -33,6 +34,9 @@ import com.jetbrains.reactivemodel.util.Lifetime
 public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val doc: Document) {
   private val TIMESTAMP: Key<Int> = Key("com.jetbrains.reactiveidea.timestamp")
   private val recursionGuard = Guard()
+
+  public val updateDocumentText: Signal<String?>
+  public val listenToDocumentEvents: Signal<ListModel?>
 
   init {
     val listener = object : DocumentAdapter() {
@@ -58,12 +62,13 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
       else (model as PrimitiveModel<String>).value
     }
 
-    reaction(true, "init document text", textSignal) { text ->
+    updateDocumentText = reaction(true, "init document text", textSignal) { text ->
       if (text != null) {
         ApplicationManager.getApplication().runWriteAction {
           doc.setText(text)
         }
       }
+      text
     }
 
     doc.addDocumentListener(listener)
@@ -83,7 +88,7 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
       else null
     }
 
-    val listenToDocumentEvents = reaction(true, "listen to model events", eventsList) { evts ->
+    listenToDocumentEvents = reaction(true, "listen to model events", eventsList) { evts ->
       if (evts != null) {
         var timestamp = doc.getUserData(TIMESTAMP)
         if (timestamp == null) {
@@ -101,12 +106,12 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
           }
         }
       }
+      evts
     }
 
     lifetime += {
       listenToDocumentEvents.lifetime.terminate()
     }
-
   }
 }
 

@@ -14,5 +14,8 @@
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" name="com.github.nkzawa:socket.io-client:0.4.2" level="project" />
     <orderEntry type="library" name="com.corundumstudio.socketio:netty-socketio:1.7.6" level="project" />
+    <orderEntry type="module" module-name="editor-ui-api" />
+    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="editor-ui-ex" />
   </component>
 </module>

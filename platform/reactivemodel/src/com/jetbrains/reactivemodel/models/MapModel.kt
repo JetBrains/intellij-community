@@ -37,8 +37,8 @@ public data class MapModel(val map: PersistentMap<String, Model> = Persistents.h
                 diff.put(it, ValueDiff(AbsentModel()))
             }
         }
-        assert(!diff.isEmpty())
-        return MapDiff(diff)
+        if (diff.isEmpty()) return null
+        else return MapDiff(diff)
     }
 
     override fun patch(diff: Diff<Model>): MapModel {
