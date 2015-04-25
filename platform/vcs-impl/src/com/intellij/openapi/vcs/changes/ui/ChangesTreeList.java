@@ -219,6 +219,13 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
                                    : myTree.getPathForLocation(e.getX(), e.getY());
         if (clickPath == null) return false;
 
+        final int row = myTree.getRowForLocation(e.getPoint().x, e.getPoint().y);
+        if (row >= 0) {
+          final Rectangle baseRect = myTree.getRowBounds(row);
+          baseRect.setSize(checkboxWidth, baseRect.height);
+          if (baseRect.contains(e.getPoint())) return false;
+        }
+
         myDoubleClickHandler.run();
         return true;
       }
