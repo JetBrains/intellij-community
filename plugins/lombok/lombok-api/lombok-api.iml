@@ -14,6 +14,7 @@
       <excludeFolder url="file://$MODULE_DIR$/target/dependency-maven-plugin-markers" />
       <excludeFolder url="file://$MODULE_DIR$/target/maven-archiver" />
       <excludeFolder url="file://$MODULE_DIR$/target/maven-status" />
+      <excludeFolder url="file://$MODULE_DIR$/target/surefire" />
       <excludeFolder url="file://$MODULE_DIR$/target/test-classes" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -21,4 +22,3 @@
   </component>
   <component name="POM File Configuration" pomFile="" />
 </module>
-
