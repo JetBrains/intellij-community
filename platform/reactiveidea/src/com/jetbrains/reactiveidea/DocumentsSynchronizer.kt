@@ -45,18 +45,24 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
     UIUtil.invokeLaterIfNeeded {
       val aTxt = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled/src/A.txt")
       val bJava = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled/src/B.java")
-      val openedEditors = HashMap<VirtualFile, Editor>()
+
 
       FileEditorManager.getInstance(project).getSelectedTextEditor()
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
           object : FileEditorManagerListener {
             override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-              if (file.equals(aTxt) || file.equals(bJava)) {
-                val editor = (FileEditorManager.getInstance(project).getAllEditors(file).first() as TextEditor).getEditor()
-                openedEditors[file] = editor
-                if (openedEditors.size() == 2) {
-                  messageBusConnection.disconnect()
-                  initSync(openedEditors[aTxt], openedEditors[bJava])
+              val editor = (FileEditorManager.getInstance(project).getAllEditors(file).first() as TextEditor).getEditor()
+              if (!isClient()) {
+                if (file.equals(aTxt)) {
+                  serverModel(lifetime.lifetime, 12345) { m ->
+                    aTxtHost = EditorHost(lifetime.lifetime, m, Path("editor"), editor, false)
+                  }
+                }
+              } else {
+                if (file.equals(bJava)) {
+                  val clientModel = clientModel("http://localhost:12345", Lifetime.Eternal)
+
+                  bJavaHost = EditorHost(lifetime.lifetime, clientModel, Path("editor"), editor, true)
                 }
               }
             }
@@ -73,16 +79,8 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
     }
   }
 
-  private fun initSync(aTxtEditor: Editor, bJavaEditor: Editor) {
-    serverModel(lifetime.lifetime, 12345) { m ->
-      aTxtHost = EditorHost(lifetime.lifetime, m, Path("editor"), aTxtEditor, false)
-    }
+  private fun isClient(): Boolean = System.getProperty("com.jetbrains.reactiveidea.client") == "true"
 
-    val clientModel = clientModel("http://localhost:12345", Lifetime.Eternal)
-
-    bJavaHost = EditorHost(lifetime.lifetime, clientModel, Path("editor"), bJavaEditor, true)
-
-  }
 
   override fun disposeComponent() {
     lifetime.terminate()
