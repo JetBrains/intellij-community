@@ -208,6 +208,7 @@
 				    <li>Fixed #96: @Value and @Wither not playing well together</li>
 				    <li>Fixed #97: Two constructors being shown when using @Builder and @AllArgsConstructor together</li>
 				    <li>Fixed #98: Plugin crash: IndexNotReadyException val processing</li>
+				    <li>Fixed #101: @SneakyThrows causes incorrect errors in IntelliJ 14</li>
 				</ol>
 			</li>
 		  <li>0.9.2
