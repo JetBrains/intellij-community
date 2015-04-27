@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -157,13 +158,22 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
         @Override
         public void onOutput(@NotNull IpnbConnection connection,
-                             @NotNull String parentMessageId,
-                             @NotNull List<IpnbOutputCell> outputs,
-                             @Nullable Integer execCount) {
+                             @NotNull String parentMessageId) {
+          if (!myUpdateMap.containsKey(parentMessageId)) return;
+          final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
+          cell.getCell().setPromptNumber(connection.getExecCount());
+          //noinspection unchecked
+          cell.updatePanel(null, (List<IpnbOutputCell>)connection.getOutput().clone());
+        }
+
+        @Override
+        public void onPayload(@Nullable String payload, @NotNull String parentMessageId) {
           if (!myUpdateMap.containsKey(parentMessageId)) return;
           final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
-          cell.getCell().setPromptNumber(execCount);
-          cell.updatePanel(outputs);
+          if (payload != null) {
+            //noinspection unchecked
+            cell.updatePanel(payload, null);
+          }
         }
       };
 
@@ -296,6 +306,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
   private void shutdownKernels() {
     for (IpnbConnection connection : myKernels.values()) {
+      if (!connection.isAlive()) continue;
       connection.shutdown();
       try {
         connection.close();
@@ -309,7 +320,8 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     myKernels.clear();
     if (myProcessHandler != null && !myProcessHandler.isProcessTerminated()) {
-      myProcessHandler.killProcess();
+      myProcessHandler.destroyProcess();
+      UnixProcessManager.sendSigIntToProcessTree(myProcessHandler.getProcess());
     }
   }
 
