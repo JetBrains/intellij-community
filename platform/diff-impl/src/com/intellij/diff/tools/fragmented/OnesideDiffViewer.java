@@ -483,6 +483,8 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     }
     myChangedBlockData = null;
 
+    OnesideEditorRangeHighlighter.erase(myProject, myDocument);
+
     myFoldingModel.destroy();
 
     myStatusPanel.update();
