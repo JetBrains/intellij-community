@@ -64,7 +64,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     if (rangeToReformat.intersects(oldWhitespaceRange)) {
       final TextRange newWhitespaceRange = replaceOrDeleteTrailingWhitespaces((PyFile)source, oldWhitespaceRange);
       final int delta = newWhitespaceRange.getLength() - oldWhitespaceRange.getLength();
-      if (newWhitespaceRange.contains(oldWhitespaceRange)) {
+      if (oldWhitespaceRange.contains(rangeToReformat)) {
         return newWhitespaceRange;
       }
       else if (rangeToReformat.contains(oldWhitespaceRange)) {
@@ -109,19 +109,24 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
         numLineFeeds = 1;
       }
       documentManager.doPostponedOperationsAndUnblockDocument(document);
-      final String text = StringUtil.repeat("\n", numLineFeeds);
-      if (numLineFeeds > 0 && whitespaceRange.getStartOffset() != 0) {
-        if (!whitespaceRange.isEmpty()) {
-          document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), text);
+      try {
+        final String text = StringUtil.repeat("\n", numLineFeeds);
+        if (numLineFeeds > 0 && whitespaceRange.getStartOffset() != 0) {
+          if (!whitespaceRange.isEmpty()) {
+            document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), text);
+          }
+          else {
+            document.insertString(document.getTextLength(), text);
+          }
         }
-        else {
-          document.insertString(document.getTextLength(), text);
+        else if (!whitespaceRange.isEmpty()) {
+          document.deleteString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset());
         }
+        return TextRange.from(whitespaceRange.getStartOffset(), text.length());
       }
-      else if (!whitespaceRange.isEmpty()) {
-        document.deleteString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset());
+      finally {
+        documentManager.commitDocument(document);
       }
-      return TextRange.from(whitespaceRange.getStartOffset(), text.length());
     }
     return whitespaceRange;
   }
