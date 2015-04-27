@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
@@ -38,10 +39,12 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
   private final @Nullable DfaValue myPrecalculatedReturnValue;
 
 
-  public GrMethodCallInstruction(@NotNull GrReferenceExpression propertyAccess, @NotNull PsiMethod property) {
+  public GrMethodCallInstruction(@NotNull GrReferenceExpression propertyAccess,
+                                 @NotNull PsiMethod property,
+                                 @Nullable GrExpression rValue) {
     myCall = propertyAccess;
     myNamedArguments = GrNamedArgument.EMPTY_ARRAY;
-    myExpressionArguments = GrExpression.EMPTY_ARRAY;
+    myExpressionArguments = rValue == null ? GrExpression.EMPTY_ARRAY : new GrExpression[]{rValue};
     myClosureArguments = GrClosableBlock.EMPTY_ARRAY;
 
     myReturnType = property.getReturnType();
@@ -49,6 +52,26 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
 
     myShouldFlushFields = false;
     argumentsToParameters = null;
+    myPrecalculatedReturnValue = null;
+  }
+
+  public GrMethodCallInstruction(@NotNull GrExpression call,
+                                 @NotNull GrNamedArgument[] namedArguments,
+                                 @NotNull GrExpression[] expressionArguments,
+                                 @NotNull GrClosableBlock[] closureArguments,
+                                 @Nullable PsiType returnType,
+                                 @NotNull GroovyResolveResult result) {
+    myCall = call;
+    myNamedArguments = namedArguments;
+    myExpressionArguments = expressionArguments;
+    myClosureArguments = closureArguments;
+    myReturnType = returnType;
+    myTargetMethod = (PsiMethod)result.getElement();
+    myShouldFlushFields = !(call instanceof GrNewExpression && myReturnType != null && myReturnType.getArrayDimensions() > 0)
+                          && !isPureCall(myTargetMethod);
+    argumentsToParameters = GrClosureSignatureUtil.mapArgumentsToParameters(
+      result, call, false, false, myNamedArguments, myExpressionArguments, myClosureArguments
+    );
     myPrecalculatedReturnValue = null;
   }
 
@@ -124,7 +147,17 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
   }
 
   public String toString() {
-    return "CALL METHOD " + myCall.getText();
+    return "CALL METHOD " +
+           myReturnType +
+           " " +
+           myTargetMethod +
+           "(" +
+           Arrays.toString(myNamedArguments) +
+           ":" +
+           Arrays.toString(myExpressionArguments) +
+           ":" +
+           Arrays.toString(myClosureArguments) +
+           ")";
   }
 
   private static boolean isPureCall(PsiMethod myTargetMethod) {
