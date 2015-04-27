@@ -30,12 +30,15 @@ import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Strip trailing extra blank lines at the end of the file and insert necessary line feed if corresponding whitespace element belongs to
- * formatted range/element. If "Add new line at the file end" option was selected in Python code style settings final whitespace is replaced
- * by single line feed, and it removed completely otherwise.
- * <p/>
- * Note however that if option {@link EditorSettingsExternalizable#isEnsureNewLineAtEOF()} was also enabled line feed will be added at the
- * end of file on next "Save" action regardless of the code style settings for Python.
+ * Handles extra blank lines at the end of the file if corresponding whitespace elements belong to formatted range/element.
+ * These trailing whitespaces are replaced by line feeds if either:
+ * <ul>
+ * <li>Option {@link PyCodeStyleSettings#BLANKS_LINES_AT_FILE_END} has positive value. In this case that number of line feeds will be
+ * inserted at the end of file.</li>
+ * <li>Setting {@link EditorSettingsExternalizable#isEnsureNewLineAtEOF()} is enabled. Otherwise extra new line added on the next
+ * "Save" action will be removed after reformatting.</li>
+ * </ul>
+ * If none of these conditions holds, blank lines are removed completely.
  *
  * @author Mikhail Golubev
  */
@@ -59,7 +62,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     }
     final TextRange oldWhitespaceRange = findTrailingWhitespacesRange(source);
     if (rangeToReformat.intersects(oldWhitespaceRange)) {
-      final TextRange newWhitespaceRange = replaceOrDeleteTrailingWhitespaces((PyFile)source, oldWhitespaceRange);;
+      final TextRange newWhitespaceRange = replaceOrDeleteTrailingWhitespaces((PyFile)source, oldWhitespaceRange);
       final int delta = newWhitespaceRange.getLength() - oldWhitespaceRange.getLength();
       if (newWhitespaceRange.contains(oldWhitespaceRange)) {
         return newWhitespaceRange;
@@ -101,13 +104,13 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = documentManager.getDocument(pyFile);
     if (document != null) {
-      int numLineFeedsAtEnd = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).NEW_LINE_AT_FILE_END;
-      if (numLineFeedsAtEnd <= 0 && EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF()) {
-        numLineFeedsAtEnd = 1;
+      int numLineFeeds = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).BLANKS_LINES_AT_FILE_END;
+      if (numLineFeeds <= 0 && EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF()) {
+        numLineFeeds = 1;
       }
       documentManager.doPostponedOperationsAndUnblockDocument(document);
-      final String text = StringUtil.repeat("\n", numLineFeedsAtEnd);
-      if (numLineFeedsAtEnd > 0) {
+      final String text = StringUtil.repeat("\n", numLineFeeds);
+      if (numLineFeeds > 0) {
         if (!whitespaceRange.isEmpty()) {
           document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), text);
         }
