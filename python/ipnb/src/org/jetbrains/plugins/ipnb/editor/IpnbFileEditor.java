@@ -130,6 +130,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     controlPanel.add(runPanel);
 
     addInterruptKernelButton(runPanel);
+    addReloadKernelButton(runPanel);
     myCellTypeCombo = new ComboBox(ourCellTypes);
 
     myCellTypeCombo.addActionListener(new ActionListener() {
@@ -174,6 +175,15 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
         IpnbInterruptKernelAction.interruptKernel(IpnbFileEditor.this);
       }
     }, AllIcons.Actions.Suspend, "Interrupt kernel");
+  }
+
+  private void addReloadKernelButton(@NotNull final JPanel controlPanel) {
+    addButton(controlPanel, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        IpnbReloadKernelAction.reloadKernel(IpnbFileEditor.this);
+      }
+    }, AllIcons.Actions.Refresh, "Restart kernel");
   }
 
   private void addSaveButton(@NotNull final JPanel controlPanel) {

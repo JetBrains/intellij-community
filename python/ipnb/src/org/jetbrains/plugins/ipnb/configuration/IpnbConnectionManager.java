@@ -209,14 +209,26 @@ public final class IpnbConnectionManager implements ProjectComponent {
     return true;
   }
 
-  public void interruptKernel(@NotNull final String kernelId) {
-    if (!myKernels.containsKey(kernelId)) return;
-    final IpnbConnection connection = myKernels.get(kernelId);
+  public void interruptKernel(@NotNull final String filePath) {
+    if (!myKernels.containsKey(filePath)) return;
+    final IpnbConnection connection = myKernels.get(filePath);
     try {
       connection.interrupt();
     }
     catch (IOException e) {
-      LOG.warn("Failed to interrupt kernel " + kernelId);
+      LOG.warn("Failed to interrupt kernel " + filePath);
+      LOG.warn(e.getMessage());
+    }
+  }
+
+  public void reloadKernel(@NotNull final String filePath) {
+    if (!myKernels.containsKey(filePath)) return;
+    final IpnbConnection connection = myKernels.get(filePath);
+    try {
+      connection.reload();
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to reload kernel " + filePath);
       LOG.warn(e.getMessage());
     }
   }
