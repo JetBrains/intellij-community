@@ -19,18 +19,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyFile;
@@ -38,7 +36,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.jetbrains.python.psi.PyUtil.as;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Strip trailing extra blank lines at the end of the file and insert necessary line feed if corresponding whitespace element belongs to
@@ -55,8 +55,10 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
   public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     if (source instanceof PyFile) {
       final PyFile pyFile = (PyFile)source;
-      final Couple<PsiWhiteSpace> range = findTrailingWhitespaces(pyFile);
-      if (range != null && PsiTreeUtil.isAncestor(source, range.getFirst(), false)) {
+      final List<PsiElement> range = findTrailingWhitespaces(pyFile);
+      if (!range.isEmpty() &&
+          PsiTreeUtil.isAncestor(source, ContainerUtil.getFirstItem(range), false) &&
+          PsiTreeUtil.isAncestor(source, ContainerUtil.getLastItem(range), false)) {
         replaceOrDeleteTrailingWhitespaces(pyFile, range);
       }
     }
@@ -68,9 +70,8 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     if (!(source instanceof PyFile)) {
       return rangeToReformat;
     }
-    final Couple<PsiWhiteSpace> range = findTrailingWhitespaces(source);
-    final TextRange oldWhitespaceRange;
-    oldWhitespaceRange = range != null ? unionRange(range) : TextRange.from(source.getTextLength(), 0);
+    final List<PsiElement> range = findTrailingWhitespaces(source);
+    final TextRange oldWhitespaceRange = !range.isEmpty() ? unionRange(range) : TextRange.from(source.getTextLength(), 0);
     if (rangeToReformat.intersects(oldWhitespaceRange)) {
       final TextRange newWhitespaceRange = replaceOrDeleteTrailingWhitespaces((PyFile)source, range);;
       final int delta = newWhitespaceRange.getLength() - oldWhitespaceRange.getLength();
@@ -93,27 +94,46 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     return rangeToReformat;
   }
 
-  @Nullable
-  private static Couple<PsiWhiteSpace> findTrailingWhitespaces(@NotNull PsiFile file) {
-    final PsiWhiteSpace lastWhitespace = as(PsiTreeUtil.lastChild(file), PsiWhiteSpace.class);
-    if (lastWhitespace == null) {
-      return null;
+  @NotNull
+  private static List<PsiElement> findTrailingWhitespaces(@NotNull PsiFile file) {
+    final PsiElement lastLeaf = PsiTreeUtil.lastChild(file);
+
+    if (isWhitespaceBackslashOrEmptyError(lastLeaf)) {
+      final List<PsiElement> result = new ArrayList<PsiElement>();
+      boolean containsWhitespaces = false;
+      for (PsiElement prev = lastLeaf; isWhitespaceBackslashOrEmptyError(prev); prev = PsiTreeUtil.prevLeaf(prev)) {
+        containsWhitespaces |= prev instanceof PsiWhiteSpace;
+        result.add(prev);
+      }
+      if (containsWhitespaces) {
+        Collections.reverse(result);
+        return result;
+      }
     }
-    PsiWhiteSpace firstWhitespace = lastWhitespace;
-    for (PsiElement prev = lastWhitespace.getPrevSibling(); prev instanceof PsiWhiteSpace; prev = prev.getPrevSibling()) {
-      firstWhitespace = (PsiWhiteSpace)prev;
+    return Collections.emptyList();
+  }
+
+  private static boolean isWhitespaceBackslashOrEmptyError(@Nullable PsiElement elem) {
+    if (elem == null) {
+      return false;
     }
-    return Couple.of(firstWhitespace, lastWhitespace);
+    return elem instanceof PsiWhiteSpace ||
+           elem.getNode().getElementType() == PyTokenTypes.BACKSLASH ||
+           (elem instanceof PsiErrorElement && elem.getTextLength() == 0);
   }
 
   @NotNull
-  private static TextRange unionRange(@NotNull Couple<? extends PsiElement> range) {
-    return range.getFirst().getTextRange().union(range.getSecond().getTextRange());
+  private static TextRange unionRange(@NotNull List<PsiElement> range) {
+    if (range.isEmpty()) {
+      return TextRange.EMPTY_RANGE;
+    }
+    //noinspection ConstantConditions
+    return ContainerUtil.getFirstItem(range).getTextRange().union(ContainerUtil.getLastItem(range).getTextRange());
   }
 
   @NotNull
   private static TextRange replaceOrDeleteTrailingWhitespaces(@NotNull final PyFile pyFile,
-                                                              @Nullable final Couple<PsiWhiteSpace> whitespaces) {
+                                                              @NotNull final List<PsiElement> whitespaces) {
     final Project project = pyFile.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = documentManager.getDocument(pyFile);
@@ -134,7 +154,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
         return codeStyleManager.performActionWithFormatterDisabled(new Computable<TextRange>() {
           @Override
           public TextRange compute() {
-            if (whitespaces != null) {
+            if (!whitespaces.isEmpty()) {
               return replaceOrDeletePsiRange(whitespaces, lineFeeds).getTextRange();
             }
             else {
@@ -143,7 +163,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
           }
         });
       }
-      else if (whitespaces != null) {
+      else if (!whitespaces.isEmpty()) {
         return codeStyleManager.performActionWithFormatterDisabled(new Computable<TextRange>() {
           @Override
           public TextRange compute() {
@@ -153,26 +173,19 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
         });
       }
     }
-    return whitespaces == null ? TextRange.from(pyFile.getTextLength(), 0) : unionRange(whitespaces);
+    return whitespaces.isEmpty() ? TextRange.from(pyFile.getTextLength(), 0) : unionRange(whitespaces);
   }
 
   @Contract("_, null -> null; _, !null -> !null")
   @Nullable
-  private static PsiElement replaceOrDeletePsiRange(@NotNull Couple<? extends PsiElement> range, @Nullable PsiElement replacement) {
-    final PsiElement first = range.getFirst();
-    final PsiElement last = range.getSecond();
-    final PsiElement parent = first.getParent();
-    final PsiElement beforeFirst = first.getPrevSibling();
-    assert !(beforeFirst instanceof PsiWhiteSpace);
-    parent.deleteChildRange(first, last);
-    // chain `first.getParent().deleteRange(first.getNextSibling(), last); first.replace(replacement)` doesn't work
+  private static PsiElement replaceOrDeletePsiRange(@NotNull List<PsiElement> range, @Nullable PsiElement replacement) {
+    final PsiElement file = range.get(0).getContainingFile();
+    // If whitespaces span several parents, the safest option is to append new whitespace at the end of the file
+    for (PsiElement element : ContainerUtil.reverse(range)) {
+      element.delete();
+    }
     if (replacement != null) {
-      if (beforeFirst != null) {
-        return parent.addAfter(replacement, beforeFirst);
-      }
-      else {
-        return parent.add(replacement);
-      }
+      return file.add(replacement);
     }
     return null;
   }

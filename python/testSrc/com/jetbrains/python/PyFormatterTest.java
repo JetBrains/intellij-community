@@ -542,6 +542,26 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesAtFileEnd() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesAtFunctionEnd() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesAtFunctionEndNoNewLine() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesMixed() {
+    doTest();
+  }
+
   // PY-15530
   public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
     doTest();
