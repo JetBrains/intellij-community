@@ -44,7 +44,7 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
 
     UIUtil.invokeLaterIfNeeded {
       val aTxt = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled/src/A.txt")
-      val bJava = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled/src/B.java")
+      val bJava = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled2/src/B.java")
 
 
       FileEditorManager.getInstance(project).getSelectedTextEditor()
@@ -54,13 +54,13 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
               val editor = (FileEditorManager.getInstance(project).getAllEditors(file).first() as TextEditor).getEditor()
               if (!isClient()) {
                 if (file.equals(aTxt)) {
-                  serverModel(lifetime.lifetime, 12345) { m ->
+                  serverModel(lifetime.lifetime, 12346) { m ->
                     aTxtHost = EditorHost(lifetime.lifetime, m, Path("editor"), editor, false)
                   }
                 }
               } else {
                 if (file.equals(bJava)) {
-                  val clientModel = clientModel("http://localhost:12345", Lifetime.Eternal)
+                  val clientModel = clientModel("http://localhost:12346", Lifetime.Eternal)
 
                   bJavaHost = EditorHost(lifetime.lifetime, clientModel, Path("editor"), editor, true)
                 }
