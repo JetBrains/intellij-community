@@ -55,8 +55,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
   private final Project myProject;
   private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
-  private KillableColoredProcessHandler myProcessHandler;
-
   public IpnbConnectionManager(final Project project) {
     myProject = project;
   }
@@ -263,18 +261,24 @@ public final class IpnbConnectionManager implements ProjectComponent {
       withEnvironment(env);
 
     try {
-      myProcessHandler = new KillableColoredProcessHandler(commandLine) {
+      final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
+        @Override
+        protected void doDestroyProcess() {
+          super.doDestroyProcess();
+          UnixProcessManager.sendSigIntToProcessTree(getProcess());
+        }
+
         @Override
         public boolean isSilentlyDestroyOnClose() {
           return true;
         }
       };
-      myProcessHandler.setShouldDestroyProcessRecursively(true);
+      processHandler.setShouldDestroyProcessRecursively(true);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          new RunContentExecutor(myProject, myProcessHandler)
-            .withConsole(new IpnbConsole(myProject, myProcessHandler))
+          new RunContentExecutor(myProject, processHandler)
+            .withConsole(new IpnbConsole(myProject, processHandler))
             .run();
         }
       });
@@ -319,10 +323,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
     }
     myKernels.clear();
-    if (myProcessHandler != null && !myProcessHandler.isProcessTerminated()) {
-      myProcessHandler.destroyProcess();
-      UnixProcessManager.sendSigIntToProcessTree(myProcessHandler.getProcess());
-    }
   }
 
   @NotNull
