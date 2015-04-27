@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.InputEvent;
 import java.util.List;
 
 /**
@@ -51,4 +52,12 @@ public interface ExternalProjectsView {
   boolean getGroupTasks();
 
   ProjectSystemId getSystemId();
+
+  void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent);
+
+  void addListener(@NotNull ExternalProjectsView.Listener listener);
+
+  interface Listener {
+    void onDoubleClickOrEnter(@NotNull ExternalSystemNode node, InputEvent inputEvent);
+  }
 }

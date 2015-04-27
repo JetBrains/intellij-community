@@ -373,9 +373,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   @Override
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
     String actionId = getActionId();
-    if (actionId != null) {
-      ExternalSystemActionUtil.executeAction(actionId, inputEvent);
-    }
+    getExternalProjectsView().handleDoubleClickOrEnter(this, actionId, inputEvent);
   }
 
   @Override
