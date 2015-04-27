@@ -217,10 +217,11 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
   }
 
   @Nullable
-  private DfaInstructionState<V>[] handleRelationBinop(BinopInstruction<V> instruction,
-                                                       AbstractDataFlowRunner<V> runner,
-                                                       DfaMemoryState memState,
-                                                       DfaValue dfaRight, DfaValue dfaLeft) {
+  private static <V extends GrInstructionVisitor<V>>
+  DfaInstructionState<V>[] handleRelationBinop(BinopInstruction<V> instruction,
+                                               AbstractDataFlowRunner<V> runner,
+                                               DfaMemoryState memState,
+                                               DfaValue dfaRight, DfaValue dfaLeft) {
     DfaValueFactory factory = runner.getFactory();
     final Instruction<V> next = runner.getInstruction(instruction.getIndex() + 1);
     DfaRelationValue dfaRelation = factory.getRelationFactory().createRelation(dfaLeft, dfaRight, instruction.getOperationSign(), false);

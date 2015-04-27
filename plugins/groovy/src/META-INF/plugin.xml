@@ -1617,10 +1617,6 @@
       <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction"
               text="get PsiType" description=""
               internal="true"/>
-      <action id="GetNullabilityAction" 
-              class="org.jetbrains.plugins.groovy.actions.GrGetNullabilityAction"
-              text="get nullability"
-              internal="true"/>
       <action id="DumpGroovyControlFlowAction"
               class="org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction"
               text="dump groovy control flow"

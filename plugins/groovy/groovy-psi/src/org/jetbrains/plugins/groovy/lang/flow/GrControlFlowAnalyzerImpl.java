@@ -63,8 +63,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -245,7 +245,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
                                  @NotNull GrNamedArgument[] namedArguments,
                                  @NotNull GrExpression[] expressionArguments,
                                  @NotNull GrClosableBlock[] closureArguments) {
-    
+
     final GroovyResolveResult result = invokedReference.advancedResolve();
     final GrExpression qualifier = invokedReference.getQualifierExpression();
     if (qualifier != null) {
@@ -275,12 +275,12 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       // qualifier is on top of stack
       // evaluate arguments 
       visitArguments(namedArguments, expressionArguments, closureArguments);
-      addInstruction(new GrMethodCallInstruction<V>(call, namedArguments, expressionArguments, closureArguments, null, result));
+      addInstruction(new GrMethodCallInstruction<V>(call, namedArguments, expressionArguments, closureArguments, result));
       gotoEnd.setOffset(myFlow.getNextOffset());
     }
     else {
       visitArguments(namedArguments, expressionArguments, closureArguments);
-      addInstruction(new GrMethodCallInstruction<V>(call, namedArguments, expressionArguments, closureArguments, null, result));
+      addInstruction(new GrMethodCallInstruction<V>(call, namedArguments, expressionArguments, closureArguments, result));
     }
   }
 
@@ -384,77 +384,17 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     startElement(switchStatement);
 
     final GrExpression condition = switchStatement.getCondition();
-    if (condition != null) {
-      condition.accept(this);
+    if (condition == null) {
+      finishElement(switchStatement);
+      return;
     }
-    else {
-      pushUnknown();
-    }
-
+    condition.accept(this);
+    
     GotoInstruction fallbackGoto = null;
     for (GrCaseSection section : switchStatement.getCaseSections()) {
       startElement(section);
 
-      final List<ConditionalGotoInstruction> gotosToBlock = new ArrayList<ConditionalGotoInstruction>();
-      final GrCaseLabel[] labels = section.getCaseLabels();
-      for (int i = 0, length = labels.length; i < length; i++) {
-        final GrCaseLabel caseLabel = labels[i];
-        startElement(caseLabel);
-
-        // duplicate evaluated condition on top of the stack
-        addInstruction(new DupInstruction<V>());
-        // put case expression on top of the stack
-        final GrExpression labelValue = caseLabel.getValue();
-        if (labelValue == null) {
-          pushUnknown();
-        }
-        else {
-          labelValue.accept(this);
-        }
-
-        // do the match
-        if (labelValue instanceof GrReferenceExpression) {
-          if (((GrReferenceExpression)labelValue).resolve() instanceof PsiClass) {
-            addInstruction(new BinopInstruction<V>(DfaRelation.INSTANCEOF, labelValue));
-          }
-          else {
-            // we do not know what to do 
-            pop();
-            pop();
-            pushUnknown();
-          }
-        }
-        else if (labelValue != null) {
-          addInstruction(new BinopInstruction<V>(DfaRelation.EQ, labelValue));
-        }
-        else {
-          pop();
-          pop();
-          pushUnknown();
-        }
-
-        if (i == labels.length - 1) {
-          // if not matched then go to next case section
-          // if matched then next instruction is the start of the statements block
-          addInstruction(new ConditionalGotoInstruction<V>(
-            myFlow.getEndOffset(section),
-            true,
-            labelValue
-          ));
-        }
-        else {
-          // if matched go to the statements block
-          // if not matched then next instruction is the start of the next case label
-          gotosToBlock.add(addInstruction(new ConditionalGotoInstruction<V>(
-            null,
-            false,
-            labelValue
-          )));
-        }
-
-        finishElement(caseLabel);
-      }
-
+      final List<ConditionalGotoInstruction> gotosToBlock = processCaseSection(condition, section);
       final ControlFlowOffset statementsBlockOffset = myFlow.getNextOffset();
       for (ConditionalGotoInstruction aGoto : gotosToBlock) {
         aGoto.setOffset(statementsBlockOffset);
@@ -479,6 +419,78 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     // now pop switch condition
     pop();
+  }
+
+  /**
+   * @param condition
+   * @param section
+   * @return empty gotos to statements block
+   */
+  private List<ConditionalGotoInstruction> processCaseSection(@NotNull GrExpression condition, @NotNull GrCaseSection section) {
+    final List<ConditionalGotoInstruction> result = ContainerUtil.newArrayList();
+    final GrCaseLabel[] labels = section.getCaseLabels();
+    for (int i = 0, length = labels.length; i < length; i++) {
+      final GrCaseLabel caseLabel = labels[i];
+      startElement(caseLabel);
+
+      // put case expression on top of the stack
+      final GrExpression labelValue = caseLabel.getValue();
+      if (labelValue == null) {
+        pushUnknown();
+      }
+      else {
+        // duplicate evaluated condition on top of the stack
+        addInstruction(new DupInstruction<V>());
+        labelValue.accept(this);
+        if (processCaseCall(condition, labelValue)) {
+          pop(); // pop label value
+          pop(); // pop duplicated condition
+          pushUnknown();
+        }
+      }
+
+      if (i == labels.length - 1) {
+        // if not matched then go to next case section
+        // if matched then next instruction is the start of the statements block
+        addInstruction(new ConditionalGotoInstruction<V>(
+          myFlow.getEndOffset(section),
+          true,
+          labelValue
+        ));
+      }
+      else {
+        // if matched go to the statements block
+        // if not matched then next instruction is the start of the next case label
+        result.add(addInstruction(new ConditionalGotoInstruction<V>(
+          null,
+          false,
+          labelValue
+        )));
+      }
+
+      finishElement(caseLabel);
+    }
+    return result;
+  }
+
+  private boolean processCaseCall(@NotNull GrExpression condition, @NotNull GrExpression caseValue) {
+    if (caseValue instanceof GrLiteral) {
+      addInstruction(new BinopInstruction<V>(DfaRelation.EQ, caseValue));
+      return false;
+    }
+    if (caseValue instanceof GrReferenceExpression && ((GrReferenceExpression)caseValue).resolve() instanceof PsiClass) {
+      addInstruction(new BinopInstruction<V>(DfaRelation.INSTANCEOF, caseValue));
+      return false;
+    }
+    final PsiType caseType = caseValue.getType();
+    if (caseType != null) {
+      final GroovyResolveResult[] cases = ResolveUtil.getMethodCandidates(caseType, "isCase", caseValue, condition.getType());
+      if (cases.length == 1 && cases[0] != GroovyResolveResult.EMPTY_RESULT) {
+        addInstruction(new GrMethodCallInstruction<V>(caseValue, new GrExpression[]{condition}, cases[0]));
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

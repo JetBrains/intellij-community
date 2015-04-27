@@ -59,20 +59,26 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
                                  @NotNull GrNamedArgument[] namedArguments,
                                  @NotNull GrExpression[] expressionArguments,
                                  @NotNull GrClosableBlock[] closureArguments,
-                                 @Nullable PsiType returnType,
                                  @NotNull GroovyResolveResult result) {
     myCall = call;
     myNamedArguments = namedArguments;
     myExpressionArguments = expressionArguments;
     myClosureArguments = closureArguments;
-    myReturnType = returnType;
     myTargetMethod = (PsiMethod)result.getElement();
+    assert myTargetMethod != null;
+    myReturnType = myTargetMethod.getReturnType();
     myShouldFlushFields = !(call instanceof GrNewExpression && myReturnType != null && myReturnType.getArrayDimensions() > 0)
                           && !isPureCall(myTargetMethod);
     argumentsToParameters = GrClosureSignatureUtil.mapArgumentsToParameters(
       result, call, false, false, myNamedArguments, myExpressionArguments, myClosureArguments
     );
     myPrecalculatedReturnValue = null;
+  }
+
+  public GrMethodCallInstruction(@NotNull GrExpression call,
+                                 @NotNull GrExpression[] expressionArguments,
+                                 @NotNull GroovyResolveResult result) {
+    this(call, GrNamedArgument.EMPTY_ARRAY, expressionArguments, GrClosableBlock.EMPTY_ARRAY, result);
   }
 
   public GrMethodCallInstruction(@NotNull GrCallExpression call, @Nullable DfaValue precalculatedReturnValue) {

@@ -19,7 +19,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.NullabilityProblem;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
@@ -31,17 +30,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
-import org.jetbrains.plugins.groovy.lang.flow.GrNullness;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrNullabilityInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Set;
@@ -75,13 +68,14 @@ public class GrNullabilityInspection extends GroovySuppressableInspectionTool {
   }
 
   private static void check(@NotNull GrControlFlowOwner owner, @NotNull ProblemsHolder holder, final boolean onTheFly) {
-    final GrDataFlowRunner<GrNullabilityInstructionVisitor> dfaRunner = new GrDataFlowRunner<GrNullabilityInstructionVisitor>() {
-      @Override
-      protected boolean shouldCheckTimeLimit() {
-        if (!onTheFly) return false;
-        return super.shouldCheckTimeLimit();
-      }
-    };
+    final GrDataFlowRunner<GrNullabilityInstructionVisitor> dfaRunner =
+      new GrDataFlowRunner<GrNullabilityInstructionVisitor>(owner.getProject()) {
+        @Override
+        protected boolean shouldCheckTimeLimit() {
+          if (!onTheFly) return false;
+          return super.shouldCheckTimeLimit();
+        }
+      };
     final GrNullabilityInstructionVisitor visitor = new GrNullabilityInstructionVisitor(dfaRunner);
     final RunnerResult rc = dfaRunner.analyzeMethod(owner, visitor);
     if (rc == RunnerResult.OK) {
@@ -134,15 +128,13 @@ public class GrNullabilityInspection extends GroovySuppressableInspectionTool {
       for (Instruction instruction : constConditionalExpressions.first) {
         if (instruction instanceof ConditionalGotoInstruction) {
           final PsiElement element = ((ConditionalGotoInstruction)instruction).getPsiAnchor();
-          final boolean negated = ((ConditionalGotoInstruction)instruction).isNegated();
-          holder.registerProblem(element, "Condition <code>#ref</code> is always " + (negated ? "false" : "true"));
+          holder.registerProblem(element, "Condition <code>#ref</code>  is always true");
         }
       }
       for (Instruction instruction : constConditionalExpressions.second) {
         if (instruction instanceof ConditionalGotoInstruction) {
           final PsiElement element = ((ConditionalGotoInstruction)instruction).getPsiAnchor();
-          final boolean negated = ((ConditionalGotoInstruction)instruction).isNegated();
-          holder.registerProblem(element, "Condition <code>#ref</code> is always " + (negated ? "true" : "false"));
+          holder.registerProblem(element, "Condition <code>#ref</code> #loc is always false");
         }
       }
     }
@@ -152,45 +144,6 @@ public class GrNullabilityInspection extends GroovySuppressableInspectionTool {
         final PsiElement identifierGroovy = ((GrMethod)parent).getNameIdentifierGroovy();
         holder.registerProblem(identifierGroovy, InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.WEAK_WARNING);
       }
-    }
-  }
-
-  @SuppressWarnings("unused")
-  private class MyVisitor2 extends GroovyRecursiveElementVisitor {
-
-    private final ProblemsHolder myProblemsHolder;
-
-    private MyVisitor2(ProblemsHolder problemsHolder) {
-      this.myProblemsHolder = problemsHolder;
-    }
-
-    @Override
-    public void visitAssignmentExpression(GrAssignmentExpression expression) {
-      final GrExpression rValue = expression.getRValue();
-      if (rValue == null) return;
-      final Nullness left = GrNullness.getNullability(expression.getLValue());
-      final Nullness right = GrNullness.getNullability(rValue);
-      if (left == Nullness.NOT_NULL && (right == Nullness.NULLABLE || right == Nullness.UNKNOWN && UNKNOWN_MEMBERS_ARE_NULLABLE)) {
-        final String text = GrInspectionUtil.isNull(rValue)
-                            ? InspectionsBundle.message("dataflow.message.assigning.null")
-                            : InspectionsBundle.message("dataflow.message.assigning.nullable");
-        myProblemsHolder.registerProblem(rValue, text);
-      }
-    }
-
-    @Override
-    public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
-      super.visitMethodCallExpression(methodCallExpression);
-    }
-
-    @Override
-    public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-      super.visitReferenceExpression(referenceExpression);
-    }
-
-    @Override
-    public void visitExpression(GrExpression expression) {
-      super.visitExpression(expression);
     }
   }
 }

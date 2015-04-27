@@ -21,14 +21,17 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 
 
@@ -36,11 +39,13 @@ public class GrDfaValueFactory extends DfaValueFactory {
 
   private final GrDfaVariableValue.FactoryImpl myVarFactory;
   private final GrDfaConstValueFactory myConstFactory;
+  private final PsiElementFactory myElementFactory;
 
-  public GrDfaValueFactory() {
+  public GrDfaValueFactory(Project project) {
     super(true, false);
     myVarFactory = new GrDfaVariableValue.FactoryImpl(this);
     myConstFactory = new GrDfaConstValueFactory(this);
+    myElementFactory = PsiElementFactory.SERVICE.getInstance(project);
   }
 
   public DfaValue createValue(GrExpression expression) {
@@ -105,11 +110,18 @@ public class GrDfaValueFactory extends DfaValueFactory {
 
   private DfaValue createReferenceValue(@NotNull GrReferenceExpression refExpr) {
 
-    final PsiElement resolved = refExpr.resolve();
+    final GroovyResolveResult resolveResult = refExpr.advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
     final PsiModifierListOwner var = resolved instanceof PsiModifierListOwner ? (PsiModifierListOwner)resolved : null;
     //getAccessedVariableOrGetter(resolved);
     if (var == null) {
       return null;
+    }
+
+    if (resolved instanceof PsiClass) {
+      final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      final PsiClassType type = myElementFactory.createType((PsiClass)resolved, substitutor);
+      return createTypeValue(type, Nullness.NOT_NULL);
     }
 
     if (!var.hasModifierProperty(PsiModifier.VOLATILE)) {
@@ -142,7 +154,7 @@ public class GrDfaValueFactory extends DfaValueFactory {
   }
 
   public DfaValue createLiteralValue(GrLiteral literal) {
-    if (literal.getValue() instanceof String) {
+    if (literal instanceof GrString || literal.getValue() instanceof String) {
       return createTypeValue(literal.getType(), Nullness.NOT_NULL); // Non-null string literal.
     }
     return getConstFactory().create(literal);
