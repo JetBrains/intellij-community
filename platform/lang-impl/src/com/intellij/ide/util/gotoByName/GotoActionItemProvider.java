@@ -49,7 +49,7 @@ import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
  * @author peter
  */
 public class GotoActionItemProvider implements ChooseByNameItemProvider {
-  public static final TObjectHashingStrategy<AnAction> ACTION_OBJECT_HASHING_STRATEGY = new TObjectHashingStrategy<AnAction>() {
+  private static final TObjectHashingStrategy<AnAction> ACTION_OBJECT_HASHING_STRATEGY = new TObjectHashingStrategy<AnAction>() {
     @Override
     public int computeHashCode(AnAction object) {
       return object.getClass().hashCode();
