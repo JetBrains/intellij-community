@@ -23,10 +23,6 @@ import com.intellij.xml.util.XmlUtil;
  */
 public class InternalResourceProvider implements StandardResourceProvider{
 
-  public static final String XML_SCHEMA_1_1 = XmlUtil.XML_SCHEMA_URI + "-1.1";
-  public static final String XML_SCHEMA_1_1_XSD = XML_SCHEMA_1_1 + ".xsd";
-  public static final String XML_SCHEMA_URI_XSD = XmlUtil.XML_SCHEMA_URI + ".xsd";
-
   @Override
   public void registerResources(ResourceRegistrar registrar) {
     ResourceRegistrarImpl impl = (ResourceRegistrarImpl)registrar;
@@ -36,10 +32,7 @@ public class InternalResourceProvider implements StandardResourceProvider{
     impl.addInternalResource(XmlUtil.XINCLUDE_URI,"xinclude.xsd");
 
     impl.addInternalResource(XmlUtil.XML_SCHEMA_URI, "XMLSchema.xsd");
-    impl.addInternalResource(XML_SCHEMA_URI_XSD, "XMLSchema.xsd");
-
-    //impl.addInternalResource(XML_SCHEMA_1_1, "1.1", "XMLSchema-1_1/XMLSchema.xsd");
-    //impl.addInternalResource(XML_SCHEMA_1_1_XSD, "1.1", "XMLSchema-1_1/XMLSchema.xsd");
+    impl.addInternalResource(XmlUtil.XML_SCHEMA_URI + ".xsd", "XMLSchema.xsd");
 
     impl.addInternalResource("http://www.w3.org/2001/XMLSchema.dtd", "XMLSchema.dtd");
     impl.addInternalResource(XmlUtil.XML_SCHEMA_INSTANCE_URI, "XMLSchema-instance.xsd");
