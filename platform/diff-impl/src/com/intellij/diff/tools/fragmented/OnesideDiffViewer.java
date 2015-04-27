@@ -214,7 +214,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         blocks.add(ChangedBlock.createInserted(data.getText().length() + 1, data.getLines()));
 
         indicator.checkCanceled();
-        LineNumberConvertor convertor = LineNumberConvertor.Builder.createLeft(data.getLines());
+        LineNumberConvertor convertor = LineNumberConvertor.Builder.createRight(data.getLines());
 
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), data.getHighlighter(),
                                                                data.getRangeHighlighter(), content.getContentType(),
@@ -240,7 +240,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         blocks.add(ChangedBlock.createDeleted(data.getText().length() + 1, data.getLines()));
 
         indicator.checkCanceled();
-        LineNumberConvertor convertor = LineNumberConvertor.Builder.createRight(data.getLines());
+        LineNumberConvertor convertor = LineNumberConvertor.Builder.createLeft(data.getLines());
 
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), data.getHighlighter(),
                                                                data.getRangeHighlighter(), content.getContentType(),
