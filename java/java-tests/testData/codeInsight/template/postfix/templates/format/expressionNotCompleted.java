@@ -1,7 +1,9 @@
 package templates;
 
+import java.lang.Exception;
+
 public class Foo {
   void m(boolean b, int value) {
-      String.format("m()", <caret>)
+      throw new Exception("".format<caret>
   }
 }
