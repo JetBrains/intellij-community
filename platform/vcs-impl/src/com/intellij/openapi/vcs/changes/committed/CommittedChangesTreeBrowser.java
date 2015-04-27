@@ -17,17 +17,23 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
@@ -312,7 +318,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     for (AnAction action : auxiliaryActions) {
       menuGroup.add(action);
     }
-    menuGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+    menuGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
     PopupHandler.installPopupHandler(myChangesTree, menuGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 
@@ -358,7 +364,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       myChangesTree);
     toolbarGroup.add(expandAllAction);
     toolbarGroup.add(collapseAllAction);
-    toolbarGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+    toolbarGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
     toolbarGroup.add(new ContextHelpAction(myHelpId));
     if (tailGroup != null) {
       toolbarGroup.add(tailGroup);
@@ -385,6 +391,22 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       final List<CommittedChangeList> lists = getSelectedChangeLists();
       if (!lists.isEmpty()) {
         sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
+      }
+    }
+    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(key.getName())) {
+      List<CommittedChangeList> changeLists = getSelectedChangeLists();
+      ContainerUtil.sort(changeLists, CommittedChangeListByDateComparator.DESCENDING);
+
+      List<VcsRevisionNumber> revisionNumbers =
+        ContainerUtil.mapNotNull(changeLists, new Function<CommittedChangeList, VcsRevisionNumber>() {
+          @Override
+          public VcsRevisionNumber fun(CommittedChangeList changeList) {
+            return changeList instanceof VcsRevisionNumberAware ? ((VcsRevisionNumberAware)changeList).getRevisionNumber() : null;
+          }
+        });
+
+      if (!revisionNumbers.isEmpty()) {
+        sink.put(VcsDataKeys.VCS_REVISION_NUMBERS, ArrayUtil.toObjectArray(revisionNumbers, VcsRevisionNumber.class));
       }
     }
     else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
