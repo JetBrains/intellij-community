@@ -20,7 +20,10 @@ import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.view.*;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsStructure;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewAdapter;
+import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ScrollPaneFactory;
@@ -30,11 +33,13 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
+import java.awt.event.InputEvent;
 import java.util.Collection;
 import java.util.List;
 
@@ -77,6 +82,11 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
         public void updateUpTo(ExternalSystemNode node) {
           treeStructure.updateUpTo(node);
         }
+
+        @Override
+        public void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
+          SelectExternalSystemNodeDialog.this.handleDoubleClickOrEnter(node, actionId, inputEvent);
+        }
       });
 
       final Collection<ExternalProjectInfo> projectsData =
@@ -105,6 +115,9 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     }
 
     init();
+  }
+
+  protected void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
   }
 
   protected SimpleNode getSelectedNode() {
