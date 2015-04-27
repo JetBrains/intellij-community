@@ -566,7 +566,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     private final DataContext myDataContext;
     private Presentation myPresentation;
 
-    public ActionWrapper(@NotNull AnAction action, String groupName, MatchMode mode, DataContext dataContext) {
+    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, MatchMode mode, DataContext dataContext) {
       myAction = action;
       myMode = mode;
       myGroupName = groupName;
@@ -605,7 +605,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
       return myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
     }
 
+    @Nullable
     public String getGroupName() {
+      if (myAction instanceof ActionGroup && Comparing.equal(myAction.getTemplatePresentation().getText(), myGroupName)) return null;
       return myGroupName;
     }
     
