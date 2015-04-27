@@ -109,8 +109,7 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.swing.*;
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.FileFilter;
@@ -1029,13 +1028,16 @@ public class BuildManager implements ApplicationComponent{
     String userDefinedHeapSize = null;
     final List<String> userAdditionalOptionsList = new SmartList<String>();
     final String userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
-    final String additionalOptions = !StringUtil.isEmptyOrSpaces(userAdditionalVMOptions)? userAdditionalVMOptions : projectConfig.getBuildProcessVMOptions();
+    final boolean userLocalOptionsActive = !StringUtil.isEmptyOrSpaces(userAdditionalVMOptions);
+    final String additionalOptions = userLocalOptionsActive ? userAdditionalVMOptions : projectConfig.getBuildProcessVMOptions();
     if (!StringUtil.isEmptyOrSpaces(additionalOptions)) {
       final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
       while (tokenizer.hasMoreTokens()) {
         final String option = tokenizer.nextToken();
         if (StringUtil.startsWithIgnoreCase(option, "-Xmx")) {
-          userDefinedHeapSize = option;
+          if (userLocalOptionsActive) {
+            userDefinedHeapSize = option;
+          }
         }
         else {
           if ("-Dprofiling.mode=true".equals(option)) {
@@ -1050,8 +1052,7 @@ public class BuildManager implements ApplicationComponent{
       cmdLine.addParameter(userDefinedHeapSize);
     }
     else {
-      final int heapSize = projectConfig.getBuildProcessHeapSize(
-        JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
+      final int heapSize = projectConfig.getBuildProcessHeapSize(JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
       cmdLine.addParameter("-Xmx" + heapSize + "m");
     }
 
