@@ -49,12 +49,7 @@
 
     </xs:documentation>
   </xs:annotation>
-  <xs:annotation>
-    <xs:documentation>
-   The simpleType element and all of its members are defined
-   in datatypes.xsd</xs:documentation>
-  </xs:annotation>
-  <xs:include schemaLocation="datatypes.xsd"/>
+
   <xs:import namespace="http://www.w3.org/XML/1998/namespace"
              schemaLocation="http://www.w3.org/2001/xml.xsd">
     <xs:annotation>
