@@ -75,6 +75,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,12 +95,14 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -115,12 +118,47 @@ public class ExternalSystemUtil {
 
   @NotNull private static final Map<String, String> RUNNER_IDS = ContainerUtilRt.newHashMap();
 
+  public static final TObjectHashingStrategy<Pair<ProjectSystemId, File>> HASHING_STRATEGY =
+    new TObjectHashingStrategy<Pair<ProjectSystemId, File>>() {
+      @Override
+      public int computeHashCode(Pair<ProjectSystemId, File> object) {
+        return object.first.hashCode() + fileHashCode(object.second);
+      }
+
+      @Override
+      public boolean equals(Pair<ProjectSystemId, File> o1, Pair<ProjectSystemId, File> o2) {
+        return o1.first.equals(o2.first) && filesEqual(o1.second, o2.second);
+      }
+    };
+
   static {
     RUNNER_IDS.put(DefaultRunExecutor.EXECUTOR_ID, ExternalSystemConstants.RUNNER_ID);
     RUNNER_IDS.put(DefaultDebugExecutor.EXECUTOR_ID, ExternalSystemConstants.DEBUG_RUNNER_ID);
   }
 
   private ExternalSystemUtil() {
+  }
+
+  public static int fileHashCode(@Nullable File file) {
+    int hash;
+    try {
+      hash = FileUtil.pathHashCode(file == null ? null : file.getCanonicalPath());
+    }
+    catch (IOException e) {
+      LOG.warn("unable to get canonical file path", e);
+      hash = FileUtil.fileHashCode(file);
+    }
+    return hash;
+  }
+
+  public static boolean filesEqual(@Nullable File file1, @Nullable File file2) {
+    try {
+      return FileUtil.pathsEqual(file1 == null ? null : file1.getCanonicalPath(), file2 == null ? null : file2.getCanonicalPath());
+    }
+    catch (IOException e) {
+      LOG.warn("unable to get canonical file path", e);
+    }
+    return FileUtil.filesEqual(file1, file2);
   }
 
   public static void ensureToolWindowInitialized(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
