@@ -141,6 +141,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     super.onDispose();
   }
 
+  @CalledInAwt
   protected void processContextHints() {
     Side side = DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.MASTER_SIDE);
     if (side != null) myMasterSide = side;
@@ -148,11 +149,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     myScrollToLineHelper.processContext();
   }
 
+  @CalledInAwt
   protected void updateContextHints() {
     myScrollToLineHelper.updateContext();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
   }
 
+  @CalledInAwt
   @NotNull
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
@@ -166,6 +169,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return group;
   }
 
+  @CalledInAwt
   @NotNull
   public List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
@@ -185,6 +189,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   //
 
   @Override
+  @CalledInAwt
   protected void onSlowRediff() {
     super.onSlowRediff();
     myPanel.setLoadingContent();
@@ -562,6 +567,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return myStatusPanel;
   }
 
+  @CalledInAwt
   public boolean isEditable(@NotNull Side side, boolean respectReadOnlyLock) {
     if (myReadOnlyLockSet && respectReadOnlyLock) return false;
     if (side.select(myForceReadOnlyFlags)) return false;
@@ -602,6 +608,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return null;
   }
 
+  @CalledInAwt
   @Nullable
   protected OpenFileDescriptor getOpenFileDescriptor(int offset) {
     assert myActualContent1 != null || myActualContent2 != null;
