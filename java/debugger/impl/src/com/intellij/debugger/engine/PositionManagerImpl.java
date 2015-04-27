@@ -256,7 +256,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Set<PsiClass> res = new HashSet<PsiClass>();
     for (PsiElement element : getLineElements(file, lineNumber)) {
-      res.add(getEnclosingClass(element));
+      PsiClass aClass = getEnclosingClass(element);
+      if (aClass != null) {
+        res.add(aClass);
+      }
     }
     return res;
   }
@@ -400,7 +403,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
    * Inner in = new Inner(new Inner2(){}) {};
    * Parent of Inner2 sub class here is not Inner sub class
    */
-  private static PsiClass getEnclosingClass(PsiElement element) {
+  @Nullable
+  private static PsiClass getEnclosingClass(@Nullable PsiElement element) {
     if (element == null) {
       return null;
     }
