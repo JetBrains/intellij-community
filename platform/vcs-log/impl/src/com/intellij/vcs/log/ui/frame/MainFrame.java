@@ -195,7 +195,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          if (!myFilterUi.getFilters().isEmpty()) {
+          if (!myFilterUi.getFilters().getDetailsFilters().isEmpty()) {
             e.getPresentation().setEnabled(false);
           }
           if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {
@@ -220,7 +220,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
-        if (!myFilterUi.getFilters().isEmpty()) {
+        if (!myFilterUi.getFilters().getDetailsFilters().isEmpty()) {
           e.getPresentation().setEnabled(false);
         }
         if (myUI.getBekType() == PermanentGraph.SortType.LinearBek) {
