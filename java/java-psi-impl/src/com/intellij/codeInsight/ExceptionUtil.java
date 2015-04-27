@@ -409,6 +409,10 @@ public class ExceptionUtil {
   public static List<PsiClassType> getUnhandledExceptions(@NotNull final PsiCallExpression methodCall,
                                                           @Nullable final PsiElement topElement,
                                                           final boolean includeSelfCalls) {
+    //exceptions only influence the invocation type after overload resolution is complete
+    if (MethodCandidateInfo.isOverloadCheck()) {
+      return Collections.emptyList();
+    }
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
     if (method == null) {
