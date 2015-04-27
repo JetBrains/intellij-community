@@ -61,12 +61,13 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @NotNull
   public final FrameDiffTool.ToolbarComponents init() {
     onInit();
-    rediff(true);
 
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
     components.toolbarActions = createToolbarActions();
     components.popupActions = createPopupActions();
     components.statusPanel = getStatusPanel();
+
+    rediff(true);
     return components;
   }
 

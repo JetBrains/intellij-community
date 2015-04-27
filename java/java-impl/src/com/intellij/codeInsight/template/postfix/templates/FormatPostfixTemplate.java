@@ -23,7 +23,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 public class FormatPostfixTemplate extends StringBasedPostfixTemplate {
   private static final Condition<PsiElement> IS_STRING = new Condition<PsiElement>() {
@@ -39,13 +39,18 @@ public class FormatPostfixTemplate extends StringBasedPostfixTemplate {
 
 
   public FormatPostfixTemplate() {
-    super("format", "String.format(expr)", selectorTopmost(IS_STRING));
+    super("format", "String.format(expr)", selectorAllExpressionsWithCurrentOffset(IS_STRING));
   }
 
 
   @Nullable
   @Override
   public String getTemplateString(@NotNull PsiElement element) {
-    return "String.format($expr$, $END$);";
+    return "String.format($expr$, $END$)";
+  }
+
+  @Override
+  protected boolean shouldRemoveParent() {
+    return false;
   }
 }

@@ -13,4 +13,4 @@ xsi:schemaLocation=
   http://jboss.com/products/seam/async http://jboss.com/products/seam/async-2.0.xsd
 http://jboss.com/products/seam/web http://jboss.com/products/seam/web-2.0.xsd"
             <caret>xmlns:async="http://jboss.com/products/seam/async"
-        />
+/>

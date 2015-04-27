@@ -247,27 +247,6 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
         return returnTypeErasure;
       }
     }
-    PsiType lowerBound = PsiType.NULL;
-    if (substitutedReturnType instanceof PsiCapturedWildcardType) {
-      lowerBound = ((PsiCapturedWildcardType)substitutedReturnType).getLowerBound();
-    } else if (substitutedReturnType instanceof PsiWildcardType) {
-      lowerBound = ((PsiWildcardType)substitutedReturnType).getSuperBound();
-    }
-    if (lowerBound != PsiType.NULL) { //? super
-      final PsiClass containingClass = method.getContainingClass();
-      final PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-      final PsiClass childClass = qualifierExpression != null ? PsiUtil.resolveClassInClassTypeOnly(qualifierExpression.getType()) : null;
-      if (containingClass != null && childClass != null) {
-        final PsiType typeInChildClassTypeParams = TypeConversionUtil.getSuperClassSubstitutor(containingClass, childClass, PsiSubstitutor.EMPTY).substitute(ret);
-        final PsiClass substituted = PsiUtil.resolveClassInClassTypeOnly(typeInChildClassTypeParams);
-        if (substituted instanceof PsiTypeParameter) {
-          final PsiClassType[] extendsListTypes = substituted.getExtendsListTypes();
-          if (extendsListTypes.length == 1) {
-            return extendsListTypes[0];
-          }
-        }
-      }
-    }
     return PsiImplUtil.normalizeWildcardTypeByPosition(substitutedReturnType, call);
   }
 }

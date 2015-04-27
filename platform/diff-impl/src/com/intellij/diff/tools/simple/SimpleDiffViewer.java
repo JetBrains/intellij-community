@@ -590,10 +590,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private class MyReadOnlyLockAction extends ReadOnlyLockAction {
+  private class MyReadOnlyLockAction extends EditorReadOnlyLockAction {
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      super.setSelected(e, state);
+    protected void doApply(boolean readOnly) {
+      super.doApply(readOnly);
       for (SimpleDiffChange change : myDiffChanges) {
         change.updateGutterActions(true);
       }

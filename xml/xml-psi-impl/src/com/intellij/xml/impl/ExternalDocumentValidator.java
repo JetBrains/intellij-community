@@ -146,7 +146,7 @@ public class ExternalDocumentValidator {
                 return;
               }
 
-              final VirtualFile errorFile = myHandler.getFile(e.getPublicId(), e.getSystemId());
+              final VirtualFile errorFile = myHandler.getProblemFile(e);
               if (!Comparing.equal(errorFile, file.getVirtualFile()) && errorFile != null) {
                 return; // error in attached schema
               }

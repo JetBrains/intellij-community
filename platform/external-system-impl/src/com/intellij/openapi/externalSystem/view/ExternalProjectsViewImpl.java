@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil;
 import com.intellij.openapi.externalSystem.action.ExternalSystemViewGearAction;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
@@ -69,6 +70,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.List;
 
@@ -89,6 +91,8 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   private final ProjectSystemId myExternalSystemId;
   @NotNull
   private final ExternalSystemUiAware myUiAware;
+  @NotNull
+  private final Set<Listener> listeners = ContainerUtil.newHashSet();
 
   @Nullable
   private ExternalProjectsStructure myStructure;
@@ -275,6 +279,21 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     myToolWindow.setAdditionalGearActions(createAdditionalGearActionsGroup());
 
     scheduleStructureUpdate();
+  }
+
+  @Override
+  public void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
+    if (actionId != null) {
+      ExternalSystemActionUtil.executeAction(actionId, inputEvent);
+    }
+    for (Listener listener : listeners) {
+      listener.onDoubleClickOrEnter(node, inputEvent);
+    }
+  }
+
+  @Override
+  public void addListener(@NotNull Listener listener) {
+    listeners.add(listener);
   }
 
   private ActionGroup createAdditionalGearActionsGroup() {

@@ -19,16 +19,29 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.EditorTextField;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -36,6 +49,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
@@ -46,6 +60,8 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
 
   private static final String INHERIT_GROUP_ID_KEY = "GradleModuleWizard.inheritGroupId";
   private static final String INHERIT_VERSION_KEY = "GradleModuleWizard.inheritVersion";
+  private static final String EMPTY_PARENT = "<none>";
+  private static final String DEFAULT_VERSION = "1.0-SNAPSHOT";
 
   @Nullable
   private final Project myProjectOrNull;
@@ -61,7 +77,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
 
   private JPanel myMainPanel;
 
-  private JLabel myParentNameLabel;
+  private EditorTextField myParentPathField;
   private JButton mySelectParent;
 
   private JTextField myGroupIdField;
@@ -69,9 +85,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   private JTextField myArtifactIdField;
   private JTextField myVersionField;
   private JCheckBox myInheritVersionCheckBox;
-
   private JPanel myAddToPanel;
-
 
   public GradleModuleWizardStep(@NotNull GradleModuleBuilder builder, @NotNull WizardContext context) {
     myProjectOrNull = context.getProject();
@@ -154,6 +168,12 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public boolean validate() throws ConfigurationException {
     if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true);
+        }
+      });
       throw new ConfigurationException("Please, specify artifactId");
     }
 
@@ -171,12 +191,6 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
            : null;
   }
 
-  private static void setTestIfEmpty(@NotNull JTextField artifactIdField, @Nullable String text) {
-    if (StringUtil.isEmpty(artifactIdField.getText())) {
-      artifactIdField.setText(StringUtil.notNullize(text));
-    }
-  }
-
   @Override
   public void updateStep() {
     myParent = findPotentialParentProject(myProjectOrNull);
@@ -186,7 +200,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     if (projectId == null) {
       setTestIfEmpty(myArtifactIdField, myBuilder.getName());
       setTestIfEmpty(myGroupIdField, myParent == null ? myBuilder.getName() : myParent.getGroup());
-      setTestIfEmpty(myVersionField, myParent == null ? "1.0-SNAPSHOT" : myParent.getVersion());
+      setTestIfEmpty(myVersionField, myParent == null ? DEFAULT_VERSION : myParent.getVersion());
     }
     else {
       setTestIfEmpty(myArtifactIdField, projectId.getArtifactId());
@@ -208,7 +222,8 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     myInheritGroupIdCheckBox.setVisible(isAddToVisible);
     myInheritVersionCheckBox.setVisible(isAddToVisible);
 
-    myParentNameLabel.setText(formatProjectString(myParent));
+    myParentPathField.setText(myParent == null ? EMPTY_PARENT : myParent.getLinkedExternalProjectPath());
+    collapseIfPossible(myParentPathField, GradleConstants.SYSTEM_ID, getProject());
 
     if (myParent == null) {
       myContext.putUserData(ExternalModuleSettingsStep.SKIP_STEP_KEY, Boolean.FALSE);
@@ -216,6 +231,10 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
       myVersionField.setEnabled(true);
       myInheritGroupIdCheckBox.setEnabled(false);
       myInheritVersionCheckBox.setEnabled(false);
+
+      setTestIfEmpty(myArtifactIdField, myBuilder.getName());
+      setTestIfEmpty(myGroupIdField, "");
+      setTestIfEmpty(myVersionField, DEFAULT_VERSION);
     }
     else {
       myContext.putUserData(ExternalModuleSettingsStep.SKIP_STEP_KEY, Boolean.TRUE);
@@ -245,11 +264,6 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     return false;
   }
 
-  private static String formatProjectString(ProjectData moduleData) {
-    if (moduleData == null) return "<none>";
-    return moduleData.toString();
-  }
-
   @Override
   public void updateDataModel() {
     myContext.setProjectBuilder(myBuilder);
@@ -277,6 +291,86 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public Icon getIcon() {
     return WIZARD_ICON;
+  }
+
+  private void createUIComponents() {
+    Project project = getProject();
+    myParentPathField = new TextViewer("", project);
+  }
+
+  @NotNull
+  private Project getProject() {
+    Project project = myProjectOrNull != null ? myProjectOrNull : ArrayUtil.getFirstElement(ProjectManager.getInstance().getOpenProjects());
+    return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+  }
+
+  private static void collapseIfPossible(@NotNull EditorTextField editorTextField,
+                                         @NotNull ProjectSystemId systemId,
+                                         @NotNull Project project) {
+    Editor editor = editorTextField.getEditor();
+    if (editor != null) {
+      String rawText = editor.getDocument().getText();
+      if (StringUtil.isEmpty(rawText)) return;
+      if (EMPTY_PARENT.equals(rawText)) {
+        editorTextField.setEnabled(false);
+        return;
+      }
+      final Collection<ExternalProjectInfo> projectsData =
+        ProjectDataManager.getInstance().getExternalProjectsData(project, systemId);
+      for (ExternalProjectInfo projectInfo : projectsData) {
+        if (projectInfo.getExternalProjectStructure() != null && projectInfo.getExternalProjectPath().equals(rawText)) {
+          editorTextField.setEnabled(true);
+          ExternalProjectPathField.collapse(
+            editorTextField.getEditor(), projectInfo.getExternalProjectStructure().getData().getExternalName());
+          return;
+        }
+      }
+    }
+  }
+
+  private static class TextViewer extends EditorTextField {
+    private final boolean myEmbeddedIntoDialogWrapper;
+    private final boolean myUseSoftWraps;
+
+    public TextViewer(@NotNull String initialText, @NotNull Project project) {
+      this(createDocument(initialText), project, true, true);
+    }
+
+    public TextViewer(@NotNull Document document, @NotNull Project project, boolean embeddedIntoDialogWrapper, boolean useSoftWraps) {
+      super(document, project, FileTypes.PLAIN_TEXT, true, false);
+      myEmbeddedIntoDialogWrapper = embeddedIntoDialogWrapper;
+      myUseSoftWraps = useSoftWraps;
+      setFontInheritedFromLAF(false);
+    }
+
+    private static Document createDocument(@NotNull String initialText) {
+      return EditorFactory.getInstance().createDocument(initialText);
+    }
+
+    @Override
+    public void setText(@Nullable String text) {
+      super.setText(text != null ? StringUtil.convertLineSeparators(text) : null);
+    }
+
+    @Override
+    protected EditorEx createEditor() {
+      final EditorEx editor = super.createEditor();
+      editor.setHorizontalScrollbarVisible(true);
+      editor.setCaretEnabled(true);
+      editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+      editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
+      editor.setBorder(UIUtil.getTextFieldBorder());
+      editor.setOneLineMode(true);
+      editor.getComponent().setPreferredSize(null);
+      editor.getSettings().setUseSoftWraps(myUseSoftWraps);
+      return editor;
+    }
+  }
+
+  private static void setTestIfEmpty(@NotNull JTextField field, @Nullable String text) {
+    if (StringUtil.isEmpty(field.getText())) {
+      field.setText(StringUtil.notNullize(text));
+    }
   }
 }
 

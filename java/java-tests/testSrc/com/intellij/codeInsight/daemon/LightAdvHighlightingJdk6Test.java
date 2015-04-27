@@ -73,6 +73,7 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testIDEA79251() { doTest(false, false); }
   public void testIDEA65473() { doTest(false, false); }
   public void testIDEA61415() { doTest(false, false); }
+  public void testGenericArrayCreationWithGenericTypeWithOneUnboundedWildcardOneNormalParams() { doTest(false, false); }
   public void testAgentPremain() {
     doTest(false, false); 
   }

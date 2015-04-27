@@ -24,8 +24,10 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +35,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.sun.jdi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,7 +178,52 @@ public class PositionManagerImpl implements PositionManager {
       return sourcePosition;
     }
 
-    return SourcePosition.createFromLine(psiFile, lineNumber);
+    return new JavaSourcePosition(SourcePosition.createFromLine(psiFile, lineNumber), location.declaringType(), location.method());
+  }
+
+  private static class JavaSourcePosition extends RemappedSourcePosition {
+    private final String myExpectedClassName;
+    private final String myExpectedMethodName;
+
+    public JavaSourcePosition(SourcePosition delegate, ReferenceType declaringType, Method method) {
+      super(delegate);
+      myExpectedClassName = declaringType != null ? declaringType.name() : null;
+      myExpectedMethodName = method != null ? method.name() : null;
+    }
+
+    @Override
+    public SourcePosition mapDelegate(final SourcePosition original) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
+        @Override
+        public SourcePosition compute() {
+          // There may be more than one class/method code on the line, so we need to find out the correct place
+          int lineNumber = original.getLine();
+          PsiElement element = original.getElementAt();
+          PsiClass aClass = getEnclosingClass(element);
+          if (aClass != null) {
+            if (Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(aClass))) {
+              return original;
+            }
+            //try to look for other elements in the line
+            final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
+            if (document == null || lineNumber >= document.getLineCount()) {
+              return original;
+            }
+            int endOffset = document.getLineEndOffset(lineNumber);
+            element = PsiTreeUtil.nextLeaf(element);
+            while (element != null && element.getTextOffset() < endOffset) {
+              aClass = getEnclosingClass(element);
+              if (aClass == null) break;
+              if (Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(aClass))) {
+                return SourcePosition.createFromElement(element);
+              }
+              element = PsiTreeUtil.nextLeaf(element);
+            }
+          }
+          return original;
+        }
+      });
+    }
   }
 
   @Nullable
@@ -448,76 +499,19 @@ public class PositionManagerImpl implements PositionManager {
     }
   }
 
-  private static class ClsSourcePosition extends SourcePosition {
-    private SourcePosition myDelegate;
-    private int myOriginalLine;
+  private static class ClsSourcePosition extends RemappedSourcePosition {
+    private final int myOriginalLine;
 
     public ClsSourcePosition(SourcePosition delegate, int originalLine) {
-      myDelegate = delegate;
+      super(delegate);
       myOriginalLine = originalLine;
     }
 
     @Override
-    @NotNull
-    public PsiFile getFile() {
-      return myDelegate.getFile();
-    }
-
-    @Override
-    public PsiElement getElementAt() {
-      return myDelegate.getElementAt();
-    }
-
-    @Override
-    public int getLine() {
-      int line = myDelegate.getLine();
-      if (myOriginalLine >= 0) {
-        return mapDelegate().getLine();
-      }
-      return line;
-    }
-
-    @Override
-    public int getOffset() {
-      int offset = myDelegate.getOffset(); //document loaded here
-      if (myOriginalLine >= 0) {
-        return mapDelegate().getOffset();
-      }
-      return offset;
-    }
-
-    private SourcePosition mapDelegate() {
-      SourcePosition position = calcLineMappedSourcePosition(myDelegate.getFile(), myOriginalLine);
-      if (position != null) {
-        myDelegate = position;
-      }
-      myOriginalLine = -1;
-      return myDelegate;
-    }
-
-    @Override
-    public Editor openEditor(boolean requestFocus) {
-      return myDelegate.openEditor(requestFocus);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return myDelegate.equals(o);
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-      myDelegate.navigate(requestFocus);
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return myDelegate.canNavigate();
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return myDelegate.canNavigateToSource();
+    public SourcePosition mapDelegate(SourcePosition original) {
+      if (myOriginalLine < 0) return original;
+      SourcePosition position = calcLineMappedSourcePosition(getFile(), myOriginalLine);
+      return position != null ? position : original;
     }
   }
 

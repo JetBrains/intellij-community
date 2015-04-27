@@ -22,6 +22,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -30,6 +31,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -87,19 +90,26 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
 
 
+      final boolean isVIM = PluginGroups.IDEA_VIM_PLUGIN_ID.equals(descriptor.getPluginId().getIdString());
+      
       JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + title + "</h2></body></html>");
       JLabel topicLabel = new JLabel("<html><body><h4 style=\"text-align:left;\">" + topic + "</h4></body></html>");
-      JLabel descriptionLabel = new JLabel("<html><body><i>" + description + "</i></body></html>") {
-        @Override
-        public Dimension getPreferredSize() {
-          Dimension size = super.getPreferredSize();
-          size.width = Math.min(size.width, 200);
-          return size;
-        }
-      };
+
+      JLabel descriptionLabel = createHTMLLabel("<i>" + description + "</i>");
+      JLabel warningLabel = null;
+      if (isVIM) {
+        warningLabel = createHTMLLabel("This plugin enables Vim-keymap and 'insert' mode for editing. " +
+                                       "If you are not familiar with Vim, it's not recommended to install it.");
+        
+        if (SystemInfo.isMac) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
+        warningLabel.setBackground(new JBColor(ColorUtil.fromHex("F6F199"), ColorUtil.fromHex("52503A")));
+        warningLabel.setOpaque(true);
+      }
+      
       final CardLayout wrapperLayout = new CardLayout();
       final JPanel buttonWrapper = new JPanel(wrapperLayout);
-      final JButton installButton = new JButton("Install");
+      final JButton installButton = new JButton(isVIM ? "Install and Enable Vim Editor" : "Install");
+      
       final JProgressBar progressBar = new JProgressBar(0, 100);
       progressBar.setStringPainted(true);
       JPanel progressPanel = new JPanel(new VerticalFlowLayout(true, false));
@@ -109,7 +119,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       linkWrapper.add(cancelLink);
       progressPanel.add(linkWrapper);
 
-      JPanel buttonPanel = new JPanel(new VerticalFlowLayout(0, 0));
+      final JPanel buttonPanel = new JPanel(new VerticalFlowLayout(0, 0));
       buttonPanel.add(installButton);
 
       buttonWrapper.add(buttonPanel, "button");
@@ -219,6 +229,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       gbc.weighty = 1;
       groupPanel.add(Box.createVerticalGlue(), gbc);
       gbc.weighty = 0;
+      if (warningLabel != null) groupPanel.add(warningLabel, gbc);
       groupPanel.add(buttonWrapper, gbc);
       gridPanel.add(groupPanel);
     }
@@ -239,6 +250,18 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
     if (isEmptyOrOffline) throw new OfflineException();
     add(scrollPane);
+  }
+
+  @NotNull
+  private static JLabel createHTMLLabel(final String text) {
+    return new JLabel("<html><body>" + text + "</body></html>") {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        size.width = Math.min(size.width, 200);
+        return size;
+      }
+    };
   }
 
   @Override

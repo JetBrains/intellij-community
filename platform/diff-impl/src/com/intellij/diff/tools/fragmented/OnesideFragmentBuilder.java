@@ -31,7 +31,6 @@ public class OnesideFragmentBuilder {
   @NotNull private final List<LineFragment> myFragments;
   @NotNull private final Document myDocument1;
   @NotNull private final Document myDocument2;
-  private final boolean myInlineFragments;
   @NotNull private final Side myMasterSide;
 
   @NotNull private final StringBuilder myBuilder = new StringBuilder();
@@ -43,12 +42,10 @@ public class OnesideFragmentBuilder {
   public OnesideFragmentBuilder(@NotNull List<LineFragment> fragments,
                                 @NotNull Document document1,
                                 @NotNull Document document2,
-                                boolean inlineFragments,
                                 @NotNull Side masterSide) {
     myFragments = fragments;
     myDocument1 = document1;
     myDocument2 = document2;
-    myInlineFragments = inlineFragments;
     myMasterSide = masterSide;
   }
 
@@ -116,10 +113,10 @@ public class OnesideFragmentBuilder {
 
     linesAfter = totalLines;
 
-    List<DiffFragment> innerFragments = myInlineFragments ? fragment.getInnerFragments() : null;
     myBlocks.add(new ChangedBlock(blockStartOffset1, blockEndOffset1,
                                   blockStartOffset2, blockEndOffset2,
-                                  linesBefore, linesAfter, innerFragments));
+                                  linesBefore, linesAfter,
+                                  fragment));
 
     lastProcessedLine1 = endLine1;
     lastProcessedLine2 = endLine2;

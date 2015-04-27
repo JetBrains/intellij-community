@@ -38,6 +38,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
@@ -47,6 +48,8 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,8 +61,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.service.settings.GradleProjectSettingsControl;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -89,6 +94,9 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   private static final String TEMPLATE_ATTRIBUTE_MODULE_NAME = "MODULE_NAME";
   private static final String TEMPLATE_ATTRIBUTE_MODULE_GROUP = "MODULE_GROUP";
   private static final String TEMPLATE_ATTRIBUTE_MODULE_VERSION = "MODULE_VERSION";
+  private static final String TEMPLATE_ATTRIBUTE_GRADLE_VERSION = "GRADLE_VERSION";
+  private static final Key<BuildScriptDataBuilder> BUILD_SCRIPT_DATA =
+    Key.create("gradle.module.buildScriptData");
 
   private WizardContext myWizardContext;
 
@@ -97,6 +105,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   private boolean myInheritGroupId;
   private boolean myInheritVersion;
   private ProjectId myProjectId;
+  private String rootProjectPath;
 
   public GradleModuleBuilder() {
     super(GradleConstants.SYSTEM_ID, new GradleProjectSettings());
@@ -125,8 +134,6 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     }
 
     final Project project = modifiableRootModel.getProject();
-
-    final String rootProjectPath;
     if (myParentProject != null) {
       rootProjectPath = myParentProject.getLinkedExternalProjectPath();
     }
@@ -134,11 +141,36 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       rootProjectPath =
         FileUtil.toCanonicalPath(myWizardContext.isCreatingNewProject() ? project.getBasePath() : modelContentRootDir.getPath());
     }
-
     assert rootProjectPath != null;
+
     final VirtualFile gradleBuildFile = setupGradleBuildFile(modelContentRootDir);
     setupGradleSettingsFile(rootProjectPath, modelContentRootDir, modifiableRootModel);
 
+    if (gradleBuildFile != null) {
+      modifiableRootModel.getModule().putUserData(
+        BUILD_SCRIPT_DATA, new BuildScriptDataBuilder(gradleBuildFile));
+    }
+  }
+
+  @Override
+  protected void setupModule(Module module) throws ConfigurationException {
+    super.setupModule(module);
+    assert rootProjectPath != null;
+
+    VirtualFile buildScriptFile = null;
+    final BuildScriptDataBuilder buildScriptDataBuilder = getBuildScriptData(module);
+    try {
+      if (buildScriptDataBuilder != null) {
+        buildScriptFile = buildScriptDataBuilder.getBuildScriptFile();
+        final String text = buildScriptDataBuilder.build();
+        appendToFile(buildScriptFile, "\n" + text);
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Unexpected exception on applying frameworks templates", e);
+    }
+
+    final Project project = module.getProject();
     if (myWizardContext.isCreatingNewProject()) {
       getExternalProjectSettings().setExternalProjectPath(rootProjectPath);
       AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID);
@@ -149,6 +181,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     else {
       FileDocumentManager.getInstance().saveAllDocuments();
       final GradleProjectSettings gradleProjectSettings = getExternalProjectSettings();
+      final VirtualFile finalBuildScriptFile = buildScriptFile;
       Runnable runnable = new Runnable() {
         public void run() {
           if (myParentProject == null) {
@@ -163,8 +196,8 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
             ProgressExecutionMode.IN_BACKGROUND_ASYNC);
 
           final PsiFile psiFile;
-          if (gradleBuildFile != null) {
-            psiFile = PsiManager.getInstance(project).findFile(gradleBuildFile);
+          if (finalBuildScriptFile != null) {
+            psiFile = PsiManager.getInstance(project).findFile(finalBuildScriptFile);
             if (psiFile != null) {
               EditorHelper.openInEditor(psiFile);
             }
@@ -190,16 +223,9 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Nullable
   @Override
   public ModuleWizardStep getCustomOptionsStep(WizardContext context, Disposable parentDisposable) {
-    return new ModuleWizardStep() {
-      @Override
-      public JComponent getComponent() {
-        return new JPanel();
-      }
-
-      @Override
-      public void updateDataModel() {
-      }
-    };
+    final GradleFrameworksWizardStep step = new GradleFrameworksWizardStep(context, this);
+    Disposer.register(parentDisposable, step);
+    return step;
   }
 
   @Override
@@ -235,6 +261,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       if (myProjectId != null) {
         attributes.put(TEMPLATE_ATTRIBUTE_MODULE_VERSION, myProjectId.getVersion());
         attributes.put(TEMPLATE_ATTRIBUTE_MODULE_GROUP, myProjectId.getGroupId());
+        attributes.put(TEMPLATE_ATTRIBUTE_GRADLE_VERSION, GradleVersion.current().getVersion());
       }
       saveFile(file, templateName, attributes);
     }
@@ -267,11 +294,11 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       Map<String, String> attributes = ContainerUtil.newHashMap();
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_NAME, moduleName);
       // check for flat structure
-      final String flatStuctureModulePath =
+      final String flatStructureModulePath =
         modulePath != null && StringUtil.startsWith(modulePath, "../") ? StringUtil.trimStart(modulePath, "../") : null;
-      if (StringUtil.equals(flatStuctureModulePath, modelContentRootDir.getName())) {
+      if (StringUtil.equals(flatStructureModulePath, modelContentRootDir.getName())) {
         attributes.put(TEMPLATE_ATTRIBUTE_MODULE_FLAT_DIR, "true");
-        attributes.put(TEMPLATE_ATTRIBUTE_MODULE_PATH, flatStuctureModulePath);
+        attributes.put(TEMPLATE_ATTRIBUTE_MODULE_PATH, flatStructureModulePath);
       }
       else {
         attributes.put(TEMPLATE_ATTRIBUTE_MODULE_PATH, modulePath);
@@ -287,9 +314,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
     FileTemplate template = manager.getInternalTemplate(templateName);
     try {
-      String lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
-      VfsUtil.saveText(file, StringUtil.convertLineSeparators(
-        templateAttributes != null ? template.getText(templateAttributes) : template.getText(), lineSeparator));
+      appendToFile(file, templateAttributes != null ? template.getText(templateAttributes) : template.getText());
     }
     catch (IOException e) {
       LOG.warn(String.format("Unexpected exception on applying template %s config", GradleConstants.SYSTEM_ID.getReadableName()), e);
@@ -304,16 +329,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
     FileTemplate template = manager.getInternalTemplate(templateName);
     try {
-      String lineSeparator = LoadTextUtil.detectLineSeparator(file, false);
-      if (lineSeparator == null) {
-        lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
-      }
-      String content = StringUtil.trimTrailing(VfsUtilCore.loadText(file)) +
-                       lineSeparator +
-                       StringUtil.convertLineSeparators(
-                         (templateAttributes != null ? template.getText(templateAttributes) : template.getText()), lineSeparator);
-      content = StringUtil.convertLineSeparators(content, lineSeparator);
-      VfsUtil.saveText(file, content);
+      appendToFile(file, templateAttributes != null ? template.getText(templateAttributes) : template.getText());
     }
     catch (IOException e) {
       LOG.warn(String.format("Unexpected exception on appending template %s config", GradleConstants.SYSTEM_ID.getReadableName()), e);
@@ -374,5 +390,21 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
       projectSettingsStep.bindModuleSettings();
     }
     return super.modifySettingsStep(settingsStep);
+  }
+
+  public static void appendToFile(@NotNull VirtualFile file, @NotNull String text) throws IOException {
+    String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
+    if (lineSeparator == null) {
+      lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+    }
+    final String existingText = StringUtil.trimTrailing(VfsUtilCore.loadText(file));
+    String content = (StringUtil.isNotEmpty(existingText) ? existingText + lineSeparator : "") +
+                     StringUtil.convertLineSeparators(text, lineSeparator);
+    VfsUtil.saveText(file, content);
+  }
+
+  @Nullable
+  public static BuildScriptDataBuilder getBuildScriptData(@Nullable Module module) {
+    return module == null ? null : module.getUserData(BUILD_SCRIPT_DATA);
   }
 }
