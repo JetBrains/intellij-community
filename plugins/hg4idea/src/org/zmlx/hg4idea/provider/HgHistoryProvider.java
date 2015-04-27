@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
@@ -54,7 +55,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
 
   public AnAction[] getAdditionalActions(Runnable runnable) {
     return new AnAction[]{ShowAllAffectedGenericAction.getInstance(),
-      ActionManager.getInstance().getAction("Vcs.CopyRevisionNumberAction")};
+      ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)};
   }
 
   public boolean isDateOmittable() {

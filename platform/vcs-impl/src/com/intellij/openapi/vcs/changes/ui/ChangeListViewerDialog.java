@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -155,7 +156,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
       @Override
       protected void buildToolBar(DefaultActionGroup toolBarGroup) {
         super.buildToolBar(toolBarGroup);
-        toolBarGroup.add(ActionManager.getInstance().getAction("Vcs.CopyRevisionNumberAction"));
+        toolBarGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
       }
 
       @Override
