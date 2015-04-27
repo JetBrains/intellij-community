@@ -37,10 +37,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.forceNotNull;
 import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.handleConstantComparison;
+import static com.intellij.codeInspection.dataFlow.value.DfaRelation.EQ;
 import static com.intellij.codeInspection.dataFlow.value.DfaRelation.UNDEFINED;
 
 public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstructionVisitor<V>> extends GrInstructionVisitor<V> {
@@ -287,25 +289,30 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
 
   @Override
   public DfaInstructionState<V>[] visitCoerceToBoolean(GrCoerceToBooleanInstruction<V> instruction, DfaMemoryState state) {
-    state.push(coerceToBoolean(state.pop(), state));
-    return nextInstruction(instruction, state);
-  }
-
-  private DfaValue coerceToBoolean(DfaValue value, DfaMemoryState state) {
+    final DfaValue value = state.pop();
     final GrDfaConstValueFactory constFactory = myFactory.getConstFactory();
-    //final DfaRelationValue relation = myFactory.getRelationFactory().createRelation(value, constFactory.getNull(), EQ, false);
-    if (value instanceof DfaConstValue) {
-      final DfaConstValue constValue = (DfaConstValue)value;
-      if (constValue == constFactory.getFalse() || constValue == constFactory.getTrue()) {
-        return constValue;
-      }
-      else if (constValue == constFactory.getNull()) {
-        return constFactory.getFalse();
-      }
+    if (value == constFactory.getFalse() || value == constFactory.getTrue()) {
+      state.push(value);
+      return nextInstruction(instruction, state);
     }
-    else if (state.isNull(value)) {
-      return constFactory.getFalse();
+    final DfaRelationValue.Factory relationFactory = myFactory.getRelationFactory();
+
+    final DfaRelationValue isFalse = relationFactory.createRelation(value, constFactory.getFalse(), EQ, false);
+    final DfaRelationValue isNull = relationFactory.createRelation(value, constFactory.getNull(), EQ, false);
+
+    final DfaMemoryState trueState = state.createCopy();
+    final DfaMemoryState falseState = state.createCopy();
+
+    final List<DfaMemoryState> states = ContainerUtil.newArrayList();
+    if (trueState.applyCondition(isNull.createNegated()) & trueState.applyCondition(isFalse.createNegated())) {
+      trueState.push(constFactory.getTrue());
+      states.add(trueState);
     }
-    return DfaUnknownValue.getInstance();
+    if (falseState.applyCondition(isNull) | falseState.applyCondition(isFalse)) {
+      falseState.push(constFactory.getFalse());
+      states.add(falseState);
+    }
+    state.push(DfaUnknownValue.getInstance());
+    return states.isEmpty() ? nextInstruction(instruction, state) : nextInstructionStates(instruction, states);
   }
 }
