@@ -140,7 +140,25 @@ public class ArrayBackedFMap implements KeyFMap {
     return keys;
   }
 
+  @NotNull
+  @Override
+  public Key[] getKeys() {
+    return getKeysByIndices(keys);
+  }
+
+  @NotNull
   public Object[] getValues() {
     return values;
+  }
+
+  @NotNull
+  static Key[] getKeysByIndices(int[] indexes) {
+    Key[] result = new Key[indexes.length];
+
+    for (int i =0; i < indexes.length; i++) {
+      result[i] = Key.getKeyByIndex(indexes[i]);
+    }
+
+    return result;
   }
 }
