@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.MultiRequestPositionManager;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
@@ -36,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.EmptyIterable;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -44,14 +46,12 @@ import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author lex
  */
-public class PositionManagerImpl implements PositionManager {
+public class PositionManagerImpl implements PositionManager, MultiRequestPositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
 
   private final DebugProcessImpl myDebugProcess;
@@ -75,49 +75,47 @@ public class PositionManagerImpl implements PositionManager {
     return Collections.emptyList();
   }
 
-  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) throws NoDataException {
-    final Ref<String> waitPrepareFor = new Ref<String>(null);
-    final Ref<ClassPrepareRequestor> waitRequestor = new Ref<ClassPrepareRequestor>(null);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        PsiClass psiClass = JVMNameUtil.getClassAt(position);
-        if (psiClass == null) {
-          return;
-        }
+  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
+    throws NoDataException {
+    throw new IllegalStateException("This class implements MultiRequestPositionManager, corresponding createPrepareRequests version should be used");
+  }
 
-        String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
-        if (className == null) {
-          final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
-
-          if (parent == null) {
-            return;
-          }
-
-          final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
-          if (parentQName == null) {
-            return;
-          }
-          waitPrepareFor.set(parentQName + "*");
-          waitRequestor.set(new ClassPrepareRequestor() {
-            public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-              final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
-              final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
-              if (positionClasses.contains(referenceType)) {
-                requestor.processClassPrepare(debuggerProcess, referenceType);
-              }
+  @NotNull
+  @Override
+  public List<ClassPrepareRequest> createPrepareRequests(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
+    throws NoDataException {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<ClassPrepareRequest>>() {
+      @Override
+      public List<ClassPrepareRequest> compute() {
+        List<ClassPrepareRequest> res = new ArrayList<ClassPrepareRequest>();
+        for (PsiClass psiClass : getLineClasses(position.getFile(), position.getLine())) {
+          ClassPrepareRequestor prepareRequestor = requestor;
+          String classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass);
+          if (classPattern == null) {
+            final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
+            if (parent == null) {
+              continue;
             }
-          });
+            final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
+            if (parentQName == null) {
+              continue;
+            }
+            classPattern = parentQName + "*";
+            prepareRequestor = new ClassPrepareRequestor() {
+              public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+                final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
+                final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
+                if (positionClasses.contains(referenceType)) {
+                  requestor.processClassPrepare(debuggerProcess, referenceType);
+                }
+              }
+            };
+          }
+          res.add(myDebugProcess.getRequestsManager().createClassPrepareRequest(prepareRequestor, classPattern));
         }
-        else {
-          waitPrepareFor.set(className);
-          waitRequestor.set(requestor);
-        }
+        return res;
       }
     });
-    if (waitPrepareFor.get() == null) {
-      return null;  // no suitable class found for this name
-    }
-    return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor.get(), waitPrepareFor.get());
   }
 
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
@@ -205,25 +203,62 @@ public class PositionManagerImpl implements PositionManager {
               return original;
             }
             //try to look for other elements in the line
-            final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
-            if (document == null || lineNumber >= document.getLineCount()) {
-              return original;
-            }
-            int endOffset = document.getLineEndOffset(lineNumber);
-            element = PsiTreeUtil.nextLeaf(element);
-            while (element != null && element.getTextOffset() < endOffset) {
-              aClass = getEnclosingClass(element);
-              if (aClass == null) break;
-              if (Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(aClass))) {
-                return SourcePosition.createFromElement(element);
+            PsiFile file = original.getFile();
+            for (PsiElement elem : getLineElements(file, lineNumber)) {
+              if (Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(getEnclosingClass(elem)))) {
+                return SourcePosition.createFromElement(elem);
               }
-              element = PsiTreeUtil.nextLeaf(element);
             }
           }
           return original;
         }
       });
     }
+  }
+
+  private static Iterable<PsiElement> getLineElements(final PsiFile file, int lineNumber) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null || lineNumber >= document.getLineCount()) {
+      return EmptyIterable.getInstance();
+    }
+    final int startOffset = document.getLineStartOffset(lineNumber);
+    final int endOffset = document.getLineEndOffset(lineNumber);
+    return new Iterable<PsiElement>() {
+      @Override
+      public Iterator<PsiElement> iterator() {
+        return new Iterator<PsiElement>() {
+          PsiElement myElement = file.findElementAt(startOffset);
+
+          @Override
+          public boolean hasNext() {
+            return myElement != null;
+          }
+
+          @Override
+          public PsiElement next() {
+            PsiElement res = myElement;
+            myElement = PsiTreeUtil.nextLeaf(myElement);
+            if (myElement != null && myElement.getTextOffset() > endOffset) {
+              myElement = null;
+            }
+            return res;
+          }
+
+          @Override
+          public void remove() {}
+        };
+      }
+    };
+  }
+
+  private static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    Set<PsiClass> res = new HashSet<PsiClass>();
+    for (PsiElement element : getLineElements(file, lineNumber)) {
+      res.add(getEnclosingClass(element));
+    }
+    return res;
   }
 
   @Nullable
@@ -287,33 +322,43 @@ public class PositionManagerImpl implements PositionManager {
 
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
+      @Override
+      public List<ReferenceType> compute() {
+        List<ReferenceType> res = new ArrayList<ReferenceType>();
+        for (PsiClass aClass : getLineClasses(position.getFile(), position.getLine())) {
+          res.addAll(getClassReferences(aClass, position));
+        }
+        return res;
+      }
+    });
+  }
+
+  private List<ReferenceType> getClassReferences(@NotNull final PsiClass psiClass, SourcePosition position) {
     final Ref<String> baseClassNameRef = new Ref<String>(null);
     final Ref<PsiClass> classAtPositionRef = new Ref<PsiClass>(null);
     final Ref<Boolean> isLocalOrAnonymous = new Ref<Boolean>(Boolean.FALSE);
     final Ref<Integer> requiredDepth = new Ref<Integer>(0);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final PsiClass psiClass = JVMNameUtil.getClassAt(position);
-        if (psiClass != null) {
-          classAtPositionRef.set(psiClass);
-          String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
-          if (className == null) {
-            isLocalOrAnonymous.set(Boolean.TRUE);
-            final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
-            if (topLevelClass != null) {
-              final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
-              if (parentClassName != null) {
-                requiredDepth.set(getNestingDepth(psiClass));
-                baseClassNameRef.set(parentClassName);
-              }
-            }
-            else {
-              LOG.error("Local or anonymous class has no non-local parent");
+        classAtPositionRef.set(psiClass);
+        String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+        if (className == null) {
+          isLocalOrAnonymous.set(Boolean.TRUE);
+          final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
+          if (topLevelClass != null) {
+            final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
+            if (parentClassName != null) {
+              requiredDepth.set(getNestingDepth(psiClass));
+              baseClassNameRef.set(parentClassName);
             }
           }
           else {
-            baseClassNameRef.set(className);
+            LOG.error("Local or anonymous class has no non-local parent");
           }
+        }
+        else {
+          baseClassNameRef.set(className);
         }
       }
     });
