@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -24,7 +25,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgCopyHistoryRevisionNumberAction;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -53,7 +53,8 @@ public class HgHistoryProvider implements VcsHistoryProvider {
   }
 
   public AnAction[] getAdditionalActions(Runnable runnable) {
-    return new AnAction[]{ShowAllAffectedGenericAction.getInstance(), new HgCopyHistoryRevisionNumberAction()};
+    return new AnAction[]{ShowAllAffectedGenericAction.getInstance(),
+      ActionManager.getInstance().getAction("Vcs.CopyRevisionNumberAction")};
   }
 
   public boolean isDateOmittable() {
