@@ -31,4 +31,12 @@ public class FormatPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testNotString() {
     doTest();
   }
+
+  public void testExpression() {
+    doTest();
+  }
+
+  public void testExpressionNotCompleted() {
+    doTest();
+  }
 }
