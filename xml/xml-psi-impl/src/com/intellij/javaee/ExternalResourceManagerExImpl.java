@@ -74,6 +74,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   };
 
   private String myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;
+  private XMLSchemaVersion myXMLSchemaVersion = XMLSchemaVersion.XMLSchema_1_0;
 
   private String myCatalogPropertiesFile;
   private XMLCatalogManager myCatalogManager;
@@ -98,6 +99,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @NonNls private static final String LOCATION_ATTR = "location";
   @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
   @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
+  @NonNls private static final String XML_SCHEMA_VERSION = "xml-schema-version";
 
   private static final String DEFAULT_VERSION = "";
 
@@ -180,13 +182,22 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
 
   @Override
   public String getResourceLocation(@NotNull @NonNls String url, @NotNull Project project) {
-    String location = getProjectResources(project).getResourceLocation(url);
-    return location == null || location.equals(url) ? getResourceLocation(url) : location;
+    return getResourceLocation(url, null, project);
   }
 
-  public String getResourceLocation(@NonNls String url, String version, @NotNull Project project) {
-    String location = getProjectResources(project).getResourceLocation(url, version);
-    return location == null || location.equals(url) ? getResourceLocation(url, version) : location;
+  private String getResourceLocation(@NonNls String url, String version, @NotNull Project project) {
+    ExternalResourceManagerExImpl projectResources = getProjectResources(project);
+    String location = projectResources.getResourceLocation(url, version);
+    if (location == null || location.equals(url)) {
+      if (projectResources.myXMLSchemaVersion == XMLSchemaVersion.XMLSchema_1_1) { // substitute url
+        if (XmlUtil.XML_SCHEMA_URI.equals(url)) url = InternalResourceProvider.XML_SCHEMA_1_1;
+        if (InternalResourceProvider.XML_SCHEMA_URI_XSD.equals(url)) url = InternalResourceProvider.XML_SCHEMA_1_1_XSD;
+      }
+      return getResourceLocation(url, version);
+    }
+    else {
+      return location;
+    }
   }
 
   @Override
@@ -432,6 +443,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       e.setText(myDefaultHtmlDoctype);
       element.addContent(e);
     }
+    if (myXMLSchemaVersion != XMLSchemaVersion.XMLSchema_1_0) {
+      Element e = new Element(XML_SCHEMA_VERSION);
+      e.setText(myXMLSchemaVersion.toString());
+      element.addContent(e);
+    }
     if (myCatalogPropertiesFile != null) {
       Element properties = new Element(CATALOG_PROPERTIES_ELEMENT);
       properties.setText(myCatalogPropertiesFile);
@@ -471,6 +487,11 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
       }
       myDefaultHtmlDoctype = text;
     }
+    Element schemaElement = state.getChild(XML_SCHEMA_VERSION);
+    if (schemaElement != null) {
+      String text = schemaElement.getText();
+      myXMLSchemaVersion = XMLSchemaVersion.XMLSchema_1_1.toString().equals(text) ? XMLSchemaVersion.XMLSchema_1_1 : XMLSchemaVersion.XMLSchema_1_0;
+    }
     Element catalogElement = state.getChild(CATALOG_PROPERTIES_ELEMENT);
     if (catalogElement != null) {
       myCatalogPropertiesFile = catalogElement.getTextTrim();
@@ -491,6 +512,7 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     for (ExternalResourceListener listener : myListeners) {
       listener.externalResourceChanged();
     }
+    incModificationCount();
   }
 
   Collection<Map<String, Resource>> getStandardResources() {
@@ -521,6 +543,17 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @Override
   public void setDefaultHtmlDoctype(@NotNull String defaultHtmlDoctype, @NotNull Project project) {
     getProjectResources(project).setDefaultHtmlDoctype(defaultHtmlDoctype);
+  }
+
+  @Override
+  public XMLSchemaVersion getXmlSchemaVersion(@NotNull Project project) {
+    return getProjectResources(project).myXMLSchemaVersion;
+  }
+
+  @Override
+  public void setXmlSchemaVersion(XMLSchemaVersion version, @NotNull Project project) {
+    getProjectResources(project).myXMLSchemaVersion = version;
+    fireExternalResourceChanged();
   }
 
   @Override
