@@ -78,6 +78,18 @@ public class Conditions {
     };
   }
 
+  public static <T> Condition<T> oneOf(final Iterable<? extends T> options) {
+    return new Condition<T>() {
+      @Override
+      public boolean value(T t) {
+        for (T option : options) {
+          if (Comparing.equal(option, t)) return true;
+        }
+        return false;
+      }
+    };
+  }
+
   public static <T> Condition<T> not(Condition<T> c) {
     return new Not<T>(c);
   }

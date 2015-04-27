@@ -35,7 +35,7 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
   @NotNull
   public static SyntaxTraverser<LighterASTNode> lightTraverser(PsiBuilder builder) {
     FlyweightCapableTreeStructure<LighterASTNode> lightTree = builder.getLightTree();
-    Meta<LighterASTNode> meta = FilteredTraverser.<LighterASTNode>emptyMeta().withRoot(lightTree.getRoot());
+    Meta<LighterASTNode> meta = FilteredTraverser.<LighterASTNode>emptyMeta().withRoots(Collections.singletonList(lightTree.getRoot()));
     return new LightASTTraverser(meta, builder.getOriginalText(), lightTree);
   }
 

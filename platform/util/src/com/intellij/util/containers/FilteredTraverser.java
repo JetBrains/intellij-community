@@ -17,7 +17,6 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,12 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
 
   @NotNull
   public T getRoot() {
-    return ObjectUtils.assertNotNull(myMeta.rootNode);
+    return myMeta.roots.iterator().next();
+  }
+
+  @NotNull
+  public Iterable<? extends T> getRoots() {
+    return myMeta.roots;
   }
 
   @Override
@@ -51,24 +55,28 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
 
   @NotNull
   protected FluentIterable<T> rawIterableImpl() {
-    return preOrderTraversal(getRoot());
+    return preOrderTraversal(getRoots());
   }
 
   @NotNull
   private Condition<? super T> newResultFilter() {
     if (!myMeta.skipExpanded) return myMeta.resultFilter;
-    return Conditions.and2(Conditions.not(Conditions.or2(Conditions.is(myMeta.rootNode), myMeta.expandFilter)), myMeta.resultFilter);
+    return Conditions.and2(Conditions.not(Conditions.or2(Conditions.oneOf(myMeta.roots), myMeta.expandFilter)), myMeta.resultFilter);
   }
 
   @NotNull
   public Self reset() {
-    Meta<T> meta = FilteredTraverser.<T>emptyMeta().exclude(myMeta.excludeFilter);
-    return newInstance(myMeta.rootNode == null ? meta : meta.withRoot(myMeta.rootNode));
+    return newInstance(FilteredTraverser.<T>emptyMeta().exclude(myMeta.excludeFilter).withRoots(myMeta.roots));
   }
 
   @NotNull
   public Self withRoot(@NotNull T root) {
-    return newInstance(myMeta.withRoot(root));
+    return newInstance(myMeta.withRoots(Collections.singleton(root)));
+  }
+
+  @NotNull
+  public Self withRoots(@NotNull Iterable<? extends T> roots) {
+    return newInstance(myMeta.withRoots(roots));
   }
 
   @NotNull
@@ -93,7 +101,7 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
   @NotNull
   @Override
   public FluentIterable<T> children(@NotNull T node) {
-    if (node != myMeta.rootNode && !myMeta.expandFilter.value(node)) {
+    if (!myMeta.expandFilter.value(node) && !Conditions.oneOf(myMeta.roots).value(node)) {
       return FluentIterable.from(Collections.<T>emptyList());
     }
     return FluentIterable.from(childrenImpl(node)).filter(Conditions.not(myMeta.excludeFilter));
@@ -103,50 +111,50 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
   
   
   protected static <T> Meta<T> emptyMeta() {
-    return new Meta<T>(null, false,
+    return new Meta<T>(EmptyIterable.<T>getInstance(), false,
                        Conditions.alwaysTrue(),
                        Conditions.alwaysTrue(),
                        Conditions.alwaysFalse());
   }
 
   protected static class Meta<T> {
-    final T rootNode;
+    final Iterable<? extends T> roots;
     final boolean skipExpanded;
     final Condition<? super T> expandFilter;
     final Condition<? super T> resultFilter;
     final Condition<? super T> excludeFilter;
 
-    public Meta(@Nullable T rootNode,
+    public Meta(@NotNull Iterable<? extends T> roots,
                 boolean skipExpanded,
                 @NotNull Condition<? super T> expandFilter,
                 @NotNull Condition<? super T> resultFilter,
                 @NotNull Condition<? super T> excludeFilter) {
-      this.rootNode = rootNode;
+      this.roots = roots;
       this.skipExpanded = skipExpanded;
       this.expandFilter = expandFilter;
       this.resultFilter = resultFilter;
       this.excludeFilter = excludeFilter;
     }
 
-    public Meta<T> withRoot(@NotNull T root) {
-      return new Meta<T>(root, skipExpanded, expandFilter, resultFilter, excludeFilter);
+    public Meta<T> withRoots(@NotNull Iterable<? extends T> roots) {
+      return new Meta<T>(roots, skipExpanded, expandFilter, resultFilter, excludeFilter);
     }
 
     public Meta<T> skipExpanded(boolean skip) {
-      return new Meta<T>(rootNode, skip, expandFilter, resultFilter, excludeFilter);
+      return new Meta<T>(roots, skip, expandFilter, resultFilter, excludeFilter);
     }
 
     public Meta<T> expand(@NotNull Condition<? super T> filter) {
-      return new Meta<T>(rootNode, skipExpanded, Conditions.and2(expandFilter, filter), resultFilter, excludeFilter);
+      return new Meta<T>(roots, skipExpanded, Conditions.and2(expandFilter, filter), resultFilter, excludeFilter);
     }
 
     public Meta<T> filter(@NotNull Condition<? super T> filter) {
-      return new Meta<T>(rootNode, skipExpanded, expandFilter, Conditions.and2(resultFilter, filter), excludeFilter);
+      return new Meta<T>(roots, skipExpanded, expandFilter, Conditions.and2(resultFilter, filter), excludeFilter);
     }
 
     public Meta<T> exclude(Condition<? super T> filter) {
       // exclude filter is always accumulated
-      return new Meta<T>(rootNode, skipExpanded, expandFilter, resultFilter, Conditions.or2(excludeFilter, filter));
+      return new Meta<T>(roots, skipExpanded, expandFilter, resultFilter, Conditions.or2(excludeFilter, filter));
     }
   }
 }
