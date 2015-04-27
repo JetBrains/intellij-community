@@ -202,7 +202,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
               ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
                 event.getPresentation().getText(), (ActionGroup)action, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-              Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+              Window window = SwingUtilities.getWindowAncestor(component);
               if (window != null) {
                 popup.showInCenterOf(window);
               }
