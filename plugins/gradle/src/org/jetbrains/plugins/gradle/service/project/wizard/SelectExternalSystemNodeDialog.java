@@ -66,6 +66,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     final ExternalProjectsView projectsView = ExternalProjectsManager.getInstance(project).getExternalProjectsView(GradleConstants.SYSTEM_ID);
     if(projectsView != null) {
       final ExternalProjectsStructure treeStructure = new ExternalProjectsStructure(project, myTree) {
+        @SuppressWarnings("unchecked")
         @Override
         protected Class<? extends ExternalSystemNode>[] getVisibleNodesClasses() {
           return new Class[]{nodeClass};
@@ -115,6 +116,12 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     }
 
     init();
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myTree;
   }
 
   protected void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
