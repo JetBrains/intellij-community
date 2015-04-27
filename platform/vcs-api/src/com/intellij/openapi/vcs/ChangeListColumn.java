@@ -51,6 +51,8 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     }
 
     public Comparator<CommittedChangeList> getComparator() {
+      // TODO: CommittedChangeListByDateComparator could be utilized here. But currently it is placed in vcs-impl.
+      // TODO: Think of either moving these ChangeListColumn instances to vcs-impl or move comparator to vcs-api.
       return new Comparator<CommittedChangeList>() {
         public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
           return o1.getCommitDate().compareTo(o2.getCommitDate());

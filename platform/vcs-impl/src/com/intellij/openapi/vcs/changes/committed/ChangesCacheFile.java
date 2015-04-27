@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -139,11 +138,7 @@ public class ChangesCacheFile {
 
   public List<CommittedChangeList> writeChanges(final List<CommittedChangeList> changes) throws IOException {
     // the list and index are sorted in direct chronological order
-    Collections.sort(changes, new Comparator<CommittedChangeList>() {
-      public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-        return Comparing.compare(o1.getCommitDate(), o2.getCommitDate());
-      }
-    });
+    Collections.sort(changes, CommittedChangeListByDateComparator.ASCENDING);
     return writeChanges(changes, null);
   }
 

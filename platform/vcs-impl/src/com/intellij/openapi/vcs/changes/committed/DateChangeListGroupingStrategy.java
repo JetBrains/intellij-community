@@ -78,11 +78,7 @@ public class DateChangeListGroupingStrategy implements ChangeListGroupingStrateg
   }
 
   public Comparator<CommittedChangeList> getComparator() {
-    return new Comparator<CommittedChangeList>() {
-      public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-        return -o1.getCommitDate().compareTo(o2.getCommitDate());
-      }
-    };
+    return CommittedChangeListByDateComparator.DESCENDING;
   }
 
   private static class MonthsCache {
