@@ -562,6 +562,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-11552
+  public void testTrailingBlankLinesInEmptyFile() {
+    doTest();
+  }
+
   // PY-15530
   public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
     doTest();

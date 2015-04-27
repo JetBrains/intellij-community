@@ -110,7 +110,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
       }
       documentManager.doPostponedOperationsAndUnblockDocument(document);
       final String text = StringUtil.repeat("\n", numLineFeeds);
-      if (numLineFeeds > 0) {
+      if (numLineFeeds > 0 && whitespaceRange.getStartOffset() != 0) {
         if (!whitespaceRange.isEmpty()) {
           document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), text);
         }
