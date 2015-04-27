@@ -57,7 +57,9 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   @NonNls public static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
   @NonNls public static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
   @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
+
   private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";
+  private static final String XSD_1_1 = new Resource("/standardSchemas/XMLSchema-1_1/XMLSchema.xsd", ExternalResourceManagerExImpl.class, null).getResourceUrl();
 
   private final Map<String, Map<String, String>> myResources = new THashMap<String, Map<String, String>>();
   private final Set<String> myResourceLocations = new THashSet<String>();
@@ -189,9 +191,9 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
     ExternalResourceManagerExImpl projectResources = getProjectResources(project);
     String location = projectResources.getResourceLocation(url, version);
     if (location == null || location.equals(url)) {
-      if (projectResources.myXMLSchemaVersion == XMLSchemaVersion.XMLSchema_1_1) { // substitute url
-        if (XmlUtil.XML_SCHEMA_URI.equals(url)) url = InternalResourceProvider.XML_SCHEMA_1_1;
-        if (InternalResourceProvider.XML_SCHEMA_URI_XSD.equals(url)) url = InternalResourceProvider.XML_SCHEMA_1_1_XSD;
+      if (projectResources.myXMLSchemaVersion == XMLSchemaVersion.XMLSchema_1_1) {
+        if (XmlUtil.XML_SCHEMA_URI.equals(url)) return XSD_1_1;
+        if ((XmlUtil.XML_SCHEMA_URI + ".xsd").equals(url)) return XSD_1_1;
       }
       return getResourceLocation(url, version);
     }
