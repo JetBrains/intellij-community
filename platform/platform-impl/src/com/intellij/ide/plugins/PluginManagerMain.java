@@ -607,34 +607,22 @@ public abstract class PluginManagerMain implements Disposable {
     pluginTable.select(descriptors);
   }
 
-  protected static boolean isAccepted(String filter,
-                                      Set<String> search,
-                                      IdeaPluginDescriptor descriptor) {
+  protected static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
     if (StringUtil.isEmpty(filter)) return true;
-    if (isAccepted(search, filter, descriptor.getName())) {
-      return true;
-    }
-    else {
-      final String description = descriptor.getDescription();
-      if (description != null && isAccepted(search, filter, description)) {
-        return true;
-      }
-      final String category = descriptor.getCategory();
-      if (category != null && isAccepted(search, filter, category)) {
-        return true;
-      }
-      final String changeNotes = descriptor.getChangeNotes();
-      if (changeNotes != null && isAccepted(search, filter, changeNotes)) {
-        return true;
-      }
-    }
-    return false;
+    if (StringUtil.containsIgnoreCase(descriptor.getName(), filter) || isAccepted(search, filter, descriptor.getName())) return true;
+    if (isAccepted(search, filter, descriptor.getDescription())) return true;
+    String category = descriptor.getCategory();
+    return category != null && (StringUtil.containsIgnoreCase(category, filter) || isAccepted(search, filter, category));
   }
 
-  private static boolean isAccepted(Set<String> search, @NotNull String filter, @NotNull String description) {
-    if (StringUtil.containsIgnoreCase(description, filter)) return true;
+  private static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
+    if (StringUtil.isEmpty(description)) return false;
+    if (filter.length() <= 2) return false; 
+    Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWords(description);
+    if (words.contains(filter)) return true;
+    if (search.isEmpty()) return false;
     Set<String> descriptionSet = new HashSet<String>(search);
-    descriptionSet.removeAll(SearchableOptionsRegistrar.getInstance().getProcessedWords(description));
+    descriptionSet.removeAll(words);
     return descriptionSet.isEmpty();
   }
 
