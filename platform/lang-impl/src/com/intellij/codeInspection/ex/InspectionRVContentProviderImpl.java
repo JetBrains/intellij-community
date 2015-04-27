@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -94,6 +95,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
                                     @NotNull final Map<String, Set<RefEntity>> contents,
                                     @NotNull final Map<RefEntity, CommonProblemDescriptor[]> problems,
                                     DefaultTreeModel model) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
 
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
