@@ -39,32 +39,22 @@ class RefModuleImpl extends RefEntityImpl implements RefModule {
   }
 
   @Override
-  public void add(@NotNull final RefEntity child) {
-    myManager.doWrite(new Runnable() {
-      @Override
-      public void run() {
-        if (myChildren == null) {
-          myChildren = new ArrayList<RefEntity>();
-        }
-        myChildren.add(child);
+  public synchronized void add(@NotNull final RefEntity child) {
+    if (myChildren == null) {
+      myChildren = new ArrayList<RefEntity>();
+    }
+    myChildren.add(child);
 
-        if (child.getOwner() == null) {
-          ((RefEntityImpl)child).setOwner(RefModuleImpl.this);
-        }
-      }
-    });
+    if (child.getOwner() == null) {
+      ((RefEntityImpl)child).setOwner(this);
+    }
   }
 
   @Override
-  protected void removeChild(@NotNull final RefEntity child) {
-    myManager.doWrite(new Runnable() {
-      @Override
-      public void run() {
-        if (myChildren != null) {
-          myChildren.remove(child);
-        }
-      }
-    });
+  protected synchronized void removeChild(@NotNull final RefEntity child) {
+    if (myChildren != null) {
+      myChildren.remove(child);
+    }
   }
 
   @Override
