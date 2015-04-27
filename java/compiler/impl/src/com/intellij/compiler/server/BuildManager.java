@@ -1024,9 +1024,36 @@ public class BuildManager implements ApplicationComponent{
     cmdLine.setExePath(vmExecutablePath);
     //cmdLine.addParameter("-XX:MaxPermSize=150m");
     //cmdLine.addParameter("-XX:ReservedCodeCacheSize=64m");
-    final int heapSize = projectConfig.getBuildProcessHeapSize(JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
 
-    cmdLine.addParameter("-Xmx" + heapSize + "m");
+    boolean isProfilingMode = false;
+    String userDefinedHeapSize = null;
+    final List<String> userAdditionalOptionsList = new SmartList<String>();
+    final String userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
+    final String additionalOptions = !StringUtil.isEmptyOrSpaces(userAdditionalVMOptions)? userAdditionalVMOptions : projectConfig.getBuildProcessVMOptions();
+    if (!StringUtil.isEmptyOrSpaces(additionalOptions)) {
+      final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
+      while (tokenizer.hasMoreTokens()) {
+        final String option = tokenizer.nextToken();
+        if (StringUtil.startsWithIgnoreCase(option, "-Xmx")) {
+          userDefinedHeapSize = option;
+        }
+        else {
+          if ("-Dprofiling.mode=true".equals(option)) {
+            isProfilingMode = true;
+          }
+          userAdditionalOptionsList.add(option);
+        }
+      }
+    }
+
+    if (userDefinedHeapSize != null) {
+      cmdLine.addParameter(userDefinedHeapSize);
+    }
+    else {
+      final int heapSize = projectConfig.getBuildProcessHeapSize(
+        JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
+      cmdLine.addParameter("-Xmx" + heapSize + "m");
+    }
 
     if (SystemInfo.isMac && sdkVersion != null && JavaSdkVersion.JDK_1_6.equals(sdkVersion) && Registry.is("compiler.process.32bit.vm.on.mac")) {
       // unfortunately -d32 is supported on jdk 1.6 only
@@ -1062,20 +1089,9 @@ public class BuildManager implements ApplicationComponent{
     // this will make netty initialization faster on some systems
     cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" + ThreadLocalRandom.getInitialSeedUniquifier());
 
-    boolean isProfilingMode = false;
-    final String userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
-    final String additionalOptions = !StringUtil.isEmptyOrSpaces(userAdditionalVMOptions)? userAdditionalVMOptions : projectConfig.getBuildProcessVMOptions();
-    if (!StringUtil.isEmptyOrSpaces(additionalOptions)) {
-      final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
-      while (tokenizer.hasMoreTokens()) {
-        final String option = tokenizer.nextToken();
-        if ("-Dprofiling.mode=true".equals(option)) {
-          isProfilingMode = true;
-        }
-        cmdLine.addParameter(option);
-      }
+    for (String option : userAdditionalOptionsList) {
+      cmdLine.addParameter(option);
     }
-
     if (isProfilingMode) {
       cmdLine.addParameter("-agentlib:yjpagent=disablealloc,delay=10000,sessionname=ExternalBuild");
     }
@@ -1208,7 +1224,7 @@ public class BuildManager implements ApplicationComponent{
   }
 
   @Nullable
-  private Pair<Date, File> readUsageFile(File usageFile) {
+  private static Pair<Date, File> readUsageFile(File usageFile) {
     try {
       final List<String> lines = FileUtil.loadLines(usageFile, CharsetToolkit.UTF8_CHARSET.name());
       if (!lines.isEmpty()) {
