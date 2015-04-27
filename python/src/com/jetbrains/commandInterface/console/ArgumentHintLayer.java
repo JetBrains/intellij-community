@@ -155,6 +155,12 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
     final FontMetrics consoleFontMetrics = consoleEditor.getFontMetrics(consoleFontType);
     final Font consoleFont = consoleFontMetrics.getFont();
 
+    // Copy rendering hints
+    final Graphics2D sourceGraphics2 = PyUtil.as(consoleEditor.getComponent().getGraphics(), Graphics2D.class);
+    if (sourceGraphics2 != null && g instanceof Graphics2D) {
+      ((Graphics2D)g).setRenderingHints(sourceGraphics2.getRenderingHints());
+    }
+
     final boolean argumentRequired = nextArg.first;
     final String argumentText = nextArg.second.getHelp().getHelpString();
 
