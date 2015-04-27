@@ -209,6 +209,18 @@ public final class IpnbConnectionManager implements ProjectComponent {
     return true;
   }
 
+  public void interruptKernel(@NotNull final String kernelId) {
+    if (!myKernels.containsKey(kernelId)) return;
+    final IpnbConnection connection = myKernels.get(kernelId);
+    try {
+      connection.interrupt();
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to interrupt kernel " + kernelId);
+      LOG.warn(e.getMessage());
+    }
+  }
+
   private static void showWarning(@NotNull final IpnbFileEditor fileEditor, @NotNull final String message,
                                   @Nullable final HyperlinkAdapter listener) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
