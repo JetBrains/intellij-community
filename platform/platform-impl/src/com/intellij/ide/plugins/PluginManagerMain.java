@@ -48,6 +48,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -103,6 +104,7 @@ public abstract class PluginManagerMain implements Disposable {
   private PluginHeaderPanel myPluginHeaderPanel;
   private JPanel myInfoPanel;
   protected JBLabel myPanelDescription;
+  private JBScrollPane myDescriptionScrollPane;
 
 
   protected PluginTableModel pluginsModel;
@@ -196,6 +198,7 @@ public abstract class PluginManagerMain implements Disposable {
     pluginTable.getModel().addTableModelListener(modelListener);
     modelListener.tableChanged(null);
 
+    myDescriptionScrollPane.setBackground(UIUtil.getTextFieldBackground());
     Border border = new BorderUIResource.LineBorderUIResource(new JBColor(Gray._220, Gray._55), 1);
     myInfoPanel.setBorder(border);
   }

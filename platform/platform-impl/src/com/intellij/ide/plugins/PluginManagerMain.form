@@ -59,7 +59,7 @@
                   <size top="2" left="4" bottom="2" right="4"/>
                 </border>
                 <children>
-                  <scrollpane id="8853a" class="com.intellij.ui.components.JBScrollPane">
+                  <scrollpane id="8853a" class="com.intellij.ui.components.JBScrollPane" binding="myDescriptionScrollPane">
                     <constraints border-constraint="Center"/>
                     <properties/>
                     <border type="empty"/>
