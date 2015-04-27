@@ -50,7 +50,6 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
   val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument())
 
   val caretGuard = Guard()
-  val selectionGuard = Guard()
 
   init {
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")
