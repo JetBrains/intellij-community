@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.html;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
@@ -27,24 +26,47 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 public class HtmlScriptLanguageInjector implements MultiHostInjector {
+
+
+  /**
+   * Finds language to be injected into &lt;script&gt; tag
+   *
+   * @param xmlTag &lt;script&gt; tag
+   * @return language to inject or null if no language found or not a script tag at all
+   */
+  @Nullable
+  public static Language getScriptLanguageToInject(@NotNull XmlTag xmlTag) {
+    if (!HtmlUtil.isScriptTag(xmlTag)) {
+      return null;
+    }
+    String mimeType = xmlTag.getAttributeValue("type");
+    Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
+    return !languages.isEmpty() ? languages.iterator().next() : Language.ANY;
+  }
+
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement host) {
     if (!host.isValid() || !(host instanceof XmlText) || !HtmlUtil.isHtmlTagContainingFile(host)) {
       return;
     }
     XmlTag scriptTag = ((XmlText)host).getParentTag();
-    if (scriptTag == null || !HtmlUtil.isScriptTag(scriptTag)) {
+
+    if (scriptTag == null) {
       return;
     }
-    String mimeType = scriptTag.getAttributeValue("type");
-    Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
-    Language language = !languages.isEmpty() ? languages.iterator().next() : Language.ANY;
+    final Language language = getScriptLanguageToInject(scriptTag);
+
+    if (language == null || HtmlScriptInjectionBlockerExtension.isInjectionBlocked(scriptTag, language)) {
+      return;
+    }
+
     if (LanguageUtil.isInjectableLanguage(language)) {
       registrar
         .startInjecting(language)
