@@ -28,6 +28,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrMethodCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -121,8 +122,14 @@ public class GrControlFlowCallHelper<V extends GrInstructionVisitor<V>> {
 
   void processMethodCallStraight(@NotNull GrExpression call,
                                  @NotNull GroovyResolveResult result,
-                                 @NotNull GrExpression... expressionArguments) {
-    processMethodCallStraight(call, result, GrNamedArgument.EMPTY_ARRAY, expressionArguments, GrClosableBlock.EMPTY_ARRAY);
+                                 @Nullable GrExpression... expressionArguments) {
+    processMethodCallStraight(
+      call,
+      result,
+      GrNamedArgument.EMPTY_ARRAY,
+      expressionArguments == null ? GrExpression.EMPTY_ARRAY : expressionArguments,
+      GrClosableBlock.EMPTY_ARRAY
+    );
   }
 
   private void processMethodCallStraight(@NotNull GrExpression call,

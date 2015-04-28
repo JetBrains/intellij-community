@@ -715,21 +715,26 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   public void visitUnaryExpression(GrUnaryExpression expression) {
     startElement(expression);
 
-    GrExpression operand = expression.getOperand();
-    if (operand != null) {
+    final GrExpression operand = expression.getOperand();
+    if (operand == null) {
+      pushUnknown();
+    }
+    else {
       operand.accept(this);
-      IElementType tokenType = expression.getOperationTokenType();
-      if (tokenType == mLNOT) {
+      if (expression.getOperationTokenType() == mLNOT) {
         coerceToBoolean();
         addInstruction(new NotInstruction<V>());
       }
-      else if (tokenType == mBNOT) {
-
+      else {
+        final GroovyResolveResult[] results = expression.multiResolve(false);
+        if (results.length == 1) {
+          myCallHelper.processMethodCallStraight(expression, results[0]);
+        }
+        else {
+          pop();
+          pushUnknown();
+        }
       }
-      //} else if (tokenType == GroovyTokenTypes)
-    }
-    else {
-      pushUnknown();
     }
 
     finishElement(expression);
