@@ -38,7 +38,7 @@ default_pydev_banner_parts = default_banner_parts
 
 default_pydev_banner = ''.join(default_pydev_banner_parts)
 
-def show_in_pager(self, strng):
+def show_in_pager(self, strng, *args, **kwargs):
     """ Run a string through pager """
     # On PyDev we just output the string, there are scroll bars in the console
     # to handle "paging". This is the same behaviour as when TERM==dump (see
