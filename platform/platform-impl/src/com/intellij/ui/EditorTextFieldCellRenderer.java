@@ -203,6 +203,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     public void dispose() {
+      myEditor.getComponent().removeNotify();
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
 
