@@ -135,7 +135,8 @@ public class ArrayBackedFMap implements KeyFMap {
     return false;
   }
 
-  public int[] getKeys() {
+  @NotNull
+  public int[] getKeyIds() {
     return keys;
   }
 
