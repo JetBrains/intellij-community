@@ -73,32 +73,40 @@ public class LombokInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new JavaElementVisitor() {
+    return new LombokElementVisitor(holder);
+  }
 
-      @Override
-      public void visitTypeElement(PsiTypeElement type) {
-        super.visitTypeElement(type);
+  private class LombokElementVisitor extends JavaElementVisitor {
 
-        valProcessor.verifyTypeElement(type, holder);
-      }
+    private final ProblemsHolder holder;
 
-      @Override
-      public void visitAnnotation(PsiAnnotation annotation) {
-        super.visitAnnotation(annotation);
+    public LombokElementVisitor(ProblemsHolder holder) {
+      this.holder = holder;
+    }
 
-        final String qualifiedName = annotation.getQualifiedName();
-        if (StringUtils.isNotBlank(qualifiedName) && allProblemHandlers.containsKey(qualifiedName)) {
-          final Collection<LombokProblem> problems = new HashSet<LombokProblem>();
+    @Override
+    public void visitTypeElement(PsiTypeElement type) {
+      super.visitTypeElement(type);
 
-          for (Processor inspector : allProblemHandlers.get(qualifiedName)) {
-            problems.addAll(inspector.verifyAnnotation(annotation));
-          }
+      valProcessor.verifyTypeElement(type, holder);
+    }
 
-          for (LombokProblem problem : problems) {
-            holder.registerProblem(annotation, problem.getMessage(), problem.getHighlightType(), problem.getQuickFixes());
-          }
+    @Override
+    public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
+
+      final String qualifiedName = annotation.getQualifiedName();
+      if (StringUtils.isNotBlank(qualifiedName) && allProblemHandlers.containsKey(qualifiedName)) {
+        final Collection<LombokProblem> problems = new HashSet<LombokProblem>();
+
+        for (Processor inspector : allProblemHandlers.get(qualifiedName)) {
+          problems.addAll(inspector.verifyAnnotation(annotation));
+        }
+
+        for (LombokProblem problem : problems) {
+          holder.registerProblem(annotation, problem.getMessage(), problem.getHighlightType(), problem.getQuickFixes());
         }
       }
-    };
+    }
   }
 }
