@@ -32,7 +32,6 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -467,12 +466,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public abstract PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   public static String getIdLabel(ObjectReference objRef) {
-    if (objRef instanceof StringReference && !Registry.is("debugger.show.strings.type")) {
+    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
+    if (objRef instanceof StringReference && !classRenderer.SHOW_STRINGS_TYPE) {
       return null;
     }
     StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
-      final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
       final boolean showConcreteType =
         !classRenderer.SHOW_DECLARED_TYPE ||
         (!(objRef instanceof StringReference) && !(objRef instanceof ClassObjectReference) && !isEnumConstant(objRef));
