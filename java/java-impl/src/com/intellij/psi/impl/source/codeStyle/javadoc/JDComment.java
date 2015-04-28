@@ -133,7 +133,7 @@ public class JDComment {
       sb.insert(0, myFirstLine + '\n');
       sb.append(indent);
     } else {
-      sb.replace(0, prefix.length(), "/** ");
+      sb.replace(0, prefix.length(), myFirstLine + " ");
       sb.deleteCharAt(sb.length()-1);
     }
     sb.append(' ').append(myEndLine);

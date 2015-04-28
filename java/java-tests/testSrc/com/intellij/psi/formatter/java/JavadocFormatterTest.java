@@ -775,4 +775,20 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     doClassTest(before, after);
   }
 
+  public void test_DoNotTouch_SingleLineComments() {
+    getSettings().getRootSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = true;
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+
+    doClassTest(
+      "/****** AAAAAAA *******/\n" +
+      "  \n" +
+      "  public void t() {\n" +
+      "         }",
+      "/****** AAAAAAA *******/\n" +
+      "\n" +
+      "public void t() {\n" +
+      "}"
+    );
+  }
+
 }
