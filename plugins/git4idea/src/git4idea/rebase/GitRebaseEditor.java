@@ -142,11 +142,13 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     while (i < entries.size() && entries.get(i).getAction() == GitRebaseEntry.Action.skip) {
       i++;
     }
-    GitRebaseEntry.Action action = entries.get(i).getAction();
-    if (i < entries.size() && (action == GitRebaseEntry.Action.squash || action == GitRebaseEntry.Action.fixup)) {
-      setErrorText(GitBundle.message("rebase.editor.invalid.squash", StringUtil.toLowerCase(action.name())));
-      setOKActionEnabled(false);
-      return;
+    if (i < entries.size()) {
+      GitRebaseEntry.Action action = entries.get(i).getAction();
+      if (action == GitRebaseEntry.Action.squash || action == GitRebaseEntry.Action.fixup) {
+        setErrorText(GitBundle.message("rebase.editor.invalid.squash", StringUtil.toLowerCase(action.name())));
+        setOKActionEnabled(false);
+        return;
+      }
     }
     setErrorText(null);
     setOKActionEnabled(true);
