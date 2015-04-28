@@ -106,7 +106,7 @@ public class CommonShortcuts {
   }
 
   public static ShortcutSet getDiff() {
-    return shortcutsById(IdeActions.ACTION_SHOW_DIFF);
+    return shortcutsById(IdeActions.ACTION_SHOW_DIFF_COMMON);
   }
 
   public static ShortcutSet getFind() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,6 +154,11 @@ public class JavaLexerTest extends LexerTestCase {
   public void testJava8Tokens() {
     doTest("none :: ->",
            "IDENTIFIER ('none')\nWHITE_SPACE (' ')\nDOUBLE_COLON ('::')\nWHITE_SPACE (' ')\nARROW ('->')");
+  }
+
+  public void testUnicodeLiterals() {
+    doTest("Ɐ Σx dΦ",
+           "IDENTIFIER ('Ɐ')\nWHITE_SPACE (' ')\nIDENTIFIER ('Σx')\nWHITE_SPACE (' ')\nIDENTIFIER ('dΦ')");
   }
 
   @Override
