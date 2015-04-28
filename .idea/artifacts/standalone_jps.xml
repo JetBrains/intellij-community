@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact name="standalone-jps">
-    <output-path>$PROJECT_DIR$/out/classes/artifacts/standalone_jps</output-path>
+    <output-path>$PROJECT_DIR$/out/artifacts/standalone_jps</output-path>
     <root id="root">
       <element id="archive" name="util.jar">
         <element id="module-output" name="util" />
