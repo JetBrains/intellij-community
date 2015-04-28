@@ -184,15 +184,17 @@ class SMTestSender extends RunListener {
   private static void sendTree(Object description, List tests) {
     if (tests.isEmpty()) {
       final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
-      System.out.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) +
-                         "\' locationHint=\'java:test://" + escapeName(JUnit4ReflectionUtil.getClassName((Description)description) + "." + methodName) + "\']");
+      if (methodName != null) {
+        System.out.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) +
+                           "\' locationHint=\'java:test://" + escapeName(JUnit4ReflectionUtil.getClassName((Description)description) + "." + methodName) + "\']");
+      }
     }
     boolean pass = false;
     for (Iterator iterator = tests.iterator(); iterator.hasNext(); ) {
       final Object next = iterator.next();
       final List childTests = ((Description)next).getChildren();
       final Description nextDescription = (Description)next;
-      if ((childTests.isEmpty() || isParameter(nextDescription)) && !pass) {
+      if ((childTests.isEmpty() && JUnit4ReflectionUtil.getMethodName(nextDescription) != null || isParameter(nextDescription)) && !pass) {
         pass = true;
         final String className = JUnit4ReflectionUtil.getClassName((Description)description);
         String locationHint = className;
