@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.console;
 
+import com.intellij.AppTopics;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.Language;
@@ -32,6 +33,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -116,7 +118,6 @@ public class ConsoleHistoryController {
                                   @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
     myHelper = new ModelHelper(rootType, fixNullPersistenceId(persistenceId, console), model.copy());
     myConsole = console;
-    console.getVirtualFile().putUserData(CONTROLLER_KEY, this);
   }
 
   public static ConsoleHistoryController getController(LanguageConsoleView console) {
@@ -138,8 +139,11 @@ public class ConsoleHistoryController {
     return !getModel().getEntries().isEmpty();
   }
 
+  @NotNull
   private static String fixNullPersistenceId(@Nullable String persistenceId, @NotNull LanguageConsoleView console) {
-    return StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId;
+    if (StringUtil.isNotEmpty(persistenceId)) return persistenceId;
+    String url = console.getProject().getPresentableUrl();
+    return StringUtil.isNotEmpty(url) ? url : "default";
   }
 
   public boolean isMultiline() {
@@ -156,24 +160,33 @@ public class ConsoleHistoryController {
   }
 
   public void install() {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    if (myHelper.getId() != null) {
-      ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(
-        ProjectEx.ProjectSaved.TOPIC, new ProjectEx.ProjectSaved() {
-          @Override
-          public void saved(@NotNull final Project project) {
-            saveHistory();
-          }
-        });
-      Disposer.register(myConsole, new Disposable() {
-        @Override
-        public void dispose() {
+    class Listener extends FileDocumentManagerAdapter implements ProjectEx.ProjectSaved {
+      @Override
+      public void beforeDocumentSaving(@NotNull Document document) {
+        if (document == myConsole.getEditorDocument()) {
           saveHistory();
         }
-      });
-      if (myHelper.getModel().getHistorySize() == 0) {
-        loadHistory(myHelper.getId());
       }
+
+      @Override
+      public void saved(@NotNull Project project) {
+        saveHistory();
+      }
+    }
+    Listener listener = new Listener();
+    ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(ProjectEx.ProjectSaved.TOPIC, listener);
+    myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
+
+    myConsole.getVirtualFile().putUserData(CONTROLLER_KEY, this);
+    Disposer.register(myConsole, new Disposable() {
+      @Override
+      public void dispose() {
+        myConsole.getVirtualFile().putUserData(CONTROLLER_KEY, null);
+        saveHistory();
+      }
+    });
+    if (myHelper.getModel().getHistorySize() == 0) {
+      loadHistory(myHelper.getId());
     }
     configureActions();
     myLastSaveStamp = getCurrentTimeStamp();
