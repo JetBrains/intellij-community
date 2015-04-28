@@ -184,7 +184,7 @@ class SMTestSender extends RunListener {
     return messageLength < threshold;
   }
 
-  private static void sendTree(JUnit4IdeaTestRunner runner, Object description, List tests) {
+  private static void sendTree(Object description, List tests) {
     if (tests.isEmpty()) {
       final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
       System.out.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) +
@@ -193,7 +193,7 @@ class SMTestSender extends RunListener {
     boolean pass = false;
     for (Iterator iterator = tests.iterator(); iterator.hasNext(); ) {
       final Object next = iterator.next();
-      final List childTests = runner.getChildTests(next);
+      final List childTests = ((Description)next).getChildren();
       final Description nextDescription = (Description)next;
       if ((childTests.isEmpty() || isParameter(nextDescription)) && !pass) {
         pass = true;
@@ -212,7 +212,7 @@ class SMTestSender extends RunListener {
         System.out.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) +
                            "\' locationHint=\'java:suite://" + escapeName(locationHint) + "\']");
       }
-      sendTree(runner, next, childTests);
+      sendTree(next, childTests);
     }
     if (pass) {
       System.out.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName((Description)description))) + "\']");
@@ -224,12 +224,12 @@ class SMTestSender extends RunListener {
     return displayName.startsWith("[") && displayName.endsWith("]");
   }
 
-  public void sendTree(JUnit4IdeaTestRunner runner, Description description) {
-    final List tests = runner.getChildTests(description);
+  public void sendTree(Description description) {
+    final List tests = description.getChildren();
     if (tests.isEmpty()) {
       myIgnoreTopSuite = true;
     }
-    sendTree(runner, description, tests);
+    sendTree(description, tests);
   }
 
   private static String getShortName(String fqName) {
