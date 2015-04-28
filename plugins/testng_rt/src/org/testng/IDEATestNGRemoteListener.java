@@ -28,7 +28,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onConfigurationSuccess(ITestResult result) {
-    final String className = result.getTestClass().getName();
+    final String className = getShortName(result.getTestClass().getName());
     System.out.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\']");
     final String methodName = result.getMethod().getMethodName();
     System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\']");
@@ -37,7 +37,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onConfigurationFailure(ITestResult result) {
-    final String className = result.getTestClass().getName();
+    final String className = getShortName(result.getTestClass().getName());
     System.out.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\']");
     final String methodName = result.getMethod().getMethodName();
     System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\']");
@@ -58,7 +58,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onTestStart(ITestResult result) {
-    final String className = result.getTestClass().getName();
+    final String className = getShortName(result.getTestClass().getName());
     if (myCurrentClassName == null || !myCurrentClassName.equals(className)) {
       if (myCurrentClassName != null) {
         System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
@@ -137,5 +137,13 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     if (myCurrentClassName != null) {
       System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
     }
+  }
+
+  protected static String getShortName(String fqName) {
+    int lastPointIdx = fqName.lastIndexOf('.');
+    if (lastPointIdx >= 0) {
+      return fqName.substring(lastPointIdx + 1);
+    }
+    return fqName;
   }
 }

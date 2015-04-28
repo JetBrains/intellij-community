@@ -56,14 +56,16 @@ public class IDEARemoteTestNG extends TestNG {
           final List<XmlTest> tests = suite.getTests();
           for (XmlTest test : tests) {
             for (XmlClass aClass : test.getXmlClasses()) {
-              System.out.println("##teamcity[suiteTreeStarted name=\'" + aClass.getName() + "\' locationHint=\'java:suite://" + aClass.getName() +  "\']");
+              final String shortName = IDEATestNGRemoteListener.getShortName(aClass.getName());
+              System.out.println("##teamcity[suiteTreeStarted name=\'" +
+                                 shortName + "\' locationHint=\'java:suite://" + aClass.getName() +  "\']");
               if (myParam != null) {
                 for (XmlInclude include : aClass.getIncludedMethods()) {
                   aClass.setIncludedMethods(Arrays.asList(new XmlInclude(include.getName(), Arrays.asList(Integer.parseInt(myParam)), 0)));
                 }
               }
 
-              System.out.println("##teamcity[suiteTreeEnded name=\'" + aClass.getName() + "\']");
+              System.out.println("##teamcity[suiteTreeEnded name=\'" + shortName + "\']");
             }
             testCount += test.getClasses().size();
           }

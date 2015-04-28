@@ -70,7 +70,7 @@ class SMTestSender extends RunListener {
       System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']");
       myParamName = null;
     }
-    final String className = JUnit4ReflectionUtil.getClassName(description);
+    final String className = getShortName(JUnit4ReflectionUtil.getClassName(description));
     if (!className.equals(myCurrentClassName)) {
       if (myCurrentClassName != null) {
         System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
@@ -209,13 +209,13 @@ class SMTestSender extends RunListener {
             }
           }
         }
-        System.out.println("##teamcity[suiteTreeStarted name=\'" + escapeName(className) +
+        System.out.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) +
                            "\' locationHint=\'java:suite://" + escapeName(locationHint) + "\']");
       }
       sendTree(runner, next, childTests);
     }
     if (pass) {
-      System.out.println("##teamcity[suiteTreeEnded name=\'" + escapeName(JUnit4ReflectionUtil.getClassName((Description)description)) + "\']");
+      System.out.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName((Description)description))) + "\']");
     }
   }
 
@@ -230,5 +230,17 @@ class SMTestSender extends RunListener {
       myIgnoreTopSuite = true;
     }
     sendTree(runner, description, tests);
+  }
+
+  private static String getShortName(String fqName) {
+    if (fqName.startsWith("[")) {
+      //param name
+      return fqName;
+    }
+    int lastPointIdx = fqName.lastIndexOf('.');
+    if (lastPointIdx >= 0) {
+      return fqName.substring(lastPointIdx + 1);
+    }
+    return fqName;
   }
 }
