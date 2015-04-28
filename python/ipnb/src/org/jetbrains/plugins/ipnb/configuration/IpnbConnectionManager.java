@@ -88,13 +88,14 @@ public final class IpnbConnectionManager implements ProjectComponent {
     if (StringUtil.isEmptyOrSpaces(url)) {
       url = IpnbSettings.DEFAULT_URL;
     }
-    url = showDialogUrl(url);
-    if (url == null) return;
-    IpnbSettings.getInstance(myProject).setURL(url);
 
     boolean connectionStarted = startConnection(codePanel, path, url, false);
     if (!connectionStarted) {
       final String finalUrl = url;
+      url = showDialogUrl(url);
+      if (url == null) return;
+      IpnbSettings.getInstance(myProject).setURL(url);
+
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
