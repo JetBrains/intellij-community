@@ -153,7 +153,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       myRawText = text;
       myTextAttributes = textAttributes;
       mySelected = selected;
-      recalculatePreferredSize();
+      myPreferredSize = null;
     }
 
     @Override
@@ -167,6 +167,27 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     public Dimension getPreferredSize() {
+      if (myPreferredSize == null) {
+        int maxLineLength = 0;
+        int linesCount = 0;
+
+        for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd(); lt.advance()) {
+          maxLineLength = Math.max(maxLineLength, lt.getLength());
+          linesCount++;
+        }
+
+        FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
+        int preferredHeight = myEditor.getLineHeight() * Math.max(1, linesCount);
+        int preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
+
+        Insets insets = getInsets();
+        if (insets != null) {
+          preferredHeight += insets.top + insets.bottom;
+          preferredWidth += insets.left + insets.right;
+        }
+
+        myPreferredSize = new Dimension(preferredWidth, preferredHeight);
+      }
       return myPreferredSize;
     }
 
@@ -183,28 +204,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @Override
     public void dispose() {
       EditorFactory.getInstance().releaseEditor(myEditor);
-    }
-
-    private void recalculatePreferredSize() {
-      int maxLineLength = 0;
-      int linesCount = 0;
-
-      for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd(); lt.advance()) {
-        maxLineLength = Math.max(maxLineLength, lt.getLength());
-        linesCount++;
-      }
-
-      FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
-      int preferredHeight = myEditor.getLineHeight() * Math.max(1, linesCount);
-      int preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
-
-      Insets insets = getInsets();
-      if (insets != null) {
-        preferredHeight += insets.top + insets.bottom;
-        preferredWidth += insets.left + insets.right;
-      }
-
-      myPreferredSize = new Dimension(preferredWidth, preferredHeight);
     }
 
     private void updateText() {
