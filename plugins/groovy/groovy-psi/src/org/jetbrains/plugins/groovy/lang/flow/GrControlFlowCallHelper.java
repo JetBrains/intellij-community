@@ -27,8 +27,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.flow.instruction.GrDereferenceInstruction;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrMethodCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -38,6 +40,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL_DOT;
@@ -53,8 +57,11 @@ public class GrControlFlowCallHelper<V extends GrInstructionVisitor<V>> {
   }
 
   void processMethodCall(@NotNull GrMethodCall methodCall) {
+    processMethodCall(methodCall.getInvokedExpression(), methodCall);
+  }
+
+  void processMethodCall(@NotNull GrExpression invokedExpression, @NotNull GrCallExpression call) {
     // qualifier
-    final GrExpression invokedExpression = methodCall.getInvokedExpression();
     final PsiType invokedExpressionType = invokedExpression.getType();
     final PsiClass psiClass = PsiTypesUtil.getPsiClass(invokedExpressionType);
     if (myClosureType.equals(invokedExpressionType) ||
@@ -64,11 +71,11 @@ public class GrControlFlowCallHelper<V extends GrInstructionVisitor<V>> {
     }
     else {
       processMethodCall(
-        methodCall,
+        call,
         (GrReferenceExpression)invokedExpression,
-        methodCall.getNamedArguments(),
-        methodCall.getExpressionArguments(),
-        methodCall.getClosureArguments()
+        call.getNamedArguments(),
+        call.getExpressionArguments(),
+        call.getClosureArguments()
       );
     }
   }
@@ -167,5 +174,28 @@ public class GrControlFlowCallHelper<V extends GrInstructionVisitor<V>> {
       counter++;
     }
     return counter;
+  }
+
+  void processIndexProperty(GrIndexProperty indexProperty, @Nullable GrExpression right) {
+    indexProperty.getInvokedExpression().accept(myAnalyzer); // qualifier
+    final boolean isGetter = right == null;
+    final GroovyResolveResult[] results = isGetter ? indexProperty.multiResolveGetter(false) : indexProperty.multiResolveSetter(false);
+    if (results.length == 1) {
+      GrExpression[] args = isGetter ? indexProperty.getExpressionArguments()
+                                     : ArrayUtil.append(indexProperty.getExpressionArguments(), right);
+      processMethodCallStraight(indexProperty, results[0], args);
+    }
+    else {
+      myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(indexProperty)); // dereference qualifier
+      for (GrExpression arg : indexProperty.getExpressionArguments()) {
+        arg.accept(myAnalyzer);
+        myAnalyzer.pop();
+      }
+      if (right != null) {
+        right.accept(myAnalyzer);
+        myAnalyzer.pop();
+      }
+      myAnalyzer.pushUnknown();
+    }
   }
 }

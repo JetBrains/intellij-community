@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -888,6 +889,13 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     finishElement(listOrMap);
   }
 
+  @Override
+  public void visitIndexProperty(GrIndexProperty expression) {
+    startElement(expression);
+    myCallHelper.processIndexProperty(expression, null);
+    finishElement(expression);
+  }
+
   private void initialize(@NotNull GrVariable variable, @NotNull GrExpression initializer) {
     final DfaVariableValue dfaVariableValue = myFactory.getVarFactory().createVariableValue(variable, false);
     push(dfaVariableValue, initializer);
@@ -904,6 +912,10 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         myCallHelper.processMethodCall(left, (GrReferenceExpression)left, right);
         return;
       }
+    }
+    if (left instanceof GrIndexProperty) {
+      myCallHelper.processIndexProperty((GrIndexProperty)left, right);
+      return;
     }
     left.accept(this);
     right.accept(this);
