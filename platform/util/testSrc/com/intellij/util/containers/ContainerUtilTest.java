@@ -225,6 +225,17 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
+  public void testLockFreeCOWPerformance() {
+    List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
+    long start = System.currentTimeMillis();
+    for (int i = 0; i < 15000; i++) {
+      my.add(this);
+    }
+    long elapsed = System.currentTimeMillis() - start;
+    //System.out.println("elapsed = " + elapsed);
+    assertTrue(String.valueOf(elapsed), elapsed < 1000);
+  }
+
   private static void assertReallyEmpty(List<Object> my) {
     assertEquals(0, my.size());
 
