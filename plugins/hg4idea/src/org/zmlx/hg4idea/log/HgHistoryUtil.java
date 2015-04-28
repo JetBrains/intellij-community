@@ -210,7 +210,7 @@ public class HgHistoryUtil {
     if (errors != null && !errors.isEmpty()) {
       if (result.getExitValue() != 0) {
         if (silent) {
-          LOG.warn(errors.toString());
+          LOG.debug(errors.toString());
         }
         else {
           VcsNotifier.getInstance(project).notifyError(HgVcsMessages.message("hg4idea.error.log.command.execution"), errors.toString());
