@@ -26,11 +26,12 @@ import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -38,6 +39,8 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.EmptyIterable;
+import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -179,7 +182,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return new JavaSourcePosition(SourcePosition.createFromLine(psiFile, lineNumber), location.declaringType(), location.method());
   }
 
-  private static class JavaSourcePosition extends RemappedSourcePosition {
+  private static class JavaSourcePosition extends RemappedSourcePosition implements ExecutionPointHighlighter.HighlighterProvider {
     private final String myExpectedClassName;
     private final String myExpectedMethodName;
 
@@ -189,30 +192,62 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       myExpectedMethodName = method != null ? method.name() : null;
     }
 
+    private PsiElement remapElement(PsiElement element) {
+      PsiClass aClass = getEnclosingClass(element);
+      if (!Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(aClass))) {
+        return null;
+      }
+      NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+      if (!StringUtil.isEmpty(myExpectedMethodName)) {
+        if (method == null) {
+          return null;
+        }
+        else if ((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName()))) {
+          return element;
+        }
+        else if (method instanceof PsiLambdaExpression && myExpectedMethodName.startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
+          return ((PsiLambdaExpression)method).getBody();
+        }
+      }
+      return null;
+    }
+
     @Override
     public SourcePosition mapDelegate(final SourcePosition original) {
       return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
         @Override
         public SourcePosition compute() {
           // There may be more than one class/method code on the line, so we need to find out the correct place
-          int lineNumber = original.getLine();
-          PsiElement element = original.getElementAt();
-          PsiClass aClass = getEnclosingClass(element);
-          if (aClass != null) {
-            if (Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(aClass))) {
-              return original;
-            }
-            //try to look for other elements in the line
-            PsiFile file = original.getFile();
-            for (PsiElement elem : getLineElements(file, lineNumber)) {
-              if (Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(getEnclosingClass(elem)))) {
-                return SourcePosition.createFromElement(elem);
-              }
+          for (PsiElement elem : getLineElements(original.getFile(), original.getLine())) {
+            PsiElement remappedElement = remapElement(elem);
+            if (remappedElement != null) {
+              if (remappedElement.getTextOffset() <= original.getOffset()) break;
+              return SourcePosition.createFromElement(remappedElement);
             }
           }
           return original;
         }
       });
+    }
+
+    @Nullable
+    @Override
+    public RangeHighlighter createHighlighter(Document document, Project project, TextAttributes attributes) {
+      PsiElement element = getElementAt();
+      NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+      if (method instanceof PsiLambdaExpression) {
+        TextRange range = method.getTextRange();
+        int startOffset = document.getLineStartOffset(getLine());
+        int endOffset = document.getLineEndOffset(getLine());
+        int hlStart = Math.max(startOffset, range.getStartOffset());
+        int hlEnd = Math.min(endOffset, range.getEndOffset());
+        if (hlStart != startOffset || hlEnd != endOffset) {
+          return DocumentMarkupModel.forDocument(document, project, true).
+            addRangeHighlighter(hlStart, hlEnd, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes,
+                                HighlighterTargetArea.EXACT_RANGE);
+        }
+      }
+      return null;
     }
   }
 
