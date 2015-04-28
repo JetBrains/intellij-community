@@ -44,12 +44,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil.isCertainlyReturnStatement;
 
-public class GrControlFlowHelper<V extends GrInstructionVisitor<V>> {
+public class GrControlFlowExceptionHelper<V extends GrInstructionVisitor<V>> {
 
   final GrControlFlowAnalyzerImpl<V> analyzer;
   final Stack<CatchDescriptor> myCatchStack = new Stack<CatchDescriptor>();
 
-  public GrControlFlowHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
+  public GrControlFlowExceptionHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
     this.analyzer = analyzer;
   }
 

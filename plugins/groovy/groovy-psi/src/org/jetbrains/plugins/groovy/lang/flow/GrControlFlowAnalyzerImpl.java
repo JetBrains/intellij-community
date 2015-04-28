@@ -26,16 +26,14 @@ import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.flow.GrControlFlowHelper.CatchDescriptor;
+import org.jetbrains.plugins.groovy.lang.flow.GrControlFlowExceptionHelper.CatchDescriptor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.*;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -67,7 +65,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.List;
 import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.flow.GrControlFlowHelper.shouldCheckReturn;
+import static org.jetbrains.plugins.groovy.lang.flow.GrControlFlowExceptionHelper.shouldCheckReturn;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
@@ -86,18 +84,18 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     MAP.put(mPLUS, DfaRelation.PLUS);
   }
 
+  private final GrControlFlowExceptionHelper<V> myExceptionHelper = new GrControlFlowExceptionHelper<V>(this);
+  private final GrControlFlowCallHelper<V> myCallHelper;
   final ControlFlowImpl<V> myFlow = new ControlFlowImpl<V>();
-  final GrControlFlowHelper<V> myHelper = new GrControlFlowHelper<V>(this);
   final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
   final GrDfaValueFactory myFactory;
   final PsiElement myCodeFragment;
-  private final PsiType myClosureType;
   private final PsiType myAssertionError;
 
   public GrControlFlowAnalyzerImpl(@NotNull GrDfaValueFactory factory, @NotNull PsiElement block) {
+    myCallHelper = new GrControlFlowCallHelper<V>(this, block);
     myFactory = factory;
     myCodeFragment = block;
-    myClosureType = TypesUtil.createType("groovy.lang.Closure", block);
     myAssertionError = TypesUtil.createType(CommonClassNames.JAVA_LANG_ASSERTION_ERROR, block);
   }
 
@@ -207,108 +205,15 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   @Override
   public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
     startElement(methodCallExpression);
-    processMethodCall(methodCallExpression);
+    myCallHelper.processMethodCall(methodCallExpression);
     finishElement(methodCallExpression);
   }
 
   @Override
   public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
     startElement(applicationStatement);
-    processMethodCall(applicationStatement);
+    myCallHelper.processMethodCall(applicationStatement);
     finishElement(applicationStatement);
-  }
-
-  private void processMethodCall(GrMethodCall methodCall) {
-    // qualifier
-    final GrExpression invokedExpression = methodCall.getInvokedExpression();
-    final PsiType invokedExpressionType = invokedExpression.getType();
-    final PsiClass psiClass = PsiTypesUtil.getPsiClass(invokedExpressionType);
-    if (myClosureType.equals(invokedExpressionType) ||
-        psiClass != null && PsiClassImplUtil.findMethodsByName(psiClass, "call", true).length > 0) {
-      // TODO
-      throw new CannotAnalyzeException();
-    }
-    else {
-      processMethodCall(
-        methodCall,
-        (GrReferenceExpression)invokedExpression,
-        methodCall.getNamedArguments(),
-        methodCall.getExpressionArguments(),
-        methodCall.getClosureArguments()
-      );
-    }
-  }
-
-  private void processMethodCall(@NotNull GrExpression call,
-                                 @NotNull GrReferenceExpression invokedReference,
-                                 @NotNull GrNamedArgument[] namedArguments,
-                                 @NotNull GrExpression[] expressionArguments,
-                                 @NotNull GrClosableBlock[] closureArguments) {
-
-    final GroovyResolveResult result = invokedReference.advancedResolve();
-    final GrExpression qualifier = invokedReference.getQualifierExpression();
-    if (qualifier != null) {
-      qualifier.accept(this);
-    }
-    else {
-      pushUnknown();
-    }
-    if (invokedReference.getDotTokenType() == mOPTIONAL_DOT) {
-      addInstruction(new DupInstruction<V>()); // save qualifier for later use
-      pushNull();
-      addInstruction(new BinopInstruction(DfaRelation.EQ, invokedReference));
-      final ConditionalGotoInstruction gotoToNotNull = addInstruction(new ConditionalGotoInstruction(null, true, qualifier));
-
-      // null branch
-      // even if qualifier is null, groovy evaluates arguments
-      final int argumentsToPop = visitArguments(namedArguments, expressionArguments, closureArguments);
-      for (int i = 0; i < argumentsToPop; i++) {
-        pop();
-      }
-      pop();        // pop duplicated qualifier
-      pushNull();
-      final GotoInstruction<V> gotoEnd = addInstruction(new GotoInstruction<V>(null));
-
-      // not null branch
-      gotoToNotNull.setOffset(myFlow.getNextOffset());
-      // qualifier is on top of stack
-      // evaluate arguments 
-      visitArguments(namedArguments, expressionArguments, closureArguments);
-      addInstruction(new GrMethodCallInstruction<V>(call, namedArguments, expressionArguments, closureArguments, result));
-      gotoEnd.setOffset(myFlow.getNextOffset());
-    }
-    else {
-      visitArguments(namedArguments, expressionArguments, closureArguments);
-      addInstruction(new GrMethodCallInstruction<V>(call, namedArguments, expressionArguments, closureArguments, result));
-    }
-  }
-
-
-  private int visitArguments(@NotNull GrCall methodCall) {
-    return visitArguments(methodCall.getNamedArguments(), methodCall.getExpressionArguments(), methodCall.getClosureArguments());
-  }
-
-  private int visitArguments(@NotNull GrNamedArgument[] namedArguments,
-                             @NotNull GrExpression[] expressionArguments,
-                             @NotNull GrClosableBlock[] closureArguments) {
-    int counter = 0;
-    for (GrNamedArgument argument : namedArguments) {
-      argument.accept(this);
-      pop();
-    }
-    if (namedArguments.length > 0) {
-      push(myFactory.createTypeValue(TypesUtil.createType("java.util.Map", namedArguments[0]), Nullness.NOT_NULL));
-      counter++;
-    }
-    for (GrExpression expression : expressionArguments) {
-      expression.accept(this);
-      counter++;
-    }
-    for (GrClosableBlock block : closureArguments) {
-      push(myFactory.createValue(block), block);
-      counter++;
-    }
-    return counter;
   }
 
   @Override
@@ -326,7 +231,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       }
     }
     else {
-      visitArguments(expression);
+      myCallHelper.visitArguments(expression);
       addInstruction(new GrMethodCallInstruction(expression, null));
       //if (!myCatchStack.isEmpty()) {
       //  addMethodThrows(ctr, expression);
@@ -599,7 +504,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     GrFinallyClause finallyBlock = statement.getFinallyClause();
 
     if (finallyBlock != null) {
-      myHelper.myCatchStack.push(new CatchDescriptor(finallyBlock));
+      myExceptionHelper.myCatchStack.push(new CatchDescriptor(finallyBlock));
     }
 
     GrCatchClause[] sections = statement.getCatchClauses();
@@ -610,7 +515,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       if (parameter != null && catchBlock != null) {
         PsiType type = parameter.getType();
         if (type instanceof PsiClassType || type instanceof PsiDisjunctionType) {
-          myHelper.myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
+          myExceptionHelper.myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
           continue;
         }
       }
@@ -627,21 +532,21 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     for (GrCatchClause section : sections) {
       section.accept(this);
       addInstruction(new GotoInstruction(endOffset));
-      myHelper.myCatchStack.pop();
+      myExceptionHelper.myCatchStack.pop();
     }
 
     if (finallyBlock != null) {
-      CatchDescriptor finallyDescriptor = myHelper.myCatchStack.pop();
+      CatchDescriptor finallyDescriptor = myExceptionHelper.myCatchStack.pop();
       finallyBlock.accept(this);
 
       //if $exception$==null => continue normal execution
-      addInstruction(new PushInstruction(myHelper.getExceptionHolder(finallyDescriptor), null));
+      addInstruction(new PushInstruction(myExceptionHelper.getExceptionHolder(finallyDescriptor), null));
       addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
       addInstruction(new BinopInstruction(DfaRelation.EQ, null, statement.getProject()));
       addInstruction(new ConditionalGotoInstruction(myFlow.getEndOffset(statement), false, null));
 
       // else throw $exception$
-      myHelper.rethrowException(finallyDescriptor, false);
+      myExceptionHelper.rethrowException(finallyDescriptor, false);
     }
 
     finishElement(statement);
@@ -659,7 +564,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
 
     final CatchDescriptor currentDescriptor = new CatchDescriptor(catchClauseParameter, catchBlock);
-    final DfaVariableValue exceptionHolder = myHelper.getExceptionHolder(currentDescriptor);
+    final DfaVariableValue exceptionHolder = myExceptionHelper.getExceptionHolder(currentDescriptor);
 
     // exception is in exceptionHolder mock variable
     // check if it's assignable to catch parameter type
@@ -675,7 +580,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
 
     // not assignable => rethrow 
-    myHelper.rethrowException(currentDescriptor, true);
+    myExceptionHelper.rethrowException(currentDescriptor, true);
 
     // e = $exception$
     addInstruction(new PushInstruction(myFactory.getVarFactory().createVariableValue(catchClauseParameter, false), null));
@@ -703,9 +608,9 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         description.accept(this);
       }
 
-      CatchDescriptor cd = myHelper.findNextCatch(false);
-      myHelper.initException(myAssertionError, cd);
-      myHelper.addThrowCode(cd, assertStatement);
+      CatchDescriptor cd = myExceptionHelper.findNextCatch(false);
+      myExceptionHelper.initException(myAssertionError, cd);
+      myExceptionHelper.addThrowCode(cd, assertStatement);
     }
     finishElement(assertStatement);
   }
@@ -862,8 +767,15 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
     else {
       left.accept(this);
-      right.accept(this);
-      addInstruction(new BinopInstruction<V>(MAP.get(operatorToken), expression, expression.getProject()));
+      final GroovyResolveResult[] resolveResults = expression.multiResolve(false);
+      if (resolveResults.length == 1) {
+        final GroovyResolveResult result = resolveResults[0];
+        myCallHelper.processMethodCallStraight(expression, result, right);
+      }
+      else {
+        right.accept(this);
+        addInstruction(new BinopInstruction<V>(MAP.get(operatorToken), expression, expression.getProject()));
+      }
     }
 
     finishElement(expression);
@@ -984,13 +896,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       final GroovyResolveResult result = ((GrReferenceExpression)left).advancedResolve();
       final PsiElement element = result.getElement();
       if (element instanceof PsiMethod) {
-        processMethodCall(
-          left,
-          (GrReferenceExpression)left,
-          GrNamedArgument.EMPTY_ARRAY,
-          new GrExpression[]{right},
-          GrClosableBlock.EMPTY_ARRAY
-        );
+        myCallHelper.processMethodCall(left, (GrReferenceExpression)left, right);
         return;
       }
     }
@@ -1111,27 +1017,27 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     addInstruction(new FlushVariableInstruction<V>(myFactory.getVarFactory().createVariableValue(variable, false)));
   }
 
-  private PopInstruction pop() {
+  PopInstruction pop() {
     return addInstruction(new PopInstruction());
   }
 
-  private PushInstruction push(DfaValue value, PsiElement place) {
+  PushInstruction push(DfaValue value, PsiElement place) {
     return addInstruction(new PushInstruction(value, place));
   }
 
-  private PushInstruction push(DfaValue value, PsiElement place, boolean writing) {
+  PushInstruction push(DfaValue value, PsiElement place, boolean writing) {
     return addInstruction(new PushInstruction<V>(value, place, writing));
   }
 
-  private PushInstruction push(DfaValue value) {
+  PushInstruction push(DfaValue value) {
     return push(value, null);
   }
 
-  private void pushUnknown() {
+  void pushUnknown() {
     push(DfaUnknownValue.getInstance());
   }
 
-  private void pushNull() {
+  void pushNull() {
     push(myFactory.getConstFactory().getNull());
   }
 
