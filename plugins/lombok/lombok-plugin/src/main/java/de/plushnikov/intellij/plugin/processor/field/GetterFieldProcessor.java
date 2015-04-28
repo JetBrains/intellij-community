@@ -84,8 +84,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
   }
 
   protected boolean isLazyGetter(@NotNull PsiAnnotation psiAnnotation) {
-    final Boolean lazyObj = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy", Boolean.class);
-    return null != lazyObj && lazyObj;
+    return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "lazy", false);
   }
 
   protected boolean validateExistingMethods(@NotNull PsiField psiField, @NotNull ProblemBuilder builder) {

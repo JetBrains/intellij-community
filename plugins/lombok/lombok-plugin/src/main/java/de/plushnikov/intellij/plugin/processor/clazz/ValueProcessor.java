@@ -92,7 +92,7 @@ public class ValueProcessor extends AbstractClassProcessor {
       if (definedConstructors.isEmpty()) {
         final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
 
-        final String staticName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticConstructor", String.class);
+        final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
         final Collection<PsiField> requiredFields = allArgsConstructorProcessor.getAllFields(psiClass);
 
         if (allArgsConstructorProcessor.validateIsConstructorDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {

@@ -20,36 +20,32 @@ public class LombokProcessorUtil {
 
   @Nullable
   public static String getMethodModifier(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAccessLevelToJavaModifier(getAnnotationValue(psiAnnotation, "value"));
+    return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getAccessLevelAnnotationValue(psiAnnotation, "value"));
   }
 
   @Nullable
   public static String getAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAccessLevelToJavaModifier(getAnnotationValue(psiAnnotation, "access"));
-  }
-
-  private static String getAnnotationValue(final PsiAnnotation psiAnnotation, final String parameterName) {
-    return PsiAnnotationUtil.getAnnotationValue(psiAnnotation, parameterName, String.class);
+    return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getAccessLevelAnnotationValue(psiAnnotation, "access"));
   }
 
   @Nullable
-  private static String convertAccessLevelToJavaModifier(String value) {
-    if (null == value || value.isEmpty() || value.equals("PUBLIC")) {
+  private static String convertAccessLevelToJavaModifier(AccessLevel value) {
+    if (null == value || AccessLevel.PUBLIC.equals(value)) {
       return PsiModifier.PUBLIC;
     }
-    if (value.equals("MODULE")) {
+    if (AccessLevel.MODULE.equals(value)) {
       return PsiModifier.PACKAGE_LOCAL;
     }
-    if (value.equals("PROTECTED")) {
+    if (AccessLevel.PROTECTED.equals(value)) {
       return PsiModifier.PROTECTED;
     }
-    if (value.equals("PACKAGE")) {
+    if (AccessLevel.PACKAGE.equals(value)) {
       return PsiModifier.PACKAGE_LOCAL;
     }
-    if (value.equals("PRIVATE")) {
+    if (AccessLevel.PRIVATE.equals(value)) {
       return PsiModifier.PRIVATE;
     }
-    if (value.equals("NONE")) {
+    if (AccessLevel.NONE.equals(value)) {
       return null;
     } else {
       return null;

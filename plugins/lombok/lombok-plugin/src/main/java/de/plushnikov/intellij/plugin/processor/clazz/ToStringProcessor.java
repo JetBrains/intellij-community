@@ -115,7 +115,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   }
 
   private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
-    final boolean callSuper = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "callSuper", Boolean.class, Boolean.FALSE);
+    final boolean callSuper = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKeys.TOSTRING_DO_NOT_USE_GETTERS);
     final boolean includeFieldNames = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "includeFieldNames", ConfigKeys.TOSTRING_INCLUDE_FIELD_NAMES);
 

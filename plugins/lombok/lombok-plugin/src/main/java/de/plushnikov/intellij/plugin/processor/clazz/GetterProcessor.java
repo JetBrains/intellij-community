@@ -39,17 +39,16 @@ public class GetterProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final boolean result = validateAnnotationOnRigthType(psiClass, builder) && validateVisibility(psiAnnotation);
+    final boolean result = validateAnnotationOnRightType(psiClass, builder) && validateVisibility(psiAnnotation);
 
-    final Boolean lazy = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "lazy", Boolean.class);
-    if (null != lazy && lazy) {
+    if (PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "lazy", false)) {
       builder.addWarning("'lazy' is not supported for @Getter on a type");
     }
 
     return result;
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addError("'@Getter' is only supported on a class, enum or field type");

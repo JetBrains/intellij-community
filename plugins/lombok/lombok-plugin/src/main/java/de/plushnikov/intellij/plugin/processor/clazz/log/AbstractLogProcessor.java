@@ -102,7 +102,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   @NotNull
   private String createLoggerInitializeParameter(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final String loggerInitializerParameter;
-    final String topic = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "topic", String.class);
+    final String topic = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "topic");
     if (StringUtil.isEmptyOrSpaces(topic)) {
       loggerInitializerParameter = String.format(loggerCategory, psiClass.getName());
     } else {

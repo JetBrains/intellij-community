@@ -43,7 +43,7 @@ public class CleanupProcessor extends AbstractProcessor {
 
     PsiLocalVariable psiVariable = PsiTreeUtil.getParentOfType(psiAnnotation, PsiLocalVariable.class);
     if (null != psiVariable) {
-      final String cleanupName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "value", String.class);
+      final String cleanupName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "value");
 
       if (StringUtil.isEmptyOrSpaces(cleanupName)) {
         problemNewBuilder.addError("'@Cleanup': value cannot be the empty string");

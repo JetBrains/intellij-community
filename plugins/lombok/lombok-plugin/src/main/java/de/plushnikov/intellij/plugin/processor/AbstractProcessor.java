@@ -116,7 +116,7 @@ public abstract class AbstractProcessor implements Processor {
   public static boolean readAnnotationOrConfigProperty(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass,
                                                        @NotNull String annotationParameter, @NotNull ConfigKeys configKeys) {
     final boolean result;
-    final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, annotationParameter, Boolean.class);
+    final Boolean declaredAnnotationValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(psiAnnotation, annotationParameter);
     if (null == declaredAnnotationValue) {
       result = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(configKeys, psiClass);
     } else {

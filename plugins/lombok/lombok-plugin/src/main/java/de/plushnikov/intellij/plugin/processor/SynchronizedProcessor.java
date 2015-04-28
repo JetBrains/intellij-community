@@ -51,7 +51,7 @@ public class SynchronizedProcessor extends AbstractProcessor {
         );
       }
 
-      final String lockFieldName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "value", String.class);
+      final String lockFieldName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "value");
       if (StringUtil.isNotEmpty(lockFieldName)) {
         final PsiClass containingClass = psiMethod.getContainingClass();
 

@@ -166,19 +166,19 @@ public class BuilderHandler {
 
   @NotNull
   public static String getBuildMethodName(@NotNull PsiAnnotation psiAnnotation) {
-    final String buildMethodName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILD_METHOD_NAME, String.class);
+    final String buildMethodName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILD_METHOD_NAME);
     return StringUtil.isEmptyOrSpaces(buildMethodName) ? BUILD_METHOD_NAME : buildMethodName;
   }
 
   @NotNull
   public static String getBuilderMethodName(@NotNull PsiAnnotation psiAnnotation) {
-    final String builderMethodName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_METHOD_NAME, String.class);
+    final String builderMethodName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_METHOD_NAME);
     return StringUtil.isEmptyOrSpaces(builderMethodName) ? BUILDER_METHOD_NAME : builderMethodName;
   }
 
   @NotNull
   public String getBuilderClassName(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiType psiBuilderType) {
-    String builderClassName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, String.class);
+    String builderClassName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME);
     if (StringUtil.isEmptyOrSpaces(builderClassName)) {
       if (PsiType.VOID.equals(psiBuilderType)) {
         return StringUtil.capitalize(PsiType.VOID.getCanonicalText()) + BUILDER_CLASS_NAME;
@@ -476,8 +476,7 @@ public class BuilderHandler {
   public static final String SETTER_PREFIX = "set";
 
   private boolean isFluentBuilder(@NotNull PsiAnnotation psiAnnotation) {
-    Boolean fluentAnnotationValue = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_FLUENT, Boolean.class);
-    return fluentAnnotationValue != null ? fluentAnnotationValue : true;
+    return PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, ANNOTATION_FLUENT, true);
   }
 
   @NotNull
@@ -487,8 +486,7 @@ public class BuilderHandler {
 
   @NotNull
   private PsiType createSetterReturnType(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiType fieldType) {
-    Boolean chainAnnotationValue = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_CHAIN, Boolean.class);
-    final boolean isChain = chainAnnotationValue != null ? chainAnnotationValue : true;
+    final boolean isChain = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, ANNOTATION_CHAIN, true);
     return isChain ? fieldType : PsiType.VOID;
   }
 }

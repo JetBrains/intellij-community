@@ -165,7 +165,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   protected String getStaticConstructorName(@NotNull PsiAnnotation psiAnnotation) {
-    return PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "staticName", String.class);
+    return PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticName");
   }
 
   protected boolean isStaticConstructor(@Nullable String staticName) {

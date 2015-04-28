@@ -14,7 +14,6 @@
 
   <modules>
     <module>lombok</module>
-    <module>lombok_pg</module>
   </modules>
 
   <dependencyManagement>

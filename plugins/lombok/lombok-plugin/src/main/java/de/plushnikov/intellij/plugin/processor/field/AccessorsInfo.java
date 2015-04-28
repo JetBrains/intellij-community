@@ -63,7 +63,7 @@ public class AccessorsInfo {
     final boolean isFluent = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "fluent", ConfigKeys.ACCESSORS_FLUENT);
     final boolean isChained = AbstractProcessor.readAnnotationOrConfigProperty(accessorsAnnotation, psiClass, "chain", ConfigKeys.ACCESSORS_CHAIN);
 
-    Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredAnnotationValue(accessorsAnnotation, "chain", Boolean.class);
+    Boolean chainDeclaredValue = PsiAnnotationUtil.getDeclaredBooleanAnnotationValue(accessorsAnnotation, "chain");
     Collection<String> prefixes = PsiAnnotationUtil.getAnnotationValues(accessorsAnnotation, "prefix", String.class);
 
     final boolean dontUseIsPrefix = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKeys.GETTER_NO_IS_PREFIX, psiClass);
