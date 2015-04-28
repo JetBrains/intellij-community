@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -73,7 +74,7 @@ public abstract class GitRebaseActionBase extends GitRepositoryAction {
           editor.close();
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
           manager.updateRepository(root);
-          root.refresh(false, true);
+          VfsUtil.markDirtyAndRefresh(false, true, false, root);
           notifyAboutResult(result, resultListener, editor.wasNoopSituationDetected(), exceptions, project);
         }
         finally {
