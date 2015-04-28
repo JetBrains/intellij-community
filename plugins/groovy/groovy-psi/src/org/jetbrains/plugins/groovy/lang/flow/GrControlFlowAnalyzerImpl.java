@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.GrControlFlowHelper.CatchDescriptor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.*;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -69,7 +68,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.flow.GrControlFlowHelper.shouldCheckReturn;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL_DOT;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   extends GroovyRecursiveElementVisitor implements IControlFlowAnalyzer<V> {
@@ -77,14 +76,14 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   private static final Map<IElementType, DfaRelation> MAP = new HashMap<IElementType, DfaRelation>();
 
   static {
-    MAP.put(GroovyTokenTypes.mEQUAL, DfaRelation.EQ);
-    MAP.put(GroovyTokenTypes.mNOT_EQUAL, DfaRelation.NE);
-    MAP.put(GroovyTokenTypes.kINSTANCEOF, DfaRelation.INSTANCEOF);
-    MAP.put(GroovyTokenTypes.mGT, DfaRelation.GT);
-    MAP.put(GroovyTokenTypes.mGE, DfaRelation.GE);
-    MAP.put(GroovyTokenTypes.mLT, DfaRelation.LT);
-    MAP.put(GroovyTokenTypes.mLE, DfaRelation.LE);
-    MAP.put(GroovyTokenTypes.mPLUS, DfaRelation.PLUS);
+    MAP.put(mEQUAL, DfaRelation.EQ);
+    MAP.put(mNOT_EQUAL, DfaRelation.NE);
+    MAP.put(kINSTANCEOF, DfaRelation.INSTANCEOF);
+    MAP.put(mGT, DfaRelation.GT);
+    MAP.put(mGE, DfaRelation.GE);
+    MAP.put(mLT, DfaRelation.LT);
+    MAP.put(mLE, DfaRelation.LE);
+    MAP.put(mPLUS, DfaRelation.PLUS);
   }
 
   final ControlFlowImpl<V> myFlow = new ControlFlowImpl<V>();
@@ -185,7 +184,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
 
     final IElementType op = expression.getOperationTokenType();
-    if (op == GroovyTokenTypes.mASSIGN) {
+    if (op == mASSIGN) {
       if (left instanceof GrTupleExpression) {
         assignTuple(((GrTupleExpression)left).getExpressions(), right);
         pushUnknown(); // so there will be value to pop in finishElement()
@@ -363,7 +362,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     if (condition != null) {
       condition.accept(this);
-      addInstruction(new GrCoerceToBooleanInstruction<V>());
+      coerceToBoolean();
       addInstruction(new ConditionalGotoInstruction(ifFalseOffset, true, condition));
     }
 
@@ -389,7 +388,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       return;
     }
     condition.accept(this);
-    
+
     GotoInstruction fallbackGoto = null;
     for (GrCaseSection section : switchStatement.getCaseSections()) {
       startElement(section);
@@ -727,7 +726,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     final GrExpression condition = expression.getCondition();
     condition.accept(this);
-    addInstruction(new GrCoerceToBooleanInstruction<V>());
+    coerceToBoolean();
     addInstruction(new DupInstruction<V>());
     addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(expression), false, condition));
     pop();
@@ -750,7 +749,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     final GrExpression thenBranch = expression.getThenBranch();
     final GrExpression elseBranch = expression.getElseBranch();
     condition.accept(this);
-    addInstruction(new GrCoerceToBooleanInstruction<V>());
+    coerceToBoolean();
     final ConditionalGotoInstruction<V> gotoElse = addInstruction(new ConditionalGotoInstruction<V>(null, true, condition));
 
     if (thenBranch == null) {
@@ -815,11 +814,11 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (operand != null) {
       operand.accept(this);
       IElementType tokenType = expression.getOperationTokenType();
-      if (tokenType == GroovyTokenTypes.mLNOT) {
-        addInstruction(new GrCoerceToBooleanInstruction<V>());
+      if (tokenType == mLNOT) {
+        coerceToBoolean();
         addInstruction(new NotInstruction<V>());
       }
-      else if (tokenType == GroovyTokenTypes.mBNOT) {
+      else if (tokenType == mBNOT) {
 
       }
       //} else if (tokenType == GroovyTokenTypes)
@@ -838,13 +837,33 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     GrExpression left = expression.getLeftOperand();
     GrExpression right = expression.getRightOperand();
 
-    if (right != null) {
+    if (right == null) {
+      pushUnknown();
+      finishElement(expression);
+      return;
+    }
+
+    final IElementType operatorToken = expression.getOperationTokenType();
+    if (operatorToken == mLAND || operatorToken == mLOR) {
+      final boolean isAnd = operatorToken == mLAND;
       left.accept(this);
+      coerceToBoolean();
+      addInstruction(new DupInstruction<V>());
+      addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(expression), isAnd, left));
+      pop();
       right.accept(this);
-      addInstruction(new BinopInstruction<V>(MAP.get(expression.getOperationTokenType()), expression, expression.getProject()));
+
+      coerceToBoolean();
+      final ConditionalGotoInstruction<V> gotoSuccess = addInstruction(new ConditionalGotoInstruction<V>(null, false, right));
+      push(myFactory.getConstFactory().getFalse());
+      addInstruction(new GotoInstruction<V>(myFlow.getEndOffset(expression)));
+      gotoSuccess.setOffset(myFlow.getNextOffset());
+      push(myFactory.getConstFactory().getTrue());
     }
     else {
-      pushUnknown();
+      left.accept(this);
+      right.accept(this);
+      addInstruction(new BinopInstruction<V>(MAP.get(operatorToken), expression, expression.getProject()));
     }
 
     finishElement(expression);
@@ -1114,5 +1133,9 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
   private void pushNull() {
     push(myFactory.getConstFactory().getNull());
+  }
+
+  private void coerceToBoolean() {
+    addInstruction(new GrCoerceToBooleanInstruction<V>());
   }
 }
