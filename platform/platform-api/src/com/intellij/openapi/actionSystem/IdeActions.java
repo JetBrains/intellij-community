@@ -156,6 +156,7 @@ public interface IdeActions {
   @NonNls String ACTION_CLOSE_ALL_EDITORS_BUT_THIS = "CloseAllEditorsButActive";
 
   @NonNls String ACTION_SHOW_DIFF_COMMON = "Diff.ShowDiff";
+  @NonNls String ACTION_SHOW_DIFF = "CompareTwoFiles";
   @NonNls String ACTION_PREVIOUS_DIFF = "PreviousDiff";
   @NonNls String ACTION_NEXT_DIFF = "NextDiff";
 
