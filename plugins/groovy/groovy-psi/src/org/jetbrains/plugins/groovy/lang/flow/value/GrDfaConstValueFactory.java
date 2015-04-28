@@ -26,10 +26,31 @@ import static com.intellij.codeInspection.dataFlow.value.java.DfaConstValueFacto
 public class GrDfaConstValueFactory extends DfaConstValue.Factory {
 
   private final GrDfaValueFactory myFactory;
+  private final DfaConstValue myCoercedToTrue;
+  private final DfaConstValue myCoercedToFalse;
+
+  private class DfaCoercionValue extends DfaConstValue {
+    public DfaCoercionValue(GrDfaValueFactory factory) {
+      super(new Object(), factory, null);
+    }
+
+    @Override
+    public DfaValue createNegated() {
+      if (this == myCoercedToTrue) return myCoercedToFalse;
+      if (this == myCoercedToFalse) return myCoercedToTrue;
+      return super.createNegated(); // should never happen
+    }
+  }
 
   GrDfaConstValueFactory(GrDfaValueFactory factory) {
     super(factory);
     myFactory = factory;
+    myCoercedToTrue = new DfaCoercionValue(factory);
+    myCoercedToFalse = new DfaCoercionValue(factory);
+  }
+
+  public DfaConstValue getCoercedToTrue() {
+    return myCoercedToTrue;
   }
 
   public DfaValue create(GrLiteral literal) {

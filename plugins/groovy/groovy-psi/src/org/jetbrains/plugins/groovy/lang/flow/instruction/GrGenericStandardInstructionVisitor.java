@@ -296,24 +296,27 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
       state.push(value);
       return nextInstruction(instruction, state);
     }
-    final DfaRelationValue.Factory relationFactory = myFactory.getRelationFactory();
+    if (value instanceof DfaVariableValue) {
+      final DfaRelationValue.Factory relationFactory = myFactory.getRelationFactory();
 
-    final DfaRelationValue isFalse = relationFactory.createRelation(value, constFactory.getFalse(), EQ, false);
-    final DfaRelationValue isNull = relationFactory.createRelation(value, constFactory.getNull(), EQ, false);
+      final DfaValue coercedToTrue = relationFactory.createRelation(value, constFactory.getCoercedToTrue(), EQ, false);
+      final DfaValue coercedToFalse = coercedToTrue.createNegated();
 
-    final DfaMemoryState trueState = state.createCopy();
-    final DfaMemoryState falseState = state.createCopy();
+      final DfaMemoryState trueState = state.createCopy();
+      final DfaMemoryState falseState = state.createCopy();
 
-    final List<DfaMemoryState> states = ContainerUtil.newArrayList();
-    if (trueState.applyCondition(isNull.createNegated()) & trueState.applyCondition(isFalse.createNegated())) {
-      trueState.push(constFactory.getTrue());
-      states.add(trueState);
-    }
-    if (falseState.applyCondition(isNull) | falseState.applyCondition(isFalse)) {
-      falseState.push(constFactory.getFalse());
-      states.add(falseState);
+      final List<DfaMemoryState> states = ContainerUtil.newArrayList();
+      if (trueState.applyCondition(coercedToTrue)) {
+        trueState.push(constFactory.getTrue());
+        states.add(trueState);
+      }
+      if (falseState.applyCondition(coercedToFalse)) {
+        falseState.push(constFactory.getFalse());
+        states.add(falseState);
+      }
+      return nextInstructionStates(instruction, states);
     }
     state.push(DfaUnknownValue.getInstance());
-    return states.isEmpty() ? nextInstruction(instruction, state) : nextInstructionStates(instruction, states);
+    return nextInstruction(instruction, state);
   }
 }
