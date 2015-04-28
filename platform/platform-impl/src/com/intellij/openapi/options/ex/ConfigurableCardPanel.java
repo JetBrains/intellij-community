@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.BorderLayout;
@@ -62,12 +63,12 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
                 panel.add(BorderLayout.CENTER, component);
                 component = panel;
               }
-              component.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
+              component.setBorder(JBUI.Borders.empty(5, 10, 10, 10));
             }
             if (ConfigurableWrapper.cast(Configurable.NoScroll.class, configurable) == null) {
               JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
-              scroll.setViewport(new GradientViewport(component, 5, 0, 0, 0, true));
-              scroll.getVerticalScrollBar().setUnitIncrement(10);
+              scroll.setViewport(new GradientViewport(component, JBUI.insetsTop(5), true));
+              scroll.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
               component = scroll;
             }
           }
