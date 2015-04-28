@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -229,6 +230,18 @@ public class FormatterImpl extends FormatterEx
                                           @NotNull DependentSpacingRule rule)
   {
     return new DependantSpacingImpl(minSpaces, maxSpaces, dependencyRange, keepLineBreaks, keepBlankLines, rule);
+  }
+
+  @NotNull
+  @Override
+  public Spacing createDependentLFSpacing(int minSpaces,
+                                          int maxSpaces,
+                                          @NotNull List<TextRange> dependentRegion,
+                                          boolean keepLineBreaks,
+                                          int keepBlankLines,
+                                          @NotNull DependentSpacingRule rule)
+  {
+    return new DependantSpacingImpl(minSpaces, maxSpaces, dependentRegion, keepLineBreaks, keepBlankLines, rule);
   }
 
   @NotNull

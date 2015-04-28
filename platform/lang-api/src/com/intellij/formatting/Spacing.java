@@ -18,6 +18,8 @@ package com.intellij.formatting;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * The spacing setting for a formatting model block. Indicates the number of spaces and/or
  *  line breaks that should be inserted between the specified children of the specified block.
@@ -113,6 +115,23 @@ public abstract class Spacing {
                                                  int keepBlankLines)
   {
     return createDependentLFSpacing(minSpaces, maxSpaces, dependency, keepLineBreaks, keepBlankLines, DependentSpacingRule.DEFAULT);
+  }
+
+
+  /**
+   * Needed when implementing options like "Next line after '('" or "Place ')' on new line". This options works only if parameters are
+   * wrapped, so previously dependent spacing was created on whole parameter list range, which does not work correctly with multiline
+   * arguments such as lambdas and anonymous classes.
+   *
+   * Using this method we can create dependent spacing on multiple ranges between parameters and solve this problem
+   */
+  public static Spacing createDependentLFSpacing(int minSpaces,
+                                                 int maxSpaces,
+                                                 List<TextRange> dependency,
+                                                 boolean keepLineBreaks,
+                                                 int keepBlankLines)
+  {
+    return myFactory.createDependentLFSpacing(minSpaces, maxSpaces, dependency, keepLineBreaks, keepBlankLines, DependentSpacingRule.DEFAULT);
   }
 
   /**
