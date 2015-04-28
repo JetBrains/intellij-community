@@ -23,17 +23,12 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
@@ -391,22 +386,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       final List<CommittedChangeList> lists = getSelectedChangeLists();
       if (!lists.isEmpty()) {
         sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
-      }
-    }
-    else if (VcsDataKeys.VCS_REVISION_NUMBERS.is(key.getName())) {
-      List<CommittedChangeList> changeLists = getSelectedChangeLists();
-      ContainerUtil.sort(changeLists, CommittedChangeListByDateComparator.DESCENDING);
-
-      List<VcsRevisionNumber> revisionNumbers =
-        ContainerUtil.mapNotNull(changeLists, new Function<CommittedChangeList, VcsRevisionNumber>() {
-          @Override
-          public VcsRevisionNumber fun(CommittedChangeList changeList) {
-            return changeList instanceof VcsRevisionNumberAware ? ((VcsRevisionNumberAware)changeList).getRevisionNumber() : null;
-          }
-        });
-
-      if (!revisionNumbers.isEmpty()) {
-        sink.put(VcsDataKeys.VCS_REVISION_NUMBERS, ArrayUtil.toObjectArray(revisionNumbers, VcsRevisionNumber.class));
       }
     }
     else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
