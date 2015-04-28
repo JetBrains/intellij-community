@@ -100,7 +100,6 @@ class SMTestSender extends RunListener {
     final String trace = failure.getTrace();
     final Map attrs = new HashMap();
     attrs.put("name", JUnit4ReflectionUtil.getMethodName(failure.getDescription()));
-    attrs.put("message", failureMessage != null ? failureMessage : "");
     final ComparisonFailureData notification = createExceptionNotification(failure.getException());
     if (notification != null) {
       attrs.put("expected", notification.getExpected());
@@ -112,9 +111,11 @@ class SMTestSender extends RunListener {
       if (filePath != null) {
         attrs.put("expectedFile", filePath);
       }
+      attrs.put("message", "Comparison Failure:");
     } else {
       attrs.put("details", trace);
       attrs.put("error", "true");
+      attrs.put("message", failureMessage != null ? failureMessage : "");
     }
 
     System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
