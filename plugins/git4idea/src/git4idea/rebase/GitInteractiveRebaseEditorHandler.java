@@ -112,9 +112,9 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
             GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, path);
             if (editor.showAndGet()) {
               editor.save();
-              isSuccess.set(true);
-              return;
             }
+            isSuccess.set(true);
+            return;
           }
           else {
             setRebaseEditorShown();
