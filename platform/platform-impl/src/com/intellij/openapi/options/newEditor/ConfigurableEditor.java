@@ -75,7 +75,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     @Override
     public void actionPerformed(ActionEvent event) {
       if (myConfigurable != null) {
-        myConfigurable.reset();
+        ConfigurableCardPanel.reset(myConfigurable);
         updateCurrent(myConfigurable, true);
       }
     }
