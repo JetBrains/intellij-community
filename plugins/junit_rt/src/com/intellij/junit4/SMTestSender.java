@@ -66,7 +66,7 @@ class SMTestSender extends RunListener {
   public void testStarted(Description description) throws Exception {
     final String methodName = JUnit4ReflectionUtil.getMethodName(description);
     final int paramStart = methodName.indexOf('[');
-    if (paramStart < 0 && myParamName != null){
+    if (myParamName != null){
       System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']");
       myParamName = null;
     }
@@ -81,9 +81,6 @@ class SMTestSender extends RunListener {
     if (paramStart > -1) {
       final String paramName = methodName.substring(paramStart, methodName.length());
       if (!paramName.equals(myParamName)) {
-        if (myParamName != null) {
-          System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']");
-        }
         myParamName = paramName;
         System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(myParamName) + "\']");
       }
