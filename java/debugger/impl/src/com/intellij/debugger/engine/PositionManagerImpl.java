@@ -203,13 +203,21 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           return null;
         }
         else if ((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName()))) {
-          return element;
+          if (insideBody(element, ((PsiMethod)method).getBody())) return element;
         }
         else if (method instanceof PsiLambdaExpression && myExpectedMethodName.startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
-          return ((PsiLambdaExpression)method).getBody();
+          if (insideBody(element, ((PsiLambdaExpression)method).getBody())) return element;
         }
       }
       return null;
+    }
+
+    private static boolean insideBody(@NotNull PsiElement element, @Nullable PsiElement body) {
+      if (!PsiTreeUtil.isAncestor(body, element, false)) return false;
+      if (body instanceof PsiCodeBlock) {
+        return !element.equals(((PsiCodeBlock)body).getRBrace()) && !element.equals(((PsiCodeBlock)body).getLBrace());
+      }
+      return true;
     }
 
     @Override
