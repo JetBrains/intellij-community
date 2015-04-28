@@ -126,8 +126,16 @@ fi
 # ---------------------------------------------------------------------
 # Collect JVM options and properties.
 # ---------------------------------------------------------------------
+if [ "$OS_TYPE" = "Darwin" ]; then
+  OS_SPECIFIC_BIN_DIR=$IDE_BIN_HOME/mac
+else
+  OS_SPECIFIC_BIN_DIR=$IDE_BIN_HOME/linux
+fi
+
 if [ -n "$@@product_uc@@_PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
+elif [ -e "$OS_SPECIFIC_BIN_DIR/idea.properties" ]; then
+  IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$PWD/$OS_SPECIFIC_BIN_DIR/idea.properties"
 fi
 
 MAIN_CLASS_NAME="$@@product_uc@@_MAIN_CLASS_NAME"
@@ -137,7 +145,7 @@ fi
 
 VM_OPTIONS=""
 VM_OPTIONS_FILES_USED=""
-for vm_opts_file in "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" "$@@product_uc@@_VM_OPTIONS"; do
+for vm_opts_file in "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" "$OS_SPECIFIC_BIN_DIR/@@vm_options@@$BITS.vmoptions" "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" "$@@product_uc@@_VM_OPTIONS"; do
   if [ -r "$vm_opts_file" ]; then
     VM_OPTIONS_DATA=`"$CAT" "$vm_opts_file" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
     VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"

@@ -36,6 +36,7 @@ SET IDE_HOME=%IDE_BIN_DIR%\..
 SET MAIN_CLASS_NAME=%@@product_uc@@_MAIN_CLASS_NAME%
 IF "%MAIN_CLASS_NAME%" == "" SET MAIN_CLASS_NAME=com.intellij.idea.Main
 
+IF EXIST %IDE_BIN_DIR%\win\idea.properties SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%IDE_BIN_DIR%\win\idea.properties"
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
 :: ---------------------------------------------------------------------
@@ -44,6 +45,7 @@ IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.p
 
 SET USER_VM_OPTIONS_FILE=%USERPROFILE%\.@@system_selector@@\@@vm_options@@.vmoptions
 SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
+IF EXIST %IDE_BIN_DIR%\win\@@vm_options@@.vmoptions SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
 IF EXIST %USER_VM_OPTIONS_FILE% SET VM_OPTIONS_FILE=%USER_VM_OPTIONS_FILE%
 IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
 

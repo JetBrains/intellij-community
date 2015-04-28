@@ -116,12 +116,19 @@ public class PathManager {
 
   private static boolean isIdeaHome(final File root) {
     return new File(root, FileUtil.toSystemDependentName("bin/idea.properties")).exists() ||
+           new File(root, FileUtil.toSystemDependentName("bin/" + getOSSpecificBinSubdir() + "/idea.properties")).exists() ||
            new File(root, FileUtil.toSystemDependentName("community/bin/idea.properties")).exists();
   }
 
   @NotNull
   public static String getBinPath() {
     return getHomePath() + File.separator + BIN_FOLDER;
+  }
+
+  private static String getOSSpecificBinSubdir() {
+    if (SystemInfo.isWindows) return "win";
+    if (SystemInfo.isMac) return "mac";
+    return "linux";
   }
 
   @NotNull
