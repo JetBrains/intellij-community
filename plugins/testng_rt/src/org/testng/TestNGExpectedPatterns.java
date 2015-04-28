@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.junit4;
+package org.testng;
 
 import com.intellij.rt.execution.testFrameworks.AbstractExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
@@ -21,17 +21,17 @@ import com.intellij.rt.execution.junit.ComparisonFailureData;
 import java.util.ArrayList;
 import java.util.List;
 
-class ExpectedPatterns extends AbstractExpectedPatterns {
+class TestNGExpectedPatterns extends AbstractExpectedPatterns {
   private static final List PATTERNS = new ArrayList();
 
   private static final String[] PATTERN_STRINGS = new String[]{
-    "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
-    "\nExpected: is \"(.*)\"\n\\s*but: was \"(.*)\"",
-    "\nExpected: (.*)\n\\s*got: (.*)",
-    ".*?\\s*expected same:<(.*)> was not:<(.*)>",
-    ".*?\\s*expected:<(.*?)> but was:<(.*?)>",
-    "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
-    "\\s*Expected: (.*)\\s*but: was (.*)"};
+    ".*expected same with:\\<(.*)\\> but was:\\<(.*)\\>.*",
+    ".*expected:\\<(.*)\\> but was:\\<(.*)\\>.*",
+    ".*expected \\[(.*)\\] but got \\[(.*)\\].*",
+    ".*expected not same with:\\<(.*)\\> but was same:\\<(.*)\\>.*",
+    ".*expected \\[(.*)\\] but found \\[(.*)\\].*", 
+    ".*\nExpected: .*?\"(.*)\"\n\\s*but: .*?\"(.*)\".*"
+    };
 
   static {
     registerPatterns(PATTERN_STRINGS, PATTERNS);

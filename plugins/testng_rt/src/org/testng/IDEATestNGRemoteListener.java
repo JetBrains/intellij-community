@@ -1,5 +1,6 @@
 package org.testng;
 
+import com.intellij.rt.execution.junit.ComparisonFailureData;
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
@@ -112,9 +113,14 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     final String methodName = getMethodName(result);
     attrs.put("name", methodName);
     final String failureMessage = ex.getMessage();
-    attrs.put("message", failureMessage != null ? failureMessage : "");
-    attrs.put("details", trace);
-    attrs.put("error", "true");
+    ComparisonFailureData notification;
+    try {
+      notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
+    }
+    catch (Throwable e) {
+      notification = null;
+    }
+    ComparisonFailureData.registerSMAttributes(notification, trace, failureMessage, attrs);
     System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
     System.out.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) + "\']");
   }
