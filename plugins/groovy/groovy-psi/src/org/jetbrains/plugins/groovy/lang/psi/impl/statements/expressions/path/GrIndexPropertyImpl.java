@@ -281,7 +281,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolveSetter(boolean incomplete) {
-    return resolveImpl(incomplete, null, false);
+    return resolveImpl(incomplete, null, true);
   }
 
   @NotNull
