@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
@@ -55,6 +56,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("ConstantConditions")
 public class FileTypesTest extends PlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
@@ -480,5 +482,23 @@ public class FileTypesTest extends PlatformTestCase {
     finally {
       Extensions.getRootArea().getExtensionPoint(FileTypeFactory.FILE_TYPE_FACTORY_EP).unregisterExtension(factory);
     }
+  }
+
+  // IDEA-139409 Persistent message "File type recognized: File extension *.vm was reassigned to VTL"
+  public void testReassign() throws Exception {
+    Element element = JDOMUtil.loadDocument(
+      "<component name=\"FileTypeManager\" version=\"13\">\n" +
+      "   <extensionMap>\n" +
+      "      <mapping ext=\"zip\" type=\"Velocity Template files\" />\n" +
+      "   </extensionMap>\n" +
+      "</component>").getRootElement();
+
+    myFileTypeManager.loadState(element);
+    myFileTypeManager.initComponent();
+    Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
+    assertEquals(1, mappings.size());
+    assertEquals(ArchiveFileType.INSTANCE, mappings.values().iterator().next().first);
+    assertEquals(ArchiveFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("zip"));
+    assertNull(myFileTypeManager.getState().getChild("extensionMap"));
   }
 }
