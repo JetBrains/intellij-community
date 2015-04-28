@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -742,10 +742,10 @@ public class TemplateState implements Disposable {
 
     ExpressionContext context = createExpressionContext(start);
     Result result = isQuick ? expressionNode.calculateQuickResult(context) : expressionNode.calculateResult(context);
-    if (isQuick && isEmptyResult(result, element) && !oldValue.isEmpty()) {
+    if (isQuick && result == null && !oldValue.isEmpty()) {
       return;
     }
-    if (isEmptyResult(result, element) && defaultValue != null) {
+    if (defaultValue != null && (result == null || result.equalsToText("", element))) {
       result = defaultValue.calculateResult(context);
     }
     if (element != null) {
@@ -763,10 +763,6 @@ public class TemplateState implements Disposable {
         .handleRecalc(psiFile, myDocument, mySegments.getSegmentStart(segmentNumber), mySegments.getSegmentEnd(segmentNumber));
       restoreEmptyVariables(indices);
     }
-  }
-
-  private static boolean isEmptyResult(Result result, PsiElement context) {
-    return result == null || result.equalsToText("", context);
   }
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
