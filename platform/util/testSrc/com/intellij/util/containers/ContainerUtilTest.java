@@ -225,14 +225,16 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
-  public void testLockFreeCOWPerformance() {
+  public void testLockFreeCOWPerformanceIsAdequateForRegisteringAllIElementTypesReasonablyQuick() {
     List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
     long start = System.currentTimeMillis();
+    // see IElementType.ourRegistry
     for (int i = 0; i < 15000; i++) {
-      my.add(this);
+      my.add(i);
+      assertEquals(i, my.indexOf(i));
     }
     long elapsed = System.currentTimeMillis() - start;
-    //System.out.println("elapsed = " + elapsed);
+    System.out.println("elapsed = " + elapsed);
     assertTrue(String.valueOf(elapsed), elapsed < 1000);
   }
 
