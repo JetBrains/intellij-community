@@ -179,7 +179,6 @@ Various problems with spring have also been reported. See issue #287, issue #271
         result.add(buildName(normalPrefix, baseName));
         result.add(buildName(booleanPrefix, baseName));
       }
-
     } else {
       result.add(buildName(normalPrefix, fieldName));
     }
@@ -187,6 +186,6 @@ Various problems with spring have also been reported. See issue #287, issue #271
   }
 
   private static String buildName(String prefix, String suffix) {
-    return prefix + StringUtil.capitalizeWithJavaBeanConvention(suffix);
+    return prefix + StringUtil.capitalize(suffix);
   }
 }

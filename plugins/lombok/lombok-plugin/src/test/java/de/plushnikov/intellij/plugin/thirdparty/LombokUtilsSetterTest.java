@@ -19,6 +19,20 @@ public class LombokUtilsSetterTest {
   }
 
   @Test
+  public void testToSetterNames_dValue() throws Exception {
+    String result = makeResults("dValue", false);
+
+    assertThat(result, equalTo("setDValue"));
+  }
+
+  @Test
+  public void testToSetterNames_Value() throws Exception {
+    String result = makeResults("Value", false);
+
+    assertThat(result, equalTo("setValue"));
+  }
+
+  @Test
   public void testToSetterNames_NonBoolean() throws Exception {
     String result = makeResults("myField", false);
 

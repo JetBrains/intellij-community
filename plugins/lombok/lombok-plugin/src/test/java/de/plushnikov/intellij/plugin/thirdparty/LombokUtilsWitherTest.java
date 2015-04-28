@@ -19,6 +19,20 @@ public class LombokUtilsWitherTest {
   }
 
   @Test
+  public void testToWitherNames_dValue() throws Exception {
+    String result = makeResults("dValue", false);
+
+    assertThat(result, equalTo("withDValue"));
+  }
+
+  @Test
+  public void testToWitherNames_Value() throws Exception {
+    String result = makeResults("Value", false);
+
+    assertThat(result, equalTo("withValue"));
+  }
+
+  @Test
   public void testToWitherNames_NonBoolean() throws Exception {
     String result = makeResults("myField", false);
 

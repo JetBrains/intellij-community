@@ -20,6 +20,20 @@ public class LombokUtilsGetterTest {
   }
 
   @Test
+  public void testToGetterNames_dValue() throws Exception {
+    String result = makeResults("dValue", false);
+
+    assertThat(result, equalTo("getDValue"));
+  }
+
+  @Test
+  public void testToGetterNames_Value() throws Exception {
+    String result = makeResults("Value", false);
+
+    assertThat(result, equalTo("getValue"));
+  }
+
+  @Test
   public void testToGetterNames_NonBoolean() throws Exception {
     String result = makeResults("myField", false);
 
