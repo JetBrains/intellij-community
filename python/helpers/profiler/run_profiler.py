@@ -5,6 +5,7 @@ import time
 import sys
 import traceback
 import StringIO
+import os
 
 from prof_io import ProfWriter, ProfReader
 from pydevd_utils import save_main_module
@@ -15,7 +16,7 @@ from thrift import TSerialization
 from thrift.protocol import TJSONProtocol, TBinaryProtocol
 from profiler.ttypes import ProfilerResponse
 
-
+base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
 
 def StartClient(host, port):
     """ connects to a host/port """
@@ -68,7 +69,7 @@ class Profiler(object):
 
     def process(self, message):
         if hasattr(message, 'save_snapshot'):
-            self.save_snapshot(message.id, message.save_snapshot.filepath)
+            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath))
         else:
             raise AssertionError("Unknown request %s" % dir(message))
 
@@ -85,7 +86,7 @@ class Profiler(object):
         pydev_imports.execfile(file, globals, globals)  # execute the script
 
         self.stop_profiling()
-        self.save_snapshot(0, generate_snapshot_filepath())
+        self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path))
 
     def start_profiling(self):
         self.profiling_backend.enable()

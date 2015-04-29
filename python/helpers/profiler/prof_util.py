@@ -15,8 +15,7 @@ class ProfDaemonThread(threading.Thread):
     def OnRun(self):
         pass
 
-def generate_snapshot_filepath():
-    basepath = os.getenv('PYCHARM_SNAPSHOT_PATH')
+def generate_snapshot_filepath(basepath):
     n = 0
     path = basepath + '.pstat'
     while os.path.exists(path):
