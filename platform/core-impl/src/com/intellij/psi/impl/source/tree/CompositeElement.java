@@ -51,8 +51,8 @@ import java.util.List;
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
 
-  private TreeElement firstChild = null;
-  private TreeElement lastChild = null;
+  private TreeElement firstChild;
+  private TreeElement lastChild;
 
   private volatile int myModificationsCount;
   private volatile int myCachedLength = -1;
