@@ -15,21 +15,10 @@
  */
 package com.intellij.jsp.impl;
 
-import com.intellij.xml.XmlAttributeDescriptor;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Maxim.Mossienko
- */
-public interface TldAttributeDescriptor extends XmlAttributeDescriptor, MethodSignatureAwareAttributeDescriptor, TypeAwareAttributeDescriptor{
+public interface TypeAwareAttributeDescriptor {
 
-  /**
-   * Indicates that attribute is a fragment
-   *
-   * @return
-   */
-  boolean isIndirectSyntax();
-
-  boolean isDeferred();
-
-  boolean isDynamic();
+  @Nullable
+  String getType();
 }
