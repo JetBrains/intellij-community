@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.lang;
 
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Marker interface for retrieving the service which provides a default implementation of ASTFactory.
@@ -24,5 +25,6 @@ import com.intellij.psi.tree.IElementType;
  * @author yole
  */
 public interface DefaultASTFactory {
-  LeafElement createComment(IElementType type, CharSequence text);
+  @NotNull
+  LeafElement createComment(@NotNull IElementType type, @NotNull CharSequence text);
 }
