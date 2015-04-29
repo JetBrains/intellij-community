@@ -68,6 +68,32 @@ public class JUnitTreeByDescriptionHierarchyTest {
     doTest(rootDescription, "##teamcity[suiteTreeNode name='testName' locationHint='java:test://TestA.testName']\n");
   }
 
+  @Test
+  public void testSuiteAndParameterizedTestsInOnePackage() throws Exception {
+    final Description root = Description.createSuiteDescription("root");
+    final Description aTestClass = Description.createSuiteDescription("ATest");
+    root.addChild(aTestClass);
+    for (String paramName : new String[]{"[0]", "[1]"}) {
+      final Description param1 = Description.createSuiteDescription(paramName);
+      aTestClass.addChild(param1);
+      param1.addChild(Description.createTestDescription("ATest", "testName" + paramName));
+    }
+    final Description suiteDescription = Description.createSuiteDescription("suite");
+    root.addChild(suiteDescription);
+    final Description aTestClassWithJUnit3Test = Description.createSuiteDescription("ATest");
+    suiteDescription.addChild(aTestClassWithJUnit3Test);
+    aTestClassWithJUnit3Test.addChild(Description.createTestDescription("ATest", "test"));
+    doTest(root, "##teamcity[suiteTreeStarted name='ATest' locationHint='java:suite://ATest']\n" +
+                 "##teamcity[suiteTreeStarted name='|[0|]' locationHint='java:suite://ATest.|[0|]']\n" +
+                 "##teamcity[suiteTreeNode name='testName|[0|]' locationHint='java:test://ATest.testName|[0|]']\n" +
+                 "##teamcity[suiteTreeEnded name='|[0|]']\n" +
+                 "##teamcity[suiteTreeStarted name='|[1|]' locationHint='java:suite://ATest.|[1|]']\n" +
+                 "##teamcity[suiteTreeNode name='testName|[1|]' locationHint='java:test://ATest.testName|[1|]']\n" +
+                 "##teamcity[suiteTreeEnded name='|[1|]']\n" +
+                 "##teamcity[suiteTreeNode name='test' locationHint='java:test://ATest.test']\n" +
+                 "##teamcity[suiteTreeEnded name='ATest']\n");
+  }
+
   private static void doTest(Description description, String expected) {
     final StringBuffer buf = new StringBuffer();
     new SMTestSender().sendTree(description, new PrintStream(new OutputStream() {
