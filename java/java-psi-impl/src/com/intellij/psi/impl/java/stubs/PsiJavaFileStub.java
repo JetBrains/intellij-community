@@ -26,6 +26,5 @@ public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
   String getPackageName();
   boolean isCompiled();
   StubPsiFactory getPsiFactory();
-  @Deprecated
   void setPsiFactory(StubPsiFactory factory);
 }
