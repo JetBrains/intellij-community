@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.compiled.ClassFileDecompilers;
@@ -105,18 +106,16 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     this(viewProvider, false);
   }
 
-  /** @deprecated use {@link #ClsFileImpl(FileViewProvider)} (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public ClsFileImpl(@NotNull PsiManager manager, @NotNull FileViewProvider viewProvider) {
-    this(viewProvider, false);
-  }
-
   private ClsFileImpl(@NotNull FileViewProvider viewProvider, boolean forDecompiling) {
-    //noinspection ConstantConditions
     super(null);
+
+    if (!forDecompiling) {
+      VirtualFile file = viewProvider.getVirtualFile();
+      assert file instanceof VirtualFileWithId : file + " [" + file.getClass() + "]";
+    }
+
     myViewProvider = viewProvider;
     myIsForDecompiling = forDecompiling;
-    //noinspection ResultOfMethodCallIgnored
     JavaElementType.CLASS.getIndex();  // initialize Java stubs
   }
 
@@ -473,7 +472,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       if (LOG.isDebugEnabled()) {
         LOG.debug("No stub for class file in index: " + getVirtualFile().getPresentableUrl());
       }
-      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
+      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
     }
 
     synchronized (myStubLock) {
@@ -545,12 +544,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   }
 
   // default decompiler implementation
-
-  /** @deprecated use {@link #decompile(VirtualFile)} (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public static String decompile(@NotNull PsiManager manager, @NotNull VirtualFile file) {
-    return decompile(file).toString();
-  }
 
   @NotNull
   public static CharSequence decompile(@NotNull VirtualFile file) {
