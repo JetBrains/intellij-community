@@ -180,6 +180,11 @@ public class OnesideDiffChange {
     return myLine2;
   }
 
+  @NotNull
+  public LineFragment getLineFragment() {
+    return myLineFragment;
+  }
+
   private boolean hasInsertion() {
     return myStartOffset2 != myEndOffset2;
   }

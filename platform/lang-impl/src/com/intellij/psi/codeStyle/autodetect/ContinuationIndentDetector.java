@@ -27,6 +27,8 @@ class ContinuationIndentDetector {
   private final int myLength;
   private boolean myIncorrectBracketsOrder = false;
 
+  private Character myOpeningStringLiteralDelimiter = null;
+
   public ContinuationIndentDetector(@NotNull CharSequence text) {
     myText = text;
     myLength = text.length();
@@ -39,10 +41,31 @@ class ContinuationIndentDetector {
     if (lineEndOffset < 0) lineEndOffset = myLength;
 
     for (int i = startOffset; i < lineEndOffset; i++) {
-      Bracket bracket = Bracket.forChar(myText.charAt(i));
-      if (bracket == null) continue;
-      processBracket(bracket);
+      final char currentChar = myText.charAt(i);
+
+      if (isStringLiteralDelimiter(currentChar)) {
+        processStringLiteralDelimiter(currentChar);
+      }
+      else {
+        Bracket bracket = Bracket.forChar(currentChar);
+        if (bracket != null && myOpeningStringLiteralDelimiter == null) {
+          processBracket(bracket);
+        }
+      }
     }
+  }
+
+  private void processStringLiteralDelimiter(char delimiter) {
+    if (myOpeningStringLiteralDelimiter == null) {
+      myOpeningStringLiteralDelimiter = delimiter;
+    }
+    else if (myOpeningStringLiteralDelimiter.charValue() == delimiter) {
+      myOpeningStringLiteralDelimiter = null;
+    }
+  }
+
+  private boolean isStringLiteralDelimiter(char currentChar) {
+    return currentChar == '\'' || currentChar == '\"';
   }
 
   private void processBracket(@NotNull Bracket bracket) {

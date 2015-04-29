@@ -202,7 +202,7 @@ public class SMTestRunnerConnectionUtil {
     }
 
     // UI actions
-    final SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);
+    final SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties, resultsViewer.getTreeView());
     // notifications
     final SMTRunnerNotificationsHandler notifierHandler = new SMTRunnerNotificationsHandler(consoleProperties);
 

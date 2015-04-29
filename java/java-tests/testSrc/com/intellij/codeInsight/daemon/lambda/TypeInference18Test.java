@@ -43,6 +43,10 @@ public class TypeInference18Test extends ResolveTestCase {
     doTestMethodCall();
   }
 
+  public void testLambdaChainConflictResolution() throws Exception {
+    doTestMethodCall();
+  }
+
   public void testCachedSubstitutionDuringOverloadResolution() throws Exception {
     PsiReference ref = configureByFile("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
     assertNotNull(ref);

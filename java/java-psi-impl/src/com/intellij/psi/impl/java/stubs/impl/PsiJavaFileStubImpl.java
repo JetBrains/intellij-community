@@ -28,15 +28,15 @@ import com.intellij.util.io.StringRef;
  * @author max
  */
 public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements PsiJavaFileStub {
-  private static final ClsStubPsiFactory CLS_FACTORY = new ClsStubPsiFactory();
-  private static final SourceStubPsiFactory SOURCE_FACTORY = new SourceStubPsiFactory();
   private final StringRef myPackageName;
   private final boolean myCompiled;
+  private StubPsiFactory myFactory;
 
   public PsiJavaFileStubImpl(final PsiJavaFile file, final StringRef packageName, final boolean compiled) {
     super(file);
     myPackageName = packageName;
     myCompiled = compiled;
+    myFactory = compiled ? new ClsStubPsiFactory() : new SourceStubPsiFactory();
   }
 
   public PsiJavaFileStubImpl(final String packageName, final boolean compiled) {
@@ -55,17 +55,16 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
 
   @Override
   public StubPsiFactory getPsiFactory() {
-    return myCompiled ? CLS_FACTORY : SOURCE_FACTORY;
+    return myFactory;
   }
 
   @Override
   public void setPsiFactory(StubPsiFactory factory) {
-    throw new IncorrectOperationException();
+    myFactory = factory;
   }
 
   @Deprecated // use constructor
   public void setPackageName(final String packageName) {
-    //myPackageName = StringRef.fromString(packageName);
     throw new IncorrectOperationException();
   }
 

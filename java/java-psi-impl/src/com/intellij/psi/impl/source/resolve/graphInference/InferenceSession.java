@@ -299,6 +299,13 @@ public class InferenceSession {
     for (int i = 0; i < args.length; i++) {
       final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[i]);
       if (arg != null) {
+        if (MethodCandidateInfo.isOverloadCheck() && arg instanceof PsiLambdaExpression) {
+          for (Object expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
+            if (PsiTreeUtil.getParentOfType((PsiElement)expr, PsiLambdaExpression.class) == arg) {
+              return;
+            }
+          }
+        }
         final InferenceSession nestedCallSession = findNestedCallSession(arg);
         final PsiType parameterType =
           nestedCallSession.substituteWithInferenceVariables(getParameterType(parameters, i, siteSubstitutor, varargs));

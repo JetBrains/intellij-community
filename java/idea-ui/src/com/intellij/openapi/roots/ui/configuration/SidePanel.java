@@ -30,6 +30,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -87,13 +88,12 @@ public class SidePanel extends JPanel {
 
       @Override
       public boolean hasSeparatorAboveOf(final Object value) {
-        final int index = myPlaces.indexOf(value);
-        return myIndex2Separator.get(index) != null;
+        return getSeparatorAbove((Place)value) != null;
       }
 
       @Override
       public String getCaptionAboveOf(final Object value) {
-        return myIndex2Separator.get(myPlaces.indexOf(value));
+        return getSeparatorAbove((Place)value);
       }
     };
 
@@ -111,44 +111,7 @@ public class SidePanel extends JPanel {
 
       @Override
       protected SeparatorWithText createSeparator() {
-        return new SeparatorWithText() {
-          @Override
-          protected void paintComponent(Graphics g) {
-            if (Registry.is("ide.new.project.settings")) {
-              final JBColor separatorColor = new JBColor(POPUP_SEPARATOR_FOREGROUND, Gray._80);
-              g.setColor(separatorColor);
-              if ("--".equals(getCaption())) {
-                final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-                final int h = getHeight() / 2;
-                g.drawLine(30, h, getWidth() - 30, h);
-                ((Graphics2D)g).setPaint(new GradientPaint(5, h, ColorUtil.toAlpha(separatorColor, 0), 30, h, separatorColor));
-                g.drawLine(5, h, 30, h);
-                ((Graphics2D)g).setPaint(
-                  new GradientPaint(getWidth() - 5, h, ColorUtil.toAlpha(separatorColor, 0), getWidth() - 30, h, separatorColor));
-                g.drawLine(getWidth() - 5, h, getWidth() - 30, h);
-                config.restore();
-                return;
-              }
-              Rectangle viewR = new Rectangle(0, getVgap(), getWidth() - 1, getHeight() - getVgap() - 1);
-              Rectangle iconR = new Rectangle();
-              Rectangle textR = new Rectangle();
-              String s = SwingUtilities
-                .layoutCompoundLabel(g.getFontMetrics(), getCaption(), null, CENTER,
-                                     LEFT,
-                                     CENTER,
-                                     LEFT,
-                                     viewR, iconR, textR, 0);
-              GraphicsUtil.setupAAPainting(g);
-              g.setColor(new JBColor(Gray._255.withAlpha(80), Gray._0.withAlpha(80)));
-              g.drawString(s, textR.x + 10, textR.y + 1 + g.getFontMetrics().getAscent());
-              g.setColor(new JBColor(new Color(0x5F6D7B), Gray._120));
-              g.drawString(s, textR.x + 10, textR.y + g.getFontMetrics().getAscent());
-            }
-            else {
-              super.paintComponent(g);
-            }
-          }
-        };
+        return new Separator();
       }
 
       @Override
@@ -224,8 +187,25 @@ public class SidePanel extends JPanel {
     repaint();
   }
 
+  public void clear() {
+    myModel.clear();
+    myPlaces.clear();
+    myPlace2Presentation.clear();
+    myIndex2Separator.clear();
+  }
+
+  public void updatePlace(Place place) {
+    int index = myPlaces.indexOf(place);
+    myModel.set(index, place);
+  }
+
   public void addSeparator(String text) {
     myIndex2Separator.put(myPlaces.size(), text);
+  }
+
+  @Nullable
+  public String getSeparatorAbove(final Place place) {
+    return myIndex2Separator.get(myPlaces.indexOf(place));
   }
 
   public Collection<Place> getPlaces() {
@@ -236,7 +216,46 @@ public class SidePanel extends JPanel {
     myList.setSelectedValue(place, true);
   }
 
-  private static class CountLabel extends JLabel {
+  public static class Separator extends SeparatorWithText {
+    @Override
+    protected void paintComponent(Graphics g) {
+      if (Registry.is("ide.new.project.settings")) {
+        final JBColor separatorColor = new JBColor(GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND, Gray._80);
+        g.setColor(separatorColor);
+        if ("--".equals(getCaption())) {
+          final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+          final int h = getHeight() / 2;
+          g.drawLine(30, h, getWidth() - 30, h);
+          ((Graphics2D)g).setPaint(new GradientPaint(5, h, ColorUtil.toAlpha(separatorColor, 0), 30, h, separatorColor));
+          g.drawLine(5, h, 30, h);
+          ((Graphics2D)g).setPaint(
+            new GradientPaint(getWidth() - 5, h, ColorUtil.toAlpha(separatorColor, 0), getWidth() - 30, h, separatorColor));
+          g.drawLine(getWidth() - 5, h, getWidth() - 30, h);
+          config.restore();
+          return;
+        }
+        Rectangle viewR = new Rectangle(0, getVgap(), getWidth() - 1, getHeight() - getVgap() - 1);
+        Rectangle iconR = new Rectangle();
+        Rectangle textR = new Rectangle();
+        String s = SwingUtilities
+          .layoutCompoundLabel(g.getFontMetrics(), getCaption(), null, CENTER,
+                               LEFT,
+                               CENTER,
+                               LEFT,
+                               viewR, iconR, textR, 0);
+        GraphicsUtil.setupAAPainting(g);
+        g.setColor(new JBColor(Gray._255.withAlpha(80), Gray._0.withAlpha(80)));
+        g.drawString(s, textR.x + 10, textR.y + 1 + g.getFontMetrics().getAscent());
+        g.setColor(new JBColor(new Color(0x5F6D7B), Gray._120));
+        g.drawString(s, textR.x + 10, textR.y + g.getFontMetrics().getAscent());
+      }
+      else {
+        super.paintComponent(g);
+      }
+    }
+  }
+
+  public static class CountLabel extends JLabel {
     private boolean mySelected;
 
     public CountLabel() {

@@ -122,6 +122,9 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   static boolean isPropertiesFile(XmlFile file) {
     Project project = file.getProject();
     if (DumbService.isDumb(project)) {
+      if (!file.isValid()) {
+        return false;
+      }
       CharSequence contents = file.getViewProvider().getContents();
       return CharArrayUtil.indexOf(contents, HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD, 0) != -1 &&
           isAccepted(contents);

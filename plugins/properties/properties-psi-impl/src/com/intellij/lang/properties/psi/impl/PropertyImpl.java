@@ -449,7 +449,9 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
       return null;
     }
     String separatorText = delimiter.getText();
-    LOG.assertTrue(separatorText.length() > 0);
+    if (separatorText.isEmpty()) {
+      return null;
+    }
     separatorText = separatorText.trim();
     if (separatorText.isEmpty()) {
       separatorText = " ";

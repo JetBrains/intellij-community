@@ -32,10 +32,7 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
 import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SMTestSender extends RunListener {
   private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
@@ -182,13 +179,21 @@ public class SMTestSender extends RunListener {
     return messageLength < threshold;
   }
 
-  private static void sendTree(Object description, List tests, PrintStream printStream) {
-    if (tests.isEmpty()) {
+  private static void sendTree(Description description, Map groups, PrintStream printStream) {
+    if (description.getChildren().isEmpty()) {
       final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
       if (methodName != null) {
         printStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) +
                             "\' locationHint=\'java:test://" + escapeName(JUnit4ReflectionUtil.getClassName((Description)description) + "." + methodName) + "\']");
       }
+      return;
+    }
+    List tests = (List)groups.get(description);
+    if (isParameter(description)) {
+      tests = description.getChildren();
+    }
+    if (tests == null) {
+      return;
     }
     boolean pass = false;
     for (Iterator iterator = tests.iterator(); iterator.hasNext(); ) {
@@ -211,10 +216,26 @@ public class SMTestSender extends RunListener {
         }
         printStream.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) + "\' locationHint=\'java:suite://" + escapeName(locationHint) + "\']");
       }
-      sendTree(next, childTests, printStream);
+      sendTree(nextDescription, groups, printStream);
     }
     if (pass) {
       printStream.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName((Description)description))) + "\']");
+      groups.remove(description);
+    }
+  }
+
+  private static void groupTests(Object description, Map found) {
+    if (!isParameter((Description)description)) {
+      final ArrayList childTests = ((Description)description).getChildren();
+      List children = (List)found.get(description);
+      if (children == null) {
+        children = new ArrayList();
+        found.put(description, children);
+      }
+      children.addAll(childTests);
+      for (Iterator iterator = childTests.iterator(); iterator.hasNext(); ) {
+        groupTests(iterator.next(), found);
+      }
     }
   }
 
@@ -228,7 +249,9 @@ public class SMTestSender extends RunListener {
     if (tests.isEmpty()) {
       myIgnoreTopSuite = true;
     }
-    sendTree(description, tests, printStream);
+    final HashMap group = new HashMap();
+    groupTests(description, group);
+    sendTree(description, group, printStream);
   }
 
   private static String getShortName(String fqName) {

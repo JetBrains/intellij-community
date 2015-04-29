@@ -132,6 +132,9 @@
     <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction">
       <add-to-group group-id="MarkRootGroup"/>
     </action>
+
+    <action overrides="true" id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+
     <group id="TypeHierarchyPopupMenu">
     </group>
   </actions>
