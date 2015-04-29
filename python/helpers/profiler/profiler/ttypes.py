@@ -369,10 +369,19 @@ class Stats_Req:
   def __ne__(self, other):
     return not (self == other)
 
-class StatsString_Req:
+class SaveSnapshot_Req:
+  """
+  Attributes:
+   - filepath
+  """
 
   thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'filepath', None, None, ), # 1
   )
+
+  def __init__(self, filepath=None,):
+    self.filepath = filepath
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -383,6 +392,11 @@ class StatsString_Req:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
         break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.filepath = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -392,16 +406,23 @@ class StatsString_Req:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('StatsString_Req')
+    oprot.writeStructBegin('SaveSnapshot_Req')
+    if self.filepath is not None:
+      oprot.writeFieldBegin('filepath', TType.STRING, 1)
+      oprot.writeString(self.filepath)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
   def validate(self):
+    if self.filepath is None:
+      raise TProtocol.TProtocolException(message='Required field filepath is unset!')
     return
 
 
   def __hash__(self):
     value = 17
+    value = (value * 31) ^ hash(self.filepath)
     return value
 
   def __repr__(self):
@@ -420,20 +441,20 @@ class ProfilerRequest:
   Attributes:
    - id
    - ystats
-   - ystats_string
+   - save_snapshot
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I32, 'id', None, None, ), # 1
     (2, TType.STRUCT, 'ystats', (Stats_Req, Stats_Req.thrift_spec), None, ), # 2
-    (3, TType.STRUCT, 'ystats_string', (StatsString_Req, StatsString_Req.thrift_spec), None, ), # 3
+    (3, TType.STRUCT, 'save_snapshot', (SaveSnapshot_Req, SaveSnapshot_Req.thrift_spec), None, ), # 3
   )
 
-  def __init__(self, id=None, ystats=None, ystats_string=None,):
+  def __init__(self, id=None, ystats=None, save_snapshot=None,):
     self.id = id
     self.ystats = ystats
-    self.ystats_string = ystats_string
+    self.save_snapshot = save_snapshot
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -457,8 +478,8 @@ class ProfilerRequest:
           iprot.skip(ftype)
       elif fid == 3:
         if ftype == TType.STRUCT:
-          self.ystats_string = StatsString_Req()
-          self.ystats_string.read(iprot)
+          self.save_snapshot = SaveSnapshot_Req()
+          self.save_snapshot.read(iprot)
         else:
           iprot.skip(ftype)
       else:
@@ -479,9 +500,9 @@ class ProfilerRequest:
       oprot.writeFieldBegin('ystats', TType.STRUCT, 2)
       self.ystats.write(oprot)
       oprot.writeFieldEnd()
-    if self.ystats_string is not None:
-      oprot.writeFieldBegin('ystats_string', TType.STRUCT, 3)
-      self.ystats_string.write(oprot)
+    if self.save_snapshot is not None:
+      oprot.writeFieldBegin('save_snapshot', TType.STRUCT, 3)
+      self.save_snapshot.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -496,7 +517,7 @@ class ProfilerRequest:
     value = 17
     value = (value * 31) ^ hash(self.id)
     value = (value * 31) ^ hash(self.ystats)
-    value = (value * 31) ^ hash(self.ystats_string)
+    value = (value * 31) ^ hash(self.save_snapshot)
     return value
 
   def __repr__(self):
@@ -515,20 +536,20 @@ class ProfilerResponse:
   Attributes:
    - id
    - ystats
-   - ystats_string
+   - snapshot_filepath
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I32, 'id', None, None, ), # 1
     (2, TType.STRUCT, 'ystats', (Stats, Stats.thrift_spec), None, ), # 2
-    (3, TType.STRING, 'ystats_string', None, None, ), # 3
+    (3, TType.STRING, 'snapshot_filepath', None, None, ), # 3
   )
 
-  def __init__(self, id=None, ystats=None, ystats_string=None,):
+  def __init__(self, id=None, ystats=None, snapshot_filepath=None,):
     self.id = id
     self.ystats = ystats
-    self.ystats_string = ystats_string
+    self.snapshot_filepath = snapshot_filepath
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -552,7 +573,7 @@ class ProfilerResponse:
           iprot.skip(ftype)
       elif fid == 3:
         if ftype == TType.STRING:
-          self.ystats_string = iprot.readString();
+          self.snapshot_filepath = iprot.readString();
         else:
           iprot.skip(ftype)
       else:
@@ -573,9 +594,9 @@ class ProfilerResponse:
       oprot.writeFieldBegin('ystats', TType.STRUCT, 2)
       self.ystats.write(oprot)
       oprot.writeFieldEnd()
-    if self.ystats_string is not None:
-      oprot.writeFieldBegin('ystats_string', TType.STRING, 3)
-      oprot.writeString(self.ystats_string)
+    if self.snapshot_filepath is not None:
+      oprot.writeFieldBegin('snapshot_filepath', TType.STRING, 3)
+      oprot.writeString(self.snapshot_filepath)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -590,7 +611,7 @@ class ProfilerResponse:
     value = 17
     value = (value * 31) ^ hash(self.id)
     value = (value * 31) ^ hash(self.ystats)
-    value = (value * 31) ^ hash(self.ystats_string)
+    value = (value * 31) ^ hash(self.snapshot_filepath)
     return value
 
   def __repr__(self):
