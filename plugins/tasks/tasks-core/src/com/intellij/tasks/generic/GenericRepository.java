@@ -53,21 +53,21 @@ public class GenericRepository extends BaseRepositoryImpl {
   @NonNls public static final String USERNAME = "username";
   @NonNls public static final String PASSWORD = "password";
 
-  public final FactoryVariable SERVER_URL_TEMPLATE_VARIABLE = new FactoryVariable(SERVER_URL) {
+  private final FactoryVariable myServerTemplateVariable = new FactoryVariable(SERVER_URL) {
     @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getUrl();
     }
   };
-  public final FactoryVariable USERNAME_TEMPLATE_VARIABLE = new FactoryVariable(USERNAME) {
+  private final FactoryVariable myUserNameTemplateVariable = new FactoryVariable(USERNAME) {
     @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getUsername();
     }
   };
-  public final FactoryVariable PASSWORD_TEMPLATE_VARIABLE = new FactoryVariable(PASSWORD, true) {
+  private final FactoryVariable myPasswordTemplateVariable = new FactoryVariable(PASSWORD, true) {
     @NotNull
     @Override
     public String getValue() {
@@ -75,11 +75,9 @@ public class GenericRepository extends BaseRepositoryImpl {
     }
   };
 
-  public final List<TemplateVariable> PREDEFINED_TEMPLATE_VARIABLES = ContainerUtil.<TemplateVariable>newSmartList(
-    SERVER_URL_TEMPLATE_VARIABLE,
-    USERNAME_TEMPLATE_VARIABLE,
-    PASSWORD_TEMPLATE_VARIABLE
-  );
+  private final List<FactoryVariable> myPredefinedTemplateVariables = Arrays.asList(myServerTemplateVariable,
+                                                                                    myUserNameTemplateVariable,
+                                                                                    myPasswordTemplateVariable);
 
   private String myLoginURL = "";
   private String myTasksListUrl = "";
@@ -330,7 +328,7 @@ public class GenericRepository extends BaseRepositoryImpl {
    * Returns all template variables including both predefined and defined by user
    */
   public List<TemplateVariable> getAllTemplateVariables() {
-    return ContainerUtil.concat(PREDEFINED_TEMPLATE_VARIABLES, getTemplateVariables());
+    return ContainerUtil.concat(myPredefinedTemplateVariables, getTemplateVariables());
   }
 
   public void setTemplateVariables(final List<TemplateVariable> templateVariables) {
