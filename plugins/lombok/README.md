@@ -56,7 +56,9 @@ Developed By
 - [**@uvpoblotzki** Ulrich von Poblotzki](https://github.com/uvpoblotzki)
 - [**@toadzky** David Harris](https://github.com/toadzky)
 - [**@mlueders** Mike Lueders](https://github.com/mlueders)
+- [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
 - [**@siosio** siosio](https://github.com/siosio)
+
 
 License
 -------
