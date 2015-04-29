@@ -31,8 +31,6 @@ import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
 import org.apache.maven.artifact.resolver.*;
 import org.apache.maven.cli.MavenCli;
-import org.apache.maven.cli.logging.Slf4jConfiguration;
-import org.apache.maven.cli.logging.Slf4jConfigurationFactory;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
@@ -72,6 +70,7 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.internal.impl.DefaultArtifactResolver;
 import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.spi.log.LoggerFactory;
@@ -941,9 +940,11 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
         ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
       }
 
+      List<RemoteRepository> repositories = RepositoryUtils.toRepos(request.getRemoteRepositories());
+      repositories = repositorySystem.newResolutionRepositories(repositorySystemSession, repositories);
+
       final ArtifactResult artifactResult = repositorySystem.resolveArtifact(
-        repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact),
-                                                     RepositoryUtils.toRepos(request.getRemoteRepositories()), null));
+        repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact), repositories, null));
 
       return RepositoryUtils.toArtifact(artifactResult.getArtifact());
     }
