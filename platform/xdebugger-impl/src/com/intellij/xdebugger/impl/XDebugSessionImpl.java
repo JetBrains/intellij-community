@@ -543,7 +543,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebugProcess.resume();
   }
 
-  private void doResume() {
+  public void doResume() {
     if (!myPaused.getAndSet(false)) return;
 
     myDispatcher.getMulticaster().beforeSessionResume();

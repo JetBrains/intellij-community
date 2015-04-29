@@ -74,7 +74,7 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return true;
+    return myAnnotation.isValid();
   }
 
   @Override
@@ -106,7 +106,7 @@ public class AddMissingRequiredAnnotationParametersFix implements IntentionActio
       }
     }
 
-    final PsiExpression nullValue = JavaPsiFacade.getElementFactory(myAnnotation.getProject()).createExpressionFromText(PsiKeyword.NULL, null);
+    final PsiExpression nullValue = JavaPsiFacade.getElementFactory(project).createExpressionFromText(PsiKeyword.NULL, null);
     for (final String misssedParameter : myMissedElements) {
       newParameters.add(Pair.<String, PsiAnnotationMemberValue>create(misssedParameter, nullValue));
     }

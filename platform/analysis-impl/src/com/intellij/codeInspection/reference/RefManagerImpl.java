@@ -536,10 +536,6 @@ public class RefManagerImpl extends RefManager {
       return null;
     }
 
-    //noinspection unchecked
-    result = (T)myRefTable.get(psiAnchor);
-    if (result != null) return result;
-
     result = factory.create();
     if (result == null) return null;
 

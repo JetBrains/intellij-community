@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
     @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +
                              (vFile == null ? "<unknown file>" : vFile.getPath()) +
-                             "\nFile:\n" + file.toString() + "@" + System.identityHashCode(file) +
+                             "\nFile:\n" + file + "@" + System.identityHashCode(file) +
                              "\nFile stub tree:\n" + stubString +
                              "\nLoaded file AST:\n" + astString;
     if (ourTraceStubAstBinding) {
@@ -124,7 +124,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       public void visitComposite(CompositeElement composite) {
         PsiElement psi = composite.getPsi();
         if (psi != null) {
-          traces.append(psi.toString()).append("@").append(System.identityHashCode(psi)).append("\n");
+          traces.append(psi).append("@").append(System.identityHashCode(psi)).append("\n");
           String trace = psi.getUserData(CREATION_TRACE);
           if (trace != null) {
             traces.append(trace).append("\n");

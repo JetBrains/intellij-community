@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,17 +55,13 @@ public class FileElement extends LazyParseableElement implements FileASTNode, Ge
     final IFileElementType contentType = (IFileElementType)getElementType();
     assert contentType instanceof ILightStubFileElementType:contentType;
 
-    LighterAST tree;
     if (!isParsed()) {
       return new FCTSBackedLighterAST(getCharTable(), ((ILightStubFileElementType<?>)contentType).parseContentsLight(this));
     }
-    else {
-      tree = new TreeBackedLighterAST(this);
-    }
-    return tree;
+    return new TreeBackedLighterAST(this);
   }
 
-  public FileElement(IElementType type, CharSequence text) {
+  public FileElement(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
 

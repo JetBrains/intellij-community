@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -150,6 +151,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
           transaction.run();
           event = transaction.getAccumulatedEvent();
         }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
         catch(Exception e){
           LOG.error(e);
           return;
@@ -186,12 +190,18 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
           }
         }
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Throwable t) {
         throwables.add(t);
       }
       finally {
         try {
           commitTransaction(transaction);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Throwable t) {
           throwables.add(t);
