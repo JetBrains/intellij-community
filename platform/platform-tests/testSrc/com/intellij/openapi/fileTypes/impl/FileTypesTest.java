@@ -381,6 +381,7 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
     myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
+    myFileTypeManager.clearForTests();
   }
 
   public void testRenamedPropertiesToUnknownAndBack() throws Exception {
@@ -498,8 +499,12 @@ public class FileTypesTest extends PlatformTestCase {
     Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
     assertEquals(1, mappings.size());
     assertEquals(ArchiveFileType.INSTANCE, mappings.values().iterator().next().first);
+    mappings.clear();
     assertEquals(ArchiveFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("zip"));
-    assertNull(myFileTypeManager.getState().getChild("extensionMap"));
+    Element map = myFileTypeManager.getState().getChild("extensionMap");
+    if (map != null) {
+      fail(JDOMUtil.writeElement(map));
+    }
   }
 
   public void testDefaultFileType() throws Exception {
