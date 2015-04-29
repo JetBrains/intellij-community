@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.flow.GrControlFlowExceptionHelper.Catch
 import org.jetbrains.plugins.groovy.lang.flow.instruction.*;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -68,6 +69,7 @@ import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.flow.GrControlFlowExceptionHelper.shouldCheckReturn;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.ASSIGNMENTS_TO_OPERATORS;
 
 public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   extends GroovyRecursiveElementVisitor implements IControlFlowAnalyzer<V> {
@@ -92,12 +94,14 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   final GrDfaValueFactory myFactory;
   final PsiElement myCodeFragment;
   private final PsiType myAssertionError;
+  private final GroovyPsiElementFactory psiElementFactory;
 
   public GrControlFlowAnalyzerImpl(@NotNull GrDfaValueFactory factory, @NotNull PsiElement block) {
     myCallHelper = new GrControlFlowCallHelper<V>(this, block);
     myFactory = factory;
     myCodeFragment = block;
     myAssertionError = TypesUtil.createType(CommonClassNames.JAVA_LANG_ASSERTION_ERROR, block);
+    psiElementFactory = GroovyPsiElementFactory.getInstance(block.getProject());
   }
 
   @Override
@@ -171,8 +175,6 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
   @Override
   public void visitAssignmentExpression(GrAssignmentExpression expression) {
-    startElement(expression);
-
     final GrExpression left = expression.getLValue();
     final GrExpression right = expression.getRValue();
 
@@ -184,6 +186,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     final IElementType op = expression.getOperationTokenType();
     if (op == mASSIGN) {
+      startElement(expression);
       if (left instanceof GrTupleExpression) {
         assignTuple(((GrTupleExpression)left).getExpressions(), right);
         pushUnknown(); // so there will be value to pop in finishElement()
@@ -191,16 +194,21 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       else {
         assign(left, right);
       }
+      finishElement(expression);
     }
     else {
-      left.accept(this);
-      addInstruction(new DupInstruction());
-      right.accept(this);
-      addInstruction(new BinopInstruction<V>(MAP.get(op), expression, expression.getProject()));
-      addInstruction(new GrAssignInstruction<V>(myFactory.createValue(left), right, false));
+      final IElementType operator = ASSIGNMENTS_TO_OPERATORS.get(op);
+      final GrAssignmentExpression assignment = (GrAssignmentExpression)psiElementFactory.createExpressionFromText(
+        String.format("_x = _y %s _z", operator.toString()), expression.getContext()
+      );
+      final GrBinaryExpression rValue = (GrBinaryExpression)assignment.getRValue();
+      assert rValue != null;
+      assert rValue.getRightOperand() != null;
+      assignment.getLValue().replace(expression.getLValue());
+      rValue.getLeftOperand().replace(expression.getLValue());
+      rValue.getRightOperand().replace(expression.getRValue());
+      assignment.accept(this);
     }
-
-    finishElement(expression);
   }
 
   @Override
@@ -976,7 +984,6 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       push(myFactory.createValue(referenceExpression), referenceExpression, writing);
     }
   }
-
 
   private void boxUnbox(GrExpression context, PsiType expectedType, PsiType actualType) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(actualType)) {
