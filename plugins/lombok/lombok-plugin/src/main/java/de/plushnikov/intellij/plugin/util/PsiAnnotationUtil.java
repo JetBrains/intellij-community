@@ -21,7 +21,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
-import lombok.AccessLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,15 +135,6 @@ public class PsiAnnotationUtil {
   public static String getStringAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
     PsiAnnotationMemberValue attrValue = psiAnnotation.findAttributeValue(parameter);
     return null != attrValue ? resolveElementValue(attrValue, String.class) : null;
-  }
-
-  @Nullable
-  public static AccessLevel getAccessLevelAnnotationValue(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
-    PsiAnnotationMemberValue attributeValue = psiAnnotation.findDeclaredAttributeValue(parameter);
-//    return resolveElementValue(attributeValue, String.class);
-    final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiAnnotation.getProject());
-    Object constValue = javaPsiFacade.getConstantEvaluationHelper().computeConstantExpression(attributeValue);
-    return constValue instanceof AccessLevel ? (AccessLevel) constValue : null;
   }
 
   @Nullable
