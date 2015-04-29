@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -292,7 +291,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @NotNull
     private static EditorEx createEditor(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
-      fileType = ObjectUtils.notNull(fileType, FileTypes.PLAIN_TEXT);
       EditorTextField field = new EditorTextField(new MyDocument(), project, fileType, false, false);
       field.setSupplementary(true);
       field.setFontInheritedFromLAF(inheritFontFromLaF);
