@@ -17,9 +17,6 @@
       lombok/Getter.java,lombok/Setter.java,lombok/Equals*.java,lombok/NonNull.java,lombok/Synchronized.java,
       lombok/ToString.java,lombok/SneakyThrows.java,lombok/Value.java,lombok/val.java
     </lombok-annotations.includes>
-    <lombok-pg-annotations.includes>
-      lombok/EnumId.java,lombok/FluentSetter.java,lombok/Singleton.java,lombok/LazyGetter.java
-    </lombok-pg-annotations.includes>
     <hrisey-annotations.includes>
       hrisey/Parcelable.java
     </hrisey-annotations.includes>
@@ -28,10 +25,6 @@
   <prerequisites>
     <maven>${maven.min.version}</maven>
   </prerequisites>
-
-  <dependencies>
-
-  </dependencies>
 
   <build>
     <plugins>
@@ -57,27 +50,6 @@
                 </artifactItem>
               </artifactItems>
               <includes>${lombok-annotations.includes}</includes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>lombok_pg</id>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <phase>generate-sources</phase>
-            <configuration>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>com.github.peichhorn</groupId>
-                  <artifactId>lombok-pg</artifactId>
-                  <version>${lombok-pg.version}</version>
-                  <type>jar</type>
-                  <classifier>sources</classifier>
-                  <overWrite>true</overWrite>
-                  <outputDirectory>${project.build.directory}/generated-sources/lombok-pg</outputDirectory>
-                </artifactItem>
-              </artifactItems>
-              <includes>${lombok-pg-annotations.includes}</includes>
             </configuration>
           </execution>
           <execution>
@@ -115,7 +87,6 @@
             <configuration>
               <sources>
                 <source>${project.build.directory}/generated-sources/lombok</source>
-                <source>${project.build.directory}/generated-sources/lombok-pg</source>
                 <source>${project.build.directory}/generated-sources/hrisey</source>
               </sources>
             </configuration>

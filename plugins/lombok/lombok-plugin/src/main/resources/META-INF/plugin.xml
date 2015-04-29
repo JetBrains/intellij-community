@@ -102,13 +102,6 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalClassMethodProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderExperimentalMethodProcessor"/>
 
-    <!-- lombok-pg-->
-    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.clazz.FluentSetterProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.clazz.SingletonProcessor"/>
-
-    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.field.EnumIdFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.field.LazyGetterFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor_pg.field.FluentSetterFieldProcessor"/>
   </extensions>
 
   <actions>
@@ -204,7 +197,7 @@
 		<ul>
 		<li>0.9.5
 				<ol>
-				    <li>....</li>
+				    <li>Dropped outdated support for some lombok_pg annotations</li>
 				</ol>
 			</li>
 		<li>0.9.4

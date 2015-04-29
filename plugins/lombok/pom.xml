@@ -25,7 +25,6 @@
     <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 
     <lombok.version>1.16.4</lombok.version>
-    <lombok-pg.version>0.11.3</lombok-pg.version>
     <hrisey.version>0.3.1</hrisey.version>
   </properties>
 
@@ -35,17 +34,6 @@
         <groupId>org.projectlombok</groupId>
         <artifactId>lombok</artifactId>
         <version>${lombok.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.github.peichhorn</groupId>
-        <artifactId>lombok-pg</artifactId>
-        <version>${lombok-pg.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.github.peichhorn</groupId>
-        <artifactId>lombok-pg</artifactId>
-        <classifier>runtime</classifier>
-        <version>${lombok-pg.version}</version>
       </dependency>
       <dependency>
         <groupId>pl.mg6.hrisey</groupId>
