@@ -9,6 +9,7 @@ import StringIO
 from prof_io import ProfWriter, ProfReader
 from pydevd_utils import save_main_module
 import pydev_imports
+from prof_util import generate_snapshot_filepath
 
 from thrift import TSerialization
 from thrift.protocol import TJSONProtocol, TBinaryProtocol
@@ -43,11 +44,11 @@ class Profiler(object):
         try:
             import yappi_profiler
             self.profiling_backend = yappi_profiler.YappiProfile()
-            print('Using yappi profiler\n')
+            print('Starting yappi profiler\n')
         except ImportError:
             import cProfile
             self.profiling_backend = cProfile.Profile()
-            print('Using cProfile profiler\n')
+            print('Starting cProfile profiler\n')
 
     def connect(self, host, port):
         s = StartClient(host, port)
@@ -61,7 +62,6 @@ class Profiler(object):
             pass
         self.writer = ProfWriter(sock)
         self.reader = ProfReader(sock, self)
-        self.writer.start()
         self.reader.start()
 
         time.sleep(0.1)  # give threads time to start
@@ -84,13 +84,14 @@ class Profiler(object):
 
         pydev_imports.execfile(file, globals, globals)  # execute the script
 
-        # self.stats_string()
-
-        time.sleep(10)
+        self.stop_profiling()
+        self.save_snapshot(0, generate_snapshot_filepath())
 
     def start_profiling(self):
         self.profiling_backend.enable()
-        print('Profiling started\n')
+
+    def stop_profiling(self):
+        self.profiling_backend.disable()
 
     def get_snapshot(self):
         return self.profiling_backend.getstats()
@@ -100,6 +101,7 @@ class Profiler(object):
         return filename
 
     def save_snapshot(self, id, filename):
+        self.stop_profiling()
         filename = self.dump_snapshot(filename)
 
         m = ProfilerResponse(id=id, snapshot_filepath=filename)
@@ -107,6 +109,7 @@ class Profiler(object):
         print('Snapshot saved to %s' % filename)
 
         self.writer.addCommand(m)
+        self.start_profiling()
 
 
 if __name__ == '__main__':
