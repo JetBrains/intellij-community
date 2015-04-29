@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
@@ -47,8 +46,7 @@ public class ParcelableMethodsProcessor extends AbstractClassProcessor {
   }
 
   private PsiElement generateWriteToParcel(PsiClass psiClass, PsiAnnotation psiAnnotation) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-    PsiClassType classType = elementFactory.createTypeByFQClassName("android.os.Parcel");
+    PsiClassType classType = getParcelClassType(psiClass);
     return new LombokLightMethodBuilder(psiClass.getManager(), "writeToParcel")
         .withModifier(PsiModifier.PUBLIC)
         .withMethodReturnType(PsiType.VOID)
@@ -59,17 +57,22 @@ public class ParcelableMethodsProcessor extends AbstractClassProcessor {
   }
 
   private PsiElement generateParcelConstructor(PsiClass psiClass, PsiAnnotation psiAnnotation) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      if (!psiClass.hasModifierProperty("final")) {
-        builder.append("protected ");
-      }
-      builder.append(psiClass.getName());
-      builder.append("(android.os.Parcel source) {\n}");
-
-      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiAnnotation);
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
+    String modifier = PsiModifier.PACKAGE_LOCAL;
+    if (!psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+      modifier = PsiModifier.PROTECTED;
     }
+
+    return new LombokLightMethodBuilder(psiClass.getManager(), psiClass.getName())
+        .withConstructor(true)
+        .withContainingClass(psiClass)
+        .withNavigationElement(psiAnnotation)
+        .withModifier(modifier)
+        .withParameter("source", getParcelClassType(psiClass));
+  }
+
+  @NotNull
+  private PsiClassType getParcelClassType(@NotNull PsiClass psiClass) {
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+    return elementFactory.createTypeByFQClassName("android.os.Parcel");
   }
 }

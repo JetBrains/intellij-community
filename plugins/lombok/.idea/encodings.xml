@@ -6,7 +6,5 @@
     <file url="file://$PROJECT_DIR$/lombok-plugin/src/test/data/inspection/issue37" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/test-manual" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/test-manual/lombok" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/test-manual/lombok_pg" charset="UTF-8" />
   </component>
 </project>
-
