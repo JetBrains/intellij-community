@@ -17,44 +17,38 @@ package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 
+import java.util.List;
+
 public class KeyFMapTest extends TestCase {
-  private final static Key[] KEYS = {
-    Key.create("K0"),
-    Key.create("K1"),
-    Key.create("K2"),
-    Key.create("K3"),
-    Key.create("K4"),
-    Key.create("K5"),
-    Key.create("K6"),
-    Key.create("K7"),
-    Key.create("K8"),
-    Key.create("K9")
-  };
+  private static KeyFMap createKeyFMap(List<Key> keys, List<Object> values) {
+    KeyFMap map = KeyFMap.EMPTY_MAP;
 
-  private final static Object[] VALUES = { "V0", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8", "V9" };
-
-  private static KeyFMap createKeyFMap(Key[] keys, Object[] values, int size) {
-    KeyFMap fmap = KeyFMap.EMPTY_MAP;
-
-    for (int i = 0; i < size; i++) {
-      fmap = fmap.plus(keys[i], values[i]);
+    for (int i = 0; i < keys.size(); i++) {
+      map = map.plus(keys.get(i), values.get(i));
     }
 
-    return fmap;
+    return map;
   }
 
   private static void doTestGetKeys(int size) {
-    KeyFMap map = createKeyFMap(KEYS, VALUES, size);
-
-    Key[] keys = map.getKeys();
-
-    assertEquals(size, keys.length);
-
+    List<Key> keys = ContainerUtil.newArrayList();
+    List<Object> values = ContainerUtil.newArrayList();
     for (int i = 0; i < size; i++) {
-      int index = ArrayUtil.indexOf(keys, KEYS[i], 0, size);
-      assertTrue("Key" + " not found: " + KEYS[i], index >= 0);
+      keys.add(Key.create("Key#" + i));
+      values.add("Value#" + i);
+    }
+
+    KeyFMap map = createKeyFMap(keys, values);
+
+    Key[] actualKeys = map.getKeys();
+
+    assertEquals(size, actualKeys.length);
+
+    for (Key key : keys) {
+      assertTrue("Key not found: " + key, ArrayUtil.contains(key, actualKeys));
     }
   }
 
@@ -75,6 +69,6 @@ public class KeyFMapTest extends TestCase {
   }
 
   public void testGetKeysOnMapBackedFMap() {
-    doTestGetKeys(10);
+    doTestGetKeys(15);
   }
 }
