@@ -129,8 +129,11 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
     if (value == null) return; // null may come from deserializator
-    this.outputLevel = value;
-    changed();
+    if (!Comparing.equal(this.outputLevel, value)) {
+      MavenServerManager.getInstance().setLoggingLevel(value);
+      this.outputLevel = value;
+      changed();
+    }
   }
 
   public boolean isWorkOffline() {
