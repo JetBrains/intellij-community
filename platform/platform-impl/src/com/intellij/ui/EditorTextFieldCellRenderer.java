@@ -196,7 +196,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     protected void paintChildren(Graphics g) {
-      updateText();
+      updateText(g.getClipBounds());
       super.paintChildren(g);
     }
 
@@ -206,20 +206,32 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
 
-    private void updateText() {
+    private void updateText(Rectangle clip) {
       FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
       Insets insets = getInsets();
       int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
 
       myDocumentTextBuilder.setLength(0);
-      float visibleLinesCountFractional = getHeight() / (float)myEditor.getLineHeight();
-      if (visibleLinesCountFractional < 1.1f) {
+
+      boolean singleLineMode = getHeight() / (float)myEditor.getLineHeight() < 1.1f;
+      if (singleLineMode) {
         appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true);
       }
       else {
+        int lineHeight = myEditor.getLineHeight();
+        int firstVisibleLine = clip.y / lineHeight;
+        float visibleLinesCountFractional = clip.height / (float)lineHeight;
         int linesToAppend = (int)Math.floor(visibleLinesCountFractional + 0.5);
-        for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd() && linesToAppend > 0; lt.advance(), linesToAppend--) {
-          appendAbbreviated(myDocumentTextBuilder, myRawText, lt.getOffset(), lt.getOffset() + lt.getLength(), fontMetrics, maxLineWidth, false);
+
+        LineTokenizer lt = new LineTokenizer(myRawText);
+        for (int line = 0; !lt.atEnd() && line < firstVisibleLine; lt.advance(), line++) {
+          myDocumentTextBuilder.append('\n');
+        }
+
+        for (int line = 0; !lt.atEnd() && line < linesToAppend; lt.advance(), line++) {
+          int start = lt.getOffset();
+          int end = start + lt.getLength();
+          appendAbbreviated(myDocumentTextBuilder, myRawText, start, end, fontMetrics, maxLineWidth, false);
           if (lt.getLineSeparatorLength() > 0) {
             myDocumentTextBuilder.append('\n');
           }
