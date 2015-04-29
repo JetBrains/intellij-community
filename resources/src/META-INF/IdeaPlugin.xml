@@ -172,7 +172,6 @@
 
     <extensionPoint name="unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport"/>
 
-    <extensionPoint name="clsStubBuilderFactory" interface="com.intellij.psi.impl.compiled.ClsStubBuilderFactory"/>
     <extensionPoint name="javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
 
     <extensionPoint name="importFilter" interface="com.intellij.codeInsight.ImportFilter"/>
@@ -269,8 +268,6 @@
     <!-- deprecated API -->
     <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint name="psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
-    <!--suppress DeprecatedClassUsageInspection -->
-    <extensionPoint name="psi.clsDecompiledFileProvider" interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
 
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
 
