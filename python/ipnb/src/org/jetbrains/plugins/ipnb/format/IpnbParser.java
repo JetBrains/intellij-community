@@ -1,14 +1,8 @@
 package org.jetbrains.plugins.ipnb.format;
 
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.TypeAdapterFactory;
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -21,6 +15,7 @@ import org.jetbrains.plugins.ipnb.format.cells.*;
 import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +28,9 @@ public class IpnbParser {
 
   @NotNull
   private static Gson initGson() {
-    final GsonBuilder builder = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapterFactory(new ExecutionCountAdapterFactory());
+    final GsonBuilder builder =
+      new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(IpnbCellRaw.class, new RawCellAdapter())
+    .registerTypeAdapter(IpnbFileRaw.class, new FileAdapter()).registerTypeAdapter(CellOutputRaw.class, new OutputsAdapter()).serializeNulls();
     return builder.create();
   }
 
@@ -139,18 +136,10 @@ public class IpnbParser {
     List<IpnbCellRaw> cells = new ArrayList<IpnbCellRaw>();
   }
 
-  private static class ExecutionCount {
-    Integer count;
-
-    public ExecutionCount(Integer integer) {
-      count = integer;
-    }
-  }
-
   @SuppressWarnings("unused")
   private static class IpnbCellRaw {
     String cell_type;
-    ExecutionCount execution_count;
+    Integer execution_count;
     Map<String, Object> metadata = new HashMap<String, Object>();
     Integer level;
     CellOutputRaw[] outputs;
@@ -174,7 +163,7 @@ public class IpnbParser {
         raw.outputs = outputRaws.toArray(new CellOutputRaw[outputRaws.size()]);
         final Integer promptNumber = ((IpnbCodeCell)cell).getPromptNumber();
         if (nbformat == 4) {
-          raw.execution_count = new ExecutionCount(promptNumber != null && promptNumber >= 0 ? promptNumber : null);
+          raw.execution_count = promptNumber != null && promptNumber >= 0 ? promptNumber : null;
           raw.source = ((IpnbCodeCell)cell).getSource();
         }
         else {
@@ -204,7 +193,7 @@ public class IpnbParser {
         for (CellOutputRaw outputRaw : outputs) {
           outputCells.add(outputRaw.createOutput());
         }
-        final Integer prompt = (prompt_number != null) ? prompt_number : ((execution_count != null) ? execution_count.count : null);
+        final Integer prompt = prompt_number != null ? prompt_number : execution_count;
         cell = new IpnbCodeCell(language == null ? "python" : language, input == null ? source : input,
                                 prompt, outputCells);
       }
@@ -381,34 +370,137 @@ public class IpnbParser {
     @SerializedName("text/latex") String[] latex;
   }
 
-  public static class ExecutionCountAdapterFactory implements TypeAdapterFactory {
-    @SuppressWarnings("unchecked")
-    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type) {
-      Class<T> rawType = (Class<T>) type.getRawType();
-      if (rawType != ExecutionCount.class) {
-        return null;
+  static class RawCellAdapter implements JsonSerializer<IpnbCellRaw> {
+    @Override
+    public JsonElement serialize(IpnbCellRaw cellRaw, Type typeOfSrc, JsonSerializationContext context) {
+      final JsonObject jsonObject = new JsonObject();
+      jsonObject.addProperty("cell_type", cellRaw.cell_type);
+      if ("code".equals(cellRaw.cell_type)) {
+        final Integer count = cellRaw.execution_count;
+        if (count == null) {
+          jsonObject.add("execution_count", JsonNull.INSTANCE);
+        }
+        else {
+          jsonObject.addProperty("execution_count", count);
+        }
       }
-      return (TypeAdapter<T>)new ExecutionCountAdapter();
+      final JsonElement metadata = gson.toJsonTree(cellRaw.metadata);
+      jsonObject.add("metadata", metadata);
+      if (cellRaw.level != null) {
+        jsonObject.addProperty("level", cellRaw.level);
+      }
+
+      if (cellRaw.outputs != null) {
+        final JsonElement outputs = gson.toJsonTree(cellRaw.outputs);
+        jsonObject.add("outputs", outputs);
+      }
+      if (cellRaw.source != null) {
+        final JsonElement source = gson.toJsonTree(cellRaw.source);
+        jsonObject.add("source", source);
+      }
+      if (cellRaw.input != null) {
+        final JsonElement input = gson.toJsonTree(cellRaw.input);
+        jsonObject.add("input", input);
+      }
+      if (cellRaw.language != null) {
+        jsonObject.addProperty("language", cellRaw.language);
+      }
+      if (cellRaw.prompt_number != null) {
+        jsonObject.addProperty("prompt_number", cellRaw.prompt_number);
+      }
+
+      return jsonObject;
+    }
+  }
+  static class FileAdapter implements JsonSerializer<IpnbFileRaw> {
+    @Override
+    public JsonElement serialize(IpnbFileRaw fileRaw, Type typeOfSrc, JsonSerializationContext context) {
+      final JsonObject jsonObject = new JsonObject();
+      if (fileRaw.worksheets != null) {
+        final JsonElement worksheets = gson.toJsonTree(fileRaw.worksheets);
+        jsonObject.add("worksheets", worksheets);
+      }
+      if (fileRaw.cells != null) {
+        final JsonElement cells = gson.toJsonTree(fileRaw.cells);
+        jsonObject.add("cells", cells);
+      }
+      final JsonElement metadata = gson.toJsonTree(fileRaw.metadata);
+      jsonObject.add("metadata", metadata);
+
+      jsonObject.addProperty("nbformat", fileRaw.nbformat);
+      jsonObject.addProperty("nbformat_minor", fileRaw.nbformat_minor);
+
+      return jsonObject;
     }
   }
 
-  public static class ExecutionCountAdapter extends TypeAdapter<ExecutionCount> {
-    public ExecutionCount read(JsonReader reader) throws IOException {
-      if (reader.peek() == JsonToken.NULL) {
-        reader.nextNull();
-        return new ExecutionCount(null);
+  static class OutputsAdapter implements JsonSerializer<CellOutputRaw> {
+    @Override
+    public JsonElement serialize(CellOutputRaw cellRaw, Type typeOfSrc, JsonSerializationContext context) {
+      final JsonObject jsonObject = new JsonObject();
+      if (cellRaw.ename != null) {
+        jsonObject.addProperty("ename", cellRaw.ename);
       }
-      return new ExecutionCount(reader.nextInt());
-    }
-    public void write(JsonWriter writer, ExecutionCount value) throws IOException {
-      if (value == null || value.count == null) {
-        writer.setSerializeNulls(true);
-        writer.nullValue();
-        writer.setSerializeNulls(false);
-        return;
+      if (cellRaw.name != null) {
+        jsonObject.addProperty("name", cellRaw.name);
       }
-      writer.value(value.count);
+      if (cellRaw.evalue != null) {
+        jsonObject.addProperty("evalue", cellRaw.evalue);
+      }
+
+      if (cellRaw.data != null) {
+        final JsonElement data = gson.toJsonTree(cellRaw.data);
+        jsonObject.add("data", data);
+      }
+      if (cellRaw.execution_count != null) {
+        jsonObject.addProperty("execution_count", cellRaw.execution_count);
+      }
+      if (cellRaw.output_type != null) {
+        jsonObject.addProperty("output_type", cellRaw.output_type);
+      }
+      if (cellRaw.png != null) {
+        jsonObject.addProperty("png", cellRaw.png);
+      }
+
+      if (cellRaw.stream != null) {
+        jsonObject.addProperty("stream", cellRaw.stream);
+      }
+
+      if (cellRaw.jpeg != null) {
+        jsonObject.addProperty("jpeg", cellRaw.jpeg);
+      }
+
+      if (cellRaw.html != null) {
+        final JsonElement html = gson.toJsonTree(cellRaw.html);
+        jsonObject.add("html", html);
+      }
+      if (cellRaw.latex != null) {
+        final JsonElement latex = gson.toJsonTree(cellRaw.latex);
+        jsonObject.add("latex", latex);
+      }
+
+      if (cellRaw.svg != null) {
+        final JsonElement svg = gson.toJsonTree(cellRaw.svg);
+        jsonObject.add("svg", svg);
+      }
+      if (cellRaw.prompt_number != null) {
+        jsonObject.addProperty("prompt_number", cellRaw.prompt_number);
+      }
+      if (cellRaw.text != null) {
+        final JsonElement text = gson.toJsonTree(cellRaw.text);
+        jsonObject.add("text", text);
+      }
+      if (cellRaw.traceback != null) {
+        final JsonElement traceback = gson.toJsonTree(cellRaw.traceback);
+        jsonObject.add("traceback", traceback);
+      }
+
+      if (cellRaw.metadata != null) {
+        final JsonElement metadata = gson.toJsonTree(cellRaw.metadata);
+        jsonObject.add("metadata", metadata);
+      }
+
+      return jsonObject;
     }
   }
-
 }
