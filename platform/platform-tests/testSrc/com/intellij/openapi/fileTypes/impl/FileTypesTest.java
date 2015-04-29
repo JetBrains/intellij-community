@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.PatternUtil;
@@ -61,8 +62,9 @@ public class FileTypesTest extends PlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public FileTypesTest() {
-    initPlatformLangPrefix();
+    IdeaTestCase.initPlatformPrefix();
   }
 
   @Override
@@ -382,6 +384,8 @@ public class FileTypesTest extends PlatformTestCase {
 
     myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
     myFileTypeManager.clearForTests();
+    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.initComponent();
   }
 
   public void testRenamedPropertiesToUnknownAndBack() throws Exception {
