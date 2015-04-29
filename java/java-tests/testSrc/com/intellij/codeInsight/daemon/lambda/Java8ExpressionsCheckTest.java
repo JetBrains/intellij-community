@@ -31,6 +31,10 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testNestedLambdaAdditionalConstraints() throws Exception {
+    doTestAllMethodCallExpressions();
+  }
+
   private void doTestAllMethodCallExpressions() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final Collection<PsiMethodCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiMethodCallExpression.class);

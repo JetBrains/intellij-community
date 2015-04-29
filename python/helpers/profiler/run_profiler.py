@@ -5,15 +5,18 @@ import time
 import sys
 import traceback
 import StringIO
-
-import yappi
+import os
 
 from prof_io import ProfWriter, ProfReader
 from pydevd_utils import save_main_module
 import pydev_imports
-from prof_data import copy_fields
-from profiler_protocol_pb2 import ProfilerResponse, Stats
+from prof_util import generate_snapshot_filepath
 
+from thrift import TSerialization
+from thrift.protocol import TJSONProtocol, TBinaryProtocol
+from profiler.ttypes import ProfilerResponse
+
+base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
 
 def StartClient(host, port):
     """ connects to a host/port """
@@ -39,7 +42,14 @@ def StartClient(host, port):
 
 class Profiler(object):
     def __init__(self):
-        pass
+        try:
+            import yappi_profiler
+            self.profiling_backend = yappi_profiler.YappiProfile()
+            print('Starting yappi profiler\n')
+        except ImportError:
+            import cProfile
+            self.profiling_backend = cProfile.Profile()
+            print('Starting cProfile profiler\n')
 
     def connect(self, host, port):
         s = StartClient(host, port)
@@ -53,18 +63,15 @@ class Profiler(object):
             pass
         self.writer = ProfWriter(sock)
         self.reader = ProfReader(sock, self)
-        self.writer.start()
         self.reader.start()
 
         time.sleep(0.1)  # give threads time to start
 
     def process(self, message):
-        if message.HasField('ystats_string'):
-            self.stats_string(message.id)
-        elif message.HasField('ystats'):
-            self.func_stats(message.id)
+        if hasattr(message, 'save_snapshot'):
+            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath))
         else:
-            raise AssertionError("malformed request")
+            raise AssertionError("Unknown request %s" % dir(message))
 
     def run(self, file):
         m = save_main_module(file, 'run_profiler')
@@ -78,32 +85,32 @@ class Profiler(object):
 
         pydev_imports.execfile(file, globals, globals)  # execute the script
 
-        # self.stats_string()
-
-        time.sleep(10)
+        self.stop_profiling()
+        self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path))
 
     def start_profiling(self):
-        yappi.start(profile_threads=False)
+        self.profiling_backend.enable()
 
-    def stats_string(self, id):
-        output = StringIO.StringIO()
-        yappi.get_func_stats().print_all(out=output)
-        m = ProfilerResponse()
-        m.id = id
-        m.ystats_string = output.getvalue()
+    def stop_profiling(self):
+        self.profiling_backend.disable()
+
+    def get_snapshot(self):
+        return self.profiling_backend.getstats()
+
+    def dump_snapshot(self, filename):
+        self.profiling_backend.dump_stats(filename)
+        return filename
+
+    def save_snapshot(self, id, filename):
+        self.stop_profiling()
+        filename = self.dump_snapshot(filename)
+
+        m = ProfilerResponse(id=id, snapshot_filepath=filename)
+
+        print('Snapshot saved to %s' % filename)
+
         self.writer.addCommand(m)
-
-    def func_stats(self, id):
-        yfunc_stats = yappi.get_func_stats()
-        m = ProfilerResponse()
-        m.id = id
-        ystats = Stats()
-
-        for fstat in yfunc_stats:
-            func_stat = ystats.func_stats.add()
-            copy_fields(func_stat, fstat)
-        m.ystats.CopyFrom(ystats)
-        self.writer.addCommand(m)
+        self.start_profiling()
 
 
 if __name__ == '__main__':
