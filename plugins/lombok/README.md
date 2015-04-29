@@ -1,6 +1,8 @@
 lombok-intellij-plugin [![Build Status](https://travis-ci.org/mplushnikov/lombok-intellij-plugin.svg?branch=master)](https://travis-ci.org/mplushnikov/lombok-intellij-plugin) [![Donate](https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=3F9HXD7A2SMCN) 
 ======================
 
+[![Join the chat at https://gitter.im/mplushnikov/lombok-intellij-plugin](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mplushnikov/lombok-intellij-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317?pr=idea plugin) to support [Lombok](http://code.google.com/p/projectlombok/) annotations. ##
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
