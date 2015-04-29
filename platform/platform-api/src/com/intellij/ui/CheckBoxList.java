@@ -204,9 +204,8 @@ public class CheckBoxList<T> extends JBList {
         checkbox.setBorderPainted(false);
         panel.add(checkbox, BorderLayout.LINE_START);
 
-        JLabel infoLabel = new JLabel();
-        infoLabel.setText(auxText);
-        infoLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        JLabel infoLabel = new JLabel(auxText, SwingConstants.RIGHT);
+        infoLabel.setBorder(new EmptyBorder(0, 0, 0, checkbox.getInsets().left));
         infoLabel.setFont(font);
         panel.add(infoLabel, BorderLayout.CENTER);
 
