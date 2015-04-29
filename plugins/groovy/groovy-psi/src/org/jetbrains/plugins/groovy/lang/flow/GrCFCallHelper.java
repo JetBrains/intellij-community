@@ -29,7 +29,6 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrDereferenceInstruction;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrMethodCallInstruction;
@@ -46,12 +45,85 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL_DOT;
 
-public class GrControlFlowCallHelper<V extends GrInstructionVisitor<V>> {
+public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
+
+  public interface Arguments {
+    @NotNull
+    GrNamedArgument[] getNamedArguments();
+
+    @NotNull
+    GrExpression[] getExpressionArguments();
+
+    @NotNull
+    GrClosableBlock[] getClosureArguments();
+
+    int runArguments();
+  }
+
+  public abstract class ArgumentsBase implements Arguments {
+
+    @NotNull
+    @Override
+    public GrNamedArgument[] getNamedArguments() {
+      return GrNamedArgument.EMPTY_ARRAY;
+    }
+
+    @NotNull
+    @Override
+    public GrClosableBlock[] getClosureArguments() {
+      return GrClosableBlock.EMPTY_ARRAY;
+    }
+
+    @NotNull
+    @Override
+    public GrExpression[] getExpressionArguments() {
+      return GrExpression.EMPTY_ARRAY;
+    }
+
+    @Override
+    public int runArguments() {
+      return visitArguments(getNamedArguments(), getExpressionArguments(), getClosureArguments());
+    }
+  }
+
+  public class CallBasedArguments extends ArgumentsBase {
+
+    private final GrCall myCall;
+
+    public CallBasedArguments(GrCall call) {
+      myCall = call;
+    }
+
+    @NotNull
+    @Override
+    public GrNamedArgument[] getNamedArguments() {
+      return myCall.getNamedArguments();
+    }
+
+    @NotNull
+    @Override
+    public GrClosableBlock[] getClosureArguments() {
+      return myCall.getClosureArguments();
+    }
+
+    @NotNull
+    @Override
+    public GrExpression[] getExpressionArguments() {
+      return myCall.getExpressionArguments();
+    }
+  }
+
+  public final Arguments EMPTY = new ArgumentsBase() {
+    @Override
+    public int runArguments() {
+      return 0;
+    }
+  };
 
   private final GrControlFlowAnalyzerImpl<V> myAnalyzer;
   private final PsiType myClosureType;
 
-  public GrControlFlowCallHelper(GrControlFlowAnalyzerImpl<V> analyzer, @NotNull PsiElement block) {
+  public GrCFCallHelper(GrControlFlowAnalyzerImpl<V> analyzer, @NotNull PsiElement block) {
     myAnalyzer = analyzer;
     myClosureType = TypesUtil.createType("groovy.lang.Closure", block);
   }
@@ -70,28 +142,13 @@ public class GrControlFlowCallHelper<V extends GrInstructionVisitor<V>> {
       throw new IControlFlowAnalyzer.CannotAnalyzeException();
     }
     else {
-      processMethodCall(
-        call,
-        (GrReferenceExpression)invokedExpression,
-        call.getNamedArguments(),
-        call.getExpressionArguments(),
-        call.getClosureArguments()
-      );
+      processMethodCall(call, (GrReferenceExpression)invokedExpression, new CallBasedArguments(call));
     }
   }
 
   void processMethodCall(@NotNull GrExpression call,
                          @NotNull GrReferenceExpression invokedReference,
-                         @NotNull GrExpression... expressionArguments) {
-    processMethodCall(call, invokedReference, GrNamedArgument.EMPTY_ARRAY, expressionArguments, GrClosableBlock.EMPTY_ARRAY);
-  }
-
-  private void processMethodCall(@NotNull GrExpression call,
-                                 @NotNull GrReferenceExpression invokedReference,
-                                 @NotNull GrNamedArgument[] namedArguments,
-                                 @NotNull GrExpression[] expressionArguments,
-                                 @NotNull GrClosableBlock[] closureArguments) {
-
+                         @NotNull Arguments arguments) {
     final GroovyResolveResult result = invokedReference.advancedResolve();
     final GrExpression qualifier = invokedReference.getQualifierExpression();
     if (qualifier != null) {
@@ -108,7 +165,7 @@ public class GrControlFlowCallHelper<V extends GrInstructionVisitor<V>> {
 
       // null branch
       // even if qualifier is null, groovy evaluates arguments
-      final int argumentsToPop = visitArguments(namedArguments, expressionArguments, closureArguments);
+      final int argumentsToPop = arguments.runArguments();//visitArguments(namedArguments, expressionArguments, closureArguments);
       for (int i = 0; i < argumentsToPop; i++) {
         myAnalyzer.pop();
       }
@@ -119,34 +176,43 @@ public class GrControlFlowCallHelper<V extends GrInstructionVisitor<V>> {
       // not null branch
       gotoToNotNull.setOffset(myAnalyzer.myFlow.getNextOffset());
       // qualifier is on top of stack
-      processMethodCallStraight(call, result, namedArguments, expressionArguments, closureArguments);
+      processMethodCallStraight(call, result, arguments);
       gotoEnd.setOffset(myAnalyzer.myFlow.getNextOffset());
     }
     else {
-      processMethodCallStraight(call, result, namedArguments, expressionArguments, closureArguments);
+      processMethodCallStraight(call, result, arguments);
     }
   }
 
   void processMethodCallStraight(@NotNull GrExpression call,
                                  @NotNull GroovyResolveResult result,
-                                 @Nullable GrExpression... expressionArguments) {
+                                 @NotNull final GrExpression... expressionArguments) {
     processMethodCallStraight(
       call,
       result,
-      GrNamedArgument.EMPTY_ARRAY,
-      expressionArguments == null ? GrExpression.EMPTY_ARRAY : expressionArguments,
-      GrClosableBlock.EMPTY_ARRAY
+      new ArgumentsBase() {
+        @NotNull
+        @Override
+        public GrExpression[] getExpressionArguments() {
+          return expressionArguments;
+        }
+      }
     );
   }
 
-  private void processMethodCallStraight(@NotNull GrExpression call,
-                                         @NotNull GroovyResolveResult result,
-                                         @NotNull GrNamedArgument[] namedArguments,
-                                         @NotNull GrExpression[] expressionArguments,
-                                         @NotNull GrClosableBlock[] closureArguments) {
+  void processMethodCallStraight(@NotNull GrExpression call,
+                                 @NotNull GroovyResolveResult result,
+                                 @NotNull Arguments arguments) {
     // evaluate arguments
-    visitArguments(namedArguments, expressionArguments, closureArguments);
-    myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(call, namedArguments, expressionArguments, closureArguments, result));
+    //visitArguments(namedArguments, expressionArguments, closureArguments);
+    arguments.runArguments();
+    myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(
+      call,
+      arguments.getNamedArguments(),
+      arguments.getExpressionArguments(),
+      arguments.getClosureArguments(),
+      result
+    ));
   }
 
   int visitArguments(@NotNull GrCall methodCall) {
@@ -176,25 +242,42 @@ public class GrControlFlowCallHelper<V extends GrInstructionVisitor<V>> {
     return counter;
   }
 
-  void processIndexProperty(GrIndexProperty indexProperty, @Nullable GrExpression right) {
-    indexProperty.getInvokedExpression().accept(myAnalyzer); // qualifier
-    final boolean isGetter = right == null;
-    final GroovyResolveResult[] results = isGetter ? indexProperty.multiResolveGetter(false) : indexProperty.multiResolveSetter(false);
+  void processIndexProperty(final GrIndexProperty indexProperty, @NotNull final Arguments arguments) {
+    final GrExpression invokedExpression = indexProperty.getInvokedExpression();
+    invokedExpression.accept(myAnalyzer); // qualifier
+    final GroovyResolveResult[] results = arguments == EMPTY
+                                          ? indexProperty.multiResolveGetter(false)
+                                          : indexProperty.multiResolveSetter(false);
     if (results.length == 1) {
-      GrExpression[] args = isGetter ? indexProperty.getExpressionArguments()
-                                     : ArrayUtil.append(indexProperty.getExpressionArguments(), right);
-      processMethodCallStraight(indexProperty, results[0], args);
+      processMethodCallStraight(indexProperty, results[0], new ArgumentsBase() {
+        @NotNull
+        @Override
+        public GrExpression[] getExpressionArguments() {
+          return ArrayUtil.mergeArrays(indexProperty.getExpressionArguments(), arguments.getExpressionArguments());
+        }
+
+        @Override
+        public int runArguments() {
+          for (GrExpression arg : indexProperty.getExpressionArguments()) {
+            arg.accept(myAnalyzer);
+          }
+          return indexProperty.getExpressionArguments().length + arguments.runArguments();
+        }
+      });
     }
     else {
-      myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(indexProperty)); // dereference qualifier
+      myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(invokedExpression)); // dereference qualifier
+
       for (GrExpression arg : indexProperty.getExpressionArguments()) {
         arg.accept(myAnalyzer);
         myAnalyzer.pop();
       }
-      if (right != null) {
-        right.accept(myAnalyzer);
+
+      final int count = arguments.runArguments();
+      for (int i = 0; i < count; i++) {
         myAnalyzer.pop();
       }
+
       myAnalyzer.pushUnknown();
     }
   }

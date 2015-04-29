@@ -27,17 +27,14 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.flow.GrControlFlowExceptionHelper.CatchDescriptor;
+import org.jetbrains.plugins.groovy.lang.flow.GrCFExceptionHelper.CatchDescriptor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.*;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -65,43 +62,28 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.List;
-import java.util.Map;
 
-import static org.jetbrains.plugins.groovy.lang.flow.GrControlFlowExceptionHelper.shouldCheckReturn;
+import static org.jetbrains.plugins.groovy.lang.flow.GrCFExpressionHelper.shouldCheckReturn;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.ASSIGNMENTS_TO_OPERATORS;
 
 public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   extends GroovyRecursiveElementVisitor implements IControlFlowAnalyzer<V> {
 
-  private static final Map<IElementType, DfaRelation> MAP = new HashMap<IElementType, DfaRelation>();
-
-  static {
-    MAP.put(mEQUAL, DfaRelation.EQ);
-    MAP.put(mNOT_EQUAL, DfaRelation.NE);
-    MAP.put(kINSTANCEOF, DfaRelation.INSTANCEOF);
-    MAP.put(mGT, DfaRelation.GT);
-    MAP.put(mGE, DfaRelation.GE);
-    MAP.put(mLT, DfaRelation.LT);
-    MAP.put(mLE, DfaRelation.LE);
-    MAP.put(mPLUS, DfaRelation.PLUS);
-  }
-
-  private final GrControlFlowExceptionHelper<V> myExceptionHelper = new GrControlFlowExceptionHelper<V>(this);
-  private final GrControlFlowCallHelper<V> myCallHelper;
+  private final GrCFExceptionHelper<V> myExceptionHelper = new GrCFExceptionHelper<V>(this);
+  private final GrCFExpressionHelper<V> myExpressionHelper = new GrCFExpressionHelper<V>(this);
+  final GrCFCallHelper<V> myCallHelper;
   final ControlFlowImpl<V> myFlow = new ControlFlowImpl<V>();
   final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
   final GrDfaValueFactory myFactory;
   final PsiElement myCodeFragment;
   private final PsiType myAssertionError;
-  private final GroovyPsiElementFactory psiElementFactory;
 
   public GrControlFlowAnalyzerImpl(@NotNull GrDfaValueFactory factory, @NotNull PsiElement block) {
-    myCallHelper = new GrControlFlowCallHelper<V>(this, block);
+    myCallHelper = new GrCFCallHelper<V>(this, block);
     myFactory = factory;
     myCodeFragment = block;
     myAssertionError = TypesUtil.createType(CommonClassNames.JAVA_LANG_ASSERTION_ERROR, block);
-    psiElementFactory = GroovyPsiElementFactory.getInstance(block.getProject());
   }
 
   @Override
@@ -122,7 +104,6 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       return null;
     }
   }
-
 
   @Override
   public void visitOpenBlock(GrOpenBlock block) {
@@ -150,7 +131,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         final GrExpression[] initializers = ((GrListOrMap)tupleInitializer).getInitializers();
         // iterate over tuple variables and initialize each 
         for (int i = 0; i < Math.min(variables.length, initializers.length); i++) {
-          initialize(variables[i], initializers[i]);
+          myExpressionHelper.initialize(variables[i], initializers[i]);
           pop();
         }
         // iterate over rest initializers and evaluate them
@@ -164,7 +145,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       for (GrVariable variable : variables) {
         final GrExpression initializer = variable.getInitializerGroovy();
         if (initializer != null) {
-          initialize(variable, initializer);
+          myExpressionHelper.initialize(variable, initializer);
           pop();
         }
       }
@@ -174,7 +155,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   }
 
   @Override
-  public void visitAssignmentExpression(GrAssignmentExpression expression) {
+  public void visitAssignmentExpression(final GrAssignmentExpression expression) {
     final GrExpression left = expression.getLValue();
     final GrExpression right = expression.getRValue();
 
@@ -188,26 +169,22 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (op == mASSIGN) {
       startElement(expression);
       if (left instanceof GrTupleExpression) {
-        assignTuple(((GrTupleExpression)left).getExpressions(), right);
+        myExpressionHelper.assignTuple(((GrTupleExpression)left).getExpressions(), right);
         pushUnknown(); // so there will be value to pop in finishElement()
       }
       else {
-        assign(left, right);
+        myExpressionHelper.assign(left, right);
       }
       finishElement(expression);
     }
     else {
-      final IElementType operator = ASSIGNMENTS_TO_OPERATORS.get(op);
-      final GrAssignmentExpression assignment = (GrAssignmentExpression)psiElementFactory.createExpressionFromText(
-        String.format("_x = _y %s _z", operator.toString()), expression.getContext()
-      );
-      final GrBinaryExpression rValue = (GrBinaryExpression)assignment.getRValue();
-      assert rValue != null;
-      assert rValue.getRightOperand() != null;
-      assignment.getLValue().replace(expression.getLValue());
-      rValue.getLeftOperand().replace(expression.getLValue());
-      rValue.getRightOperand().replace(expression.getRValue());
-      assignment.accept(this);
+      myExpressionHelper.assign(left, right, myCallHelper.new ArgumentsBase() {
+        @Override
+        public int runArguments() {
+          myExpressionHelper.binaryOperation(expression, left, right, ASSIGNMENTS_TO_OPERATORS.get(op), expression.multiResolve(false));
+          return 1;
+        }
+      });
     }
   }
 
@@ -235,7 +212,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (arrayDeclaration != null) {
       for (GrExpression dimension : arrayDeclaration.getBoundExpressions()) {
         dimension.accept(this);
-        boxUnbox(dimension, PsiType.INT, dimension.getType());
+        myExpressionHelper.boxUnbox(PsiType.INT, dimension.getType());
         pop();
       }
     }
@@ -629,7 +606,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     startElement(parameter);
     final GrExpression initializer = parameter.getInitializerGroovy();
     if (initializer != null) {
-      initialize(parameter, initializer);
+      myExpressionHelper.initialize(parameter, initializer);
     }
     finishElement(parameter);
   }
@@ -709,11 +686,11 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         gotoToNotNull.setOffset(myFlow.getNextOffset());
 
         // not null branch
-        dereference(qualifierExpression, referenceExpression, writing);
+        myExpressionHelper.dereference(qualifierExpression, referenceExpression, writing);
         gotoEnd.setOffset(myFlow.getNextOffset());
       }
       else {
-        dereference(qualifierExpression, referenceExpression, writing);
+        myExpressionHelper.dereference(qualifierExpression, referenceExpression, writing);
       }
     }
 
@@ -780,16 +757,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       push(myFactory.getConstFactory().getTrue());
     }
     else {
-      left.accept(this);
       final GroovyResolveResult[] resolveResults = expression.multiResolve(false);
-      if (resolveResults.length == 1) {
-        final GroovyResolveResult result = resolveResults[0];
-        myCallHelper.processMethodCallStraight(expression, result, right);
-      }
-      else {
-        right.accept(this);
-        addInstruction(new BinopInstruction<V>(MAP.get(operatorToken), expression, expression.getProject()));
-      }
+      myExpressionHelper.binaryOperation(expression, left, right, operatorToken, resolveResults);
     }
 
     finishElement(expression);
@@ -900,103 +869,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   @Override
   public void visitIndexProperty(GrIndexProperty expression) {
     startElement(expression);
-    myCallHelper.processIndexProperty(expression, null);
+    myCallHelper.processIndexProperty(expression, myCallHelper.EMPTY);
     finishElement(expression);
-  }
-
-  private void initialize(@NotNull GrVariable variable, @NotNull GrExpression initializer) {
-    final DfaVariableValue dfaVariableValue = myFactory.getVarFactory().createVariableValue(variable, false);
-    push(dfaVariableValue, initializer);
-    initializer.accept(this);
-    boxUnbox(initializer, variable.getDeclaredType(), initializer.getNominalType());
-    addInstruction(new GrAssignInstruction(dfaVariableValue, initializer, true));
-  }
-
-  private void assign(@NotNull GrExpression left, @NotNull GrExpression right) {
-    if (left instanceof GrReferenceExpression) {
-      final GroovyResolveResult result = ((GrReferenceExpression)left).advancedResolve();
-      final PsiElement element = result.getElement();
-      if (element instanceof PsiMethod) {
-        myCallHelper.processMethodCall(left, (GrReferenceExpression)left, right);
-        return;
-      }
-    }
-    if (left instanceof GrIndexProperty) {
-      myCallHelper.processIndexProperty((GrIndexProperty)left, right);
-      return;
-    }
-    left.accept(this);
-    right.accept(this);
-    boxUnbox(right, left.getType(), right.getType());
-    addInstruction(new GrAssignInstruction(myFactory.createValue(left), right, false));
-  }
-
-  private void assign(@NotNull GrExpression left, @NotNull DfaValue right) {
-    left.accept(this);
-    push(right);
-    addInstruction(new GrAssignInstruction<V>(myFactory.createValue(left), null, false));
-  }
-
-  private void assignTuple(@NotNull GrExpression[] lValues, @Nullable GrExpression right) {
-    if (right instanceof GrListOrMap) {
-      final GrExpression[] rValues = ((GrListOrMap)right).getInitializers();
-      // iterate over tuple variables and assign each 
-      for (int i = 0; i < Math.min(lValues.length, rValues.length); i++) {
-        assign(lValues[i], rValues[i]);
-        pop();
-      }
-      // iterate over rest lValues and assign them to null 
-      for (int i = rValues.length; i < lValues.length; i++) {
-        assign(lValues[i], myFactory.getConstFactory().getNull());
-        pop();
-      }
-      // iterate over rest rValues and evaluate them
-      for (int i = lValues.length; i < rValues.length; i++) {
-        rValues[i].accept(this);
-        pop();
-      }
-    }
-    else {
-      // here we cannot know what values will be assigned
-      for (GrExpression lValue : lValues) {
-        assign(lValue, DfaUnknownValue.getInstance());
-      }
-    }
-  }
-
-  private void dereference(@NotNull GrExpression qualifier, GrReferenceExpression referenceExpression, boolean writing) {
-    // qualifier is already on top of stack thank to duplication
-    final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
-    final PsiElement resolved = resolveResult.getElement();
-    if (resolved instanceof PsiMethod && !(referenceExpression.getParent() instanceof GrMethodCallExpression) && !writing) {
-      // groovy property getter
-      addInstruction(new GrMethodCallInstruction<V>(referenceExpression, (PsiMethod)resolved, null));
-    }
-    else {
-      if (resolved instanceof PsiMember) {
-        addInstruction(new GrDereferenceInstruction<V>(qualifier));
-      }
-      else {
-        // pop qualifier if cannot resolve
-        pop();
-      }
-      // push value
-      push(myFactory.createValue(referenceExpression), referenceExpression, writing);
-    }
-  }
-
-  private void boxUnbox(GrExpression context, PsiType expectedType, PsiType actualType) {
-    if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(actualType)) {
-      addInstruction(new GrDummyInstruction<V>("UNBOXING"));
-    }
-    else if (TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(actualType)) {
-      addInstruction(new GrDummyInstruction<V>("BOXING"));
-    }
-  }
-
-  <T extends Instruction<V>> T addInstruction(T instruction) {
-    myFlow.addInstruction(instruction);
-    return instruction;
   }
 
   private void startElement(PsiElement element) {
@@ -1039,6 +913,11 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   private void removeVariable(@Nullable GrVariable variable) {
     if (variable == null) return;
     addInstruction(new FlushVariableInstruction<V>(myFactory.getVarFactory().createVariableValue(variable, false)));
+  }
+
+  <T extends Instruction<V>> T addInstruction(T instruction) {
+    myFlow.addInstruction(instruction);
+    return instruction;
   }
 
   PopInstruction pop() {

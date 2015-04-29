@@ -33,23 +33,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrAssignInstruction;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil.isCertainlyReturnStatement;
-
-public class GrControlFlowExceptionHelper<V extends GrInstructionVisitor<V>> {
+public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
 
   final GrControlFlowAnalyzerImpl<V> analyzer;
   final Stack<CatchDescriptor> myCatchStack = new Stack<CatchDescriptor>();
 
-  public GrControlFlowExceptionHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
+  public GrCFExceptionHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
     this.analyzer = analyzer;
   }
 
@@ -174,7 +167,6 @@ public class GrControlFlowExceptionHelper<V extends GrInstructionVisitor<V>> {
     return myExceptionHolders.get(cd.getTryStatement());
   }
 
-
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private FactoryMap<GrTryCatchStatement, DfaVariableValue> myExceptionHolders = new FactoryMap<GrTryCatchStatement, DfaVariableValue>() {
     @Nullable
@@ -186,12 +178,4 @@ public class GrControlFlowExceptionHelper<V extends GrInstructionVisitor<V>> {
       return analyzer.myFactory.getVarFactory().createVariableValue(mockVar, false);
     }
   };
-
-  public static boolean shouldCheckReturn(GroovyPsiElement element) {
-    if (!(element instanceof GrExpression)) return false;
-    final PsiElement parent = element.getParent();
-    if (parent instanceof GrConditionalExpression) return false;
-    return parent instanceof GrReturnStatement && ((GrReturnStatement)parent).getReturnValue() == element
-           || isCertainlyReturnStatement((GrStatement)element);
-  }
 }
