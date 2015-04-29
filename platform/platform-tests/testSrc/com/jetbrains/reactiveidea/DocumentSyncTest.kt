@@ -65,10 +65,10 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
     modelRef = model
 
     val first = DocumentImpl("my test document")
-    val firstDocumentHost = DocumentHost(Lifetime.Eternal, model, Path("document"), first)
+    val firstDocumentHost = DocumentHost(Lifetime.Eternal, model, Path("document"), first, getProject(), true)
 
     val second = DocumentImpl("")
-    val secondDocumentHost = DocumentHost(Lifetime.Eternal, mirror, Path("document"), second)
+    val secondDocumentHost = DocumentHost(Lifetime.Eternal, mirror, Path("document"), second, getProject(), false)
 
     first.insertString(0, "hello world!\n")
     first.insertString(0, "abcd\n")
@@ -117,8 +117,8 @@ public class DocumentSyncTest : LightPlatformCodeInsightFixtureTestCase() {
 
     val serverModel = modelFuture.getResultSync()
 
-    val firstHost = DocumentHost(Lifetime.Eternal, serverModel, Path("document"), first)
-    val secondHost = DocumentHost(Lifetime.Eternal, clientModel, Path("document"), second)
+    val firstHost = DocumentHost(Lifetime.Eternal, serverModel, Path("document"), first,getProject(), true)
+    val secondHost = DocumentHost(Lifetime.Eternal, clientModel, Path("document"), second,getProject(), false)
 
 
     ApplicationManager.getApplication().runWriteAction {

@@ -43,11 +43,8 @@ import java.awt.Color
 import java.util.HashMap
 
 public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val editor: Editor, val providesMarkup: Boolean) {
-  val markupIndex: MutableMap<String, RangeHighlighter> = HashMap()
-  var markupIdFactory = 0
-  val markupIdKey = Key<String>("com.jetbrains.reactiveidea.markupId")
 
-  val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument())
+  val documentHost = DocumentHost(lifetime, reactiveModel, path / "document", editor.getDocument(), editor.getProject(), providesMarkup)
 
   val caretGuard = Guard()
 
@@ -55,8 +52,8 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
     val selectionSignal = reactiveModel.subscribe(lifetime, path / "selection")
     val caretSignal = reactiveModel.subscribe(lifetime, path / "caret")
 
-    val caretReaction = reaction(true, "update caret in editor from the model", caretSignal, documentHost.listenToDocumentEvents, documentHost.updateDocumentText) {
-      caret, _, __ ->
+    val caretReaction = reaction(true, "update caret in editor from the model", caretSignal, documentHost.documentUpdated) {
+      caret, _ ->
       if (caret != null) {
         caret as MapModel
         if (!caretGuard.locked) {
@@ -68,10 +65,8 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
       caret
     }
 
-    lifetime.addNested(caretReaction.lifetimeDefinition)
-
-    val selectionReaction = reaction(true, "update selection in editor from the model", selectionSignal, documentHost.listenToDocumentEvents, documentHost.updateDocumentText, caretReaction) {
-      selection, _, __, ___ ->
+    val selectionReaction = reaction(true, "update selection in editor from the model", selectionSignal, documentHost.documentUpdated, caretReaction) {
+      selection, _, __ ->
 
       selection as MapModel?
 
@@ -82,8 +77,6 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
       }
       selection
     }
-
-    lifetime.addNested(selectionReaction.lifetimeDefinition)
 
     reactiveModel.transaction { m ->
       (path / "caret" / "offset").putIn(m, PrimitiveModel(editor.getCaretModel().getOffset()))
@@ -123,126 +116,5 @@ public class EditorHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel
     lifetime += {
       editor.getSelectionModel().removeSelectionListener(selectionListener)
     }
-
-    val markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), true) as MarkupModelEx
-    if (providesMarkup) {
-      val highlighters = markupModel.getAllHighlighters()
-      reactiveModel.transaction { m ->
-        (path / "markup").putIn(m, MapModel(highlighters.map { highlighter -> (markupIdFactory++).toString() to marshalHighlighter(highlighter) }.toMap()))
-      }
-
-      val markupListenerDisposable = { }
-      lifetime += {
-        Disposer.dispose(markupListenerDisposable)
-      }
-
-      markupModel.addMarkupModelListener(markupListenerDisposable, object : MarkupModelListener {
-        override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean) {
-          val markupId = highlighter.getUserData(markupIdKey)
-          if (markupId != null) {
-            reactiveModel.transaction { m ->
-              (path / "markup" / markupId).putIn(m, marshalHighlighter(highlighter))
-            }
-          }
-        }
-
-        override fun beforeRemoved(highlighter: RangeHighlighterEx) {
-          val markupId = highlighter.getUserData(markupIdKey)
-          if (markupId != null) {
-            reactiveModel.transaction { m ->
-              (path / "markup" / markupId).putIn(m, AbsentModel())
-            }
-          }
-        }
-
-        override fun afterAdded(highlighter: RangeHighlighterEx) {
-          val markupId = markupIdFactory++.toString()
-          highlighter.putUserData(markupIdKey, markupId)
-          reactiveModel.transaction { m ->
-            (path / "markup" / markupId).putIn(m, marshalHighlighter(highlighter))
-          }
-        }
-      })
-    } else {
-      val markupSignal = reactiveModel.subscribe(lifetime, path / "markup")
-      var oldMarkup: MapModel = MapModel()
-      val updateEditorMarkup = reaction(true, "update editor markup from the model", documentHost.listenToDocumentEvents, documentHost.updateDocumentText, markupSignal) {
-        _, __, markup ->
-        if (markup != null) {
-          val diff = oldMarkup.diff(markup) as MapDiff?
-          if (diff != null) {
-            for ((markupId, highlighterDiff) in diff.diff) {
-              if (highlighterDiff is ValueDiff<*>) {
-                val valueDiff = highlighterDiff as ValueDiff<Model>
-                val highlighterModel = valueDiff.newValue
-                if (highlighterModel is AbsentModel) {
-                  val highlighterEx = markupIndex[markupId]
-                  if (highlighterEx != null) {
-                    markupModel.removeHighlighter(highlighterEx)
-                  }
-                } else {
-                  highlighterModel as MapModel
-
-                  val rangeHighlighter = markupModel.addRangeHighlighter(
-                      (highlighterModel["startOffset"] as PrimitiveModel<Int>).value,
-                      (highlighterModel["endOffset"] as PrimitiveModel<Int>).value,
-                      10000,
-                      unmarshalTextAttributes(highlighterModel["attrs"]), HighlighterTargetArea.EXACT_RANGE)
-                  markupIndex[markupId] = rangeHighlighter
-                }
-              }
-            }
-          }
-          oldMarkup = markup as MapModel
-        }
-        markup
-      }
-      lifetime.addNested(updateEditorMarkup.lifetimeDefinition)
-    }
   }
-
-  private fun unmarshalTextAttributes(model: Model?): TextAttributes? =
-      if (model is MapModel) TextAttributes(
-          toColor(model["foreground"]),
-          toColor(model["background"]),
-          toColor(model["effectColor"]),
-          toEffectType(model["effectType"]),
-          (model["fontType"] as PrimitiveModel<Int>).value)
-      else null
-
-
-  private fun marshalTextAttributes(textAttributes: TextAttributes?): Model =
-      if (textAttributes == null) AbsentModel()
-      else MapModel(hashMapOf(
-          "foreground" to toColorModel(textAttributes.getForegroundColor()),
-          "background" to toColorModel(textAttributes.getBackgroundColor()),
-          "effectColor" to toColorModel(textAttributes.getEffectColor()),
-          "effectType" to toEffectTypeModel(textAttributes.getEffectType()),
-          "fontType" to PrimitiveModel(textAttributes.getFontType())
-      ))
-
-
-  private fun toEffectType(model: Model?): EffectType? =
-      if (model is AbsentModel || model == null) null
-      else EffectType.valueOf((model as PrimitiveModel<String>).value)
-
-  private fun toColor(model: Model?): Color? =
-      if (model is AbsentModel) null
-      else ColorUtil.fromHex((model as PrimitiveModel<String>).value)
-
-  private fun toEffectTypeModel(effectType: EffectType?): Model =
-    if (effectType == null) AbsentModel()
-    else PrimitiveModel(effectType.toString())
-
-  private fun toColorModel(color: Color?): Model =
-    if (color == null) AbsentModel()
-    else PrimitiveModel(ColorUtil.toHex(color))
-
-
-  private fun marshalHighlighter(highlighter: RangeHighlighter): MapModel =
-      MapModel(hashMapOf(
-          "startOffset" to PrimitiveModel(highlighter.getStartOffset()),
-          "endOffset" to PrimitiveModel(highlighter.getEndOffset()),
-          "attrs" to marshalTextAttributes(highlighter.getTextAttributes())
-      ))
 }

@@ -52,17 +52,17 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
           object : FileEditorManagerListener {
             override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
               val editor = (FileEditorManager.getInstance(project).getAllEditors(file).first() as TextEditor).getEditor()
-              if (!isClient()) {
+              if (isClient()) {
                 if (file.equals(aTxt)) {
-                  serverModel(lifetime.lifetime, 12346) { m ->
-                    aTxtHost = EditorHost(lifetime.lifetime, m, Path("editor"), editor, false)
-                  }
+                  val clientModel = clientModel("http://localhost:12346", Lifetime.Eternal)
+
+                  aTxtHost = EditorHost(lifetime.lifetime, clientModel, Path("editor"), editor, true)
                 }
               } else {
                 if (file.equals(bJava)) {
-                  val clientModel = clientModel("http://localhost:12346", Lifetime.Eternal)
-
-                  bJavaHost = EditorHost(lifetime.lifetime, clientModel, Path("editor"), editor, true)
+                  serverModel(lifetime.lifetime, 12346) { m ->
+                    bJavaHost = EditorHost(lifetime.lifetime, m, Path("editor"), editor, false)
+                  }
                 }
               }
             }

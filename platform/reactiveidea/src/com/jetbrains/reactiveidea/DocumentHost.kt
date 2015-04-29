@@ -21,22 +21,34 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentAdapter
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.ex.MarkupModelEx
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.event.MarkupModelListener
+import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.ui.ColorUtil
 import com.jetbrains.reactivemodel.*
-import com.jetbrains.reactivemodel.models.ListModel
-import com.jetbrains.reactivemodel.models.MapModel
-import com.jetbrains.reactivemodel.models.PrimitiveModel
+import com.jetbrains.reactivemodel.models.*
 import com.jetbrains.reactivemodel.signals.Signal
 import com.jetbrains.reactivemodel.signals.reaction
 import com.jetbrains.reactivemodel.util.Guard
 import com.jetbrains.reactivemodel.util.Lifetime
+import java.awt.Color
+import java.util.HashMap
 
-public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val doc: Document) {
+public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveModel, val path: Path, val doc: Document, project: Project?, providesMarkup: Boolean) {
   private val TIMESTAMP: Key<Int> = Key("com.jetbrains.reactiveidea.timestamp")
   private val recursionGuard = Guard()
 
-  public val updateDocumentText: Signal<String?>
-  public val listenToDocumentEvents: Signal<ListModel?>
+  val markupHost: Any
+
+  public val documentUpdated: Signal<Any?>
 
   init {
     val listener = object : DocumentAdapter() {
@@ -62,7 +74,7 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
       else (model as PrimitiveModel<String>).value
     }
 
-    updateDocumentText = reaction(true, "init document text", textSignal) { text ->
+    val updateDocumentText = reaction(true, "init document text", textSignal) { text ->
       if (text != null) {
         ApplicationManager.getApplication().runWriteAction {
           doc.setText(text)
@@ -88,7 +100,7 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
       else null
     }
 
-    listenToDocumentEvents = reaction(true, "listen to model events", eventsList) { evts ->
+    val listenToDocumentEvents = reaction(true, "listen to model events", eventsList) { evts ->
       if (evts != null) {
         var timestamp = doc.getUserData(TIMESTAMP)
         if (timestamp == null) {
@@ -109,9 +121,24 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
       evts
     }
 
-    lifetime += {
-      listenToDocumentEvents.lifetime.terminate()
-    }
+    documentUpdated = reaction(true, "document updated", listenToDocumentEvents, updateDocumentText) { _, __ -> _ to __ }
+
+    val documentMarkup = DocumentMarkupModel.forDocument(doc, project, true) as MarkupModelEx
+    markupHost =
+        if (providesMarkup) {
+          ServerMarkupHost(
+              documentMarkup,
+              reactiveModel,
+              path / "markup",
+              lifetime)
+        } else {
+          ClientMarkupHost(
+              documentMarkup,
+              reactiveModel,
+              path / "markup",
+              lifetime,
+              documentUpdated)
+        }
   }
 }
 
