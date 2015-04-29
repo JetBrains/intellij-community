@@ -221,7 +221,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
         int lineHeight = myEditor.getLineHeight();
         int firstVisibleLine = clip.y / lineHeight;
         float visibleLinesCountFractional = clip.height / (float)lineHeight;
-        int linesToAppend = (int)Math.floor(visibleLinesCountFractional + 0.5);
+        int linesToAppend = 1 + (int)visibleLinesCountFractional;
 
         LineTokenizer lt = new LineTokenizer(myRawText);
         for (int line = 0; !lt.atEnd() && line < firstVisibleLine; lt.advance(), line++) {
