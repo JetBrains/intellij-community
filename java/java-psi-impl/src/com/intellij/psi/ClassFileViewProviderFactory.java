@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import org.jetbrains.annotations.NotNull;
@@ -34,14 +32,6 @@ public class ClassFileViewProviderFactory implements FileViewProviderFactory {
     ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
     if (decompiler instanceof Full) {
       return ((Full)decompiler).createFileViewProvider(file, manager, eventSystemEnabled);
-    }
-
-    for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
-      Language lang = processor.obtainLanguageForFile(file);
-      if (lang != null) {
-        FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-        return factory.createFileViewProvider(file, language, manager, eventSystemEnabled);
-      }
     }
 
     return new ClassFileViewProvider(manager, file, eventSystemEnabled);
