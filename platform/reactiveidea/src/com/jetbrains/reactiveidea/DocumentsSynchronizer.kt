@@ -45,9 +45,6 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
     UIUtil.invokeLaterIfNeeded {
       val aTxt = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled/src/A.txt")
       val bJava = StandardFileSystems.local().findFileByPath("/Users/jetzajac/IdeaProjects/untitled2/src/B.java")
-
-
-      FileEditorManager.getInstance(project).getSelectedTextEditor()
       messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
           object : FileEditorManagerListener {
             override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
@@ -56,12 +53,12 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
                 if (file.equals(aTxt)) {
                   val clientModel = clientModel("http://localhost:12346", Lifetime.Eternal)
 
-                  aTxtHost = EditorHost(lifetime.lifetime, clientModel, Path("editor"), editor, true)
+                  aTxtHost = EditorHost(lifetime.lifetime, clientModel, Path("editor"), editor, false)
                 }
               } else {
                 if (file.equals(bJava)) {
                   serverModel(lifetime.lifetime, 12346) { m ->
-                    bJavaHost = EditorHost(lifetime.lifetime, m, Path("editor"), editor, false)
+                    bJavaHost = EditorHost(lifetime.lifetime, m, Path("editor"), editor, true)
                   }
                 }
               }

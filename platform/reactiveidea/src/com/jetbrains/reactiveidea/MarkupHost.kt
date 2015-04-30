@@ -43,7 +43,7 @@ public class ClientMarkupHost(val markupModel: MarkupModelEx,
                               documentUpdated: Signal<Any>) {
   val markupIndex: MutableMap<String, RangeHighlighter> = HashMap()
   init {
-    val markupSignal = reactiveModel.subscribe(lifetime, path / "markup")
+    val markupSignal = reactiveModel.subscribe(lifetime, path)
     var oldMarkup: MapModel = MapModel()
     val updateEditorMarkup = reaction(true, "update editor markup from the model", documentUpdated, markupSignal) { _, markup ->
       if (markup != null) {
