@@ -108,7 +108,6 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           int eOffset = sibling.getTextRange().getEndOffset();
 
           editor.getDocument().deleteString(sOffset, eOffset);
-          assert otherTag != null;
           editor.getDocument().insertString(sOffset, ((XmlTag)otherTag).getName());
         }
       }
