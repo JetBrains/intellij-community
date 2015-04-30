@@ -1,9 +1,10 @@
 import sys
 import pstats
 
-from thrift import TSerialization
-from thrift.protocol import TJSONProtocol, TBinaryProtocol
-from profiler.ttypes import ProfilerResponse, Stats, FuncStat, Function
+
+from _prof_imports import TSerialization
+from _prof_imports import TJSONProtocol
+from _prof_imports import ProfilerResponse, Stats, FuncStat, Function
 
 
 if __name__ == '__main__':

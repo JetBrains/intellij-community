@@ -1,18 +1,12 @@
-from socket import SHUT_WR
-import sys
-import time
 import traceback
 
-from thrift import TSerialization
-from thrift.protocol import TJSONProtocol, TBinaryProtocol
-from profiler.ttypes import ProfilerRequest
+from _prof_imports import TSerialization
+from _prof_imports import TJSONProtocol
+from _prof_imports import ProfilerRequest
 
 from prof_util import ProfDaemonThread
 
 import struct
-
-from pydev_imports import _queue
-import pydevd_vm_type
 
 
 def send_message(sock, message):
