@@ -117,6 +117,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
       if (numLineFeeds <= 0 && EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF()) {
         numLineFeeds = 1;
       }
+      // TODO: figure out why this line causes all changes made because of dict alignment to be reverted
       documentManager.doPostponedOperationsAndUnblockDocument(document);
       try {
         final String text = StringUtil.repeat("\n", numLineFeeds);

@@ -22,6 +22,29 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
  * @author yole
  */
 public class PyCodeStyleSettings extends CustomCodeStyleSettings {
+
+  public enum DictAlignment {
+    NONE("Do not align"),
+    ON_VALUE("Align on value"),
+    ON_COLON("Align on colon");
+
+    String description;
+
+    DictAlignment(String description) {
+      this.description = description;
+    }
+
+    @Override
+    public String toString() {
+      return description;
+    }
+  }
+
+  // Unfortunately, the old serializer for code style settings can't handle enums
+  public static final int KEY_VALUE_DO_NOT_ALIGN = DictAlignment.NONE.ordinal();
+  public static final int KEY_VALUE_ALIGN_ON_VALUE = DictAlignment.ON_VALUE.ordinal();
+  public static final int KEY_VALUE_ALIGN_ON_COLON = DictAlignment.ON_COLON.ordinal();
+
   public boolean SPACE_WITHIN_BRACES = false;
   public boolean SPACE_BEFORE_PY_COLON = false;
   public boolean SPACE_AFTER_PY_COLON = true;
@@ -42,6 +65,8 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public boolean SPACE_AFTER_NUMBER_SIGN = true;
   public boolean SPACE_BEFORE_NUMBER_SIGN = true;
+
+  public int DICT_ALIGNMENT = KEY_VALUE_DO_NOT_ALIGN;
 
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);
