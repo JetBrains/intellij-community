@@ -237,7 +237,7 @@ public class IpnbParser {
       if (outputCell instanceof IpnbPngOutputCell) {
         if (nbformat == 4) {
           final OutputDataRaw dataRaw = new OutputDataRaw();
-          dataRaw.png = new String[]{((IpnbPngOutputCell)outputCell).getBase64String()};
+          dataRaw.png = ((IpnbPngOutputCell)outputCell).getBase64String();
           raw.data = dataRaw;
         }
         else {
@@ -365,7 +365,7 @@ public class IpnbParser {
     @SerializedName("text/plain") String[] text;
     @SerializedName("text/html") String[] html;
     @SerializedName("image/svg+xml") String[] svg;
-    @SerializedName("image/png") String[] png;
+    @SerializedName("image/png") String png;
     @SerializedName("image/jpeg") String[] jpeg;
     @SerializedName("text/latex") String[] latex;
   }
