@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBInsets;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -49,10 +51,9 @@ public class CellRendererPanel extends JPanel {
   @Override
   public void doLayout() {
     if (getComponentCount() != 1) return;
-    Insets insets = getInsets();
-    getComponent(0).setBounds(insets.left, insets.top,
-                              getWidth() - insets.left - insets.right,
-                              getHeight() - insets.top - insets.bottom);
+    Rectangle bounds = new Rectangle(getWidth(), getHeight());
+    JBInsets.removeFrom(bounds, getInsets());
+    getComponent(0).setBounds(bounds);
   }
 
   @Override

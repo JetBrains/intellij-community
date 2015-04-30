@@ -58,6 +58,30 @@ public class ComparisonFailureData {
     myFilePath = filePath;
   }
 
+  public static void registerSMAttributes(ComparisonFailureData notification,
+                                          String trace,
+                                          String failureMessage,
+                                          Map attrs) {
+
+    if (notification != null) {
+      attrs.put("expected", notification.getExpected());
+      attrs.put("actual", notification.getActual());
+
+      final int failureIdx = trace.indexOf(failureMessage);
+      attrs.put("details", failureIdx > -1 ? trace.substring(failureIdx + failureMessage.length()) : trace);
+      final String filePath = notification.getFilePath();
+      if (filePath != null) {
+        attrs.put("expectedFile", filePath);
+      }
+      attrs.put("message", "Comparison Failure:");
+    }
+    else {
+      attrs.put("details", trace);
+      attrs.put("error", "true");
+      attrs.put("message", failureMessage != null ? failureMessage : "");
+    }
+  }
+
   public String getFilePath() {
     return myFilePath;
   }

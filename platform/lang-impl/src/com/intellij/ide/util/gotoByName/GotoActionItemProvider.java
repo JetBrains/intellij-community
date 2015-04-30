@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,14 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -46,6 +49,17 @@ import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
  * @author peter
  */
 public class GotoActionItemProvider implements ChooseByNameItemProvider {
+  private static final TObjectHashingStrategy<AnAction> ACTION_OBJECT_HASHING_STRATEGY = new TObjectHashingStrategy<AnAction>() {
+    @Override
+    public int computeHashCode(AnAction object) {
+      return object.getClass().hashCode();
+    }
+
+    @Override
+    public boolean equals(AnAction o1, AnAction o2) {
+      return Comparing.equal(o1.getClass(), o2.getClass());
+    }
+  };
   private final ActionManager myActionManager = ActionManager.getInstance();
   protected final SearchableOptionsRegistrar myIndex = SearchableOptionsRegistrar.getInstance();
   private final GotoActionModel myModel;
@@ -155,7 +169,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   private boolean processActions(String pattern, boolean everywhere, Processor<MatchedValue> consumer, DataContext dataContext) {
-    List<AnAction> actions = ContainerUtil.newArrayList();
+    Set<AnAction> actions = new THashSet<AnAction>(ACTION_OBJECT_HASHING_STRATEGY);
     if (everywhere) {
       for (String id : ((ActionManagerImpl)myActionManager).getActionIds()) {
         ProgressManager.checkCanceled();

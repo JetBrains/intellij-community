@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,15 +108,6 @@ public final class ExecutionEnvironmentBuilder {
     myExecutor = copySource.getExecutor();
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public ExecutionEnvironmentBuilder setTarget(@NotNull ExecutionTarget target) {
-    return target(target);
-  }
-
   public ExecutionEnvironmentBuilder target(@Nullable ExecutionTarget target) {
     if (target != null) {
       myTarget = target;
@@ -129,16 +120,6 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public ExecutionEnvironmentBuilder setRunnerAndSettings(@NotNull ProgramRunner programRunner,
-                                                          @NotNull RunnerAndConfigurationSettings settings) {
-    return runnerAndSettings(programRunner, settings);
-  }
-
   public ExecutionEnvironmentBuilder runnerAndSettings(@NotNull ProgramRunner runner,
                                                        @NotNull RunnerAndConfigurationSettings settings) {
     myRunnerAndConfigurationSettings = settings;
@@ -149,38 +130,8 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public ExecutionEnvironmentBuilder setRunnerSettings(@Nullable RunnerSettings runnerSettings) {
-    myRunnerSettings = runnerSettings;
-    return this;
-  }
-
   public ExecutionEnvironmentBuilder runnerSettings(@Nullable RunnerSettings runnerSettings) {
     myRunnerSettings = runnerSettings;
-    return this;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public ExecutionEnvironmentBuilder setConfigurationSettings(@Nullable ConfigurationPerRunnerSettings configurationSettings) {
-    myConfigurationSettings = configurationSettings;
-    return this;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public ExecutionEnvironmentBuilder setContentToReuse(@Nullable RunContentDescriptor contentToReuse) {
-    contentToReuse(contentToReuse);
     return this;
   }
 
@@ -189,27 +140,8 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public ExecutionEnvironmentBuilder setRunProfile(@NotNull RunProfile runProfile) {
-    return runProfile(runProfile);
-  }
-
   public ExecutionEnvironmentBuilder runProfile(@NotNull RunProfile runProfile) {
     myRunProfile = runProfile;
-    return this;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public ExecutionEnvironmentBuilder setRunnerId(@Nullable String runnerId) {
-    myRunnerId = runnerId;
     return this;
   }
 
@@ -218,32 +150,9 @@ public final class ExecutionEnvironmentBuilder {
     return this;
   }
 
-  public ExecutionEnvironmentBuilder assignNewId() {
-    myAssignNewId = true;
-    return this;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public ExecutionEnvironmentBuilder setDataContext(@Nullable DataContext dataContext) {
-    return dataContext(dataContext);
-  }
-
   public ExecutionEnvironmentBuilder dataContext(@Nullable DataContext dataContext) {
     myDataContext = dataContext;
     return this;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public ExecutionEnvironmentBuilder setExecutor(@NotNull Executor executor) {
-    return executor(executor);
   }
 
   public ExecutionEnvironmentBuilder executor(@NotNull Executor executor) {

@@ -43,7 +43,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -62,6 +65,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.sun.jdi.*;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventSet;
@@ -696,7 +700,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new JavaXSourcePosition(position, file);
   }
 
-  private static class JavaXSourcePosition implements XSourcePosition {
+  private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
     private final SourcePosition mySourcePosition;
     @NotNull private final VirtualFile myFile;
 
@@ -725,6 +729,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
       return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
+    }
+
+    @Nullable
+    @Override
+    public RangeHighlighter createHighlighter(Document document, Project project, TextAttributes attributes) {
+      if (mySourcePosition instanceof ExecutionPointHighlighter.HighlighterProvider) {
+        return ((ExecutionPointHighlighter.HighlighterProvider)mySourcePosition).createHighlighter(document, project, attributes);
+      }
+      return null;
     }
   }
 

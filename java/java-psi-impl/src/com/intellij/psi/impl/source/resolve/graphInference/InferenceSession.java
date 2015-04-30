@@ -299,6 +299,13 @@ public class InferenceSession {
     for (int i = 0; i < args.length; i++) {
       final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[i]);
       if (arg != null) {
+        if (MethodCandidateInfo.isOverloadCheck() && arg instanceof PsiLambdaExpression) {
+          for (Object expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
+            if (PsiTreeUtil.getParentOfType((PsiElement)expr, PsiLambdaExpression.class) == arg) {
+              return;
+            }
+          }
+        }
         final InferenceSession nestedCallSession = findNestedCallSession(arg);
         final PsiType parameterType =
           nestedCallSession.substituteWithInferenceVariables(getParameterType(parameters, i, siteSubstitutor, varargs));
@@ -411,7 +418,7 @@ public class InferenceSession {
     final Computable<JavaResolveResult> computableResolve = new Computable<JavaResolveResult>() {
       @Override
       public JavaResolveResult compute() {
-        return callExpression.resolveMethodGenerics();
+        return getResolveResult(callExpression, argumentList);
       }
     };
     MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
@@ -419,6 +426,24 @@ public class InferenceSession {
            expression == null || !PsiResolveHelper.ourGraphGuard.currentStack().contains(expression)
            ? computableResolve.compute()
            : PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, false, computableResolve);
+  }
+
+  public static JavaResolveResult getResolveResult(PsiCallExpression callExpression, PsiExpressionList argumentList) {
+    if (callExpression instanceof PsiNewExpression) {
+      final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
+      final JavaResolveResult resolveResult = classReference != null ? classReference.advancedResolve(false) : null;
+      final PsiElement psiClass = resolveResult != null ? resolveResult.getElement() : null;
+      if (psiClass instanceof PsiClass) {
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
+        final JavaResolveResult constructor = facade.getResolveHelper()
+          .resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(), argumentList, callExpression);
+        return constructor.getElement() == null ? resolveResult : constructor;
+      }
+      else {
+        return JavaResolveResult.EMPTY;
+      }
+    }
+    return callExpression.resolveMethodGenerics();
   }
 
   public PsiSubstitutor retrieveNonPrimitiveEqualsBounds(Collection<InferenceVariable> variables) {

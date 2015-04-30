@@ -28,6 +28,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RawCommandLineEditor;
@@ -38,6 +39,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -66,8 +68,10 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox            myCbEnableAutomake;
   private JCheckBox            myCbParallelCompilation;
   private JTextField           myHeapSizeField;
+  private JTextField           mySharedVMOptionsField;
   private JTextField           myVMOptionsField;
   private JLabel               myHeapSizeLabel;
+  private JLabel               mySharedVMOptionsLabel;
   private JLabel               myVMOptionsLabel;
   private JCheckBox            myCbRebuildOnDependencyChange;
   private JLabel               myResourcePatternsLabel;
@@ -85,6 +89,11 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     ));
     myPatternLegendLabel.setForeground(new JBColor(Gray._50, Gray._130));
     tweakControls(project);
+    myVMOptionsField.getDocument().addDocumentListener(new DocumentAdapter() {
+      protected void textChanged(DocumentEvent e) {
+        mySharedVMOptionsField.setEnabled(e.getDocument().getLength() == 0);
+      }
+    });
   }
 
   private void tweakControls(@NotNull Project project) {
@@ -125,7 +134,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
                  ContainerUtilRt.<JComponent>newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
     controls.put(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE, ContainerUtilRt.<JComponent>newArrayList(myCbRebuildOnDependencyChange));
     controls.put(Setting.HEAP_SIZE, ContainerUtilRt.<JComponent>newArrayList(myHeapSizeLabel, myHeapSizeField));
-    controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtilRt.<JComponent>newArrayList(myVMOptionsLabel, myVMOptionsField));
+    controls.put(Setting.COMPILER_VM_OPTIONS, ContainerUtilRt.<JComponent>newArrayList(myVMOptionsLabel, myVMOptionsField, mySharedVMOptionsLabel, mySharedVMOptionsField));
     
     for (Setting setting : myDisabledSettings) {
       Collection<JComponent> components = controls.get(setting);
@@ -149,9 +158,10 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbParallelCompilation.setSelected(workspaceConfiguration.PARALLEL_COMPILATION);
     myCbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
     final int javacPreferred = JavacConfiguration.getOptions(myProject, JavacConfiguration.class).MAXIMUM_HEAP_SIZE; // for compatibility with older projects
-    myHeapSizeField.setText(String.valueOf(workspaceConfiguration.getProcessHeapSize(javacPreferred)));
+    myHeapSizeField.setText(String.valueOf(configuration.getBuildProcessHeapSize(javacPreferred)));
     final String options = workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
     myVMOptionsField.setText(options == null ? "" : options.trim());
+    mySharedVMOptionsField.setText(configuration.getBuildProcessVMOptions());
 
     configuration.convertPatterns();
 
@@ -202,7 +212,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       }
       if (!myDisabledSettings.contains(Setting.HEAP_SIZE)) {
         try {
-          workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE = Integer.parseInt(myHeapSizeField.getText().trim());
+          configuration.setBuildProcessHeapSize(Integer.parseInt(myHeapSizeField.getText().trim()));
         }
         catch (NumberFormatException ignored) {
           LOG.info(ignored);
@@ -210,6 +220,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       }
       if (!myDisabledSettings.contains(Setting.COMPILER_VM_OPTIONS)) {
         workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = myVMOptionsField.getText().trim();
+        configuration.setBuildProcessVMOptions(mySharedVMOptionsField.getText().trim());
       }
     }
 
@@ -268,12 +279,14 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
                   && ComparingUtils.isModified(myCbParallelCompilation, workspaceConfiguration.PARALLEL_COMPILATION);
     isModified |= !myDisabledSettings.contains(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE)
                   && ComparingUtils.isModified(myCbRebuildOnDependencyChange, workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
-    isModified |= !myDisabledSettings.contains(Setting.HEAP_SIZE)
-                  && ComparingUtils.isModified(myHeapSizeField, workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE);
     isModified |= !myDisabledSettings.contains(Setting.COMPILER_VM_OPTIONS)
                   && ComparingUtils.isModified(myVMOptionsField, workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS);
 
     final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    isModified |= !myDisabledSettings.contains(Setting.HEAP_SIZE)
+                  && ComparingUtils.isModified(myHeapSizeField, compilerConfiguration.getBuildProcessHeapSize(0));
+    isModified |= !myDisabledSettings.contains(Setting.COMPILER_VM_OPTIONS)
+                  && ComparingUtils.isModified(mySharedVMOptionsField, compilerConfiguration.getBuildProcessVMOptions());
     isModified |= !myDisabledSettings.contains(Setting.ADD_NOT_NULL_ASSERTIONS)
                   && ComparingUtils.isModified(myCbAssertNotNull, compilerConfiguration.isAddNotNullAssertions());
     isModified |= !myDisabledSettings.contains(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD)

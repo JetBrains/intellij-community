@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
@@ -340,9 +339,6 @@ public class LambdaUtil {
         if (gParent instanceof PsiCall) {
           final PsiCall contextCall = (PsiCall)gParent;
           final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(contextCall.getArgumentList());
-          if (MethodCandidateInfo.isOverloadCheck()) {
-            MethodCandidateInfo.ourOverloadGuard.prohibitResultCaching(MethodCandidateInfo.ourOverloadGuard.currentStack().get(0));
-          }
           if (properties != null && properties.isApplicabilityCheck()) { //todo simplification
             final PsiParameter[] parameters = properties.getMethod().getParameterList().getParameters();
             final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, properties.getMethod(), parameters);

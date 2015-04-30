@@ -43,6 +43,10 @@ public class IpnbConnection {
   private volatile boolean myIsIOPubOpen = false;
   protected volatile boolean myIsOpened = false;
 
+  private ArrayList<IpnbOutputCell> myOutput = new ArrayList<IpnbOutputCell>();
+  private int myExecCount;
+
+
   public IpnbConnection(@NotNull String uri, @NotNull IpnbConnectionListener listener) throws IOException, URISyntaxException {
     myURI = new URI(uri);
     myListener = listener;
@@ -78,61 +82,7 @@ public class IpnbConnection {
     myShellThread = new Thread(myShellClient);
     myShellThread.start();
 
-    myIOPubClient = new WebSocketClient(getIOPubURI(), draft) {
-      private ArrayList<IpnbOutputCell> myOutput = new ArrayList<IpnbOutputCell>();
-      private Integer myExecCount = null;
-      @Override
-      public void onOpen(ServerHandshake handshakeData) {
-        send(authMessage);
-        myIsIOPubOpen = true;
-        notifyOpen();
-      }
-
-      @Override
-      public void onMessage(String message) {
-        final Gson gson = new Gson();
-        final Message msg = gson.fromJson(message, Message.class);
-        final Header header = msg.getHeader();
-        final Header parentHeader = gson.fromJson(msg.getParentHeader(), Header.class);
-        final String messageType = header.getMessageType();
-        if ("pyout".equals(messageType) || "display_data".equals(messageType)) {
-          final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
-          addCellOutput(content, myOutput);
-        }
-        else if ("pyerr".equals(messageType) || "error".equals(messageType)) {
-          final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
-          addCellOutput(content, myOutput);
-        }
-        else if ("stream".equals(messageType)) {
-          final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
-          addCellOutput(content, myOutput);
-        }
-        else if ("pyin".equals(messageType) || "execute_input".equals(messageType)) {
-          final JsonElement executionCount = msg.getContent().get("execution_count");
-          if (executionCount != null) {
-            myExecCount = executionCount.getAsInt();
-          }
-        }
-        else if ("status".equals(messageType)) {
-          final PyStatusContent content = gson.fromJson(msg.getContent(), PyStatusContent.class);
-          if (content.getExecutionState().equals("idle")) {
-            //noinspection unchecked
-            myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId(), (List<IpnbOutputCell>)myOutput.clone(), myExecCount);
-            myOutput.clear();
-          }
-        }
-      }
-
-      @Override
-      public void onClose(int code, String reason, boolean remote) {
-
-      }
-
-      @Override
-      public void onError(Exception ex) {
-
-      }
-    };
+    myIOPubClient = new IpnbWebSocketClient(getIOPubURI(), draft);
     myIOPubThread = new Thread(myIOPubClient);
     myIOPubThread.start();
   }
@@ -334,35 +284,30 @@ public class IpnbConnection {
       output.add(new IpnbStreamOutputCell(((PyStreamContent)content).getName(), new String[]{data}, null));
     }
     else if (content instanceof PyOutContent) {
-      final Map<String, String> data = ((PyOutContent)content).getData();
+      final Map<String, Object> data = ((PyOutContent)content).getData();
+      final String plainText = (String)data.get("text/plain");
       if (data.containsKey("text/latex")) {
-        final String text = data.get("text/latex");
-        final String plainText = data.get("text/plain");
+        final String text = (String)data.get("text/latex");
         output.add(new IpnbLatexOutputCell(new String[]{text}, null, new String[]{plainText}));
       }
       else if (data.containsKey("text/html")) {
-        final String html = data.get("text/html");
+        final String html = (String)data.get("text/html");
         output.add(new IpnbHtmlOutputCell(StringUtil.splitByLinesKeepSeparators(html), StringUtil.splitByLinesKeepSeparators(html), null));
       }
       else if (data.containsKey("image/png")) {
-        final String png = data.get("image/png");
-        final String plainText = data.get("text/plain");
+        final String png = (String)data.get("image/png");
         output.add(new IpnbPngOutputCell(png, StringUtil.splitByLinesKeepSeparators(plainText), null));
       }
       else if (data.containsKey("image/jpeg")) {
-        final String jpeg = data.get("image/jpeg");
-        final String plainText = data.get("text/plain");
+        final String jpeg = (String)data.get("image/jpeg");
         output.add(new IpnbJpegOutputCell(jpeg, StringUtil.splitByLinesKeepSeparators(plainText), null));
       }
       else if (data.containsKey("image/svg")) {
-        final String svg = data.get("image/svg");
-        final String plainText = data.get("text/plain");
+        final String svg = (String)data.get("image/svg");
         output.add(new IpnbSvgOutputCell(StringUtil.splitByLinesKeepSeparators(svg), StringUtil.splitByLinesKeepSeparators(plainText), null));
       }
-      else {
-        for (Map.Entry<String, String> entry : data.entrySet()) {
-          output.add(new IpnbOutOutputCell(new String[]{entry.getValue()}, null));
-        }
+      else if (plainText != null){
+        output.add(new IpnbOutOutputCell(new String[]{plainText}, null));
       }
     }
   }
@@ -370,16 +315,43 @@ public class IpnbConnection {
   private interface PyContent {}
 
   @SuppressWarnings("UnusedDeclaration")
+  protected static class Payload {
+    String text;
+    boolean replace;
+    String source;
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  protected static class PyExecuteReplyContent implements PyContent {
+    private int execution_count;
+    private JsonObject metadata;
+    private String status;
+    private List<Payload> payload;
+
+    public int getExecutionCount() {
+      return execution_count;
+    }
+
+    public JsonObject getMetadata() {
+      return metadata;
+    }
+
+    public List<Payload> getPayload() {
+      return payload;
+    }
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
   protected static class PyOutContent implements PyContent {
     private int execution_count;
-    private HashMap<String, String> data;
+    private HashMap<String, Object> data;
     private JsonObject metadata;
 
     public int getExecutionCount() {
       return execution_count;
     }
 
-    public Map<String, String> getData() {
+    public Map<String, Object> getData() {
       return data;
     }
 
@@ -445,4 +417,84 @@ public class IpnbConnection {
       return request;
     }
   }
+
+  protected class IpnbWebSocketClient extends WebSocketClient {
+    protected IpnbWebSocketClient(@NotNull final URI serverUri, @NotNull final Draft draft) {
+      super(serverUri, draft);
+    }
+
+    @Override
+    public void onOpen(ServerHandshake handshakeData) {
+      send(authMessage);
+      myIsIOPubOpen = true;
+      notifyOpen();
+    }
+
+    @Override
+    public void onMessage(String message) {
+      final Gson gson = new Gson();
+      final Message msg = gson.fromJson(message, Message.class);
+      final Header header = msg.getHeader();
+      final Header parentHeader = gson.fromJson(msg.getParentHeader(), Header.class);
+      final String messageType = header.getMessageType();
+      if ("pyout".equals(messageType) || "display_data".equals(messageType) || "execute_result".equals(messageType)) {
+        final PyOutContent content = gson.fromJson(msg.getContent(), PyOutContent.class);
+        addCellOutput(content, myOutput);
+      }
+      if ("execute_reply".equals(messageType)) {
+        final PyExecuteReplyContent content = gson.fromJson(msg.getContent(), PyExecuteReplyContent.class);
+        final List<Payload> payloads = content.payload;
+        if (payloads != null && !payloads.isEmpty()) {
+          final Payload payload = payloads.get(0);
+          if (payload.replace) {
+            myListener.onPayload(payload.text, parentHeader.getMessageId());
+          }
+        }
+        else {
+          myListener.onPayload(null, parentHeader.getMessageId());
+        }
+      }
+      else if ("pyerr".equals(messageType) || "error".equals(messageType)) {
+        final PyErrContent content = gson.fromJson(msg.getContent(), PyErrContent.class);
+        addCellOutput(content, myOutput);
+      }
+      else if ("stream".equals(messageType)) {
+        final PyStreamContent content = gson.fromJson(msg.getContent(), PyStreamContent.class);
+        addCellOutput(content, myOutput);
+      }
+      else if ("pyin".equals(messageType) || "execute_input".equals(messageType)) {
+        final JsonElement executionCount = msg.getContent().get("execution_count");
+        if (executionCount != null) {
+          myExecCount = executionCount.getAsInt();
+        }
+      }
+      else if ("status".equals(messageType)) {
+        final PyStatusContent content = gson.fromJson(msg.getContent(), PyStatusContent.class);
+        final String executionState = content.getExecutionState();
+        if ("idle".equals(executionState)) {
+          myListener.onOutput(IpnbConnection.this, parentHeader.getMessageId());
+          myOutput.clear();
+        }
+      }
+    }
+
+    @Override
+    public void onClose(int code, String reason, boolean remote) {
+
+    }
+
+    @Override
+    public void onError(Exception ex) {
+
+    }
+  }
+
+  public ArrayList<IpnbOutputCell> getOutput() {
+    return myOutput;
+  }
+
+  public int getExecCount() {
+    return myExecCount;
+  }
+
 }

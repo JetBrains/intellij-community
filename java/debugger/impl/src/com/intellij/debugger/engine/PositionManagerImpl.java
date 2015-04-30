@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.engine;
 
+import com.intellij.debugger.MultiRequestPositionManager;
 import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
@@ -24,28 +25,36 @@ import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.sun.jdi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.EmptyIterable;
+import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
+import com.intellij.xdebugger.ui.DebuggerColors;
+import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author lex
  */
-public class PositionManagerImpl implements PositionManager {
+public class PositionManagerImpl implements PositionManager, MultiRequestPositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
 
   private final DebugProcessImpl myDebugProcess;
@@ -69,49 +78,47 @@ public class PositionManagerImpl implements PositionManager {
     return Collections.emptyList();
   }
 
-  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) throws NoDataException {
-    final Ref<String> waitPrepareFor = new Ref<String>(null);
-    final Ref<ClassPrepareRequestor> waitRequestor = new Ref<ClassPrepareRequestor>(null);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        PsiClass psiClass = JVMNameUtil.getClassAt(position);
-        if (psiClass == null) {
-          return;
-        }
+  public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
+    throws NoDataException {
+    throw new IllegalStateException("This class implements MultiRequestPositionManager, corresponding createPrepareRequests version should be used");
+  }
 
-        String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
-        if (className == null) {
-          final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
-
-          if (parent == null) {
-            return;
-          }
-
-          final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
-          if (parentQName == null) {
-            return;
-          }
-          waitPrepareFor.set(parentQName + "*");
-          waitRequestor.set(new ClassPrepareRequestor() {
-            public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-              final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
-              final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
-              if (positionClasses.contains(referenceType)) {
-                requestor.processClassPrepare(debuggerProcess, referenceType);
-              }
+  @NotNull
+  @Override
+  public List<ClassPrepareRequest> createPrepareRequests(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position)
+    throws NoDataException {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<ClassPrepareRequest>>() {
+      @Override
+      public List<ClassPrepareRequest> compute() {
+        List<ClassPrepareRequest> res = new ArrayList<ClassPrepareRequest>();
+        for (PsiClass psiClass : getLineClasses(position.getFile(), position.getLine())) {
+          ClassPrepareRequestor prepareRequestor = requestor;
+          String classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass);
+          if (classPattern == null) {
+            final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
+            if (parent == null) {
+              continue;
             }
-          });
+            final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
+            if (parentQName == null) {
+              continue;
+            }
+            classPattern = parentQName + "*";
+            prepareRequestor = new ClassPrepareRequestor() {
+              public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+                final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
+                final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
+                if (positionClasses.contains(referenceType)) {
+                  requestor.processClassPrepare(debuggerProcess, referenceType);
+                }
+              }
+            };
+          }
+          res.add(myDebugProcess.getRequestsManager().createClassPrepareRequest(prepareRequestor, classPattern));
         }
-        else {
-          waitPrepareFor.set(className);
-          waitRequestor.set(requestor);
-        }
+        return res;
       }
     });
-    if (waitPrepareFor.get() == null) {
-      return null;  // no suitable class found for this name
-    }
-    return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor.get(), waitPrepareFor.get());
   }
 
   public SourcePosition getSourcePosition(final Location location) throws NoDataException {
@@ -172,7 +179,132 @@ public class PositionManagerImpl implements PositionManager {
       return sourcePosition;
     }
 
-    return SourcePosition.createFromLine(psiFile, lineNumber);
+    return new JavaSourcePosition(SourcePosition.createFromLine(psiFile, lineNumber), location.declaringType(), location.method());
+  }
+
+  private static class JavaSourcePosition extends RemappedSourcePosition implements ExecutionPointHighlighter.HighlighterProvider {
+    private final String myExpectedClassName;
+    private final String myExpectedMethodName;
+
+    public JavaSourcePosition(SourcePosition delegate, ReferenceType declaringType, Method method) {
+      super(delegate);
+      myExpectedClassName = declaringType != null ? declaringType.name() : null;
+      myExpectedMethodName = method != null ? method.name() : null;
+    }
+
+    private PsiElement remapElement(PsiElement element) {
+      PsiClass aClass = getEnclosingClass(element);
+      if (!Comparing.equal(myExpectedClassName, JVMNameUtil.getClassVMName(aClass))) {
+        return null;
+      }
+      NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+      if (!StringUtil.isEmpty(myExpectedMethodName)) {
+        if (method == null) {
+          return null;
+        }
+        else if ((method instanceof PsiMethod && myExpectedMethodName.equals(((PsiMethod)method).getName()))) {
+          if (insideBody(element, ((PsiMethod)method).getBody())) return element;
+        }
+        else if (method instanceof PsiLambdaExpression && myExpectedMethodName.startsWith(LambdaMethodFilter.LAMBDA_METHOD_PREFIX)) {
+          if (insideBody(element, ((PsiLambdaExpression)method).getBody())) return element;
+        }
+      }
+      return null;
+    }
+
+    private static boolean insideBody(@NotNull PsiElement element, @Nullable PsiElement body) {
+      if (!PsiTreeUtil.isAncestor(body, element, false)) return false;
+      if (body instanceof PsiCodeBlock) {
+        return !element.equals(((PsiCodeBlock)body).getRBrace()) && !element.equals(((PsiCodeBlock)body).getLBrace());
+      }
+      return true;
+    }
+
+    @Override
+    public SourcePosition mapDelegate(final SourcePosition original) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
+        @Override
+        public SourcePosition compute() {
+          // There may be more than one class/method code on the line, so we need to find out the correct place
+          for (PsiElement elem : getLineElements(original.getFile(), original.getLine())) {
+            PsiElement remappedElement = remapElement(elem);
+            if (remappedElement != null) {
+              if (remappedElement.getTextOffset() <= original.getOffset()) break;
+              return SourcePosition.createFromElement(remappedElement);
+            }
+          }
+          return original;
+        }
+      });
+    }
+
+    @Nullable
+    @Override
+    public RangeHighlighter createHighlighter(Document document, Project project, TextAttributes attributes) {
+      PsiElement element = getElementAt();
+      NavigatablePsiElement method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class);
+      if (method instanceof PsiLambdaExpression) {
+        TextRange range = method.getTextRange();
+        int startOffset = document.getLineStartOffset(getLine());
+        int endOffset = document.getLineEndOffset(getLine());
+        int hlStart = Math.max(startOffset, range.getStartOffset());
+        int hlEnd = Math.min(endOffset, range.getEndOffset());
+        if (hlStart != startOffset || hlEnd != endOffset) {
+          return DocumentMarkupModel.forDocument(document, project, true).
+            addRangeHighlighter(hlStart, hlEnd, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes,
+                                HighlighterTargetArea.EXACT_RANGE);
+        }
+      }
+      return null;
+    }
+  }
+
+  private static Iterable<PsiElement> getLineElements(final PsiFile file, int lineNumber) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    if (document == null || lineNumber >= document.getLineCount()) {
+      return EmptyIterable.getInstance();
+    }
+    final int startOffset = document.getLineStartOffset(lineNumber);
+    final int endOffset = document.getLineEndOffset(lineNumber);
+    return new Iterable<PsiElement>() {
+      @Override
+      public Iterator<PsiElement> iterator() {
+        return new Iterator<PsiElement>() {
+          PsiElement myElement = file.findElementAt(startOffset);
+
+          @Override
+          public boolean hasNext() {
+            return myElement != null;
+          }
+
+          @Override
+          public PsiElement next() {
+            PsiElement res = myElement;
+            myElement = PsiTreeUtil.nextLeaf(myElement);
+            if (myElement != null && myElement.getTextOffset() > endOffset) {
+              myElement = null;
+            }
+            return res;
+          }
+
+          @Override
+          public void remove() {}
+        };
+      }
+    };
+  }
+
+  private static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    Set<PsiClass> res = new HashSet<PsiClass>();
+    for (PsiElement element : getLineElements(file, lineNumber)) {
+      PsiClass aClass = getEnclosingClass(element);
+      if (aClass != null) {
+        res.add(aClass);
+      }
+    }
+    return res;
   }
 
   @Nullable
@@ -236,33 +368,43 @@ public class PositionManagerImpl implements PositionManager {
 
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition position) throws NoDataException {
+    return ApplicationManager.getApplication().runReadAction(new Computable<List<ReferenceType>>() {
+      @Override
+      public List<ReferenceType> compute() {
+        List<ReferenceType> res = new ArrayList<ReferenceType>();
+        for (PsiClass aClass : getLineClasses(position.getFile(), position.getLine())) {
+          res.addAll(getClassReferences(aClass, position));
+        }
+        return res;
+      }
+    });
+  }
+
+  private List<ReferenceType> getClassReferences(@NotNull final PsiClass psiClass, SourcePosition position) {
     final Ref<String> baseClassNameRef = new Ref<String>(null);
     final Ref<PsiClass> classAtPositionRef = new Ref<PsiClass>(null);
     final Ref<Boolean> isLocalOrAnonymous = new Ref<Boolean>(Boolean.FALSE);
     final Ref<Integer> requiredDepth = new Ref<Integer>(0);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final PsiClass psiClass = JVMNameUtil.getClassAt(position);
-        if (psiClass != null) {
-          classAtPositionRef.set(psiClass);
-          String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
-          if (className == null) {
-            isLocalOrAnonymous.set(Boolean.TRUE);
-            final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
-            if (topLevelClass != null) {
-              final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
-              if (parentClassName != null) {
-                requiredDepth.set(getNestingDepth(psiClass));
-                baseClassNameRef.set(parentClassName);
-              }
-            }
-            else {
-              LOG.error("Local or anonymous class has no non-local parent");
+        classAtPositionRef.set(psiClass);
+        String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+        if (className == null) {
+          isLocalOrAnonymous.set(Boolean.TRUE);
+          final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
+          if (topLevelClass != null) {
+            final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
+            if (parentClassName != null) {
+              requiredDepth.set(getNestingDepth(psiClass));
+              baseClassNameRef.set(parentClassName);
             }
           }
           else {
-            baseClassNameRef.set(className);
+            LOG.error("Local or anonymous class has no non-local parent");
           }
+        }
+        else {
+          baseClassNameRef.set(className);
         }
       }
     });
@@ -304,7 +446,8 @@ public class PositionManagerImpl implements PositionManager {
    * Inner in = new Inner(new Inner2(){}) {};
    * Parent of Inner2 sub class here is not Inner sub class
    */
-  private static PsiClass getEnclosingClass(PsiElement element) {
+  @Nullable
+  private static PsiClass getEnclosingClass(@Nullable PsiElement element) {
     if (element == null) {
       return null;
     }
@@ -448,76 +591,19 @@ public class PositionManagerImpl implements PositionManager {
     }
   }
 
-  private static class ClsSourcePosition extends SourcePosition {
-    private SourcePosition myDelegate;
-    private int myOriginalLine;
+  private static class ClsSourcePosition extends RemappedSourcePosition {
+    private final int myOriginalLine;
 
     public ClsSourcePosition(SourcePosition delegate, int originalLine) {
-      myDelegate = delegate;
+      super(delegate);
       myOriginalLine = originalLine;
     }
 
     @Override
-    @NotNull
-    public PsiFile getFile() {
-      return myDelegate.getFile();
-    }
-
-    @Override
-    public PsiElement getElementAt() {
-      return myDelegate.getElementAt();
-    }
-
-    @Override
-    public int getLine() {
-      int line = myDelegate.getLine();
-      if (myOriginalLine >= 0) {
-        return mapDelegate().getLine();
-      }
-      return line;
-    }
-
-    @Override
-    public int getOffset() {
-      int offset = myDelegate.getOffset(); //document loaded here
-      if (myOriginalLine >= 0) {
-        return mapDelegate().getOffset();
-      }
-      return offset;
-    }
-
-    private SourcePosition mapDelegate() {
-      SourcePosition position = calcLineMappedSourcePosition(myDelegate.getFile(), myOriginalLine);
-      if (position != null) {
-        myDelegate = position;
-      }
-      myOriginalLine = -1;
-      return myDelegate;
-    }
-
-    @Override
-    public Editor openEditor(boolean requestFocus) {
-      return myDelegate.openEditor(requestFocus);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return myDelegate.equals(o);
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-      myDelegate.navigate(requestFocus);
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return myDelegate.canNavigate();
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return myDelegate.canNavigateToSource();
+    public SourcePosition mapDelegate(SourcePosition original) {
+      if (myOriginalLine < 0) return original;
+      SourcePosition position = calcLineMappedSourcePosition(getFile(), myOriginalLine);
+      return position != null ? position : original;
     }
   }
 

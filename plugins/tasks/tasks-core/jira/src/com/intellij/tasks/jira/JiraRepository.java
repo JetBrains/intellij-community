@@ -365,10 +365,12 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @Override
   public void setUrl(String url) {
+    // Compare only normalized URLs
+    final String oldUrl = getUrl();
+    super.setUrl(url);
     // reset remote API version, only if server URL was changed
-    if (!getUrl().equals(url)) {
+    if (!getUrl().equals(oldUrl)) {
       myApiVersion = null;
-      super.setUrl(url);
     }
   }
 

@@ -66,8 +66,9 @@ public class JBSwingUtilities {
   @NotNull
   public static TreeTraverser<Component> uiTraverser() {
     return new TreeTraverser<Component>() {
+      @NotNull
       @Override
-      public Iterable<Component> children(Component c) {
+      public Iterable<Component> children(@NotNull Component c) {
         Iterable<Component> result = ContainerUtil.emptyIterable();
         if (c instanceof JMenu) {
           result = Arrays.asList(((JMenu)c).getMenuComponents());

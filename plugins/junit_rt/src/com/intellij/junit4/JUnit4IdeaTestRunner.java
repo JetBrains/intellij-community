@@ -53,7 +53,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       }
       TreeSender.sendTree(this, description, sendTree);
       if (myTestsListener instanceof SMTestSender) {
-        ((SMTestSender)myTestsListener).sendTree(this, description);
+        ((SMTestSender)myTestsListener).sendTree(description, System.out);
       }
     }
     catch (Exception e) {

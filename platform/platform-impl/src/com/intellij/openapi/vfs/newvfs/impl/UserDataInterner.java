@@ -55,7 +55,7 @@ class UserDataInterner {
   private static boolean shouldIntern(@NotNull KeyFMap map) {
     return map instanceof OneElementFMap || 
            map instanceof PairElementsFMap ||
-           map instanceof ArrayBackedFMap && ((ArrayBackedFMap)map).getKeys().length <= 5;
+           map instanceof ArrayBackedFMap && ((ArrayBackedFMap)map).getKeyIds().length <= 5;
   }
 }
 
@@ -77,7 +77,7 @@ class MapReference extends WeakReference<KeyFMap> {
              System.identityHashCode(map.getValue1()) + System.identityHashCode(map.getValue2());
     }
     if (object instanceof ArrayBackedFMap) {
-      int hc = Arrays.hashCode(((ArrayBackedFMap)object).getKeys());
+      int hc = Arrays.hashCode(((ArrayBackedFMap)object).getKeyIds());
       for (Object o : ((ArrayBackedFMap)object).getValues()) {
         hc = hc * 31 + System.identityHashCode(o);
       }
@@ -114,7 +114,7 @@ class MapReference extends WeakReference<KeyFMap> {
     if (o1 instanceof ArrayBackedFMap && o2 instanceof ArrayBackedFMap) {
       ArrayBackedFMap m1 = (ArrayBackedFMap)o1;
       ArrayBackedFMap m2 = (ArrayBackedFMap)o2;
-      return Arrays.equals(m1.getKeys(), m2.getKeys()) && containSameElements(m1.getValues(), m2.getValues());
+      return Arrays.equals(m1.getKeyIds(), m2.getKeyIds()) && containSameElements(m1.getValues(), m2.getValues());
     }
     return false;
   }

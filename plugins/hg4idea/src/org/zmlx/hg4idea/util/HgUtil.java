@@ -293,7 +293,7 @@ public abstract class HgUtil {
   public static String getNewBranchNameFromUser(@NotNull HgRepository repository,
                                                 @NotNull String dialogTitle) {
     return Messages.showInputDialog(repository.getProject(), "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
-                                    HgReferenceValidator.newInstance(repository));
+                                    new HgBranchReferenceValidator(repository));
   }
 
   /**
@@ -637,6 +637,11 @@ public abstract class HgUtil {
         names.add(hash.getName());
       }
     }
+    return names;
+  }
+
+  public static List<String> getSortedNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
+    List<String> names = getNamesWithoutHashes(namesWithHashes);
     Collections.sort(names);
     return names;
   }

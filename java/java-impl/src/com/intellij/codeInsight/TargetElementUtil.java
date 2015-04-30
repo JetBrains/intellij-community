@@ -29,6 +29,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.Processor;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,8 +78,8 @@ public class TargetElementUtil extends TargetElementEvaluatorEx2 implements Targ
 
   @Override
   @NotNull
-  public Answer isAcceptableReferencedElement(@NotNull final PsiElement element, final PsiElement referenceOrReferencedElement) {
-    if (isEnumConstantReference(element, referenceOrReferencedElement)) return Answer.NO;
+  public ThreeState isAcceptableReferencedElement(@NotNull final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    if (isEnumConstantReference(element, referenceOrReferencedElement)) return ThreeState.NO;
     return super.isAcceptableReferencedElement(element, referenceOrReferencedElement);
   }
 

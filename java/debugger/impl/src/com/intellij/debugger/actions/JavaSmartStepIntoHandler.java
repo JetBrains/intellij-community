@@ -106,6 +106,17 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         @Override
+        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+          PsiElement element = expression.resolve();
+          if (element instanceof PsiMethod) {
+            PsiElement navMethod = element.getNavigationElement();
+            if (navMethod instanceof PsiMethod) {
+              targets.add(new MethodSmartStepTarget(((PsiMethod)navMethod), null, expression, true, null));
+            }
+          }
+        }
+
+        @Override
         public void visitStatement(PsiStatement statement) {
           if (lineRange.intersects(statement.getTextRange())) {
             super.visitStatement(statement);

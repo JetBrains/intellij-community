@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.xdebugger;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
@@ -56,17 +55,6 @@ public abstract class XDebuggerManager {
 
   @Nullable
   public abstract XDebugSession getCurrentSession();
-
-  /**
-   * @deprecated use {@link #startSession(com.intellij.execution.runners.ExecutionEnvironment, XDebugProcessStarter)} instead
-   * to remove in IDEA 15
-   */
-  @NotNull
-  @Deprecated
-  public abstract XDebugSession startSession(@NotNull ProgramRunner runner,
-                                             @NotNull ExecutionEnvironment env,
-                                             @Nullable RunContentDescriptor contentToReuse,
-                                             @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
 
   /**
    * Start a new debugging session. Use this method only if debugging is started by using standard 'Debug' action i.e. this methods is called

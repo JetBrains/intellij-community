@@ -40,7 +40,7 @@ import java.awt.*;
 public class EditorNotificationPanel extends JPanel {
   protected final JLabel myLabel = new JLabel();
   protected final JLabel myGearLabel = new JLabel();
-  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(5));
+  protected final JPanel myLinksPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
 
   public EditorNotificationPanel() {
     super(new BorderLayout());

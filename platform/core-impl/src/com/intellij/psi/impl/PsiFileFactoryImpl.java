@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,8 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
   }
 
   @Nullable
-  public PsiFile trySetupPsiForFile(final LightVirtualFile virtualFile, Language language,
+  public PsiFile trySetupPsiForFile(@NotNull LightVirtualFile virtualFile,
+                                    @NotNull Language language,
                                     final boolean physical, final boolean markAsCopy) {
     final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;

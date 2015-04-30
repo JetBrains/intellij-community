@@ -17,6 +17,7 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Interface for token types returned from lexical analysis and for types
@@ -46,24 +46,20 @@ public class IElementType {
    */
   public static final Predicate TRUE = new Predicate() {
     @Override
-    public boolean matches(IElementType type) {
+    public boolean matches(@NotNull IElementType type) {
       return true;
     }
   };
 
   public static final short FIRST_TOKEN_INDEX = 1;
-  public static final short MAX_INDEXED_TYPES = 15000;
+  private static final short MAX_INDEXED_TYPES = 15000;
 
-  private static short ourCounter = FIRST_TOKEN_INDEX;
-  private static IElementType[] ourRegistry = new IElementType[700];
-  private static final ReentrantReadWriteLock.ReadLock ourRegistryReadLock;
-  private static final ReentrantReadWriteLock.WriteLock ourRegistryWriteLock;
-
+  private static final List<IElementType> ourRegistry = ContainerUtil.createConcurrentList();
   static {
-    ReentrantReadWriteLock ourLock = new ReentrantReadWriteLock();
-    ourRegistryReadLock = ourLock.readLock();
-    ourRegistryWriteLock = ourLock.writeLock();
+    // have to start from one for some obscure compatibility reasons
+    ourRegistry.add(new IElementType("NULL", Language.ANY));
   }
+
   private final short myIndex;
   @NotNull private final String myDebugName;
   @NotNull private final Language myLanguage;
@@ -82,22 +78,9 @@ public class IElementType {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourRegistryWriteLock.lock();
-      try {
-        myIndex = ourCounter++;
-        LOG.assertTrue(myIndex < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
-        final int registryIndex = myIndex - FIRST_TOKEN_INDEX;
-
-        if (ourRegistry.length == registryIndex) {
-          IElementType[] newRegistry = new IElementType[ourRegistry.length << 1];
-          System.arraycopy(ourRegistry, 0, newRegistry, 0, ourRegistry.length);
-          ourRegistry = newRegistry;
-        }
-        ourRegistry[registryIndex] = this; // overflow
-      } finally {
-        ourRegistryWriteLock.unlock();
-      }
+      LOG.assertTrue(ourRegistry.size()+1 < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
+      ourRegistry.add(this);
+      myIndex = (short)ourRegistry.indexOf(this);
     }
     else {
       myIndex = -1;
@@ -161,14 +144,7 @@ public class IElementType {
    * @throws IndexOutOfBoundsException if the index is out of registered elements' range.
    */
   public static IElementType find(short idx) {
-    ourRegistryReadLock.lock();
-    try {
-      if (idx == 0) return ourRegistry[0]; // We've changed FIRST_TOKEN_INDEX from 0 to 1. This is just for old plugins to avoid crashes.
-      if (idx >= ourCounter) return null;
-      return ourRegistry[idx - FIRST_TOKEN_INDEX];
-    } finally {
-      ourRegistryReadLock.unlock();
-    }
+    return ourRegistry.get(idx);
   }
 
   /**
@@ -177,12 +153,12 @@ public class IElementType {
    * @see IElementType#enumerate(Predicate)
    */
   public interface Predicate {
-    boolean matches(IElementType type);
+    boolean matches(@NotNull IElementType type);
   }
 
   @TestOnly
   static short getAllocatedTypesCount() {
-    return ourCounter;
+    return (short)ourRegistry.size();
   }
 
   /**
@@ -193,17 +169,8 @@ public class IElementType {
    */
   @NotNull
   public static IElementType[] enumerate(@NotNull Predicate p) {
-    IElementType[] copy;
-    ourRegistryReadLock.lock();
-    try {
-      copy = new IElementType[ourCounter - FIRST_TOKEN_INDEX];
-      System.arraycopy(ourRegistry, 0, copy, 0, ourCounter - FIRST_TOKEN_INDEX);
-    } finally {
-      ourRegistryReadLock.unlock();
-    }
-
     List<IElementType> matches = new ArrayList<IElementType>();
-    for (IElementType value : copy) {
+    for (IElementType value : ourRegistry) {
       if (p.matches(value)) {
         matches.add(value);
       }

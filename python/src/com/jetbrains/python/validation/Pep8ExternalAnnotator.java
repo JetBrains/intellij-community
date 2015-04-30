@@ -320,10 +320,6 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         return true;
       }
     }
-    // W292 no newline at end of file
-    if (editorSettings.isEnsureNewLineAtEOF() && problem.myCode.equals("W292")) {
-      return true;
-    }
 
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
     final CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(PythonLanguage.getInstance());

@@ -561,23 +561,25 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, offset);
     if (element != null) {
       PsiElement identifier = element.getNameIdentifier();
-      return new Info(identifier){
-        @Override
-        public void showDocInfo(@NotNull DocumentationManager docManager) {
-        }
-
-        @NotNull
-        @Override
-        public DocInfo getInfo() {
-          String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
-          return new DocInfo("Show usages of "+name, null, element);
-        }
-
-        @Override
-        public boolean isValid(@NotNull Document document) {
-          return element.isValid();
-        }
-      };
+      if (identifier != null && identifier.isValid()) {
+        return new Info(identifier){
+          @Override
+          public void showDocInfo(@NotNull DocumentationManager docManager) {
+          }
+  
+          @NotNull
+          @Override
+          public DocInfo getInfo() {
+            String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
+            return new DocInfo("Show usages of "+name, null, element);
+          }
+  
+          @Override
+          public boolean isValid(@NotNull Document document) {
+            return element.isValid();
+          }
+        };
+      }
     }
     return null;
   }

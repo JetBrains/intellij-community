@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.DefaultLookup;
@@ -183,10 +184,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
       }
     }
 
-    if (myPadding != null) {
-      display.width += myPadding.left + myPadding.right;
-      display.height += myPadding.top + myPadding.bottom;
-    }
+    JBInsets.addTo(display, myPadding);
 
     myDisplaySizeCache.setSize(display.width, display.height);
     myDisplaySizeDirty = false;
@@ -267,12 +265,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     }
 
     Rectangle r = new Rectangle(bounds);
-    if (myPadding != null) {
-      r.x += myPadding.left;
-      r.y += myPadding.top;
-      r.width -= myPadding.left + myPadding.right;
-      r.height -= myPadding.top + myPadding.bottom;
-    }
+    JBInsets.removeFrom(r, myPadding);
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, shouldValidate);
     // return opaque for combobox popup items painting

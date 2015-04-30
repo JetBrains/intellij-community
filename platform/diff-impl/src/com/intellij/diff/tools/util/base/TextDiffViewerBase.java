@@ -377,18 +377,13 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     protected abstract void expandAll(boolean expand);
   }
 
-  protected class ReadOnlyLockAction extends ToggleAction implements DumbAware {
-    private final List<? extends EditorEx> myEditableEditors;
-
+  protected abstract class ReadOnlyLockAction extends ToggleAction implements DumbAware {
     public ReadOnlyLockAction() {
       super("Disable editing", null, AllIcons.Nodes.Padlock);
       setEnabledInModalContext(true);
-      myEditableEditors = ContainerUtil.filter(getEditors(), new Condition<EditorEx>() {
-        @Override
-        public boolean value(EditorEx editor) {
-          return !editor.isViewer();
-        }
-      });
+    }
+
+    protected void init() {
       if (isVisible()) { // apply default state
         setSelected(null, isSelected(null));
       }
@@ -412,14 +407,51 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myContext.putUserData(READ_ONLY_LOCK_KEY, state);
-      for (EditorEx editor : myEditableEditors) {
-        editor.setViewer(state);
-      }
+      doApply(state);
     }
 
     private boolean isVisible() {
-      return !myEditableEditors.isEmpty() && myContext.getUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK) == Boolean.TRUE;
+      return myContext.getUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK) == Boolean.TRUE && canEdit();
     }
+
+    protected abstract void doApply(boolean readOnly);
+
+    protected abstract boolean canEdit();
+  }
+
+  protected class EditorReadOnlyLockAction extends ReadOnlyLockAction {
+    private final List<? extends EditorEx> myEditableEditors;
+
+    public EditorReadOnlyLockAction() {
+      this(getEditableEditors(getEditors()));
+    }
+
+    public EditorReadOnlyLockAction(@NotNull List<? extends EditorEx> editableEditors) {
+      myEditableEditors = editableEditors;
+      init();
+    }
+
+    @Override
+    protected void doApply(boolean readOnly) {
+      for (EditorEx editor : myEditableEditors) {
+        editor.setViewer(readOnly);
+      }
+    }
+
+    @Override
+    protected boolean canEdit() {
+      return !myEditableEditors.isEmpty();
+    }
+  }
+
+  @NotNull
+  protected static List<? extends EditorEx> getEditableEditors(@NotNull List<? extends EditorEx> editors) {
+    return ContainerUtil.filter(editors, new Condition<EditorEx>() {
+      @Override
+      public boolean value(EditorEx editor) {
+        return !editor.isViewer();
+      }
+    });
   }
 
   private final class MyEditorMouseListener extends EditorPopupHandler {

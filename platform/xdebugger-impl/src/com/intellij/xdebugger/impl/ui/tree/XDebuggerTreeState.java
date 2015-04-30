@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,9 @@ public class XDebuggerTreeState {
   private Rectangle myLastVisibleNodeRect;
 
   private XDebuggerTreeState(@NotNull XDebuggerTree tree) {
-    myRootInfo = new NodeInfo("", "", false);
     ApplicationManager.getApplication().assertIsDispatchThread();
-
-    final XDebuggerTreeNode root = (XDebuggerTreeNode)tree.getTreeModel().getRoot();
+    XDebuggerTreeNode root = tree.getRoot();
+    myRootInfo = root != null ? new NodeInfo("", "", tree.isPathSelected(root.getPath())) : null;
     if (root != null) {
       addChildren(tree, myRootInfo, root);
     }
@@ -46,8 +45,11 @@ public class XDebuggerTreeState {
 
   public XDebuggerTreeRestorer restoreState(@NotNull XDebuggerTree tree) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    XDebuggerTreeRestorer restorer = new XDebuggerTreeRestorer(tree, myLastVisibleNodeRect);
-    restorer.restoreChildren(((XDebuggerTreeNode)tree.getTreeModel().getRoot()), myRootInfo);
+    XDebuggerTreeRestorer restorer = null;
+    if (myRootInfo != null) {
+      restorer = new XDebuggerTreeRestorer(tree, myLastVisibleNodeRect);
+      restorer.restore(tree.getRoot(), myRootInfo);
+    }
     return restorer;
   }
 
@@ -120,7 +122,7 @@ public class XDebuggerTreeState {
     }
 
     @Nullable
-    public NodeInfo removeChild(@NotNull String name) {
+    public NodeInfo removeChild(String name) {
       return myChildren != null ? myChildren.remove(name) : null;
     }
   }

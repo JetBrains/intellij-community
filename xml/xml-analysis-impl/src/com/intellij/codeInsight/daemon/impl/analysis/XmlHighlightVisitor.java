@@ -54,6 +54,7 @@ import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlUndefinedElementFixProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.AnchorReference;
+import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -317,7 +318,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (requiredAttributes != null) {
       for (final String attrName : requiredAttributes) {
-        if (tag.getAttributeValue(attrName) == null &&
+        if (!hasAttribute(tag, attrName) &&
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           IntentionAction insertRequiredAttributeIntention = XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName);
@@ -339,6 +340,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         }
       }
     }
+  }
+
+  private static boolean hasAttribute(XmlTag tag, String attrName) {
+    final XmlAttribute attribute = tag.getAttribute(attrName);
+    if (attribute == null) return false;
+    if (attribute.getValueElement() != null) return true;
+    if (!(tag instanceof HtmlTag)) return false;
+    final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+    return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, tag);
   }
 
   private void reportOneTagProblem(final XmlTag tag,

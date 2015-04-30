@@ -38,6 +38,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Html;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -543,11 +544,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         Dimension s = prefSize.get() != null ? new Dimension(prefSize.get()) : super.getPreferredSize();
         Border b = getBorder();
         if (b != null) {
-          Insets insets = b.getBorderInsets(this);
-          if (insets != null) {
-            s.width += insets.left + insets.right;
-            s.height += insets.top + insets.bottom;
-          }
+          JBInsets.addTo(s, b.getBorderInsets(this));
         }
         return s;
       }

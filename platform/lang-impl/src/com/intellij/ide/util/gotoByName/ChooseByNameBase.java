@@ -530,7 +530,7 @@ public abstract class ChooseByNameBase {
                   return;
                 }
 
-                if (oppositeComponent != null && myProject != null) {
+                if (oppositeComponent != null && myProject != null && !myProject.isDisposed()) {
                   ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
                   ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowManager.getActiveToolWindowId());
                   if (toolWindow != null) {

@@ -38,7 +38,7 @@
  *     It has PSI, so it parses command lines into tree of PsiElements. But this package <strong>is not only for parsing</strong>:
  *     If you provide list of
  *     {@link com.jetbrains.commandInterface.command.Command commands} to {@link com.jetbrains.commandInterface.commandLine.psi.CommandLineFile}
- *      (see {@link com.jetbrains.commandInterface.commandLine.psi.CommandLineFile#setCommands(java.util.List)}), it will inject references
+ *      (see {@link com.jetbrains.commandInterface.commandLine.psi.CommandLineFile#setCommandsAndDefaultExecutor(java.util.List, com.jetbrains.commandInterface.command.CommandExecutor)}}), it will inject references
  *      (to provide autocompletion) and activate inspection to validate options and arguments. </li>
  *      <li>{@link com.jetbrains.commandInterface.console} displays console-like interface at the bottom of the screen to give user
  *      ability to wotk with your command-line.</li>

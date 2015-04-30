@@ -73,12 +73,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   public final CandidateInfo resolveConflict(@NotNull final List<CandidateInfo> conflicts){
     final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(myArgumentsList);
     if (properties != null) {
-      final PsiMethod method = properties.getMethod();
-      for (CandidateInfo conflict : conflicts) {
-        if (conflict.getElement() == method) {
-          return conflict;
-        }
-      }
+      LOG.error("Recursive conflict resolution for:" + properties.getMethod());
     }
     return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, true, new Computable<CandidateInfo>() {
       @Override
@@ -351,9 +346,9 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return ((MethodCandidateInfo)info).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
   }
 
-  public static boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,
-                                              final int argumentsCount,
-                                              boolean ignoreIfStaticsProblem) {
+  public boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,
+                                       final int argumentsCount,
+                                       boolean ignoreIfStaticsProblem) {
     boolean atLeastOneMatch = false;
     TIntArrayList unmatchedIndices = null;
     for (int i = 0; i < conflicts.size(); i++) {
@@ -362,7 +357,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (ignoreIfStaticsProblem && !info.isStaticsScopeCorrect()) return true;
       if (!(info instanceof MethodCandidateInfo)) continue;
       PsiMethod method = ((MethodCandidateInfo)info).getElement();
-      if (method.isVarArgs() || method.getParameterList().getParametersCount() == argumentsCount) {
+      if ((myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? ((MethodCandidateInfo)info).isVarargs() : method.isVarArgs()) ||
+          method.getParameterList().getParametersCount() == argumentsCount) {
         // remove all unmatched before
         if (unmatchedIndices != null) {
           for (int u=unmatchedIndices.size()-1; u>=0; u--) {

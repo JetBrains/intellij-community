@@ -44,6 +44,15 @@ public class ContentUtilEx extends ContentsUtil {
       final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, groupPrefix + ": " + tabName, true);
       content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
       content.putUserData(Content.TAB_GROUP_NAME_KEY, groupPrefix);
+
+      for (Content c : manager.getContents()) {
+        if (c.getComponent() == contentComponent) {
+          if (select) {
+            manager.setSelectedContent(c);
+          }
+          return;
+        }
+      }
       addContent(manager, content, select);
       return;
     }

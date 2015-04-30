@@ -25,7 +25,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
 import gnu.trove.THashMap;
@@ -37,18 +36,16 @@ import java.util.List;
 import java.util.Map;
 
 abstract class RefEntityImpl implements RefEntity {
-  private RefEntityImpl myOwner;         // guarded by myManager.myLock
-  protected List<RefEntity> myChildren;  // guarded by myManager.myLock
+  private volatile RefEntityImpl myOwner;
+  protected List<RefEntity> myChildren;  // guarded by this
   private final String myName;
-  private Map<Key, Object> myUserMap;
+  private Map<Key, Object> myUserMap;    // guarded by this
   protected long myFlags;
   protected final RefManagerImpl myManager;
 
   RefEntityImpl(@NotNull String name, @NotNull RefManager manager) {
     myManager = (RefManagerImpl)manager;
     myName = name;
-    myOwner = null;
-    myChildren = null;
   }
 
   @NotNull
@@ -64,58 +61,33 @@ abstract class RefEntityImpl implements RefEntity {
   }
 
   @Override
-  public List<RefEntity> getChildren() {
-    return myManager.doRead(new Computable<List<RefEntity>>() {
-      @Override
-      public List<RefEntity> compute() {
-        return myChildren;
-      }
-    });
+  public synchronized List<RefEntity> getChildren() {
+    return myChildren;
   }
 
   @Override
   public RefEntity getOwner() {
-    return myManager.doRead(new Computable<RefEntity>() {
-      @Override
-      public RefEntity compute() {
-        return myOwner;
-      }
-    });
+    return myOwner;
   }
 
-  protected void setOwner(final RefEntityImpl owner) {
-    myManager.doWrite(new Runnable() {
-      @Override
-      public void run() {
-        myOwner = owner;
-      }
-    });
+  protected void setOwner(@Nullable final RefEntityImpl owner) {
+    myOwner = owner;
   }
 
-  public void add(@NotNull final RefEntity child) {
-    myManager.doWrite(new Runnable() {
-      @Override
-      public void run() {
-        if (myChildren == null) {
-          myChildren = new ArrayList<RefEntity>(1);
-        }
+  public synchronized void add(@NotNull final RefEntity child) {
+    if (myChildren == null) {
+      myChildren = new ArrayList<RefEntity>(1);
+    }
 
-        myChildren.add(child);
-        ((RefEntityImpl)child).setOwner(RefEntityImpl.this);
-      }
-    });
+    myChildren.add(child);
+    ((RefEntityImpl)child).setOwner(this);
   }
 
-  protected void removeChild(@NotNull final RefEntity child) {
-    myManager.doWrite(new Runnable() {
-      @Override
-      public void run() {
-        if (myChildren != null) {
-          myChildren.remove(child);
-          ((RefEntityImpl)child).setOwner(null);
-        }
-      }
-    });
+  protected synchronized void removeChild(@NotNull final RefEntity child) {
+    if (myChildren != null) {
+      myChildren.remove(child);
+      ((RefEntityImpl)child).setOwner(null);
+    }
   }
 
   public String toString() {

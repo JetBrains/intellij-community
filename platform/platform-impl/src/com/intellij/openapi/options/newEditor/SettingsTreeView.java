@@ -33,10 +33,7 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -130,7 +127,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     });
 
     myScroller = ScrollPaneFactory.createScrollPane(null, true);
-    myScroller.setViewport(new GradientViewport(myTree, 5, 0, 0, 0, true) {
+    myScroller.setViewport(new GradientViewport(myTree, JBUI.insetsTop(5), true) {
       private JLabel myHeader;
 
       @Override

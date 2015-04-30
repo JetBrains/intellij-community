@@ -68,6 +68,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int RECENT_FILES_LIMIT = 50;
   public int CONSOLE_COMMAND_HISTORY_LIMIT = 300;
   public int EDITOR_TAB_LIMIT = 10;
+  public boolean REUSE_NOT_MODIFIED_TABS = false;
   public boolean ANIMATE_WINDOWS = true;
   @Deprecated //todo remove in IDEA 16
   public int ANIMATION_SPEED = 4000; // Pixels per second

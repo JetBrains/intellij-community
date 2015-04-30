@@ -374,5 +374,6 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   @Override
   public void dispose() {
     getTable().removeAllHighlighters();
+    myVisiblePack = VisiblePack.EMPTY;
   }
 }

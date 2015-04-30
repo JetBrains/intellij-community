@@ -30,18 +30,19 @@ import java.util.Collection;
  */
 public class HgRepositoryFiles {
 
-  public static final String BRANCHHEADS = "cache/branch";//branchheads <2.5; branchheads-served >= 2.5 and <2.9; branch2-served >=2.9
+  private static final String BRANCHHEADS = "cache/branch";//branchheads <2.5; branchheads-served >= 2.5 and <2.9; branch2-served >=2.9
   // so check for starting branch
-  public static final String BRANCHEADSDIR = "cache";
-  public static final String MERGE = "merge";
-  public static final String REBASE = "rebase"; //rebasestate
-  public static final String BRANCH = "branch";
-  public static final String DIRSTATE = "dirstate";
-  public static final String BOOKMARKS = "bookmarks";
-  public static final String LOCAL_TAGS = "localtags";
-  public static final String TAGS = ".hgtags";
-  public static final String CURRENT_BOOKMARK = "bookmarks.current";
-  public static final String CONFIG_HGRC = "hgrc";
+  private static final String BRANCHEADSDIR = "cache";
+  private static final String MERGE = "merge";
+  private static final String REBASE = "rebase"; //rebasestate
+  private static final String BRANCH = "branch";
+  private static final String DIRSTATE = "dirstate";
+  private static final String BOOKMARKS = "bookmarks";
+  private static final String LOCAL_TAGS = "localtags";
+  private static final String TAGS = ".hgtags";
+  private static final String CURRENT_BOOKMARK = "bookmarks.current";
+  private static final String MQDIR = "patches";
+  private static final String CONFIG_HGRC = "hgrc";
 
 
   @NotNull private final String myBranchHeadsPath;
@@ -54,6 +55,7 @@ public class HgRepositoryFiles {
   @NotNull private final String myTagsPath;
   @NotNull private final String myLocalTagsPath;
   @NotNull private final String myCurrentBookmarkPath;
+  @NotNull private final String myMQDirPath;
   @NotNull private final String myConfigHgrcPath;
 
   @NotNull
@@ -72,6 +74,7 @@ public class HgRepositoryFiles {
     myTagsPath = hgDir.getParent().getPath() + slash(TAGS);
     myLocalTagsPath = hgDir.getPath() + slash(LOCAL_TAGS);
     myCurrentBookmarkPath = hgDir.getPath() + slash(CURRENT_BOOKMARK);
+    myMQDirPath = hgDir.getPath() + slash(MQDIR);
     myConfigHgrcPath = hgDir.getPath() + slash(CONFIG_HGRC);
   }
 
@@ -91,6 +94,11 @@ public class HgRepositoryFiles {
   @NotNull
   public String getBranchHeadsDirPath() {
     return myBranchHeadsDirPath;
+  }
+
+  @NotNull
+  public String getMQDirPath() {
+    return myMQDirPath;
   }
 
   public boolean isbranchHeadsFile(String filePath) {
@@ -131,5 +139,9 @@ public class HgRepositoryFiles {
 
   public boolean isLocalTagsFile(String filePath) {
     return filePath.equals(myLocalTagsPath);
+  }
+
+  public boolean isMqFile(String filePath) {
+    return filePath.startsWith(myMQDirPath);
   }
 }

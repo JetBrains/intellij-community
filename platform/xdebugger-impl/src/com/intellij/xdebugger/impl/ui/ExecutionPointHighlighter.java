@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -195,10 +196,15 @@ public class ExecutionPointHighlighter {
     if (myRangeHighlighter != null) return;
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    myRangeHighlighter = DocumentMarkupModel.forDocument(document, myProject, true).addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                                                      myNotTopFrame
-                                                                      ? scheme.getAttributes(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES)
-                                                                      : scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES));
+    TextAttributes attributes = myNotTopFrame ? scheme.getAttributes(DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES)
+                                : scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES);
+    if (mySourcePosition instanceof HighlighterProvider) {
+      myRangeHighlighter = ((HighlighterProvider)mySourcePosition).createHighlighter(document, myProject, attributes);
+    }
+    if (myRangeHighlighter == null) {
+      myRangeHighlighter = DocumentMarkupModel.forDocument(document, myProject, true).
+          addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, attributes);
+    }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_KEY, true);
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }
@@ -216,5 +222,10 @@ public class ExecutionPointHighlighter {
         component.putClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
       }
     });
+  }
+
+  public interface HighlighterProvider {
+    @Nullable
+    RangeHighlighter createHighlighter(Document document, Project project, TextAttributes attributes);
   }
 }

@@ -31,6 +31,8 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_BEFORE_BACKSLASH = true;
 
   public int BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS = 2;
+  // TODO make boolean (it needs special editor in BlankLinesPanel)
+  public int BLANKS_LINES_AT_FILE_END = 1;
 
   public boolean ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
   public boolean ALIGN_MULTILINE_IMPORTS = true;

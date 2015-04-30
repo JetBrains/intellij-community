@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,19 +82,41 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return myResult;
   }
 
-  @Override
-  public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+  static String getFqn(String internalName, String myShortName) {
     String fqn;
     String shortName;
-    if (myShortName != null && name.endsWith(myShortName)) {
+    if (myShortName != null && internalName.endsWith(myShortName)) {
       shortName = myShortName;
-      fqn = name.length() == shortName.length()
-            ? shortName : getClassName(name.substring(0, name.length() - shortName.length() - 1)) + "." + shortName;
+      fqn = internalName.length() == shortName.length()
+            ? shortName : getClassName(internalName.substring(0, internalName.length() - shortName.length() - 1)) + "." + shortName;
     }
     else {
-      fqn = getClassName(name);
+      fqn = getClassName(internalName);
       shortName = PsiNameHelper.getShortClassName(fqn);
     }
+
+    return fqn;
+  }
+  static String getShortName(String internalName, String myShortName) {
+    String fqn;
+    String shortName;
+    if (myShortName != null && internalName.endsWith(myShortName)) {
+      shortName = myShortName;
+      fqn = internalName.length() == shortName.length()
+            ? shortName : getClassName(internalName.substring(0, internalName.length() - shortName.length() - 1)) + "." + shortName;
+    }
+    else {
+      fqn = getClassName(internalName);
+      shortName = PsiNameHelper.getShortClassName(fqn);
+    }
+
+    return shortName;
+  }
+
+  @Override
+  public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+    String fqn = getFqn(name, myShortName);
+    String shortName = getShortName(name, myShortName);
 
     int flags = myAccess | access;
     boolean isDeprecated = (flags & Opcodes.ACC_DEPRECATED) != 0;

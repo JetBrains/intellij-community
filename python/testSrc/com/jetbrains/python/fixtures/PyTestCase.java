@@ -30,16 +30,19 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -55,6 +58,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -92,6 +96,24 @@ public abstract class PyTestCase extends UsefulTestCase {
       return path;
     }
     return null;
+  }
+
+  /**
+   * Reformats currently configured file.
+   */
+  protected final void reformatFile() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        doPerformFormatting();
+      }
+    });
+  }
+
+  private void doPerformFormatting() throws IncorrectOperationException {
+    final PsiFile file = myFixture.getFile();
+    final TextRange myTextRange = file.getTextRange();
+    CodeStyleManager.getInstance(myFixture.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
   }
 
   @Override

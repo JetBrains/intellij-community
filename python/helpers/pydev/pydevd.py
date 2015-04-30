@@ -27,6 +27,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_STEP_INTO, \
                          CMD_STEP_OVER, \
                          CMD_STEP_RETURN, \
+                         CMD_STEP_INTO_MY_CODE, \
     CMD_THREAD_KILL, \
                          CMD_THREAD_RUN, \
                          CMD_THREAD_SUSPEND, \
@@ -805,7 +806,8 @@ class PyDB:
                         sys.stderr.write("Can't make tasklet run: %s\n" % (text,))
 
 
-                elif cmd_id == CMD_STEP_INTO or cmd_id == CMD_STEP_OVER or cmd_id == CMD_STEP_RETURN:
+                elif cmd_id == CMD_STEP_INTO or cmd_id == CMD_STEP_OVER or cmd_id == CMD_STEP_RETURN or \
+                        cmd_id == CMD_STEP_INTO_MY_CODE:
                     # we received some command to make a single step
                     t = PydevdFindThreadById(text)
                     if t:
@@ -1460,7 +1462,7 @@ class PyDB:
             time.sleep(0.01)
 
         # process any stepping instructions
-        if info.pydev_step_cmd == CMD_STEP_INTO:
+        if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
             info.pydev_step_stop = None
             info.pydev_smart_step_stop = None
 

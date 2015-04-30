@@ -48,6 +48,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -251,9 +252,9 @@ public class TargetElementUtilBase {
     
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
     if (evaluator != null) {
-      TargetElementEvaluatorEx2.Answer answer = evaluator.isAcceptableReferencedElement(element, referenceOrReferencedElement);
-      if (answer == TargetElementEvaluatorEx2.Answer.YES) return true;
-      if (answer == TargetElementEvaluatorEx2.Answer.NO) return false;
+      ThreeState answer = evaluator.isAcceptableReferencedElement(element, referenceOrReferencedElement);
+      if (answer == ThreeState.YES) return true;
+      if (answer == ThreeState.NO) return false;
     }
 
     return true;

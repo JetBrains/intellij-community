@@ -85,8 +85,10 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "BLANK_LINES_AFTER_IMPORTS",
                                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
                                    "KEEP_BLANK_LINES_IN_CODE");
-      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS", "Around top-level classes and functions:",
+      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS",
+                                "Around top-level classes and functions:",
                                 BLANK_LINES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANKS_LINES_AT_FILE_END", "Blank lines at the end of file", BLANK_LINES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
@@ -116,6 +118,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
     indentOptions.INDENT_SIZE = 4;
     defaultSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    defaultSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1;
     return defaultSettings;
   }
 

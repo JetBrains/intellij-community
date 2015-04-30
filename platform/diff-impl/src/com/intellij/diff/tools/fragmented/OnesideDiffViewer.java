@@ -93,11 +93,16 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
   @Nullable private ChangedBlockData myChangedBlockData;
 
+  private final boolean[] myForceReadOnlyFlags;
+  private boolean myReadOnlyLockSet = false;
+
   public OnesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
+
+    myForceReadOnlyFlags = checkForceReadOnly();
 
 
     List<DiffContent> contents = myRequest.getContents();
@@ -136,6 +141,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     super.onDispose();
   }
 
+  @CalledInAwt
   protected void processContextHints() {
     Side side = DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.MASTER_SIDE);
     if (side != null) myMasterSide = side;
@@ -143,11 +149,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     myScrollToLineHelper.processContext();
   }
 
+  @CalledInAwt
   protected void updateContextHints() {
     myScrollToLineHelper.updateContext();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
   }
 
+  @CalledInAwt
   @NotNull
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
@@ -155,12 +163,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
-    group.add(new ReadOnlyLockAction());
+    group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     return group;
   }
 
+  @CalledInAwt
   @NotNull
   public List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
@@ -180,6 +189,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   //
 
   @Override
+  @CalledInAwt
   protected void onSlowRediff() {
     super.onSlowRediff();
     myPanel.setLoadingContent();
@@ -209,13 +219,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         blocks.add(ChangedBlock.createInserted(data.getText().length() + 1, data.getLines()));
 
         indicator.checkCanceled();
-        LineNumberConvertor convertor = LineNumberConvertor.Builder.createLeft(data.getLines());
+        LineNumberConvertor convertor = LineNumberConvertor.Builder.createRight(data.getLines());
 
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), data.getHighlighter(),
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor1(), null);
 
-        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false, false);
       }
 
       if (myActualContent2 == null) {
@@ -235,13 +245,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         blocks.add(ChangedBlock.createDeleted(data.getText().length() + 1, data.getLines()));
 
         indicator.checkCanceled();
-        LineNumberConvertor convertor = LineNumberConvertor.Builder.createRight(data.getLines());
+        LineNumberConvertor convertor = LineNumberConvertor.Builder.createLeft(data.getLines());
 
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), data.getHighlighter(),
                                                                data.getRangeHighlighter(), content.getContentType(),
                                                                convertor.createConvertor2(), null);
 
-        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false);
+        return apply(editorData, blocks, convertor, Collections.singletonList(new LineRange(0, data.getLines())), false, false);
       }
 
       final DocumentContent content1 = myActualContent1;
@@ -257,6 +267,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         }
       });
 
+      final boolean innerFragments = getDiffConfig().innerFragments;
       final List<LineFragment> fragments = DiffUtil.compareWithCache(myRequest, documentData, getDiffConfig(), indicator);
 
       indicator.checkCanceled();
@@ -264,9 +275,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         @Override
         public TwosideDocumentData compute() {
           indicator.checkCanceled();
-          OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2,
-                                                                      getHighlightPolicy().isFineFragments(),
-                                                                      myMasterSide);
+          OnesideFragmentBuilder builder = new OnesideFragmentBuilder(fragments, document1, document2, myMasterSide);
           builder.exec();
 
           indicator.checkCanceled();
@@ -292,7 +301,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       CombinedEditorData editorData = new CombinedEditorData(builder.getText(), data.getHighlighter(), data.getRangeHighlighter(), fileType,
                                                              convertor.createConvertor1(), convertor.createConvertor2());
 
-      return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual);
+      return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual, innerFragments);
     }
     catch (DiffTooBigException ignore) {
       return new Runnable() {
@@ -352,7 +361,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
                          @NotNull final List<ChangedBlock> blocks,
                          @NotNull final LineNumberConvertor convertor,
                          @NotNull final List<LineRange> changedLines,
-                         final boolean isEqual) {
+                         final boolean isEqual, final boolean innerFragments) {
     return new Runnable() {
       @Override
       public void run() {
@@ -380,7 +389,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
         ArrayList<OnesideDiffChange> diffChanges = new ArrayList<OnesideDiffChange>(blocks.size());
         for (ChangedBlock block : blocks) {
-          diffChanges.add(new OnesideDiffChange(myEditor, block));
+          diffChanges.add(new OnesideDiffChange(OnesideDiffViewer.this, block, innerFragments));
         }
 
         myChangedBlockData = new ChangedBlockData(diffChanges, convertor);
@@ -483,6 +492,8 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     }
     myChangedBlockData = null;
 
+    OnesideEditorRangeHighlighter.erase(myProject, myDocument);
+
     myFoldingModel.destroy();
 
     myStatusPanel.update();
@@ -522,6 +533,11 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   //
 
   @NotNull
+  public EditorEx getEditor() {
+    return myEditor;
+  }
+
+  @NotNull
   @Override
   protected List<? extends EditorEx> getEditors() {
     return Collections.singletonList(myEditor);
@@ -551,6 +567,20 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return myStatusPanel;
   }
 
+  @CalledInAwt
+  public boolean isEditable(@NotNull Side side, boolean respectReadOnlyLock) {
+    if (myReadOnlyLockSet && respectReadOnlyLock) return false;
+    if (side.select(myForceReadOnlyFlags)) return false;
+    Document document = getDocument(side);
+    return document != null && DiffUtil.canMakeWritable(document);
+  }
+
+  @Nullable
+  public Document getDocument(@NotNull Side side) {
+    DocumentContent content = side.select(myActualContent1, myActualContent2);
+    return content != null ? content.getDocument() : null;
+  }
+
   //
   // Misc
   //
@@ -566,6 +596,19 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return getOpenFileDescriptor(myEditor.getCaretModel().getOffset());
   }
 
+  @CalledInAwt
+  @Nullable
+  protected OnesideDiffChange getCurrentChange() {
+    if (myChangedBlockData == null) return null;
+    int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
+
+    for (OnesideDiffChange change : myChangedBlockData.getDiffChanges()) {
+      if (DiffUtil.isSelectedByLine(caretLine, change.getLine1(), change.getLine2())) return change;
+    }
+    return null;
+  }
+
+  @CalledInAwt
   @Nullable
   protected OpenFileDescriptor getOpenFileDescriptor(int offset) {
     assert myActualContent1 != null || myActualContent2 != null;
@@ -713,6 +756,28 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     }
   }
 
+  private class MyReadOnlyLockAction extends ReadOnlyLockAction {
+    public MyReadOnlyLockAction() {
+      init();
+    }
+
+    @Override
+    protected void doApply(boolean readOnly) {
+      myReadOnlyLockSet = readOnly;
+      if (myChangedBlockData != null) {
+        for (OnesideDiffChange onesideDiffChange : myChangedBlockData.getDiffChanges()) {
+          onesideDiffChange.updateGutterActions();
+        }
+      }
+    }
+
+    @Override
+    protected boolean canEdit() {
+      return myActualContent1 != null && !myForceReadOnlyFlags[0] && DiffUtil.canMakeWritable(myActualContent1.getDocument()) ||
+             myActualContent2 != null && !myForceReadOnlyFlags[1] && DiffUtil.canMakeWritable(myActualContent2.getDocument());
+    }
+  }
+
   //
   // Scroll from annotate
   //
@@ -806,9 +871,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     else if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return myEditor;
     }
-    else {
-      return super.getData(dataId);
+    else if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
+      OnesideDiffChange change = getCurrentChange();
+      if (change != null) {
+        return new LineRange(change.getLine1(), change.getLine2());
+      }
     }
+    return super.getData(dataId);
   }
 
   private class MyStatusPanel extends StatusPanel {

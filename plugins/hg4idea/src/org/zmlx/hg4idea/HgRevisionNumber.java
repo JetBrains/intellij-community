@@ -13,9 +13,10 @@
 package org.zmlx.hg4idea;
 
 import com.google.common.base.Objects;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.log.HgBaseLogParser;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collections;
@@ -69,15 +70,14 @@ public class HgRevisionNumber implements VcsRevisionNumber {
                           @NotNull String commitMessage,
                           @NotNull List<HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
-    Pair<String, String> authorArgs = HgUtil.parseUserNameAndEmail(authorInfo);
+    Couple<String> authorArgs = HgUtil.parseUserNameAndEmail(authorInfo);
     this.author = authorArgs.getFirst();
     this.email = authorArgs.getSecond();
     this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();
     isWorkingVersion = changeset.endsWith("+");
-    int subjectIndex = commitMessage.indexOf('\n');
-    mySubject = subjectIndex == -1 ? commitMessage : commitMessage.substring(0, subjectIndex);
+    mySubject = HgBaseLogParser.extractSubject(commitMessage);
   }
 
   @NotNull

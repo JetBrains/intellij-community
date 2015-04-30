@@ -15,11 +15,15 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.maven.execution.MavenExecutionRequest;
 
 import java.io.File;
 import java.rmi.RemoteException;
 import java.util.List;
+
 
 /**
  * @author Vladislav.Soroka
@@ -28,6 +32,10 @@ import java.util.List;
 public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements MavenServerEmbedder {
 
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
+
+  public Maven3ServerEmbedder(MavenServerSettings settings) {
+    initLog4J(settings);
+  }
 
   @SuppressWarnings({"unchecked"})
   public abstract <T> T getComponent(Class<T> clazz, String roleHint);
@@ -42,4 +50,36 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
                                                       List<String> inactiveProfiles,
                                                       List<String> goals)
     throws RemoteException;
+
+  private static void initLog4J(MavenServerSettings settings) {
+    try {
+      BasicConfigurator.configure();
+      final Level rootLoggerLevel = toLog4JLevel(settings.getLoggingLevel());
+      Logger.getRootLogger().setLevel(rootLoggerLevel);
+      if (!rootLoggerLevel.isGreaterOrEqual(Level.ERROR)) {
+        Logger.getLogger("org.apache.maven.wagon.providers.http.httpclient.wire").setLevel(Level.ERROR);
+        Logger.getLogger("org.apache.http.wire").setLevel(Level.ERROR);
+      }
+    }
+    catch (Throwable ignore) {
+    }
+  }
+
+  private static Level toLog4JLevel(int level) {
+    switch (level) {
+      case MavenServerConsole.LEVEL_DEBUG:
+        return Level.ALL;
+      case MavenServerConsole.LEVEL_ERROR:
+        return Level.ERROR;
+      case MavenServerConsole.LEVEL_FATAL:
+        return Level.FATAL;
+      case MavenServerConsole.LEVEL_DISABLED:
+        return Level.OFF;
+      case MavenServerConsole.LEVEL_INFO:
+        return Level.INFO;
+      case MavenServerConsole.LEVEL_WARN:
+        return Level.WARN;
+    }
+    return Level.INFO;
+  }
 }

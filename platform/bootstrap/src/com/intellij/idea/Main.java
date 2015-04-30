@@ -169,7 +169,7 @@ public class Main {
       //noinspection SpellCheckingInspection
       Collections.addAll(args,
                          System.getProperty("java.home") + "/bin/java",
-                         "-Xmx500m",
+                         "-Xmx750m",
                          "-Djna.nosys=true",
                          "-Djna.boot.library.path=",
                          "-Djna.debug_load=true",

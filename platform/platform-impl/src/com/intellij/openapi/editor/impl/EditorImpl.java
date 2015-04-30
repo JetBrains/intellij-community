@@ -2036,14 +2036,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   public void startDumb() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    final JComponent component = getContentComponent();
-    final Rectangle rect = ((JViewport)component.getParent()).getViewRect();
+    Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
     BufferedImage image = UIUtil.createImage(rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
-    final Graphics2D graphics = image.createGraphics();
-    UISettings.setupAntialiasing(graphics);
+    Graphics2D graphics = image.createGraphics();
     graphics.translate(-rect.x, -rect.y);
     graphics.setClip(rect.x, rect.y, rect.width, rect.height);
-    paint(graphics);
+    myEditorComponent.paintComponent(graphics);
     graphics.dispose();
     putUserData(BUFFER, image);
   }

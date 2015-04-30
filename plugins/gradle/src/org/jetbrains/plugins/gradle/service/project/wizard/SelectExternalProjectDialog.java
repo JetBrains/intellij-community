@@ -16,15 +16,18 @@
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.ui.treeStructure.SimpleNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 
 /**
  * @author Vladislav.Soroka
@@ -67,6 +70,13 @@ public class SelectExternalProjectDialog extends SelectExternalSystemNodeDialog 
 
     myResult = node instanceof ProjectNode ? ((ProjectNode)node).getData() : null;
     super.doOKAction();
+  }
+
+  @Override
+  protected void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
+    if(node instanceof ProjectNode ) {
+      doOKAction();
+    }
   }
 
   public ProjectData getResult() {

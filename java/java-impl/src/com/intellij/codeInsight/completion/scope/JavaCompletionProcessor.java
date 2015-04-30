@@ -306,6 +306,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   public boolean isAccessible(@Nullable final PsiElement element) {
+    // if checkAccess is false, we only show inaccessible source elements because their access modifiers can be changed later by the user.
+    // compiled element can't be changed so we don't pollute the completion with them. In Javadoc, everything is allowed.
     if (!myOptions.checkAccess && myInJavaDoc) return true;
     if (!(element instanceof PsiMember)) return true;
 

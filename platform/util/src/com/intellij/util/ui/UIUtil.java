@@ -1634,22 +1634,28 @@ public class UIUtil {
                                 boolean toolWindow,
                                 boolean drawTopLine,
                                 boolean drawBottomLine) {
-    g.setColor(getPanelBackground());
-    g.fillRect(x, 0, width, height);
-
-    ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
-    g.fillRect(x, 0, width, height);
-
-    g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
-    if (drawTopLine) g.drawLine(x, 0, width, 0);
-    if (drawBottomLine) g.drawLine(x, height - 1, width, height - 1);
-
-    g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
-    g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
-
-    if (active) {
-      g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
+    height++;
+    GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
+    try {
+      g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
+
+      ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
+      g.fillRect(x, 0, width, height);
+
+      g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
+      if (drawTopLine) g.drawLine(x, 0, width, 0);
+      if (drawBottomLine) g.drawLine(x, height - 1, width, height - 1);
+
+      g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
+      g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+
+      if (active) {
+        g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
+        g.fillRect(x, 0, width, height);
+      }
+    } finally {
+      config.restore();
     }
   }
 
@@ -3020,16 +3026,6 @@ public class UIUtil {
    */
   public static void addInsets(@NotNull JComponent component, @NotNull Insets insets) {
     addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
-  }
-
-  public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
-    Dimension ans = new Dimension(dimension);
-    ans.width += insets.left;
-    ans.width += insets.right;
-    ans.height += insets.top;
-    ans.height += insets.bottom;
-
-    return ans;
   }
 
   public static void adjustWindowToMinimumSize(final Window window) {
