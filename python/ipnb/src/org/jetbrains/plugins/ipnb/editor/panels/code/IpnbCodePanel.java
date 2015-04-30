@@ -118,7 +118,8 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   public void runCell() {
     super.runCell();
     updateCellSource();
-    myCell.setPromptNumber(-1);
+    isRunning = true;
+    updatePanel(null, null);
     final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
     connectionManager.executeCell(this);
     setEditing(false);
@@ -157,7 +158,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         panel.setBackground(IpnbEditorUtil.getBackground());
         addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel);
         myViewPanel.add(panel);
-
+        isRunning = false;
         if (outputContent != null) {
           for (IpnbOutputCell output : outputContent) {
             myCell.addCellOutput(output);
