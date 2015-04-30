@@ -107,6 +107,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
   }
 
+  public Sdk getSdk() {
+    return myConfig.getSdk();
+  }
+
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
