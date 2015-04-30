@@ -356,7 +356,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     protected EditorEx createEditor() {
       final EditorEx editor = super.createEditor();
       editor.setHorizontalScrollbarVisible(true);
-      editor.setCaretEnabled(true);
+      editor.setCaretEnabled(isEnabled());
       editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
       editor.setEmbeddedIntoDialogWrapper(myEmbeddedIntoDialogWrapper);
       editor.setBorder(UIUtil.getTextFieldBorder());
