@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,15 +288,6 @@ public class MavenIndex {
     if (myKind != kind) return false;
     if (kind == Kind.LOCAL) return FileUtil.pathsEqual(myRepositoryPathOrUrl, normalizePathOrUrl(pathOrUrl));
     return myRepositoryPathOrUrl.equalsIgnoreCase(normalizePathOrUrl(pathOrUrl));
-  }
-
-  @Deprecated
-  /**
-   * use {@link #isFor(Kind, String)} instead
-   * @deprecated to remove in IDEA 15
-   */
-  public boolean isFor(Kind kind, String repositoryId, String pathOrUrl) {
-    return isFor(kind, pathOrUrl);
   }
 
   public synchronized long getUpdateTimestamp() {
