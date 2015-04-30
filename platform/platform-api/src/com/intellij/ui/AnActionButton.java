@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,10 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   
   public static AnActionButton fromAction(final AnAction action) {
     final Presentation presentation = action.getTemplatePresentation();
-    return action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action)
-                                                   : new AnActionButtonWrapper(presentation, action);
+    final AnActionButtonWrapper button = action instanceof CheckedActionGroup ? new CheckedAnActionButton(presentation, action)
+                                                                              : new AnActionButtonWrapper(presentation, action);
+    button.setShortcut(action.getShortcutSet());
+    return button;
   }
 
   public boolean isEnabled() {
