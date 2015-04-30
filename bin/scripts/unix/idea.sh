@@ -134,8 +134,6 @@ fi
 
 if [ -n "$@@product_uc@@_PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
-elif [ -e "$OS_SPECIFIC_BIN_DIR/idea.properties" ]; then
-  IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$PWD/$OS_SPECIFIC_BIN_DIR/idea.properties"
 fi
 
 MAIN_CLASS_NAME="$@@product_uc@@_MAIN_CLASS_NAME"

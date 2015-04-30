@@ -324,6 +324,7 @@ public class PathManager {
       getUserPropertiesPath(),
       getUserHome() + "/idea.properties",
       getHomePath() + "/bin/idea.properties",
+      getHomePath() + "/bin/" + getOSSpecificBinSubdir() + "/idea.properties",
       getHomePath() + "/community/bin/idea.properties"};
 
     for (String path : propFiles) {
