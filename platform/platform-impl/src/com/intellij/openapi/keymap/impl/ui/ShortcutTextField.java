@@ -22,7 +22,9 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.KeyStrokeAdapter;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
@@ -47,8 +49,14 @@ public class ShortcutTextField extends JTextField {
       ){
         return;
       }
-
-      setKeyStroke(KeyStroke.getKeyStroke(keyCode, e.getModifiers()));
+      // On Windows it is preferable to use normal key code here
+      // see java.awt.event.KeyEvent.getExtendedKeyCode
+      boolean extendedKeyCodeFirst = !SystemInfo.isWindows;
+      KeyStroke stroke = KeyStrokeAdapter.getKeyStroke(e, extendedKeyCodeFirst);
+      if (stroke == null) {
+        stroke = KeyStrokeAdapter.getKeyStroke(e, !extendedKeyCodeFirst);
+      }
+      setKeyStroke(stroke);
     }
   }
 
