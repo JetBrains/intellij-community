@@ -52,7 +52,7 @@ DTD_REF= "\"" [^\"]* "\"" | "'" [^']* "'"
 DOCTYPE= "<!" (D|d)(O|o)(C|c)(T|t)(Y|y)(P|p)(E|e)
 HTML= (H|h)(T|t)(M|m)(L|l)
 PUBLIC= (P|p)(U|u)(B|b)(L|l)(I|i)(C|c)
-END_COMMENT="--"[ \n\r\t\f]*">"
+END_COMMENT="-->"
 
 CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{WHITE_SPACE_CHARS}|{DIGIT}|"."|"("|")"|"|"|"!"|"&")*
 %%
