@@ -30,7 +30,7 @@ public class IpnbParser {
   private static Gson initGson() {
     final GsonBuilder builder =
       new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().registerTypeAdapter(IpnbCellRaw.class, new RawCellAdapter())
-    .registerTypeAdapter(IpnbFileRaw.class, new FileAdapter()).registerTypeAdapter(CellOutputRaw.class, new OutputsAdapter()).serializeNulls();
+    .registerTypeAdapter(IpnbFileRaw.class, new FileAdapter()).registerTypeAdapter(CellOutputRaw.class, new OutputsAdapter()).registerTypeAdapter(OutputDataRaw.class, new OutputDataAdapter()).serializeNulls();
     return builder.create();
   }
 
@@ -498,6 +498,39 @@ public class IpnbParser {
       if (cellRaw.metadata != null) {
         final JsonElement metadata = gson.toJsonTree(cellRaw.metadata);
         jsonObject.add("metadata", metadata);
+      }
+
+      return jsonObject;
+    }
+  }
+
+  static class OutputDataAdapter implements JsonSerializer<OutputDataRaw> {
+    @Override
+    public JsonElement serialize(OutputDataRaw cellRaw, Type typeOfSrc, JsonSerializationContext context) {
+      final JsonObject jsonObject = new JsonObject();
+
+      if (cellRaw.text != null) {
+        final JsonElement text = gson.toJsonTree(cellRaw.text);
+        jsonObject.add("text/plain", text);
+      }
+      if (cellRaw.html != null) {
+        final JsonElement html = gson.toJsonTree(cellRaw.html);
+        jsonObject.add("text/html", html);
+      }
+      if (cellRaw.svg != null) {
+        final JsonElement svg = gson.toJsonTree(cellRaw.svg);
+        jsonObject.add("image/svg+xml", svg);
+      }
+      if (cellRaw.png != null) {
+        jsonObject.addProperty("image/png", cellRaw.png);
+      }
+      if (cellRaw.jpeg != null) {
+        final JsonElement jpeg = gson.toJsonTree(cellRaw.jpeg);
+        jsonObject.add("image/jpeg", jpeg);
+      }
+      if (cellRaw.latex != null) {
+        final JsonElement latex = gson.toJsonTree(cellRaw.latex);
+        jsonObject.add("text/latex", latex);
       }
 
       return jsonObject;
