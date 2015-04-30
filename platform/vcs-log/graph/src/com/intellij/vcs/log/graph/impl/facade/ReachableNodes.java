@@ -86,6 +86,7 @@ public class ReachableNodes {
 
       myTempFlags.setAll(false);
       for (int start : startNodes) {
+        if (start < 0) continue;
         if (myTempFlags.get(start)) continue;
         myTempFlags.set(start, true);
         consumer.consume(start);
