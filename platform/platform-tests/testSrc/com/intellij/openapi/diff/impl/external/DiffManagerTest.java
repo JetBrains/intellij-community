@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,21 @@ package com.intellij.openapi.diff.impl.external;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import junit.framework.TestCase;
+import org.easymock.classextension.EasyMock;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
-public class DiffManagerTest extends TestCase {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+public class DiffManagerTest {
+  @Test
   public void testAdditionalTools() {
     DiffManagerImpl diffManager = new DiffManagerImpl();
     MyDiffTool tool = new MyDiffTool();
@@ -46,6 +52,7 @@ public class DiffManagerTest extends TestCase {
   private static class MyDiffTool implements DiffTool {
     public int myCanShowCount = 0;
     public int myShowCount = 0;
+
     @Override
     public boolean canShow(DiffRequest request) {
       myCanShowCount++;
@@ -69,8 +76,8 @@ public class DiffManagerTest extends TestCase {
   }
 
   private static class MyDiffRequest extends DiffRequest {
-    private final ArrayList<String> myContentTitles = new ArrayList<String>();
-    private final ArrayList<DiffContent> myDiffContents = new ArrayList<DiffContent>();
+    private final List<String> myContentTitles = new ArrayList<String>();
+    private final List<DiffContent> myDiffContents = new ArrayList<DiffContent>();
 
     public MyDiffRequest() {
       super(null);
@@ -98,7 +105,8 @@ public class DiffManagerTest extends TestCase {
     }
 
     public void addContent() {
-      addContent(new BinaryContent(ArrayUtil.EMPTY_BYTE_ARRAY, null, FileTypes.UNKNOWN), "");
+      Project project = EasyMock.createMock(Project.class);
+      addContent(new BinaryContent(project, ArrayUtil.EMPTY_BYTE_ARRAY, null, FileTypes.UNKNOWN, null), "");
     }
   }
 }
