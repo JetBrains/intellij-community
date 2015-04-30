@@ -818,6 +818,7 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
     fileset(dir: distWin) {
       exclude(name: "bin/fsnotifier*.exe")
       exclude(name: "bin/idea*.exe.vmoptions")
+      exclude(name: "bin/idea*.exe")
     }
     zipfileset(dir: "$distWin/bin", prefix: "bin/win") {
       include(name: "fsnotifier*.exe")
