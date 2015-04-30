@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -737,19 +737,23 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       myWorker = worker;
     }
 
+    @Override
     public List<LocalChangeList> getListsCopy() {
       return myWorker.getListsCopy();
     }
 
     @Nullable
+    @Override
     public LocalChangeList findChangeList(final String name) {
       return myWorker.getCopyByName(name);
     }
 
+    @Override
     public LocalChangeList addChangeList(final String name, final String comment) {
       return myWorker.addChangeList(null, name, comment, true, null);
     }
 
+    @Override
     public LocalChangeList findOrCreateList(final String name, final String comment) {
       LocalChangeList list = myWorker.getCopyByName(name);
       if (list == null) {
@@ -758,19 +762,17 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       return list;
     }
 
+    @Override
     public void editComment(final String name, final String comment) {
       myWorker.editComment(name, comment);
     }
 
+    @Override
     public void editName(String oldName, String newName) {
       myWorker.editName(oldName, newName);
     }
 
-    // todo usage allowed only when..
-    public void moveChanges(String toList, Collection<Change> changes) {
-      myWorker.moveChangesTo(toList, changes.toArray(new Change[changes.size()]));
-    }
-
+    @Override
     public void setListsToDisappear(final Collection<String> names) {
       myWorker.setListsToDisappear(names);
     }
@@ -795,16 +797,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myIdx.remove(path);
 
     for (LocalChangeList list : myMap.values()) {
-      for (Iterator<Change> iterator = list.getChanges().iterator(); iterator.hasNext(); ) {
-        final Change change = iterator.next();
+      for (Change change : list.getChanges()) {
         final ContentRevision afterRevision = change.getAfterRevision();
         if (afterRevision != null && afterRevision.getFile().equals(path)) {
-          ((LocalChangeListImpl) list).removeChange(change);
+          ((LocalChangeListImpl)list).removeChange(change);
           return;
         }
         final ContentRevision beforeRevision = change.getBeforeRevision();
         if (beforeRevision != null && beforeRevision.getFile().equals(path)) {
-          ((LocalChangeListImpl) list).removeChange(change);
+          ((LocalChangeListImpl)list).removeChange(change);
           return;
         }
       }

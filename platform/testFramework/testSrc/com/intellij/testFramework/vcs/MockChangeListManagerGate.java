@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.intellij.testFramework.vcs;
 
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerGate;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -35,18 +33,22 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
     myManager = manager;
   }
 
+  @Override
   public List<LocalChangeList> getListsCopy() {
     return myManager.getChangeListsCopy();
   }
 
+  @Override
   public LocalChangeList findChangeList(final String name) {
     return myManager.findChangeList(name);
   }
 
+  @Override
   public LocalChangeList addChangeList(final String name, final String comment) {
     return myManager.addChangeList(name, comment);
   }
 
+  @Override
   public LocalChangeList findOrCreateList(final String name, final String comment) {
     LocalChangeList changeList = myManager.findChangeList(name);
     if (changeList == null) {
@@ -55,23 +57,18 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
     return changeList;
   }
 
+  @Override
   public void editComment(final String name, final String comment) {
     myManager.editComment(name, comment);
   }
 
+  @Override
   public void editName(String oldName, String newName) {
     myManager.editName(oldName, newName);
   }
 
-  public void moveChanges(String toList, Collection<Change> changes) {
-    final LocalChangeList changeList = myManager.findChangeList(toList);
-    if (changeList != null) {
-      myManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
-    }
-  }
-
-  public void setListsToDisappear(Collection<String> names) {
-  }
+  @Override
+  public void setListsToDisappear(Collection<String> names) { }
 
   @Override
   public FileStatus getStatus(VirtualFile file) {
@@ -84,6 +81,5 @@ public class MockChangeListManagerGate implements ChangeListManagerGate {
   }
 
   @Override
-  public void setDefaultChangeList(@NotNull String list) {
-  }
+  public void setDefaultChangeList(@NotNull String list) { }
 }
