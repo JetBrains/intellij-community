@@ -18,6 +18,7 @@
 #
 
 from thrift.Thrift import *
+import six
 
 
 class TProtocolException(TException):
@@ -187,18 +188,18 @@ class TProtocolBase:
       self.readStructEnd()
     elif ttype == TType.MAP:
       (ktype, vtype, size) = self.readMapBegin()
-      for i in xrange(size):
+      for i in range(size):
         self.skip(ktype)
         self.skip(vtype)
       self.readMapEnd()
     elif ttype == TType.SET:
       (etype, size) = self.readSetBegin()
-      for i in xrange(size):
+      for i in range(size):
         self.skip(etype)
       self.readSetEnd()
     elif ttype == TType.LIST:
       (etype, size) = self.readListBegin()
-      for i in xrange(size):
+      for i in range(size):
         self.skip(etype)
       self.readListEnd()
 
@@ -246,13 +247,13 @@ class TProtocolBase:
     (list_type, list_len) = self.readListBegin()
     if tspec is None:
       # list values are simple types
-      for idx in xrange(list_len):
+      for idx in range(list_len):
         results.append(reader())
     else:
       # this is like an inlined readFieldByTType
       container_reader = self._TTYPE_HANDLERS[list_type][0]
       val_reader = getattr(self, container_reader)
-      for idx in xrange(list_len):
+      for idx in range(list_len):
         val = val_reader(tspec)
         results.append(val)
     self.readListEnd()
@@ -266,12 +267,12 @@ class TProtocolBase:
     (set_type, set_len) = self.readSetBegin()
     if tspec is None:
       # set members are simple types
-      for idx in xrange(set_len):
+      for idx in range(set_len):
         results.add(reader())
     else:
       container_reader = self._TTYPE_HANDLERS[set_type][0]
       val_reader = getattr(self, container_reader)
-      for idx in xrange(set_len):
+      for idx in range(set_len):
         results.add(val_reader(tspec))
     self.readSetEnd()
     return results
@@ -292,7 +293,7 @@ class TProtocolBase:
     key_reader = getattr(self, self._TTYPE_HANDLERS[key_ttype][0])
     val_reader = getattr(self, self._TTYPE_HANDLERS[val_ttype][0])
     # list values are simple types
-    for idx in xrange(map_len):
+    for idx in range(map_len):
       if key_spec is None:
         k_val = key_reader()
       else:
@@ -363,7 +364,7 @@ class TProtocolBase:
     k_writer = getattr(self, ktype_name)
     v_writer = getattr(self, vtype_name)
     self.writeMapBegin(k_type, v_type, len(val))
-    for m_key, m_val in val.iteritems():
+    for m_key, m_val in six.iteritems(val):
       if not k_is_container:
         k_writer(m_key)
       else:

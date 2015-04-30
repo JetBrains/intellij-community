@@ -17,7 +17,7 @@
 # under the License.
 #
 
-import BaseHTTPServer
+from six.moves import BaseHTTPServer
 
 from thrift.server import TServer
 from thrift.transport import TTransport

@@ -6,12 +6,12 @@
 #  options string: py
 #
 
-from thriftpy3.Thrift import TType
+from thrift.Thrift import TType, TMessageType, TException, TApplicationException
 
-from thriftpy3.transport import TTransport
-from thriftpy3.protocol import TBinaryProtocol, TProtocol
+from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol, TProtocol
 try:
-  from thriftpy3.protocol import fastbinary
+  from thrift.protocol import fastbinary
 except:
   fastbinary = None
 
@@ -148,7 +148,7 @@ class FuncStat:
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+      for key, value in self.__dict__.items()]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
@@ -193,7 +193,7 @@ class Function:
         if ftype == TType.LIST:
           self.callers = []
           (_etype3, _size0) = iprot.readListBegin()
-          for _i4 in xrange(_size0):
+          for _i4 in range(_size0):
             _elem5 = FuncStat()
             _elem5.read(iprot)
             self.callers.append(_elem5)
@@ -238,7 +238,7 @@ class Function:
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+      for key, value in self.__dict__.items()]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
@@ -274,7 +274,7 @@ class Stats:
         if ftype == TType.LIST:
           self.func_stats = []
           (_etype10, _size7) = iprot.readListBegin()
-          for _i11 in xrange(_size7):
+          for _i11 in range(_size7):
             _elem12 = Function()
             _elem12.read(iprot)
             self.func_stats.append(_elem12)
@@ -314,7 +314,7 @@ class Stats:
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+      for key, value in self.__dict__.items()]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
@@ -360,7 +360,7 @@ class Stats_Req:
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+      for key, value in self.__dict__.items()]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
@@ -427,7 +427,7 @@ class SaveSnapshot_Req:
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+      for key, value in self.__dict__.items()]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
@@ -522,7 +522,7 @@ class ProfilerRequest:
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+      for key, value in self.__dict__.items()]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
@@ -616,7 +616,7 @@ class ProfilerResponse:
 
   def __repr__(self):
     L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
+      for key, value in self.__dict__.items()]
     return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):

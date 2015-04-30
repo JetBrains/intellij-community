@@ -69,13 +69,5 @@ class TBase(object):
     oprot.writeStruct(self, self.thrift_spec)
 
 
-class TExceptionBase(Exception):
-  # old style class so python2.4 can raise exceptions derived from this
-  #  This can't inherit from TBase because of that limitation.
+class TExceptionBase(TBase, Exception):
   __slots__ = []
-
-  __repr__ = TBase.__repr__.im_func
-  __eq__ = TBase.__eq__.im_func
-  __ne__ = TBase.__ne__.im_func
-  read = TBase.read.im_func
-  write = TBase.write.im_func
