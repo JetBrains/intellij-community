@@ -96,6 +96,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean ACTIVATE_MRU_EDITOR_ON_CLOSE = false;
   public boolean ACTIVATE_RIGHT_EDITOR_ON_CLOSE = false;
   public boolean ANTIALIASING_IN_EDITOR = true;
+  public boolean USE_LCD_RENDERING_IN_EDITOR = true;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;
   public int ALPHA_MODE_DELAY = 1500;
@@ -281,9 +282,11 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
             g2d.addRenderingHints(map);
           }
         }
-        else {
-          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        }
+
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, uiSettings.USE_LCD_RENDERING_IN_EDITOR ?
+                                                                   RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB :
+                                                                   RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
         if (FORCE_USE_FRACTIONAL_METRICS) {
           g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         }
