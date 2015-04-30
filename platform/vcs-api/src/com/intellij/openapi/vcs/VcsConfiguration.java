@@ -76,13 +76,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean INCLUDE_TEXT_INTO_SHELF = false;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
-
-  /**
-   * To remove in IDEA 15
-   */
-  @Deprecated
-  public boolean SHOW_VCS_ERROR_NOTIFICATIONS = true;
-
   public boolean SHOW_DIRTY_RECURSIVELY = false;
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
