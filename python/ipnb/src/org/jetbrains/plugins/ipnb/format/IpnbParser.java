@@ -295,12 +295,12 @@ public class IpnbParser {
           final OutputDataRaw dataRaw = new OutputDataRaw();
           dataRaw.html = ((IpnbHtmlOutputCell)outputCell).getHtmls();
           raw.data = dataRaw;
+          raw.execution_count = outputCell.getPromptNumber();
         }
         else {
           raw.html = ((IpnbHtmlOutputCell)outputCell).getHtmls();
         }
         raw.output_type = nbformat == 4 ? "execute_result" : "pyout";
-        raw.text = outputCell.getText();
       }
       else if (outputCell instanceof IpnbErrorOutputCell) {
         raw.output_type = nbformat == 4 ? "error" : "pyerr";
