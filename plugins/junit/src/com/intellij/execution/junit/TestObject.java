@@ -345,8 +345,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       for (final T element : elements) {
         final String name = nameFunction.fun(element);
         if (name == null) {
-          LOG.error("invalid element " + element);
-          return;
+          continue;
         }
 
         if (perModule != null && element instanceof PsiElement) {
