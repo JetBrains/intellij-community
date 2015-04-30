@@ -10,11 +10,17 @@ except AttributeError:
 
 
 if IS_PY3K:
+    # noinspection PyUnresolvedReferences
     from thriftpy3 import TSerialization
+    # noinspection PyUnresolvedReferences
     from thriftpy3.protocol import TJSONProtocol, TBinaryProtocol
+    # noinspection PyUnresolvedReferences
     from profilerpy3.ttypes import ProfilerRequest
 else:
+    # noinspection PyUnresolvedReferences
     from thrift import TSerialization
+    # noinspection PyUnresolvedReferences
     from thrift.protocol import TJSONProtocol, TBinaryProtocol
+    # noinspection PyUnresolvedReferences
     from profiler.ttypes import ProfilerRequest
 
