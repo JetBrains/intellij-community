@@ -91,6 +91,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
       }
     }
   };
+  private final GraphCommitCellRender myGraphCommitCellRenderer;
 
   private boolean myColumnsSizeInitialized = false;
 
@@ -112,12 +113,12 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     super();
     myUI = UI;
     myLogDataHolder = logDataHolder;
+    myGraphCommitCellRenderer = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
-    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, this));
+    setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
     setDefaultRenderer(String.class, new StringCellRenderer());
 
-    setRowHeight(22);
     setShowHorizontalLines(false);
     setIntercellSpacing(JBUI.emptySize());
 
@@ -748,6 +749,11 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     // this fixes selection problems by prohibiting selection when user clicks on graph (CellEditor does that)
     // what is fun about this code is that if you set cell editor in constructor with setCellEditor method it would not work
     return myDummyEditor;
+  }
+
+  @Override
+  public int getRowHeight() {
+    return myGraphCommitCellRenderer.getPreferredHeight();
   }
 
   private class StringCellRenderer extends ColoredTableCellRenderer {

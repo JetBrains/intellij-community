@@ -49,6 +49,17 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     myIssueLinkRenderer = new IssueLinkRenderer(dataHolder.getProject(), this);
   }
 
+  @NotNull
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension preferredSize = super.getPreferredSize();
+    return new Dimension(preferredSize.width, getPreferredHeight());
+  }
+
+  public int getPreferredHeight() {
+    return myLabelPainter.calculateSize("", getFontMetrics(LabelPainters.getFont())).height + 4;
+  }
+
   @Override
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
