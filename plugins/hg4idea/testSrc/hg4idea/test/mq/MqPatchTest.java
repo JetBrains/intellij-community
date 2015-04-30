@@ -100,7 +100,7 @@ public class MqPatchTest extends HgPlatformTest {
 
   private TimedVcsCommit getLastRevisionDetails() throws VcsException {
     //noinspection unchecked
-    return ContainerUtil.getFirstItem(HgHistoryUtil.readAllHashes(myProject, myRepository, Consumer.EMPTY_CONSUMER,
+    return (TimedVcsCommit)ContainerUtil.getFirstItem(HgHistoryUtil.readAllHashes(myProject, myRepository, Consumer.EMPTY_CONSUMER,
                                                                   Arrays.asList("-r", "tip")));
   }
 
