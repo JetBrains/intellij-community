@@ -271,6 +271,9 @@ public class CompilerTask extends Task.Backgroundable {
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+              if (myProject != null && myProject.isDisposed()) {
+                return;
+              }
               synchronized (myMessageViewLock) {
                 if (myErrorTreeView != null) {
                   myErrorTreeView.selectFirstMessage();
@@ -285,7 +288,10 @@ public class CompilerTask extends Task.Backgroundable {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            AppIcon appIcon = AppIcon.getInstance();
+            if (myProject != null && myProject.isDisposed()) {
+              return;
+            }
+            final AppIcon appIcon = AppIcon.getInstance();
             if (appIcon.hideProgress(myProject, APP_ICON_ID)) {
               if (myErrorCount > 0) {
                 appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
@@ -359,7 +365,7 @@ public class CompilerTask extends Task.Backgroundable {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (!myProject.isDisposed()) {
+          if (myProject != null && !myProject.isDisposed()) {
             openMessageView();
             doAddMessage(message);
           }
