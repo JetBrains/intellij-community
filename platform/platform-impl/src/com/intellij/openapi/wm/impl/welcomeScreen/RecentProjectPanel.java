@@ -239,6 +239,9 @@ public class RecentProjectPanel extends JPanel {
         if (focusOwner == null) {
           myList.requestFocus();
         }
+        if (myList.getSelectedIndices().length > 1) {
+          return;
+        }
         if (myIsEngaged && !UIUtil.isSelectionButtonDown(e) && !(focusOwner instanceof JRootPane)) {
           Point point = e.getPoint();
           int index = myList.locationToIndex(point);
