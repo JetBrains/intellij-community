@@ -237,8 +237,6 @@ public class LineNumberConvertor {
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     public void handleOnesideChange(int startLine, int endLine, int shift, @NotNull Side masterSide) {
-      if (shift == 0) return;
-
       int oldOnesideStart = startLine;
       int oldTwosideStart = convert(startLine, masterSide, true, false);
       assert oldTwosideStart != -1;
@@ -268,7 +266,7 @@ public class LineNumberConvertor {
 
       if (change.side != side) { // ?u' -> ?o'
         int converted = convertFromTwoside(value, side, approximate, index - 1);
-        if (converted <= change.startOneside) { // Su' -> So'
+        if (converted < change.startOneside) { // Su' -> So'
           // Su' == Su; So' == So
           // value == Su'; converted == So
           return converted;
@@ -286,7 +284,7 @@ public class LineNumberConvertor {
         return append(converted, Math.min(change.newLength, converted - change.startOneside));
       }
       else { // ?m '-> ?o'
-        if (value <= change.startTwoside) { // Sm' -> So'
+        if (value < change.startTwoside) { // Sm' -> So'
           return convertFromTwoside(value, side, approximate, index - 1);
         }
         if (value >= change.startTwoside + change.newLength) { // Em' -> Eo'
@@ -312,7 +310,7 @@ public class LineNumberConvertor {
       CorrectedChange change = myChanges.get(index);
       int shift = change.newLength - change.oldLength;
 
-      if (value <= change.startOneside) { // So' -> Sm', So' -> Su'
+      if (value < change.startOneside) { // So' -> Sm', So' -> Su'
         // So' == So; Sm' == Sm; Su' == Su
         // value = So'
         return convertFromOneside(value, side, approximate, index - 1);

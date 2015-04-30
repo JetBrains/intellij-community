@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 
 import javax.swing.*;
@@ -71,6 +72,18 @@ public class KeyStrokeAdapter implements KeyListener {
     if (stroke != null && keyReleased(stroke)) {
       event.consume();
     }
+  }
+
+  /**
+   * @param event the specified key event to process
+   * @return a key stroke or {@code null} if it is not applicable
+   * @see KeyStroke#getKeyStrokeForEvent(KeyEvent)
+   */
+  public static KeyStroke getDefaultKeyStroke(KeyEvent event) {
+    // On Windows and Mac it is preferable to use normal key code here
+    boolean extendedKeyCodeFirst = !SystemInfo.isWindows && !SystemInfo.isMac;
+    KeyStroke stroke = getKeyStroke(event, extendedKeyCodeFirst);
+    return stroke != null ? stroke : getKeyStroke(event, !extendedKeyCodeFirst);
   }
 
   /**

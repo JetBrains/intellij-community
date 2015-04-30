@@ -17,7 +17,7 @@ package com.intellij.xml.index;
 
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,12 +31,12 @@ import java.util.Collection;
  */
 public class XsdTagNameBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
 
-  @Nullable
+  @NotNull
   public static Collection<String> computeTagNames(final InputStream is) {
     return computeTagNames(new InputStreamReader(is));
   }
 
-  @Nullable
+  @NotNull
   public static Collection<String> computeTagNames(final Reader reader) {
     try {
       final XsdTagNameBuilder builder = new XsdTagNameBuilder();

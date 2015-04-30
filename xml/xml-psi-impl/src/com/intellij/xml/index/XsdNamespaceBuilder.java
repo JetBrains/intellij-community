@@ -18,6 +18,7 @@ package com.intellij.xml.index;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -42,6 +45,9 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
     try {
       final XsdNamespaceBuilder builder = new XsdNamespaceBuilder();
       NanoXmlUtil.parse(reader, builder);
+      HashSet<String> tags = new HashSet<String>(builder.getTags());
+      tags.removeAll(builder.myReferencedTags);
+      builder.getRootTags().addAll(tags);
       return builder;
     }
     finally {
@@ -62,13 +68,16 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
   private String myNamespace;
 
   private String myVersion;
-  private List<String> myTags = new ArrayList<String>();
+  private final List<String> myTags;
+  private final Set<String> myReferencedTags = new HashSet<String>();
+  private final List<String> myRootTags;
   private final List<String> myAttributes = new ArrayList<String>();
+
   @Override
   public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
       throws Exception {
 
-    if (myCurrentDepth < 2 && "http://www.w3.org/2001/XMLSchema".equals(nsURI)) {
+    if (XmlUtil.XML_SCHEMA_URI.equals(nsURI)) {
       myCurrentTag = name;
     }
     myCurrentDepth++;
@@ -83,7 +92,7 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
   @Override
   public void addAttribute(@NonNls final String key, final String nsPrefix, final String nsURI, final String value, final String type)
       throws Exception {
-    if ("schema".equals(myCurrentTag)) {
+    if (myCurrentDepth == 1 && "schema".equals(myCurrentTag)) {
       if ("targetNamespace".equals(key)) {
         myNamespace = value;
       }
@@ -91,8 +100,13 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
         myVersion = value;
       }
     }
-    else if ("element".equals(myCurrentTag) && "name".equals(key)) {
-      myTags.add(value);
+    else if ("element".equals(myCurrentTag)) {
+      if (myCurrentDepth < 3 && "name".equals(key)) {
+        myTags.add(value);
+      }
+      else if ("ref".equals(key)) {
+        myReferencedTags.add(XmlUtil.getLocalName(value).toString());
+      }
     }
   }
 
@@ -117,12 +131,15 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
   }
 
   private XsdNamespaceBuilder() {
+    myTags = new ArrayList<String>();
+    myRootTags = new ArrayList<String>();
   }
 
-  public XsdNamespaceBuilder(String namespace, String version, List<String> tags) {
+  XsdNamespaceBuilder(String namespace, String version, List<String> tags, List<String> rootTags) {
     myNamespace = namespace;
     myVersion = version;
     myTags = tags;
+    myRootTags = rootTags;
   }
 
   public String getNamespace() {
@@ -137,7 +154,33 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
     return myTags;
   }
 
+  public List<String> getRootTags() {
+    return myRootTags;
+  }
+
   public List<String> getAttributes() {
     return myAttributes;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    XsdNamespaceBuilder builder = (XsdNamespaceBuilder)o;
+
+    if (myNamespace != null ? !myNamespace.equals(builder.myNamespace) : builder.myNamespace != null) return false;
+    if (myVersion != null ? !myVersion.equals(builder.myVersion) : builder.myVersion != null) return false;
+    if (myTags != null ? !myTags.equals(builder.myTags) : builder.myTags != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myNamespace != null ? myNamespace.hashCode() : 0;
+    result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
+    result = 31 * result + (myTags != null ? myTags.hashCode() : 0);
+    return result;
   }
 }
