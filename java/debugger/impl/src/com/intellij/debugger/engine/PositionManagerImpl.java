@@ -281,10 +281,13 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           @Override
           public PsiElement next() {
             PsiElement res = myElement;
-            myElement = PsiTreeUtil.nextLeaf(myElement);
-            if (myElement != null && myElement.getTextOffset() > endOffset) {
-              myElement = null;
-            }
+            do {
+              myElement = PsiTreeUtil.nextLeaf(myElement);
+              if (myElement == null || myElement.getTextOffset() > endOffset) {
+                myElement = null;
+                break;
+              }
+            } while (myElement.getTextLength() == 0);
             return res;
           }
 
