@@ -133,7 +133,7 @@
       <add-to-group group-id="MarkRootGroup"/>
     </action>
 
-    <action id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action overrides="true" id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
     <group id="TypeHierarchyPopupMenu">
     </group>
