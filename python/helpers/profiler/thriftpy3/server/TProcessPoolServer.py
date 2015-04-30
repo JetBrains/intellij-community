@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 from multiprocessing import  Process, Value, Condition, reduction
 
 from .TServer import TServer
-from thrift.transport.TTransport import TTransportException
+from thriftpy3.transport.TTransport import TTransportException
 
 
 class TProcessPoolServer(TServer):

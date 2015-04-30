@@ -28,7 +28,7 @@ from twisted.internet.threads import deferToThread
 from twisted.protocols import basic
 from twisted.web import server, resource, http
 
-from thrift.transport import TTransport
+from thriftpy3.transport import TTransport
 import six
 
 

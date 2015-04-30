@@ -26,9 +26,9 @@ import traceback
 import logging
 logger = logging.getLogger(__name__)
 
-from thrift.Thrift import TProcessor
-from thrift.protocol import TBinaryProtocol
-from thrift.transport import TTransport
+from thriftpy3.Thrift import TProcessor
+from thriftpy3.protocol import TBinaryProtocol
+from thriftpy3.transport import TTransport
 
 
 class TServer:

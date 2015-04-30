@@ -19,8 +19,8 @@
 
 from six.moves import BaseHTTPServer
 
-from thrift.server import TServer
-from thrift.transport import TTransport
+from thriftpy3.server import TServer
+from thriftpy3.transport import TTransport
 
 
 class ResponseException(Exception):

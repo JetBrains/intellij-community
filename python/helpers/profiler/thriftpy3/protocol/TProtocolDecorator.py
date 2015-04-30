@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from thrift.protocol.TProtocol import TProtocolBase
+from thriftpy3.protocol.TProtocol import TProtocolBase
 from types import *
 
 class TProtocolDecorator():

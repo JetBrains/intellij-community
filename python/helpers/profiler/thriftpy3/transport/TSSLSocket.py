@@ -21,8 +21,8 @@ import os
 import socket
 import ssl
 
-from thrift.transport import TSocket
-from thrift.transport.TTransport import TTransportException
+from thriftpy3.transport import TSocket
+from thriftpy3.transport.TTransport import TTransportException
 
 
 class TSSLSocket(TSocket.TSocket):
