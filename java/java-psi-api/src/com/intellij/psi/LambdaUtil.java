@@ -346,7 +346,7 @@ public class LambdaUtil {
               return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
             }
           }
-          final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
+          final JavaResolveResult resolveResult = properties != null ? properties.getInfo() : contextCall.resolveMethodGenerics();
             final PsiElement resolve = resolveResult.getElement();
             if (resolve instanceof PsiMethod) {
               final PsiParameter[] parameters = ((PsiMethod)resolve).getParameterList().getParameters();

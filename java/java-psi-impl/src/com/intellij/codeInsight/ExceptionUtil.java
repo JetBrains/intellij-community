@@ -413,7 +413,8 @@ public class ExceptionUtil {
     if (MethodCandidateInfo.isOverloadCheck()) {
       return Collections.emptyList();
     }
-    final JavaResolveResult result = methodCall.resolveMethodGenerics();
+    final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(methodCall.getArgumentList());
+    final JavaResolveResult result = properties != null ? properties.getInfo() : methodCall.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
     if (method == null) {
       return Collections.emptyList();

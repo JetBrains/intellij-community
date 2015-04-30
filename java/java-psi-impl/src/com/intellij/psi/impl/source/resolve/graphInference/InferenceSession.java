@@ -636,7 +636,7 @@ public class InferenceSession {
           if (properties != null && properties.isApplicabilityCheck()) {
             return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor());
           }
-          final JavaResolveResult result = ((PsiCallExpression)gParent).resolveMethodGenerics();
+          final JavaResolveResult result = properties != null ? properties.getInfo() : ((PsiCallExpression)gParent).resolveMethodGenerics();
           final boolean varargs = properties != null && properties.isVarargs() || result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
           return getTypeByMethod(context, argumentList, result.getElement(),
                                  varargs,
