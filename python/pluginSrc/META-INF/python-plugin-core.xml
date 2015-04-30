@@ -41,7 +41,7 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
-    <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"/>
+    <action id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"/>
   </actions>
 
 </idea-plugin>
