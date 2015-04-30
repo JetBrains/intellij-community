@@ -63,10 +63,4 @@ public class JarVersionDetectionUtil {
   public static String getImplementationVersion(@NotNull File jar) {
     return JarUtil.getJarAttribute(jar, Attributes.Name.IMPLEMENTATION_VERSION);
   }
-
-  /** @deprecated use {@link JarUtil#getJarAttribute(File, Attributes.Name)} (to remove in IDEA 15) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String getJarAttributeVersion(@NotNull File jar, @NotNull Attributes.Name attribute, @Nullable String entryName) {
-    return entryName != null ? JarUtil.getJarAttribute(jar, entryName, attribute) : JarUtil.getJarAttribute(jar, attribute);
-  }
 }

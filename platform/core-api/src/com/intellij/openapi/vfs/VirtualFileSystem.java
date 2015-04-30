@@ -114,12 +114,6 @@ public abstract class VirtualFileSystem {
    */
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
 
-  /** @deprecated. Current implementation blindly calls plain refresh against the file passed (to be removed in IDEA 15) */
-  @SuppressWarnings("unused")
-  public void forceRefreshFile(boolean asynchronous, @NotNull VirtualFile file) {
-    file.refresh(asynchronous, false);
-  }
-
   /**
    * Implementation of deleting files in this file system
    *

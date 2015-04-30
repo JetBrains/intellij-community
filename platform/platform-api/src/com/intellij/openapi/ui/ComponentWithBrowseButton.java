@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,15 +288,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       return chosenFile.getPresentableUrl();
     }
 
-    /** @deprecated use/override {@link #onFileChosen(VirtualFile)} (to be removed in IDEA 15) */
-    @SuppressWarnings("SpellCheckingInspection")
-    protected void onFileChoosen(@NotNull VirtualFile chosenFile) {
-      myAccessor.setText(myTextComponent.getChildComponent(), chosenFileToResultingText(chosenFile));
-    }
-
-    @SuppressWarnings("deprecation")
     protected void onFileChosen(@NotNull VirtualFile chosenFile) {
-      onFileChoosen(chosenFile);
+      myAccessor.setText(myTextComponent.getChildComponent(), chosenFileToResultingText(chosenFile));
     }
   }
 

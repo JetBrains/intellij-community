@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -241,18 +241,6 @@ public class EnvironmentUtil {
         myWaiter.notifyAll();
       }
     }
-  }
-
-  /** @deprecated use {@link #getEnvironmentMap()} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
-  public static Map<String, String> getEnviromentProperties() {
-    return getEnvironmentMap();
-  }
-
-  /** @deprecated use {@link #getEnvironmentMap()} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
-  public static Map<String, String> getEnvironmentProperties() {
-    return getEnvironmentMap();
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {

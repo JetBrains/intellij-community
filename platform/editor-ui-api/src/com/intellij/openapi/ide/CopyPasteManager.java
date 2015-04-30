@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,6 @@ public abstract class CopyPasteManager {
   public abstract void addContentChangedListener(@NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable);
 
   public abstract void removeContentChangedListener(@NotNull ContentChangedListener listener);
-
-  /** @deprecated use {@link #getContents(DataFlavor)} or {@link #areDataFlavorsAvailable(DataFlavor...)} (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public boolean isDataFlavorAvailable(@Nullable DataFlavor flavor) {
-    return flavor != null && areDataFlavorsAvailable(flavor);
-  }
 
   public abstract boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors);
 

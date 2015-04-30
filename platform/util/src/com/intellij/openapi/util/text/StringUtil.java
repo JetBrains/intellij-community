@@ -940,27 +940,6 @@ public class StringUtil extends StringUtilRt {
     return true;
   }
 
-  /**
-   * @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14).
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Contract(pure = true)
-  public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
-    return startsWithConcatenation(string, firstPrefix, secondPrefix);
-  }
-
-  /**
-   * @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14).
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Contract(pure = true)
-  public static boolean startsWithConcatenationOf(@NotNull String string,
-                                                  @NotNull String firstPrefix,
-                                                  @NotNull String secondPrefix,
-                                                  @NotNull String thirdPrefix) {
-    return startsWithConcatenation(string, firstPrefix, secondPrefix, thirdPrefix);
-  }
-
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static String trim(@Nullable String s) {
     return s == null ? null : s.trim();

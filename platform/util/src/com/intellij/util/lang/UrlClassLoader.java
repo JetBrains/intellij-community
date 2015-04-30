@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,26 +144,6 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories());
-  }
-
-  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent) {
-    this(build().urls(urls).parent(parent));
-  }
-
-  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
-  public UrlClassLoader(URL[] urls, @Nullable ClassLoader parent) {
-    this(build().urls(urls).parent(parent));
-  }
-
-  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache) {
-    this(build().urls(urls).parent(parent).allowLock(lockJars).useCache(useCache));
-  }
-
-  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache, boolean allowUnescaped, boolean preload) {
-    this(build().urls(urls).parent(parent).allowLock(lockJars).useCache(useCache).allowUnescaped(allowUnescaped).preload(preload));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {

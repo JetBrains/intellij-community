@@ -34,12 +34,6 @@ public abstract class ModuleAdapter implements ModuleListener {
   @Override
   public void moduleRemoved(@NotNull Project project, @NotNull Module module) { }
 
-  @SuppressWarnings("deprecation")
   @Override
-  public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) {
-    modulesRenamed(project, modules);
-  }
-
-  /** @deprecated implement {@link #modulesRenamed(Project, List, Function)} (to remove in IDEA 14) */
-  public void modulesRenamed(Project project, List<Module> modules) { }
+  public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) { }
 }

@@ -786,18 +786,6 @@ public class UIUtil {
     return UIManager.getColor("Label.disabledText");
   }
 
-  /** @deprecated to remove in IDEA 14 */
-  @SuppressWarnings("UnusedDeclaration")
-  public static Icon getOptionPanelWarningIcon() {
-    return getWarningIcon();
-  }
-
-  /** @deprecated to remove in IDEA 14 */
-  @SuppressWarnings("UnusedDeclaration")
-  public static Icon getOptionPanelQuestionIcon() {
-    return getQuestionIcon();
-  }
-
   @NotNull
   public static String removeMnemonic(@NotNull String s) {
     if (s.indexOf('&') != -1) {

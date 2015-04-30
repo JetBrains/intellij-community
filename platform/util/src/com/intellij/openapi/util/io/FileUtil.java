@@ -1484,24 +1484,6 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.loadLines(reader);
   }
 
-  /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
-  public static List<String> loadLines(@NotNull InputStream stream) throws IOException {
-    return loadLines(new InputStreamReader(stream));
-  }
-
-  /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static List<String> loadLines(@NotNull Reader reader) throws IOException {
-    BufferedReader bufferedReader = new BufferedReader(reader);
-    try {
-      return loadLines(bufferedReader);
-    }
-    finally {
-      bufferedReader.close();
-    }
-  }
-
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
     return FileUtilRt.loadBytes(stream);

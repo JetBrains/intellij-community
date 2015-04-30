@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,12 +60,9 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
    * Overrides should call super.coloredTextAvailable() if they want to pass lines to registered listeners
    * To receive chunks of data instead of fragments inherit your class from ColoredChunksAcceptor interface and
    * override coloredChunksAvailable method.
-   * @param text
-   * @param attributes
    */
   @Override
   public void coloredTextAvailable(String text, Key attributes) {
-    textAvailable(text, attributes);
     notifyColoredListeners(text, attributes);
   }
 
@@ -81,15 +78,5 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
 
   public void removeColoredTextListener(AnsiEscapeDecoder.ColoredTextAcceptor listener) {
     myColoredTextListeners.remove(listener);
-  }
-
-  /**
-   * @deprecated Inheritors should override coloredTextAvailable method
-   * or implement {@link com.intellij.execution.process.AnsiEscapeDecoder.ColoredChunksAcceptor}
-   * and override method coloredChunksAvailable to process colored chunks.
-   * To be removed in IDEA 14.
-   */
-  protected void textAvailable(final String text, final Key attributes) {
-    super.notifyTextAvailable(text, attributes);
   }
 }

@@ -520,40 +520,4 @@ public class PathManager {
     }
     return false;
   }
-
-  // outdated stuff
-
-  /** @deprecated use {@link #getPluginsPath()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration") public static final String PLUGINS_DIRECTORY = PLUGINS_FOLDER;
-
-  /** @deprecated use {@link #getPreInstalledPluginsPath()} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration", "MethodNamesDifferingOnlyByCase", "SpellCheckingInspection"})
-  public static String getPreinstalledPluginsPath() {
-    return getPreInstalledPluginsPath();
-  }
-
-  /** @deprecated use {@link #getConfigPath()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String getConfigPath(boolean createIfNotExists) {
-    ensureConfigFolderExists();
-    return ourConfigPath;
-  }
-
-  /** @deprecated use {@link #ensureConfigFolderExists()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean ensureConfigFolderExists(boolean createIfNotExists) {
-    return checkAndCreate(getConfigPath(), createIfNotExists);
-  }
-
-  /** @deprecated use {@link #getOptionsPath()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String getOptionsPathWithoutDialog() {
-    return getOptionsPath();
-  }
-
-  /** @deprecated use {@link #getOptionsFile(String)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static File getDefaultOptionsFile() {
-    return new File(getOptionsPath(), DEFAULT_OPTIONS_FILE_NAME + ".xml");
-  }
 }
