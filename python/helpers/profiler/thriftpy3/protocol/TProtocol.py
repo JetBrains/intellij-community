@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from thrift.Thrift import *
+from thriftpy3.Thrift import *
 import six
 
 

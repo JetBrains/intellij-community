@@ -17,12 +17,12 @@
 # under the License.
 #
 
-from thrift.Thrift import *
-from thrift.protocol import TBinaryProtocol
-from thrift.transport import TTransport
+from thriftpy3.Thrift import *
+from thriftpy3.protocol import TBinaryProtocol
+from thriftpy3.transport import TTransport
 
 try:
-  from thrift.protocol import fastbinary
+  from thriftpy3.protocol import fastbinary
 except:
   fastbinary = None
 

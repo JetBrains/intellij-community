@@ -19,7 +19,7 @@
 
 from six import BytesIO
 from struct import pack, unpack
-from thrift.Thrift import TException
+from thriftpy3.Thrift import TException
 
 
 class TTransportException(TException):

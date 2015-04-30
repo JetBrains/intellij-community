@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 from six.moves import queue
 
-from thrift.transport import TTransport
-from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
+from thriftpy3.transport import TTransport
+from thriftpy3.protocol.TBinaryProtocol import TBinaryProtocolFactory
 
 __all__ = ['TNonblockingServer']
 

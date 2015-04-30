@@ -15,12 +15,12 @@ if IS_PY3K:
     # noinspection PyUnresolvedReferences
     from thriftpy3.protocol import TJSONProtocol, TBinaryProtocol
     # noinspection PyUnresolvedReferences
-    from profilerpy3.ttypes import ProfilerRequest
+    from profilerpy3.ttypes import ProfilerRequest, ProfilerResponse, Stats, FuncStat, Function
 else:
     # noinspection PyUnresolvedReferences
     from thrift import TSerialization
     # noinspection PyUnresolvedReferences
     from thrift.protocol import TJSONProtocol, TBinaryProtocol
     # noinspection PyUnresolvedReferences
-    from profiler.ttypes import ProfilerRequest
+    from profiler.ttypes import ProfilerRequest, ProfilerResponse, Stats, FuncStat, Function
 

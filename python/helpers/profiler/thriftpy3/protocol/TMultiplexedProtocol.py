@@ -17,8 +17,8 @@
 # under the License.
 #
 
-from thrift.Thrift import TMessageType
-from thrift.protocol import TProtocolDecorator
+from thriftpy3.Thrift import TMessageType
+from thriftpy3.protocol import TProtocolDecorator
 
 SEPARATOR = ":"
 
