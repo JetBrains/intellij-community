@@ -67,7 +67,6 @@ fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
   server.addEventListener("diff", javaClass<JsonNode>(), { socketIOClient, json, ackRequest ->
     val diff = toDiff(JSONObject(json.toString()))
     UIUtil.invokeLaterIfNeeded {
-//      println("applying diff on server $diff")
       reactiveModel.performTransaction { m ->
         m.patch(diff)
       }
@@ -108,7 +107,6 @@ fun clientModel(url: String, lifetime: Lifetime): ReactiveModel {
           val diff = toDiff(json)
           UIUtil.invokeLaterIfNeeded {
             reactiveModel.performTransaction { m ->
-//              println("apply diff $diff")
               m.patch(diff)
             }
           }
@@ -173,7 +171,7 @@ fun toJson(model: Model): JSONObject =
 fun toModel(json: JSONObject): Model =
     when (json.getString(type)) {
       "list" -> ListModel(toList(json.getJSONArray("list")).map { toModel(it as JSONObject) })
-      "primitive" -> PrimitiveModel<Any>(json.get("value"))
+      "primitive" -> PrimitiveModel(json.get("value"))
       "map" -> MapModel(toMap(json).map { entry ->
         entry.getKey() to toModel(entry.getValue())
       }.toMap())
@@ -186,7 +184,7 @@ fun toDiff(json: JSONObject): Diff<Model> =
       "primitive" -> PrimitiveDiff(json.get("newValue"))
       "list" -> ListDiff(toList(json.getJSONArray("list")).map { toModel(it as JSONObject) }, json.getInt("index"))
       "map" -> MapDiff(toMap(json).map { entry -> entry.getKey() to toDiff(entry.getValue()) }.toMap())
-      "value" -> ValueDiff<Model>(toModel(json.getJSONObject("newValue")))
+      "value" -> ValueDiff(toModel(json.getJSONObject("newValue")))
       else -> throw AssertionError("unknown diff type\n$json")
     }
 
