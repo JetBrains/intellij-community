@@ -153,6 +153,10 @@ public class PsiElementRenameHandler implements RenameHandler {
       }
     }
 
+    if (isVetoed(element)) {
+      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.cannot.be.renamed"));
+    }
+
     if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(element)) {
       final String message = RefactoringBundle.message("error.in.injected.lang.prefix.suffix", UsageViewUtil.getType(element));
       return RefactoringBundle.getCannotRefactorMessage(message);
