@@ -626,14 +626,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            try {
-              fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
-            }
-            catch (IndexNotReadyException e) {
-              fullTextRef.set("Documentation is not available while indexing is in progress");
-            }
-            if (anchorElement instanceof PsiQualifiedNamedElement) {
-              qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
+            if (anchorElement.isValid() && originalElement.isValid()) {
+              try {
+                fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
+              }
+              catch (IndexNotReadyException e) {
+                fullTextRef.set("Documentation is not available while indexing is in progress");
+              }
+              if (anchorElement instanceof PsiQualifiedNamedElement) {
+                qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
+              }
             }
           }
         });
