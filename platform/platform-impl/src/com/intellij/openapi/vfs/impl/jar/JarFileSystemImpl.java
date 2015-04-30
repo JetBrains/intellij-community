@@ -19,7 +19,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFile;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Set;
 
 public class JarFileSystemImpl extends JarFileSystem {
@@ -138,12 +136,5 @@ public class JarFileSystemImpl extends JarFileSystem {
   @Override
   public void refresh(boolean asynchronous) {
     VfsImplUtil.refresh(this, asynchronous);
-  }
-
-  /** @deprecated to be removed in IDEA 15 */
-  @SuppressWarnings("deprecation")
-  @Override
-  public JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException {
-    return getHandler(entryVFile).getJar();
   }
 }

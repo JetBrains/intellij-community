@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFile;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.impl.ZipHandler;
@@ -43,7 +42,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.zip.ZipFile;
 
 /**
  * @author max
@@ -325,18 +323,5 @@ public class JarHandler extends ZipHandler {
 
     String message = VfsBundle.message("jar.copy.error.message", path, target.getPath(), e.getMessage());
     ERROR_COPY_NOTIFICATION.getValue().createNotification(message, NotificationType.ERROR).notify(null);
-  }
-
-  /** @deprecated to be removed in IDEA 15 */
-  @SuppressWarnings("deprecation")
-  public JarFile getJar() {
-    File original = getFile();
-    try {
-      return new JarHandlerBase.MyJarFile(new ZipFile(getMirrorFile(original)));
-    }
-    catch (IOException e) {
-      LOG.warn(e.getMessage() + ": " + original, e);
-      return null;
-    }
   }
 }

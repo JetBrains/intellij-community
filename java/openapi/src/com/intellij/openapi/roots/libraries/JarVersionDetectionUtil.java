@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 public class JarVersionDetectionUtil {
   private JarVersionDetectionUtil() { }
@@ -56,27 +52,6 @@ public class JarVersionDetectionUtil {
     VirtualFile jarRoot = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
     return jarRoot != null && jarRoot.getFileSystem() instanceof JarFileSystem ?
            JdkUtil.getJarMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) : null;
-  }
-
-  /** @deprecated use {@link JarUtil#getJarAttribute(File, Attributes.Name)} (to remove in IDEA 15) */
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
-  public static String detectJarVersion(@Nullable com.intellij.openapi.vfs.JarFile zipFile) {
-    if (zipFile == null) {
-      return null;
-    }
-    try {
-      final com.intellij.openapi.vfs.JarFile.JarEntry zipEntry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-      if (zipEntry == null) {
-        return null;
-      }
-      final InputStream inputStream = zipFile.getInputStream(zipEntry);
-      final Manifest manifest = new Manifest(inputStream);
-      final Attributes attributes = manifest.getMainAttributes();
-      return attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
-    }
-    catch (IOException e) {
-      return null;
-    }
   }
 
   @Nullable
