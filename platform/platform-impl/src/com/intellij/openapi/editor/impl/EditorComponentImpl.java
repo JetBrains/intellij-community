@@ -251,7 +251,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
 
   @Override
   public AccessibleContext getAccessibleContext() {
-    if (accessibleContext == null) {
+    if (accessibleContext == null && !myEditor.isDisposed()) {
         accessibleContext = new AccessibleEditor();
     }
     return accessibleContext;
