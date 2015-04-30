@@ -55,6 +55,8 @@
 
     <findUsagesHandlerFactory implementation="de.plushnikov.intellij.plugin.extension.LombokFieldFindUsagesHandlerFactory"/>
     <renamePsiElementProcessor implementation="de.plushnikov.intellij.plugin.extension.LombokRenameFieldReferenceProcessor"/>
+
+		<java.elementFinder implementation="de.plushnikov.intellij.plugin.extension.LombokElementFinder" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
@@ -200,6 +202,7 @@
 		<ul>
 		<li>0.9.5
 				<ol>
+				    <li>Fixed #48: Importing @Builder generated builder classes does not work</li>
 				    <li>Added Hrisey @Parcelable support patch</li>
 				    <li>Dropped outdated support for some lombok_pg annotations</li>
 				</ol>
