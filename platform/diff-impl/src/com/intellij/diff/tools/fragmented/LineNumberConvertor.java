@@ -213,9 +213,9 @@ public class LineNumberConvertor {
    *    |       |       |                |       |       |
    *    |       |       |            Bm' +-------+ Bo'   |
    *    |       |       |                |       |       |
-   * Em +       + Eo    + Eu             |       |       |
-   *                                     |       |       |
-   *                                 Em' +       + Eo'   + Eu'
+   * Em +       + Eo    + Eu             |       |       + Eu'
+   *                                     |       |
+   *                                 Em' +       + Eo'
    *
    * Su == Su'; Mu == Mu'; Eu == Eu'; Au == Au'
    * Sm == Sm'; So == So'; Am == Am'; Ao == Ao'
