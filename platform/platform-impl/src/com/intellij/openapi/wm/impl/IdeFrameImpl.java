@@ -477,6 +477,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
     }
     if (myWindowsBorderUpdater != null) {
       Toolkit.getDefaultToolkit().removePropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
+      myWindowsBorderUpdater = null;
     }
 
     FocusTrackback.release(this);
