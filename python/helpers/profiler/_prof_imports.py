@@ -10,7 +10,11 @@ except AttributeError:
 
 
 if IS_PY3K:
-    pass
+    from thriftpy3 import TSerialization
+    from thriftpy3.protocol import TJSONProtocol, TBinaryProtocol
+    from profilerpy3.ttypes import ProfilerRequest
 else:
-    pass
+    from thrift import TSerialization
+    from thrift.protocol import TJSONProtocol, TBinaryProtocol
+    from profiler.ttypes import ProfilerRequest
 
