@@ -36,7 +36,6 @@ SET IDE_HOME=%IDE_BIN_DIR%\..
 SET MAIN_CLASS_NAME=%@@product_uc@@_MAIN_CLASS_NAME%
 IF "%MAIN_CLASS_NAME%" == "" SET MAIN_CLASS_NAME=com.intellij.idea.Main
 
-IF EXIST %IDE_BIN_DIR%\win\idea.properties SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%IDE_BIN_DIR%\win\idea.properties"
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
 :: ---------------------------------------------------------------------
