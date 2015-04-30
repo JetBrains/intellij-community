@@ -23,4 +23,10 @@ import org.jetbrains.annotations.NotNull;
 public interface VcsLogHighlighterFactory {
   @NotNull
   VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties);
+
+  @NotNull
+  String getId();
+
+  @NotNull
+  String getDescription();
 }

@@ -161,25 +161,14 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @Override
-  public boolean isHighlightMyCommits() {
-    return myUiProperties.isHighlightMyCommits();
+  public boolean isHighlighterEnabled(@NotNull String id) {
+    return myUiProperties.isHighlighterEnabled(id);
   }
 
   @Override
-  public void setHighlightMyCommits(boolean state) {
-    myUiProperties.setHighlightMyCommits(state);
+  public void enableHighlighter(@NotNull String id, boolean enabled) {
+    myUiProperties.enableHighlighter(id, enabled);
     repaintUI();
-  }
-
-  @Override
-  public void setHighlightCurrentBranch(boolean state) {
-    myUiProperties.setHighlightCurrentBranch(state);
-    repaintUI();
-  }
-
-  @Override
-  public boolean isHighlightCurrentBranch() {
-    return myUiProperties.isHighlightCurrentBranch();
   }
 
   @Override

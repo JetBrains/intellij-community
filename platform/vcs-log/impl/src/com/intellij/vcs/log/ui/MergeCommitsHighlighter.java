@@ -39,7 +39,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (isSelected || myUiProperties.getBekSortType() != PermanentGraphImpl.SortType.LinearBek.ordinal()) return VcsCommitStyle.DEFAULT;
+    if (isSelected || !myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
       if (details.getParents().size() >= 2) return VcsCommitStyleFactory.foreground(MERGE_COMMIT_FOREGROUND);
@@ -49,9 +49,24 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
 
   public static class Factory implements VcsLogHighlighterFactory {
     @NotNull
+    private static final String ID = "MERGE_COMMITS";
+
+    @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
       return new MergeCommitsHighlighter(logDataHolder, uiProperties);
+    }
+
+    @NotNull
+    @Override
+    public String getId() {
+      return ID;
+    }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+      return "Merge Commits";
     }
   }
 }

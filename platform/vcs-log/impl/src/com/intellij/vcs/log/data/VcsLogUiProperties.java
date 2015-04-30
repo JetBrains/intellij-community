@@ -25,10 +25,7 @@ import com.intellij.vcs.log.VcsLogSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
 
 /**
  * Stores UI configuration based on user activity and preferences.
@@ -48,9 +45,9 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
     public boolean HIGHLIGHT_MY_COMMITS = true;
-    public boolean HIGHLIGHT_CURRENT_BRANCH = false;
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<UserGroup>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<UserGroup>();
+    public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
   }
 
   @Nullable
@@ -140,20 +137,21 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     myState.SHOW_ROOT_NAMES = isShowRootNames;
   }
 
+  public boolean isHighlighterEnabled(@NotNull String id) {
+    Boolean result = myState.HIGHLIGHTERS.get(id);
+    return result != null ? result : true; // new highlighters get enabled by default
+  }
+
+  public void enableHighlighter(@NotNull String id, boolean value) {
+    myState.HIGHLIGHTERS.put(id, value);
+  }
+
   public boolean isHighlightMyCommits() {
     return myState.HIGHLIGHT_MY_COMMITS;
   }
 
   public void setHighlightMyCommits(boolean isHighlightMyCommits) {
     myState.HIGHLIGHT_MY_COMMITS = isHighlightMyCommits;
-  }
-
-  public boolean isHighlightCurrentBranch() {
-    return myState.HIGHLIGHT_CURRENT_BRANCH;
-  }
-
-  public void setHighlightCurrentBranch(boolean isHighlightCurrentBranch) {
-    myState.HIGHLIGHT_CURRENT_BRANCH = isHighlightCurrentBranch;
   }
 
   public static class UserGroup {

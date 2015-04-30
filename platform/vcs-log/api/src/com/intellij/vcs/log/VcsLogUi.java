@@ -44,10 +44,7 @@ public interface VcsLogUi {
 
   void setShowRootNames(boolean showRootNames);
 
-  boolean isHighlightMyCommits();
+  boolean isHighlighterEnabled(@NotNull String id);
 
-  void setHighlightMyCommits(boolean state);
-
-  void setHighlightCurrentBranch(boolean state);
-  boolean isHighlightCurrentBranch();
+  void enableHighlighter(@NotNull String id, boolean enabled);
 }

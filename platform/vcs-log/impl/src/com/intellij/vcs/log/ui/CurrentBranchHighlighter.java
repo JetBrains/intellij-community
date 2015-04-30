@@ -38,7 +38,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (isSelected || !myUiProperties.isHighlightCurrentBranch()) return VcsCommitStyle.DEFAULT;
+    if (isSelected || !myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
       VcsLogProvider provider = myDataHolder.getLogProvider(details.getRoot());
@@ -55,9 +55,24 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
   public static class Factory implements VcsLogHighlighterFactory {
     @NotNull
+    private static final String ID = "CURRENT_BRANCH";
+
+    @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
       return new CurrentBranchHighlighter(logDataHolder, uiProperties);
+    }
+
+    @NotNull
+    @Override
+    public String getId() {
+      return ID;
+    }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+      return "Current Branch";
     }
   }
 }

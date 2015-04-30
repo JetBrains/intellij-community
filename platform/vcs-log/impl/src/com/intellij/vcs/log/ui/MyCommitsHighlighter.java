@@ -35,12 +35,19 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   public MyCommitsHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
     myDataHolder = logDataHolder;
     myUiProperties = uiProperties;
+    // migration to map storage
+    if (!myUiProperties.isHighlightMyCommits()) {
+      // by default, my commits highlighter was enabled
+      // if it was disabled we need to migrate that
+      myUiProperties.enableHighlighter(Factory.ID, false);
+      myUiProperties.setHighlightMyCommits(true);
+    }
   }
 
   @NotNull
   @Override
   public VcsCommitStyle getStyle(int commitIndex, boolean isSelected) {
-    if (!myUiProperties.isHighlightMyCommits()) return VcsCommitStyle.DEFAULT;
+    if (!myUiProperties.isHighlighterEnabled(Factory.ID)) return VcsCommitStyle.DEFAULT;
     Map<VirtualFile, VcsUser> users = myDataHolder.getCurrentUser();
     VcsShortCommitDetails details = myDataHolder.getMiniDetailsGetter().getCommitDataIfAvailable(commitIndex);
     if (details != null && !(details instanceof LoadingDetails)) {
@@ -54,9 +61,24 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
   public static class Factory implements VcsLogHighlighterFactory {
     @NotNull
+    private static final String ID = "MY_COMMITS";
+
+    @NotNull
     @Override
     public VcsLogHighlighter createHighlighter(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUiProperties uiProperties) {
       return new MyCommitsHighlighter(logDataHolder, uiProperties);
+    }
+
+    @NotNull
+    @Override
+    public String getId() {
+      return ID;
+    }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+      return "My Commits";
     }
   }
 }
