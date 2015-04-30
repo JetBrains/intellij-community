@@ -29,6 +29,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 /**
  * @author nik
  */
+//todo[nik] use 'addModule' from JpsGantTool instead after next update of standalone JPS jars
 binding.setVariable("loadModule", {File moduleFile ->
   def moduleName = FileUtil.getNameWithoutExtension(moduleFile)
   def module = JpsElementFactory.instance.createModule(moduleName, JpsJavaModuleType.INSTANCE, JpsElementFactory.instance.createDummyElement())
