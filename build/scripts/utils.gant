@@ -67,9 +67,10 @@ binding.setVariable("isEap", {
 binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
-                                        "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true")
+                                        "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                        "-XX:+HeapDumpOnOutOfMemoryError")
 
-binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
+binding.setVariable("vmOptions", { "$common_vmoptions".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
