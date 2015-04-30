@@ -20,6 +20,7 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
@@ -238,6 +239,29 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
 
   public void testRenameTypeParamToSuper() throws Exception {
     doTest("T");
+  }
+
+  private void doTestImpossibleToRename() throws Exception {
+    try {
+      doTest("val");
+      fail("Should be impossible to rename");
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "This element cannot be renamed", e.getMessage());
+    }
+  }
+
+  public void testNotAvailableForValueOf() throws Exception {
+    doTestImpossibleToRename();
+  }
+
+  public void testNotAvailableForValues() throws Exception {
+    doTestImpossibleToRename();
+  }
+
+  public void testNotAvailableForArrayLength() throws Exception {
+    doTestImpossibleToRename();
   }
 
   private void doTest(final String newName) throws Exception {

@@ -142,7 +142,9 @@ public class ClassInnerStuffCache {
         PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
         String text = "public static " + myClass.getName() + "[] values() { }";
         PsiMethod physicalMethod = factory.createMethodFromText(text, myClass);
-        PsiMethod method = new LightMethod(myClass.getManager(), physicalMethod, myClass);
+        final PsiClass enumSelf = myClass.getSuperClass();
+        if (enumSelf == null) return null;
+        PsiMethod method = new LightMethod(myClass.getManager(), physicalMethod, enumSelf);
         return new Result<PsiMethod>(method, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
       }
     });
@@ -157,7 +159,9 @@ public class ClassInnerStuffCache {
         PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
         String text = "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }";
         PsiMethod physicalMethod = factory.createMethodFromText(text, myClass);
-        PsiMethod method = new LightMethod(myClass.getManager(), physicalMethod, myClass);
+        final PsiClass enumSelf = myClass.getSuperClass();
+        if (enumSelf == null) return null;
+        PsiMethod method = new LightMethod(myClass.getManager(), physicalMethod, enumSelf);
         return new Result<PsiMethod>(method, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, myTracker);
       }
     });
