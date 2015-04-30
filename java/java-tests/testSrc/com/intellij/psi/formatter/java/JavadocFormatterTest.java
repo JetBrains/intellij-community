@@ -819,4 +819,26 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void test_Touch_Nothing_Inside_Pre_Tag() {
+    doClassTest(
+      "/**\n" +
+      " *   Holla\n" +
+      " * <pre>\n" +
+      " * @Override\n" +
+      " *              Test me\n" +
+      " * </pre>\n" +
+      " */\n" +
+      "public void test() {\n" +
+      "}",
+      "/**\n" +
+      " * Holla\n" +
+      " * <pre>\n" +
+      " * @Override\n" +
+      " *              Test me\n" +
+      " * </pre>\n" +
+      " */\n" +
+      "public void test() {\n" +
+      "}"
+    );
+  }
 }

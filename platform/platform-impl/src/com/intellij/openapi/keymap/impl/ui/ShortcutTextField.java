@@ -49,9 +49,9 @@ public class ShortcutTextField extends JTextField {
       ){
         return;
       }
-      // On Windows it is preferable to use normal key code here
+      // On Windows and Mac it is preferable to use normal key code here
       // see java.awt.event.KeyEvent.getExtendedKeyCode
-      boolean extendedKeyCodeFirst = !SystemInfo.isWindows;
+      boolean extendedKeyCodeFirst = !SystemInfo.isWindows && !SystemInfo.isMac;
       KeyStroke stroke = KeyStrokeAdapter.getKeyStroke(e, extendedKeyCodeFirst);
       if (stroke == null) {
         stroke = KeyStrokeAdapter.getKeyStroke(e, !extendedKeyCodeFirst);
