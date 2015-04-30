@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,12 +148,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public String resolveSymLink(@NotNull VirtualFile file) {
     return FileSystemUtil.resolveSymLink(file.getPath());
-  }
-
-  @Override
-  public boolean isSpecialFile(@NotNull final VirtualFile file) {
-    final FileAttributes attributes = getAttributes(file);
-    return attributes != null && attributes.isSpecial();
   }
 
   @Override

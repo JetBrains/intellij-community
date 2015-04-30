@@ -345,11 +345,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public boolean isSpecialFile(@NotNull VirtualFile file) {
-    return isSpecialFile(getFileAttributes(getFileId(file)));
-  }
-
-  @Override
   public boolean isWritable(@NotNull VirtualFile file) {
     return (getFileAttributes(getFileId(file)) & IS_READ_ONLY) == 0;
   }
