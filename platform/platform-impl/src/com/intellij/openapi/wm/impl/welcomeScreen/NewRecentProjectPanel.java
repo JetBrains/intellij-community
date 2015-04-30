@@ -36,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -125,6 +126,10 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     list.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
+        final int index = list.locationToIndex(new Point(x, y));
+        if (index != -1 && Arrays.binarySearch(list.getSelectedIndices(), index) < 0) {
+          list.setSelectedIndex(index);
+        }
         final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup");
         if (group != null) {
           ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).getComponent().show(comp, x, y);

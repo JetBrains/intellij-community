@@ -73,12 +73,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   public final CandidateInfo resolveConflict(@NotNull final List<CandidateInfo> conflicts){
     final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(myArgumentsList);
     if (properties != null) {
-      final PsiMethod method = properties.getMethod();
-      for (CandidateInfo conflict : conflicts) {
-        if (conflict.getElement() == method) {
-          return conflict;
-        }
-      }
+      LOG.error("Recursive conflict resolution for:" + properties.getMethod());
     }
     return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, true, new Computable<CandidateInfo>() {
       @Override

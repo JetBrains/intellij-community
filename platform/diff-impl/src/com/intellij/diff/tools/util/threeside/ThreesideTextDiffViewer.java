@@ -105,7 +105,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     myPanel = new ThreesideTextDiffPanel(this, myContentPanel, this, context);
 
 
-    //new MyFocusOppositePaneAction().setupAction(myPanel, this); // FIXME
+    //new MyFocusOppositePaneAction().setupAction(myPanel, this); // TODO
 
     myEditorSettingsAction = new MySetEditorSettingsAction();
     myEditorSettingsAction.applyDefaults();

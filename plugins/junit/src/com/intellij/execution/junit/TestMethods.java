@@ -70,8 +70,7 @@ public class TestMethods extends TestMethod {
   @Nullable
   public static String getTestPresentation(AbstractTestProxy testInfo, Project project, GlobalSearchScope searchScope) {
     final Location location = testInfo.getLocation(project, searchScope);
-    LOG.assertTrue(location != null);
-    final PsiElement element = location.getPsiElement();
+    final PsiElement element = location != null ? location.getPsiElement() : null;
     if (element instanceof PsiMethod) {
       final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() 
                                                                           : ((PsiMethod)element).getContainingClass();

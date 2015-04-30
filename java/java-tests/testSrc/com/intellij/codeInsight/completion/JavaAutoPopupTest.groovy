@@ -1720,7 +1720,7 @@ class Foo {
   public void "test autopopup after package completion"() {
     myFixture.addClass("package foo.bar.goo; class Foo {}")
     myFixture.configureByText "a.java", "class Foo { { foo.b<caret> } }"
-    myFixture.completeBasic()
+    assert myFixture.completeBasic() == null
     assert myFixture.editor.document.text.contains('foo.bar. ')
     joinAutopopup()
     joinCompletion()

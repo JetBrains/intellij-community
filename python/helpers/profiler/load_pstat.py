@@ -1,9 +1,11 @@
 import sys
 import pstats
 
-from thrift import TSerialization
-from thrift.protocol import TJSONProtocol, TBinaryProtocol
-from profiler.ttypes import ProfilerResponse, Stats, FuncStat, Function
+
+from _prof_imports import TSerialization
+from _prof_imports import TJSONProtocol
+from _prof_imports import ProfilerResponse, Stats, FuncStat, Function
+from _prof_imports import IS_PY3K
 
 
 if __name__ == '__main__':
@@ -50,6 +52,9 @@ if __name__ == '__main__':
     m.validate()
 
     data = TSerialization.serialize(m, TJSONProtocol.TJSONProtocolFactory())
+
+    if IS_PY3K:
+        data = data.decode("utf-8")
 
     sys.stdout.write(data)
     sys.stdout.flush()

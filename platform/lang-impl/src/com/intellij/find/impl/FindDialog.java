@@ -395,7 +395,7 @@ public class FindDialog extends DialogWrapper {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress) {
+                if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
                   int occurrences = resultsCount.get();
                   if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
                   myContent.setTitleAt(RESULTS_PREVIEW_TAB_INDEX, PREVIEW_TITLE + " (" + (occurrences != ShowUsagesAction.USAGES_PAGE_SIZE ? Integer.valueOf(occurrences): occurrences + "+") +")");

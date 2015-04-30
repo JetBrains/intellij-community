@@ -252,7 +252,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();
-      return dialog.getParameters();
+      return dialog.isOK() ? dialog.getParameters() : null;
     }
     return null;
   }

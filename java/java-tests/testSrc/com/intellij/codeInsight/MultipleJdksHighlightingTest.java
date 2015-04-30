@@ -168,7 +168,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTest3Modules();
   }
 
-  @Bombed(user = "peter,anna", year = 2015, month = Calendar.MAY, day = 1)
+  @Bombed(user = "peter,anna", year = 2015, month = Calendar.MAY, day = 15)
   public void testCloseableAutoCloseable() {
     ModuleRootModificationUtil.addDependency(myJava7Module, myJava3Module);
     final String name = getTestName(false);

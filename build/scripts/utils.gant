@@ -67,9 +67,10 @@ binding.setVariable("isEap", {
 binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
-                                        "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true")
+                                        "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                        "-XX:+HeapDumpOnOutOfMemoryError")
 
-binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
+binding.setVariable("vmOptions", { "$common_vmoptions".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
@@ -784,78 +785,78 @@ binding.setVariable("buildWinZip", { String zipPath, List paths ->
   notifyArtifactBuilt(zipPath)
 })
 
-binding.setVariable("buildCrossPlatformZip",
-                    { String zipPath, String sandbox, List commonPaths, String distWin, String distUnix, String distMac ->
-                      projectBuilder.stage("Building cross-platform zip")
+binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, List commonPaths, String distWin, String distUnix, String distMac ->
+  projectBuilder.stage("Building cross-platform zip")
 
-                      def zipDir = "$sandbox/cross-platform-zip"
-                      def ideaPropertiesFile = commonPaths.collect { new File(it, "bin/idea.properties") }.find { it.exists() }
-                      ["win", "linux"].each {
-                        ant.mkdir(dir: "$zipDir/bin/$it")
-                        ant.copy(file: ideaPropertiesFile.absolutePath, todir: "$zipDir/bin/$it")
-                      }
-                      ant.fixcrlf(file: "$zipDir/bin/win/idea.properties", eol: "dos")
-                      ant.copy(todir: "$zipDir/bin/linux") {
-                        fileset(dir: "$distUnix/bin") {
-                          include(name: "idea*.vmoptions")
-                        }
-                      }
-                      ant.copy(todir: "$zipDir/bin/mac") {
-                        fileset(dir: "$distMac/bin") {
-                          include(name: "idea*.vmoptions")
-                          include(name: "idea.properties")
-                        }
-                      }
+  def zipDir = "$sandbox/cross-platform-zip"
+  def ideaPropertiesFile = commonPaths.collect { new File(it, "bin/idea.properties") }.find { it.exists() }
+  ["win", "linux"].each {
+    ant.mkdir(dir: "$zipDir/bin/$it")
+    ant.copy(file: ideaPropertiesFile.absolutePath, todir: "$zipDir/bin/$it")
+  }
+  ant.fixcrlf(file: "$zipDir/bin/win/idea.properties", eol: "dos")
+  ant.copy(todir: "$zipDir/bin/linux") {
+    fileset(dir: "$distUnix/bin") {
+      include(name: "idea*.vmoptions")
+    }
+  }
+  ant.copy(todir: "$zipDir/bin/mac") {
+    fileset(dir: "$distMac/bin") {
+      include(name: "idea*.vmoptions")
+      include(name: "idea.properties")
+    }
+  }
 
-                      ant.zip(zipfile: zipPath, duplicate: "fail") {
-                        commonPaths.each {
-                          fileset(dir: it) {
-                            exclude(name: "bin/idea.properties")
-                          }
-                        }
-                        fileset(dir: zipDir)
+  ant.zip(zipfile: zipPath, duplicate: "fail") {
+    commonPaths.each {
+      fileset(dir: it) {
+        exclude(name: "bin/idea.properties")
+      }
+    }
+    fileset(dir: zipDir)
 
-                        fileset(dir: distWin) {
-                          exclude(name: "bin/fsnotifier*.exe")
-                          exclude(name: "bin/idea*.exe.vmoptions")
-                        }
-                        zipfileset(dir: "$distWin/bin", prefix: "bin/win") {
-                          include(name: "fsnotifier*.exe")
-                          include(name: "idea*.exe.vmoptions")
-                        }
+    fileset(dir: distWin) {
+      exclude(name: "bin/fsnotifier*.exe")
+      exclude(name: "bin/idea*.exe.vmoptions")
+      exclude(name: "bin/idea*.exe")
+    }
+    zipfileset(dir: "$distWin/bin", prefix: "bin/win") {
+      include(name: "fsnotifier*.exe")
+      include(name: "idea*.exe.vmoptions")
+    }
 
-                        fileset(dir: distUnix) {
-                          exclude(name: "bin/fsnotifier*")
-                          exclude(name: "bin/idea*.vmoptions")
-                          exclude(name: "bin/*.sh")
-                          exclude(name: "help/**")
-                        }
-                        zipfileset(dir: "$distUnix/bin", filemode: "775", prefix: "bin") {
-                          include(name: "*.sh")
-                        }
-                        zipfileset(dir: "$distUnix/bin", prefix: "bin/linux", filemode: "775") {
-                          include(name: "fsnotifier*")
-                        }
+    fileset(dir: distUnix) {
+      exclude(name: "bin/fsnotifier*")
+      exclude(name: "bin/idea*.vmoptions")
+      exclude(name: "bin/*.sh")
+      exclude(name: "help/**")
+    }
+    zipfileset(dir: "$distUnix/bin", filemode: "775", prefix: "bin") {
+      include(name: "*.sh")
+    }
+    zipfileset(dir: "$distUnix/bin", prefix: "bin/linux", filemode: "775") {
+      include(name: "fsnotifier*")
+    }
 
-                        fileset(dir: distMac) {
-                          exclude(name: "bin/fsnotifier*")
-                          exclude(name: "bin/restarter*")
-                          exclude(name: "bin/*.sh")
-                          exclude(name: "bin/*.py")
-                          exclude(name: "bin/idea.properties")
-                          exclude(name: "bin/idea*.vmoptions")
-                        }
-                        zipfileset(dir: "$distMac/bin", filemode: "775", prefix: "bin") {
-                          include(name: "restarter*")
-                          include(name: "*.py")
-                        }
-                        zipfileset(dir: "$distMac/bin", prefix: "bin/mac", filemode: "775") {
-                          include(name: "fsnotifier*")
-                        }
-                      }
+    fileset(dir: distMac) {
+      exclude(name: "bin/fsnotifier*")
+      exclude(name: "bin/restarter*")
+      exclude(name: "bin/*.sh")
+      exclude(name: "bin/*.py")
+      exclude(name: "bin/idea.properties")
+      exclude(name: "bin/idea*.vmoptions")
+    }
+    zipfileset(dir: "$distMac/bin", filemode: "775", prefix: "bin") {
+      include(name: "restarter*")
+      include(name: "*.py")
+    }
+    zipfileset(dir: "$distMac/bin", prefix: "bin/mac", filemode: "775") {
+      include(name: "fsnotifier*")
+    }
+  }
 
-                      notifyArtifactBuilt(zipPath)
-                    })
+  notifyArtifactBuilt(zipPath)
+})
 
 binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
   projectBuilder.stage(".mac.zip")

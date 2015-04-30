@@ -236,6 +236,12 @@ public class RecentProjectPanel extends JPanel {
       @Override
       public void mouseMoved(MouseEvent e) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (focusOwner == null) {
+          myList.requestFocus();
+        }
+        if (myList.getSelectedIndices().length > 1) {
+          return;
+        }
         if (myIsEngaged && !UIUtil.isSelectionButtonDown(e) && !(focusOwner instanceof JRootPane)) {
           Point point = e.getPoint();
           int index = myList.locationToIndex(point);

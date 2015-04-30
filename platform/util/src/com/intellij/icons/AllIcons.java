@@ -794,6 +794,7 @@ public class AllIcons {
     public static final Icon CollapseNode = IconLoader.getIcon("/nodes/collapseNode.png"); // 9x9
     public static final Icon CompiledClassesFolder = IconLoader.getIcon("/nodes/compiledClassesFolder.png"); // 16x16
     public static final Icon CopyOfFolder = IconLoader.getIcon("/nodes/copyOfFolder.png"); // 16x16
+    public static final Icon CustomRegion = IconLoader.getIcon("/nodes/customRegion.png"); // 16x16
     public static final Icon Cvs_global = IconLoader.getIcon("/nodes/cvs_global.png"); // 16x16
     public static final Icon Cvs_roots = IconLoader.getIcon("/nodes/cvs_roots.png"); // 16x16
     public static final Icon DataColumn = IconLoader.getIcon("/nodes/dataColumn.png"); // 16x16

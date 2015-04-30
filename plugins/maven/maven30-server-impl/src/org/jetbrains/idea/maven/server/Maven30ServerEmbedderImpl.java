@@ -72,7 +72,11 @@ import org.jetbrains.idea.maven.server.embedder.*;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.graph.Dependency;
+import org.sonatype.aether.impl.internal.DefaultArtifactResolver;
+import org.sonatype.aether.impl.internal.DefaultRepositorySystem;
 import org.sonatype.aether.repository.LocalRepositoryManager;
+import org.sonatype.aether.resolution.ArtifactRequest;
+import org.sonatype.aether.resolution.ArtifactResult;
 import org.sonatype.aether.util.DefaultRepositorySystemSession;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
@@ -119,6 +123,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   private boolean myAlwaysUpdateSnapshots;
 
   public Maven30ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
+    super(settings);
+
     File mavenHome = settings.getMavenHome();
     if (mavenHome != null) {
       System.setProperty("maven.home", mavenHome.getPath());
@@ -150,17 +156,26 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
     Object cliRequest;
     try {
-      String[] commandLineOptions = new String[settings.getUserProperties().size()];
-      int idx = 0;
+      List<String> commandLineOptions = new ArrayList<String>(settings.getUserProperties().size());
       for (Map.Entry<Object, Object> each : settings.getUserProperties().entrySet()) {
-        commandLineOptions[idx++] = "-D" + each.getKey() + "=" + each.getValue();
+        commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
       }
 
+      if (settings.getLoggingLevel() == MavenServerConsole.LEVEL_DEBUG) {
+        commandLineOptions.add("-X");
+        commandLineOptions.add("-e");
+      }
+      else if (settings.getLoggingLevel() == MavenServerConsole.LEVEL_DISABLED) {
+        commandLineOptions.add("-q");
+      }
+
+      //noinspection unchecked
       Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
-      cliRequest = constructor.newInstance(commandLineOptions, classWorld);
+      //noinspection SSBasedInspection
+      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[commandLineOptions.size()]), classWorld);
 
-      for (String each : new String[]{"initialize", "cli", "properties", "container"}) {
+      for (String each : new String[]{"initialize", "cli", "logging", "properties", "container"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
         m.setAccessible(true);
         m.invoke(cli, cliRequest);
@@ -850,8 +865,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   private Artifact doResolve(Artifact artifact, List<ArtifactRepository> remoteRepositories) throws RemoteException {
     try {
-      resolve(artifact, remoteRepositories);
-      return artifact;
+      return resolve(artifact, remoteRepositories);
     }
     catch (Exception e) {
       Maven3ServerGlobals.getLogger().info(e);
@@ -859,20 +873,55 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return artifact;
   }
 
-  public void resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
-    throws ArtifactResolutionException, ArtifactNotFoundException {
+  private Artifact resolve(@NotNull final Artifact artifact, @NotNull final List<ArtifactRepository> repos)
+    throws
+    ArtifactResolutionException,
+    ArtifactNotFoundException,
+    RemoteException,
+    org.sonatype.aether.resolution.ArtifactResolutionException {
 
-    MavenExecutionRequest request = new DefaultMavenExecutionRequest();
-    request.setRemoteRepositories(repos);
-    try {
-      getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(request, myMavenSettings);
-      getComponent(MavenExecutionRequestPopulator.class).populateDefaults(request);
-    }
-    catch (MavenExecutionRequestPopulationException e) {
-      throw new RuntimeException(e);
-    }
+    if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
+      MavenExecutionRequest request = new DefaultMavenExecutionRequest();
+      request.setRemoteRepositories(repos);
+      try {
+        getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(request, myMavenSettings);
+        getComponent(MavenExecutionRequestPopulator.class).populateDefaults(request);
+      }
+      catch (MavenExecutionRequestPopulationException e) {
+        throw new RuntimeException(e);
+      }
 
-    getComponent(ArtifactResolver.class).resolve(artifact, request.getRemoteRepositories(), myLocalRepository);
+      getComponent(ArtifactResolver.class).resolve(artifact, request.getRemoteRepositories(), myLocalRepository);
+      return artifact;
+    }
+    else {
+      final MavenExecutionRequest request =
+        createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
+      for (ArtifactRepository artifactRepository : repos) {
+        request.addRemoteRepository(artifactRepository);
+      }
+
+      DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
+      RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
+
+      final org.sonatype.aether.impl.ArtifactResolver artifactResolver = getComponent(org.sonatype.aether.impl.ArtifactResolver.class);
+      final org.sonatype.aether.spi.log.Logger logger = new MyLogger();
+
+      if (artifactResolver instanceof DefaultArtifactResolver) {
+        ((DefaultArtifactResolver)artifactResolver).setLogger(logger);
+      }
+
+      final org.sonatype.aether.RepositorySystem repositorySystem = getComponent(org.sonatype.aether.RepositorySystem.class);
+      if (repositorySystem instanceof DefaultRepositorySystem) {
+        ((DefaultRepositorySystem)repositorySystem).setLogger(logger);
+      }
+
+      final ArtifactResult artifactResult = repositorySystem.resolveArtifact(
+        repositorySystemSession, new ArtifactRequest(RepositoryUtils.toArtifact(artifact),
+                                                     RepositoryUtils.toRepos(request.getRemoteRepositories()), null));
+
+      return RepositoryUtils.toArtifact(artifactResult.getArtifact());
+    }
   }
 
   private List<ArtifactRepository> convertRepositories(List<MavenRemoteRepository> repositories) throws RemoteException {
@@ -1119,6 +1168,38 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   public interface Computable<T> {
     T compute();
+  }
+
+  private class MyLogger implements org.sonatype.aether.spi.log.Logger {
+    @Override
+    public boolean isDebugEnabled() {
+      return myConsoleWrapper.isDebugEnabled();
+    }
+
+    @Override
+    public void debug(String s) {
+      myConsoleWrapper.debug(s);
+    }
+
+    @Override
+    public void debug(String s, Throwable throwable) {
+      myConsoleWrapper.debug(s, throwable);
+    }
+
+    @Override
+    public boolean isWarnEnabled() {
+      return myConsoleWrapper.isWarnEnabled();
+    }
+
+    @Override
+    public void warn(String s) {
+      myConsoleWrapper.warn(s);
+    }
+
+    @Override
+    public void warn(String s, Throwable throwable) {
+      myConsoleWrapper.debug(s, throwable);
+    }
   }
 }
 

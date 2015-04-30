@@ -43,6 +43,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -69,6 +70,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       if (myArrayClass == null) {
         @NonNls final String body = "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
         myArrayClass = ((PsiExtensibleClass)createClassFromText(body, null)).getOwnInnerClasses().get(0);
+        ensureNonWritable(myArrayClass);
       }
       return myArrayClass;
     }
@@ -76,9 +78,17 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       if (myArrayClass15 == null) {
         @NonNls final String body = "public class __Array__<T>{\n public final int length;\n public T[] clone() {}\n}";
         myArrayClass15 = ((PsiExtensibleClass)createClassFromText(body, null)).getOwnInnerClasses().get(0);
+        ensureNonWritable(myArrayClass15);
       }
       return myArrayClass15;
     }
+  }
+
+  private static void ensureNonWritable(PsiClass arrayClass) {
+    try {
+      arrayClass.getContainingFile().getViewProvider().getVirtualFile().setWritable(false);
+    }
+    catch (IOException ignored) {}
   }
 
   @NotNull

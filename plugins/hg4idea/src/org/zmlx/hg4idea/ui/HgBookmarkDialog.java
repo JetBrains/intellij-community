@@ -10,6 +10,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgBranchReferenceValidator;
 import org.zmlx.hg4idea.util.HgReferenceValidator;
 
 import javax.swing.*;
@@ -19,9 +20,6 @@ import java.awt.*;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgBookmarkDialog extends DialogWrapper {
   @NotNull private HgRepository myRepository;
   @NotNull private JBTextField myBookmarkName;
@@ -85,7 +83,7 @@ public class HgBookmarkDialog extends DialogWrapper {
   }
 
   private void validateFields() {
-    HgReferenceValidator validator = HgReferenceValidator.newInstance(myRepository);
+    HgReferenceValidator validator = new HgBranchReferenceValidator(myRepository);
     String name = getName();
     if (!validator.checkInput(name)) {
       String message = validator.getErrorText(name);

@@ -111,6 +111,7 @@ public class HgLogProvider implements VcsLogProvider {
     Collection<HgNameWithHashInfo> bookmarks = repository.getBookmarks();
     Collection<HgNameWithHashInfo> tags = repository.getTags();
     Collection<HgNameWithHashInfo> localTags = repository.getLocalTags();
+    Collection<HgNameWithHashInfo> mqAppliedPatches = repository.getMQAppliedPatches();
 
     Set<VcsRef> refs = new HashSet<VcsRef>(branches.size() + bookmarks.size());
 
@@ -140,6 +141,10 @@ public class HgLogProvider implements VcsLogProvider {
     for (HgNameWithHashInfo localTagInfo : localTags) {
       refs.add(myVcsObjectsFactory.createRef(localTagInfo.getHash(), localTagInfo.getName(),
                               HgRefManager.LOCAL_TAG, root));
+    }
+    for (HgNameWithHashInfo mqPatchRef : mqAppliedPatches) {
+      refs.add(myVcsObjectsFactory.createRef(mqPatchRef.getHash(), mqPatchRef.getName(),
+                                             HgRefManager.MQ_APPLIED_TAG, root));
     }
     return refs;
   }

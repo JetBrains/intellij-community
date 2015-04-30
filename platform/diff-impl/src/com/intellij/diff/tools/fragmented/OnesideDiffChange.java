@@ -29,7 +29,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledWithWriteLock;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,13 +41,9 @@ public class OnesideDiffChange {
   @NotNull private final OnesideDiffViewer myViewer;
   @NotNull private final EditorEx myEditor;
 
-  private final int myStartOffset1;
-  private final int myEndOffset1;
-  private final int myStartOffset2;
-  private final int myEndOffset2;
-
-  private final int myLine1;
-  private final int myLine2;
+  // Boundaries of this change in myEditor. If current state is out-of-date - approximate value.
+  private int myLine1;
+  private int myLine2;
 
   @NotNull private final LineFragment myLineFragment;
 
@@ -58,15 +54,14 @@ public class OnesideDiffChange {
     myViewer = viewer;
     myEditor = viewer.getEditor();
 
-    myStartOffset1 = block.getStartOffset1();
-    myEndOffset1 = block.getEndOffset1();
-    myStartOffset2 = block.getStartOffset2();
-    myEndOffset2 = block.getEndOffset2();
     myLine1 = block.getLine1();
     myLine2 = block.getLine2();
     myLineFragment = block.getLineFragment();
 
-    installHighlighter(innerFragments);
+    TextRange deleted = new TextRange(block.getStartOffset1(), block.getEndOffset1());
+    TextRange inserted = new TextRange(block.getStartOffset2(), block.getEndOffset2());
+
+    installHighlighter(deleted, inserted, innerFragments);
   }
 
   public void destroyHighlighter() {
@@ -81,14 +76,14 @@ public class OnesideDiffChange {
     myOperations.clear();
   }
 
-  public void installHighlighter(boolean innerFragments) {
+  private void installHighlighter(@NotNull TextRange deleted, @NotNull TextRange inserted, boolean innerFragments) {
     assert myHighlighters.isEmpty();
 
     if (innerFragments && myLineFragment.getInnerFragments() != null) {
-      doInstallHighlighterWithInner();
+      doInstallHighlighterWithInner(deleted, inserted);
     }
     else {
-      doInstallHighlighterSimple();
+      doInstallHighlighterSimple(deleted, inserted);
     }
     doInstallActionHighlighters();
   }
@@ -103,43 +98,41 @@ public class OnesideDiffChange {
     if (leftEditable) myOperations.add(createOperation(Side.RIGHT, rightEditable));
   }
 
-  private void doInstallHighlighterSimple() {
-    createLineHighlighters(false);
+  private void doInstallHighlighterSimple(@NotNull TextRange deleted, @NotNull TextRange inserted) {
+    createLineHighlighters(deleted, inserted, false);
   }
 
-  private void doInstallHighlighterWithInner() {
+  private void doInstallHighlighterWithInner(@NotNull TextRange deleted, @NotNull TextRange inserted) {
     List<DiffFragment> innerFragments = myLineFragment.getInnerFragments();
     assert innerFragments != null;
 
-    createLineHighlighters(true);
+    createLineHighlighters(deleted, inserted, true);
 
     for (DiffFragment fragment : innerFragments) {
       createInlineHighlighter(TextDiffType.DELETED,
-                              getStartOffset1() + fragment.getStartOffset1(),
-                              getStartOffset1() + fragment.getEndOffset1());
+                              deleted.getStartOffset() + fragment.getStartOffset1(),
+                              deleted.getStartOffset() + fragment.getEndOffset1());
       createInlineHighlighter(TextDiffType.INSERTED,
-                              getStartOffset2() + fragment.getStartOffset2(),
-                              getStartOffset2() + fragment.getEndOffset2());
+                              inserted.getStartOffset() + fragment.getStartOffset2(),
+                              inserted.getStartOffset() + fragment.getEndOffset2());
     }
   }
 
-  private void createLineHighlighters(boolean ignored) {
-    boolean insertion = hasInsertion();
-    boolean deletion = hasDeletion();
-    if (insertion && deletion) {
+  private void createLineHighlighters(@NotNull TextRange deleted, @NotNull TextRange inserted, boolean ignored) {
+    if (!inserted.isEmpty() && !deleted.isEmpty()) {
       createLineMarker(TextDiffType.DELETED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.DELETED, getStartOffset1(), getEndOffset1(), ignored);
-      createHighlighter(TextDiffType.INSERTED, getStartOffset2(), getEndOffset2(), ignored);
+      createHighlighter(TextDiffType.DELETED, deleted.getStartOffset(), deleted.getEndOffset(), ignored);
+      createHighlighter(TextDiffType.INSERTED, inserted.getStartOffset(), inserted.getEndOffset(), ignored);
       createLineMarker(TextDiffType.INSERTED, getLine2() - 1, SeparatorPlacement.BOTTOM);
     }
-    else if (insertion) {
+    else if (!inserted.isEmpty()) {
       createLineMarker(TextDiffType.INSERTED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.INSERTED, getStartOffset2(), getEndOffset2(), ignored);
+      createHighlighter(TextDiffType.INSERTED, inserted.getStartOffset(), inserted.getEndOffset(), ignored);
       createLineMarker(TextDiffType.INSERTED, getLine2() - 1, SeparatorPlacement.BOTTOM);
     }
-    else if (deletion) {
+    else if (!deleted.isEmpty()) {
       createLineMarker(TextDiffType.DELETED, getLine1(), SeparatorPlacement.TOP);
-      createHighlighter(TextDiffType.DELETED, getStartOffset1(), getEndOffset1(), ignored);
+      createHighlighter(TextDiffType.DELETED, deleted.getStartOffset(), deleted.getEndOffset(), ignored);
       createLineMarker(TextDiffType.DELETED, getLine2() - 1, SeparatorPlacement.BOTTOM);
     }
   }
@@ -156,22 +149,6 @@ public class OnesideDiffChange {
     myHighlighters.add(DiffDrawUtil.createLineMarker(myEditor, line, type, placement));
   }
 
-  public int getStartOffset1() {
-    return myStartOffset1;
-  }
-
-  public int getEndOffset1() {
-    return myEndOffset1;
-  }
-
-  public int getStartOffset2() {
-    return myStartOffset2;
-  }
-
-  public int getEndOffset2() {
-    return myEndOffset2;
-  }
-
   public int getLine1() {
     return myLine1;
   }
@@ -180,29 +157,39 @@ public class OnesideDiffChange {
     return myLine2;
   }
 
-  private boolean hasInsertion() {
-    return myStartOffset2 != myEndOffset2;
+  /*
+   * Warning: It does not updated on document change. Check myViewer.isStateInconsistent() before use.
+   */
+  @NotNull
+  public LineFragment getLineFragment() {
+    return myLineFragment;
   }
 
-  private boolean hasDeletion() {
-    return myStartOffset1 != myEndOffset1;
-  }
+  public void processChange(int oldLine1, int oldLine2, int shift) {
+    if (myLine2 <= oldLine1) return;
+    if (myLine1 >= oldLine2) {
+      myLine1 += shift;
+      myLine2 += shift;
+      return;
+    }
 
-  @CalledWithWriteLock
-  public void replaceChange(@NotNull final Side sourceSide) {
-    Side affectedSide = sourceSide.other();
-    if (!myViewer.isEditable(affectedSide, true)) return;
+    if (myLine1 <= oldLine1 && myLine2 >= oldLine2) {
+      myLine2 += shift;
+      return;
+    }
 
-    final Document document1 = myViewer.getDocument(Side.LEFT);
-    final Document document2 = myViewer.getDocument(Side.RIGHT);
-    assert document1 != null && document2 != null;
+    // range is destroyed. We don't know new boundaries.
+    // Anything below is just a guess in attempt to keep changes ordered.
+    int newLine2 = oldLine2 + shift;
+    if (myLine2 < oldLine2) {
+      if (myLine2 > newLine2) myLine2 = newLine2;
+    }
+    else {
+      myLine2 += shift; // end of change is outside of modified range - just shift
+    }
 
-    DiffUtil.applyModification(affectedSide.select(document1, document2),
-                               affectedSide.getStartLine(myLineFragment), affectedSide.getEndLine(myLineFragment),
-                               sourceSide.select(document1, document2),
-                               sourceSide.getStartLine(myLineFragment), sourceSide.getEndLine(myLineFragment));
-
-    destroyHighlighter();
+    if (myLine1 < oldLine1) myLine1 = Math.min(myLine1, newLine2);
+    if (myLine1 > myLine2) myLine1 = myLine2;
   }
 
   //
@@ -298,7 +285,7 @@ public class OnesideDiffChange {
             DiffUtil.executeWriteCommand(document, project, "Replace change", new Runnable() {
               @Override
               public void run() {
-                replaceChange(sourceSide);
+                myViewer.applyChange(OnesideDiffChange.this, sourceSide);
               }
             });
           }

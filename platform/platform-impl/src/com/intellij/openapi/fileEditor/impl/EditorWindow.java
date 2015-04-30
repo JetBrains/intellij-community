@@ -1061,6 +1061,11 @@ public class EditorWindow {
 
   private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
     LinkedHashSet<VirtualFile> closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst);
+    VirtualFile selectedFile = getSelectedFile();
+    if (shouldCloseSelected()) {
+      defaultCloseFile(selectedFile, transferFocus);
+      closingOrder.remove(selectedFile);
+    }
 
     for (VirtualFile file : closingOrder) {
       if (myTabbedPane.getTabCount() <= limit || myTabbedPane.getTabCount() == 0 || areAllTabsPinned(fileToIgnore)) {
@@ -1118,6 +1123,20 @@ public class EditorWindow {
     closingOrder.remove(selectedFile);
     closingOrder.add(selectedFile); // selected should be closed last
     return closingOrder;
+  }
+
+  private boolean shouldCloseSelected() {
+    if (!UISettings.getInstance().REUSE_NOT_MODIFIED_TABS) return false;
+    if (!myOwner.getManager().getProject().isInitialized()) return false;
+    VirtualFile file = getSelectedFile();
+    if (file == null) return false;
+    if (!isFileOpen(file)) return false;
+    if (isFilePinned(file)) return false;
+    EditorWithProviderComposite composite = findFileComposite(file);
+    if (composite == null) return false;
+    Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
+    if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
+    return !myOwner.getManager().isChanged(composite);
   }
 
   private static boolean isFileModified(EditorComposite composite, VirtualFile file) {

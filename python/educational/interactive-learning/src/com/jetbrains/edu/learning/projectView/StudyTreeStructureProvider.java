@@ -62,7 +62,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     return nodes;
   }
 
-  private static boolean isCourseBasedProject(@NotNull final AbstractTreeNode parent) {
+  protected boolean isCourseBasedProject(@NotNull final AbstractTreeNode parent) {
     final Project project = parent.getProject();
     if (project != null) {
       final StudyTaskManager studyTaskManager = StudyTaskManager.getInstance(project);

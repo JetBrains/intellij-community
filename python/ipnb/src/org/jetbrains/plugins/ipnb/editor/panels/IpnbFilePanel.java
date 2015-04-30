@@ -241,11 +241,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (index < 0) return true;
     myIpnbPanels.remove(index);
     myIpnbFile.removeCell(index);
-    if (myIpnbFile.getCells().isEmpty()) {
-      final IpnbCodeCell newCell = new IpnbCodeCell("python", new String[]{""}, null, new ArrayList<IpnbOutputCell>());
-      final IpnbCodePanel codePanel = new IpnbCodePanel(myProject, myParent, newCell);
-      addCell(codePanel, false);
-    }
     return false;
   }
 

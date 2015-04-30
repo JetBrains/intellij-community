@@ -83,8 +83,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.impl.TemplateListPanel");
 
-  private final Map<Integer, Map<TemplateOptionalProcessor, Boolean>> myTemplateOptions = new LinkedHashMap<Integer, Map<TemplateOptionalProcessor, Boolean>>();
-  private final Map<Integer, TemplateContext> myTemplateContext = ContainerUtil.newLinkedHashMap();
+  private final Map<TemplateImpl, Map<TemplateOptionalProcessor, Boolean>> myTemplateOptions = ContainerUtil.newIdentityHashMap();
+  private final Map<TemplateImpl, TemplateContext> myTemplateContext = ContainerUtil.newIdentityHashMap();
   private final JPanel myDetailsPanel = new JPanel(new CardLayout());
   private LiveTemplateSettingsEditor myCurrentTemplateEditor;
   private final JLabel myEmptyCardLabel = new JLabel();
@@ -270,11 +270,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   private TemplateContext getTemplateContext(final TemplateImpl newTemplate) {
-    return myTemplateContext.get(getKey(newTemplate));
+    return myTemplateContext.get(newTemplate);
   }
 
   private Map<TemplateOptionalProcessor, Boolean> getTemplateOptions(final TemplateImpl newTemplate) {
-    return myTemplateOptions.get(getKey(newTemplate));
+    return myTemplateOptions.get(newTemplate);
   }
 
   private List<TemplateGroup> getTemplateGroups() {
@@ -395,15 +395,11 @@ public class TemplateListPanel extends JPanel implements Disposable {
   }
 
   public void addTemplate(TemplateImpl template) {
-    myTemplateOptions.put(getKey(template), template.createOptions());
-    myTemplateContext.put(getKey(template), template.createContext());
+    myTemplateOptions.put(template, template.createOptions());
+    myTemplateContext.put(template, template.createContext());
 
     registerTemplate(template);
     updateTemplateDetails(true, false);
-  }
-
-  private static int getKey(final TemplateImpl template) {
-    return System.identityHashCode(template);
   }
 
   private void copyRow() {
@@ -414,8 +410,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     LOG.assertTrue(orTemplate != null);
     TemplateImpl template = orTemplate.copy();
     template.setKey(ABBREVIATION);
-    myTemplateOptions.put(getKey(template), new HashMap<TemplateOptionalProcessor, Boolean>(getTemplateOptions(orTemplate)));
-    myTemplateContext.put(getKey(template), getTemplateContext(orTemplate).createCopy());
+    myTemplateOptions.put(template, new HashMap<TemplateOptionalProcessor, Boolean>(getTemplateOptions(orTemplate)));
+    myTemplateContext.put(template, getTemplateContext(orTemplate).createCopy());
     registerTemplate(template);
 
     updateTemplateDetails(true, false);
@@ -764,7 +760,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
         int result = builder.show();
         if (result == DialogWrapper.OK_EXIT_CODE) {
           for (TemplateImpl template : templates.keySet()) {
-            myTemplateContext.put(getKey(template), context);
+            myTemplateContext.put(template, context);
           }
         }
         updateTemplateDetails(false, true);
@@ -794,8 +790,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
         for (TemplateImpl template : templates.keySet()) {
           TemplateImpl defaultTemplate = TemplateSettings.getInstance().getDefaultTemplate(template);
           if (defaultTemplate != null) {
-            myTemplateOptions.put(getKey(template), defaultTemplate.createOptions());
-            myTemplateContext.put(getKey(template), defaultTemplate.createContext());
+            myTemplateOptions.put(template, defaultTemplate.createOptions());
+            myTemplateContext.put(template, defaultTemplate.createContext());
             template.resetFrom(defaultTemplate);
           }
         }
@@ -992,8 +988,8 @@ public class TemplateListPanel extends JPanel implements Disposable {
     List<TemplateImpl> templates = new ArrayList<TemplateImpl>(group.getElements());
     Collections.sort(templates, TEMPLATE_COMPARATOR);
     for (final TemplateImpl template : templates) {
-      myTemplateOptions.put(getKey(template), template.createOptions());
-      myTemplateContext.put(getKey(template), template.createContext());
+      myTemplateOptions.put(template, template.createOptions());
+      myTemplateContext.put(template, template.createContext());
       CheckedTreeNode node = new CheckedTreeNode(template);
       node.setChecked(!template.isDeactivated());
       groupNode.add(node);

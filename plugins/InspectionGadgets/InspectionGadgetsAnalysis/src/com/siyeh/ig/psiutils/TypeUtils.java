@@ -179,6 +179,9 @@ public class TypeUtils {
   }
 
   public static boolean areConvertible(PsiType type1, PsiType type2) {
+    if (TypeConversionUtil.areTypesConvertible(type1, type2)) {
+      return true;
+    }
     final PsiType comparedTypeErasure = TypeConversionUtil.erasure(type1);
     final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(type2);
     if (comparedTypeErasure == null || comparisonTypeErasure == null ||

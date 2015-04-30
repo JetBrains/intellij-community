@@ -85,7 +85,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null) {
 
       if (descriptor != null) {
-        insertIncompleteTag(context.getCompletionChar(), editor, project, descriptor, tag);
+        insertIncompleteTag(context.getCompletionChar(), editor, tag);
       }
     }
     else if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
@@ -108,7 +108,6 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           int eOffset = sibling.getTextRange().getEndOffset();
 
           editor.getDocument().deleteString(sOffset, eOffset);
-          assert otherTag != null;
           editor.getDocument().insertString(sOffset, ((XmlTag)otherTag).getName());
         }
       }
@@ -126,11 +125,11 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     tailType.processTail(editor, editor.getCaretModel().getOffset());
   }
 
-  private static void insertIncompleteTag(char completionChar,
+  public static void insertIncompleteTag(char completionChar,
                                           final Editor editor,
-                                          final Project project,
-                                          XmlElementDescriptor descriptor,
                                           XmlTag tag) {
+    XmlElementDescriptor descriptor = tag.getDescriptor();
+    final Project project = editor.getProject();
     TemplateManager templateManager = TemplateManager.getInstance(project);
     Template template = templateManager.createTemplate("", "");
 

@@ -161,10 +161,12 @@ public class JDParser {
 
     StringBuilder sb = new StringBuilder();
     String tag = null;
+    boolean isInsidePreTag = false;
+
     for (int i = 0; i <= size; i++) {
       String line = i == size ? null : l.get(i);
       if (i == size || !line.isEmpty()) {
-        if (i == size || line.charAt(0) == '@') {
+        if (i == size || line.charAt(0) == '@' && !isInsidePreTag) {
           if (tag == null) {
             comment.setDescription(sb.toString());
           }
@@ -205,6 +207,12 @@ public class JDParser {
         if (sb.length() > 0) {
           sb.append(lineSeparator);
         }
+      }
+
+      if (line != null) {
+        isInsidePreTag = isInsidePreTag
+                         ? !lineHasClosingPreTag(line)
+                         : lineHasUnclosedPreTag(line);
       }
     }
   }
@@ -521,6 +529,10 @@ public class JDParser {
     return StringUtil.getOccurrenceCount(line, PRE_TAG_START) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
   }
 
+  private static boolean lineHasClosingPreTag(@NotNull String line) {
+    return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > StringUtil.getOccurrenceCount(line, PRE_TAG_START);
+  }
+
   /**
    * Returns formatted JavaDoc tag description, according to selected configuration
    * @param str JavaDoc tag description
@@ -596,10 +608,10 @@ public class JDParser {
           sb.append(line);
 
           // We want to track if we're inside <pre>...</pre> in order to not generate <p/> there.
-          if (PRE_TAG_START.equals(line)) {
+          if (line.startsWith(PRE_TAG_START)) {
             insidePreTag = true;
           }
-          else if (PRE_TAG_END.equals(line)) {
+          else if (line.endsWith(PRE_TAG_END)) {
             insidePreTag = false;
           }
         }

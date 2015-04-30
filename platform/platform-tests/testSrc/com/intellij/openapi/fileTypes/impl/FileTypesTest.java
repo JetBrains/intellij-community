@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.PatternUtil;
@@ -61,8 +62,9 @@ public class FileTypesTest extends PlatformTestCase {
   private FileTypeManagerImpl myFileTypeManager;
   private String myOldIgnoredFilesList;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public FileTypesTest() {
-    initPlatformLangPrefix();
+    IdeaTestCase.initPlatformPrefix();
   }
 
   @Override
@@ -381,6 +383,9 @@ public class FileTypesTest extends PlatformTestCase {
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
     myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
+    myFileTypeManager.clearForTests();
+    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.initComponent();
   }
 
   public void testRenamedPropertiesToUnknownAndBack() throws Exception {
@@ -498,7 +503,11 @@ public class FileTypesTest extends PlatformTestCase {
     Map<FileNameMatcher, Pair<FileType, Boolean>> mappings = myFileTypeManager.getRemovedMappings();
     assertEquals(1, mappings.size());
     assertEquals(ArchiveFileType.INSTANCE, mappings.values().iterator().next().first);
+    mappings.clear();
     assertEquals(ArchiveFileType.INSTANCE, myFileTypeManager.getFileTypeByExtension("zip"));
-    assertNull(myFileTypeManager.getState().getChild("extensionMap"));
+    Element map = myFileTypeManager.getState().getChild("extensionMap");
+    if (map != null) {
+      fail(JDOMUtil.writeElement(map));
+    }
   }
 }

@@ -346,14 +346,14 @@ public class LambdaUtil {
               return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
             }
           }
-          final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
+          final JavaResolveResult resolveResult = properties != null ? properties.getInfo() : contextCall.resolveMethodGenerics();
             final PsiElement resolve = resolveResult.getElement();
             if (resolve instanceof PsiMethod) {
               final PsiParameter[] parameters = ((PsiMethod)resolve).getParameterList().getParameters();
               final int finalLambdaIdx = adjustLambdaIdx(lambdaIdx, (PsiMethod)resolve, parameters);
               if (finalLambdaIdx < parameters.length) {
                 if (!tryToSubstitute) return getNormalizedType(parameters[finalLambdaIdx]);
-                return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, new Computable<PsiType>() {
+                return PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, !MethodCandidateInfo.isOverloadCheck(), new Computable<PsiType>() {
                   @Override
                   public PsiType compute() {
                     return resolveResult.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));

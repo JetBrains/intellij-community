@@ -29,12 +29,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +84,8 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
       return;
     }
     final XmlAttributeDescriptor attrDescriptor = descriptor.getAttributeDescriptor(myAttrName, myTag);
-    boolean indirectSyntax = XmlExtension.getExtension(myTag.getContainingFile()).isIndirectSyntax(attrDescriptor);
+    final boolean indirectSyntax = XmlExtension.getExtension(myTag.getContainingFile()).isIndirectSyntax(attrDescriptor);
+    boolean insertShorthand = myTag instanceof HtmlTag && attrDescriptor != null && HtmlUtil.isBooleanAttribute(attrDescriptor, myTag);
 
     PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(
       XmlChildRole.EMPTY_TAG_END_FINDER.findChild(treeElement)
@@ -103,7 +106,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
       if (anchorIsEmptyTag) template.addTextSegment(">");
       template.addTextSegment("<jsp:attribute name=\"" + myAttrName + "\">");
     } else {
-      template.addTextSegment(" " + myAttrName + "=\"");
+      template.addTextSegment(" " + myAttrName + (!insertShorthand ? "=\"" : ""));
     }
 
     Expression expression = new Expression() {
@@ -129,18 +132,18 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
         return items;
       }
     };
-    template.addVariable(NAME_TEMPLATE_VARIABLE, expression, expression, true);
+    if (!insertShorthand) template.addVariable(NAME_TEMPLATE_VARIABLE, expression, expression, true);
+
     if (indirectSyntax) {
       template.addTextSegment("</jsp:attribute>");
       template.addEndVariable();
       if (anchorIsEmptyTag) template.addTextSegment("</" + myTag.getName() + ">");
-    } else {
+    } else if (!insertShorthand) {
       template.addTextSegment("\"");
     }
 
     final PsiElement anchor1 = anchor;
 
-    final boolean indirectSyntax1 = indirectSyntax;
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -149,9 +152,9 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
             @Override
             public void run() {
               int textOffset = anchor1.getTextOffset();
-              if (!anchorIsEmptyTag && indirectSyntax1) ++textOffset;
+              if (!anchorIsEmptyTag && indirectSyntax) ++textOffset;
               editor.getCaretModel().moveToOffset(textOffset);
-              if (anchorIsEmptyTag && indirectSyntax1) {
+              if (anchorIsEmptyTag && indirectSyntax) {
                 editor.getDocument().deleteString(textOffset,textOffset + 2);
               }
               TemplateManager.getInstance(project).startTemplate(editor, template);

@@ -17,6 +17,7 @@ package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.BufferedLineIterator;
+import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.actions.NavigationContextChecker;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.diff.comparison.DiffTooBigException;
@@ -43,10 +44,12 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.diff.LineTokenizer;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -58,6 +61,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
@@ -96,6 +100,12 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   private final boolean[] myForceReadOnlyFlags;
   private boolean myReadOnlyLockSet = false;
 
+  private boolean myDuringOnesideDocumentModification;
+  private boolean myDuringTwosideDocumentModification;
+
+  private boolean myStateIsOutOfDate; // whether something was changed since last rediff
+  private boolean mySuppressEditorTyping; // our state is inconsistent. No typing can be handled correctly
+
   public OnesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
@@ -110,12 +120,19 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     myActualContent2 = contents.get(1) instanceof DocumentContent ? ((DocumentContent)contents.get(1)) : null;
     assert myActualContent1 != null || myActualContent2 != null;
 
+    if (myActualContent1 == null) myMasterSide = Side.RIGHT;
+    if (myActualContent2 == null) myMasterSide = Side.LEFT;
+
+    boolean leftEditable = isEditable(Side.LEFT, false);
+    boolean rightEditable = isEditable(Side.RIGHT, false);
+    if (leftEditable && !rightEditable) myMasterSide = Side.LEFT;
+    if (!leftEditable && rightEditable) myMasterSide = Side.RIGHT;
+
 
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
+
     List<JComponent> titles = DiffUtil.createTextTitles(myRequest, ContainerUtil.list(myEditor, myEditor));
-
-
     OnesideContentPanel contentPanel = new OnesideContentPanel(titles, myEditor);
 
     myPanel = new OnesideDiffPanel(myProject, contentPanel, myEditor, this, myContext);
@@ -132,6 +149,8 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   protected void onInit() {
     super.onInit();
     processContextHints();
+    installTypingSupport();
+    myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
   }
 
   @Override
@@ -141,22 +160,42 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     super.onDispose();
   }
 
+  @CalledInAwt
   protected void processContextHints() {
     Side side = DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.MASTER_SIDE);
-    if (side != null) myMasterSide = side;
+    if (side != null && side.select(myActualContent1, myActualContent2) != null) myMasterSide = side;
 
     myScrollToLineHelper.processContext();
   }
 
+  @CalledInAwt
   protected void updateContextHints() {
     myScrollToLineHelper.updateContext();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
   }
 
+  @CalledInAwt
+  protected void updateEditorCanBeTyped() {
+    myEditor.setViewer(mySuppressEditorTyping || !isEditable(myMasterSide, true));
+  }
+
+  private void installTypingSupport() {
+    if (!isEditable(myMasterSide, false)) return;
+
+    updateEditorCanBeTyped();
+    myEditor.getColorsScheme().setColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR, null); // guarded blocks
+    EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myDocument, new MyReadonlyFragmentModificationHandler());
+    myDocument.putUserData(DocumentFragmentContent.ORIGINAL_DOCUMENT, getDocument(myMasterSide)); // use undo of master document
+
+    myDocument.addDocumentListener(new MyOnesideDocumentListener());
+  }
+
+  @CalledInAwt
   @NotNull
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
+    // TODO: allow to choose myMasterSide
     group.add(new MyIgnorePolicySettingAction());
     group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
@@ -166,6 +205,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return group;
   }
 
+  @CalledInAwt
   @NotNull
   public List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<AnAction>();
@@ -185,9 +225,10 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   //
 
   @Override
+  @CalledInAwt
   protected void onSlowRediff() {
     super.onSlowRediff();
-    myPanel.setLoadingContent();
+    myStatusPanel.setBusy(true);
   }
 
   @Override
@@ -214,7 +255,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         blocks.add(ChangedBlock.createInserted(data.getText().length() + 1, data.getLines()));
 
         indicator.checkCanceled();
-        LineNumberConvertor convertor = LineNumberConvertor.Builder.createLeft(data.getLines());
+        LineNumberConvertor convertor = LineNumberConvertor.Builder.createRight(data.getLines());
 
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), data.getHighlighter(),
                                                                data.getRangeHighlighter(), content.getContentType(),
@@ -240,7 +281,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         blocks.add(ChangedBlock.createDeleted(data.getText().length() + 1, data.getLines()));
 
         indicator.checkCanceled();
-        LineNumberConvertor convertor = LineNumberConvertor.Builder.createRight(data.getLines());
+        LineNumberConvertor convertor = LineNumberConvertor.Builder.createLeft(data.getLines());
 
         CombinedEditorData editorData = new CombinedEditorData(new MergingCharSequence(data.getText(), "\n"), data.getHighlighter(),
                                                                data.getRangeHighlighter(), content.getContentType(),
@@ -330,7 +371,12 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
   private void clearDiffPresentation() {
     myPanel.resetNotifications();
+    myStatusPanel.setBusy(false);
     destroyChangedBlockData();
+
+    myStateIsOutOfDate = false;
+    mySuppressEditorTyping = false;
+    updateEditorCanBeTyped();
   }
 
   @Nullable
@@ -372,7 +418,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            myDocument.setText(data.getText());
+            myDuringOnesideDocumentModification = true;
+            try {
+              myDocument.setText(data.getText());
+            }
+            finally {
+              myDuringOnesideDocumentModification = false;
+            }
           }
         });
 
@@ -387,7 +439,19 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
           diffChanges.add(new OnesideDiffChange(OnesideDiffViewer.this, block, innerFragments));
         }
 
-        myChangedBlockData = new ChangedBlockData(diffChanges, convertor);
+        List<RangeMarker> guarderRangeBlocks = new ArrayList<RangeMarker>();
+        if (!myEditor.isViewer()) {
+          for (ChangedBlock block : blocks) {
+            int start = myMasterSide.select(block.getStartOffset2(), block.getStartOffset1());
+            int end = myMasterSide.select(block.getEndOffset2() - 1, block.getEndOffset1() - 1);
+            if (start >= end) continue;
+            guarderRangeBlocks.add(createGuardedBlock(start, end));
+          }
+          int textLength = myDocument.getTextLength(); // there are 'fake' newline at the very end
+          guarderRangeBlocks.add(createGuardedBlock(textLength, textLength));
+        }
+
+        myChangedBlockData = new ChangedBlockData(diffChanges, guarderRangeBlocks, convertor);
 
         myFoldingModel.install(changedLines, myRequest, getFoldingModelSettings());
 
@@ -397,6 +461,14 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
         myPanel.setGoodContent();
       }
     };
+  }
+
+  @NotNull
+  private RangeMarker createGuardedBlock(int start, int end) {
+    RangeMarker block = myDocument.createGuardedBlock(start, end);
+    block.setGreedyToLeft(true);
+    block.setGreedyToRight(true);
+    return block;
   }
 
   @Contract("!null, _ -> !null")
@@ -447,6 +519,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   @CalledInAwt
+  @NotNull
   protected Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
 
@@ -485,6 +558,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     for (OnesideDiffChange change : myChangedBlockData.getDiffChanges()) {
       change.destroyHighlighter();
     }
+    for (RangeMarker block : myChangedBlockData.getGuardedRangeBlocks()) {
+      myDocument.removeGuardedBlock(block);
+    }
     myChangedBlockData = null;
 
     OnesideEditorRangeHighlighter.erase(myProject, myDocument);
@@ -492,6 +568,136 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     myFoldingModel.destroy();
 
     myStatusPanel.update();
+  }
+
+  //
+  // Typing
+  //
+
+  private class MyOnesideDocumentListener extends DocumentAdapter {
+    @Override
+    public void beforeDocumentChange(DocumentEvent e) {
+      if (myDuringOnesideDocumentModification) return;
+      if (myChangedBlockData == null) {
+        LOG.warn("oneside beforeDocumentChange - myChangedBlockData == null");
+        return;
+      }
+      // TODO: modify Document guard range logic - we can handle case, when whole read-only block is modified (ex: my replacing selection).
+
+      try {
+        myDuringTwosideDocumentModification = true;
+
+        Document twosideDocument = getDocument(myMasterSide);
+        assert twosideDocument != null;
+
+        int offset1 = e.getOffset();
+        int offset2 = e.getOffset() + e.getOldLength();
+
+        if (StringUtil.endsWithChar(e.getOldFragment(), '\n') &&
+            StringUtil.endsWithChar(e.getNewFragment(), '\n')) {
+          offset2--;
+        }
+
+        LineCol onesideStartPosition = LineCol.fromOffset(myDocument, offset1);
+        LineCol onesideEndPosition = LineCol.fromOffset(myDocument, offset2);
+        int shift = StringUtil.countNewLines(e.getNewFragment()) - StringUtil.countNewLines(e.getOldFragment());
+
+        int twosideStartLine = transferLineFromOnesideStrict(myMasterSide, onesideStartPosition.line);
+        int twosideEndLine = transferLineFromOnesideStrict(myMasterSide, onesideEndPosition.line);
+        if (twosideStartLine == -1 || twosideEndLine == -1) {
+          // this should never happen
+          logDebugInfo(e, onesideStartPosition, onesideEndPosition, twosideStartLine, twosideEndLine);
+          mySuppressEditorTyping = true;
+          updateEditorCanBeTyped();
+          return;
+        }
+
+        int twosideStartOffset = twosideDocument.getLineStartOffset(twosideStartLine) + onesideStartPosition.column;
+        int twosideEndOffset = twosideDocument.getLineStartOffset(twosideEndLine) + onesideEndPosition.column;
+        twosideDocument.replaceString(twosideStartOffset, twosideEndOffset, e.getNewFragment());
+
+        for (OnesideDiffChange change : myChangedBlockData.getDiffChanges()) {
+          change.processChange(onesideStartPosition.line, onesideEndPosition.line + 1, shift);
+        }
+
+        LineNumberConvertor lineNumberConvertor = myChangedBlockData.getLineNumberConvertor();
+        lineNumberConvertor.handleOnesideChange(onesideStartPosition.line, onesideEndPosition.line + 1, shift, myMasterSide);
+      }
+      finally {
+        // TODO: we can avoid marking state out-of-date in some simple cases (like in SimpleDiffViewer)
+        // but this will greatly increase complexity, so let's wait if it's actually required by users
+        myStateIsOutOfDate = true;
+
+        myFoldingModel.onDocumentChanged(e);
+        scheduleRediff();
+
+        myDuringTwosideDocumentModification = false;
+      }
+    }
+
+    private void logDebugInfo(DocumentEvent e,
+                              LineCol onesideStartPosition, LineCol onesideEndPosition,
+                              int twosideStartLine, int twosideEndLine) {
+      StringBuilder info = new StringBuilder();
+      Document document1 = getDocument(Side.LEFT);
+      Document document2 = getDocument(Side.RIGHT);
+      info.append("==== OnesideDiffViewer Debug Info ====");
+      info.append("myMasterSide - ").append(myMasterSide).append('\n');
+      info.append("myLeftDocument.length() - ").append(document1 != null ? document1.getTextLength() : null).append('\n');
+      info.append("myRightDocument.length() - ").append(document2 != null ? document2.getTextLength() : null).append('\n');
+      info.append("myDocument.length() - ").append(myDocument.getTextLength()).append('\n');
+      info.append("e.getOffset() - ").append(e.getOffset()).append('\n');
+      info.append("e.getNewLength() - ").append(e.getNewLength()).append('\n');
+      info.append("e.getOldLength() - ").append(e.getOldLength()).append('\n');
+      info.append("onesideStartPosition - ").append(onesideStartPosition).append('\n');
+      info.append("onesideEndPosition - ").append(onesideEndPosition).append('\n');
+      info.append("twosideStartLine - ").append(twosideStartLine).append('\n');
+      info.append("twosideEndLine - ").append(twosideEndLine).append('\n');
+      Pair<int[], Side> pair1 = transferLineFromOneside(onesideStartPosition.line);
+      Pair<int[], Side> pair2 = transferLineFromOneside(onesideEndPosition.line);
+      info.append("non-strict transferStartLine - ").append(pair1.first[0]).append("-").append(pair1.first[1])
+        .append(":").append(pair1.second).append('\n');
+      info.append("non-strict transferEndLine - ").append(pair2.first[0]).append("-").append(pair2.first[1])
+        .append(":").append(pair2.second).append('\n');
+      info.append("---- OnesideDiffViewer Debug Info ----");
+
+      LOG.warn(info.toString());
+    }
+  }
+
+  @Override
+  protected void onDocumentChange(@NotNull DocumentEvent e) {
+    if (myDuringTwosideDocumentModification) return;
+
+    myStateIsOutOfDate = true;
+    mySuppressEditorTyping = true;
+    updateEditorCanBeTyped();
+
+    myFoldingModel.onDocumentChanged(e);
+    scheduleRediff();
+  }
+
+  @CalledWithWriteLock
+  public void applyChange(@NotNull OnesideDiffChange change, @NotNull Side sourceSide) {
+    if (myStateIsOutOfDate || myChangedBlockData == null) return;
+
+    Side affectedSide = sourceSide.other();
+    if (!isEditable(affectedSide, true)) return;
+
+    Document document1 = getDocument(Side.LEFT);
+    Document document2 = getDocument(Side.RIGHT);
+    assert document1 != null && document2 != null;
+
+    LineFragment lineFragment = change.getLineFragment();
+
+    DiffUtil.applyModification(affectedSide.select(document1, document2),
+                               affectedSide.getStartLine(lineFragment), affectedSide.getEndLine(lineFragment),
+                               sourceSide.select(document1, document2),
+                               sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment));
+
+    // no need to mark myStateIsOutOfDate - it will be made by DocumentListener
+    // TODO: we can apply change manually, without marking state out-of-date. But we'll have to schedule rediff anyway.
+    rediff();
   }
 
   //
@@ -515,12 +721,6 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     IgnorePolicy policy = getTextSettings().getIgnorePolicy();
     if (policy == IgnorePolicy.IGNORE_WHITESPACES_CHUNKS) return IgnorePolicy.IGNORE_WHITESPACES;
     return policy;
-  }
-
-  @Override
-  protected void onDocumentChange(@NotNull DocumentEvent e) {
-    super.onDocumentChange(e);
-    myFoldingModel.onDocumentChanged(e);
   }
 
   //
@@ -562,6 +762,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return myStatusPanel;
   }
 
+  @CalledInAwt
   public boolean isEditable(@NotNull Side side, boolean respectReadOnlyLock) {
     if (myReadOnlyLockSet && respectReadOnlyLock) return false;
     if (side.select(myForceReadOnlyFlags)) return false;
@@ -573,6 +774,10 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   public Document getDocument(@NotNull Side side) {
     DocumentContent content = side.select(myActualContent1, myActualContent2);
     return content != null ? content.getDocument() : null;
+  }
+
+  protected boolean isStateIsOutOfDate() {
+    return myStateIsOutOfDate;
   }
 
   //
@@ -602,6 +807,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     return null;
   }
 
+  @CalledInAwt
   @Nullable
   protected OpenFileDescriptor getOpenFileDescriptor(int offset) {
     assert myActualContent1 != null || myActualContent2 != null;
@@ -762,6 +968,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
           onesideDiffChange.updateGutterActions();
         }
       }
+      updateEditorCanBeTyped();
     }
 
     @Override
@@ -831,22 +1038,24 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
     @Override
     public void loadNextBlock() {
+      if (myActualContent2 == null) return; // because we want only insertions
+      LOG.assertTrue(!myStateIsOutOfDate);
+
       OnesideDiffChange change = myChanges.get(myIndex);
       myIndex++;
 
-      int line1 = change.getLine1();
-      int line2 = change.getLine2();
+      LineFragment lineFragment = change.getLineFragment();
 
-      Document document = myEditor.getDocument();
+      int insertedStart = lineFragment.getStartOffset2();
+      int insertedEnd = lineFragment.getEndOffset2();
+      CharSequence insertedText = myActualContent2.getDocument().getCharsSequence().subSequence(insertedStart, insertedEnd);
 
-      for (int i = line1; i < line2; i++) {
-        int offset1 = document.getLineStartOffset(i);
-        int offset2 = document.getLineEndOffset(i);
+      int lineNumber = lineFragment.getStartLine2();
 
-        if (offset2 < change.getStartOffset2()) continue; // because we want only insertions
-
-        CharSequence text = document.getImmutableCharSequence().subSequence(offset1, offset2);
-        addLine(i, text);
+      LineTokenizer tokenizer = new LineTokenizer(insertedText.toString());
+      for (String line : tokenizer.execute()) {
+        addLine(lineNumber, line);
+        lineNumber++;
       }
     }
   }
@@ -948,17 +1157,25 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
   private static class ChangedBlockData {
     @NotNull private final List<OnesideDiffChange> myDiffChanges;
+    @NotNull private final List<RangeMarker> myGuardedRangeBlocks;
     @NotNull private final LineNumberConvertor myLineNumberConvertor;
 
     public ChangedBlockData(@NotNull List<OnesideDiffChange> diffChanges,
+                            @NotNull List<RangeMarker> guarderRangeBlocks,
                             @NotNull LineNumberConvertor lineNumberConvertor) {
       myDiffChanges = diffChanges;
+      myGuardedRangeBlocks = guarderRangeBlocks;
       myLineNumberConvertor = lineNumberConvertor;
     }
 
     @NotNull
     public List<OnesideDiffChange> getDiffChanges() {
       return myDiffChanges;
+    }
+
+    @NotNull
+    public List<RangeMarker> getGuardedRangeBlocks() {
+      return myGuardedRangeBlocks;
     }
 
     @NotNull
@@ -1153,6 +1370,13 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     @NotNull
     public TIntFunction getLineNumberConvertor() {
       return getLineConvertor(0);
+    }
+  }
+
+  private static class MyReadonlyFragmentModificationHandler implements ReadonlyFragmentModificationHandler {
+    @Override
+    public void handle(ReadOnlyFragmentModificationException e) {
+      // do nothing
     }
   }
 }
