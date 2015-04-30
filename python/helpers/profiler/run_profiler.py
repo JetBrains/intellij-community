@@ -4,7 +4,6 @@ from socket import socket
 import time
 import sys
 import traceback
-import StringIO
 import os
 
 from prof_io import ProfWriter, ProfReader
@@ -12,9 +11,7 @@ from pydevd_utils import save_main_module
 import pydev_imports
 from prof_util import generate_snapshot_filepath
 
-from thrift import TSerialization
-from thrift.protocol import TJSONProtocol, TBinaryProtocol
-from profiler.ttypes import ProfilerResponse
+from _prof_imports import ProfilerResponse
 
 base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
 
