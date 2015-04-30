@@ -49,11 +49,12 @@ public class Lifetime internal (eternal : Boolean = false) {
 
     internal fun terminate() {
         isTerminated = true;
-        var actionsCopy = actions.copyToArray()
-        actions.clear()
+        var actionsCopy = actions//.copyToArray()
+//        actions.clear()
         actionsCopy.reverse().forEach {
             catch { it() }
         }
+        actions.clear()
     }
 }
 

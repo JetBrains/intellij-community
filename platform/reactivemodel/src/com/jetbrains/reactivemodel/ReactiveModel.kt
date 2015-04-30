@@ -9,7 +9,7 @@ import java.util.HashMap
 import java.util.Queue
 
 public class ReactiveModel(val lifetime: Lifetime = Lifetime.Eternal, val diffConsumer: (MapDiff) -> Unit = {}) {
-  private var root: MapModel = MapModel()
+  public var root: MapModel = MapModel()
   private val subscriptions: MutableMap<Path, ModelSignal> = HashMap()
   private val transactionsQueue: Queue<(MapModel) -> MapModel> = ArrayDeque()
   private val transactionGuard = Guard()

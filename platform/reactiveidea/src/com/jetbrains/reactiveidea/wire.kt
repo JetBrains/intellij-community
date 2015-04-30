@@ -34,7 +34,7 @@ import org.json.JSONObject
 import java.util.ArrayList
 import java.util.HashMap
 
-fun serverModel(lifetime: Lifetime, port: Int, onConnect: (ReactiveModel) -> Unit): SocketIOServer {
+fun serverModel(lifetime: Lifetime, port: Int): ReactiveModel {
   val config = Configuration()
   config.setHostname("localhost")
   config.setPort(port)
@@ -52,8 +52,13 @@ fun serverModel(lifetime: Lifetime, port: Int, onConnect: (ReactiveModel) -> Uni
 
   server.addConnectListener(object : ConnectListener {
     override fun onConnect(client: SocketIOClient) {
-      UIUtil.invokeLaterIfNeeded {
-        onConnect(reactiveModel)
+      val diff = MapModel().diff(reactiveModel.root)
+      if (diff != null) {
+        val jsonObj = toJson(diff)
+        val jsonStr = jsonObj.toString()
+
+        val jsonNode = ObjectMapper().readTree(jsonStr)
+        client.sendEvent("diff", jsonNode)
       }
     }
   })
@@ -79,7 +84,8 @@ fun serverModel(lifetime: Lifetime, port: Int, onConnect: (ReactiveModel) -> Uni
   lifetime += {
     server.stop()
   }
-  return server
+
+  return reactiveModel
 }
 
 fun clientModel(url: String, lifetime: Lifetime): ReactiveModel {
@@ -212,11 +218,11 @@ fun pairsListToJSONObject(entries: List<Pair<String, Any>>): JSONObject {
 
 fun main(args: Array<String>) {
   val port = 12345
-  val server = serverModel(Lifetime.Eternal, port, { model ->
-    model.transaction { m ->
-      Path("a").putIn(m, PrimitiveModel("abcd"))
-    }
-  })
+//  val server = serverModel(Lifetime.Eternal, port, { model ->
+//    model.transaction { m ->
+//      Path("a").putIn(m, PrimitiveModel("abcd"))
+//    }
+//  })
 
   val clientModel = clientModel("http://localhost:" + port, Lifetime.Eternal)
 }

@@ -53,19 +53,21 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
   init {
     val listener = object : DocumentAdapter() {
       override fun documentChanged(e: DocumentEvent) {
-        val transaction: (MapModel) -> MapModel = { m ->
-          if (recursionGuard.locked) {
-            m
-          } else if (e.isWholeTextReplaced()) {
-            (path / "text").putIn(m, PrimitiveModel(doc.getText()))
-          } else {
-            val result = (path / "events" / Last).putIn(m, documentEvent(e))
-            val events = (path / "events").getIn(result) as ListModel
-            doc.putUserData(TIMESTAMP, events.size())
-            result
+        if (!recursionGuard.locked) {
+          recursionGuard.lock {
+            val transaction: (MapModel) -> MapModel = { m ->
+              if (e.isWholeTextReplaced()) {
+                (path / "text").putIn(m, PrimitiveModel(doc.getText()))
+              } else {
+                val result = (path / "events" / Last).putIn(m, documentEvent(e))
+                val events = (path / "events").getIn(result) as ListModel
+                doc.putUserData(TIMESTAMP, events.size())
+                result
+              }
+            }
+            reactiveModel.transaction(transaction)
           }
         }
-        reactiveModel.transaction(transaction)
       }
     }
 
@@ -107,16 +109,20 @@ public class DocumentHost(val lifetime: Lifetime, val reactiveModel: ReactiveMod
           timestamp = 0
         }
         doc.putUserData(TIMESTAMP, evts.size())
-        recursionGuard.lock {
-          ApplicationManager.getApplication().runWriteAction {
-            CommandProcessor.getInstance().executeCommand(null, {
-              for (i in (timestamp..evts.size() - 1)) {
-                val eventModel = evts[i]
-                play(eventModel, doc)
+
+        ApplicationManager.getApplication().runWriteAction {
+          CommandProcessor.getInstance().executeCommand(null, {
+            if (!recursionGuard.locked) {
+              recursionGuard.lock {
+                for (i in (timestamp..evts.size() - 1)) {
+                  val eventModel = evts[i]
+                  play(eventModel, doc)
+                }
               }
-            }, null, null)
-          }
+            }
+          }, null, null)
         }
+
       }
       evts
     }

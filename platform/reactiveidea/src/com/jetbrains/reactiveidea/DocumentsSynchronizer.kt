@@ -57,9 +57,8 @@ public class DocumentsSynchronizer(val project: Project) : ProjectComponent {
                 }
               } else {
                 if (file.equals(bJava)) {
-                  serverModel(lifetime.lifetime, 12346) { m ->
-                    bJavaHost = EditorHost(lifetime.lifetime, m, Path("editor"), editor, true)
-                  }
+                  val serverModel = serverModel(lifetime.lifetime, 12346)
+                  bJavaHost = EditorHost(lifetime.lifetime, serverModel, Path("editor"), editor, true)
                 }
               }
             }
