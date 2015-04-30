@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.registry.Registry;
+
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -87,6 +89,9 @@ public class KeyStrokeAdapter implements KeyListener {
       if (released || id == KeyEvent.KEY_PRESSED) {
         int code = event.getKeyCode();
         if (extended) {
+          if (Registry.is("actionSystem.extendedKeyCode.disabled")) {
+            return null;
+          }
           code = getExtendedKeyCode(event);
           if (code == event.getKeyCode()) {
             return null;
