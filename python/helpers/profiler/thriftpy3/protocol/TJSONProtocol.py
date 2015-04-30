@@ -17,11 +17,12 @@
 # under the License.
 #
 
-from TProtocol import TType, TProtocolBase, TProtocolException, \
-    checkIntegerLimits
+from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
 import base64
 import json
 import math
+
+from six import u, unichr
 
 __all__ = ['TJSONProtocol',
            'TJSONProtocolFactory',
@@ -30,20 +31,27 @@ __all__ = ['TJSONProtocol',
 
 VERSION = 1
 
-COMMA = ','
-COLON = ':'
-LBRACE = '{'
-RBRACE = '}'
-LBRACKET = '['
-RBRACKET = ']'
-QUOTE = '"'
-BACKSLASH = '\\'
-ZERO = '0'
+COMMA = b','
+COLON = b':'
+LBRACE = b'{'
+RBRACE = b'}'
+LBRACKET = b'['
+RBRACKET = b']'
+QUOTE = b'"'
+BACKSLASH = b'\\'
+ZERO = b'0'
 
-ESCSEQ = '\\u00'
-ESCAPE_CHAR = '"\\bfnrt'
-ESCAPE_CHAR_VALS = ['"', '\\', '\b', '\f', '\n', '\r', '\t']
-NUMERIC_CHAR = '+-.0123456789Ee'
+ESCSEQ = b'\\u00'
+ESCAPE_CHARS = {
+    b'"': '"',
+    b'\\': '\\',
+    b'b': '\b',
+    b'f': '\f',
+    b'n': '\n',
+    b'r': '\r',
+    b't': '\t',
+}
+NUMERIC_CHAR = b'+-.0123456789Ee'
 
 CTYPES = {TType.BOOL:       'tf',
           TType.BYTE:       'i8',
@@ -70,7 +78,7 @@ class JSONBaseContext(object):
 
   def doIO(self, function):
     pass
-  
+
   def write(self):
     pass
 
@@ -85,7 +93,7 @@ class JSONBaseContext(object):
 
 
 class JSONListContext(JSONBaseContext):
-    
+
   def doIO(self, function):
     if self.first is True:
       self.first = False
@@ -100,7 +108,7 @@ class JSONListContext(JSONBaseContext):
 
 
 class JSONPairContext(JSONBaseContext):
-  
+
   def __init__(self, protocol):
     super(JSONPairContext, self).__init__(protocol)
     self.colon = True
@@ -174,13 +182,13 @@ class TJSONProtocolBase(TProtocolBase):
 
   def writeJSONString(self, string):
     self.context.write()
-    self.trans.write(json.dumps(string))
+    self.trans.write(json.dumps(string).encode('ascii'))
 
   def writeJSONNumber(self, number):
     self.context.write()
-    jsNumber = str(number)
+    jsNumber = str(number).encode('ascii')
     if self.context.escapeNum():
-      jsNumber = "%s%s%s" % (QUOTE, jsNumber,  QUOTE)
+      jsNumber = QUOTE + jsNumber + QUOTE
     self.trans.write(jsNumber)
 
   def writeJSONBase64(self, binary):
@@ -225,17 +233,20 @@ class TJSONProtocolBase(TProtocolBase):
       if character == ESCSEQ[0]:
         character = self.reader.read()
         if character == ESCSEQ[1]:
-          self.readJSONSyntaxChar(ZERO)
-          self.readJSONSyntaxChar(ZERO)
-          character = json.JSONDecoder().decode('"\u00%s"' % self.trans.read(2))
+          cp = int(self.trans.read(4), 16)
+          character = unichr(cp)
         else:
-          off = ESCAPE_CHAR.find(character)
-          if off == -1:
+          if character not in ESCAPE_CHARS:
             raise TProtocolException(TProtocolException.INVALID_DATA,
                                      "Expected control char")
-          character = ESCAPE_CHAR_VALS[off]
+          character = ESCAPE_CHARS[character]
+      else:
+        utf8_bytes = bytearray([ord(character)])
+        while utf8_bytes[-1] >= 0x80:
+          utf8_bytes.append(ord(self.reader.read()))
+        character = utf8_bytes.decode('utf8')
       string.append(character)
-    return ''.join(string)
+    return u('').join(string)
 
   def isJSONNumeric(self, character):
     return (True if NUMERIC_CHAR.find(character) != - 1 else False)
@@ -251,7 +262,7 @@ class TJSONProtocolBase(TProtocolBase):
       if self.isJSONNumeric(character) is False:
         break
       numeric.append(self.reader.read())
-    return ''.join(numeric)
+    return b''.join(numeric).decode('ascii')
 
   def readJSONInteger(self):
     self.context.read()
@@ -430,12 +441,12 @@ class TJSONProtocol(TJSONProtocolBase):
   def writeMapEnd(self):
     self.writeJSONObjectEnd()
     self.writeJSONArrayEnd()
-    
+
   def writeListBegin(self, etype, size):
     self.writeJSONArrayStart()
     self.writeJSONString(CTYPES[etype])
     self.writeJSONNumber(size)
-    
+
   def writeListEnd(self):
     self.writeJSONArrayEnd()
 
@@ -443,7 +454,7 @@ class TJSONProtocol(TJSONProtocolBase):
     self.writeJSONArrayStart()
     self.writeJSONString(CTYPES[etype])
     self.writeJSONNumber(size)
-    
+
   def writeSetEnd(self):
     self.writeJSONArrayEnd()
 
@@ -471,7 +482,7 @@ class TJSONProtocol(TJSONProtocolBase):
 
   def writeString(self, string):
     self.writeJSONString(string)
-    
+
   def writeBinary(self, binary):
     self.writeJSONBase64(binary)
 
@@ -484,49 +495,49 @@ class TJSONProtocolFactory:
 
 class TSimpleJSONProtocol(TJSONProtocolBase):
     """Simple, readable, write-only JSON protocol.
-    
+
     Useful for interacting with scripting languages.
     """
 
     def readMessageBegin(self):
         raise NotImplementedError()
-    
+
     def readMessageEnd(self):
         raise NotImplementedError()
-    
+
     def readStructBegin(self):
         raise NotImplementedError()
-    
+
     def readStructEnd(self):
         raise NotImplementedError()
-    
+
     def writeMessageBegin(self, name, request_type, seqid):
         self.resetWriteContext()
-    
+
     def writeMessageEnd(self):
         pass
-    
+
     def writeStructBegin(self, name):
         self.writeJSONObjectStart()
-    
+
     def writeStructEnd(self):
         self.writeJSONObjectEnd()
-      
+
     def writeFieldBegin(self, name, ttype, fid):
         self.writeJSONString(name)
-    
+
     def writeFieldEnd(self):
         pass
-    
+
     def writeMapBegin(self, ktype, vtype, size):
         self.writeJSONObjectStart()
-    
+
     def writeMapEnd(self):
         self.writeJSONObjectEnd()
-    
+
     def _writeCollectionBegin(self, etype, size):
         self.writeJSONArrayStart()
-    
+
     def _writeCollectionEnd(self):
         self.writeJSONArrayEnd()
     writeListBegin = _writeCollectionBegin
@@ -555,10 +566,10 @@ class TSimpleJSONProtocol(TJSONProtocolBase):
 
     def writeDouble(self, dbl):
         self.writeJSONNumber(dbl)
-    
+
     def writeString(self, string):
         self.writeJSONString(string)
-      
+
     def writeBinary(self, binary):
         self.writeJSONBase64(binary)
 

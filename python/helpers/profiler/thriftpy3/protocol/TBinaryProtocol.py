@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from TProtocol import *
+from .TProtocol import *
 from struct import pack, unpack
 
 
@@ -119,8 +119,9 @@ class TBinaryProtocol(TProtocolBase):
     self.trans.write(buff)
 
   def writeString(self, str):
-    self.writeI32(len(str))
-    self.trans.write(str)
+    encoded = bytearray(str, 'utf-8')
+    self.writeI32(len(encoded))
+    self.trans.write(encoded)
 
   def readMessageBegin(self):
     sz = self.readI32()
@@ -219,7 +220,7 @@ class TBinaryProtocol(TProtocolBase):
 
   def readString(self):
     len = self.readI32()
-    str = self.trans.readAll(len)
+    str = self.trans.readAll(len).decode('utf-8')
     return str
 
 

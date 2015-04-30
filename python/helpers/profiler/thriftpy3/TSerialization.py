@@ -17,8 +17,8 @@
 # under the License.
 #
 
-from protocol import TBinaryProtocol
-from transport import TTransport
+from .protocol import TBinaryProtocol
+from .transport import TTransport
 
 
 def serialize(thrift_object,

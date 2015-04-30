@@ -22,7 +22,7 @@ import os
 import socket
 import sys
 
-from TTransport import *
+from .TTransport import *
 
 
 class TSocketBase(TTransportBase):
