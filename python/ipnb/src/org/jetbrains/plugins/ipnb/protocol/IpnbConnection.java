@@ -300,7 +300,8 @@ public class IpnbConnection {
       }
       else if (data.containsKey("text/html")) {
         final String html = (String)data.get("text/html");
-        output.add(new IpnbHtmlOutputCell(StringUtil.splitByLinesKeepSeparators(html), StringUtil.splitByLinesKeepSeparators(html), null));
+        output.add(new IpnbHtmlOutputCell(StringUtil.splitByLinesKeepSeparators(html), StringUtil.splitByLinesKeepSeparators(html),
+                                          ((PyOutContent)content).getExecutionCount()));
       }
       else if (data.containsKey("image/png")) {
         final String png = (String)data.get("image/png");
