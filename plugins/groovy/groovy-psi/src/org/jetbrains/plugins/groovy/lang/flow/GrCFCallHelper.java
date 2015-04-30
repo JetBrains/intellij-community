@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.flow;
 
-import com.intellij.codeInspection.dataFlow.IControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.instructions.BinopInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
@@ -23,10 +22,8 @@ import com.intellij.codeInspection.dataFlow.instructions.DupInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.GotoInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaRelation;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil;
@@ -143,7 +140,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       else {
         final GroovyResolveResult result = reference.advancedResolve();
         final PsiElement element = result.getElement();
-        if (element instanceof PsiParameter || element instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod)element)) {
+        if (element instanceof PsiParameter) {
           // callable parameter call
           // a()
           // callable property call
@@ -178,9 +175,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       invoked.accept(myAnalyzer);
       processMethodCallStraight(call, resolveResults[0], new CallBasedArguments(call));
     }
-    else {
-      throw new IControlFlowAnalyzer.CannotAnalyzeException();
-    }
+    fallback(invoked, new CallBasedArguments(call));
   }
 
   void processMethodCall(@NotNull GrExpression highlight,
@@ -285,43 +280,44 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     return counter;
   }
 
-  void processIndexProperty(final GrIndexProperty indexProperty, @NotNull final Arguments arguments) {
+  void processIndexProperty(final @NotNull GrIndexProperty indexProperty, final @NotNull Arguments arguments) {
     final GrExpression invokedExpression = indexProperty.getInvokedExpression();
-    invokedExpression.accept(myAnalyzer); // qualifier
     final GroovyResolveResult[] results = arguments == EMPTY
                                           ? indexProperty.multiResolveGetter(false)
                                           : indexProperty.multiResolveSetter(false);
-    if (results.length == 1) {
-      processMethodCallStraight(indexProperty, results[0], new ArgumentsBase() {
-        @NotNull
-        @Override
-        public GrExpression[] getExpressionArguments() {
-          return ArrayUtil.mergeArrays(indexProperty.getExpressionArguments(), arguments.getExpressionArguments());
-        }
+    final ArgumentsBase mergedArguments = new ArgumentsBase() {
+      @NotNull
+      @Override
+      public GrExpression[] getExpressionArguments() {
+        return ArrayUtil.mergeArrays(indexProperty.getExpressionArguments(), arguments.getExpressionArguments());
+      }
 
-        @Override
-        public int runArguments() {
-          for (GrExpression arg : indexProperty.getExpressionArguments()) {
-            arg.accept(myAnalyzer);
-          }
-          return indexProperty.getExpressionArguments().length + arguments.runArguments();
+      @Override
+      public int runArguments() {
+        for (GrExpression arg : indexProperty.getExpressionArguments()) {
+          arg.accept(myAnalyzer);
         }
-      });
+        return indexProperty.getExpressionArguments().length + arguments.runArguments();
+      }
+    };
+    if (results.length == 1) {
+      invokedExpression.accept(myAnalyzer); // qualifier
+      processMethodCallStraight(indexProperty, results[0], mergedArguments);
     }
     else {
-      myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(invokedExpression)); // dereference qualifier
-
-      for (GrExpression arg : indexProperty.getExpressionArguments()) {
-        arg.accept(myAnalyzer);
-        myAnalyzer.pop();
-      }
-
-      final int count = arguments.runArguments();
-      for (int i = 0; i < count; i++) {
-        myAnalyzer.pop();
-      }
-
-      myAnalyzer.pushUnknown();
+      fallback(invokedExpression, mergedArguments);
     }
+  }
+
+  private void fallback(@NotNull GrExpression invoked, @NotNull ArgumentsBase arguments) {
+    invoked.accept(myAnalyzer); // qualifier
+    myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(invoked)); // dereference qualifier
+
+    final int argumentsCount = arguments.runArguments();
+    for (int i = 0; i < argumentsCount; i++) {
+      myAnalyzer.pop();
+    }
+
+    myAnalyzer.pushUnknown(); // method call result
   }
 }

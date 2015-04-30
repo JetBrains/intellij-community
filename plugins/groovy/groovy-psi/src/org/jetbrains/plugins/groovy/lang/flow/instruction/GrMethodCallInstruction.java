@@ -65,8 +65,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     myExpressionArguments = expressionArguments;
     myClosureArguments = closureArguments;
     myTargetMethod = (PsiMethod)result.getElement();
-    assert myTargetMethod != null;
-    myReturnType = myTargetMethod.getReturnType();
+    myReturnType = myTargetMethod == null ? null : myTargetMethod.getReturnType();
     myShouldFlushFields = !(call instanceof GrNewExpression && myReturnType != null && myReturnType.getArrayDimensions() > 0)
                           && !isPureCall(myTargetMethod);
     argumentsToParameters = GrClosureSignatureUtil.mapArgumentsToParameters(
@@ -156,7 +155,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     return "CALL METHOD " +
            myReturnType +
            " " +
-           myTargetMethod.getName() +
+           (myTargetMethod == null ? null : myTargetMethod.getName()) +
            "(" +
            Arrays.toString(myNamedArguments) +
            ":" +

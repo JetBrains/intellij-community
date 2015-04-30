@@ -672,7 +672,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
     else {
       qualifierExpression.accept(this);
-      if (referenceExpression.getDotTokenType() == mOPTIONAL_DOT) {
+      final IElementType dot = referenceExpression.getDotTokenType();
+      if (dot == mOPTIONAL_DOT || dot == mSPREAD_DOT) {
         addInstruction(new DupInstruction<V>()); // save qualifier for later use
         pushNull();
         addInstruction(new BinopInstruction(DfaRelation.EQ, referenceExpression));
