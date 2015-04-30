@@ -133,6 +133,14 @@ public class IpnbConnection {
     httpRequest(myURI + KERNELS_URL + "/" + myKernelId, HTTP_DELETE);
   }
 
+  public void interrupt() throws IOException {
+    httpRequest(myURI + KERNELS_URL + "/" + myKernelId + "/interrupt", HTTP_POST);
+  }
+
+  public void reload() throws IOException {
+    httpRequest(myURI + KERNELS_URL + "/" + myKernelId + "/restart", HTTP_POST);
+  }
+
   @NotNull
   public URI getShellURI() throws URISyntaxException {
     return new URI(getWebSocketURIBase() + "/shell");

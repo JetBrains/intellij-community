@@ -55,8 +55,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
   private final Project myProject;
   private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
-  private KillableColoredProcessHandler myProcessHandler;
-
   public IpnbConnectionManager(final Project project) {
     myProject = project;
   }
@@ -90,13 +88,14 @@ public final class IpnbConnectionManager implements ProjectComponent {
     if (StringUtil.isEmptyOrSpaces(url)) {
       url = IpnbSettings.DEFAULT_URL;
     }
-    url = showDialogUrl(url);
-    if (url == null) return;
-    IpnbSettings.getInstance(myProject).setURL(url);
 
     boolean connectionStarted = startConnection(codePanel, path, url, false);
     if (!connectionStarted) {
       final String finalUrl = url;
+      url = showDialogUrl(url);
+      if (url == null) return;
+      IpnbSettings.getInstance(myProject).setURL(url);
+
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
@@ -203,12 +202,35 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (IOException e) {
       if (showNotification) {
-        showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused", null);
         LOG.warn("IPython Notebook connection refused: " + e.getMessage());
       }
       return false;
     }
     return true;
+  }
+
+  public void interruptKernel(@NotNull final String filePath) {
+    if (!myKernels.containsKey(filePath)) return;
+    final IpnbConnection connection = myKernels.get(filePath);
+    try {
+      connection.interrupt();
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to interrupt kernel " + filePath);
+      LOG.warn(e.getMessage());
+    }
+  }
+
+  public void reloadKernel(@NotNull final String filePath) {
+    if (!myKernels.containsKey(filePath)) return;
+    final IpnbConnection connection = myKernels.get(filePath);
+    try {
+      connection.reload();
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to reload kernel " + filePath);
+      LOG.warn(e.getMessage());
+    }
   }
 
   private static void showWarning(@NotNull final IpnbFileEditor fileEditor, @NotNull final String message,
@@ -263,18 +285,24 @@ public final class IpnbConnectionManager implements ProjectComponent {
       withEnvironment(env);
 
     try {
-      myProcessHandler = new KillableColoredProcessHandler(commandLine) {
+      final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
+        @Override
+        protected void doDestroyProcess() {
+          super.doDestroyProcess();
+          UnixProcessManager.sendSigIntToProcessTree(getProcess());
+        }
+
         @Override
         public boolean isSilentlyDestroyOnClose() {
           return true;
         }
       };
-      myProcessHandler.setShouldDestroyProcessRecursively(true);
+      processHandler.setShouldDestroyProcessRecursively(true);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          new RunContentExecutor(myProject, myProcessHandler)
-            .withConsole(new IpnbConsole(myProject, myProcessHandler))
+          new RunContentExecutor(myProject, processHandler)
+            .withConsole(new IpnbConsole(myProject, processHandler))
             .run();
         }
       });
@@ -319,10 +347,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
     }
     myKernels.clear();
-    if (myProcessHandler != null && !myProcessHandler.isProcessTerminated()) {
-      myProcessHandler.destroyProcess();
-      UnixProcessManager.sendSigIntToProcessTree(myProcessHandler.getProcess());
-    }
   }
 
   @NotNull

@@ -129,6 +129,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     addRunButton(runPanel);
     controlPanel.add(runPanel);
 
+    addInterruptKernelButton(runPanel);
+    addReloadKernelButton(runPanel);
     myCellTypeCombo = new ComboBox(ourCellTypes);
 
     myCellTypeCombo.addActionListener(new ActionListener() {
@@ -155,7 +157,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     myRunCellButton = new JButton();
     myRunCellButton.setBackground(IpnbEditorUtil.getBackground());
     myRunCellButton.setPreferredSize(new Dimension(30, 30));
-    myRunCellButton.setIcon(AllIcons.General.Run);
+    myRunCellButton.setIcon(AllIcons.Toolwindows.ToolWindowRun);
     myRunCellButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -164,6 +166,24 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     });
     myRunCellButton.setToolTipText("Run Cell");
     controlPanel.add(myRunCellButton);
+  }
+
+  private void addInterruptKernelButton(@NotNull final JPanel controlPanel) {
+    addButton(controlPanel, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        IpnbInterruptKernelAction.interruptKernel(IpnbFileEditor.this);
+      }
+    }, AllIcons.Actions.Suspend, "Interrupt kernel");
+  }
+
+  private void addReloadKernelButton(@NotNull final JPanel controlPanel) {
+    addButton(controlPanel, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        IpnbReloadKernelAction.reloadKernel(IpnbFileEditor.this);
+      }
+    }, AllIcons.Actions.Refresh, "Restart kernel");
   }
 
   private void addSaveButton(@NotNull final JPanel controlPanel) {
