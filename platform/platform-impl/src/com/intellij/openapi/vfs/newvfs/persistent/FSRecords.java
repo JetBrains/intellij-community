@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
@@ -55,6 +51,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.util.io.IOUtil.deleteAllFilesStartingWith;
 
+/**
+ * @author max
+ */
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
@@ -137,14 +136,17 @@ public class FSRecords implements Forceable {
                              (attributes.isSpecial() ? PersistentFS.IS_SPECIAL : 0) |
                              (attributes.isHidden() ? PersistentFS.IS_HIDDEN : 0), true);
       setParent(id, parentId);
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       throw DbConnection.handleError(e);
-    } finally {
+    }
+    finally {
       w.unlock();
     }
   }
 
   public static void requestVfsRebuild(Throwable e) {
+    //noinspection ThrowableResultOfMethodCallIgnored
     DbConnection.handleError(e);
   }
 
