@@ -1645,7 +1645,7 @@ public class UIUtil {
 
       g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
       if (drawTopLine) g.drawLine(x, 0, width, 0);
-      if (drawBottomLine) g.drawLine(x, height - 1, width, height - 1);
+      if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
 
       g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
       g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
