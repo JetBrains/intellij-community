@@ -36,7 +36,6 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
@@ -52,7 +51,7 @@ import java.util.Locale;
  * @author yole
  */
 public class StartupUtil {
-  @NonNls public static final String NO_SPLASH = "nosplash";
+  public static final String NO_SPLASH = "nosplash";
 
   private static SocketLock ourLock;
 
@@ -60,12 +59,6 @@ public class StartupUtil {
 
   public static boolean shouldShowSplash(final String[] args) {
     return !Arrays.asList(args).contains(NO_SPLASH);
-  }
-
-  /** @deprecated use {@link Main#isHeadless()} (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public static boolean isHeadless() {
-    return Main.isHeadless();
   }
 
   public synchronized static void addExternalInstanceListener(Consumer<List<String>> consumer) {

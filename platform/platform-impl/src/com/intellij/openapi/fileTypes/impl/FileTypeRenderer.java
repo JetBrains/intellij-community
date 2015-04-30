@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,18 +43,6 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
   public FileTypeRenderer(@NotNull FileTypeListProvider fileTypeListProvider) {
     super();
     myFileTypeListProvider = fileTypeListProvider;
-  }
-
-  /** @deprecated use {@link #FileTypeRenderer()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public FileTypeRenderer(final ListCellRenderer renderer) {
-    this();
-  }
-
-  /** @deprecated use {@link #FileTypeRenderer(FileTypeListProvider)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public FileTypeRenderer(final ListCellRenderer renderer, final FileTypeListProvider fileTypeListProvider) {
-    this(fileTypeListProvider);
   }
 
   @Override
