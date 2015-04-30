@@ -25,6 +25,7 @@ import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -907,6 +908,28 @@ public class DiffUtil {
   //
   // DataProvider
   //
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@NotNull ContentDiffRequest request, @NotNull Side currentSide) {
+    List<DiffContent> contents = request.getContents();
+    DiffContent content1 = currentSide.select(contents);
+    DiffContent content2 = currentSide.other().select(contents);
+
+    if (content1 instanceof FileContent) return ((FileContent)content1).getFile();
+    if (content2 instanceof FileContent) return ((FileContent)content2).getFile();
+    return null;
+  }
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@NotNull ContentDiffRequest request, @NotNull ThreeSide currentSide) {
+    List<DiffContent> contents = request.getContents();
+    DiffContent content1 = currentSide.select(contents);
+    DiffContent content2 = ThreeSide.BASE.select(contents);
+
+    if (content1 instanceof FileContent) return ((FileContent)content1).getFile();
+    if (content2 instanceof FileContent) return ((FileContent)content2).getFile();
+    return null;
+  }
 
   @Nullable
   public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NonNls String dataId) {

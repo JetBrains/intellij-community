@@ -21,6 +21,7 @@ import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -34,6 +35,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.DiffUtil.EditorsVisiblePositions;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Editor;
@@ -449,6 +451,10 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
       return getCurrentContent();
     }
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return DiffUtil.getVirtualFile(myRequest, myCurrentSide);
+    }
+
     return super.getData(dataId);
   }
 

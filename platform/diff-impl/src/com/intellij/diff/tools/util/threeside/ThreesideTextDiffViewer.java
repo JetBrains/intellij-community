@@ -32,6 +32,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil.EditorsVisiblePositions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
@@ -396,6 +397,9 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return getCurrentEditor();
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return DiffUtil.getVirtualFile(myRequest, myCurrentSide);
     }
     else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
       return getCurrentContent();

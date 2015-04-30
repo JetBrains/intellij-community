@@ -40,6 +40,7 @@ import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.diff.util.DiffUtil.EditorsVisiblePositions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1069,6 +1070,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
       return myPrevNextDifferenceIterable;
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return DiffUtil.getVirtualFile(myRequest, myMasterSide);
     }
     else if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return myEditor;

@@ -17,10 +17,7 @@ package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
-import com.intellij.diff.contents.BinaryFileContent;
-import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.*;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
@@ -29,6 +26,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -52,6 +50,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -445,6 +444,15 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   //
   // Helpers
   //
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      return DiffUtil.getVirtualFile(myRequest, myCurrentSide);
+    }
+    return super.getData(dataId);
+  }
 
   private static class MyStatusPanel extends JPanel {
     private final AnimatedIcon myBusySpinner;
