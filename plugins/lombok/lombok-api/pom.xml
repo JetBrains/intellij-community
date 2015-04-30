@@ -18,7 +18,7 @@
       lombok/ToString.java,lombok/SneakyThrows.java,lombok/Value.java,lombok/val.java
     </lombok-annotations.includes>
     <hrisey-annotations.includes>
-      hrisey/Parcelable.java
+      hrisey/Parcelable.java,hrisey/Preferences.java
     </hrisey-annotations.includes>
   </properties>
 
