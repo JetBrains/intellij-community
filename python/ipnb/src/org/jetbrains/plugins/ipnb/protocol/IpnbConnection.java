@@ -315,7 +315,7 @@ public class IpnbConnection {
         output.add(new IpnbSvgOutputCell(StringUtil.splitByLinesKeepSeparators(svg), StringUtil.splitByLinesKeepSeparators(plainText), null));
       }
       else if (plainText != null){
-        output.add(new IpnbOutOutputCell(new String[]{plainText}, null));
+        output.add(new IpnbOutOutputCell(new String[]{plainText}, ((PyOutContent)content).getExecutionCount()));
       }
     }
   }
