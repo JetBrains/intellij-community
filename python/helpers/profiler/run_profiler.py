@@ -95,6 +95,10 @@ class Profiler(object):
         return self.profiling_backend.getstats()
 
     def dump_snapshot(self, filename):
+        dir = os.path.dirname(filename)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
         self.profiling_backend.dump_stats(filename)
         return filename
 
