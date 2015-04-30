@@ -365,6 +365,11 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
       editor.getSettings().setUseSoftWraps(myUseSoftWraps);
       return editor;
     }
+
+    @Override
+    protected void setViewerEnabled(boolean enabled) {
+      // do not reset com.intellij.ui.EditorTextField.myIsViewer field
+    }
   }
 
   private static void setTestIfEmpty(@NotNull JTextField field, @Nullable String text) {
