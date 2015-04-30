@@ -22,26 +22,28 @@ import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruct
 import com.intellij.codeInspection.dataFlow.instructions.DupInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.GotoInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaRelation;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.PsiClassImplUtil;
-import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrDereferenceInstruction;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrMethodCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL_DOT;
 
@@ -121,32 +123,67 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
   };
 
   private final GrControlFlowAnalyzerImpl<V> myAnalyzer;
-  private final PsiType myClosureType;
 
-  public GrCFCallHelper(GrControlFlowAnalyzerImpl<V> analyzer, @NotNull PsiElement block) {
+  public GrCFCallHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
     myAnalyzer = analyzer;
-    myClosureType = TypesUtil.createType("groovy.lang.Closure", block);
   }
 
   void processMethodCall(@NotNull GrMethodCall methodCall) {
     processMethodCall(methodCall.getInvokedExpression(), methodCall);
   }
 
-  void processMethodCall(@NotNull GrExpression invokedExpression, @NotNull GrCallExpression call) {
-    // qualifier
-    final PsiType invokedExpressionType = invokedExpression.getType();
-    final PsiClass psiClass = PsiTypesUtil.getPsiClass(invokedExpressionType);
-    if (myClosureType.equals(invokedExpressionType) ||
-        psiClass != null && PsiClassImplUtil.findMethodsByName(psiClass, "call", true).length > 0) {
-      // TODO
-      throw new IControlFlowAnalyzer.CannotAnalyzeException();
+  private void processMethodCall(@NotNull GrExpression invokedExpression, @NotNull GrMethodCall call) {
+    if (invokedExpression instanceof GrReferenceExpression) {
+      final GrReferenceExpression reference = (GrReferenceExpression)invokedExpression;
+      if (JavaStylePropertiesUtil.isPropertyAccessor(call)) {
+        // getter call
+        // a.getStuff()
+        processMethodCall(call, reference, new CallBasedArguments(call));
+      }
+      else {
+        final GroovyResolveResult result = reference.advancedResolve();
+        final PsiElement element = result.getElement();
+        if (element instanceof PsiParameter || element instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod)element)) {
+          // callable parameter call
+          // a()
+          // callable property call
+          // a.stuff() (same as a.getStuff()() or a.getStuff().call() or a.stuff.call())
+          processCallableCall(call);
+        }
+        else {
+          // simple method call
+          // a.foo()
+          processMethodCall(call, reference, new CallBasedArguments(call));
+        }
+      }
     }
     else {
-      processMethodCall(call, (GrReferenceExpression)invokedExpression, new CallBasedArguments(call));
+      // closure call 
+      // ({-> "s"})()
+      processCallableCall(call);
     }
   }
 
-  void processMethodCall(@NotNull GrExpression call,
+  private void processCallableCall(@NotNull GrMethodCall call) {
+    final GrArgumentList argumentList = call.getArgumentList();
+    final GrExpression invoked = call.getInvokedExpression();
+    final PsiType type = invoked.getType();
+    final GroovyResolveResult[] resolveResults = ResolveUtil.getMethodCandidates(
+      type == null
+      ? PsiType.getJavaLangObject(invoked.getManager(), invoked.getResolveScope())
+      : type,
+      "call", call, argumentList.getExpressionTypes()
+    );
+    if (resolveResults.length == 1) {
+      invoked.accept(myAnalyzer);
+      processMethodCallStraight(call, resolveResults[0], new CallBasedArguments(call));
+    }
+    else {
+      throw new IControlFlowAnalyzer.CannotAnalyzeException();
+    }
+  }
+
+  void processMethodCall(@NotNull GrExpression highlight,
                          @NotNull GrReferenceExpression invokedReference,
                          @NotNull Arguments arguments) {
     final GroovyResolveResult result = invokedReference.advancedResolve();
@@ -176,19 +213,22 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       // not null branch
       gotoToNotNull.setOffset(myAnalyzer.myFlow.getNextOffset());
       // qualifier is on top of stack
-      processMethodCallStraight(call, result, arguments);
+      processMethodCallStraight(highlight, result, arguments);
       gotoEnd.setOffset(myAnalyzer.myFlow.getNextOffset());
     }
     else {
-      processMethodCallStraight(call, result, arguments);
+      processMethodCallStraight(highlight, result, arguments);
     }
   }
 
-  void processMethodCallStraight(@NotNull GrExpression call,
+  /**
+   * Assuming that qualifier is already processed
+   */
+  void processMethodCallStraight(@NotNull GrExpression highlight,
                                  @NotNull GroovyResolveResult result,
                                  @NotNull final GrExpression... expressionArguments) {
     processMethodCallStraight(
-      call,
+      highlight,
       result,
       new ArgumentsBase() {
         @NotNull
@@ -200,14 +240,17 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     );
   }
 
-  void processMethodCallStraight(@NotNull GrExpression call,
+  /**
+   * Assuming that qualifier is already processed
+   */
+  void processMethodCallStraight(@NotNull GrExpression highlight,
                                  @NotNull GroovyResolveResult result,
                                  @NotNull Arguments arguments) {
     // evaluate arguments
     //visitArguments(namedArguments, expressionArguments, closureArguments);
     arguments.runArguments();
     myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(
-      call,
+      highlight,
       arguments.getNamedArguments(),
       arguments.getExpressionArguments(),
       arguments.getClosureArguments(),

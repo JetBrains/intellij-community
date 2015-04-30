@@ -41,7 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCondit
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.Map;
 
@@ -143,11 +143,11 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     }
   }
 
-  void dereference(@NotNull GrExpression qualifier, GrReferenceExpression referenceExpression, boolean writing) {
+  void dereference(@NotNull GrExpression qualifier, @NotNull GrReferenceExpression referenceExpression, boolean writing) {
     // qualifier is already on top of stack thank to duplication
     final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
-    if (resolved instanceof PsiMethod && !(referenceExpression.getParent() instanceof GrMethodCallExpression) && !writing) {
+    if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved) && !writing) {
       // groovy property getter
       myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(referenceExpression, (PsiMethod)resolved, null));
     }

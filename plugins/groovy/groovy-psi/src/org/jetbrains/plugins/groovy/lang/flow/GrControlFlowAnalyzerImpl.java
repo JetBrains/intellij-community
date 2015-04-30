@@ -72,7 +72,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
   private final GrCFExceptionHelper<V> myExceptionHelper = new GrCFExceptionHelper<V>(this);
   private final GrCFExpressionHelper<V> myExpressionHelper = new GrCFExpressionHelper<V>(this);
-  final GrCFCallHelper<V> myCallHelper;
+  final GrCFCallHelper<V> myCallHelper = new GrCFCallHelper<V>(this);
   final ControlFlowImpl<V> myFlow = new ControlFlowImpl<V>();
   final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
   final GrDfaValueFactory myFactory;
@@ -80,7 +80,6 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   private final PsiType myAssertionError;
 
   public GrControlFlowAnalyzerImpl(@NotNull GrDfaValueFactory factory, @NotNull PsiElement block) {
-    myCallHelper = new GrCFCallHelper<V>(this, block);
     myFactory = factory;
     myCodeFragment = block;
     myAssertionError = TypesUtil.createType(CommonClassNames.JAVA_LANG_ASSERTION_ERROR, block);
@@ -686,6 +685,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         gotoToNotNull.setOffset(myFlow.getNextOffset());
 
         // not null branch
+        // qualifier is on top of stack
         myExpressionHelper.dereference(qualifierExpression, referenceExpression, writing);
         gotoEnd.setOffset(myFlow.getNextOffset());
       }

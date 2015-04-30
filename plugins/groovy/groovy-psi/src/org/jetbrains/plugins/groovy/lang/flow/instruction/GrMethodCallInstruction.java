@@ -156,7 +156,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     return "CALL METHOD " +
            myReturnType +
            " " +
-           myTargetMethod +
+           myTargetMethod.getName() +
            "(" +
            Arrays.toString(myNamedArguments) +
            ":" +
