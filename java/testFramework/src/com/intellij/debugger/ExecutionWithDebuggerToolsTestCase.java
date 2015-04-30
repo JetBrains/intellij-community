@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   public DebugProcessImpl myDebugProcess = null;
   private final CompositeException myException = new CompositeException();
 
-  private class InvokeRatherLaterRequest {
+  private static class InvokeRatherLaterRequest {
     private final DebuggerCommandImpl myDebuggerCommand;
     private final DebugProcessImpl myDebugProcess;
     int invokesN = 0;
@@ -75,7 +75,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  public List<InvokeRatherLaterRequest> myRatherLaterRequests = new ArrayList<InvokeRatherLaterRequest>();
+  public final List<InvokeRatherLaterRequest> myRatherLaterRequests = new ArrayList<InvokeRatherLaterRequest>();
 
   protected DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
