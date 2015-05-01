@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.editor.impl;
+package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -41,9 +42,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-// This class should replace IterationState when new editor rendering engine will become default
-public final class IterationState2 {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
+// This class should replace com.intellij.openapi.editor.impl.IterationState when new editor rendering engine will become default
+public class IterationState {
+  private static final Logger LOG = Logger.getInstance(IterationState.class);
 
   private static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = new Comparator<RangeHighlighterEx>() {
     @Override
@@ -114,9 +115,9 @@ public final class IterationState2 {
   private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<RangeHighlighterEx>();
 
   private final FoldingModelEx myFoldingModel;
-
-  private FoldRegion myCurrentFold = null;
   private final TextAttributes myFoldTextAttributes;
+  private FoldRegion myCurrentFold;
+
   private final TextAttributes mySelectionAttributes;
   private final TextAttributes myCaretRowAttributes;
   private final Color myDefaultBackground;
@@ -130,16 +131,8 @@ public final class IterationState2 {
   private final boolean myUseOnlyFullLineHighlighters;
   private final boolean myReverseIteration;
 
-  public IterationState2(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection) {
-    this(editor, start, end, useCaretAndSelection, false);
-  }
-
-  public IterationState2(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection, boolean useOnlyFullLineHighlighters) {
-    this(editor, start, end, useCaretAndSelection, useOnlyFullLineHighlighters, false);
-  }
-
-  public IterationState2(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection, boolean useOnlyFullLineHighlighters,
-                        boolean iterateBackwards) {
+  public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection, boolean useOnlyFullLineHighlighters,
+                        boolean useFoldRegions, boolean iterateBackwards) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = editor.getDocument();
     myStartOffset = start;
@@ -184,8 +177,8 @@ public final class IterationState2 {
       }
     }
 
-    myFoldingModel = editor.getFoldingModel();
-    myFoldTextAttributes = myFoldingModel.getPlaceholderAttributes();
+    myFoldingModel = useFoldRegions ? editor.getFoldingModel() : null;
+    myFoldTextAttributes = useFoldRegions ? myFoldingModel.getPlaceholderAttributes() : null;
     mySelectionAttributes = editor.getSelectionModel().getTextAttributes();
 
     myReadOnlyColor = myEditor.getColorsScheme().getColor(EditorColors.READONLY_FRAGMENT_BACKGROUND_COLOR);
@@ -274,7 +267,8 @@ public final class IterationState2 {
 
   private boolean skipHighlighter(@NotNull RangeHighlighterEx highlighter) {
     if (!highlighter.isValid() || highlighter.isAfterEndOfLine() || highlighter.getTextAttributes() == null) return true;
-    final FoldRegion region = myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
+    final FoldRegion region = myFoldingModel == null ? null :
+                              myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaStartOffset());
     if (region != null && region == myFoldingModel.getCollapsedRegionAtOffset(highlighter.getAffectedAreaEndOffset())) return true;
     return !highlighter.getEditorFilter().avaliableIn(myEditor);
   }
@@ -286,7 +280,8 @@ public final class IterationState2 {
     advanceCurrentVirtualSelectionIndex();
 
     if (!myUseOnlyFullLineHighlighters) {
-      myCurrentFold = myFoldingModel.getCollapsedRegionAtOffset(myReverseIteration ? myStartOffset - 1 : myStartOffset);
+      myCurrentFold = myFoldingModel == null ? null :
+                      myFoldingModel.getCollapsedRegionAtOffset(myReverseIteration ? myStartOffset - 1 : myStartOffset);
     }
     if (myCurrentFold != null) {
       myEndOffset = myReverseIteration ? myCurrentFold.getStartOffset() : myCurrentFold.getEndOffset();
@@ -413,7 +408,7 @@ public final class IterationState2 {
   }
 
   private int getFoldRangesEnd(int startOffset) {
-    if (myUseOnlyFullLineHighlighters) {
+    if (myUseOnlyFullLineHighlighters || myFoldingModel == null) {
       return myEnd;
     }
     int end = myEnd;
@@ -490,7 +485,8 @@ public final class IterationState2 {
     }
 
     boolean isInSelection = isInSelection();
-    boolean isInCaretRow = myStartOffset >= myCaretRowStart && myStartOffset < myCaretRowEnd;
+    boolean isInCaretRow = myStartOffset > myCaretRowStart && myStartOffset < myCaretRowEnd ||
+                           myStartOffset == (myReverseIteration ? myCaretRowEnd : myCaretRowStart);
     boolean isInGuardedBlock = !myUseOnlyFullLineHighlighters &&
                                myDocument.getOffsetGuard(myReverseIteration ? myStartOffset - 1 : myStartOffset) != null;
 
