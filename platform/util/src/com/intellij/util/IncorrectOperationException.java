@@ -33,4 +33,9 @@ public class IncorrectOperationException extends RuntimeException {
   public IncorrectOperationException(@NonNls String message, Throwable t) {
     super(message, t);
   }
+
+  /** @deprecated use {@link #IncorrectOperationException(String, Throwable)} (to be removed in IDEA 16) */
+  public IncorrectOperationException(@NonNls String message, Exception e) {
+    super(message, e);
+  }
 }

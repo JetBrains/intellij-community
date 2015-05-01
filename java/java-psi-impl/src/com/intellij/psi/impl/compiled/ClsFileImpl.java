@@ -613,4 +613,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private static String getPackageName(String fqn, String shortName) {
     return fqn == null || Comparing.equal(shortName, fqn) ? "" : fqn.substring(0, fqn.lastIndexOf('.'));
   }
+
+  /** @deprecated use {@link #ClsFileImpl(FileViewProvider)} (to remove in IDEA 15) */
+  @SuppressWarnings("unused")
+  public ClsFileImpl(@NotNull PsiManager manager, @NotNull FileViewProvider viewProvider) {
+    this(viewProvider);
+  }
 }
