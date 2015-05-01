@@ -18,6 +18,7 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -242,14 +243,11 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
   }
 
   private void doTestImpossibleToRename() throws Exception {
-    try {
-      doTest("val");
-      fail("Should be impossible to rename");
-    }
-    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals("Cannot perform refactoring.\n" +
-                   "This element cannot be renamed", e.getMessage());
-    }
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    PsiElement element = TargetElementUtilBase
+      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull(element);
+    assertTrue(PsiElementRenameHandler.isVetoed(element));
   }
 
   public void testNotAvailableForValueOf() throws Exception {
@@ -261,7 +259,14 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
   }
 
   public void testNotAvailableForArrayLength() throws Exception {
-    doTestImpossibleToRename();
+    try {
+      doTest("val");
+      fail("Should be impossible to rename");
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "This element cannot be renamed", e.getMessage());
+    }
   }
 
   private void doTest(final String newName) throws Exception {
