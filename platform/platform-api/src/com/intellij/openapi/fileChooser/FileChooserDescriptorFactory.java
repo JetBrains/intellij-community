@@ -22,8 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileChooserDescriptorFactory {
-  private FileChooserDescriptorFactory() {
-  }
+  private FileChooserDescriptorFactory() { }
 
   public static FileChooserDescriptor createAllButJarContentsDescriptor() {
     return new FileChooserDescriptor(true, true, true, true, false, true);
