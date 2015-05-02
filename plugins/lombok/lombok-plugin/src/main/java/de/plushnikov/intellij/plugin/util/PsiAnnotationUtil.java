@@ -20,6 +20,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,7 @@ import java.util.Collections;
 import java.util.regex.Pattern;
 
 /**
+ * Some util methods for annotation processing
  * @author peichhorn
  * @author Plushnikov Michail
  */
@@ -50,21 +52,17 @@ public class PsiAnnotationUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String qualifiedName) {
-    return AnnotationUtil.findAnnotation(psiModifierListOwner, true, qualifiedName);
-  }
-
-  @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
     return findAnnotation(psiModifierListOwner, annotationType.getName());
   }
 
-  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
-    return isAnnotatedWith(psiModifierListOwner, annotationType.getName());
+  @Nullable
+  public static PsiAnnotation findAnnotation(@NotNull final PsiModifierListOwner psiModifierListOwner, @NotNull final String qualifiedName) {
+    return PsiImplUtil.findAnnotation(psiModifierListOwner.getModifierList(), qualifiedName);
   }
 
-  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
-    return AnnotationUtil.isAnnotated(psiModifierListOwner, annotationFQN, false, true);
+  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
+    return isAnnotatedWith(psiModifierListOwner, annotationType.getName());
   }
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
@@ -82,6 +80,10 @@ public class PsiAnnotationUtil {
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
+  }
+
+  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String qualifiedName) {
+    return AnnotationUtil.isAnnotated(psiModifierListOwner, qualifiedName, false, true);
   }
 
   public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Pattern annotationPattern) {
