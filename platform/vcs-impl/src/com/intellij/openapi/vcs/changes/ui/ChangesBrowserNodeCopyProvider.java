@@ -21,11 +21,15 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
+import java.util.Arrays;
+import java.util.List;
 
 class ChangesBrowserNodeCopyProvider implements CopyProvider {
 
@@ -44,7 +48,8 @@ class ChangesBrowserNodeCopyProvider implements CopyProvider {
   }
 
   public void performCopy(@NotNull DataContext dataContext) {
-    TreePath[] paths = ObjectUtils.assertNotNull(myTree.getSelectionPaths());
+    List<TreePath> paths = ContainerUtil.sorted(Arrays.asList(ObjectUtils.assertNotNull(myTree.getSelectionPaths())),
+                                                TreeUtil.getDisplayOrderComparator(myTree));
     CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(paths, new Function<TreePath, String>() {
       @Override
       public String fun(TreePath path) {
