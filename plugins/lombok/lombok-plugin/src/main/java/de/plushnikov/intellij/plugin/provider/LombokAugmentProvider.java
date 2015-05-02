@@ -13,6 +13,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.impl.source.PsiExtensibleClass;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.processor.Processor;
@@ -65,15 +66,20 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     }
     // Expecting that we are only augmenting an PsiClass
     // Don't filter !isPhysical elements or code auto completion will not work
-    if (!(element instanceof PsiClass) || !element.isValid()) {
+    if (!(element instanceof PsiExtensibleClass) || !element.isValid()) {
       return emptyResult;
     }
     // skip processing for other as supported types
-    if (!(type.isAssignableFrom(PsiMethod.class) || type.isAssignableFrom(PsiField.class) || type.isAssignableFrom(PsiClass.class))) {
+    if (type != PsiMethod.class && type != PsiField.class && type != PsiClass.class) {
       return emptyResult;
     }
     // skip processing if plugin is disabled
     if (!ProjectSettings.loadAndGetEnabledInProject(project)) {
+      return emptyResult;
+    }
+
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) {
       return emptyResult;
     }
 
@@ -90,12 +96,10 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       final PsiClass psiClass = (PsiClass) element;
 
       boolean fileOpenInEditor = true;
-      final PsiFile containingFile = psiClass.getContainingFile();
-      if (null != containingFile) {
-        final VirtualFile virtualFile = containingFile.getVirtualFile();
-        if (null != virtualFile) {
-          fileOpenInEditor = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
-        }
+
+      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (null != virtualFile) {
+        fileOpenInEditor = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
       }
 
       if (fileOpenInEditor || checkLombokPresent(psiClass)) {
