@@ -22,6 +22,7 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -46,6 +47,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -66,6 +68,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
@@ -97,7 +100,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   private final Runnable myInclusionListener;
   @Nullable private ChangeNodeDecorator myChangeDecorator;
   private Runnable myGenericSelectionListener;
-  @NotNull private final CopyProvider myCopyProvider;
+  @NotNull private final CopyProvider myTreeCopyProvider;
+  @NotNull private final ChangesBrowserNodeListCopyProvider myListCopyProvider;
 
   public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
                          final boolean highlightProblems, @Nullable final Runnable inclusionListener, @Nullable final ChangeNodeDecorator decorator) {
@@ -228,7 +232,9 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     setEmptyText(emptyText);
-    myCopyProvider = new ChangesBrowserNodeCopyProvider(myTree);
+
+    myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(myTree);
+    myListCopyProvider = new ChangesBrowserNodeListCopyProvider(myProject, myList);
   }
 
   public void setEmptyText(@NotNull String emptyText) {
@@ -972,7 +978,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   @Override
   public void calcData(DataKey key, DataSink sink) {
     if (PlatformDataKeys.COPY_PROVIDER == key) {
-      sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+      sink.put(PlatformDataKeys.COPY_PROVIDER, myShowFlatten ? myListCopyProvider : myTreeCopyProvider);
     }
   }
 
@@ -1049,6 +1055,38 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     public void calcData(DataKey key, DataSink sink) {
       // just delegate to the change list
       ChangesTreeList.this.calcData(key, sink);
+    }
+  }
+
+  private static class ChangesBrowserNodeListCopyProvider implements CopyProvider {
+
+    @NotNull private final Project myProject;
+    @NotNull private final JList myList;
+
+    ChangesBrowserNodeListCopyProvider(@NotNull Project project, @NotNull JList list) {
+      myProject = project;
+      myList = list;
+    }
+
+    @Override
+    public void performCopy(@NotNull DataContext dataContext) {
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(myList.getSelectedValues(),
+                                                                                     new Function<Object, String>() {
+        @Override
+        public String fun(Object object) {
+          return ChangesBrowserNode.create(myProject, object).getTextPresentation();
+        }
+      }, "\n")));
+    }
+
+    @Override
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+      return !myList.isSelectionEmpty();
+    }
+
+    @Override
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
+      return true;
     }
   }
 }
