@@ -39,7 +39,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -145,12 +144,6 @@ public class CompilerTask extends Task.Backgroundable {
   @Override
   public String getProcessId() {
     return "compilation";
-  }
-
-  @NotNull
-  @Override
-  public DumbModeAction getDumbModeAction() {
-    return DumbModeAction.WAIT;
   }
 
   @Override

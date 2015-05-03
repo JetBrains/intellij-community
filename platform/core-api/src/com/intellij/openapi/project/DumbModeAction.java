@@ -17,6 +17,7 @@ package com.intellij.openapi.project;
 
 /**
  * @author peter
+ * @deprecated to remove in IDEA 16
  */
 public enum DumbModeAction {
   NOTHING,
