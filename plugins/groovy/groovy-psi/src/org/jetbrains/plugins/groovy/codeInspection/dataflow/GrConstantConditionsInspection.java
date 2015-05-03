@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 import java.util.Set;
 
-public class GrNullabilityInspection extends GroovySuppressableInspectionTool {
+public class GrConstantConditionsInspection extends GroovySuppressableInspectionTool {
 
   public boolean UNKNOWN_MEMBERS_ARE_NULLABLE = false;
 

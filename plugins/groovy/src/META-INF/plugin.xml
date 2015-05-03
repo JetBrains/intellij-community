@@ -1111,7 +1111,7 @@
                      key="groovy.nullness"
                      enabledByDefault="true"
                      level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GrNullabilityInspection"/>
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GrConstantConditionsInspection"/>
 
 
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.lang.flow.GrNullness"/>
