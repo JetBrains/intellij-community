@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrNullabilityInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -41,7 +42,7 @@ import java.util.Set;
 
 public class GrConstantConditionsInspection extends GroovySuppressableInspectionTool {
 
-  public boolean UNKNOWN_MEMBERS_ARE_NULLABLE = false;
+  @SuppressWarnings("unused") public boolean UNKNOWN_MEMBERS_ARE_NULLABLE = false;
 
   @NotNull
   @Override
@@ -63,6 +64,13 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
       final GrOpenBlock block = method.getBlock();
       if (block != null) {
         check(block, myProblemsHolder, myIsOnTheFly);
+      }
+    }
+
+    @Override
+    public void visitFile(GroovyFileBase file) {
+      if (file.isScript()) {
+        check(file, myProblemsHolder, myIsOnTheFly);
       }
     }
   }

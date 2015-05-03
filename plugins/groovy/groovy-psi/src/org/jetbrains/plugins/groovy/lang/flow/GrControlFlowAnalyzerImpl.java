@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.GrCFExceptionHelper.CatchDescriptor;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.*;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -102,6 +103,15 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     catch (CannotAnalyzeException ignored) {
       return null;
     }
+  }
+
+  @Override
+  public void visitFile(GroovyFileBase file) {
+    startElement(file);
+    for (GrStatement statement : file.getStatements()) {
+      statement.accept(this);
+    }
+    finishElement(file);
   }
 
   @Override
