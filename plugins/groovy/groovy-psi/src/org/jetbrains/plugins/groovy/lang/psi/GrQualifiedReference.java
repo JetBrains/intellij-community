@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface GrQualifiedReference<Qualifier extends PsiElement> extends PsiQualifiedReferenceElement {
   @Nullable
+  @Override
   Qualifier getQualifier();
 
   void setQualifier(@Nullable Qualifier qualifier);
