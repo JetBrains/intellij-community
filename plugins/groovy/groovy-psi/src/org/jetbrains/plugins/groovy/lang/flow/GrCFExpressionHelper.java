@@ -152,13 +152,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
       myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(referenceExpression, (PsiMethod)resolved, null));
     }
     else {
-      if (resolved instanceof PsiMember) {
-        myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(qualifier));
-      }
-      else {
-        // pop qualifier if cannot resolve
-        myAnalyzer.pop();
-      }
+      myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(qualifier));
       // push value
       myAnalyzer.push(getFactory().createValue(referenceExpression), referenceExpression, writing);
     }
