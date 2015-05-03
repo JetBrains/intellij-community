@@ -22,8 +22,10 @@ import com.intellij.codeInspection.dataFlow.instructions.DupInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.GotoInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaRelation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil;
@@ -140,7 +142,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       else {
         final GroovyResolveResult result = reference.advancedResolve();
         final PsiElement element = result.getElement();
-        if (element instanceof PsiParameter) {
+        if (element instanceof PsiParameter || element instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod)element)) {
           // callable parameter call
           // a()
           // callable property call
@@ -162,18 +164,19 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
   }
 
   private void processCallableCall(@NotNull GrMethodCall call) {
-    final GrArgumentList argumentList = call.getArgumentList();
     final GrExpression invoked = call.getInvokedExpression();
     final PsiType type = invoked.getType();
-    final GroovyResolveResult[] resolveResults = ResolveUtil.getMethodCandidates(
-      type == null
-      ? PsiType.getJavaLangObject(invoked.getManager(), invoked.getResolveScope())
-      : type,
-      "call", call, argumentList.getExpressionTypes()
-    );
-    if (resolveResults.length == 1) {
-      invoked.accept(myAnalyzer);
-      processMethodCallStraight(call, resolveResults[0], new CallBasedArguments(call));
+    if (type != null) {
+      final GrArgumentList argumentList = call.getArgumentList();
+      final GroovyResolveResult[] resolveResults = ResolveUtil.getMethodCandidates(type, "call", call, argumentList.getExpressionTypes());
+      if (resolveResults.length == 1) {
+        final GroovyResolveResult result = resolveResults[0];
+        if (result.isValidResult()) {
+          invoked.accept(myAnalyzer);
+          processMethodCallStraight(call, result, new CallBasedArguments(call));
+          return;
+        }
+      }
     }
     fallback(invoked, new CallBasedArguments(call));
   }
