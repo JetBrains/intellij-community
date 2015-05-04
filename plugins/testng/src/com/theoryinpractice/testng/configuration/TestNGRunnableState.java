@@ -188,13 +188,18 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   }
 
   @Override
+  protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(AfterClass.class));
+
+    super.configureClasspath(javaParameters);
+  }
+
+  @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
     javaParameters.setupEnvs(getConfiguration().getPersistantData().getEnvs(), getConfiguration().getPersistantData().PASS_PARENT_ENVS);
     javaParameters.setMainClass("org.testng.RemoteTestNGStarter");
-
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(RemoteTestNGStarter.class));
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(AfterClass.class));
 
     try {
       port = NetUtils.findAvailableSocketPort();

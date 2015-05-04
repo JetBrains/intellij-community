@@ -139,12 +139,16 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
+  protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
+    super.configureClasspath(javaParameters);
+  }
+
+  @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     JavaParameters javaParameters = super.createJavaParameters();
     javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     javaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
-
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
 
     final StringBuilder buf = new StringBuilder();
     collectListeners(javaParameters, buf, IDEAJUnitListener.EP_NAME, "\n");
