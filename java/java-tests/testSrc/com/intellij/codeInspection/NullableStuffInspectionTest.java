@@ -7,8 +7,11 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -106,6 +109,33 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
                        "public @interface NotNullByDefault {}");
 
     myFixture.addFileToProject("foo/package-info.java", "@NotNullByDefault package foo;");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
+    myFixture.enableInspections(myInspection);
+    myFixture.checkHighlighting(true, false, true);
+  }
+
+  public void testOverrideCustomDefault() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    myFixture.addClass("package custom;" +
+                       "public @interface CheckForNull {}");
+
+    final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    nnnManager.setNullables("custom.CheckForNull");
+    Disposer.register(myTestRootDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        nnnManager.setNullables();
+      }
+    });
+
+    myFixture.addClass("package foo;" +
+                       "import static java.lang.annotation.ElementType.*;" +
+                       "@javax.annotation.meta.TypeQualifierDefault(METHOD) " +
+                       "@javax.annotation.Nonnull " +
+                       "public @interface ReturnValuesAreNonnullByDefault {}");
+
+    myFixture.addFileToProject("foo/package-info.java", "@ReturnValuesAreNonnullByDefault package foo;");
 
     myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".java", "foo/Classes.java"));
     myFixture.enableInspections(myInspection);
