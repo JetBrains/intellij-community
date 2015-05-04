@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaConstValueFactory;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -107,9 +108,9 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
   public DfaInstructionState<V>[] visitCheckReturnValue(CheckReturnValueInstruction<V> instruction, DfaMemoryState state) {
     final DfaValue retValue = state.pop();
     final PsiElement instructionReturn = instruction.getReturn();
-    final GrMethod containingMethod = PsiTreeUtil.getParentOfType(instructionReturn, GrMethod.class);
-    if (containingMethod != null) {
-      if (NullableNotNullManager.isNotNull(containingMethod)) {
+    final PsiElement containingMethod = PsiTreeUtil.getParentOfType(instructionReturn, GrMethod.class, GrClosableBlock.class);
+    if (containingMethod instanceof PsiModifierListOwner) {
+      if (NullableNotNullManager.isNotNull((PsiModifierListOwner)containingMethod)) {
         checkNotNullable(state, retValue, NullabilityProblem.nullableReturn, instructionReturn);
       }
     }

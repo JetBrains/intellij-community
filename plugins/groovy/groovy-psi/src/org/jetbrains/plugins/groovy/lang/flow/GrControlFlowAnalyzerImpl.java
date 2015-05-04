@@ -835,7 +835,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   public void visitClosure(GrClosableBlock closure) {
     startElement(closure);
     push(factory.createValue(closure));
-    addInstruction(new GotoInstruction<V>(flow.getEndOffset(closure)));
+    pushUnknown();
+    addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(closure), false, null));
     for (GrStatement statement : closure.getStatements()) {
       statement.accept(this);
     }

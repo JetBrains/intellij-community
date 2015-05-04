@@ -223,9 +223,9 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
       myAnalyzer.addInstruction(new PopInstruction());
       myAnalyzer.addInstruction(new GotoInstruction(finallyDescriptor.getJumpOffset(myAnalyzer.flow)));
     }
-    else {
-      myAnalyzer.addInstruction(new ReturnInstruction(viaException, anchor));
-    }
+    //else {
+    //  myAnalyzer.addInstruction(new ReturnInstruction(viaException, anchor));
+    //}
   }
 
   void addConditionalRuntimeThrow() {
