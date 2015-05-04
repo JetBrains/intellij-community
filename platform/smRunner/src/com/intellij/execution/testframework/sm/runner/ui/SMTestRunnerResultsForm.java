@@ -156,7 +156,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       }
     });
 
-    final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
+    final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode) {
+      @Override
+      public Object[] getChildElements(Object element) {
+        final Object[] children = super.getChildElements(element);
+        if (element == myTestsRootNode && children.length > 0 && 
+            myProperties.hideTreeRootIfNotEmpty()) {
+          myTreeView.setRootVisible(false);
+        }
+        return children;
+      }
+    };
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
     myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
     Disposer.register(this, myTreeBuilder);

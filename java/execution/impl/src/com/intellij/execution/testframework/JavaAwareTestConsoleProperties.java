@@ -65,6 +65,11 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   }
 
   @Override
+  public boolean hideTreeRootIfNotEmpty() {
+    return true;
+  }
+
+  @Override
   public boolean fixEmptySuite() {
     return ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), isDebug());
   }
