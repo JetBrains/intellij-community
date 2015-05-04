@@ -50,6 +50,11 @@ public class HardcodedContracts {
         constraints[0] = NULL_VALUE;
         return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
       }
+      if (("checkArgument".equals(methodName) || "checkState".equals(methodName)) && paramCount > 0) {
+        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+        constraints[0] = FALSE_VALUE;
+        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+      }
     }
     else if ("java.util.Objects".equals(className)) {
       if ("requireNonNull".equals(methodName) && paramCount > 0) {
