@@ -304,39 +304,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     clearStub(STUB_PSI_MISMATCH);
     scheduleDropCachesWithInvalidStubPsi();
 
-    String msg = message;
-    msg += "\n file=" + this;
-    msg += ", modStamp=" + getModificationStamp();
-    msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
-    msg += "\n document before=" + cachedDocument;
-
-    ObjectStubTree latestIndexedStub = StubTreeLoader.getInstance().readFromVFile(getProject(), getVirtualFile());
-    msg += "\nlatestIndexedStub=" + latestIndexedStub;
-    if (latestIndexedStub != null) {
-      msg += "\n   same size=" + (stubTree.getPlainList().size() == latestIndexedStub.getPlainList().size());
-      msg += "\n   debugInfo=" + latestIndexedStub.getDebugInfo();
-    }
-
-    FileViewProvider viewProvider = getViewProvider();
-    msg += "\n viewProvider=" + viewProvider;
-    msg += "\n viewProvider stamp: " + viewProvider.getModificationStamp();
-
-    VirtualFile file = viewProvider.getVirtualFile();
-    msg += "; file stamp: " + file.getModificationStamp();
-    msg += "; file modCount: " + file.getModificationCount();
-    msg += "; file length: " + file.getLength();
-
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document != null) {
-      msg += "\n doc saved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
-      msg += "; doc stamp: " + document.getModificationStamp();
-      msg += "; doc size: " + document.getTextLength();
-      msg += "; committed: " + PsiDocumentManager.getInstance(getProject()).isCommitted(document);
-    }
-    
-    msg += "\nindexing info: " + StubTreeLoader.getInstance().getIndexingStampDebugInfo(file);
-
-    throw new AssertionError(msg + "\n------------\n");
+    throw new AssertionError(message
+                             + StubTreeLoader.getInstance().getStubAstMismatchDiagnostics(getViewProvider().getVirtualFile(), this,
+                                                                                          stubTree, cachedDocument)
+                             + "\n------------\n");
   }
 
   private void scheduleDropCachesWithInvalidStubPsi() {

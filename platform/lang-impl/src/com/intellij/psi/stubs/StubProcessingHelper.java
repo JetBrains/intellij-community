@@ -38,9 +38,7 @@ public class StubProcessingHelper extends StubProcessingHelperBase {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     StubTree stubTreeFromIndex = (StubTree)StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), virtualFile);
     String details = "Please report the problem to JetBrains with the file attached";
-    details += "\npsiFile" + psiFile;
-    details += "\npsiFile.class" + psiFile.getClass();
-    details += "\npsiFile.lang" + psiFile.getLanguage();
+    details += StubTreeLoader.getInstance().getStubAstMismatchDiagnostics(virtualFile, psiFile, stubTree, null);
     details += "\n" + DebugUtil.currentStackTrace();
     String fileText = psiFile instanceof PsiCompiledElement ? "compiled" : psiFile.getText();
     return LogMessageEx.createEvent("PSI and index do not match",
