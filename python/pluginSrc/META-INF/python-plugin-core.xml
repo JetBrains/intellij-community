@@ -15,6 +15,9 @@
 
     <!-- Console folding for Jython only, thus it's located in python-plugin only -->
     <stacktrace.fold substring="*sys-package-mgr*:"/>
+    <moduleService serviceInterface="com.jetbrains.python.resourceRoots.PyPluginResourceRootProvider"
+                   serviceImplementation="com.jetbrains.python.resourceRoots.PyPluginResourceRootProvider"/>
+    <psi.fileReferenceHelper implementation="com.jetbrains.python.resourceRoots.PyResourceRootFileReferenceHelper"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -22,6 +25,7 @@
     <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
     <importCandidateProvider implementation="com.jetbrains.python.psi.impl.PyJavaImportCandidateProvider"/>
+    <pyRootTypeProvider implementation="com.jetbrains.python.resourceRoots.PyPluginResourceRootProvider"/>
   </extensions>
 
   <application-components>
