@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.startup.impl;
 
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -44,7 +43,6 @@ import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -65,8 +63,6 @@ public class StartupManagerImpl extends StartupManagerEx {
   private final List<Runnable> myDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
   private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
   private boolean myPostStartupActivitiesPassed = false; // guarded by this
-
-  @SuppressWarnings("deprecation") private final List<CacheUpdater> myCacheUpdaters = ContainerUtil.newLinkedList();
 
   private volatile boolean myPreStartupActivitiesPassed = false;
   private volatile boolean myStartupActivitiesRunning = false;
@@ -94,13 +90,6 @@ public class StartupManagerImpl extends StartupManagerEx {
   public synchronized void registerPostStartupActivity(@NotNull Runnable runnable) {
     LOG.assertTrue(!myPostStartupActivitiesPassed, "Registering post-startup activity that will never be run");
     (DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities).add(runnable);
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public void registerCacheUpdater(@NotNull CacheUpdater updater) {
-    LOG.assertTrue(!myStartupActivitiesPassed, CacheUpdater.class.getSimpleName() + " must be registered before startup activity finished");
-    myCacheUpdaters.add(updater);
   }
 
   @Override
@@ -313,10 +302,6 @@ public class StartupManagerImpl extends StartupManagerEx {
           }
         });
       }
-
-      if (!myCacheUpdaters.isEmpty()) {
-        dumbService.queueCacheUpdateInDumbMode(myCacheUpdaters);
-      }
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -378,7 +363,6 @@ public class StartupManagerImpl extends StartupManagerEx {
     myStartupActivities.clear();
     myDumbAwarePostStartupActivities.clear();
     myNotDumbAwarePostStartupActivities.clear();
-    myCacheUpdaters.clear();
   }
 
   @TestOnly

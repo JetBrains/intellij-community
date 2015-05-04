@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.startup;
 
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +29,6 @@ public abstract class StartupManagerEx extends StartupManager {
   public abstract boolean postStartupActivityPassed();
 
   public abstract void registerPreStartupActivity(@NotNull Runnable runnable); // should be used only to register to FileSystemSynchronizer!
-
-  /**
-   * Registers a CacheUpdater instance that will be used to build initial caches and indices.
-   * Must be called in registerPreStartupActivity or registerStartupActivity
-   * @param updater to be run
-   */
-  public abstract void registerCacheUpdater(@NotNull CacheUpdater updater);
 
   public static StartupManagerEx getInstanceEx(Project project) {
     return (StartupManagerEx)getInstance(project);
