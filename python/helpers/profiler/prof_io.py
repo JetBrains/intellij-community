@@ -39,9 +39,10 @@ def socket_read_n(sock, n):
         Raise RuntimeError if the connection closed before
         n bytes were read.
     """
-    buf = ''
     if IS_PY3K:
         buf = bytearray()
+    else:
+        buf = ''
 
     while n > 0:
         data = sock.recv(n)
