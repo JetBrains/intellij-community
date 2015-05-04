@@ -15,11 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.lang.flow;
 
+import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.instructions.BinopInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.DupInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.GotoInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -43,6 +42,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.Collections;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL_DOT;
 
@@ -209,10 +211,10 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       final GotoInstruction<V> gotoEnd = myAnalyzer.addInstruction(new GotoInstruction<V>(null));
 
       // not null branch
-      gotoToNotNull.setOffset(myAnalyzer.myFlow.getNextOffset());
+      gotoToNotNull.setOffset(myAnalyzer.flow.getNextOffset());
       // qualifier is on top of stack
       processMethodCallStraight(highlight, result, arguments);
-      gotoEnd.setOffset(myAnalyzer.myFlow.getNextOffset());
+      gotoEnd.setOffset(myAnalyzer.flow.getNextOffset());
     }
     else {
       processMethodCallStraight(highlight, result, arguments);
@@ -247,6 +249,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     // evaluate arguments
     //visitArguments(namedArguments, expressionArguments, closureArguments);
     arguments.runArguments();
+    myAnalyzer.exceptionHelper.addConditionalRuntimeThrow();
     myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(
       highlight,
       arguments.getNamedArguments(),
@@ -254,6 +257,23 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       arguments.getClosureArguments(),
       result
     ));
+    final PsiElement resultElement = result.getElement();
+    final List<MethodContract> contracts = resultElement instanceof PsiMethod
+                                           ? ControlFlowAnalyzer.getMethodCallContracts((PsiMethod)resultElement, null)
+                                           : Collections.<MethodContract>emptyList();
+    if (!contracts.isEmpty()) {
+      // if a contract resulted in 'fail', handle it
+      myAnalyzer.addInstruction(new DupInstruction());
+      myAnalyzer.addInstruction(new PushInstruction(myAnalyzer.factory.getConstFactory().getContractFail(), null));
+      myAnalyzer.addInstruction(new BinopInstruction(DfaRelation.EQ, null, highlight.getProject()));
+      ConditionalGotoInstruction ifNotFail = myAnalyzer.addInstruction(new ConditionalGotoInstruction(null, true, null));
+      myAnalyzer.exceptionHelper.returnCheckingFinally(true, highlight);
+      ifNotFail.setOffset(myAnalyzer.flow.getInstructionCount());
+    }
+
+    if (!myAnalyzer.exceptionHelper.catchStack.isEmpty()) {
+      myAnalyzer.exceptionHelper.addMethodThrows((PsiMethod)result.getElement(), highlight);
+    }
   }
 
   int visitArguments(@NotNull GrCall methodCall) {
@@ -269,7 +289,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       myAnalyzer.pop();
     }
     if (namedArguments.length > 0) {
-      myAnalyzer.push(myAnalyzer.myFactory.createTypeValue(TypesUtil.createType("java.util.Map", namedArguments[0]), Nullness.NOT_NULL));
+      myAnalyzer.push(myAnalyzer.factory.createTypeValue(TypesUtil.createType("java.util.Map", namedArguments[0]), Nullness.NOT_NULL));
       counter++;
     }
     for (GrExpression expression : expressionArguments) {
@@ -277,7 +297,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       counter++;
     }
     for (GrClosableBlock block : closureArguments) {
-      myAnalyzer.push(myAnalyzer.myFactory.createValue(block), block);
+      myAnalyzer.push(myAnalyzer.factory.createValue(block), block);
       counter++;
     }
     return counter;

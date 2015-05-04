@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
@@ -79,11 +78,11 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
 
   @NotNull
   private GrDfaValueFactory getFactory() {
-    return myAnalyzer.myFactory;
+    return myAnalyzer.factory;
   }
 
   void assign(@NotNull GrExpression left, @NotNull final GrExpression right) {
-    assign(left, right, myAnalyzer.myCallHelper.new ArgumentsBase() {
+    assign(left, right, myAnalyzer.callHelper.new ArgumentsBase() {
       @NotNull
       @Override
       public GrExpression[] getExpressionArguments() {
@@ -97,12 +96,12 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
       final GroovyResolveResult result = ((GrReferenceExpression)left).advancedResolve();
       final PsiElement element = result.getElement();
       if (element instanceof PsiMethod) {
-        myAnalyzer.myCallHelper.processMethodCall(left, (GrReferenceExpression)left, argumentsProvider);
+        myAnalyzer.callHelper.processMethodCall(left, (GrReferenceExpression)left, argumentsProvider);
         return;
       }
     }
     if (left instanceof GrIndexProperty) {
-      myAnalyzer.myCallHelper.processIndexProperty((GrIndexProperty)left, argumentsProvider);
+      myAnalyzer.callHelper.processIndexProperty((GrIndexProperty)left, argumentsProvider);
       return;
     }
     left.accept(myAnalyzer);
@@ -166,7 +165,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     left.accept(myAnalyzer);
     if (resolveResults.length == 1) {
       final GroovyResolveResult result = resolveResults[0];
-      myAnalyzer.myCallHelper.processMethodCallStraight(anchor, result, right);
+      myAnalyzer.callHelper.processMethodCallStraight(anchor, result, right);
     }
     else {
       right.accept(myAnalyzer);

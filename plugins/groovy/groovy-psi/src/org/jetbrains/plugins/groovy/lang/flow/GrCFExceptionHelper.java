@@ -17,15 +17,10 @@ package org.jetbrains.plugins.groovy.lang.flow;
 
 import com.intellij.codeInspection.dataFlow.ControlFlowImpl;
 import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.instructions.GotoInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.PopInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.Stack;
@@ -33,17 +28,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrAssignInstruction;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
+import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+
+import static com.intellij.psi.CommonClassNames.*;
 
 public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
 
-  final GrControlFlowAnalyzerImpl<V> analyzer;
-  final Stack<CatchDescriptor> myCatchStack = new Stack<CatchDescriptor>();
+  private final GrControlFlowAnalyzerImpl<V> myAnalyzer;
+  private final DfaValue myString;
+  private final DfaValue myRuntimeException;
+  private final DfaValue myError;
+  final Stack<CatchDescriptor> catchStack = new Stack<CatchDescriptor>();
+  final PsiType assertionError;
+  final PsiType npe;
 
   public GrCFExceptionHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
-    this.analyzer = analyzer;
+    myAnalyzer = analyzer;
+    final GrDfaValueFactory factory = analyzer.factory;
+    final PsiElement element = analyzer.codeFragment;
+    myString = factory.createTypeValue(TypesUtil.createType(JAVA_LANG_STRING, element), Nullness.NOT_NULL);
+    myRuntimeException = factory.createTypeValue(TypesUtil.createType(JAVA_LANG_RUNTIME_EXCEPTION, element), Nullness.NOT_NULL);
+    myError = factory.createTypeValue(TypesUtil.createType(JAVA_LANG_ERROR, element), Nullness.NOT_NULL);
+    assertionError = TypesUtil.createType(JAVA_LANG_ASSERTION_ERROR, element);
+    npe = TypesUtil.createType(JAVA_LANG_NULL_POINTER_EXCEPTION, element);
   }
 
   static class CatchDescriptor {
@@ -99,68 +110,92 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
   void rethrowException(CatchDescriptor currentDescriptor, boolean catchRethrow) {
     CatchDescriptor nextCatch = findNextCatch(catchRethrow);
     if (nextCatch != null) {
-      analyzer.addInstruction(new PushInstruction(getExceptionHolder(nextCatch), null, false));
-      analyzer.addInstruction(new PushInstruction(getExceptionHolder(currentDescriptor), null, true));
-      analyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
-      analyzer.addInstruction(new PopInstruction());
+      myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(nextCatch), null, false));
+      myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(currentDescriptor), null, true));
+      myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
+      myAnalyzer.addInstruction(new PopInstruction());
     }
     addThrowCode(nextCatch, null);
   }
 
   @Nullable
   CatchDescriptor findNextCatch(boolean catchRethrow) {
-    if (myCatchStack.isEmpty()) {
+    if (catchStack.isEmpty()) {
       return null;
     }
 
-    PsiElement currentElement = analyzer.myElementStack.peek();
+    PsiElement currentElement = myAnalyzer.elementStack.peek();
 
-    CatchDescriptor cd = myCatchStack.get(myCatchStack.size() - 1);
+    CatchDescriptor cd = catchStack.get(catchStack.size() - 1);
     if (!cd.isFinally() && PsiTreeUtil.isAncestor(cd.getBlock().getParent(), currentElement, false)) {
-      int i = myCatchStack.size() - 2;
+      int i = catchStack.size() - 2;
       while (!catchRethrow &&
              i >= 0 &&
-             !myCatchStack.get(i).isFinally() &&
-             myCatchStack.get(i).getTryStatement() == cd.getTryStatement()) {
+             !catchStack.get(i).isFinally() &&
+             catchStack.get(i).getTryStatement() == cd.getTryStatement()) {
         i--;
       }
       if (i < 0) {
         return null;
       }
-      cd = myCatchStack.get(i);
+      cd = catchStack.get(i);
     }
 
     return cd;
   }
 
+  CatchDescriptor findFinally() {
+    for (int i = catchStack.size() - 1; i >= 0; i--) {
+      CatchDescriptor cd = catchStack.get(i);
+      if (cd.isFinally()) return cd;
+    }
+
+    return null;
+  }
+
   void addThrowCode(@Nullable CatchDescriptor cd, @Nullable PsiElement explicitThrower) {
     if (cd == null) {
-      analyzer.addInstruction(new ReturnInstruction(true, explicitThrower));
+      myAnalyzer.addInstruction(new ReturnInstruction(true, explicitThrower));
       return;
     }
 
     flushVariablesOnControlTransfer(cd.getBlock());
-    analyzer.addInstruction(new GotoInstruction(cd.getJumpOffset(analyzer.myFlow)));
+    myAnalyzer.addInstruction(new GotoInstruction(cd.getJumpOffset(myAnalyzer.flow)));
+  }
+
+  void addMethodThrows(@Nullable PsiMethod method, @Nullable PsiElement explicitCall) {
+    CatchDescriptor cd = findNextCatch(false);
+    if (method != null) {
+      PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
+      for (PsiClassType ref : refs) {
+        myAnalyzer.pushUnknown();
+        ConditionalGotoInstruction cond = myAnalyzer.addInstruction(new ConditionalGotoInstruction(null, false, null));
+        myAnalyzer.addInstruction(new EmptyStackInstruction());
+        initException(ref, cd);
+        addThrowCode(cd, explicitCall);
+        cond.setOffset(myAnalyzer.flow.getNextOffset());
+      }
+    }
   }
 
   private void flushVariablesOnControlTransfer(PsiElement stopWhenAncestorOf) {
-    for (int i = analyzer.myElementStack.size() - 1; i >= 0; i--) {
-      PsiElement scope = analyzer.myElementStack.get(i);
+    for (int i = myAnalyzer.elementStack.size() - 1; i >= 0; i--) {
+      PsiElement scope = myAnalyzer.elementStack.get(i);
       if (PsiTreeUtil.isAncestor(scope, stopWhenAncestorOf, true)) {
         break;
       }
       if (scope instanceof GrOpenBlock) {
-        analyzer.flushCodeBlockVariables((GrOpenBlock)scope);
+        myAnalyzer.flushCodeBlockVariables((GrOpenBlock)scope);
       }
     }
   }
 
   void initException(PsiType ref, @Nullable CatchDescriptor cd) {
     if (cd == null) return;
-    analyzer.addInstruction(new PushInstruction(getExceptionHolder(cd), null));
-    analyzer.addInstruction(new PushInstruction(analyzer.myFactory.createTypeValue(ref, Nullness.NOT_NULL), null));
-    analyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
-    analyzer.addInstruction(new PopInstruction());
+    myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(cd), null));
+    myAnalyzer.addInstruction(new PushInstruction(myAnalyzer.factory.createTypeValue(ref, Nullness.NOT_NULL), null));
+    myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
+    myAnalyzer.addInstruction(new PopInstruction());
   }
 
   DfaVariableValue getExceptionHolder(CatchDescriptor cd) {
@@ -174,8 +209,50 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
     protected DfaVariableValue create(GrTryCatchStatement key) {
       final String text = "java.lang.Object $exception" + size() + "$";
       final PsiParameter mockVar =
-        JavaPsiFacade.getElementFactory(analyzer.myCodeFragment.getManager().getProject()).createParameterFromText(text, null);
-      return analyzer.myFactory.getVarFactory().createVariableValue(mockVar, false);
+        JavaPsiFacade.getElementFactory(myAnalyzer.codeFragment.getManager().getProject()).createParameterFromText(text, null);
+      return myAnalyzer.factory.getVarFactory().createVariableValue(mockVar, false);
     }
   };
+
+  void returnCheckingFinally(boolean viaException, @NotNull PsiElement anchor) {
+    final CatchDescriptor finallyDescriptor = findFinally();
+    if (finallyDescriptor != null) {
+      myAnalyzer.addInstruction(new PushInstruction(myString, null));
+      myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(finallyDescriptor), null));
+      myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
+      myAnalyzer.addInstruction(new PopInstruction());
+      myAnalyzer.addInstruction(new GotoInstruction(finallyDescriptor.getJumpOffset(myAnalyzer.flow)));
+    }
+    else {
+      myAnalyzer.addInstruction(new ReturnInstruction(viaException, anchor));
+    }
+  }
+
+  void addConditionalRuntimeThrow() {
+    CatchDescriptor cd = findNextCatch(false);
+    if (cd == null) {
+      return;
+    }
+
+    myAnalyzer.pushUnknown();
+    final ConditionalGotoInstruction ifNoException = myAnalyzer.addInstruction(new ConditionalGotoInstruction(null, false, null));
+    {
+      myAnalyzer.addInstruction(new EmptyStackInstruction());
+      myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(cd), null));
+
+      myAnalyzer.pushUnknown();
+      final ConditionalGotoInstruction<V> ifError = myAnalyzer.addInstruction(new ConditionalGotoInstruction<V>(null, false, null));
+      myAnalyzer.push(myRuntimeException);
+      final GotoInstruction ifRuntime = myAnalyzer.addInstruction(new GotoInstruction(null));
+      ifError.setOffset(myAnalyzer.flow.getNextOffset());
+      myAnalyzer.push(myError);
+      ifRuntime.setOffset(myAnalyzer.flow.getNextOffset());
+
+      myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
+      myAnalyzer.pop();
+
+      addThrowCode(cd, null);
+    }
+    ifNoException.setOffset(myAnalyzer.flow.getInstructionCount());
+  }
 }

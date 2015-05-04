@@ -45,10 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
@@ -58,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -71,34 +67,36 @@ import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.ASSIGNMENTS_TO_O
 public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   extends GroovyRecursiveElementVisitor implements IControlFlowAnalyzer<V> {
 
-  private final GrCFExceptionHelper<V> myExceptionHelper = new GrCFExceptionHelper<V>(this);
-  private final GrCFExpressionHelper<V> myExpressionHelper = new GrCFExpressionHelper<V>(this);
-  final GrCFCallHelper<V> myCallHelper = new GrCFCallHelper<V>(this);
-  final ControlFlowImpl<V> myFlow = new ControlFlowImpl<V>();
-  final Stack<PsiElement> myElementStack = new Stack<PsiElement>();
-  final GrDfaValueFactory myFactory;
-  final PsiElement myCodeFragment;
-  private final PsiType myAssertionError;
+  final GrDfaValueFactory factory;
+  final PsiElement codeFragment;
+  final Stack<PsiElement> elementStack = new Stack<PsiElement>();
+  final ControlFlowImpl<V> flow = new ControlFlowImpl<V>();
+
+  private final GrCFExpressionHelper<V> myExpressionHelper;
+  final GrCFExceptionHelper<V> exceptionHelper;
+  final GrCFCallHelper<V> callHelper;
 
   public GrControlFlowAnalyzerImpl(@NotNull GrDfaValueFactory factory, @NotNull PsiElement block) {
-    myFactory = factory;
-    myCodeFragment = block;
-    myAssertionError = TypesUtil.createType(CommonClassNames.JAVA_LANG_ASSERTION_ERROR, block);
+    this.factory = factory;
+    codeFragment = block;
+    myExpressionHelper = new GrCFExpressionHelper<V>(this);
+    exceptionHelper = new GrCFExceptionHelper<V>(this);
+    callHelper = new GrCFCallHelper<V>(this);
   }
 
   @Override
   public ControlFlow<V> buildControlFlow() {
     try {
-      myCodeFragment.accept(new GroovyPsiElementVisitor(this) {
+      codeFragment.accept(new GroovyPsiElementVisitor(this) {
         @Override
         public void visitErrorElement(PsiErrorElement element) {
           throw new CannotAnalyzeException();
         }
       });
-      //if (myFlow.getInstructionCount() == 0) {
-      myFlow.addInstruction(new ReturnInstruction<V>(false, null));
+      //if (flow.getInstructionCount() == 0) {
+      flow.addInstruction(new ReturnInstruction<V>(false, null));
       //}
-      return myFlow;
+      return flow;
     }
     catch (CannotAnalyzeException ignored) {
       return null;
@@ -165,14 +163,11 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
   @Override
   public void visitAssignmentExpression(final GrAssignmentExpression expression) {
-    final GrExpression left = expression.getLValue();
     final GrExpression right = expression.getRValue();
-
     if (right == null) {
-      pushUnknown();
-      finishElement(expression);
       return;
     }
+    final GrExpression left = expression.getLValue();
 
     final IElementType op = expression.getOperationTokenType();
     if (op == mASSIGN) {
@@ -187,7 +182,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       finishElement(expression);
     }
     else {
-      myExpressionHelper.assign(left, right, myCallHelper.new ArgumentsBase() {
+      myExpressionHelper.assign(left, right, callHelper.new ArgumentsBase() {
         @Override
         public int runArguments() {
           myExpressionHelper.binaryOperation(expression, left, right, ASSIGNMENTS_TO_OPERATORS.get(op), expression.multiResolve(false));
@@ -200,14 +195,14 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   @Override
   public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
     startElement(methodCallExpression);
-    myCallHelper.processMethodCall(methodCallExpression);
+    callHelper.processMethodCall(methodCallExpression);
     finishElement(methodCallExpression);
   }
 
   @Override
   public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
     startElement(applicationStatement);
-    myCallHelper.processMethodCall(applicationStatement);
+    callHelper.processMethodCall(applicationStatement);
     finishElement(applicationStatement);
   }
 
@@ -224,13 +219,17 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         myExpressionHelper.boxUnbox(PsiType.INT, dimension.getType());
         pop();
       }
+      exceptionHelper.addConditionalRuntimeThrow();
+      addInstruction(new GrMethodCallInstruction(expression, null));
     }
     else {
-      myCallHelper.visitArguments(expression);
+      final PsiMethod ctr = expression.resolveMethod();
+      callHelper.visitArguments(expression);
+      exceptionHelper.addConditionalRuntimeThrow();
       addInstruction(new GrMethodCallInstruction(expression, null));
-      //if (!myCatchStack.isEmpty()) {
-      //  addMethodThrows(ctr, expression);
-      //}
+      if (!exceptionHelper.catchStack.isEmpty()) {
+        exceptionHelper.addMethodThrows(ctr, expression);
+      }
     }
 
     finishElement(expression);
@@ -257,8 +256,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     final GrStatement thenBranch = statement.getThenBranch();
     final GrStatement elseBranch = statement.getElseBranch();
     final ControlFlowOffset ifFalseOffset = elseBranch != null
-                                            ? myFlow.getStartOffset(elseBranch)
-                                            : myFlow.getEndOffset(statement);
+                                            ? flow.getStartOffset(elseBranch)
+                                            : flow.getEndOffset(statement);
 
     if (condition != null) {
       condition.accept(this);
@@ -271,7 +270,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
 
     if (elseBranch != null) {
-      addInstruction(new GotoInstruction(myFlow.getEndOffset(statement)));
+      addInstruction(new GotoInstruction(flow.getEndOffset(statement)));
       elseBranch.accept(this);
     }
 
@@ -294,7 +293,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       startElement(section);
 
       final List<ConditionalGotoInstruction> gotosToBlock = processCaseSection(condition, section);
-      final ControlFlowOffset statementsBlockOffset = myFlow.getNextOffset();
+      final ControlFlowOffset statementsBlockOffset = flow.getNextOffset();
       for (ConditionalGotoInstruction aGoto : gotosToBlock) {
         aGoto.setOffset(statementsBlockOffset);
       }
@@ -311,7 +310,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     if (fallbackGoto != null) {
       // last goto falls back to the very end
-      fallbackGoto.setOffset(myFlow.getEndOffset(switchStatement));
+      fallbackGoto.setOffset(flow.getEndOffset(switchStatement));
     }
 
     finishElement(switchStatement);
@@ -352,7 +351,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         // if not matched then go to next case section
         // if matched then next instruction is the start of the statements block
         addInstruction(new ConditionalGotoInstruction<V>(
-          myFlow.getEndOffset(section),
+          flow.getEndOffset(section),
           true,
           labelValue
         ));
@@ -396,7 +395,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   public void visitBreakStatement(GrBreakStatement statement) {
     final GrStatement targetStatement = statement.findTargetStatement();
     if (targetStatement != null) {
-      addInstruction(new GotoInstruction<V>(myFlow.getEndOffset(targetStatement)));
+      addInstruction(new GotoInstruction<V>(flow.getEndOffset(targetStatement)));
     }
   }
 
@@ -404,7 +403,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   public void visitContinueStatement(GrContinueStatement statement) {
     final GrStatement targetStatement = statement.findTargetStatement();
     if (targetStatement != null) {
-      addInstruction(new GotoInstruction<V>(myFlow.getStartOffset(targetStatement)));
+      addInstruction(new GotoInstruction<V>(flow.getStartOffset(targetStatement)));
     }
   }
 
@@ -429,7 +428,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       else {
         pushUnknown();
       }
-      addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(statement), true, condition));
+      addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(statement), true, condition));
 
       final GrStatement body = statement.getBody();
       if (body != null) {
@@ -440,7 +439,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         update.accept(this);
         pop();
       }
-      addInstruction(new GotoInstruction<V>(myFlow.getStartOffset(condition)));
+      addInstruction(new GotoInstruction<V>(flow.getStartOffset(condition)));
     }
     else if (clause instanceof GrForInClause) {
       final GrForInClause forInClause = (GrForInClause)clause;
@@ -451,11 +450,11 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         addInstruction(new GrDereferenceInstruction<V>(iteratedValue));
       }
 
-      final ControlFlowImpl.ControlFlowOffset loopStartOffset = myFlow.getNextOffset();
+      final ControlFlowImpl.ControlFlowOffset loopStartOffset = flow.getNextOffset();
       removeVariable(parameter);
 
       pushUnknown();
-      addInstruction(new ConditionalGotoInstruction(myFlow.getEndOffset(statement), true, null));
+      addInstruction(new ConditionalGotoInstruction(flow.getEndOffset(statement), true, null));
 
       final GrStatement body = statement.getBody();
       if (body != null) {
@@ -480,13 +479,13 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     else {
       condition.accept(this);
     }
-    addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(whileStatement), true, condition));
+    addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(whileStatement), true, condition));
 
     final GrStatement body = whileStatement.getBody();
     if (body != null) {
       body.accept(this);
     }
-    addInstruction(new GotoInstruction<V>(myFlow.getStartOffset(whileStatement)));
+    addInstruction(new GotoInstruction<V>(flow.getStartOffset(whileStatement)));
 
     finishElement(whileStatement);
   }
@@ -499,7 +498,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     GrFinallyClause finallyBlock = statement.getFinallyClause();
 
     if (finallyBlock != null) {
-      myExceptionHelper.myCatchStack.push(new CatchDescriptor(finallyBlock));
+      exceptionHelper.catchStack.push(new CatchDescriptor(finallyBlock));
     }
 
     GrCatchClause[] sections = statement.getCatchClauses();
@@ -510,7 +509,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       if (parameter != null && catchBlock != null) {
         PsiType type = parameter.getType();
         if (type instanceof PsiClassType || type instanceof PsiDisjunctionType) {
-          myExceptionHelper.myCatchStack.push(new CatchDescriptor(parameter, catchBlock));
+          exceptionHelper.catchStack.push(new CatchDescriptor(parameter, catchBlock));
           continue;
         }
       }
@@ -518,8 +517,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
 
     final ControlFlowImpl.ControlFlowOffset endOffset = finallyBlock == null
-                                                        ? myFlow.getEndOffset(statement)
-                                                        : myFlow.getStartOffset(finallyBlock);
+                                                        ? flow.getEndOffset(statement)
+                                                        : flow.getStartOffset(finallyBlock);
 
     tryBlock.accept(this);
     addInstruction(new GotoInstruction(endOffset));
@@ -527,21 +526,21 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     for (GrCatchClause section : sections) {
       section.accept(this);
       addInstruction(new GotoInstruction(endOffset));
-      myExceptionHelper.myCatchStack.pop();
+      exceptionHelper.catchStack.pop();
     }
 
     if (finallyBlock != null) {
-      CatchDescriptor finallyDescriptor = myExceptionHelper.myCatchStack.pop();
+      CatchDescriptor finallyDescriptor = exceptionHelper.catchStack.pop();
       finallyBlock.accept(this);
 
       //if $exception$==null => continue normal execution
-      addInstruction(new PushInstruction(myExceptionHelper.getExceptionHolder(finallyDescriptor), null));
-      addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
+      addInstruction(new PushInstruction(exceptionHelper.getExceptionHolder(finallyDescriptor), null));
+      addInstruction(new PushInstruction(factory.getConstFactory().getNull(), null));
       addInstruction(new BinopInstruction(DfaRelation.EQ, null, statement.getProject()));
-      addInstruction(new ConditionalGotoInstruction(myFlow.getEndOffset(statement), false, null));
+      addInstruction(new ConditionalGotoInstruction(flow.getEndOffset(statement), false, null));
 
       // else throw $exception$
-      myExceptionHelper.rethrowException(finallyDescriptor, false);
+      exceptionHelper.rethrowException(finallyDescriptor, false);
     }
 
     finishElement(statement);
@@ -559,7 +558,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
 
     final CatchDescriptor currentDescriptor = new CatchDescriptor(catchClauseParameter, catchBlock);
-    final DfaVariableValue exceptionHolder = myExceptionHelper.getExceptionHolder(currentDescriptor);
+    final DfaVariableValue exceptionHolder = exceptionHelper.getExceptionHolder(currentDescriptor);
 
     // exception is in exceptionHolder mock variable
     // check if it's assignable to catch parameter type
@@ -569,16 +568,16 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
                               ContainerUtil.createMaybeSingletonList(declaredType);
     for (PsiType catchType : flattened) {
       addInstruction(new PushInstruction(exceptionHolder, null));
-      addInstruction(new PushInstruction(myFactory.createTypeValue(catchType, Nullness.UNKNOWN), null));
+      addInstruction(new PushInstruction(factory.createTypeValue(catchType, Nullness.UNKNOWN), null));
       addInstruction(new BinopInstruction(DfaRelation.INSTANCEOF, null, catchClause.getProject()));
-      addInstruction(new ConditionalGotoInstruction(ControlFlowImpl.deltaOffset(myFlow.getStartOffset(catchBlock), -5), false, null));
+      addInstruction(new ConditionalGotoInstruction(ControlFlowImpl.deltaOffset(flow.getStartOffset(catchBlock), -5), false, null));
     }
 
     // not assignable => rethrow 
-    myExceptionHelper.rethrowException(currentDescriptor, true);
+    exceptionHelper.rethrowException(currentDescriptor, true);
 
     // e = $exception$
-    addInstruction(new PushInstruction(myFactory.getVarFactory().createVariableValue(catchClauseParameter, false), null));
+    addInstruction(new PushInstruction(factory.getVarFactory().createVariableValue(catchClauseParameter, false), null));
     addInstruction(new PushInstruction(exceptionHolder, null));
     addInstruction(new GrAssignInstruction<V>(null, null, false));
     addInstruction(new PopInstruction());
@@ -598,16 +597,54 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (condition != null) {
       condition.accept(this);
 
-      addInstruction(new ConditionalGotoInstruction(myFlow.getEndOffset(assertStatement), false, condition));
+      addInstruction(new ConditionalGotoInstruction(flow.getEndOffset(assertStatement), false, condition));
       if (description != null) {
         description.accept(this);
       }
 
-      CatchDescriptor cd = myExceptionHelper.findNextCatch(false);
-      myExceptionHelper.initException(myAssertionError, cd);
-      myExceptionHelper.addThrowCode(cd, assertStatement);
+      CatchDescriptor cd = exceptionHelper.findNextCatch(false);
+      exceptionHelper.initException(exceptionHelper.assertionError, cd);
+      exceptionHelper.addThrowCode(cd, assertStatement);
     }
     finishElement(assertStatement);
+  }
+
+  @Override
+  public void visitThrowStatement(GrThrowStatement statement) {
+    final GrExpression exception = statement.getException();
+    if (exception == null) {
+      return;
+    }
+
+    startElement(statement);
+
+    exception.accept(this);
+    CatchDescriptor cd = exceptionHelper.findNextCatch(false);
+    if (cd == null) {
+      addInstruction(new ReturnInstruction(true, statement));
+      finishElement(statement);
+      return;
+    }
+
+    exceptionHelper.addConditionalRuntimeThrow();
+    addInstruction(new DupInstruction());
+    addInstruction(new PushInstruction(factory.getConstFactory().getNull(), null));
+    addInstruction(new BinopInstruction(DfaRelation.EQ, null, statement.getProject()));
+    ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, true, null);
+    addInstruction(gotoInstruction);
+
+    addInstruction(new PopInstruction());
+    exceptionHelper.initException(exceptionHelper.npe, cd);
+    exceptionHelper.addThrowCode(cd, statement);
+
+    gotoInstruction.setOffset(flow.getInstructionCount());
+    addInstruction(new PushInstruction(exceptionHelper.getExceptionHolder(cd), null));
+    addInstruction(new SwapInstruction());
+    addInstruction(new GrAssignInstruction<V>(null, null, false));
+    addInstruction(new PopInstruction());
+    exceptionHelper.addThrowCode(cd, statement);
+
+    finishElement(statement);
   }
 
   @Override
@@ -628,7 +665,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     condition.accept(this);
     coerceToBoolean();
     addInstruction(new DupInstruction<V>());
-    addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(expression), false, condition));
+    addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(expression), false, condition));
     pop();
     final GrExpression elseBranch = expression.getElseBranch();
     if (elseBranch == null) {
@@ -658,9 +695,9 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     else {
       thenBranch.accept(this);
     }
-    addInstruction(new GotoInstruction<V>(myFlow.getEndOffset(expression)));
+    addInstruction(new GotoInstruction<V>(flow.getEndOffset(expression)));
 
-    gotoElse.setOffset(myFlow.getNextOffset());
+    gotoElse.setOffset(flow.getNextOffset());
     if (elseBranch == null) {
       pushUnknown();
     }
@@ -678,7 +715,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     final boolean writing = PsiUtil.isAccessedForWriting(referenceExpression);
     final GrExpression qualifierExpression = referenceExpression.getQualifierExpression();
     if (qualifierExpression == null) {
-      push(myFactory.createValue(referenceExpression), referenceExpression, writing);
+      push(factory.createValue(referenceExpression), referenceExpression, writing);
     }
     else {
       qualifierExpression.accept(this);
@@ -693,12 +730,12 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         pop();        // pop duplicated qualifier
         pushNull();
         final GotoInstruction<V> gotoEnd = addInstruction(new GotoInstruction<V>(null));
-        gotoToNotNull.setOffset(myFlow.getNextOffset());
+        gotoToNotNull.setOffset(flow.getNextOffset());
 
         // not null branch
         // qualifier is on top of stack
         myExpressionHelper.dereference(qualifierExpression, referenceExpression, writing);
-        gotoEnd.setOffset(myFlow.getNextOffset());
+        gotoEnd.setOffset(flow.getNextOffset());
       }
       else {
         myExpressionHelper.dereference(qualifierExpression, referenceExpression, writing);
@@ -725,7 +762,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       else {
         final GroovyResolveResult[] results = expression.multiResolve(false);
         if (results.length == 1) {
-          myCallHelper.processMethodCallStraight(expression, results[0]);
+          callHelper.processMethodCallStraight(expression, results[0]);
         }
         else {
           pop();
@@ -756,16 +793,16 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       left.accept(this);
       coerceToBoolean();
       addInstruction(new DupInstruction<V>());
-      addInstruction(new ConditionalGotoInstruction<V>(myFlow.getEndOffset(expression), isAnd, left));
+      addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(expression), isAnd, left));
       pop();
       right.accept(this);
 
       coerceToBoolean();
       final ConditionalGotoInstruction<V> gotoSuccess = addInstruction(new ConditionalGotoInstruction<V>(null, false, right));
-      push(myFactory.getConstFactory().getFalse());
-      addInstruction(new GotoInstruction<V>(myFlow.getEndOffset(expression)));
-      gotoSuccess.setOffset(myFlow.getNextOffset());
-      push(myFactory.getConstFactory().getTrue());
+      push(factory.getConstFactory().getFalse());
+      addInstruction(new GotoInstruction<V>(flow.getEndOffset(expression)));
+      gotoSuccess.setOffset(flow.getNextOffset());
+      push(factory.getConstFactory().getTrue());
     }
     else {
       final GroovyResolveResult[] resolveResults = expression.multiResolve(false);
@@ -787,7 +824,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     else {
       operand.accept(this);
       PsiType type = typeElement.getType();
-      addInstruction(new PushInstruction<V>(myFactory.createTypeValue(type, Nullness.NOT_NULL), expression));
+      addInstruction(new PushInstruction<V>(factory.createTypeValue(type, Nullness.NOT_NULL), expression));
       addInstruction(new GrInstanceofInstruction<V>(operand, type));
     }
 
@@ -796,7 +833,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
   @Override
   public void visitClosure(GrClosableBlock closure) {
-    push(myFactory.createValue(closure));
+    push(factory.createValue(closure));
   }
 
   @Override
@@ -827,7 +864,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   public void visitLiteralExpression(GrLiteral literal) {
     startElement(literal);
 
-    DfaValue dfaValue = myFactory.createLiteralValue(literal);
+    DfaValue dfaValue = factory.createLiteralValue(literal);
     push(dfaValue, literal);
 
     finishElement(literal);
@@ -872,7 +909,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       }
     }
 
-    push(myFactory.createValue(listOrMap));
+    push(factory.createValue(listOrMap));
 
     finishElement(listOrMap);
   }
@@ -880,18 +917,18 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   @Override
   public void visitIndexProperty(GrIndexProperty expression) {
     startElement(expression);
-    myCallHelper.processIndexProperty(expression, myCallHelper.EMPTY);
+    callHelper.processIndexProperty(expression, callHelper.EMPTY);
     finishElement(expression);
   }
 
   private void startElement(PsiElement element) {
-    myFlow.startElement(element);
-    myElementStack.push(element);
+    flow.startElement(element);
+    elementStack.push(element);
   }
 
   private void finishElement(GroovyPsiElement element) {
-    myFlow.finishElement(element);
-    PsiElement popped = myElementStack.pop();
+    flow.finishElement(element);
+    PsiElement popped = elementStack.pop();
     if (element != popped) {
       throw new AssertionError("Expected " + element + ", popped " + popped);
     }
@@ -901,9 +938,9 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         ? ((GrReturnStatement)element).getReturnValue()
         : element
       ));
-      //addInstruction(new ReturnInstruction<V>(false, element));
+      exceptionHelper.returnCheckingFinally(false, element);
     }
-    if (element instanceof GrStatement && element.getParent() instanceof GrStatementOwner) {
+    else if (element instanceof GrStatement && element.getParent() instanceof GrStatementOwner) {
       if (element instanceof GrExpression) {
         pop();
       }
@@ -923,11 +960,11 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
   private void removeVariable(@Nullable GrVariable variable) {
     if (variable == null) return;
-    addInstruction(new FlushVariableInstruction<V>(myFactory.getVarFactory().createVariableValue(variable, false)));
+    addInstruction(new FlushVariableInstruction<V>(factory.getVarFactory().createVariableValue(variable, false)));
   }
 
   <T extends Instruction<V>> T addInstruction(T instruction) {
-    myFlow.addInstruction(instruction);
+    flow.addInstruction(instruction);
     return instruction;
   }
 
@@ -952,7 +989,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   }
 
   void pushNull() {
-    push(myFactory.getConstFactory().getNull());
+    push(factory.getConstFactory().getNull());
   }
 
   private void coerceToBoolean() {
