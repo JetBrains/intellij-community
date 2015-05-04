@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.Assert;
 import org.junit.Test;
 import org.junit.runner.Description;
+import org.junit.runner.Result;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -96,13 +97,49 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
   private static void doTest(Description description, String expected) {
     final StringBuffer buf = new StringBuffer();
-    new SMTestSender().sendTree(description, new PrintStream(new OutputStream() {
+    new SMTestSender(new PrintStream(new OutputStream() {
       @Override
       public void write(int b) throws IOException {
         buf.append(new String(new byte[]{(byte)b}));
       }
-    }));
+    })).sendTree(description);
 
     Assert.assertEquals("output: " + buf, expected, StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
+  public void testProcessEmptyTestCase() throws Exception {
+    final Description description = Description.createSuiteDescription("TestA");
+    final Description emptyDescription = Description.createTestDescription(SMTestSender.EMPTY_SUITE_NAME, SMTestSender.EMPTY_SUITE_WARNING);
+    description.addChild(emptyDescription);
+
+    final StringBuffer buf = new StringBuffer();
+    final PrintStream printStream = new PrintStream(new OutputStream() {
+      @Override
+      public void write(int b) throws IOException {
+        buf.append(new String(new byte[]{(byte)b}));
+      }
+    });
+
+    final SMTestSender sender = new SMTestSender(printStream);
+    
+    sender.sendTree(description);
+
+    sender.testRunStarted(description);
+    sender.testStarted(emptyDescription);
+    sender.testFinished(emptyDescription);
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[suiteTreeStarted name='TestA' locationHint='java:suite://TestA']\n" +
+                                          "##teamcity[suiteTreeNode name='warning' locationHint='java:test://junit.framework.TestSuite$1.warning']\n" +
+                                          "##teamcity[suiteTreeEnded name='TestA']\n" +
+                                          "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
+                                          "##teamcity[testSuiteStarted name ='TestA']\n" +
+                                          "##teamcity[testStarted name='warning' locationHint='java:test://junit.framework.TestSuite$1.warning']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='warning']\n" +
+                                          "##teamcity[testSuiteFinished name='TestA']\n" +
+                                          "\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 }

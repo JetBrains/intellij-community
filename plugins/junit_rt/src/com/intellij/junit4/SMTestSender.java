@@ -38,10 +38,20 @@ public class SMTestSender extends RunListener {
   private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
   private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
   private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
-  
+  public static final String EMPTY_SUITE_NAME = "junit.framework.TestSuite$1";
+  public static final String EMPTY_SUITE_WARNING = "warning";
+
   private String myCurrentClassName;
   private String myParamName;
   private boolean myIgnoreTopSuite;
+  
+  private PrintStream myPrintStream = System.out;
+
+  public SMTestSender() {}
+
+  public SMTestSender(PrintStream printStream) {
+    myPrintStream = printStream;
+  }
 
   private static String escapeName(String str) {
     return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
@@ -49,46 +59,50 @@ public class SMTestSender extends RunListener {
 
   public void testRunStarted(Description description) throws Exception {
     myCurrentClassName = myIgnoreTopSuite ? getShortName(description.toString()) : null;
-    System.out.println("##teamcity[enteredTheMatrix]\n");
+    myPrintStream.println("##teamcity[enteredTheMatrix]\n");
   }
 
   public void testRunFinished(Result result) throws Exception {
     if (myParamName != null) {
-      System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']\n");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']\n");
     }
     if (myCurrentClassName != null) {
-      System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']\n");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']\n");
     }
   }
 
   public void testStarted(Description description) throws Exception {
     final String methodName = JUnit4ReflectionUtil.getMethodName(description);
+    final String classFQN = JUnit4ReflectionUtil.getClassName(description);
     final int paramStart = methodName.indexOf('[');
     if (myParamName != null){
-      System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']");
       myParamName = null;
     }
-    final String classFQN = JUnit4ReflectionUtil.getClassName(description);
-    final String className = getShortName(classFQN);
+    String className = getShortName(classFQN);
+    if (!myEmptyTests.isEmpty() && isWarning(methodName, classFQN)) {
+      className = (String)myEmptyTests.remove(0);
+    }
     if (!className.equals(myCurrentClassName)) {
       if (myCurrentClassName != null) {
-        System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
+        myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
       }
       myCurrentClassName = className;
-      System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(myCurrentClassName) + "\']");
+      myPrintStream.println("##teamcity[testSuiteStarted name =\'" + escapeName(myCurrentClassName) + "\']");
     }
     if (paramStart > -1) {
       final String paramName = methodName.substring(paramStart, methodName.length());
       if (!paramName.equals(myParamName)) {
         myParamName = paramName;
-        System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(myParamName) + "\']");
+        myPrintStream.println("##teamcity[testSuiteStarted name =\'" + escapeName(myParamName) + "\']");
       }
     }
-    System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\'" + getTestMethodLocation(methodName, classFQN)+ "]");
+    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + 
+                          getTestMethodLocation(methodName, classFQN) + "]");
   }
 
   public void testFinished(Description description) throws Exception {
-    System.out.println("\n##teamcity[testFinished name=\'" + escapeName(JUnit4ReflectionUtil.getMethodName(description)) + "\']");
+    myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(JUnit4ReflectionUtil.getMethodName(description)) + "\']");
   }
 
   public void testFailure(Failure failure) throws Exception {
@@ -98,7 +112,7 @@ public class SMTestSender extends RunListener {
     attrs.put("name", JUnit4ReflectionUtil.getMethodName(failure.getDescription()));
     final ComparisonFailureData notification = createExceptionNotification(failure.getException());
     ComparisonFailureData.registerSMAttributes(notification, trace, failureMessage, attrs);
-    System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
+    myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
   }
 
   public void testAssumptionFailure(Failure failure) {
@@ -111,7 +125,7 @@ public class SMTestSender extends RunListener {
     testFinished(description);
   }
 
-  private static void prepareIgnoreMessage(Description description, boolean commentMessage) {
+  private void prepareIgnoreMessage(Description description, boolean commentMessage) {
     Map attrs = new HashMap();
     if (commentMessage) {
       try {
@@ -128,7 +142,7 @@ public class SMTestSender extends RunListener {
       }
     }
     attrs.put("name", JUnit4ReflectionUtil.getMethodName(description));
-    System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_IGNORED, attrs));
+    myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_IGNORED, attrs));
   }
 
   private static boolean isComparisonFailure(Throwable throwable) {
@@ -180,12 +194,17 @@ public class SMTestSender extends RunListener {
     return messageLength < threshold;
   }
 
-  private static void sendTree(Description description, Map groups, PrintStream printStream) {
+  private final List myEmptyTests = new ArrayList();  
+  
+  private void sendTree(Description description, Map groups, Description parent) {
     if (description.getChildren().isEmpty()) {
       final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
       if (methodName != null) {
-        printStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) + "\' " + 
-                            getTestMethodLocation(methodName, JUnit4ReflectionUtil.getClassName(description)) + "]");
+        final String className = JUnit4ReflectionUtil.getClassName(description);
+        myPrintStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) + "\' " + getTestMethodLocation(methodName, className) + "]");
+        if (isWarning(methodName, className)) {
+          myEmptyTests.add(getShortName(JUnit4ReflectionUtil.getClassName(parent)));
+        }
       }
       return;
     }
@@ -215,14 +234,19 @@ public class SMTestSender extends RunListener {
             }
           }
         }
-        printStream.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) + "\' locationHint=\'java:suite://" + escapeName(locationHint) + "\']");
+        myPrintStream.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) +
+                       "\' locationHint=\'java:suite://" + escapeName(locationHint) + "\']");
       }
-      sendTree(nextDescription, groups, printStream);
+      sendTree(nextDescription, groups, description);
     }
     if (pass) {
-      printStream.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName((Description)description))) + "\']");
+      myPrintStream.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName((Description)description))) + "\']");
       groups.remove(description);
     }
+  }
+
+  private static boolean isWarning(String methodName, String className) {
+    return EMPTY_SUITE_WARNING.equals(methodName) && EMPTY_SUITE_NAME.equals(className);
   }
 
   private static String getTestMethodLocation(String methodName, String className) {
@@ -249,14 +273,14 @@ public class SMTestSender extends RunListener {
     return displayName.startsWith("[") && displayName.endsWith("]");
   }
 
-  public void sendTree(Description description, PrintStream printStream) {
+  public void sendTree(Description description) {
     final List tests = description.getChildren();
     if (tests.isEmpty()) {
       myIgnoreTopSuite = true;
     }
     final HashMap group = new HashMap();
     groupTests(description, group);
-    sendTree(description, group, printStream);
+    sendTree(description, group, null);
   }
 
   private static String getShortName(String fqName) {
