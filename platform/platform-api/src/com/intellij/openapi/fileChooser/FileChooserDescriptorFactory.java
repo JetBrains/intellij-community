@@ -95,4 +95,12 @@ public class FileChooserDescriptorFactory {
       }
     });
   }
+
+  /**
+   * @deprecated not very useful (to be removed in IDEA 15)
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  public static FileChooserDescriptor getDirectoryChooserDescriptor(String objectName) {
+    return createSingleFolderDescriptor().withTitle("Select " + objectName);
+  }
 }
