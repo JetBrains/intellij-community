@@ -242,6 +242,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
 
   /**
    * Assuming that qualifier is already processed
+   * This is where actual instructions are being added.
    */
   void processMethodCallStraight(@NotNull GrExpression highlight,
                                  @NotNull GroovyResolveResult result,
@@ -323,7 +324,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
         return indexProperty.getExpressionArguments().length + arguments.runArguments();
       }
     };
-    if (results.length == 1) {
+    if (results.length == 1 && results[0].isValidResult()) {
       invokedExpression.accept(myAnalyzer); // qualifier
       processMethodCallStraight(indexProperty, results[0], mergedArguments);
     }
@@ -332,7 +333,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     }
   }
 
-  private void fallback(@NotNull GrExpression invoked, @NotNull ArgumentsBase arguments) {
+  private void fallback(@NotNull GrExpression invoked, @NotNull Arguments arguments) {
     invoked.accept(myAnalyzer); // qualifier
     myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(invoked)); // dereference qualifier
 

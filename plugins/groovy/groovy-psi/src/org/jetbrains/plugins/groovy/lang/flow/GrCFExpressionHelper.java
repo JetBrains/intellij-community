@@ -163,7 +163,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
                        @NotNull IElementType operatorToken,
                        @NotNull GroovyResolveResult[] resolveResults) {
     left.accept(myAnalyzer);
-    if (resolveResults.length == 1) {
+    if (resolveResults.length == 1 && resolveResults[0].isValidResult() && !(operatorToken == mEQUAL || operatorToken == mNOT_EQUAL)) {
       final GroovyResolveResult result = resolveResults[0];
       myAnalyzer.callHelper.processMethodCallStraight(anchor, result, right);
     }
