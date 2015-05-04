@@ -120,6 +120,10 @@ if __name__ == '__main__':
     port = int(sys.argv[2])
     file = sys.argv[3]
 
+    del sys.argv[0]
+    del sys.argv[0]
+    del sys.argv[0]
+
     profiler = Profiler()
 
     try:
