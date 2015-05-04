@@ -298,7 +298,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       counter++;
     }
     for (GrClosableBlock block : closureArguments) {
-      myAnalyzer.push(myAnalyzer.factory.createValue(block), block);
+      block.accept(myAnalyzer);
       counter++;
     }
     return counter;

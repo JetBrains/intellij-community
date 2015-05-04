@@ -833,7 +833,13 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
   @Override
   public void visitClosure(GrClosableBlock closure) {
+    startElement(closure);
     push(factory.createValue(closure));
+    addInstruction(new GotoInstruction<V>(flow.getEndOffset(closure)));
+    for (GrStatement statement : closure.getStatements()) {
+      statement.accept(this);
+    }
+    finishElement(closure);
   }
 
   @Override
