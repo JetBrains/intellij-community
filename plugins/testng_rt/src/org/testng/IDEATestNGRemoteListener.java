@@ -30,8 +30,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   public void onConfigurationSuccess(ITestResult result) {
     final String className = getShortName(result.getTestClass().getName());
     System.out.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\']");
-    final String methodName = result.getMethod().getMethodName();
-    System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\']");
+    fireTestStarted(result, result.getMethod().getMethodName());
     onTestSuccess(result);
     System.out.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(className) + "\']");
   }
@@ -39,8 +38,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   public void onConfigurationFailure(ITestResult result) {
     final String className = getShortName(result.getTestClass().getName());
     System.out.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\']");
-    final String methodName = result.getMethod().getMethodName();
-    System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\']");
+    fireTestStarted(result, result.getMethod().getMethodName());
     onTestFailure(result);
     System.out.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(className) + "\']");
   }
@@ -68,8 +66,12 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       myInvocationCount = 0;
     }
     String methodName = getMethodName(result, false);
+    fireTestStarted(result, methodName);
+  }
+
+  private static void fireTestStarted(ITestResult result, String methodName) {
     System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) +
-                       "\' locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\']");
+                       "\' locationHint=\'java:test://" + escapeName(result.getTestClass().getName() + "." + methodName) + "\']");
   }
 
   private String getMethodName(ITestResult result) {
