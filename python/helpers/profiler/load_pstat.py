@@ -31,7 +31,7 @@ if __name__ == '__main__':
         func_stat.file = path
         func_stat.line = line
         func_stat.func_name = func_name
-        func_stat.calls_count = cc
+        func_stat.calls_count = nc
         func_stat.total_time = ct
         func_stat.own_time = tt
 
