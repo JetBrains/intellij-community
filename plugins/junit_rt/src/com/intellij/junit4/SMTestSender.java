@@ -184,7 +184,7 @@ public class SMTestSender extends RunListener {
     if (description.getChildren().isEmpty()) {
       final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
       if (methodName != null) {
-        printStream.println("##teamcity[suiteTreeNode name=\'" + methodName + "\' " + 
+        printStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) + "\' " + 
                             getTestMethodLocation(methodName, JUnit4ReflectionUtil.getClassName(description)) + "]");
       }
       return;

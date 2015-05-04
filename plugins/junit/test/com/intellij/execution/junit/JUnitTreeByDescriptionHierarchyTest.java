@@ -34,7 +34,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void test2Parameterized() throws Exception {
     final Description root = Description.createSuiteDescription("root");
-    for (String className : new String[]{"TestA", "TestB"}) {
+    for (String className : new String[]{"a.TestA", "a.TestB"}) {
       final Description aTestClass = Description.createSuiteDescription(className);
       root.addChild(aTestClass);
       for (String paramName : new String[]{"[0]", "[1]"}) {
@@ -44,20 +44,20 @@ public class JUnitTreeByDescriptionHierarchyTest {
       }
       
     }
-    doTest(root, "##teamcity[suiteTreeStarted name='TestA' locationHint='java:suite://TestA']\n" +
-                 "##teamcity[suiteTreeStarted name='|[0|]' locationHint='java:suite://TestA.|[0|]']\n" +
-                 "##teamcity[suiteTreeNode name='testName|[0|]' locationHint='java:test://TestA.testName|[0|]']\n" +
+    doTest(root, "##teamcity[suiteTreeStarted name='TestA' locationHint='java:suite://a.TestA']\n" +
+                 "##teamcity[suiteTreeStarted name='|[0|]' locationHint='java:suite://a.TestA.|[0|]']\n" +
+                 "##teamcity[suiteTreeNode name='testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
                  "##teamcity[suiteTreeEnded name='|[0|]']\n" +
-                 "##teamcity[suiteTreeStarted name='|[1|]' locationHint='java:suite://TestA.|[1|]']\n" +
-                 "##teamcity[suiteTreeNode name='testName|[1|]' locationHint='java:test://TestA.testName|[1|]']\n" +
+                 "##teamcity[suiteTreeStarted name='|[1|]' locationHint='java:suite://a.TestA.|[1|]']\n" +
+                 "##teamcity[suiteTreeNode name='testName|[1|]' locationHint='java:test://a.TestA.testName|[1|]']\n" +
                  "##teamcity[suiteTreeEnded name='|[1|]']\n" +
                  "##teamcity[suiteTreeEnded name='TestA']\n" +
-                 "##teamcity[suiteTreeStarted name='TestB' locationHint='java:suite://TestB']\n" +
-                 "##teamcity[suiteTreeStarted name='|[0|]' locationHint='java:suite://TestB.|[0|]']\n" +
-                 "##teamcity[suiteTreeNode name='testName|[0|]' locationHint='java:test://TestB.testName|[0|]']\n" +
+                 "##teamcity[suiteTreeStarted name='TestB' locationHint='java:suite://a.TestB']\n" +
+                 "##teamcity[suiteTreeStarted name='|[0|]' locationHint='java:suite://a.TestB.|[0|]']\n" +
+                 "##teamcity[suiteTreeNode name='testName|[0|]' locationHint='java:test://a.TestB.testName|[0|]']\n" +
                  "##teamcity[suiteTreeEnded name='|[0|]']\n" +
-                 "##teamcity[suiteTreeStarted name='|[1|]' locationHint='java:suite://TestB.|[1|]']\n" +
-                 "##teamcity[suiteTreeNode name='testName|[1|]' locationHint='java:test://TestB.testName|[1|]']\n" +
+                 "##teamcity[suiteTreeStarted name='|[1|]' locationHint='java:suite://a.TestB.|[1|]']\n" +
+                 "##teamcity[suiteTreeNode name='testName|[1|]' locationHint='java:test://a.TestB.testName|[1|]']\n" +
                  "##teamcity[suiteTreeEnded name='|[1|]']\n" +
                  "##teamcity[suiteTreeEnded name='TestB']\n");
   }
