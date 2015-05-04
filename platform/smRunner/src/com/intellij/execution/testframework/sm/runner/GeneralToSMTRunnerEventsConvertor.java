@@ -237,7 +237,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   private SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName) {
     if (myTreeBuildBeforeStart) {
       for (SMTestProxy proxy : parentSuite.getChildren()) {
-        if (fullName.equals(proxy.getName())) {
+        if (fullName.equals(proxy.getName()) && (!proxy.isLeaf() || !proxy.isFinal())) {
           return proxy;
         }
       }

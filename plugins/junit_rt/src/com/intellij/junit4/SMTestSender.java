@@ -68,7 +68,8 @@ public class SMTestSender extends RunListener {
       System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']");
       myParamName = null;
     }
-    final String className = getShortName(JUnit4ReflectionUtil.getClassName(description));
+    final String classFQN = JUnit4ReflectionUtil.getClassName(description);
+    final String className = getShortName(classFQN);
     if (!className.equals(myCurrentClassName)) {
       if (myCurrentClassName != null) {
         System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
@@ -83,7 +84,7 @@ public class SMTestSender extends RunListener {
         System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(myParamName) + "\']");
       }
     }
-    System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\']");
+    System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\'" + getTestMethodLocation(methodName, classFQN)+ "]");
   }
 
   public void testFinished(Description description) throws Exception {
@@ -183,8 +184,8 @@ public class SMTestSender extends RunListener {
     if (description.getChildren().isEmpty()) {
       final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
       if (methodName != null) {
-        printStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) +
-                            "\' locationHint=\'java:test://" + escapeName(JUnit4ReflectionUtil.getClassName((Description)description) + "." + methodName) + "\']");
+        printStream.println("##teamcity[suiteTreeNode name=\'" + methodName + "\' " + 
+                            getTestMethodLocation(methodName, JUnit4ReflectionUtil.getClassName(description)) + "]");
       }
       return;
     }
@@ -222,6 +223,10 @@ public class SMTestSender extends RunListener {
       printStream.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName((Description)description))) + "\']");
       groups.remove(description);
     }
+  }
+
+  private static String getTestMethodLocation(String methodName, String className) {
+    return "locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\'";
   }
 
   private static void groupTests(Object description, Map found) {
