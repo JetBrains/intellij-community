@@ -16,13 +16,14 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.sm.SMStacktraceParser;
+import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -42,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Roman Chernyatchik
  */
-public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
+public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParserEx {
   private final RunConfiguration myConfiguration;
   private final CompositeFilter myCustomFilter;
   private boolean myIdBasedTestTree = false;
@@ -93,6 +94,12 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
   public void setPrintTestingStartedTime(boolean printTestingStartedTime) {
     myPrintTestingStartedTime = printTestingStartedTime;
+  }
+
+  @Nullable
+  @Override
+  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+    return getErrorNavigatable(location.getProject(), stacktrace);
   }
 
   @Override

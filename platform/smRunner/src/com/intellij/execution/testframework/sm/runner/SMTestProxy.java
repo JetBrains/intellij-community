@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
+import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
@@ -290,7 +291,9 @@ public class SMTestProxy extends AbstractTestProxy {
 
     String stacktrace = myStacktrace;
     if (stacktrace != null && properties instanceof SMStacktraceParser && isLeaf()) {
-      Navigatable result = ((SMStacktraceParser)properties).getErrorNavigatable(location.getProject(), stacktrace);
+      Navigatable result = properties instanceof SMStacktraceParserEx ?
+                           ((SMStacktraceParserEx)properties).getErrorNavigatable(location, stacktrace) :
+                             ((SMStacktraceParser)properties).getErrorNavigatable(location.getProject(), stacktrace);
       if (result != null) {
         return result;
       }
