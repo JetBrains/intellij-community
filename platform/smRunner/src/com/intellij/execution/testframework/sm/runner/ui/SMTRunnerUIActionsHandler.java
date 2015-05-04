@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.openapi.util.Pass;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +110,10 @@ public class SMTRunnerUIActionsHandler extends TestResultsViewer.SMEventsAdapter
     SMRunnerUtil.runInEventDispatchThread(new Runnable() {
       public void run() {
         if (ScrollToTestSourceAction.isScrollEnabled(model)) {
-          OpenSourceUtil.openSourcesFrom(model.getTreeView(), false);
+          final Navigatable descriptor = TestsUIUtil.getOpenFileDescriptor(selectedTestProxy, model);
+          if (descriptor != null) {
+            OpenSourceUtil.navigate(false, descriptor);
+          }
         }
       }
     }, ModalityState.NON_MODAL);
