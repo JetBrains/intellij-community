@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
@@ -24,10 +23,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.*;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
@@ -173,11 +168,6 @@ public class TargetElementUtil extends TargetElementEvaluatorEx2 implements Targ
     return null;
   }
 
-  public boolean isAcceptableNamedParent(@NotNull PsiElement parent) {
-    return !(parent instanceof XmlAttribute)
-        && !(parent instanceof PsiFile && InjectedLanguageManager.getInstance(parent.getProject()).isInjectedFragment((PsiFile)parent));
-  }
-
   @Nullable
   public static PsiReferenceExpression findReferenceExpression(Editor editor) {
     final PsiReference ref = TargetElementUtilBase.findReference(editor);
@@ -195,23 +185,10 @@ public class TargetElementUtil extends TargetElementEvaluatorEx2 implements Targ
   @Nullable
   @Override
   public PsiElement adjustElement(Editor editor, int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
-    if (element != null) {
-      if (element instanceof PsiAnonymousClass) {
-        return ((PsiAnonymousClass)element).getBaseClassType().resolve();
-      }
-      return element;
+    if (element instanceof PsiAnonymousClass) {
+      return ((PsiAnonymousClass)element).getBaseClassType().resolve();
     }
-    if (contextElement == null) return null;
-    final PsiElement parent = contextElement.getParent();
-    if (parent instanceof XmlText || parent instanceof XmlAttributeValue) {
-      final PsiElement gParent = parent.getParent();
-      if (gParent == null) return null;
-      return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, gParent.getTextRange().getStartOffset() + 1);
-    }
-    else if (parent instanceof XmlTag || parent instanceof XmlAttribute) {
-      return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, parent.getTextRange().getStartOffset() + 1);
-    }
-    return null;
+    return element;
   }
 
   @Override
