@@ -13,7 +13,7 @@ import com.intellij.diff.fragments.LineFragmentImpl;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.SyncScrollSupport;
-import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
+import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;

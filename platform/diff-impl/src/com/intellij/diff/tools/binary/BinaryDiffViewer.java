@@ -28,7 +28,7 @@ import com.intellij.diff.tools.util.FocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
-import com.intellij.diff.tools.util.twoside.TwosideContentPanel;
+import com.intellij.diff.tools.util.side.TwosideContentPanel;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnActionEvent;
