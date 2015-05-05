@@ -41,7 +41,7 @@ import java.util.*;
  *   whenever the list of unversioned files changes.
  *   Able to get the list of unversioned files from Git.
  * </p>
- * 
+ *
  * <p>
  *   This class is used by {@link git4idea.status.GitNewChangesCollector}.
  *   By keeping track of unversioned files in the Git repository we may invoke
@@ -296,8 +296,9 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {
-    final GitRepository repository = myRepositoryManager.getRepositoryForFile(file);
+    // this check should be quick
+    // we shouldn't create a full instance repository here because it may lead to SOE while many unversioned files will be processed
+    final GitRepository repository = myRepositoryManager.getRepositoryForFile(file, false);
     return repository != null && repository.getRoot().equals(myRoot);
   }
-  
 }
