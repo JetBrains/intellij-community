@@ -258,6 +258,16 @@ class CollectionsUser {
   public void add() {
     Collections.addAll(list, "Hello");
   }
+
+  Supplier<List<String>> i() {
+    final List<String> bas = new ArrayList<>();
+    bas.add("asdf");
+    return () -> bas;
+  }
+
+  interface Supplier<T> {
+    T get();
+  }
 }
 
 class SimpleAdd {
