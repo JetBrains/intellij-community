@@ -32,10 +32,6 @@ import java.util.Set;
  */
 public class ValuableDataFlowRunner extends DataFlowRunner {
 
-  protected ValuableDataFlowRunner() {
-    super();
-  }
-
   @NotNull
   @Override
   protected DfaMemoryState createMemoryState() {

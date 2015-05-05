@@ -20,13 +20,10 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.BinopInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.PushInstruction;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaConstValueFactory;
@@ -47,13 +44,6 @@ import static com.intellij.codeInspection.dataFlow.value.DfaRelation.EQ;
 import static com.intellij.codeInspection.dataFlow.value.DfaRelation.UNDEFINED;
 
 public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstructionVisitor<V>> extends GrInstructionVisitor<V> {
-
-  //private static final Object ANY_VALUE = new Object();
-  //private final Set<BinopInstruction> myReachable = new THashSet<BinopInstruction>();
-  //private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<BinopInstruction>();
-  private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
-  private final Set<PsiElement> myNotToReportReachability = new THashSet<PsiElement>();
-  //private final Set<JavaInstanceofInstruction> myUsefulInstanceofs = new THashSet<JavaInstanceofInstruction>();
 
   private final GrDfaValueFactory myFactory;
   private final GrMethodCallHelper<V> myHelper;
@@ -123,14 +113,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     if (!checkNotNullable(state, qualifier, NullabilityProblem.fieldAccessNPE, instruction.getExpression())) {
       forceNotNull(myRunner.getFactory(), state, qualifier);
     }
-    //check(value, state, instruction.getExpression());
     return nextInstruction(instruction, state);
-  }
-
-  @Override
-  public DfaInstructionState<V>[] visitPush(PushInstruction<V> instruction, DfaMemoryState memState) {
-    //check(instruction.getValue(), memState, instruction.getPlace());
-    return super.visitPush(instruction, memState);
   }
 
   @Override
@@ -181,8 +164,6 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
 
   @Override
   public DfaInstructionState<V>[] visitBinop(BinopInstruction<V> instruction, DfaMemoryState memState) {
-    //myReachable.add(instruction);
-
     DfaValue dfaRight = memState.pop();
     DfaValue dfaLeft = memState.pop();
 
@@ -201,9 +182,6 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
         memState.push(myRunner.getFactory().getTypeFactory().getNonNullStringValue(instruction.getPsiAnchor(), instruction.getProject()));
       }
       else {
-        //if (instruction instanceof JavaInstanceofInstruction) {
-        //  handleInstanceof((JavaInstanceofInstruction)instruction, dfaRight, dfaLeft);
-        //}
         memState.push(DfaUnknownValue.getInstance());
       }
     }
@@ -230,8 +208,6 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
       return null;
     }
 
-    //myCanBeNullInInstanceof.add(instruction);
-
     ArrayList<DfaInstructionState<V>> states = new ArrayList<DfaInstructionState<V>>();
 
     final DfaMemoryState trueCopy = memState.createCopy();
@@ -247,34 +223,11 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
       falseCopy.push(factory.getConstFactory().getFalse());
       instruction.setFalseReachable();
       states.add(new DfaInstructionState<V>(next, falseCopy));
-      //if (instruction instanceof JavaInstanceofInstruction && !falseCopy.isNull(dfaLeft)) {
-      //myUsefulInstanceofs.add((JavaInstanceofInstruction)instruction);
-      //}
     }
 
     //noinspection unchecked
     DfaInstructionState<V>[] result = new DfaInstructionState[states.size()];
     return states.toArray(result);
-  }
-
-  @SuppressWarnings("unused")
-  public void skipConstantConditionReporting(@Nullable PsiElement anchor) {
-    ContainerUtil.addIfNotNull(myNotToReportReachability, anchor);
-  }
-
-  //public final void check(DfaValue value, DfaMemoryState state, PsiElement element) {
-  //  if (state.isNull(value)) {
-  //    markNull(element);
-  //  }
-  //  else if (state.isNotNull(value)) {
-  //    markNotNull(element);
-  //  }
-  //}
-
-  public void markNotNull(PsiElement element) {
-  }
-
-  public void markNull(PsiElement element) {
   }
 
   @Override
