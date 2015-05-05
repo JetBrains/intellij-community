@@ -402,4 +402,9 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     }
     assertResolveResult(element, PyClass.class, "A");
   }
+
+  public void testRelativeImport() {
+    assertResolvesTo(PyFile.class, "z.py");
+  }
+
 }
