@@ -75,13 +75,8 @@ public class JUnitTreeByDescriptionHierarchyTest {
       aSuite.addChild(aTest);
       aTest.addChild(Description.createTestDescription(className, methodName));
     }
-    final Description description = Description.createSuiteDescription(className);
-    root.addChild(description);
-    description.addChild(Description.createTestDescription(className, methodName));
     
     doTest(root, "##teamcity[suiteTreeStarted name='ATest' locationHint='java:suite://ATest']\n" +
-                 "##teamcity[suiteTreeNode name='test1' locationHint='java:test://ATest.test1']\n" +
-                 "##teamcity[suiteTreeNode name='test1' locationHint='java:test://ATest.test1']\n" +
                  "##teamcity[suiteTreeNode name='test1' locationHint='java:test://ATest.test1']\n" +
                  "##teamcity[suiteTreeEnded name='ATest']\n");
   }
