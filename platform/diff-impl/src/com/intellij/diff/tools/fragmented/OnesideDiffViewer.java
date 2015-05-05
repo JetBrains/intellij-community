@@ -20,6 +20,7 @@ import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.actions.NavigationContextChecker;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
+import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
@@ -27,10 +28,7 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
-import com.intellij.diff.tools.util.base.HighlightPolicy;
-import com.intellij.diff.tools.util.base.IgnorePolicy;
-import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
-import com.intellij.diff.tools.util.base.TextDiffViewerBase;
+import com.intellij.diff.tools.util.base.*;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
@@ -76,7 +74,7 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-public class OnesideDiffViewer extends TextDiffViewerBase {
+public class OnesideDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(OnesideDiffViewer.class);
 
   @NotNull protected final EditorEx myEditor;
@@ -86,7 +84,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @Nullable private final DocumentContent myActualContent1;
   @Nullable private final DocumentContent myActualContent2;
 
-  @NotNull private final MySetEditorSettingsAction myEditorSettingsAction;
+  @NotNull private final SetEditorSettingsAction myEditorSettingsAction;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull private final MyStatusPanel myStatusPanel;
 
@@ -112,7 +110,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
 
-    myForceReadOnlyFlags = checkForceReadOnly();
+    myForceReadOnlyFlags = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
 
 
     List<DiffContent> contents = myRequest.getContents();
@@ -139,7 +137,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
     myFoldingModel = new MyFoldingModel(myEditor, this);
 
-    myEditorSettingsAction = new MySetEditorSettingsAction();
+    myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
     new MyOpenInEditorWithMouseAction().register(getEditors());
@@ -149,6 +147,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @CalledInAwt
   protected void onInit() {
     super.onInit();
+    installEditorListeners();
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
   }
@@ -222,6 +221,16 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     group.add(new MyToggleExpandByDefaultAction());
 
     return group;
+  }
+
+  @NotNull
+  protected List<AnAction> createEditorPopupActions() {
+    return TextDiffViewerUtil.createEditorPopupActions();
+  }
+
+  @CalledInAwt
+  protected void installEditorListeners() {
+    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors());
   }
 
   //
@@ -722,6 +731,17 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   // Impl
   //
 
+
+  @NotNull
+  public TextDiffSettingsHolder.TextDiffSettings getTextSettings() {
+    return TextDiffViewerUtil.getTextSettings(myContext);
+  }
+
+  @NotNull
+  public FoldingModelSupport.Settings getFoldingModelSettings() {
+    return TextDiffViewerUtil.getFoldingModelSettings(myContext);
+  }
+
   @NotNull
   private DiffUtil.DiffConfig getDiffConfig() {
     return new DiffUtil.DiffConfig(getIgnorePolicy(), getHighlightPolicy());
@@ -751,7 +771,6 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   @NotNull
-  @Override
   protected List<? extends EditorEx> getEditors() {
     return Collections.singletonList(myEditor);
   }
@@ -930,14 +949,22 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     }
   }
 
-  private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
+  private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
+    public MyToggleExpandByDefaultAction() {
+      super(getTextSettings());
+    }
+
     @Override
     protected void expandAll(boolean expand) {
       myFoldingModel.expandAll(expand);
     }
   }
 
-  private class MyHighlightPolicySettingAction extends HighlightPolicySettingAction {
+  private class MyHighlightPolicySettingAction extends TextDiffViewerUtil.HighlightPolicySettingAction {
+    public MyHighlightPolicySettingAction() {
+      super(getTextSettings());
+    }
+
     @NotNull
     @Override
     protected HighlightPolicy getCurrentSetting() {
@@ -951,9 +978,18 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       settings.remove(HighlightPolicy.DO_NOT_HIGHLIGHT);
       return settings;
     }
+
+    @Override
+    protected void onSettingsChanged() {
+      rediff();
+    }
   }
 
-  private class MyIgnorePolicySettingAction extends IgnorePolicySettingAction {
+  private class MyIgnorePolicySettingAction extends TextDiffViewerUtil.IgnorePolicySettingAction {
+    public MyIgnorePolicySettingAction() {
+      super(getTextSettings());
+    }
+
     @NotNull
     @Override
     protected IgnorePolicy getCurrentSetting() {
@@ -967,10 +1003,16 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
       settings.remove(IgnorePolicy.IGNORE_WHITESPACES_CHUNKS);
       return settings;
     }
+
+    @Override
+    protected void onSettingsChanged() {
+      rediff();
+    }
   }
 
-  private class MyReadOnlyLockAction extends ReadOnlyLockAction {
+  private class MyReadOnlyLockAction extends TextDiffViewerUtil.ReadOnlyLockAction {
     public MyReadOnlyLockAction() {
+      super(getContext());
       init();
     }
 
