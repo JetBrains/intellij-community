@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi;
+package com.intellij.openapi.fileTypes;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiQualifiedReferenceElement;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.util.xmlb.annotations.Attribute;
 
-/**
- * @author Maxim.Medvedev
- */
-public interface GrQualifiedReference<Qualifier extends PsiElement> extends PsiQualifiedReferenceElement {
-  @Nullable
+public class SyntaxHighlighterFactoryEP extends LanguageExtensionPoint<SyntaxHighlighterFactory> {
+  // For backward compatibility
+  @Deprecated
+  @Attribute("key")
+  public String key;
+
   @Override
-  Qualifier getQualifier();
+  public String getKey() {
+    final String result = super.getKey();
+    if (result != null) {
+      return result;
+    }
 
-  void setQualifier(@Nullable Qualifier qualifier);
-
-  @Nullable
-  PsiElement getReferenceNameElement();
-
-  boolean isQualified();
+    //noinspection deprecation
+    return key;
+  }
 }

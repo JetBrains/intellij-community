@@ -64,6 +64,24 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
+  public void test2SuitesWithTheSameTest() throws Exception {
+    final Description root = Description.createSuiteDescription("root");
+    final String className = "ATest";
+    final String methodName = "test1";
+    for( String suiteName : new String[] {"ASuite1", "ASuite2"}) {
+      final Description aSuite = Description.createSuiteDescription(suiteName);
+      root.addChild(aSuite);
+      final Description aTest = Description.createSuiteDescription(className);
+      aSuite.addChild(aTest);
+      aTest.addChild(Description.createTestDescription(className, methodName));
+    }
+    
+    doTest(root, "##teamcity[suiteTreeStarted name='ATest' locationHint='java:suite://ATest']\n" +
+                 "##teamcity[suiteTreeNode name='test1' locationHint='java:test://ATest.test1']\n" +
+                 "##teamcity[suiteTreeEnded name='ATest']\n");
+  }
+
+  @Test
   public void testSingleMethod() throws Exception {
     final Description rootDescription = Description.createTestDescription("TestA", "testName");
     doTest(rootDescription, "##teamcity[suiteTreeNode name='testName' locationHint='java:test://TestA.testName']\n");

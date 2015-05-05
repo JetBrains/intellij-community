@@ -15,8 +15,13 @@
  */
 package com.jetbrains.numpy.codeInsight;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
 
 import java.util.ArrayList;
@@ -45,8 +50,17 @@ public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
       for (String type : NUMERIC_TYPES) {
         members.add(new PyCustomMember(type, "numpy.core.multiarray.dtype", false));
       }
+      addTestingModule(module, members);
       return members;
     }
     return Collections.emptyList();
+  }
+
+  private static void addTestingModule(PyFile module, List<PyCustomMember> members) {
+    PyPsiFacade psiFacade = PyPsiFacade.getInstance(module.getProject());
+    final QualifiedNameResolver resolver =
+      psiFacade.qualifiedNameResolver(QualifiedName.fromDottedString("numpy.testing")).withPlainDirectories().fromElement(module);
+    PsiElement testingModule = PyUtil.turnDirIntoInit(resolver.firstResult());
+    members.add(new PyCustomMember("testing", testingModule));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi;
+package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiQualifiedReferenceElement;
-import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Maxim.Medvedev
- */
-public interface GrQualifiedReference<Qualifier extends PsiElement> extends PsiQualifiedReferenceElement {
-  @Nullable
-  @Override
-  Qualifier getQualifier();
+public class PyResolveResultRaterBase implements PyResolveResultRater {
 
-  void setQualifier(@Nullable Qualifier qualifier);
+  public int getImportElementRate(@NotNull final PsiElement target) {
+    return 0;
+  }
 
-  @Nullable
-  PsiElement getReferenceNameElement();
-
-  boolean isQualified();
+  public int getMemberRate(PsiElement member, PyType type, TypeEvalContext context) {
+    return 0;
+  }
 }

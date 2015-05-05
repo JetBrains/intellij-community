@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.lang.IntObjectHashMap;
-import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import junit.framework.TestCase;

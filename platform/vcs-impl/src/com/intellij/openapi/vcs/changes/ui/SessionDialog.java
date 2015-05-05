@@ -68,7 +68,8 @@ public class SessionDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myConfigurationComponent;
+    return myConfigurationComponent instanceof ComplexFocusedComponentWrapper ?
+           ((ComplexFocusedComponentWrapper)myConfigurationComponent).getPreferredFocusedSimpleComponent() : myConfigurationComponent;
   }
 
   private void updateButtons() {

@@ -84,7 +84,7 @@
     </extensionPoint>
 
     <extensionPoint name="lang.syntaxHighlighterFactory"
-                    beanClass="com.intellij.util.KeyedLazyInstanceEP">
+                    beanClass="com.intellij.openapi.fileTypes.SyntaxHighlighterFactoryEP">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"/>
     </extensionPoint>
 

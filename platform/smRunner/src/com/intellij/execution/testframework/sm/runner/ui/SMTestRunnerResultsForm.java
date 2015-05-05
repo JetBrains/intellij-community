@@ -160,9 +160,9 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       @Override
       public Object[] getChildElements(Object element) {
         final Object[] children = super.getChildElements(element);
-        if (element == myTestsRootNode && children.length > 0 && 
+        if (element == myTestsRootNode && 
             myProperties.hideTreeRootIfNotEmpty()) {
-          myTreeView.setRootVisible(false);
+          myTreeView.setRootVisible(children.length == 0);
         }
         return children;
       }

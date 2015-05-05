@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -98,17 +99,15 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       JLabel descriptionLabel = createHTMLLabel("<i>" + description + "</i>");
       JLabel warningLabel = null;
       if (isVIM) {
-        warningLabel = createHTMLLabel("This plugin enables Vim-keymap and 'insert' mode for editing. " +
-                                       "If you are not familiar with Vim, it's not recommended to install it.");
+        warningLabel = createHTMLLabel("Enables Vim-keymap and 'insert' mode for editing. " +
+                                       "Not recommended if you are unfamiliar with Vim.");
         
-        if (SystemInfo.isMac) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
-        warningLabel.setBackground(new JBColor(ColorUtil.fromHex("F6F199"), ColorUtil.fromHex("52503A")));
-        warningLabel.setOpaque(true);
+        if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
       }
       
       final CardLayout wrapperLayout = new CardLayout();
       final JPanel buttonWrapper = new JPanel(wrapperLayout);
-      final JButton installButton = new JButton(isVIM ? "Install and Enable Vim Editor" : "Install");
+      final JButton installButton = new JButton(isVIM ? "Install and Enable" : "Install");
       
       final JProgressBar progressBar = new JProgressBar(0, 100);
       progressBar.setStringPainted(true);
@@ -229,7 +228,23 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       gbc.weighty = 1;
       groupPanel.add(Box.createVerticalGlue(), gbc);
       gbc.weighty = 0;
-      if (warningLabel != null) groupPanel.add(warningLabel, gbc);
+      if (warningLabel != null) {
+        Insets insetsBefore = gbc.insets;
+        gbc.insets = new Insets(0, -10, SMALL_GAP, -10);
+        JPanel warningPanel = new JPanel(new BorderLayout()) {
+          @Override
+          public Color getBackground() {
+            return new JBColor(new Color(252, 254, 200), ColorUtil.fromHex("52503A"));
+          }
+        };
+        warningPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
+        warningPanel.add(warningLabel);
+
+        groupPanel.add(warningPanel, gbc);
+        gbc.insets = insetsBefore;
+      }
+      
+      gbc.insets.bottom = 0;
       groupPanel.add(buttonWrapper, gbc);
       gridPanel.add(groupPanel);
     }

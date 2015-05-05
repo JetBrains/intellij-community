@@ -16,8 +16,7 @@
 package com.intellij.util.lang;
 
 // Nongeneral purpose memory saving map implementation for UrlClassLoader to avoid extra dependencies
-// made public for tests
-public final class IntObjectHashMap {
+final class IntObjectHashMap {
   private int size;
   private int[] keys;
   private Object[] values;
