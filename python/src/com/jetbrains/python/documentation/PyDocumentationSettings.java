@@ -53,6 +53,10 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
     return isFormat(file, DocStringFormat.REST);
   }
 
+  public boolean isNumpyFormat(PsiFile file) {
+    return isFormat(file, DocStringFormat.NUMPY);
+  }
+
   public boolean isPlain(PsiFile file) {
     return isFormat(file, DocStringFormat.PLAIN);
   }

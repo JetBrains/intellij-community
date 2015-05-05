@@ -17,6 +17,8 @@ package com.jetbrains.numpy.codeInsight;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.numpy.documentation.NumPyDocString;
 import com.jetbrains.numpy.documentation.NumPyDocStringParameter;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
@@ -83,7 +86,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if (isInsideNumPy(function)) {
+    if (isApplicable(function)) {
       final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
       final NumPyDocString docString = NumPyDocString.forFunction(function, callee);
       if (docString != null) {
@@ -140,7 +143,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter parameter, @NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    if (isInsideNumPy(function)) {
+    if (isApplicable(function)) {
       final String name = parameter.getName();
       if (name != null) {
         final PyType type = getParameterType(function, name);
@@ -153,17 +156,29 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   private static boolean isInsideNumPy(@NotNull PsiElement element) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     final PsiFile file = element.getContainingFile();
+
     if (file != null) {
       final PyPsiFacade facade = getPsiFacade(element);
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
         final String name = facade.findShortestImportableName(virtualFile, element);
-        return name != null && name.startsWith("numpy.");
+        return name != null && (name.startsWith("numpy.") || name.startsWith("matplotlib."));
       }
     }
     return false;
+  }
+
+  private static boolean isApplicable(@NotNull PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
+    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module != null){
+      if (PyDocumentationSettings.getInstance(module).isNumpyFormat(element.getContainingFile())) {
+        return true;
+      }
+    }
+
+    return isInsideNumPy(element);
   }
 
   private static PyPsiFacade getPsiFacade(@NotNull PsiElement anchor) {
@@ -237,7 +252,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   private static boolean isUfuncType(@NotNull PsiElement anchor, @NotNull final String typeString) {
     for (String typeName : NumPyDocString.getNumpyUnionType(typeString)) {
-      if (anchor instanceof PyFunction && NumpyUfuncs.isUFunc(((PyFunction)anchor).getName()) &&
+      if (anchor instanceof PyFunction && isInsideNumPy(anchor) && NumpyUfuncs.isUFunc(((PyFunction)anchor).getName()) &&
           ("array_like".equals(typeName) || "ndarray".equals(typeName))) {
         return true;
       }
