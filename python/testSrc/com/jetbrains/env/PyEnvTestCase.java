@@ -125,6 +125,23 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
     List<String> roots = getPythonRoots();
 
+    /**
+     * <p>
+     * {@link org.junit.AssumptionViolatedException} here means this test must be <strong>skipped</strong>.
+     * TeamCity supports this (if not you should create and issue about that).
+     * Idea does not support it for JUnit 3, while JUnit 4 must be supported.
+     * </p>
+     *<p>
+     * It this error brakes your test, please <strong>do not</strong> revert. Instead, do the following:
+     * <ol>
+     *   <li>Make sure {@link com.jetbrains.env.python} tests are <strong>excluded</strong> from your configuration (unless you are
+     *   PyCharm developer)</li>
+     *   <li>Check that your environment supports {@link AssumptionViolatedException}.
+     *   JUnit 4 was created about 10 years ago, so fixing environment is much better approach than hacky "return;" here.
+     *   </li>
+     * </ol>
+     *</p>
+     */
     Assume.assumeFalse(testName +
                        ": environments are not defined. Skipping. \nSpecify either " +
                        PYCHARM_PYTHON_ENVS +
