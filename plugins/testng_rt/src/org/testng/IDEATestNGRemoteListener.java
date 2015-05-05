@@ -6,6 +6,7 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.testng.internal.IResultListener;
 
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
@@ -19,100 +20,116 @@ import java.util.Map;
 public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener{
 
   public static final String INVOCATION_NUMBER = "invocation number: ";
+  private PrintStream myPrintStream = System.out;
   private String myCurrentClassName;
   private String myMethodName;
   private int    myInvocationCount = 0;
 
-  private static String escapeName(String str) {
-    return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
-  }
+  public IDEATestNGRemoteListener() {}
 
-  public void onConfigurationSuccess(ITestResult result) {
-    final String className = getShortName(result.getTestClass().getName());
-    System.out.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\']");
-    fireTestStarted(result, result.getMethod().getMethodName());
-    onTestSuccess(result);
-    System.out.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(className) + "\']");
-  }
-
-  public void onConfigurationFailure(ITestResult result) {
-    final String className = getShortName(result.getTestClass().getName());
-    System.out.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\']");
-    fireTestStarted(result, result.getMethod().getMethodName());
-    onTestFailure(result);
-    System.out.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(className) + "\']");
-  }
-
-  public void onConfigurationSkip(ITestResult itr) {
+  public IDEATestNGRemoteListener(PrintStream printStream) {
+    myPrintStream = printStream;
   }
 
   public void onStart(ISuite suite) {
-    System.out.println("##teamcity[enteredTheMatrix]");
-    System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(suite.getName()) + "\']");
+    myPrintStream.println("##teamcity[enteredTheMatrix]");
+    onSuiteStart(suite.getName(), false);
   }
 
   public void onFinish(ISuite suite) {
-    System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(suite.getName()) + "\']");
+    onSuiteFinish(suite.getName());
   }
+
+  public void onConfigurationSuccess(ITestResult result) {
+    onConfigurationStart(getClassName(result), getTestMethodName(result));
+  }
+
+  public void onConfigurationFailure(ITestResult result) {
+    onConfigurationFailure(getClassName(result), getTestMethodName(result), result.getThrowable());
+  }
+
+  public void onConfigurationSkip(ITestResult itr) {}
 
   public void onTestStart(ITestResult result) {
-    final String className = getShortName(result.getTestClass().getName());
-    if (myCurrentClassName == null || !myCurrentClassName.equals(className)) {
-      if (myCurrentClassName != null) {
-        System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
-      }
-      System.out.println("##teamcity[testSuiteStarted name =\'" + escapeName(className) + "\']");
-      myCurrentClassName = className;
-      myInvocationCount = 0;
-    }
-    String methodName = getMethodName(result, false);
-    fireTestStarted(result, methodName);
+    onTestStart(getClassName(result), getMethodName(result, false));
   }
-
-  private static void fireTestStarted(ITestResult result, String methodName) {
-    System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) +
-                       "\' locationHint=\'java:test://" + escapeName(result.getTestClass().getName() + "." + methodName) + "\']");
-  }
-
-  private String getMethodName(ITestResult result) {
-    return getMethodName(result, true);
-  }
-
-  private String getMethodName(ITestResult result, boolean changeCount) {
-    String methodName = result.getMethod().getMethodName();
-    final Object[] parameters = result.getParameters();
-    if (!methodName.equals(myMethodName)) {
-      myInvocationCount = 0;
-      myMethodName = methodName;
-    }
-    if (parameters.length > 0) {
-      final List<Integer> invocationNumbers = result.getMethod().getInvocationNumbers();
-      methodName += "[" + parameters[0].toString() + " (" + INVOCATION_NUMBER + 
-                    (invocationNumbers.isEmpty() ? myInvocationCount : invocationNumbers.get(myInvocationCount)) + ")" + "]";
-      if (changeCount) {
-        myInvocationCount++;
-      }
-    }
-    return methodName;
-  }
-
+  
   public void onTestSuccess(ITestResult result) {
-    System.out.println("\n##teamcity[testFinished name=\'" + escapeName(getMethodName(result)) + "\']");
-  }
-
-  public String getTrace(Throwable tr) {
-    StringWriter stringWriter = new StringWriter();
-    PrintWriter writer = new PrintWriter(stringWriter);
-    tr.printStackTrace(writer);
-    StringBuffer buffer = stringWriter.getBuffer();
-    return buffer.toString();
+    onTestFinished(getMethodName(result));
   }
 
   public void onTestFailure(ITestResult result) {
-    final Throwable ex = result.getThrowable();
-    final String trace = getTrace(ex);
+    onTestFailure(result.getThrowable(), getMethodName(result));
+  }
+
+  public void onTestSkipped(ITestResult result) {
+    onTestFinished(getMethodName(result));
+  }
+
+  public void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
+
+  public void onStart(ITestContext context) {}
+
+  public void onFinish(ITestContext context) {
+    if (myCurrentClassName != null) {
+      onSuiteFinish(myCurrentClassName);
+    }
+  }
+
+  public void onConfigurationStart(String classFQName, String testMethodName) {
+    final String className = getShortName(classFQName);
+    onSuiteStart(classFQName, true);
+
+    fireTestStarted(testMethodName, classFQName);
+    onTestFinished(testMethodName);
+
+    myPrintStream.println();
+    onSuiteFinish(className);
+  }
+
+  public void onConfigurationFailure(String classFQName, String testMethodName, Throwable throwable) {
+    final String className = getShortName(classFQName);
+    onSuiteStart(classFQName, true);
+
+    fireTestStarted(testMethodName, classFQName);
+    onTestFailure(throwable, testMethodName);
+
+    myPrintStream.println();
+    onSuiteFinish(className);
+  }
+
+  public void onSuiteStart(String suiteName, boolean provideLocation) {
+    myPrintStream.print("##teamcity[testSuiteStarted name =\'" + escapeName(provideLocation ? getShortName(suiteName) : suiteName));
+    if (provideLocation) {
+      myPrintStream.print("\' locationHint = \'java:suite://" + suiteName);
+    }
+    myPrintStream.println("\']");
+  }
+
+  public void onSuiteFinish(String suiteName) {
+    myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(suiteName) + "\']");
+  }
+
+  public void onTestStart(String classFQName, String methodName) {
+    final String className = getShortName(classFQName);
+    if (myCurrentClassName == null || !myCurrentClassName.equals(className)) {
+      if (myCurrentClassName != null) {
+        onSuiteFinish(myCurrentClassName);
+      }
+      onSuiteStart(classFQName, true);
+      myCurrentClassName = className;
+      myInvocationCount = 0;
+    }
+
+    fireTestStarted(methodName, classFQName);
+  }
+  
+  public void onTestFinished(String methodName) {
+    myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) + "\']");
+  }
+
+  public void onTestFailure(Throwable ex, String methodName) {
     final Map<String, String> attrs = new HashMap<String, String>();
-    final String methodName = getMethodName(result);
     attrs.put("name", methodName);
     final String failureMessage = ex.getMessage();
     ComparisonFailureData notification;
@@ -122,23 +139,52 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     catch (Throwable e) {
       notification = null;
     }
-    ComparisonFailureData.registerSMAttributes(notification, trace, failureMessage, attrs);
-    System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
-    System.out.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) + "\']");
+    ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs);
+    myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
+    onTestFinished(methodName);
   }
 
-  public void onTestSkipped(ITestResult result) {
-    System.out.println("\n##teamcity[testFinished name=\'" + escapeName(getMethodName(result)) + "\']");
+  private static String getClassName(ITestResult result) {
+    return result.getTestClass().getName();
   }
 
-  public void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
+  private static String getTestMethodName(ITestResult result) {
+    return result.getMethod().getMethodName();
+  }
 
-  public void onStart(ITestContext context) {}
+  private void fireTestStarted(String methodName, String className) {
+    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) +
+                          "\' locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\']");
+  }
 
-  public void onFinish(ITestContext context) {
-    if (myCurrentClassName != null) {
-      System.out.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
+  private String getMethodName(ITestResult result) {
+    return getMethodName(result, true);
+  }
+
+  private String getMethodName(ITestResult result, boolean changeCount) {
+    String methodName = getTestMethodName(result);
+    final Object[] parameters = result.getParameters();
+    if (!methodName.equals(myMethodName)) {
+      myInvocationCount = 0;
+      myMethodName = methodName;
     }
+    if (parameters.length > 0) {
+      final List<Integer> invocationNumbers = result.getMethod().getInvocationNumbers();
+      methodName += "[" + parameters[0].toString() + " (" + INVOCATION_NUMBER +
+                    (invocationNumbers.isEmpty() ? myInvocationCount : invocationNumbers.get(myInvocationCount)) + ")" + "]";
+      if (changeCount) {
+        myInvocationCount++;
+      }
+    }
+    return methodName;
+  }
+
+  private static String getTrace(Throwable tr) {
+    StringWriter stringWriter = new StringWriter();
+    PrintWriter writer = new PrintWriter(stringWriter);
+    tr.printStackTrace(writer);
+    StringBuffer buffer = stringWriter.getBuffer();
+    return buffer.toString();
   }
 
   protected static String getShortName(String fqName) {
@@ -147,5 +193,9 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       return fqName.substring(lastPointIdx + 1);
     }
     return fqName;
+  }
+
+  private static String escapeName(String str) {
+    return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
   }
 }
