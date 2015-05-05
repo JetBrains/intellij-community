@@ -255,11 +255,14 @@ public class SMTestSender extends RunListener {
 
   private static void groupTests(Object description, Map found) {
     if (!isParameter((Description)description)) {
-      final ArrayList childTests = ((Description)description).getChildren();
+      ArrayList childTests = ((Description)description).getChildren();
       List children = (List)found.get(description);
       if (children == null) {
         children = new ArrayList();
         found.put(description, children);
+      } else {
+        childTests = new ArrayList(childTests);
+        childTests.removeAll(children);
       }
       children.addAll(childTests);
       for (Iterator iterator = childTests.iterator(); iterator.hasNext(); ) {
