@@ -42,13 +42,24 @@ public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
     "float16", "float32", "float64", "float80", "float96", "float128", "float256",
     "complex32", "complex64", "complex128", "complex160", "complex192", "complex256", "complex512", "double"
   };
+  private static final String[] PYTHON_TYPES = {
+    "int_", "bool_", "float_", "cfloat", "string_", "str_",
+    "unicode_", "object_", "complex_", "bytes_", "byte", "ubyte", "void",
+    "short", "ushort", "intc", "uintc", "intp", "uintp", "uint",
+    "longlong", "ulonglong", "single", "csingle",
+    "longfloat", "clongfloat"};
+
+  private static String DTYPE = "numpy.core.multiarray.dtype";
 
   @Override
   protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
     if ("numpy".equals(qName)) {
       final List<PyCustomMember> members = new ArrayList<PyCustomMember>();
       for (String type : NUMERIC_TYPES) {
-        members.add(new PyCustomMember(type, "numpy.core.multiarray.dtype", false));
+        members.add(new PyCustomMember(type, DTYPE, false));
+      }
+      for (String type : PYTHON_TYPES) {
+        members.add(new PyCustomMember(type, DTYPE, false));
       }
       addTestingModule(module, members);
       return members;

@@ -28,7 +28,7 @@ public class EscapeSequenceTokenizer {
     StringBuilder currentToken = new StringBuilder();
     int currentTokenStart = startOffset;
     for (int i = 0; i < unescapedText.length(); i++) {
-      if (offsets[i+1]-offsets[i] == 1) {
+      if (offsets[i+1]-offsets[i] == 1 || !Character.isWhitespace(unescapedText.charAt(i))) {
         if (currentToken.length() == 0) {
           currentTokenStart = offsets[i] + startOffset;
         }

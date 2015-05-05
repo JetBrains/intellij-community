@@ -18,11 +18,12 @@ package com.intellij.openapi.vcs.changes.ui;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class ComplexFocusedComponentWrapper extends JPanel {
 
   public ComplexFocusedComponentWrapper(@NotNull JComponent component) {
-    super();
+    super(new BorderLayout());
     add(component);
   }
 

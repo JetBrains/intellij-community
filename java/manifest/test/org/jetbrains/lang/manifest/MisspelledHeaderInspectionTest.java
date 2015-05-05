@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.lang.manifest;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import junit.framework.Assert;
 import org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection;
 
 import java.util.List;
@@ -31,13 +30,13 @@ public class MisspelledHeaderInspectionTest extends LightCodeInsightFixtureTestC
 
   public void testNoProblem() {
     myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, "Manifest-Version: 1.0\n");
-    Assert.assertEquals(0, myFixture.getAvailableIntentions().size());
+    assertEquals(0, myFixture.getAvailableIntentions().size());
   }
 
   public void testFix() {
     myFixture.configureByText(ManifestFileTypeFactory.MANIFEST, "ManifestVersion: 1.0\n");
     List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Change to");
-    Assert.assertTrue(intentions.size() > 0);
+    assertTrue(intentions.size() > 0);
     myFixture.launchAction(intentions.get(0));
     myFixture.checkResult("Manifest-Version: 1.0\n");
   }
