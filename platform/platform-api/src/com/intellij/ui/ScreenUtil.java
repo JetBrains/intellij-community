@@ -40,6 +40,10 @@ public class ScreenUtil {
 
   private ScreenUtil() { }
 
+  public static boolean isVisible(@NotNull Point location) {
+    return getScreenRectangle(location).contains(location);
+  }
+
   public static boolean isVisible(@NotNull Rectangle bounds) {
     if (bounds.isEmpty()) return false;
     Rectangle[] allScreenBounds = getAllScreenBounds();

@@ -101,8 +101,11 @@ public class DimensionService implements PersistentStateComponent<Element> {
   @Nullable
   public synchronized Point getSharedLocation(@NotNull String key) {
     Point point = myKey2Location.get(key);
-    if (point != null && !ScreenUtil.getScreenRectangle(point).contains(point)) {
-      point = null;
+    if (point != null && !ScreenUtil.isVisible(point)) {
+      Dimension size = getSharedSize(key);
+      if (size == null || !ScreenUtil.isVisible(new Rectangle(point, size))) {
+        point = null;
+      }
     }
     return point != null ? (Point)point.clone() : null;
   }
