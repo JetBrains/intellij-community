@@ -125,18 +125,13 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
     List<String> roots = getPythonRoots();
 
-    if (roots.size() == 0) {
-      String msg = testName +
-                   ": environments are not defined. Skipping. \nSpecify either " +
-                   PYCHARM_PYTHON_ENVS +
-                   " or " +
-                   PYCHARM_PYTHON_VIRTUAL_ENVS +
-                   " environment variable.";
-      LOG.warn(msg);
-      System.out.println(msg);
-      return;
-    }
-
+    Assume.assumeFalse(testName +
+                       ": environments are not defined. Skipping. \nSpecify either " +
+                       PYCHARM_PYTHON_ENVS +
+                       " or " +
+                       PYCHARM_PYTHON_VIRTUAL_ENVS +
+                       " environment variable.",
+                       roots.isEmpty());
     doRunTests(testTask, testName, roots);
   }
 
@@ -179,7 +174,8 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
         for (File f : virtualenvs) {
           result.add(f.getAbsolutePath());
         }
-      } else {
+      }
+      else {
         LOG.error(root + " is not a directory of doesn't exist");
       }
     }
