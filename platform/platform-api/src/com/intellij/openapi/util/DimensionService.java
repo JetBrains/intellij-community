@@ -299,20 +299,15 @@ public class DimensionService implements PersistentStateComponent<Element> {
       frame = WindowManager.getInstance().getFrame(project);
     }
     Rectangle screen = new Rectangle(0, 0, 0, 0);
+    GraphicsDevice device = null;
     if (frame != null) {
-      final Point topLeft = frame.getLocation();
-      Point center = new Point(topLeft.x + frame.getWidth() / 2, topLeft.y + frame.getHeight() / 2);
-      for (GraphicsDevice device : env.getScreenDevices()) {
-        Rectangle bounds = device.getDefaultConfiguration().getBounds();
-        if (bounds.contains(center)) {
-          screen = bounds;
-          break;
-        }
-      }
+      device = ScreenUtil.getScreenDevice(frame.getBounds());
     }
-    else {
-      GraphicsConfiguration gc = env.getScreenDevices()[0].getDefaultConfiguration();
-      screen = gc.getBounds();
+    if (device == null) {
+      device = env.getDefaultScreenDevice();
+    }
+    if (device != null) {
+      screen = device.getDefaultConfiguration().getBounds();
     }
     String realKey = key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;
     if (JBUI.isHiDPI()) {

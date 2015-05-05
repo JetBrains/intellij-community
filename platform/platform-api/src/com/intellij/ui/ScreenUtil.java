@@ -131,6 +131,10 @@ public class ScreenUtil {
     return getScreenRectangle(p.x, p.y);
   }
 
+  /**
+   * @param bounds a rectangle used to find corresponding graphics device
+   * @return a graphics device that contains the biggest part of the specified rectangle
+   */
   public static GraphicsDevice getScreenDevice(Rectangle bounds) {
     GraphicsDevice candidate = null;
     int maxIntersection = 0;
@@ -222,8 +226,7 @@ public class ScreenUtil {
   }
 
   /**
-   * Finds a device that is the closest to the specified point and
-   * returns its visible area.
+   * Returns a visible area for a graphics device that is the closest to the specified point.
    *
    * @param x the X coordinate of the specified point
    * @param y the Y coordinate of the specified point
