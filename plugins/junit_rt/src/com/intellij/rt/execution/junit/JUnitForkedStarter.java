@@ -21,6 +21,7 @@ import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -29,7 +30,12 @@ import java.util.List;
  * @since 6.04.2011
  */
 public class JUnitForkedStarter {
-  private JUnitForkedStarter() {
+
+  public static final String DEBUG_SOCKET = "-debugSocket";
+
+  private int myDebugPort = -1;
+
+  JUnitForkedStarter() {
   }
 
   public static void main(String[] args) throws Exception {
@@ -68,7 +74,7 @@ public class JUnitForkedStarter {
     }
   }
 
-  static int startForkedVMs(String workingDirsPath,
+  int startForkedVMs(String workingDirsPath,
                             String[] args,
                             boolean isJUnit4,
                             List listeners,
@@ -76,6 +82,17 @@ public class JUnitForkedStarter {
                             Object err,
                             String forkMode,
                             String path) throws Exception {
+    for (int i = 0; i < args.length; i++) {
+      String arg = args[i];
+      if (arg.startsWith(DEBUG_SOCKET)) {
+        final List list = new ArrayList(Arrays.asList(args));
+        list.remove(arg);
+        args = (String[])list.toArray();
+        myDebugPort = Integer.parseInt(arg.substring(DEBUG_SOCKET.length()));
+        break;
+      }
+    }
+
     final List parameters = new ArrayList();
     final BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
     final String dynamicClasspath = bufferedReader.readLine();
@@ -176,7 +193,7 @@ public class JUnitForkedStarter {
     return null;
   }
   
-  private static int processChildren(boolean isJUnit4,
+  private int processChildren(boolean isJUnit4,
                                      List listeners,
                                      Object out,
                                      Object err,
@@ -204,7 +221,7 @@ public class JUnitForkedStarter {
     return result;
   }
 
-  private static int runChild(boolean isJUnit4,
+  private int runChild(boolean isJUnit4,
                               List listeners,
                               Object out,
                               Object err,
@@ -214,6 +231,22 @@ public class JUnitForkedStarter {
                               String startIndex,
                               String classpath,
                               String dynamicClasspath) throws IOException, InterruptedException {
+    parameters = new ArrayList(parameters);
+    for (int i = 0; i < parameters.size(); i++) {
+      String parameter = (String)parameters.get(i);
+      final String debuggerParam = "transport=dt_socket,server=";
+      final int indexOf = parameter.indexOf(debuggerParam);
+      if (indexOf >= 0) {
+        if (myDebugPort > -1) {
+          parameter = parameter.substring(0, indexOf) + "transport=dt_socket,server=n,suspend=n,address=" + myDebugPort;
+          parameters.set(i, parameter);
+        }
+        else {
+          parameters.remove(parameter);
+        }
+        break;
+      }
+    }
     //noinspection SSBasedInspection
     final File tempFile = File.createTempFile("fork", "test");
     tempFile.deleteOnExit();
