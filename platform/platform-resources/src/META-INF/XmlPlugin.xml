@@ -255,11 +255,6 @@
     <lang.unwrapDescriptor language="JSPX" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
 
     <targetElementEvaluator language="XML" implementationClass="com.intellij.codeInsight.XmlTargetElementEvaluator"/>
-    <targetElementEvaluator language="DTD" implementationClass="com.intellij.codeInsight.XmlTargetElementEvaluator"/>
-    <targetElementEvaluator language="HTML" implementationClass="com.intellij.codeInsight.XmlTargetElementEvaluator"/>
-    <targetElementEvaluator language="XHTML" implementationClass="com.intellij.codeInsight.XmlTargetElementEvaluator"/>
-    <targetElementEvaluator language="JSP" implementationClass="com.intellij.codeInsight.XmlTargetElementEvaluator"/>
-    <targetElementEvaluator language="JSPX" implementationClass="com.intellij.codeInsight.XmlTargetElementEvaluator"/>
 
     <lang.findUsagesProvider language="DTD" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
     <lang.findUsagesProvider language="XML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
