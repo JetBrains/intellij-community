@@ -110,7 +110,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        String html = "<html>" +
+        final String html = "<html>" +
                       "<header><style type='text/css'>" +
                       "body {" +
                       "  color: #" + ColorUtil.toHex(new JBColor(Gray.x33, UIUtil.getLabelForeground())) + ";" +
@@ -129,27 +129,33 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
                       "</header>" +
                       "<body>";
         int i = 0;
-        html += "<ol>";
+        final StringBuilder htmlBuilder = new StringBuilder();
+        htmlBuilder.append(html).append("<ol>");
         for (ConfigurationError error : myErrors) {
           i++;
           String description = error.getDescription();
           if (description.startsWith("<html>") && description.endsWith("</html>")) {
             description = description.substring(6, description.length() - 7);
           }
+          htmlBuilder.append("<li>");
+
           if (description.startsWith("Module '")) {
             final int start = 8;
             final int end = description.indexOf("'", 9);
-            final String moduleName = description.substring(start, end);
-            description = "Module <a href='http://module/" + StringUtil.escapeXml(moduleName) + "'>" + StringUtil.escapeXml(moduleName) + "</a> " + description.substring(
-              end + 1);
-          }
+            final String moduleNameEsc = StringUtil.escapeXml(description.substring(start, end));
+            htmlBuilder.append("Module <a href='http://module/").append(moduleNameEsc).append("'>").append(moduleNameEsc).append("</a> ")
+              .append(description.substring(end + 1));
+          } else
+            htmlBuilder.append(description);
+
           if (error.canBeFixed()) {
-            description += " <a href='http://fix/" + i + "'>[Fix]</a>";
+            htmlBuilder.append(" <a href='http://fix/").append(i).append("'>[Fix]</a>");
           }
-          html+= "<li>" + description + "</li>";
+          htmlBuilder.append("</li>");
         }
-        html += "</ol></body></html>";
-        myContent.setText(html);
+        htmlBuilder.append("</ol></body></html>");
+
+        myContent.setText(htmlBuilder.toString());
         if (myOnErrorsChanged != null) {
           myOnErrorsChanged.run();
         }
