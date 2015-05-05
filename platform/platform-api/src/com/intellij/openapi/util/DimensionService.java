@@ -82,7 +82,6 @@ public class DimensionService implements PersistentStateComponent<Element> {
    * <code>null</code> if there is no stored value under the <code>key</code>. If point
    * is outside of current screen bounds then the method returns <code>null</code>. It
    * properly works in multi-monitor configuration.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
   @Nullable
   public synchronized Point getLocation(String key) {
@@ -116,7 +115,6 @@ public class DimensionService implements PersistentStateComponent<Element> {
    *
    * @param key   a String key to store location for.
    * @param point location to save.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
   public synchronized void setLocation(String key, Point point) {
     setLocation(key, point, guessProject());
@@ -146,7 +144,6 @@ public class DimensionService implements PersistentStateComponent<Element> {
    * @param key a String key to perform a query for.
    * @return point stored under the specified <code>key</code>. The method returns
    * <code>null</code> if there is no stored value under the <code>key</code>.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key) {
@@ -174,7 +171,6 @@ public class DimensionService implements PersistentStateComponent<Element> {
    *
    * @param key  a String key to to save size for.
    * @param size a Size to save.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size) {
     setSize(key, size, guessProject());
