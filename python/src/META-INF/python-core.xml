@@ -627,6 +627,7 @@
     <!-- NumPy -->
     <pyModuleMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyModuleMembersProvider"/>
     <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider"/>
+    <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
   </extensions>
 
   <project-components>
