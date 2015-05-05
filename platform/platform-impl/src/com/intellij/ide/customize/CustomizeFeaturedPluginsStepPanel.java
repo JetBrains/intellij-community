@@ -102,12 +102,12 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
         warningLabel = createHTMLLabel("Enables Vim-keymap and 'insert' mode for editing. " +
                                        "Not recommended if you are unfamiliar with Vim.");
         
-        if (SystemInfo.isMac) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
+        if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
       }
       
       final CardLayout wrapperLayout = new CardLayout();
       final JPanel buttonWrapper = new JPanel(wrapperLayout);
-      final JButton installButton = new JButton(isVIM ? "Install and Enable Vim Editor" : "Install");
+      final JButton installButton = new JButton(isVIM ? "Install and Enable" : "Install");
       
       final JProgressBar progressBar = new JProgressBar(0, 100);
       progressBar.setStringPainted(true);
@@ -234,7 +234,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
         JPanel warningPanel = new JPanel(new BorderLayout()) {
           @Override
           public Color getBackground() {
-            return new JBColor(ColorUtil.fromHex("F6F199"), ColorUtil.fromHex("52503A"));
+            return new JBColor(new Color(252, 254, 200), ColorUtil.fromHex("52503A"));
           }
         };
         warningPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
