@@ -15,20 +15,14 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BloomFilterBase;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.HashMap;
-import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Resource;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -38,21 +32,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  */
 public class ClasspathCache {
-  static final Logger LOG = Logger.getInstance(ClasspathCache.class);
-  static final boolean doDebug = LOG.isDebugEnabled();
+  private final IntObjectHashMap myResourcePackagesCache = new IntObjectHashMap();
+  private final IntObjectHashMap myClassPackagesCache = new IntObjectHashMap();
 
-  private final DebugInfo myDebugInfo;
-
-  private final TIntObjectHashMap<Object> myResourcePackagesCache = new TIntObjectHashMap<Object>();
-  private final TIntObjectHashMap<Object> myClassPackagesCache = new TIntObjectHashMap<Object>();
-
-  private THashMap<String, Object> myResources2LoadersTempMap = new THashMap<String, Object>();
+  private Map<String, Object> myResources2LoadersTempMap = new HashMap<String, Object>();
   private static final double PROBABILITY = 0.005d;
   private Name2LoaderFilter myNameFilter;
-
-  public ClasspathCache() {
-    myDebugInfo = doDebug ? new DebugInfo() : new NullDebugInfo();
-  }
 
   static class LoaderData {
     private final List<String> myResourcePaths = new ArrayList<String>();
@@ -102,13 +87,12 @@ public class ClasspathCache {
     ParameterType2 parameter2) {
     myLock.readLock().lock();
     try {
-      TIntObjectHashMap<Object> map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ?
+      IntObjectHashMap map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ?
                                       myClassPackagesCache : myResourcePackagesCache;
       String packageName = getPackageName(resourcePath);
 
       int hash = packageName.hashCode();
       Object o = map.get(hash);
-      myDebugInfo.checkLoadersCount(resourcePath, o);
 
       if (o == null) return null;
       if (o instanceof Loader) return iterator.process((Loader)o, parameter, parameter2);
@@ -130,10 +114,8 @@ public class ClasspathCache {
   }
 
   private void addResourceEntry(String resourcePath, Loader loader) {
-    myDebugInfo.addResourceEntry(resourcePath, loader);
-
     String packageName = getPackageName(resourcePath);
-    TIntObjectHashMap<Object> map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ?
+    IntObjectHashMap map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ?
                                     myClassPackagesCache : myResourcePackagesCache;
     int hash = packageName.hashCode();
     Object o = map.get(hash);
@@ -151,18 +133,14 @@ public class ClasspathCache {
 
   private void addNameEntry(String name, Loader loader) {
     name = transformName(name);
-    myDebugInfo.addNameEntry(name, loader);
 
     if (myNameFilter == null) {
       Object loaders = myResources2LoadersTempMap.get(name);
-      boolean added = false;
       if (loaders == null) {
         myResources2LoadersTempMap.put(name, loader);
-        added = true;
       }
       else if (loaders instanceof Loader && loaders != loader) {
         myResources2LoadersTempMap.put(name, new Loader[] {(Loader)loaders, loader});
-        added = true;
       } else if (loaders instanceof Loader[]) {
         boolean weHaveThisLoader = false;
 
@@ -175,16 +153,9 @@ public class ClasspathCache {
 
         if (!weHaveThisLoader) {
           myResources2LoadersTempMap.put(name, ArrayUtil.append((Loader[])loaders, loader));
-          added = true;
         }
       }
-
-      if (doDebug && added) ++registeredBeforeClose;
     } else {
-      if (doDebug) {
-        if (!myNameFilter.maybeContains(name, loader)) ++registeredAfterClose;
-      }
-
       myNameFilter.add(name, loader);
     }
   }
@@ -200,53 +171,9 @@ public class ClasspathCache {
       if (myNameFilter == null) {
         Object loaders = myResources2LoadersTempMap.get(shortName);
         result = contains(loader, loaders);
-
-        if (doDebug) {
-          ++requestsWithoutNameFilter;
-          if (!result) ++hits;
-          boolean result2 = myDebugInfo.loaderHasName(shortName, loader);
-          if (result2 != result) {
-            ++diffs3;
-          }
-          Resource resource = loader.getResource(name, true);
-          if (resource != null && !result || resource == null && result) {
-            ++falseHits;
-          }
-
-          if (requestsWithoutNameFilter % 1000 == 0) {
-            LOG.debug("Avoided disk hits: " + hits + " from " + requestsWithoutNameFilter + ", false hits:" + falseHits + ", bitmap diffs:" + diffs3);
-          }
-        }
       }
       else {
         result = myNameFilter.maybeContains(shortName, loader);
-
-        if (doDebug) {
-          ++requestsWithNameFilter;
-          if (!result) ++avoidedDiskHits2;
-          boolean result2 = myDebugInfo.loaderHasName(shortName, loader);
-          if (result2 != result) {
-            ++diffs2;
-          }
-
-          Object loaders = myResources2LoadersTempMap.get(shortName);
-          if (result != contains(loader, loaders)) {
-            ++diffs;
-          }
-
-          Resource resource = loader.getResource(name, true);
-          if (resource == null && result) {
-            ++falseHits2;
-          }
-          if (resource != null && !result) {
-            ++falseHits2;
-          }
-
-          if (requestsWithNameFilter % 1000 == 0) {
-            LOG.debug("Avoided disk hits2: " + avoidedDiskHits2 + " from " +
-                      requestsWithNameFilter + "," + diffs + ", false hits:" + falseHits2 + ", bitmap diffs:" + diffs2);
-          }
-        }
       }
 
       return result;
@@ -292,31 +219,12 @@ public class ClasspathCache {
     return name;
   }
 
-  private int registeredBeforeClose;
-  private int registeredAfterClose;
-  private int hits;
-  private int requestsWithoutNameFilter;
-  private int falseHits;
-  private int requestsWithNameFilter;
-  private int avoidedDiskHits2;
-  private int falseHits2;
-  private int diffs;
-  private int diffs2;
-  private int diffs3;
-
   void nameSymbolsLoaded() {
     myLock.writeLock().lock();
 
     try {
       if (myNameFilter != null) {
-        if (doDebug && registeredAfterClose > 0) {
-          LOG.debug("Registered number of classes after close " + registeredAfterClose + " " + toString());
-        }
         return;
-      }
-
-      if (doDebug) {
-        LOG.debug("Registered number of classes before classes " + registeredBeforeClose + " " + toString());
       }
 
       int nBits = 0;
@@ -348,9 +256,7 @@ public class ClasspathCache {
       }
 
       myNameFilter = name2LoaderFilter;
-      if (!doDebug) {
-        myResources2LoadersTempMap = null;
-      }
+      myResources2LoadersTempMap = null;
     }
     finally {
       myLock.writeLock().unlock();
@@ -386,82 +292,6 @@ public class ClasspathCache {
         i /= 10;
       }
       return hash;
-    }
-  }
-
-  private static class DebugInfo {
-    private final HashMap<String, List<Loader>> myClassPackagesCache = new HashMap<String, List<Loader>>();
-    private final HashMap<String, List<Loader>> myResourcePackagesCache = new HashMap<String, List<Loader>>();
-    private final TIntHashSet myResourceIndex = new TIntHashSet();
-
-    private List<Loader> getLoaders(String resourcePath) {
-      boolean isClassFile = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION);
-      final int idx = resourcePath.lastIndexOf('/');
-      String packageName = idx > 0 ? resourcePath.substring(0, idx) : "";
-
-      Map<String, List<Loader>> map = isClassFile ? myClassPackagesCache : myResourcePackagesCache;
-      List<Loader> list = map.get(packageName);
-      if (list == null) {
-        list = new SmartList<Loader>();
-        map.put(packageName, list);
-      }
-
-      return list;
-    }
-
-    protected void addResourceEntry(String resourcePath, Loader loader) {
-      final List<Loader> loaders = getLoaders(resourcePath);
-      if (!loaders.contains(loader)) { // TODO Make linked hash set instead?
-        loaders.add(loader);
-      }
-    }
-
-    protected void addNameEntry(String name, Loader loader) {
-      int hash = hashFromNameAndLoader(name, loader);
-      myResourceIndex.add(hash);
-    }
-
-    protected static int hashFromNameAndLoader(String name, Loader loader) {
-      int hash = name.hashCode();
-      int i = loader.getIndex();
-      while(i > 0) {
-        hash = hash * 31 + ((i % 10) + '0');
-        i /= 10;
-      }
-      return hash;
-    }
-
-    public void checkLoadersCount(String resourcePath, Object o) {
-      List<Loader> loaders1 = getLoaders(resourcePath);
-      if (o == null && !loaders1.isEmpty() ||
-          o instanceof Loader && loaders1.size() != 1 ||
-          o instanceof Loader[] && loaders1.size() != ((Loader[])o).length
-        ) {
-        assert false;
-      }
-    }
-
-    protected boolean loaderHasName(String name, Loader loader) {
-      return myResourceIndex.contains(hashFromNameAndLoader(name, loader));
-    }
-  }
-
-  private static class NullDebugInfo extends DebugInfo {
-    @Override
-    public void checkLoadersCount(String resourcePath, Object o) {
-    }
-
-    @Override
-    protected void addResourceEntry(String resourcePath, Loader loader) {
-    }
-
-    @Override
-    protected void addNameEntry(String name, Loader loader) {
-    }
-
-    @Override
-    protected boolean loaderHasName(String name, Loader loader) {
-      return false;
     }
   }
 }

@@ -17,7 +17,10 @@ package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.IntObjectHashMap;
 import com.intellij.util.lang.UrlClassLoader;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,6 +45,52 @@ public class UrlClassLoaderTest extends TestCase {
     assertNotNull(UrlClassLoaderTest.class.getClassLoader().getResourceAsStream(name));
     assertNull(UrlClassLoader.build().get().getResourceAsStream(name));
     assertNotNull(UrlClassLoader.build().allowBootstrapResources().get().getResourceAsStream(name));
+  }
+
+  public void testIntObjectHashMap() {
+    final IntObjectHashMap map = new IntObjectHashMap();
+    final TIntObjectHashMap<Object> checkMap = new TIntObjectHashMap<Object>();
+    final TIntObjectHashMap<Object> dupesMap = new TIntObjectHashMap<Object>();
+    Random random = new Random();
+    for(int i = 0; i < 1000000; ++i) {
+      int key = random.nextInt();
+      String value = String.valueOf(random.nextInt());
+
+      if (!checkMap.contains(key)) {
+        map.put(key, value);
+        checkMap.put(key, value);
+        assertEquals(map.size(), checkMap.size());
+        assertEquals(value, map.get(key));
+      } else {
+        dupesMap.put(key, value);
+      }
+    }
+
+    dupesMap.put(0, "random string");
+
+    dupesMap.forEachEntry(new TIntObjectProcedure<Object>() {
+      @Override
+      public boolean execute(int key, Object value) {
+        checkMap.put(key, value);
+        map.put(key, value);
+        assertEquals(map.size(), checkMap.size());
+        assertEquals(value, map.get(key));
+        return true;
+      }
+    });
+
+    String value = "random string2";
+    checkMap.put(0, value);
+    map.put(0, value);
+
+    checkMap.forEachEntry(new TIntObjectProcedure<Object>() {
+      @Override
+      public boolean execute(int key, Object value) {
+        assertEquals(value, map.get(key));
+        return true;
+      }
+    });
+    assertEquals(map.size(), checkMap.size());
   }
 
   public void testConcurrentResourceLoading() throws Exception {

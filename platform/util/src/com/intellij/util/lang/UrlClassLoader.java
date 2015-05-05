@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakStringInterner;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
@@ -46,7 +45,7 @@ import java.util.List;
 public class UrlClassLoader extends ClassLoader {
   // Feature enabling flag for saving / restoring file system information for local class directories, see Builder#usePersistentClasspathIndexForLocalClassDirectories
   private static final boolean INDEX_PERSISTENCE_ENABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
-  @NonNls static final String CLASS_EXTENSION = ".class";
+  static final String CLASS_EXTENSION = ".class";
   private static boolean ourParallel = false;
 
   static {

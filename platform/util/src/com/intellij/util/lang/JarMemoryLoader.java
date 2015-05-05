@@ -16,14 +16,15 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.io.zip.ZipShort;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -36,7 +37,7 @@ import java.util.zip.ZipFile;
 public class JarMemoryLoader {
   public static final String SIZE_ENTRY = "META-INF/jb/$$size$$";
 
-  private final Map<String, Resource> myResources = new THashMap<String, Resource>();
+  private final Map<String, Resource> myResources = Collections.synchronizedMap(new HashMap<String, Resource>()); // todo do we need it ?
 
   private JarMemoryLoader() { }
 
