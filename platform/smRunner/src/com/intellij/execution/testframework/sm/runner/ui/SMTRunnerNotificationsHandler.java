@@ -39,6 +39,7 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
 
   public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
     if (testsRoot.isEmptySuite() &&
+        !testsRoot.isInterrupted() &&
         myConsoleProperties instanceof SMTRunnerConsoleProperties &&
         ((SMTRunnerConsoleProperties)myConsoleProperties).fixEmptySuite()) {
       return;
