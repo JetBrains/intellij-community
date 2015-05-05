@@ -73,7 +73,7 @@ public class DumpNewGroovyControlFlow extends AnAction implements DumbAware {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void passInner(GrControlFlowOwner owner) {
-    GrControlFlowAnalyzerImpl analyzer = new GrControlFlowAnalyzerImpl(new GrDfaValueFactory(owner.getProject()), owner);
+    GrControlFlowAnalyzerImpl analyzer = new GrControlFlowAnalyzerImpl(new GrDfaValueFactory(owner.getProject(), false), owner);
     ControlFlow flow = analyzer.buildControlFlow();
     System.out.println(owner.getText());
     System.out.println(flow);

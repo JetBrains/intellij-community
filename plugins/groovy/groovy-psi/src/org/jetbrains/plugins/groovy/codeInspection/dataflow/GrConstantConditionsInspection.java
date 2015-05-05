@@ -42,7 +42,7 @@ import java.util.Set;
 
 public class GrConstantConditionsInspection extends GroovySuppressableInspectionTool {
 
-  @SuppressWarnings("unused") public boolean UNKNOWN_MEMBERS_ARE_NULLABLE = false;
+  public boolean UNKNOWN_MEMBERS_ARE_NULLABLE = false;
 
   @NotNull
   @Override
@@ -50,7 +50,7 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
     return new GroovyPsiElementVisitor(new MyVisitor(problemsHolder, isOnTheFly));
   }
 
-  private static class MyVisitor extends GroovyElementVisitor {
+  private class MyVisitor extends GroovyElementVisitor {
     private final ProblemsHolder myProblemsHolder;
     private final boolean myIsOnTheFly;
 
@@ -75,9 +75,9 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
     }
   }
 
-  private static void check(@NotNull GrControlFlowOwner owner, @NotNull ProblemsHolder holder, final boolean onTheFly) {
+  private void check(@NotNull GrControlFlowOwner owner, @NotNull ProblemsHolder holder, final boolean onTheFly) {
     final GrDataFlowRunner<GrNullabilityInstructionVisitor> dfaRunner =
-      new GrDataFlowRunner<GrNullabilityInstructionVisitor>(owner.getProject()) {
+      new GrDataFlowRunner<GrNullabilityInstructionVisitor>(owner.getProject(), UNKNOWN_MEMBERS_ARE_NULLABLE) {
         @Override
         protected boolean shouldCheckTimeLimit() {
           if (!onTheFly) return false;

@@ -41,8 +41,8 @@ public class GrDfaValueFactory extends DfaValueFactory {
   private final GrDfaConstValueFactory myConstFactory;
   private final PsiElementFactory myElementFactory;
 
-  public GrDfaValueFactory(Project project) {
-    super(true, false);
+  public GrDfaValueFactory(Project project, boolean unknownMembersAreNullable) {
+    super(true, unknownMembersAreNullable);
     myVarFactory = new GrDfaVariableValue.FactoryImpl(this);
     myConstFactory = new GrDfaConstValueFactory(this);
     myElementFactory = PsiElementFactory.SERVICE.getInstance(project);

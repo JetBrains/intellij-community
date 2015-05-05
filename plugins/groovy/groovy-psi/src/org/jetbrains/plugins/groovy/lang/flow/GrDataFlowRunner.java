@@ -33,8 +33,8 @@ public class GrDataFlowRunner<V extends GrInstructionVisitor<V>> extends Abstrac
 
   private final GrDfaValueFactory myValueFactory;
 
-  public GrDataFlowRunner(Project project) {
-    myValueFactory = new GrDfaValueFactory(project);
+  public GrDataFlowRunner(Project project, boolean unknownMembersAreNullable) {
+    myValueFactory = new GrDfaValueFactory(project, unknownMembersAreNullable);
   }
 
   @Nullable
