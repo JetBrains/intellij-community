@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.Patches;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 
@@ -137,6 +138,8 @@ public class KeyStrokeAdapter implements KeyListener {
   // TODO: HACK because of Java7 required:
   // replace later with event.getExtendedKeyCode()
   private static int getExtendedKeyCode(KeyEvent event) {
+    //noinspection ConstantConditions
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
     try {
       Method method = KeyEvent.class.getMethod("getExtendedKeyCode");
       if (!method.isAccessible()) {
