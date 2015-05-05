@@ -91,7 +91,16 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   @Nullable
   public synchronized Point getLocation(@NotNull String key, Project project) {
-    Point point = myKey2Location.get(realKey(key, project));
+    return getSharedLocation(realKey(key, project));
+  }
+
+  /**
+   * @param key a string key to retrieve a location for
+   * @return the location stored for the given {@code key}, or {@code null} if it does not exist or it is wrong
+   */
+  @Nullable
+  public synchronized Point getSharedLocation(@NotNull String key) {
+    Point point = myKey2Location.get(key);
     if (point != null && !ScreenUtil.getScreenRectangle(point).contains(point)) {
       point = null;
     }
@@ -111,10 +120,19 @@ public class DimensionService implements PersistentStateComponent<Element> {
   }
 
   public synchronized void setLocation(@NotNull String key, Point point, Project project) {
-    key = realKey(key, project);
+    setSharedLocation(realKey(key, project), point);
+  }
 
-    if (point != null) {
-      myKey2Location.put(key, (Point)point.clone());
+  /**
+   * Stores the specified {@code location} for the given {@code key}. If {@code location} is {@code null}
+   * then the location stored for the given {@code key} will be removed.
+   *
+   * @param key      a string key to to save a location for
+   * @param location a location to save
+   */
+  public synchronized void setSharedLocation(@NotNull String key, Point location) {
+    if (location != null) {
+      myKey2Location.put(key, (Point)location.clone());
     }
     else {
       myKey2Location.remove(key);
@@ -134,7 +152,16 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
-    Dimension size = myKey2Size.get(realKey(key, project));
+    return getSharedSize(realKey(key, project));
+  }
+
+  /**
+   * @param key a string key to retrieve a size for
+   * @return the size stored for the given {@code key}, or {@code null} if it does not exist
+   */
+  @Nullable
+  public synchronized Dimension getSharedSize(@NotNull @NonNls String key) {
+    Dimension size = myKey2Size.get(key);
     return size != null ? (Dimension)size.clone() : null;
   }
 
@@ -151,8 +178,17 @@ public class DimensionService implements PersistentStateComponent<Element> {
   }
 
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
-    key = realKey(key, project);
+    setSharedSize(realKey(key, project), size);
+  }
 
+  /**
+   * Stores the specified {@code size} for the given {@code key}. If {@code size} is {@code null}
+   * then the size stored for the given {@code key} will be removed.
+   *
+   * @param key  a string key to to save size for
+   * @param size a size to save
+   */
+  public synchronized void setSharedSize(@NotNull @NonNls String key, Dimension size) {
     if (size != null) {
       myKey2Size.put(key, (Dimension)size.clone());
     }
