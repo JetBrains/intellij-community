@@ -211,9 +211,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     myEditors.get(1).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
     myEditors.get(2).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
 
-    if (mySyncScrollListener != null) {
-      mySyncScrollListener = null;
-    }
+    mySyncScrollListener = null;
   }
 
   protected void disableSyncScrollSupport(boolean disable) {

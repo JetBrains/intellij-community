@@ -21,7 +21,6 @@ import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
-import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -249,11 +248,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       myEditor2.getContentComponent().removeFocusListener(myEditorFocusListener2);
       myEditor2.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
     }
-    if (myEditor1 != null && myEditor2 != null) {
-      if (mySyncScrollSupport != null) {
-        mySyncScrollSupport = null;
-      }
-    }
+    mySyncScrollSupport = null;
   }
 
   protected void disableSyncScrollSupport(boolean disable) {
