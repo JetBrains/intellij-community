@@ -494,6 +494,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
     final DialogBuilder b = new DialogBuilder(myProject);
+    b.setPreferredFocusComponent(p.getPreferredFocusComponent());
     b.setTitle(message("create.patch.dialog.title"));
     b.setCenterPanel(p.getPanel());
     p.installOkEnabledListener(new Consumer<Boolean>() {
