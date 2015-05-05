@@ -147,6 +147,10 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     return myRequest;
   }
 
+  public boolean isDisposed() {
+    return myDisposed.get();
+  }
+
   //
   // Abstract
   //
