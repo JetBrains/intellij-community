@@ -137,11 +137,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = null;
-  private volatile DebuggerManagerThreadImpl myDebuggerManagerThread;
+  private final DebuggerManagerThreadImpl myDebuggerManagerThread;
   private static final int LOCAL_START_TIMEOUT = 30000;
 
   private final Semaphore myWaitFor = new Semaphore();
-  private boolean myIsFailed = false;
+  private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
   private final Disposable myDisposable = Disposer.newDisposable();
@@ -149,6 +149,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
+    myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(mySettingsListener);
     loadRenderers();
@@ -887,13 +888,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public DebuggerManagerThreadImpl getManagerThread() {
-    if (myDebuggerManagerThread == null) {
-      synchronized (this) {
-        if (myDebuggerManagerThread == null) {
-          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, getProject());
-        }
-      }
-    }
     return myDebuggerManagerThread;
   }
 
@@ -1838,14 +1832,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void fail() {
-    synchronized (this) {
-      if (myIsFailed) {
-        // need this in order to prevent calling stop() twice
-        return;
-      }
-      myIsFailed = true;
+    // need this in order to prevent calling stop() twice
+    if (myIsFailed.compareAndSet(false, true)) {
+      stop(false);
     }
-    stop(false);
   }
 
   private void createVirtualMachine(final String sessionName, final boolean pollConnection) {
