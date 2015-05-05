@@ -213,8 +213,9 @@ public class XmlPsiUtil {
                                             final PsiFile targetFile,
                                             final XmlEntityDecl.EntityContextType type,
                                             final XmlEntityRef entityRef) {
+    CachedValue<PsiElement> value;
     synchronized (PsiLock.LOCK) { // we depend on targetFile and entityRef
-      CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
+      value = entityRef.getUserData(PARSED_DECL_KEY);
       //    return entityDecl.parse(targetFile, type);
 
       if (value == null) {
@@ -229,11 +230,8 @@ public class XmlPsiUtil {
         }, false);
         entityRef.putUserData(PARSED_DECL_KEY, value);
       }
-
-      return value.getValue();
     }
+
+    return value.getValue();
   }
-
-
-
 }
