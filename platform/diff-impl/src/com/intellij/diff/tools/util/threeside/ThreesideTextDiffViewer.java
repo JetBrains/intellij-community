@@ -18,6 +18,7 @@ package com.intellij.diff.tools.util.threeside;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
+import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -30,11 +31,14 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.ThreesideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
-import com.intellij.diff.tools.util.base.TextDiffViewerBase;
+import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,7 +65,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
+public abstract class ThreesideTextDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(ThreesideTextDiffViewer.class);
 
   @NotNull private final EditorFactory myEditorFactory = EditorFactory.getInstance();
@@ -70,13 +74,14 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @NotNull protected final ThreesideTextContentPanel myContentPanel;
 
   @NotNull private final List<EditorEx> myEditors;
+  @NotNull private final List<? extends EditorEx> myEditableEditors;
   @NotNull private final List<TextEditorHolder> myHolders;
   @NotNull private final List<DocumentContent> myActualContents;
 
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener1 = new MyVisibleAreaListener(Side.LEFT);
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener2 = new MyVisibleAreaListener(Side.RIGHT);
 
-  @NotNull protected final MySetEditorSettingsAction myEditorSettingsAction;
+  @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
 
   @NotNull private final ThreesideFocusTrackerSupport myFocusTrackerSupport;
 
@@ -109,15 +114,25 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
     //new MyFocusOppositePaneAction().setupAction(myPanel, this); // TODO
 
-    myEditorSettingsAction = new MySetEditorSettingsAction();
+    myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
+
+    myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
+  }
+
+  @Override
+  @CalledInAwt
+  protected void onInit() {
+    super.onInit();
+    installEditorListeners();
   }
 
   @Override
   @CalledInAwt
   protected void onDispose() {
-    super.onDispose();
+    destroyEditorListeners();
     destroyEditors();
+    super.onDispose();
   }
 
   @Override
@@ -136,7 +151,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   protected List<TextEditorHolder> createEditors() {
-    boolean[] forceReadOnly = checkForceReadOnly();
+    boolean[] forceReadOnly = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
 
     List<TextEditorHolder> holders = new ArrayList<TextEditorHolder>(3);
     for (int i = 0; i < 3; i++) {
@@ -167,9 +182,10 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   //
 
   @CalledInAwt
-  @Override
   protected void installEditorListeners() {
-    super.installEditorListeners();
+    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors());
+
+    new TextDiffViewerUtil.EditorFontSizeSynchronizer(getEditors()).install(this);
 
     getEditor(ThreeSide.LEFT).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
     getEditor(ThreeSide.BASE).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
@@ -185,10 +201,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @CalledInAwt
-  @Override
   public void destroyEditorListeners() {
-    super.destroyEditorListeners();
-
     getEditor(ThreeSide.LEFT).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
     getEditor(ThreeSide.BASE).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
 
@@ -207,6 +220,16 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   //
   // Diff
   //
+
+  @NotNull
+  public TextDiffSettingsHolder.TextDiffSettings getTextSettings() {
+    return TextDiffViewerUtil.getTextSettings(myContext);
+  }
+
+  @NotNull
+  protected List<AnAction> createEditorPopupActions() {
+    return TextDiffViewerUtil.createEditorPopupActions();
+  }
 
   @Override
   protected void onDocumentChange(@NotNull DocumentEvent event) {
@@ -242,9 +265,13 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @NotNull
-  @Override
   protected List<? extends EditorEx> getEditors() {
     return myEditors;
+  }
+
+  @NotNull
+  protected List<? extends EditorEx> getEditableEditors() {
+    return myEditableEditors;
   }
 
   @NotNull
@@ -358,6 +385,12 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
                                                   mySide1.select(contents), mySide2.select(contents),
                                                   mySide1.select(titles), mySide2.select(titles));
       DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
+    }
+  }
+
+  protected class MyToggleAutoScrollAction extends TextDiffViewerUtil.ToggleAutoScrollAction {
+    public MyToggleAutoScrollAction() {
+      super(getTextSettings());
     }
   }
 

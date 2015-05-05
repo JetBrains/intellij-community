@@ -28,6 +28,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.threeside.ThreesideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
@@ -109,8 +110,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     group.add(new MyIgnorePolicySettingAction());
     //group.add(new MyHighlightPolicySettingAction()); // TODO
     group.add(new MyToggleExpandByDefaultAction());
-    group.add(new ToggleAutoScrollAction());
-    group.add(new EditorReadOnlyLockAction());
+    group.add(new MyToggleAutoScrollAction());
+    group.add(new MyEditorReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     group.add(Separator.getInstance());
@@ -131,7 +132,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     //group.add(Separator.getInstance());
     //group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
-    group.add(new ToggleAutoScrollAction());
+    group.add(new MyToggleAutoScrollAction());
     group.add(new MyToggleExpandByDefaultAction());
 
     return group;
@@ -155,6 +156,11 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   //
   // Diff
   //
+
+  @NotNull
+  public FoldingModelSupport.Settings getFoldingModelSettings() {
+    return TextDiffViewerUtil.getFoldingModelSettings(myContext);
+  }
 
   @Override
   protected void onSlowRediff() {
@@ -463,14 +469,22 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
   }
 
-  private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
+  private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
+    public MyToggleExpandByDefaultAction() {
+      super(getTextSettings());
+    }
+
     @Override
     protected void expandAll(boolean expand) {
       myFoldingModel.expandAll(expand);
     }
   }
 
-  private class MyIgnorePolicySettingAction extends IgnorePolicySettingAction {
+  private class MyIgnorePolicySettingAction extends TextDiffViewerUtil.IgnorePolicySettingAction {
+    public MyIgnorePolicySettingAction() {
+      super(getTextSettings());
+    }
+
     @NotNull
     @Override
     protected IgnorePolicy getCurrentSetting() {
@@ -483,6 +497,17 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       ArrayList<IgnorePolicy> settings = ContainerUtil.newArrayList(IgnorePolicy.values());
       settings.remove(IgnorePolicy.IGNORE_WHITESPACES_CHUNKS);
       return settings;
+    }
+
+    @Override
+    protected void onSettingsChanged() {
+      rediff();
+    }
+  }
+
+  protected class MyEditorReadOnlyLockAction extends TextDiffViewerUtil.EditorReadOnlyLockAction {
+    public MyEditorReadOnlyLockAction() {
+      super(getContext(), getEditableEditors());
     }
   }
 

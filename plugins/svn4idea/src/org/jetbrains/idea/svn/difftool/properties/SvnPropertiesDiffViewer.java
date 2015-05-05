@@ -109,12 +109,6 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
   @NotNull
   @Override
-  protected boolean[] checkForceReadOnly() {
-    return new boolean[]{true, true};
-  }
-
-  @NotNull
-  @Override
   protected Runnable performRediff(@NotNull ProgressIndicator indicator) {
     if (!myFirstRediff) return new EmptyRunnable();
     myFirstRediff = false;
@@ -439,6 +433,8 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       myContent1 = DiffContentFactory.getInstance().create(null, document1);
       myContent2 = DiffContentFactory.getInstance().create(null, document2);
       myEmbedded = embedded;
+
+      putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
     }
 
     @NotNull

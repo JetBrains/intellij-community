@@ -18,6 +18,7 @@ package com.intellij.diff.tools.util.twoside;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
+import com.intellij.diff.actions.impl.SetEditorSettingsAction;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
@@ -30,9 +31,12 @@ import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
-import com.intellij.diff.tools.util.base.TextDiffViewerBase;
+import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,7 +60,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
+public abstract class TwosideTextDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(TwosideTextDiffViewer.class);
 
   @NotNull private final EditorFactory myEditorFactory = EditorFactory.getInstance();
@@ -64,13 +68,14 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @NotNull protected final SimpleDiffPanel myPanel;
   @NotNull protected final TwosideContentPanel myContentPanel;
 
+  @NotNull private final List<? extends EditorEx> myEditableEditors;
   @Nullable private final TextEditorHolder myHolder1;
   @Nullable private final TextEditorHolder myHolder2;
 
   @Nullable private final DocumentContent myActualContent1;
   @Nullable private final DocumentContent myActualContent2;
 
-  @NotNull protected final MySetEditorSettingsAction myEditorSettingsAction;
+  @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
 
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener = new MyVisibleAreaListener();
 
@@ -102,17 +107,27 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     new MyFocusOppositePaneAction(true).setupAction(myPanel);
     new MyFocusOppositePaneAction(false).setupAction(myPanel);
 
-    myEditorSettingsAction = new MySetEditorSettingsAction();
+    myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
     new MyOpenInEditorWithMouseAction().register(getEditors());
+
+    myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
+  }
+
+  @Override
+  @CalledInAwt
+  protected void onInit() {
+    super.onInit();
+    installEditorListeners();
   }
 
   @Override
   @CalledInAwt
   protected void onDispose() {
-    super.onDispose();
+    destroyEditorListeners();
     destroyEditors();
+    super.onDispose();
   }
 
   @Override
@@ -131,7 +146,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   protected List<TextEditorHolder> createEditors() {
-    boolean[] forceReadOnly = checkForceReadOnly();
+    boolean[] forceReadOnly = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
 
     TextEditorHolder holder1 = null;
     TextEditorHolder holder2 = null;
@@ -158,6 +173,16 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   // Diff
   //
 
+  @NotNull
+  public TextDiffSettingsHolder.TextDiffSettings getTextSettings() {
+    return TextDiffViewerUtil.getTextSettings(myContext);
+  }
+
+  @NotNull
+  protected List<AnAction> createEditorPopupActions() {
+    return TextDiffViewerUtil.createEditorPopupActions();
+  }
+
   @Override
   protected void onDocumentChange(@NotNull DocumentEvent event) {
     super.onDocumentChange(event);
@@ -174,9 +199,12 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @CalledInAwt
-  @Override
   protected void installEditorListeners() {
-    super.installEditorListeners();
+    new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors());
+
+    new TextDiffViewerUtil.EditorFontSizeSynchronizer(getEditors()).install(this);
+
+
     if (getEditor1() != null) {
       getEditor1().getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     }
@@ -192,9 +220,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @CalledInAwt
-  @Override
   protected void destroyEditorListeners() {
-    super.destroyEditorListeners();
     if (getEditor1() != null) {
       getEditor1().getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
     }
@@ -215,9 +241,13 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   //
 
   @NotNull
-  @Override
   protected List<? extends EditorEx> getEditors() {
     return ContainerUtil.list(getEditor1(), getEditor2());
+  }
+
+  @NotNull
+  protected List<? extends EditorEx> getEditableEditors() {
+    return myEditableEditors;
   }
 
   @NotNull
@@ -381,6 +411,12 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
 
       return content.getOpenFileDescriptor(offset);
+    }
+  }
+
+  protected class MyToggleAutoScrollAction extends TextDiffViewerUtil.ToggleAutoScrollAction {
+    public MyToggleAutoScrollAction() {
+      super(getTextSettings());
     }
   }
 

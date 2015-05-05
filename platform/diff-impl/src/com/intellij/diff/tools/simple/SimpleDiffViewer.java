@@ -26,6 +26,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
+import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
@@ -112,10 +113,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<AnAction>();
 
-    group.add(new IgnorePolicySettingAction());
-    group.add(new HighlightPolicySettingAction());
+    group.add(new MyIgnorePolicySettingAction());
+    group.add(new MyHighlightPolicySettingAction());
     group.add(new MyToggleExpandByDefaultAction());
-    group.add(new ToggleAutoScrollAction());
+    group.add(new MyToggleAutoScrollAction());
     group.add(new MyReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
@@ -128,11 +129,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     List<AnAction> group = new ArrayList<AnAction>();
 
     group.add(Separator.getInstance());
-    group.add(new IgnorePolicySettingAction().getPopupGroup());
+    group.add(new MyIgnorePolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
-    group.add(new HighlightPolicySettingAction().getPopupGroup());
+    group.add(new MyHighlightPolicySettingAction().getPopupGroup());
     group.add(Separator.getInstance());
-    group.add(new ToggleAutoScrollAction());
+    group.add(new MyToggleAutoScrollAction());
     group.add(new MyToggleExpandByDefaultAction());
 
     return group;
@@ -178,6 +179,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
   // Diff
   //
+
+  @NotNull
+  public FoldingModelSupport.Settings getFoldingModelSettings() {
+    return TextDiffViewerUtil.getFoldingModelSettings(myContext);
+  }
 
   @Override
   protected void onSlowRediff() {
@@ -576,7 +582,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  private class MyReadOnlyLockAction extends EditorReadOnlyLockAction {
+  private class MyReadOnlyLockAction extends TextDiffViewerUtil.EditorReadOnlyLockAction {
+    public MyReadOnlyLockAction() {
+      super(getContext(), getEditableEditors());
+    }
+
     @Override
     protected void doApply(boolean readOnly) {
       super.doApply(readOnly);
@@ -763,7 +773,33 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     myDiffChanges.remove(change);
   }
 
-  private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
+  private class MyHighlightPolicySettingAction extends TextDiffViewerUtil.HighlightPolicySettingAction {
+    public MyHighlightPolicySettingAction() {
+      super(getTextSettings());
+    }
+
+    @Override
+    protected void onSettingsChanged() {
+      rediff();
+    }
+  }
+
+  private class MyIgnorePolicySettingAction extends TextDiffViewerUtil.IgnorePolicySettingAction {
+    public MyIgnorePolicySettingAction() {
+      super(getTextSettings());
+    }
+
+    @Override
+    protected void onSettingsChanged() {
+      rediff();
+    }
+  }
+
+  private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
+    public MyToggleExpandByDefaultAction() {
+      super(getTextSettings());
+    }
+
     @Override
     protected void expandAll(boolean expand) {
       if (myFoldingModel != null) myFoldingModel.expandAll(expand);
