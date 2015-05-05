@@ -113,7 +113,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     super();
     myUI = UI;
     myLogDataHolder = logDataHolder;
-    myGraphCommitCellRenderer = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, this);
+    myGraphCommitCellRenderer = new GraphCommitCellRender(logDataHolder, myGraphCellPainter, this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);

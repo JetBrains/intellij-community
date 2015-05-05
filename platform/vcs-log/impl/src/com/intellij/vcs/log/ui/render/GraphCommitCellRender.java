@@ -12,7 +12,6 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PrintParameters;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +37,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
   @Nullable private PaintInfo myGraphImage;
   @Nullable private Collection<VcsRef> myRefs;
 
-  public GraphCommitCellRender(@NotNull VcsLogColorManager colorManager,
-                               @NotNull VcsLogDataHolder dataHolder,
+  public GraphCommitCellRender(@NotNull VcsLogDataHolder dataHolder,
                                @NotNull GraphCellPainter painter,
                                @NotNull VcsLogGraphTable table) {
     myDataHolder = dataHolder;
