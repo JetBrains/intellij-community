@@ -204,8 +204,4 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   protected int getSelectionMode() {
     return TreeSelectionModel.SINGLE_TREE_SELECTION;
   }
-
-  public boolean hideTreeRootIfNotEmpty() {
-    return false;
-  }
 }
