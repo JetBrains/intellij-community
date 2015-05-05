@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.tools.util.threeside;
+package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;

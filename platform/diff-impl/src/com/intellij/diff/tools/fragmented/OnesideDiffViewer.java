@@ -29,7 +29,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.*;
-import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
+import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;

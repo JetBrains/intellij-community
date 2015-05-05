@@ -27,7 +27,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
-import com.intellij.diff.tools.util.twoside.TwosideTextDiffViewer;
+import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil.DocumentData;
