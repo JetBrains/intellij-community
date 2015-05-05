@@ -46,13 +46,18 @@ import java.util.*;
  */
 public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static final Map<String, String> NUMPY_ALIAS_TO_REAL_TYPE = new HashMap<String, String>();
+  public static String NDARRAY = "numpy.core.multiarray.ndarray";
+
+  private static String NDARRAY_OR_ITERABLE = NDARRAY + " or collections.Iterable";
 
   static {
-    NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", "numpy.core.multiarray.ndarray");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.ndarray", "numpy.core.multiarray.ndarray");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("ndarray", NDARRAY);
+    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.ndarray", NDARRAY);
     // 184 occurrences
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", "numpy.core.multiarray.ndarray or collections.Iterable");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array-like", "numpy.core.multiarray.ndarray or collections.Iterable");
+
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array_like", NDARRAY_OR_ITERABLE);
+
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array-like", NDARRAY_OR_ITERABLE);
     // Parameters marked as 'data-type' actually get any Python type identifier such as 'bool' or
     // an instance of 'numpy.core.multiarray.dtype', however the type checker isn't able to check it.
     // 30 occurrences
@@ -61,8 +66,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     // 16 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("scalar", "int or long or float or complex");
     // 10 occurrences
-    NUMPY_ALIAS_TO_REAL_TYPE.put("array", "numpy.core.multiarray.ndarray or collections.Iterable");
-    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.array", "numpy.core.multiarray.ndarray or collections.Iterable");
+    NUMPY_ALIAS_TO_REAL_TYPE.put("array", NDARRAY_OR_ITERABLE);
+    NUMPY_ALIAS_TO_REAL_TYPE.put("numpy.array", NDARRAY_OR_ITERABLE);
     // 9 occurrences
     NUMPY_ALIAS_TO_REAL_TYPE.put("any", "object");
     // 5 occurrences
