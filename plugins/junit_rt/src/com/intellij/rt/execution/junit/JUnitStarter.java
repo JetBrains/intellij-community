@@ -225,7 +225,7 @@ public class JUnitStarter {
         }
       }
       testRunner.setStreams(out, err, 0);
-      return testRunner.startRunnerWithArgs(args, listeners, name, ourCount, !SM_RUNNER);
+      return testRunner.startRunnerWithArgs(args, listeners, name, ourCount, true);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);
