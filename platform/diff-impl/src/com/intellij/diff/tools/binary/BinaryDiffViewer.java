@@ -18,43 +18,30 @@ package com.intellij.diff.tools.binary;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.FocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
+import com.intellij.diff.tools.util.twoside.TwosideContentPanel;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -69,30 +57,24 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   public static final Logger LOG = Logger.getInstance(BinaryDiffViewer.class);
 
   @NotNull private final SimpleDiffPanel myPanel;
-  @NotNull private final BinaryContentPanel myContentPanel;
+  @NotNull private final TwosideContentPanel myContentPanel;
   @NotNull private final MyStatusPanel myStatusPanel;
 
-  @Nullable private final FileEditor myEditor1;
-  @Nullable private final FileEditor myEditor2;
-  @Nullable private final FileEditorProvider myEditorProvider1;
-  @Nullable private final FileEditorProvider myEditorProvider2;
+  @Nullable private final BinaryEditorHolder myHolder1;
+  @Nullable private final BinaryEditorHolder myHolder2;
 
   @NotNull private final FocusTrackerSupport.TwosideFocusTrackerSupport myFocusTrackerSupport;
 
   public BinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
+    List<BinaryEditorHolder> holders = createEditors();
+    myHolder1 = holders.get(0);
+    myHolder2 = holders.get(1);
+
     List<JComponent> titlePanel = DiffUtil.createSimpleTitles(myRequest);
-    Couple<Pair<FileEditor, FileEditorProvider>> editors = createEditors();
-
-    myEditor1 = editors.first.first;
-    myEditorProvider1 = editors.first.second;
-    myEditor2 = editors.second.first;
-    myEditorProvider2 = editors.second.second;
-    assert myEditor1 != null || myEditor2 != null;
-
-    myFocusTrackerSupport = new FocusTrackerSupport.TwosideFocusTrackerSupport(getEditor1(), getEditor2());
-    myContentPanel = new BinaryContentPanel(titlePanel, getEditor1(), getEditor2());
+    myFocusTrackerSupport = new FocusTrackerSupport.TwosideFocusTrackerSupport(myHolder1, myHolder2);
+    myContentPanel = new TwosideContentPanel(titlePanel, myHolder1, myHolder2);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
 
@@ -126,70 +108,25 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   //
 
   @NotNull
-  protected Couple<Pair<FileEditor, FileEditorProvider>> createEditors() {
+  protected List<BinaryEditorHolder> createEditors() {
     List<DiffContent> contents = myRequest.getContents();
 
-    Pair<FileEditor, FileEditorProvider> pair1;
-    Pair<FileEditor, FileEditorProvider> pair2;
-
-    try {
-      pair1 = createEditor(contents.get(0));
-      pair2 = createEditor(contents.get(1));
-      return Couple.of(pair1, pair2);
+    List<BinaryEditorHolder> holders = new ArrayList<BinaryEditorHolder>(2);
+    for (int i = 0; i < 2; i++) {
+      DiffContent content = contents.get(i);
+      if (content instanceof EmptyContent) {
+        holders.add(null);
+      }
+      else {
+        holders.add(BinaryEditorHolder.create(myProject, content));
+      }
     }
-    catch (IOException e) {
-      LOG.error(e);
-      Pair<FileEditor, FileEditorProvider> empty = Pair.empty();
-      return Couple.of(empty, empty);
-    }
+    return holders;
   }
-
-  @NotNull
-  private Pair<FileEditor, FileEditorProvider> createEditor(@NotNull final DiffContent content) throws IOException {
-    if (content instanceof EmptyContent) return Pair.empty();
-    if (content instanceof FileContent) {
-      Project project = myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject();
-      VirtualFile file = ((FileContent)content).getFile();
-
-      FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
-      if (providers.length == 0) throw new IOException("Can't find FileEditorProvider");
-
-      FileEditorProvider provider = providers[0];
-      FileEditor editor = provider.createEditor(project, file);
-
-      UIUtil.removeScrollBorder(editor.getComponent());
-
-      return Pair.create(editor, provider);
-    }
-    if (content instanceof DocumentContent) {
-      Document document = ((DocumentContent)content).getDocument();
-      final Editor editor = DiffUtil.createEditor(document, myProject, true);
-
-      TextEditorProvider provider = TextEditorProvider.getInstance();
-      TextEditor fileEditor = provider.getTextEditor(editor);
-
-      Disposer.register(fileEditor, new Disposable() {
-        @Override
-        public void dispose() {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-      });
-
-      return Pair.<FileEditor, FileEditorProvider>create(fileEditor, provider);
-    }
-    throw new IllegalArgumentException(content.getClass() + " - " + content.toString());
-  }
-
 
   private void destroyEditors() {
-    if (getEditor1() != null) {
-      assert myEditorProvider1 != null;
-      myEditorProvider1.disposeEditor(getEditor1());
-    }
-    if (getEditor2() != null) {
-      assert myEditorProvider2 != null;
-      myEditorProvider2.disposeEditor(getEditor2());
-    }
+    if (myHolder1 != null) Disposer.dispose(myHolder1);
+    if (myHolder2 != null) Disposer.dispose(myHolder2);
   }
 
   //
@@ -299,13 +236,13 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   }
 
   @Nullable
-  FileEditor getEditor2() {
-    return myEditor2;
+  FileEditor getEditor1() {
+    return myHolder1 != null ? myHolder1.getEditor() : null;
   }
 
   @Nullable
-  FileEditor getEditor1() {
-    return myEditor1;
+  FileEditor getEditor2() {
+    return myHolder2 != null ? myHolder2.getEditor() : null;
   }
 
   @NotNull
@@ -347,26 +284,11 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
 
   public static boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
     if (content instanceof EmptyContent) return true;
-    if (content instanceof DocumentContent) return true;
-    if (content instanceof FileContent) {
-      Project project = context.getProject();
-      if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-      VirtualFile file = ((FileContent)content).getFile();
-
-      return FileEditorProviderManager.getInstance().getProviders(project, file).length != 0;
-    }
-    return false;
+    return BinaryEditorHolder.canShowContent(content, context);
   }
 
   public static boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
-    if (content instanceof EmptyContent) return false;
-    if (content instanceof FileContent) {
-      if (content.getContentType() == null) return false;
-      if (content.getContentType().isBinary()) return true;
-      if (content.getContentType() instanceof UIBasedFileType) return true;
-      return false;
-    }
-    return false;
+    return BinaryEditorHolder.wantShowContent(content, context);
   }
 
   //

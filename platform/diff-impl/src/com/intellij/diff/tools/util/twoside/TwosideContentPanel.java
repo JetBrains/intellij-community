@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.tools.util.twoside;
 
+import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,12 @@ import java.util.List;
 
 public class TwosideContentPanel extends JPanel {
   @Nullable private final DiffSplitter mySplitter;
+
+  public TwosideContentPanel(@NotNull List<JComponent> titleComponents,
+                             @Nullable EditorHolder holder1,
+                             @Nullable EditorHolder holder2) {
+    this(titleComponents, getComponent(holder1), getComponent(holder2));
+  }
 
   public TwosideContentPanel(@NotNull List<JComponent> titleComponents,
                              @Nullable JComponent editor1,
@@ -71,5 +78,10 @@ public class TwosideContentPanel extends JPanel {
       add(editor, BorderLayout.CENTER);
       if (title != null) add(title, BorderLayout.NORTH);
     }
+  }
+
+  @Nullable
+  private static JComponent getComponent(@Nullable EditorHolder holder) {
+    return holder != null ? holder.getComponent() : null;
   }
 }

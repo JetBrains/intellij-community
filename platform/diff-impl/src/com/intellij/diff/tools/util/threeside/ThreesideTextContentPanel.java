@@ -15,9 +15,9 @@
  */
 package com.intellij.diff.tools.util.threeside;
 
+import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,11 +26,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ThreesideTextContentPanel extends ThreesideContentPanel {
-  @NotNull private final List<? extends Editor> myEditors;
+  @NotNull private final List<? extends TextEditorHolder> myEditors;
 
-  public ThreesideTextContentPanel(@NotNull List<? extends Editor> editors,
+  public ThreesideTextContentPanel(@NotNull List<? extends TextEditorHolder> editors,
                                    @NotNull List<JComponent> titleComponents) {
-    super(getComponents(editors), titleComponents);
+    super(editors, titleComponents);
     myEditors = editors;
   }
 
@@ -45,12 +45,12 @@ public class ThreesideTextContentPanel extends ThreesideContentPanel {
   }
 
   public void setScrollbarPainter(@NotNull ButtonlessScrollBarUI.ScrollbarRepaintCallback painter) {
-    ((EditorEx)myEditors.get(1)).registerScrollBarRepaintCallback(painter);
+    myEditors.get(1).getEditor().registerScrollBarRepaintCallback(painter);
   }
 
   @Override
   public void repaintDivider(@NotNull Side side) {
     super.repaintDivider(side);
-    if (side == Side.RIGHT) ((EditorEx)myEditors.get(1)).getScrollPane().getVerticalScrollBar().repaint();
+    if (side == Side.RIGHT) myEditors.get(1).getEditor().getScrollPane().getVerticalScrollBar().repaint();
   }
 }
