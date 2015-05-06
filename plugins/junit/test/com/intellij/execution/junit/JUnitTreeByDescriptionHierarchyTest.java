@@ -38,12 +38,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     for (String className : new String[]{"a.TestA", "a.TestB"}) {
       final Description aTestClass = Description.createSuiteDescription(className);
       root.addChild(aTestClass);
-      for (String paramName : new String[]{"[0]", "[1]"}) {
-        final Description param1 = Description.createSuiteDescription(paramName);
-        aTestClass.addChild(param1);
-        param1.addChild(Description.createTestDescription(className, "testName" + paramName));
-      }
-      
+      attachParameterizedTests(className, aTestClass);
     }
     doTest(root, "##teamcity[suiteTreeStarted name='TestA' locationHint='java:suite://a.TestA']\n" +
                  "##teamcity[suiteTreeStarted name='|[0|]' locationHint='java:suite://a.TestA.|[0|]']\n" +
@@ -61,6 +56,19 @@ public class JUnitTreeByDescriptionHierarchyTest {
                  "##teamcity[suiteTreeNode name='testName|[1|]' locationHint='java:test://a.TestB.testName|[1|]']\n" +
                  "##teamcity[suiteTreeEnded name='|[1|]']\n" +
                  "##teamcity[suiteTreeEnded name='TestB']\n");
+  }
+
+  @Test
+  public void testSingleParameterizedClass() throws Exception {
+    final String className = "a.TestA";
+    final Description aTestClassDescription = Description.createSuiteDescription(className);
+    attachParameterizedTests(className, aTestClassDescription);
+    doTest(aTestClassDescription, "##teamcity[suiteTreeStarted name='|[0|]' locationHint='java:suite://a.TestA.|[0|]']\n" +
+                                  "##teamcity[suiteTreeNode name='testName|[0|]' locationHint='java:test://a.TestA.testName|[0|]']\n" +
+                                  "##teamcity[suiteTreeEnded name='|[0|]']\n" +
+                                  "##teamcity[suiteTreeStarted name='|[1|]' locationHint='java:suite://a.TestA.|[1|]']\n" +
+                                  "##teamcity[suiteTreeNode name='testName|[1|]' locationHint='java:test://a.TestA.testName|[1|]']\n" +
+                                  "##teamcity[suiteTreeEnded name='|[1|]']\n");
   }
 
   @Test
@@ -92,11 +100,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     final Description root = Description.createSuiteDescription("root");
     final Description aTestClass = Description.createSuiteDescription("ATest");
     root.addChild(aTestClass);
-    for (String paramName : new String[]{"[0]", "[1]"}) {
-      final Description param1 = Description.createSuiteDescription(paramName);
-      aTestClass.addChild(param1);
-      param1.addChild(Description.createTestDescription("ATest", "testName" + paramName));
-    }
+    attachParameterizedTests("ATest", aTestClass);
     final Description suiteDescription = Description.createSuiteDescription("suite");
     root.addChild(suiteDescription);
     final Description aTestClassWithJUnit3Test = Description.createSuiteDescription("ATest");
@@ -113,6 +117,15 @@ public class JUnitTreeByDescriptionHierarchyTest {
                  "##teamcity[suiteTreeEnded name='ATest']\n");
   }
 
+
+  private static void attachParameterizedTests(String className, Description aTestClass) {
+    for (String paramName : new String[]{"[0]", "[1]"}) {
+      final Description param1 = Description.createSuiteDescription(paramName);
+      aTestClass.addChild(param1);
+      param1.addChild(Description.createTestDescription(className, "testName" + paramName));
+    }
+  }
+  
   private static void doTest(Description description, String expected) {
     final StringBuffer buf = new StringBuffer();
     new SMTestSender(new PrintStream(new OutputStream() {
@@ -150,6 +163,8 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
     Assert.assertEquals("output: " + buf, "##teamcity[suiteTreeNode name='warning' locationHint='java:test://junit.framework.TestSuite$1.warning']\n" +
                                           "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
+                                          "##teamcity[rootName name = 'TestA']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='warning' locationHint='java:test://junit.framework.TestSuite$1.warning']\n" +
                                           "\n" +

@@ -218,7 +218,7 @@ public class SMTestSender extends RunListener {
       final Object next = iterator.next();
       final List childTests = ((Description)next).getChildren();
       final Description nextDescription = (Description)next;
-      if (((myCurrentClassName == null || !myCurrentClassName.equals(getShortName(className))) && childTests.isEmpty() && JUnit4ReflectionUtil.getMethodName(nextDescription) != null || isParameter(nextDescription)) && !pass) {
+      if (((myCurrentClassName == null || !myCurrentClassName.equals(getShortName(className))) && (childTests.isEmpty() && JUnit4ReflectionUtil.getMethodName(nextDescription) != null || isParameter(nextDescription))) && !pass) {
         pass = true;
         String locationHint = className;
         if (isParameter((Description)description)) {
