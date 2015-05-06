@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   @Override
-  public void addAllFiles(@NotNull Collection<VirtualFile> files) {
+  public void addAllFiles(@NotNull Collection<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       if (file == null) {
         LOG.error("null passed among " + files);
