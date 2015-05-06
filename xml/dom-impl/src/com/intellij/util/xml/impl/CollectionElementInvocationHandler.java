@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.events.DomEvent;
@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class CollectionElementInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl, ElementStub>{
+public class CollectionElementInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl, ElementStub> {
 
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
                                             final AbstractCollectionChildDescription description,
@@ -47,7 +47,12 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
                                             DomManagerImpl manager,
                                             ElementStub stub) {
     super(childDescription.getType(), new StubParentStrategy(stub), tagName, childDescription, manager, true, stub);
+  }
 
+  @Nullable
+  @Override
+  protected String getValue() {
+    return myStub == null ? super.getValue() : myStub.getValue();
   }
 
   @Override

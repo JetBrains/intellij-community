@@ -49,6 +49,8 @@ public class DomStubBuilderTest extends DomStubTest {
     doBuilderTest("foo.xml", "File:foo\n" +
                              "  Element:foo\n" +
                              "    Element:id:foo\n" +
+                             "    Element:list:list0\n" +
+                             "    Element:list:list1\n" +
                              "    Element:bar\n" +
                              "      Attribute:string:xxx\n" +
                              "      Attribute:int:666\n" +
