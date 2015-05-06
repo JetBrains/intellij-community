@@ -101,6 +101,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_METHOD_PARENTHESES);
 
     addOption("METHOD_CALL_CHAIN_WRAP", WRAPPING_CALL_CHAIN, WRAP_OPTIONS, WRAP_VALUES);
+    addOption("WRAP_FIRST_METHOD_IN_CALL_CHAIN", ApplicationBundle.message("wrapping.chained.method.call.first.on.new.line"), WRAPPING_CALL_CHAIN);
     addOption("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_CALL_CHAIN);
 
     addOption("IF_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), WRAPPING_IF_STATEMENT, BRACE_OPTIONS, BRACE_VALUES);

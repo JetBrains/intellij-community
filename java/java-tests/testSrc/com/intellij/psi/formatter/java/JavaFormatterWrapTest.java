@@ -590,5 +590,33 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   }
 
+  public void test_ChainedCalls_FirstOnNewLine() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
 
+    doMethodTest(
+      "obj.call().call().call().call();",
+      "obj\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call();"
+    );
+
+    doMethodTest(
+      "call().call().call().call();",
+      "call()\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call();"
+    );
+
+    doMethodTest(
+      "nestedCall(call().call().call().call());",
+      "nestedCall(call()\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call());"
+    );
+  }
 }
