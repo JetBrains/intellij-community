@@ -214,6 +214,14 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+
+  private void fireRootPresentationAdded(String rootName, @Nullable String comment) {
+    final GeneralTestEventsProcessor processor = myProcessor;
+    if (processor != null) {
+      processor.onRootPresentationAdded(rootName, comment);
+    }
+  }
+
   private void fireOnSuiteTreeStarted(String suiteName, String locationHint) {
 
     final GeneralTestEventsProcessor processor = myProcessor;
@@ -308,6 +316,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String SUITE_TREE_STARTED = "suiteTreeStarted";
     @NonNls private static final String SUITE_TREE_ENDED = "suiteTreeEnded";
     @NonNls private static final String SUITE_TREE_NODE = "suiteTreeNode";
+    @NonNls private static final String ROOT_PRESENTATION = "rootName";
+
     @NonNls private static final String ATTR_KEY_STATUS = "status";
     @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
     @NonNls private static final String ATTR_VALUE_STATUS_WARNING = "WARNING";
@@ -488,6 +498,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
       else if (SUITE_TREE_NODE.equals(name)) {
         fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
+      }
+      else if (ROOT_PRESENTATION.equals(name)) {
+        final Map<String, String> attributes = msg.getAttributes();
+        fireRootPresentationAdded(attributes.get("name"), attributes.get("comment"));
       }
       else {
         GeneralToSMTRunnerEventsConvertor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
