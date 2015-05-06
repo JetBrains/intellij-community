@@ -40,7 +40,9 @@ public class TestNGTreeHierarchyTest {
     test.getClasses().add(xmlClass);
     suite.getTests().add(test);
     
-    doTest(suite, "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
+    doTest(suite, "\n" +
+                  "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
+                  "\n" +
                   "##teamcity[testStarted name='test1' locationHint='java:test://a.ATest.test1']\n" +
                   "\n" +
                   "##teamcity[testFinished name='test1']\n");
@@ -60,22 +62,29 @@ public class TestNGTreeHierarchyTest {
     }
     listener.onSuiteFinish(className);
 
-    Assert.assertEquals("output: " + buf, "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
+    Assert.assertEquals("output: " + buf, "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='setUp' locationHint='java:test://a.ATest.setUp']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='setUp']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='test1' locationHint='java:test://a.ATest.test1']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='test1']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='tearDown' locationHint='java:test://a.ATest.tearDown']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='tearDown']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='setUp' locationHint='java:test://a.ATest.setUp']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='setUp']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='test2' locationHint='java:test://a.ATest.test2']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='test2']\n" +
+                                          "\n" +
                                           "##teamcity[testStarted name='tearDown' locationHint='java:test://a.ATest.tearDown']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='tearDown']\n" +
