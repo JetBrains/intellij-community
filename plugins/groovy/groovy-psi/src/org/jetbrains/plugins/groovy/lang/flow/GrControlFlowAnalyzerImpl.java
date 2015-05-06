@@ -723,18 +723,18 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       if (dot == mOPTIONAL_DOT || dot == mSPREAD_DOT) {
         addInstruction(new DupInstruction<V>()); // save qualifier for later use
         pushNull();
-        addInstruction(new BinopInstruction(DfaRelation.EQ, referenceExpression));
-        final ConditionalGotoInstruction gotoToNotNull = addInstruction(new ConditionalGotoInstruction(null, true, qualifierExpression));
-
-        // null branch
-        pop();        // pop duplicated qualifier
-        pushNull();
-        final GotoInstruction<V> gotoEnd = addInstruction(new GotoInstruction<V>(null));
-        gotoToNotNull.setOffset(flow.getNextOffset());
+        addInstruction(new BinopInstruction(DfaRelation.NE, referenceExpression));
+        final ConditionalGotoInstruction gotoToNull = addInstruction(new ConditionalGotoInstruction(null, true, qualifierExpression));
 
         // not null branch
         // qualifier is on top of stack
         myExpressionHelper.dereference(qualifierExpression, referenceExpression, writing);
+        final GotoInstruction<V> gotoEnd = addInstruction(new GotoInstruction<V>(null));
+        gotoToNull.setOffset(flow.getNextOffset());
+
+        // null branch
+        pop();        // pop duplicated qualifier
+        pushNull();
         gotoEnd.setOffset(flow.getNextOffset());
       }
       else {

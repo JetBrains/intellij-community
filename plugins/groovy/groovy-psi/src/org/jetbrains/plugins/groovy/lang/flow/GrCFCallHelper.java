@@ -197,23 +197,24 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     if (invokedReference.getDotTokenType() == mOPTIONAL_DOT) {
       myAnalyzer.addInstruction(new DupInstruction<V>()); // save qualifier for later use
       myAnalyzer.pushNull();
-      myAnalyzer.addInstruction(new BinopInstruction(DfaRelation.EQ, invokedReference));
+      myAnalyzer.addInstruction(new BinopInstruction(DfaRelation.NE, invokedReference));
       final ConditionalGotoInstruction gotoToNotNull = myAnalyzer.addInstruction(new ConditionalGotoInstruction(null, true, qualifier));
+
+      // not null branch
+      // qualifier is on top of stack
+      processMethodCallStraight(highlight, result, arguments);
+
+      final GotoInstruction<V> gotoEnd = myAnalyzer.addInstruction(new GotoInstruction<V>(null));
+      gotoToNotNull.setOffset(myAnalyzer.flow.getNextOffset());
 
       // null branch
       // even if qualifier is null, groovy evaluates arguments
-      final int argumentsToPop = arguments.runArguments();//visitArguments(namedArguments, expressionArguments, closureArguments);
+      final int argumentsToPop = arguments.runArguments();
       for (int i = 0; i < argumentsToPop; i++) {
         myAnalyzer.pop();
       }
       myAnalyzer.pop();        // pop duplicated qualifier
       myAnalyzer.pushNull();
-      final GotoInstruction<V> gotoEnd = myAnalyzer.addInstruction(new GotoInstruction<V>(null));
-
-      // not null branch
-      gotoToNotNull.setOffset(myAnalyzer.flow.getNextOffset());
-      // qualifier is on top of stack
-      processMethodCallStraight(highlight, result, arguments);
       gotoEnd.setOffset(myAnalyzer.flow.getNextOffset());
     }
     else {
