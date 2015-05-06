@@ -17,7 +17,7 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DefaultDebugUIEnvironment;
+import com.intellij.debugger.DefaultDebugEnvironment;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaDebugProcess;
@@ -87,7 +87,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
                                                       @NotNull ExecutionEnvironment env,
                                                       RemoteConnection connection,
                                                       boolean pollConnection) throws ExecutionException {
-    DebugEnvironment environment = new DefaultDebugUIEnvironment(env, state, connection, pollConnection).getEnvironment();
+    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollConnection);
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
     if (debuggerSession == null) {
       return null;
