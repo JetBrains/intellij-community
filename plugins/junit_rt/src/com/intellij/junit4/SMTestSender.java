@@ -43,8 +43,7 @@ public class SMTestSender extends RunListener {
 
   private String myCurrentClassName;
   private String myParamName;
-  private boolean myIgnoreTopSuite;
-  
+
   private PrintStream myPrintStream = System.out;
 
   public SMTestSender() {}
@@ -58,7 +57,6 @@ public class SMTestSender extends RunListener {
   }
 
   public void testRunStarted(Description description) throws Exception {
-    myCurrentClassName = myIgnoreTopSuite ? getShortName(description.toString()) : null;
     myPrintStream.println("##teamcity[enteredTheMatrix]\n");
   }
 
@@ -197,10 +195,10 @@ public class SMTestSender extends RunListener {
   private final List myEmptyTests = new ArrayList();  
   
   private void sendTree(Description description, Map groups, Description parent) {
+    final String className = JUnit4ReflectionUtil.getClassName(description);
     if (description.getChildren().isEmpty()) {
       final String methodName = JUnit4ReflectionUtil.getMethodName((Description)description);
       if (methodName != null) {
-        final String className = JUnit4ReflectionUtil.getClassName(description);
         myPrintStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName) + "\' " + getTestMethodLocation(methodName, className) + "]");
         if (isWarning(methodName, className)) {
           myEmptyTests.add(getShortName(JUnit4ReflectionUtil.getClassName(parent)));
@@ -220,9 +218,8 @@ public class SMTestSender extends RunListener {
       final Object next = iterator.next();
       final List childTests = ((Description)next).getChildren();
       final Description nextDescription = (Description)next;
-      if ((childTests.isEmpty() && JUnit4ReflectionUtil.getMethodName(nextDescription) != null || isParameter(nextDescription)) && !pass) {
+      if (((myCurrentClassName == null || !myCurrentClassName.equals(getShortName(className))) && childTests.isEmpty() && JUnit4ReflectionUtil.getMethodName(nextDescription) != null || isParameter(nextDescription)) && !pass) {
         pass = true;
-        final String className = JUnit4ReflectionUtil.getClassName((Description)description);
         String locationHint = className;
         if (isParameter((Description)description)) {
           final String displayName = nextDescription.getDisplayName();
@@ -277,16 +274,14 @@ public class SMTestSender extends RunListener {
   }
 
   public void sendTree(Description description) {
-    final List tests = description.getChildren();
-    if (tests.isEmpty()) {
-      myIgnoreTopSuite = true;
-    }
+    myCurrentClassName = getShortName(JUnit4ReflectionUtil.getClassName((Description)description));
     final HashMap group = new HashMap();
     groupTests(description, group);
     sendTree(description, group, null);
   }
 
   private static String getShortName(String fqName) {
+    if (fqName == null) return null;
     if (fqName.startsWith("[")) {
       //param name
       return fqName;
