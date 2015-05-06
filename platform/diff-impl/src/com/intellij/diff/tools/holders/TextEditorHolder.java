@@ -56,29 +56,38 @@ public class TextEditorHolder extends EditorHolder {
     return myEditor.getContentComponent();
   }
 
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myEditor.getContentComponent();
+  }
+
   //
   // Build
   //
 
-  @NotNull
-  public static TextEditorHolder create(@Nullable Project project, @NotNull DocumentContent content) {
-    return create(project, content, false);
-  }
+  public static class TextEditorHolderFactory extends EditorHolderFactory<TextEditorHolder> {
+    public static TextEditorHolderFactory INSTANCE = new TextEditorHolderFactory();
 
-  @NotNull
-  public static TextEditorHolder create(@Nullable Project project, @NotNull DocumentContent content, boolean forceReadOnly) {
-    EditorEx editor = DiffUtil.createEditor(content.getDocument(), project, forceReadOnly, true);
-    DiffUtil.configureEditor(editor, content, project);
-    return new TextEditorHolder(editor);
-  }
+    @NotNull
+    public TextEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
+      if (!(content instanceof DocumentContent)) throw new IllegalArgumentException(content.toString());
+      Project project = context.getProject();
+      DocumentContent documentContent = (DocumentContent)content;
 
-  public static boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
-    if (content instanceof DocumentContent) return true;
-    return false;
-  }
+      EditorEx editor = DiffUtil.createEditor(documentContent.getDocument(), project, false, true);
+      DiffUtil.configureEditor(editor, documentContent, project);
+      return new TextEditorHolder(editor);
+    }
 
-  public static boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
-    if (content instanceof DocumentContent) return true;
-    return false;
+    public boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
+      if (content instanceof DocumentContent) return true;
+      return false;
+    }
+
+    public boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
+      if (content instanceof DocumentContent) return true;
+      return false;
+    }
   }
 }

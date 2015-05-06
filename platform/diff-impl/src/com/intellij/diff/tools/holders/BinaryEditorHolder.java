@@ -71,65 +71,76 @@ public class BinaryEditorHolder extends EditorHolder {
     return myEditor.getComponent();
   }
 
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myEditor.getPreferredFocusedComponent();
+  }
+
   //
   // Build
   //
 
-  @NotNull
-  public static BinaryEditorHolder create(@Nullable Project project, @NotNull DiffContent content) {
-    if (content instanceof FileContent) {
-      if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-      VirtualFile file = ((FileContent)content).getFile();
+  public static class BinaryEditorHolderFactory extends EditorHolderFactory<BinaryEditorHolder> {
+    public static BinaryEditorHolderFactory INSTANCE = new BinaryEditorHolderFactory();
 
-      FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
-      if (providers.length == 0) throw new IllegalStateException("Can't find FileEditorProvider: " + file.getFileType());
-
-      FileEditorProvider provider = providers[0];
-      FileEditor editor = provider.createEditor(project, file);
-
-      UIUtil.removeScrollBorder(editor.getComponent());
-
-      return new BinaryEditorHolder(editor, provider);
-    }
-    if (content instanceof DocumentContent) {
-      Document document = ((DocumentContent)content).getDocument();
-      final Editor editor = DiffUtil.createEditor(document, project, true);
-
-      TextEditorProvider provider = TextEditorProvider.getInstance();
-      TextEditor fileEditor = provider.getTextEditor(editor);
-
-      Disposer.register(fileEditor, new Disposable() {
-        @Override
-        public void dispose() {
-          EditorFactory.getInstance().releaseEditor(editor);
-        }
-      });
-
-      return new BinaryEditorHolder(fileEditor, provider);
-    }
-
-    throw new IllegalArgumentException(content.getClass() + " - " + content.toString());
-  }
-
-  public static boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
-    if (content instanceof DocumentContent) return true;
-    if (content instanceof FileContent) {
+    @NotNull
+    public BinaryEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
       Project project = context.getProject();
-      if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-      VirtualFile file = ((FileContent)content).getFile();
+      if (content instanceof FileContent) {
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        VirtualFile file = ((FileContent)content).getFile();
 
-      return FileEditorProviderManager.getInstance().getProviders(project, file).length != 0;
+        FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
+        if (providers.length == 0) throw new IllegalStateException("Can't find FileEditorProvider: " + file.getFileType());
+
+        FileEditorProvider provider = providers[0];
+        FileEditor editor = provider.createEditor(project, file);
+
+        UIUtil.removeScrollBorder(editor.getComponent());
+
+        return new BinaryEditorHolder(editor, provider);
+      }
+      if (content instanceof DocumentContent) {
+        Document document = ((DocumentContent)content).getDocument();
+        final Editor editor = DiffUtil.createEditor(document, project, true);
+
+        TextEditorProvider provider = TextEditorProvider.getInstance();
+        TextEditor fileEditor = provider.getTextEditor(editor);
+
+        Disposer.register(fileEditor, new Disposable() {
+          @Override
+          public void dispose() {
+            EditorFactory.getInstance().releaseEditor(editor);
+          }
+        });
+
+        return new BinaryEditorHolder(fileEditor, provider);
+      }
+
+      throw new IllegalArgumentException(content.getClass() + " - " + content.toString());
     }
-    return false;
-  }
 
-  public static boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
-    if (content instanceof FileContent) {
-      if (content.getContentType() == null) return false;
-      if (content.getContentType().isBinary()) return true;
-      if (content.getContentType() instanceof UIBasedFileType) return true;
+    public boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
+      if (content instanceof DocumentContent) return true;
+      if (content instanceof FileContent) {
+        Project project = context.getProject();
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        VirtualFile file = ((FileContent)content).getFile();
+
+        return FileEditorProviderManager.getInstance().getProviders(project, file).length != 0;
+      }
       return false;
     }
-    return false;
+
+    public boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
+      if (content instanceof FileContent) {
+        if (content.getContentType() == null) return false;
+        if (content.getContentType().isBinary()) return true;
+        if (content.getContentType() instanceof UIBasedFileType) return true;
+        return false;
+      }
+      return false;
+    }
   }
 }
