@@ -859,10 +859,6 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (returnValue != null) {
       returnValue.accept(this);
     }
-    else {
-      pushUnknown();
-    }
-    pop();
 
     finishElement(returnStatement);
   }
@@ -948,7 +944,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       exceptionHelper.returnCheckingFinally(false, element);
     }
     else if (element instanceof GrStatement && element.getParent() instanceof GrStatementOwner) {
-      if (element instanceof GrExpression) {
+      if (element instanceof GrExpression && !(element instanceof GrConditionalExpression)) {
         pop();
       }
       addInstruction(new FinishElementInstruction(element));

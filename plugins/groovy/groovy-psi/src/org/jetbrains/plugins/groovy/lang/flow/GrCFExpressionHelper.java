@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -183,9 +184,12 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
   }
 
   public static boolean shouldCheckReturn(GroovyPsiElement element) {
-    if (!(element instanceof GrExpression)) return false;
+    if (!(element instanceof GrExpression)
+        || element instanceof GrConditionalExpression
+        || element instanceof GrParenthesizedExpression) {
+      return false;
+    }
     final PsiElement parent = element.getParent();
-    if (parent instanceof GrConditionalExpression) return false;
     return parent instanceof GrReturnStatement && ((GrReturnStatement)parent).getReturnValue() == element
            || isCertainlyReturnStatement((GrStatement)element);
   }

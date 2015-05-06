@@ -250,7 +250,8 @@ public class ControlFlowBuilderUtil {
              parent instanceof GrSynchronizedStatement && st != ((GrSynchronizedStatement)parent).getMonitor() ||
              parent instanceof GrWhileStatement && st != ((GrWhileStatement)parent).getCondition() ||
              parent instanceof GrConditionalExpression && st != ((GrConditionalExpression)parent).getCondition() ||
-             parent instanceof GrElvisExpression) {
+             parent instanceof GrElvisExpression ||
+             parent instanceof GrParenthesizedExpression) {
       return isCertainlyReturnStatement((GrStatement)parent);
     }
 
