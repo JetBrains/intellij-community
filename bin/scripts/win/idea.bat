@@ -31,7 +31,7 @@ IF EXIST "%JRE%\lib\amd64" SET BITS=64
 :: Ensure IDE_HOME points to the directory where the IDE is installed.
 :: ---------------------------------------------------------------------
 SET IDE_BIN_DIR=%~dp0
-SET IDE_HOME=%IDE_BIN_DIR%\..
+SET IDE_HOME=%IDE_BIN_DIR%..
 
 SET MAIN_CLASS_NAME=%@@product_uc@@_MAIN_CLASS_NAME%
 IF "%MAIN_CLASS_NAME%" == "" SET MAIN_CLASS_NAME=com.intellij.idea.Main
@@ -43,13 +43,13 @@ IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.p
 :: ---------------------------------------------------------------------
 
 SET USER_VM_OPTIONS_FILE=%USERPROFILE%\.@@system_selector@@\@@vm_options@@.vmoptions
-SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions
-IF EXIST %IDE_BIN_DIR%\win\@@vm_options@@.vmoptions SET VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions
+SET VM_OPTIONS_FILE=%IDE_BIN_DIR%@@vm_options@@.vmoptions
+IF EXIST %IDE_BIN_DIR%win\@@vm_options@@.vmoptions SET VM_OPTIONS_FILE=%IDE_BIN_DIR%win\@@vm_options@@.vmoptions
 IF EXIST %USER_VM_OPTIONS_FILE% SET VM_OPTIONS_FILE=%USER_VM_OPTIONS_FILE%
 IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" SET VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%
 
 SET ACC=
-FOR /F "usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%\append.bat" "%%i"
+FOR /F "usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL "%IDE_BIN_DIR%append.bat" "%%i"
 IF EXIST "%VM_OPTIONS_FILE%" SET ACC=%ACC% -Djb.vmOptionsFile="%VM_OPTIONS_FILE%"
 
 SET COMMON_JVM_ARGS="-XX:ErrorFile=%USERPROFILE%\java_error_in_@@product_uc@@_%%p.log" "-Xbootclasspath/a:%IDE_HOME%/lib/boot.jar" -Didea.paths.selector=@@system_selector@@ %IDE_PROPERTIES_PROPERTY%
