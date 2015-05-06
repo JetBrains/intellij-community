@@ -3,6 +3,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides functionality to import a scheme from another non-IntelliJ IDEA format.
