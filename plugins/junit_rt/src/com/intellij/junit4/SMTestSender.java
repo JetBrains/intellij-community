@@ -58,6 +58,20 @@ public class SMTestSender extends RunListener {
 
   public void testRunStarted(Description description) throws Exception {
     myPrintStream.println("##teamcity[enteredTheMatrix]\n");
+    if (myCurrentClassName != null && !myCurrentClassName.startsWith("[")) {
+      int lastPointIdx = myCurrentClassName.lastIndexOf('.');
+      String name = myCurrentClassName;
+      String comment = null;
+      if (lastPointIdx >= 0) {
+        name = myCurrentClassName.substring(lastPointIdx + 1);
+        comment = myCurrentClassName.substring(0, lastPointIdx);
+      }
+
+      myPrintStream.println("##teamcity[rootName name = \'" + escapeName(name) + 
+                            (comment != null ? ("\' comment = \'" + escapeName(comment)) : "") + 
+                            "\']\n");
+      myCurrentClassName = getShortName(myCurrentClassName);
+    }
   }
 
   public void testRunFinished(Result result) throws Exception {
@@ -218,7 +232,7 @@ public class SMTestSender extends RunListener {
       final Object next = iterator.next();
       final List childTests = ((Description)next).getChildren();
       final Description nextDescription = (Description)next;
-      if (((myCurrentClassName == null || !myCurrentClassName.equals(getShortName(className))) && (childTests.isEmpty() && JUnit4ReflectionUtil.getMethodName(nextDescription) != null || isParameter(nextDescription))) && !pass) {
+      if (((myCurrentClassName == null || !myCurrentClassName.equals(className)) && (childTests.isEmpty() && JUnit4ReflectionUtil.getMethodName(nextDescription) != null || isParameter(nextDescription))) && !pass) {
         pass = true;
         String locationHint = className;
         if (isParameter((Description)description)) {
@@ -274,7 +288,7 @@ public class SMTestSender extends RunListener {
   }
 
   public void sendTree(Description description) {
-    myCurrentClassName = getShortName(JUnit4ReflectionUtil.getClassName((Description)description));
+    myCurrentClassName = JUnit4ReflectionUtil.getClassName((Description)description);
     final HashMap group = new HashMap();
     groupTests(description, group);
     sendTree(description, group, null);

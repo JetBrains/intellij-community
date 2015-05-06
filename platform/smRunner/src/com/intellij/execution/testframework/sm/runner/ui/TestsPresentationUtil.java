@@ -145,7 +145,10 @@ public class TestsPresentationUtil {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
     final String text;
-    if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
+    final String presentableName = testProxy.getPresentation();
+    if (presentableName != null) {
+      text = presentableName;
+    } else if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running.tests");
     } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.was.terminated");
@@ -153,6 +156,10 @@ public class TestsPresentationUtil {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.results");
     }
     renderer.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    final String comment = testProxy.getComment();
+    if (comment != null) {
+      renderer.append(" (" + comment + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    }
   }
 
   public static void formatRootNodeWithoutChildren(final SMTestProxy.SMRootTestProxy testProxy,

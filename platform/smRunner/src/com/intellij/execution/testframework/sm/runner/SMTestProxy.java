@@ -740,6 +740,9 @@ public class SMTestProxy extends AbstractTestProxy {
   public static class SMRootTestProxy extends SMTestProxy {
     private boolean myTestsReporterAttached; // false by default
 
+    private String myPresentation;
+    private String myComment;
+
     public SMRootTestProxy() {
       super("[root]", true, null);
     }
@@ -750,6 +753,22 @@ public class SMTestProxy extends AbstractTestProxy {
 
     public boolean isTestsReporterAttached() {
       return myTestsReporterAttached;
+    }
+
+    public String getPresentation() {
+      return myPresentation;
+    }
+
+    public void setPresentation(String presentation) {
+      myPresentation = presentation;
+    }
+
+    public void setComment(String comment) {
+      myComment = comment;
+    }
+
+    public String getComment() {
+      return myComment;
     }
 
     @Override
