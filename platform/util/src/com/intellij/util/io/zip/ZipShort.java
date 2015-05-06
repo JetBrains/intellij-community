@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public final class ZipShort implements Cloneable {
    * @since 1.1
    */
   public ZipShort(byte[] bytes, int offset) {
-    value = ZipShort.getValue(bytes, offset);
+    value = getValue(bytes, offset);
   }
 
   /**
@@ -102,7 +102,7 @@ public final class ZipShort implements Cloneable {
    *
    * @param bytes  the array of bytes
    * @param offset the offset to start
-   * @return the correspondanding java int value
+   * @return the corresponding java int value
    */
   public static int getValue(byte[] bytes, int offset) {
     int value = (bytes[offset + 1] << BYTE_1_SHIFT) & BYTE_1_MASK;
@@ -114,7 +114,7 @@ public final class ZipShort implements Cloneable {
    * Helper method to get the value as a java int from a two-byte array
    *
    * @param bytes the array of bytes
-   * @return the correspondanding java int value
+   * @return the corresponding java int value
    */
   public static int getValue(byte[] bytes) {
     return getValue(bytes, 0);

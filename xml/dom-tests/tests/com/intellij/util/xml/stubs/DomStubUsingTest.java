@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,13 @@ public class DomStubUsingTest extends DomStubTest {
 
     Foo foo = fileElement.getRootElement();
     List<Bar> bars = foo.getBars();
+    assertFalse(file.getNode().isParsed());
+
+    final List<GenericDomValue<String>> listElements = foo.getLists();
+    final GenericDomValue<String> listElement0 = listElements.get(0);
+    assertEquals("list0", listElement0.getValue());
+    final GenericDomValue<String> listElement1 = listElements.get(1);
+    assertEquals("list1", listElement1.getValue());
     assertFalse(file.getNode().isParsed());
 
     assertEquals(2, bars.size());
