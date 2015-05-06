@@ -148,12 +148,9 @@ public class JUnitTreeByDescriptionHierarchyTest {
     sender.testFinished(emptyDescription);
     sender.testRunFinished(new Result());
 
-    Assert.assertEquals("output: " + buf, "##teamcity[suiteTreeStarted name='TestA' locationHint='java:suite://TestA']\n" +
-                                          "##teamcity[suiteTreeNode name='warning' locationHint='java:test://junit.framework.TestSuite$1.warning']\n" +
-                                          "##teamcity[suiteTreeEnded name='TestA']\n" +
+    Assert.assertEquals("output: " + buf, "##teamcity[suiteTreeNode name='warning' locationHint='java:test://junit.framework.TestSuite$1.warning']\n" +
                                           "##teamcity[enteredTheMatrix]\n" +
                                           "\n" +
-                                          "##teamcity[testSuiteStarted name ='TestA']\n" +
                                           "##teamcity[testStarted name='warning' locationHint='java:test://junit.framework.TestSuite$1.warning']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='warning']\n" +

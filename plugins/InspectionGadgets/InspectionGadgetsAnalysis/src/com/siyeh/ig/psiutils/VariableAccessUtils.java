@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,16 +52,18 @@ public class VariableAccessUtils {
     return visitor.isPassed();
   }
 
-  public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, Set<String> excludes, @Nullable PsiElement context) {
-    return variableIsPassedAsMethodArgument(variable, excludes, context, false);
+  public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, @Nullable PsiElement context,
+                                                         Processor<PsiCall> callProcessor) {
+    return variableIsPassedAsMethodArgument(variable, context, false, callProcessor);
   }
 
-  public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, Set<String> excludes,
-                                                         @Nullable PsiElement context, boolean builderPattern) {
+  public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, @Nullable PsiElement context,
+                                                         boolean builderPattern, Processor<PsiCall> callProcessor) {
     if (context == null) {
       return false;
     }
-    final VariablePassedAsArgumentExcludedVisitor visitor = new VariablePassedAsArgumentExcludedVisitor(variable, excludes, builderPattern);
+    final VariablePassedAsArgumentExcludedVisitor visitor =
+      new VariablePassedAsArgumentExcludedVisitor(variable, builderPattern, callProcessor);
     context.accept(visitor);
     return visitor.isPassed();
   }

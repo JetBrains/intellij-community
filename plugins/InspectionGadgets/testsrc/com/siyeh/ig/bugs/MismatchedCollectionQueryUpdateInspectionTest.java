@@ -25,7 +25,11 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
       "package java.util.concurrent;" +
       "public class LinkedBlockingDeque<E> implements BlockingDeque {}",
       "package java.lang;" +
-      "public class InterruptedException extends Exception {}"
+      "public class InterruptedException extends Exception {}",
+      "package java.util.concurrent;" +
+      "public interface BlockingQueue<E> {" +
+      "  int drainTo(java.util.Collection<? super E> c);" +
+      "}"
     };
   }
 

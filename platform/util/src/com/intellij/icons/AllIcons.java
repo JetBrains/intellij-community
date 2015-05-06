@@ -580,7 +580,7 @@ public class AllIcons {
   public static final Icon Icon_CE_128 = IconLoader.getIcon("/icon_CE_128.png"); // 128x128
   public static final Icon Icon_CEsmall = IconLoader.getIcon("/icon_CEsmall.png"); // 16x16
   public static final Icon Icon_small = IconLoader.getIcon("/icon_small.png"); // 16x16
-
+  
   public static class Icons {
     
     public static class Ide {

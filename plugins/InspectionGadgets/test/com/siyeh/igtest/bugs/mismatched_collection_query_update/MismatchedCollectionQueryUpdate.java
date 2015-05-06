@@ -2,6 +2,7 @@ package com.siyeh.igtest.bugs.mismatched_collection_query_update;
 
 import java.util.*;
 import java.io.FileInputStream;
+import java.util.concurrent.BlockingQueue;
 
 public class MismatchedCollectionQueryUpdate {
     private Set foo = new HashSet();
@@ -267,6 +268,15 @@ class CollectionsUser {
 
   interface Supplier<T> {
     T get();
+  }
+
+  void draining(BlockingQueue<Object> queue) {
+    List<Object> objects = new ArrayList<>();
+    queue.drainTo(objects);
+    // ...
+    for (Object obj : objects) {
+      //  ...
+    }
   }
 }
 

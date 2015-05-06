@@ -41,7 +41,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onConfigurationSuccess(ITestResult result) {
-    onConfigurationStart(getClassName(result), getTestMethodName(result));
+    onConfigurationSuccess(getClassName(result), getTestMethodName(result));
   }
 
   public void onConfigurationFailure(ITestResult result) {
@@ -76,51 +76,55 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     }
   }
 
-  public void onConfigurationStart(String classFQName, String testMethodName) {
+  public void onConfigurationSuccess(String classFQName, String testMethodName) {
     final String className = getShortName(classFQName);
-    onSuiteStart(classFQName, true);
-
+    final boolean startedNode = onSuiteStart(classFQName, true);
     fireTestStarted(testMethodName, classFQName);
     onTestFinished(testMethodName);
-
-    myPrintStream.println();
-    onSuiteFinish(className);
+    if (startedNode) {
+      myPrintStream.println();
+      onSuiteFinish(className);
+    }
   }
 
   public void onConfigurationFailure(String classFQName, String testMethodName, Throwable throwable) {
     final String className = getShortName(classFQName);
-    onSuiteStart(classFQName, true);
+    final boolean start = onSuiteStart(classFQName, true);
 
     fireTestStarted(testMethodName, classFQName);
     onTestFailure(throwable, testMethodName);
 
-    myPrintStream.println();
-    onSuiteFinish(className);
-  }
-
-  public void onSuiteStart(String suiteName, boolean provideLocation) {
-    myPrintStream.print("##teamcity[testSuiteStarted name =\'" + escapeName(provideLocation ? getShortName(suiteName) : suiteName));
-    if (provideLocation) {
-      myPrintStream.print("\' locationHint = \'java:suite://" + suiteName);
+    if (start) {
+      myPrintStream.println();
+      onSuiteFinish(className);
     }
-    myPrintStream.println("\']");
   }
-
-  public void onSuiteFinish(String suiteName) {
-    myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(suiteName) + "\']");
-  }
-
-  public void onTestStart(String classFQName, String methodName) {
-    final String className = getShortName(classFQName);
+  
+  public boolean onSuiteStart(String suiteName, boolean provideLocation) {
+    final String className = getShortName(suiteName);
     if (myCurrentClassName == null || !myCurrentClassName.equals(className)) {
       if (myCurrentClassName != null) {
         onSuiteFinish(myCurrentClassName);
       }
-      onSuiteStart(classFQName, true);
+      myPrintStream.print("##teamcity[testSuiteStarted name =\'" + escapeName(provideLocation ? getShortName(suiteName) : suiteName));
+      if (provideLocation) {
+        myPrintStream.print("\' locationHint = \'java:suite://" + suiteName);
+      }
+      myPrintStream.println("\']");
       myCurrentClassName = className;
       myInvocationCount = 0;
+      return true;
     }
+    return false;
+  }
 
+  public void onSuiteFinish(String suiteName) {
+    myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(suiteName) + "\']");
+    myCurrentClassName = null;
+  }
+
+  public void onTestStart(String classFQName, String methodName) {
+    onSuiteStart(classFQName, true);
     fireTestStarted(methodName, classFQName);
   }
   

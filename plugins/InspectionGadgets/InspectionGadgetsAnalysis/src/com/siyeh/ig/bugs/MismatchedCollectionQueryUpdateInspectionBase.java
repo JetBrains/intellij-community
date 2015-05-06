@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Processor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -236,7 +238,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     }
 
     private boolean collectionContentsAreUpdated(PsiVariable variable, PsiElement context) {
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, UPDATE_EXCLUDES, context) ||
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context, new UpdateCallProcessor()) ||
           collectionUpdateCalled(variable, context)) {
         return true;
       }
@@ -262,7 +264,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     }
 
     private boolean collectionContentsAreQueried(PsiVariable variable, PsiElement context) {
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, QUERY_EXCLUDES, context) ||
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context, new QueryCallProcessor()) ||
           collectionQueryCalled(variable, context)) {
         return true;
       }
@@ -283,6 +285,33 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       final CollectionQueryUpdateCalledVisitor visitor = new CollectionQueryUpdateCalledVisitor(variable, updateNames, false);
       context.accept(visitor);
       return visitor.isQueriedUpdated();
+    }
+  }
+
+  private static class QueryCallProcessor implements Processor<PsiCall> {
+    @Override
+    public boolean process(PsiCall call) {
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      return aClass != null && QUERY_EXCLUDES.contains(aClass.getQualifiedName());
+    }
+  }
+
+  private static class UpdateCallProcessor implements Processor<PsiCall> {
+    @Override
+    public boolean process(PsiCall call) {
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null || !UPDATE_EXCLUDES.contains(aClass.getQualifiedName())) {
+        return false;
+      }
+      return !"drainTo".equals(method.getName()) || !InheritanceUtil.isInheritor(aClass, "java.util.concurrent.BlockingQueue");
     }
   }
 }

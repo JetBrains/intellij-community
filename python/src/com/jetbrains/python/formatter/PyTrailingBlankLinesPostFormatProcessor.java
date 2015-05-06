@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.formatter;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
-import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,13 +44,21 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProcessor {
+
+  private static boolean isApplicableTo(@NotNull PsiFile source) {
+    if (InjectedLanguageManager.getInstance(source.getProject()).isInjectedFragment(source)) {
+      return false;
+    }
+    return source.getLanguage().isKindOf(PythonLanguage.getInstance());
+  }
+
   @Override
   public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
-    if (source instanceof PyFile) {
-      final PyFile pyFile = (PyFile)source;
-      final TextRange whitespaceRange = findTrailingWhitespacesRange(pyFile);
+    final PsiFile psiFile = source.getContainingFile();
+    if (isApplicableTo(psiFile)) {
+      final TextRange whitespaceRange = findTrailingWhitespacesRange(psiFile);
       if (source.getTextRange().intersects(whitespaceRange)) {
-        replaceOrDeleteTrailingWhitespaces(pyFile, whitespaceRange);
+        replaceOrDeleteTrailingWhitespaces(psiFile, whitespaceRange);
       }
     }
     return source;
@@ -57,12 +66,12 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
 
   @Override
   public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
-    if (!(source instanceof PyFile)) {
+    if (!isApplicableTo(source)) {
       return rangeToReformat;
     }
     final TextRange oldWhitespaceRange = findTrailingWhitespacesRange(source);
     if (rangeToReformat.intersects(oldWhitespaceRange)) {
-      final TextRange newWhitespaceRange = replaceOrDeleteTrailingWhitespaces((PyFile)source, oldWhitespaceRange);
+      final TextRange newWhitespaceRange = replaceOrDeleteTrailingWhitespaces(source, oldWhitespaceRange);
       final int delta = newWhitespaceRange.getLength() - oldWhitespaceRange.getLength();
       if (oldWhitespaceRange.contains(rangeToReformat)) {
         return newWhitespaceRange;
@@ -99,7 +108,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
   }
 
   @NotNull
-  private static TextRange replaceOrDeleteTrailingWhitespaces(@NotNull final PyFile pyFile, @NotNull final TextRange whitespaceRange) {
+  private static TextRange replaceOrDeleteTrailingWhitespaces(@NotNull final PsiFile pyFile, @NotNull final TextRange whitespaceRange) {
     final Project project = pyFile.getProject();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = documentManager.getDocument(pyFile);
