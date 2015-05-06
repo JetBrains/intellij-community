@@ -31,11 +31,13 @@ import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrNullabilityInstructionVisitor;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Set;
@@ -135,14 +137,12 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
       final Pair<Set<Instruction>, Set<Instruction>> constConditionalExpressions = dfaRunner.getConstConditionalExpressions();
       for (Instruction instruction : constConditionalExpressions.first) {
         if (instruction instanceof ConditionalGotoInstruction) {
-          final PsiElement element = ((ConditionalGotoInstruction)instruction).getPsiAnchor();
-          holder.registerProblem(element, "Condition <code>#ref</code>  is always true");
+          processCondition(holder, (ConditionalGotoInstruction)instruction, true);
         }
       }
       for (Instruction instruction : constConditionalExpressions.second) {
         if (instruction instanceof ConditionalGotoInstruction) {
-          final PsiElement element = ((ConditionalGotoInstruction)instruction).getPsiAnchor();
-          holder.registerProblem(element, "Condition <code>#ref</code> #loc is always false");
+          processCondition(holder, (ConditionalGotoInstruction)instruction, false);
         }
       }
     }
@@ -153,5 +153,20 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
         holder.registerProblem(identifierGroovy, InspectionsBundle.message("dataflow.too.complex"), ProblemHighlightType.WEAK_WARNING);
       }
     }
+  }
+
+  private static void processCondition(@NotNull ProblemsHolder holder, @NotNull ConditionalGotoInstruction instruction, boolean isTrue) {
+    final PsiElement element = instruction.getPsiAnchor();
+    if (element == null) return;
+    final PsiElement parent = element.getParent();
+    final String text;
+    if (parent instanceof GrReferenceExpression && ((GrReferenceExpression)parent).getQualifier() == element) {
+      assert ((GrReferenceExpression)parent).getDotTokenType() == GroovyTokenTypes.mOPTIONAL_DOT;
+      text = String.format("Qualifier <code>#ref</code> is always %s", isTrue ? "not null" : "null");
+    }
+    else {
+      text = String.format("Condition <code>#ref</code> is always %b", isTrue);
+    }
+    holder.registerProblem(element, text);
   }
 }
