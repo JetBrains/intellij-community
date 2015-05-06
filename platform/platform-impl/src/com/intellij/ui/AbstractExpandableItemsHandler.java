@@ -259,6 +259,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (forceUpdate || !Comparing.equal(myKey, selected)) {
       handleSelectionChange(selected, true);
     }
+
+    // Temporary workaround
+    if (e.getClickCount() == 2) {
+      hideHint();
+    }
   }
 
   protected void handleSelectionChange(KeyType selected) {
