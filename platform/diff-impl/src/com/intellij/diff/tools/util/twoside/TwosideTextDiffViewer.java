@@ -448,17 +448,6 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     return super.getData(dataId);
   }
 
-  @NotNull
-  protected Graphics2D getDividerGraphics(@NotNull Graphics g, @NotNull Component divider) {
-    assert myEditor1 != null && myEditor2 != null;
-
-    int width = divider.getWidth();
-    int editorHeight = myEditor1.getComponent().getHeight();
-    int dividerOffset = divider.getLocationOnScreen().y;
-    int editorOffset = myEditor1.getComponent().getLocationOnScreen().y;
-    return (Graphics2D)g.create(0, editorOffset - dividerOffset, width, editorHeight);
-  }
-
   private class MyEditorFocusListener extends FocusAdapter {
     @NotNull private final Side mySide;
 

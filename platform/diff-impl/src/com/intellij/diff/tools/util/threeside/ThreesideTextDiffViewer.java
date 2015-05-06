@@ -400,15 +400,6 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     return super.getData(dataId);
   }
 
-  @NotNull
-  protected Graphics2D getDividerGraphics(@NotNull Graphics g, @NotNull Component divider) {
-    int width = divider.getWidth();
-    int editorHeight = myEditors.get(0).getComponent().getHeight();
-    int dividerOffset = divider.getLocationOnScreen().y;
-    int editorOffset = myEditors.get(0).getComponent().getLocationOnScreen().y;
-    return (Graphics2D)g.create(0, editorOffset - dividerOffset, width, editorHeight);
-  }
-
   private class MyEditorFocusListener extends FocusAdapter {
     @NotNull private final ThreeSide mySide;
 

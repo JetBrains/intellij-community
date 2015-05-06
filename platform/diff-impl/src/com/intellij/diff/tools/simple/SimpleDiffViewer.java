@@ -874,7 +874,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
       if (myEditor1 == null || myEditor2 == null) return;
-      Graphics2D gg = getDividerGraphics(g, divider);
+      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, myEditor1.getComponent());
 
       gg.setColor(DiffDrawUtil.getDividerColor(myEditor1));
       gg.fill(gg.getClipBounds());

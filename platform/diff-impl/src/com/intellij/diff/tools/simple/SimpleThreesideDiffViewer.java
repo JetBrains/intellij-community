@@ -591,7 +591,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
-      Graphics2D gg = getDividerGraphics(g, divider);
+      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, myEditors.get(0).getComponent());
 
       gg.setColor(DiffDrawUtil.getDividerColor(myEditors.get(0)));
       gg.fill(gg.getClipBounds());
