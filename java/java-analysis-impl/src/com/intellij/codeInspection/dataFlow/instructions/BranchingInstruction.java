@@ -25,7 +25,6 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
