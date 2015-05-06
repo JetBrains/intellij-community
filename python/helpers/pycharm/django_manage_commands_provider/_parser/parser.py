@@ -23,8 +23,8 @@ def report_data(dumper):
     for command_name in get_commands().keys():
         try:
             command = utility.fetch_command(command_name)
-        except ImproperlyConfigured:
-            continue  # TODO: Log somehow
+        except Exception:
+            continue  # TODO: Log somehow. Probably print to output?
 
         assert isinstance(command, BaseCommand)
 
