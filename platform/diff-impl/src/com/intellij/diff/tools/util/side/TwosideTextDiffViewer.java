@@ -19,29 +19,23 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
 import com.intellij.diff.actions.impl.SetEditorSettingsAction;
-import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.FocusTrackerSupport.TwosideFocusTrackerSupport;
-import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
-import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -49,8 +43,8 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -60,49 +54,20 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public abstract class TwosideTextDiffViewer extends ListenerDiffViewerBase {
+public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditorHolder> {
   public static final Logger LOG = Logger.getInstance(TwosideTextDiffViewer.class);
 
-  @NotNull private final EditorFactory myEditorFactory = EditorFactory.getInstance();
-
-  @NotNull protected final SimpleDiffPanel myPanel;
-  @NotNull protected final TwosideContentPanel myContentPanel;
-
   @NotNull private final List<? extends EditorEx> myEditableEditors;
-  @Nullable private final TextEditorHolder myHolder1;
-  @Nullable private final TextEditorHolder myHolder2;
-
-  @Nullable private final DocumentContent myActualContent1;
-  @Nullable private final DocumentContent myActualContent2;
+  private List<? extends EditorEx> myEditors;
 
   @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
 
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener = new MyVisibleAreaListener();
 
-  @NotNull private final TwosideFocusTrackerSupport myFocusTrackerSupport;
-
   @Nullable protected TwosideSyncScrollSupport mySyncScrollSupport;
 
   public TwosideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
-    super(context, request);
-
-    List<DiffContent> contents = myRequest.getContents();
-    myActualContent1 = contents.get(0) instanceof DocumentContent ? ((DocumentContent)contents.get(0)) : null;
-    myActualContent2 = contents.get(1) instanceof DocumentContent ? ((DocumentContent)contents.get(1)) : null;
-    assert myActualContent1 != null || myActualContent2 != null;
-
-
-    List<TextEditorHolder> holders = createEditors();
-    myHolder1 = holders.get(0);
-    myHolder2 = holders.get(1);
-    assert myHolder1 != null || myHolder2 != null;
-
-    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, ContainerUtil.list(getEditor1(), getEditor2()));
-    myFocusTrackerSupport = new TwosideFocusTrackerSupport(myHolder1, myHolder2);
-    myContentPanel = new TwosideContentPanel(titlePanel, myHolder1, myHolder2);
-
-    myPanel = new SimpleDiffPanel(myContentPanel, this, context);
-
+    super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
 
     new MyFocusOppositePaneAction(true).setupAction(myPanel);
     new MyFocusOppositePaneAction(false).setupAction(myPanel);
@@ -126,36 +91,20 @@ public abstract class TwosideTextDiffViewer extends ListenerDiffViewerBase {
   @CalledInAwt
   protected void onDispose() {
     destroyEditorListeners();
-    destroyEditors();
     super.onDispose();
   }
 
-  @Override
-  @CalledInAwt
-  protected void processContextHints() {
-    super.processContextHints();
-    myFocusTrackerSupport.processContextHints(myRequest, myContext);
-  }
-
-  @Override
-  @CalledInAwt
-  protected void updateContextHints() {
-    super.updateContextHints();
-    myFocusTrackerSupport.updateContextHints(myRequest, myContext);
-  }
-
   @NotNull
-  protected List<TextEditorHolder> createEditors() {
-    boolean[] forceReadOnly = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
+  @Override
+  protected List<TextEditorHolder> createEditorHolders(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
+    List<TextEditorHolder> holders = super.createEditorHolders(factory);
 
-    TextEditorHolder holder1 = null;
-    TextEditorHolder holder2 = null;
-    if (myActualContent1 != null) {
-      holder1 = TextEditorHolder.create(myProject, myActualContent1, forceReadOnly[0]);
-    }
-    if (myActualContent2 != null) {
-      holder2 = TextEditorHolder.create(myProject, myActualContent2, forceReadOnly[1]);
-    }
+    boolean[] forceReadOnly = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
+    TextEditorHolder holder1 = holders.get(0);
+    TextEditorHolder holder2 = holders.get(1);
+
+    if (holder1 != null && forceReadOnly[0]) holder1.getEditor().setViewer(true);
+    if (holder2 != null && forceReadOnly[1]) holder2.getEditor().setViewer(true);
 
     if (holder1 != null && holder2 != null) {
       holder1.getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
@@ -166,7 +115,13 @@ public abstract class TwosideTextDiffViewer extends ListenerDiffViewerBase {
       }
     }
 
-    return ContainerUtil.newArrayList(holder1, holder2);
+    return holders;
+  }
+
+  @NotNull
+  @Override
+  protected List<JComponent> createTitles() {
+    return DiffUtil.createTextTitles(myRequest, getEditors());
   }
 
   //
@@ -192,11 +147,6 @@ public abstract class TwosideTextDiffViewer extends ListenerDiffViewerBase {
   //
   // Listeners
   //
-
-  private void destroyEditors() {
-    if (myHolder1 != null) Disposer.dispose(myHolder1);
-    if (myHolder2 != null) Disposer.dispose(myHolder2);
-  }
 
   @CalledInAwt
   protected void installEditorListeners() {
@@ -240,35 +190,30 @@ public abstract class TwosideTextDiffViewer extends ListenerDiffViewerBase {
   // Getters
   //
 
+
+  @NotNull
+  @Override
+  protected List<DocumentContent> getActualContents() {
+    //noinspection unchecked
+    return (List<DocumentContent>)super.getActualContents();
+  }
+
   @NotNull
   protected List<? extends EditorEx> getEditors() {
-    return ContainerUtil.list(getEditor1(), getEditor2());
+    if (myEditors == null) {
+      myEditors = ContainerUtil.map(getEditorHolders(), new Function<TextEditorHolder, EditorEx>() {
+        @Override
+        public EditorEx fun(TextEditorHolder holder) {
+          return holder != null ? holder.getEditor() : null;
+        }
+      });
+    }
+    return myEditors;
   }
 
   @NotNull
   protected List<? extends EditorEx> getEditableEditors() {
     return myEditableEditors;
-  }
-
-  @NotNull
-  @Override
-  public JComponent getComponent() {
-    return myPanel;
-  }
-
-  @Nullable
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return getCurrentEditor().getContentComponent();
-  }
-
-  @NotNull
-  public Side getCurrentSide() {
-    return myFocusTrackerSupport.getCurrentSide();
-  }
-
-  public void setCurrentSide(@NotNull Side side) {
-    myFocusTrackerSupport.setCurrentSide(side);
   }
 
   @NotNull
@@ -285,32 +230,32 @@ public abstract class TwosideTextDiffViewer extends ListenerDiffViewerBase {
 
   @Nullable
   protected EditorEx getEditor1() {
-    return myHolder1 != null ? myHolder1.getEditor() : null;
+    return getEditors().get(0);
   }
 
   @Nullable
   protected EditorEx getEditor2() {
-    return myHolder2 != null ? myHolder2.getEditor() : null;
+    return getEditors().get(1);
   }
 
   @Nullable
   protected EditorEx getEditor(@NotNull Side side) {
-    return side.select(myEditor1, myEditor2);
+    return side.select(getEditor1(), getEditor2());
   }
 
   @Nullable
   public DocumentContent getActualContent1() {
-    return myActualContent1;
+    return getActualContent(Side.LEFT);
   }
 
   @Nullable
   public DocumentContent getActualContent2() {
-    return myActualContent2;
+    return getActualContent(Side.RIGHT);
   }
 
   @Nullable
   protected DocumentContent getActualContent(@NotNull Side side) {
-    return side.select(myActualContent1, myActualContent2);
+    return side.select(getActualContents());
   }
 
   //
@@ -350,27 +295,7 @@ public abstract class TwosideTextDiffViewer extends ListenerDiffViewerBase {
   }
 
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    if (!(request instanceof ContentDiffRequest)) return false;
-
-    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
-    if (contents.size() != 2) return false;
-
-    boolean canShow = true;
-    boolean wantShow = false;
-    for (DiffContent content : contents) {
-      canShow &= canShowContent(content, context);
-      wantShow |= wantShowContent(content, context);
-    }
-    return canShow && wantShow;
-  }
-
-  public static boolean canShowContent(@NotNull DiffContent content,  @NotNull DiffContext context) {
-    if (content instanceof EmptyContent) return true;
-    return TextEditorHolder.canShowContent(content, context);
-  }
-
-  public static boolean wantShowContent(@NotNull DiffContent content,  @NotNull DiffContext context) {
-    return TextEditorHolder.wantShowContent(content, context);
+    return TwosideDiffViewer.canShowRequest(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
   }
 
   //
@@ -429,12 +354,6 @@ public abstract class TwosideTextDiffViewer extends ListenerDiffViewerBase {
   public Object getData(@NonNls String dataId) {
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return getCurrentEditor();
-    }
-    else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
-      return getCurrentContent();
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return DiffUtil.getVirtualFile(myRequest, getCurrentSide());
     }
 
     return super.getData(dataId);

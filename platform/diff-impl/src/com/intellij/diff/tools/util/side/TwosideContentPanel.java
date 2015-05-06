@@ -28,10 +28,9 @@ import java.util.List;
 public class TwosideContentPanel extends JPanel {
   @Nullable private final DiffSplitter mySplitter;
 
-  public TwosideContentPanel(@NotNull List<JComponent> titleComponents,
-                             @Nullable EditorHolder holder1,
-                             @Nullable EditorHolder holder2) {
-    this(titleComponents, getComponent(holder1), getComponent(holder2));
+  public TwosideContentPanel(@NotNull List<? extends EditorHolder> holders, @NotNull List<JComponent> titleComponents) {
+    this(titleComponents, getComponent(holders.get(0)), getComponent(holders.get(1)));
+    assert holders.size() == 2;
   }
 
   public TwosideContentPanel(@NotNull List<JComponent> titleComponents,

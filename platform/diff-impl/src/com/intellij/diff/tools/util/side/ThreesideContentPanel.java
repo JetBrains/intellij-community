@@ -16,9 +16,12 @@
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.tools.holders.EditorHolder;
+import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.ThreeDiffSplitter;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,14 +33,16 @@ import java.util.List;
 
 public class ThreesideContentPanel extends JPanel {
   @NotNull private final ThreeDiffSplitter mySplitter;
+  @Nullable private final EditorEx myBaseEditor;
 
-  public ThreesideContentPanel(@NotNull List<? extends EditorHolder> editors, @NotNull List<JComponent> titleComponents) {
+  public ThreesideContentPanel(@NotNull List<? extends EditorHolder> holders, @NotNull List<JComponent> titleComponents) {
     super(new BorderLayout());
-    assert editors.size() == 3;
+    assert holders.size() == 3;
+    myBaseEditor = holders.get(1) instanceof TextEditorHolder ? ((TextEditorHolder)holders.get(1)).getEditor() : null;
 
     ArrayList<JComponent> components = new ArrayList<JComponent>(3);
     for (int i = 0; i < 3; i++) {
-      components.add(new MyPanel(editors.get(i), titleComponents.get(i)));
+      components.add(new MyPanel(holders.get(i), titleComponents.get(i)));
     }
 
     mySplitter = new ThreeDiffSplitter(components);
@@ -54,7 +59,12 @@ public class ThreesideContentPanel extends JPanel {
   }
 
   public void repaintDivider(@NotNull Side side) {
+    if (side == Side.RIGHT && myBaseEditor != null) myBaseEditor.getScrollPane().getVerticalScrollBar().repaint();
     mySplitter.repaintDivider(side);
+  }
+
+  public void setScrollbarPainter(@NotNull ButtonlessScrollBarUI.ScrollbarRepaintCallback painter) {
+    if (myBaseEditor != null) myBaseEditor.registerScrollBarRepaintCallback(painter);
   }
 
   private static class MyPanel extends JPanel {

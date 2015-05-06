@@ -15,19 +15,14 @@
  */
 package com.intellij.diff.tools.holders;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.diff.DiffContext;
+import com.intellij.diff.contents.DiffContent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+public abstract class EditorHolderFactory<T extends EditorHolder> {
+  public abstract boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context);
 
-public abstract class EditorHolder implements Disposable {
-  @NotNull
-  public abstract JComponent getComponent();
+  public abstract boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context);
 
-  @Nullable
-  public abstract JComponent getFocusedComponent();
-
-  @Nullable
-  public abstract JComponent getPreferredFocusedComponent();
+  public abstract T create(@NotNull DiffContent content, @NotNull DiffContext context);
 }

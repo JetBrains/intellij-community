@@ -37,8 +37,9 @@ public class FocusTrackerSupport<T> {
     @Nullable private final MyFocusListener myListener1;
     @Nullable private final MyFocusListener myListener2;
 
-    public TwosideFocusTrackerSupport(@Nullable EditorHolder holder1, @Nullable EditorHolder holder2) {
-      this(getComponent(holder1), getComponent(holder2));
+    public TwosideFocusTrackerSupport(@NotNull List<? extends EditorHolder> holders) {
+      this(getComponent(holders.get(0)), getComponent(holders.get(1)));
+      assert holders.size() == 2;
     }
 
     public TwosideFocusTrackerSupport(@Nullable JComponent component1, @Nullable JComponent component2) {
