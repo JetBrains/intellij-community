@@ -120,7 +120,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRenderer, LineSepara
     int interval = getStepSize(lineHeight) * 2;
 
     int shiftX = -interval; // skip zero index painting
-    if (((EditorEx)myEditor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT) {
+    if (DiffUtil.isMirrored(myEditor)) {
       int contentWidth = ((EditorEx)myEditor).getScrollPane().getViewport().getWidth();
       shiftX += contentWidth % interval - interval;
       shiftX += gutterWidth % interval - interval;
