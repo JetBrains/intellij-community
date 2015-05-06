@@ -438,12 +438,16 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected void commit() throws ServerRuntimeException {
+    commit(COMMIT_MESSAGE);
+  }
+
+  protected void commit(String message) throws ServerRuntimeException {
     try {
       if (GitUtil.hasLocalChanges(true, getProject(), myContentRoot)) {
         GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.COMMIT);
         handler.setSilent(false);
         handler.setStdoutSuppressed(false);
-        handler.addParameters("-m", COMMIT_MESSAGE);
+        handler.addParameters("-m", message);
         handler.endOptions();
         handler.run();
       }
