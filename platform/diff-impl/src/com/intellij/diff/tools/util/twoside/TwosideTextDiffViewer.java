@@ -23,6 +23,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.FocusTrackerSupport.TwosideFocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
@@ -44,6 +45,7 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -60,10 +62,10 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @NotNull private final EditorFactory myEditorFactory = EditorFactory.getInstance();
 
   @NotNull protected final SimpleDiffPanel myPanel;
-  @NotNull protected final TwosideTextContentPanel myContentPanel;
+  @NotNull protected final TwosideContentPanel myContentPanel;
 
-  @Nullable private final EditorEx myEditor1;
-  @Nullable private final EditorEx myEditor2;
+  @Nullable private final TextEditorHolder myHolder1;
+  @Nullable private final TextEditorHolder myHolder2;
 
   @Nullable private final DocumentContent myActualContent1;
   @Nullable private final DocumentContent myActualContent2;
@@ -85,15 +87,14 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     assert myActualContent1 != null || myActualContent2 != null;
 
 
-    List<EditorEx> editors = createEditors();
-    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, editors);
+    List<TextEditorHolder> holders = createEditors();
+    myHolder1 = holders.get(0);
+    myHolder2 = holders.get(1);
+    assert myHolder1 != null || myHolder2 != null;
 
-    myEditor1 = editors.get(0);
-    myEditor2 = editors.get(1);
-    assert myEditor1 != null || myEditor2 != null;
-
-    myFocusTrackerSupport = new TwosideFocusTrackerSupport(getEditor1(), getEditor2());
-    myContentPanel = new TwosideTextContentPanel(titlePanel, getEditor1(), getEditor2());
+    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, ContainerUtil.list(getEditor1(), getEditor2()));
+    myFocusTrackerSupport = new TwosideFocusTrackerSupport(myHolder1, myHolder2);
+    myContentPanel = new TwosideContentPanel(titlePanel, myHolder1, myHolder2);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
 
@@ -129,29 +130,28 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @NotNull
-  protected List<EditorEx> createEditors() {
+  protected List<TextEditorHolder> createEditors() {
     boolean[] forceReadOnly = checkForceReadOnly();
 
-    // TODO: we may want to set editor highlighter in init() to speedup editor initialization
-    EditorEx editor1 = null;
-    EditorEx editor2 = null;
-    if (getActualContent1() != null) {
-      editor1 = DiffUtil.createEditor(getActualContent1().getDocument(), myProject, forceReadOnly[0], true);
-      DiffUtil.configureEditor(editor1, getActualContent1(), myProject);
+    TextEditorHolder holder1 = null;
+    TextEditorHolder holder2 = null;
+    if (myActualContent1 != null) {
+      holder1 = TextEditorHolder.create(myProject, myActualContent1, forceReadOnly[0]);
     }
-    if (getActualContent2() != null) {
-      editor2 = DiffUtil.createEditor(getActualContent2().getDocument(), myProject, forceReadOnly[1], true);
-      DiffUtil.configureEditor(editor2, getActualContent2(), myProject);
-    }
-    if (editor1 != null && editor2 != null) {
-      editor1.setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
-    }
-    if (Registry.is("diff.divider.repainting.disable.blitting")) {
-      if (editor1 != null) editor1.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-      if (editor2 != null) editor2.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+    if (myActualContent2 != null) {
+      holder2 = TextEditorHolder.create(myProject, myActualContent2, forceReadOnly[1]);
     }
 
-    return ContainerUtil.newArrayList(editor1, editor2);
+    if (holder1 != null && holder2 != null) {
+      holder1.getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
+
+      if (Registry.is("diff.divider.repainting.disable.blitting")) {
+        holder1.getEditor().getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+        holder2.getEditor().getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+      }
+    }
+
+    return ContainerUtil.newArrayList(holder1, holder2);
   }
 
   //
@@ -169,8 +169,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   //
 
   private void destroyEditors() {
-    if (getEditor1() != null) myEditorFactory.releaseEditor(getEditor1());
-    if (getEditor2() != null) myEditorFactory.releaseEditor(getEditor2());
+    if (myHolder1 != null) Disposer.dispose(myHolder1);
+    if (myHolder2 != null) Disposer.dispose(myHolder2);
   }
 
   @CalledInAwt
@@ -255,12 +255,12 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
   @Nullable
   protected EditorEx getEditor1() {
-    return myEditor1;
+    return myHolder1 != null ? myHolder1.getEditor() : null;
   }
 
   @Nullable
   protected EditorEx getEditor2() {
-    return myEditor2;
+    return myHolder2 != null ? myHolder2.getEditor() : null;
   }
 
   @Nullable
@@ -328,21 +328,19 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     boolean canShow = true;
     boolean wantShow = false;
     for (DiffContent content : contents) {
-      canShow &= canShowContent(content);
-      wantShow |= wantShowContent(content);
+      canShow &= canShowContent(content, context);
+      wantShow |= wantShowContent(content, context);
     }
     return canShow && wantShow;
   }
 
-  public static boolean canShowContent(@NotNull DiffContent content) {
+  public static boolean canShowContent(@NotNull DiffContent content,  @NotNull DiffContext context) {
     if (content instanceof EmptyContent) return true;
-    if (content instanceof DocumentContent) return true;
-    return false;
+    return TextEditorHolder.canShowContent(content, context);
   }
 
-  public static boolean wantShowContent(@NotNull DiffContent content) {
-    if (content instanceof DocumentContent) return true;
-    return false;
+  public static boolean wantShowContent(@NotNull DiffContent content,  @NotNull DiffContext context) {
+    return TextEditorHolder.wantShowContent(content, context);
   }
 
   //

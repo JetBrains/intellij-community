@@ -23,6 +23,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.FocusTrackerSupport.ThreesideFocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
@@ -47,7 +48,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -67,6 +70,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @NotNull protected final ThreesideTextContentPanel myContentPanel;
 
   @NotNull private final List<EditorEx> myEditors;
+  @NotNull private final List<TextEditorHolder> myHolders;
   @NotNull private final List<DocumentContent> myActualContents;
 
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener1 = new MyVisibleAreaListener(Side.LEFT);
@@ -87,11 +91,18 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
                                                   (DocumentContent)contents.get(2));
 
 
-    myEditors = createEditors();
-    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, getEditors());
+    myHolders = createEditors();
+    myEditors = ContainerUtil.map(myHolders, new Function<TextEditorHolder, EditorEx>() {
+      @Override
+      public EditorEx fun(TextEditorHolder holder) {
+        return holder.getEditor();
+      }
+    });
 
-    myFocusTrackerSupport = new ThreesideFocusTrackerSupport(getEditors());
-    myContentPanel = new ThreesideTextContentPanel(getEditors(), titlePanel);
+
+    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, myEditors);
+    myFocusTrackerSupport = new ThreesideFocusTrackerSupport(myHolders);
+    myContentPanel = new ThreesideTextContentPanel(myHolders, titlePanel);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
 
@@ -124,30 +135,30 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @NotNull
-  protected List<EditorEx> createEditors() {
+  protected List<TextEditorHolder> createEditors() {
     boolean[] forceReadOnly = checkForceReadOnly();
-    List<EditorEx> editors = new ArrayList<EditorEx>(3);
 
-    for (int i = 0; i < getActualContents().size(); i++) {
-      DocumentContent content = getActualContents().get(i);
-      EditorEx editor = DiffUtil.createEditor(content.getDocument(), myProject, forceReadOnly[i], true);
-      DiffUtil.configureEditor(editor, content, myProject);
-      editors.add(editor);
+    List<TextEditorHolder> holders = new ArrayList<TextEditorHolder>(3);
+    for (int i = 0; i < 3; i++) {
+      DocumentContent content = myActualContents.get(i);
+      holders.add(TextEditorHolder.create(myProject, content, forceReadOnly[i]));
+    }
 
-      if (Registry.is("diff.divider.repainting.disable.blitting")) {
-        editor.getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+    holders.get(0).getEditor().setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
+    ((EditorMarkupModel)holders.get(1).getEditor().getMarkupModel()).setErrorStripeVisible(false);
+
+    if (Registry.is("diff.divider.repainting.disable.blitting")) {
+      for (TextEditorHolder holder : holders) {
+        holder.getEditor().getScrollPane().getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
       }
     }
 
-    editors.get(0).setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
-    ((EditorMarkupModel)editors.get(1).getMarkupModel()).setErrorStripeVisible(false);
-
-    return editors;
+    return holders;
   }
 
   private void destroyEditors() {
-    for (EditorEx editor : getEditors()) {
-      myEditorFactory.releaseEditor(editor);
+    for (TextEditorHolder holder : myHolders) {
+      Disposer.dispose(holder);
     }
   }
 
@@ -291,20 +302,18 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     boolean canShow = true;
     boolean wantShow = false;
     for (DiffContent content : contents) {
-      canShow &= canShowContent(content);
-      wantShow |= wantShowContent(content);
+      canShow &= canShowContent(content, context);
+      wantShow |= wantShowContent(content, context);
     }
     return canShow && wantShow;
   }
 
-  public static boolean canShowContent(@NotNull DiffContent content) {
-    if (content instanceof DocumentContent) return true;
-    return false;
+  public static boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
+    return TextEditorHolder.canShowContent(content, context);
   }
 
-  public static boolean wantShowContent(@NotNull DiffContent content) {
-    if (content instanceof DocumentContent) return true;
-    return false;
+  public static boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
+    return TextEditorHolder.wantShowContent(content, context);
   }
 
   //

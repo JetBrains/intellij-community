@@ -17,11 +17,10 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,12 +37,8 @@ public class FocusTrackerSupport<T> {
     @Nullable private final MyFocusListener myListener1;
     @Nullable private final MyFocusListener myListener2;
 
-    public TwosideFocusTrackerSupport(@Nullable Editor editor1, @Nullable Editor editor2) {
-      this(getComponent(editor1), getComponent(editor2));
-    }
-
-    public TwosideFocusTrackerSupport(@Nullable FileEditor editor1, @Nullable FileEditor editor2) {
-      this(getComponent(editor1), getComponent(editor2));
+    public TwosideFocusTrackerSupport(@Nullable EditorHolder holder1, @Nullable EditorHolder holder2) {
+      this(getComponent(holder1), getComponent(holder2));
     }
 
     public TwosideFocusTrackerSupport(@Nullable JComponent component1, @Nullable JComponent component2) {
@@ -105,16 +100,8 @@ public class FocusTrackerSupport<T> {
     @Nullable private final MyFocusListener myListener2;
     @Nullable private final MyFocusListener myListener3;
 
-    public ThreesideFocusTrackerSupport(@NotNull List<? extends Editor> editors) {
-      this(editors.get(0), editors.get(1), editors.get(2));
-    }
-
-    public ThreesideFocusTrackerSupport(@Nullable Editor editor1, @Nullable Editor editor2, @Nullable Editor editor3) {
-      this(getComponent(editor1), getComponent(editor2), getComponent(editor3));
-    }
-
-    public ThreesideFocusTrackerSupport(@Nullable FileEditor editor1, @Nullable FileEditor editor2, @Nullable FileEditor editor3) {
-      this(getComponent(editor1), getComponent(editor2), getComponent(editor3));
+    public ThreesideFocusTrackerSupport(@NotNull List<? extends EditorHolder> editors) {
+      this(getComponent(editors.get(0)), getComponent(editors.get(1)), getComponent(editors.get(2)));
     }
 
     public ThreesideFocusTrackerSupport(@Nullable JComponent component1, @Nullable JComponent component2, @Nullable JComponent component3) {
@@ -177,12 +164,7 @@ public class FocusTrackerSupport<T> {
   }
 
   @Nullable
-  private static JComponent getComponent(@Nullable Editor editor) {
-    return editor != null ? editor.getContentComponent() : null;
-  }
-
-  @Nullable
-  private static JComponent getComponent(@Nullable FileEditor editor) {
-    return editor != null ? editor.getComponent() : null;
+  private static JComponent getComponent(@Nullable EditorHolder editor) {
+    return editor != null ? editor.getFocusedComponent() : null;
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.tools.util.threeside;
 
+import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.ThreeDiffSplitter;
 import com.intellij.diff.util.Side;
@@ -30,7 +31,7 @@ import java.util.List;
 public class ThreesideContentPanel extends JPanel {
   @NotNull private final ThreeDiffSplitter mySplitter;
 
-  public ThreesideContentPanel(@NotNull List<JComponent> editors, @NotNull List<JComponent> titleComponents) {
+  public ThreesideContentPanel(@NotNull List<? extends EditorHolder> editors, @NotNull List<JComponent> titleComponents) {
     super(new BorderLayout());
     assert editors.size() == 3;
 
@@ -57,9 +58,9 @@ public class ThreesideContentPanel extends JPanel {
   }
 
   private static class MyPanel extends JPanel {
-    public MyPanel(@NotNull JComponent editor, @Nullable JComponent title) {
+    public MyPanel(@NotNull EditorHolder holder, @Nullable JComponent title) {
       super(new BorderLayout());
-      add(editor, BorderLayout.CENTER);
+      add(holder.getComponent(), BorderLayout.CENTER);
       if (title != null) add(title, BorderLayout.NORTH);
     }
   }
