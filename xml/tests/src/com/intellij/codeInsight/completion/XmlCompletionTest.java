@@ -743,5 +743,13 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old;
     }
   }
+
+  public void testPi() throws Exception {
+    myFixture.configureByText("foo.xml", "<<caret>");
+    myFixture.completeBasic();
+    myFixture.type('?');
+    myFixture.type('\n');
+    myFixture.checkResult("<?xml version=\"1.0\" encoding=\"<caret>\" ?>");
+  }
 }
 
