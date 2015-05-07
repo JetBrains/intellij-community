@@ -18,7 +18,6 @@ package com.intellij.spellchecker.inspections;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
-import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,21 +52,6 @@ public class PlainTextSplitter extends BaseSplitter {
     if (text == null || StringUtil.isEmpty(text)) {
       return;
     }
-    String substring = range.substring(text);
-    if (Verifier.checkCharacterData(substring) != null) {
-      return;
-    }
-    //for(int i = 0; i < text.length(); ++i) {
-    //  final char ch = text.charAt(i);
-    //  if (ch >= '\u3040' && ch <= '\u309f' || // Hiragana
-    //      ch >= '\u30A0' && ch <= '\u30ff' || // Katakana
-    //      ch >= '\u4E00' && ch <= '\u9FFF' || // CJK Unified ideographs
-    //      ch >= '\uF900' && ch <= '\uFAFF' || // CJK Compatibility Ideographs
-    //      ch >= '\uFF00' && ch <= '\uFFEF' //Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
-    //     ) {
-    //    return;
-    //  }
-    //}
 
     final TextSplitter ws = TextSplitter.getInstance();
     int from = range.getStartOffset();

@@ -109,7 +109,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
   private ClsFileImpl(@NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(null);
 
-    if (!forDecompiling) {
+    if (!forDecompiling && !(StubTreeLoader.getInstance() instanceof CoreStubTreeLoader)) {
       VirtualFile file = viewProvider.getVirtualFile();
       assert file instanceof VirtualFileWithId : file + " [" + file.getClass() + "]";
     }

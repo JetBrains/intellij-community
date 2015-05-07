@@ -93,7 +93,7 @@ public class GitConfig {
   private static GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
     UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
     return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(),
-                         remote.getFetchSpecs(), computePushSpec(remote));
+                         remote.getFetchSpecs(), remote.getPushSpec());
   }
 
   /**
@@ -260,12 +260,6 @@ public class GitConfig {
     return Pair.create(remotes, urls);
   }
 
-  @NotNull
-  private static List<String> computePushSpec(@NotNull Remote remote) {
-    List<String> pushSpec = remote.getPushSpec();
-    return pushSpec == null ? remote.getFetchSpecs() : pushSpec;
-  }
-
   /**
    * <p>
    *   Applies {@code url.<base>.insteadOf} and {@code url.<base>.pushInsteadOf} transformations to {@code url} and {@code pushUrl} of
@@ -414,11 +408,10 @@ public class GitConfig {
       return nonNullCollection(myRemoteBean.getPushUrl());
     }
 
-    @Nullable
-    // no need in wrapping null here - we check for it in #computePushSpec 
+    @NotNull
     private List<String> getPushSpec() {
       String[] push = myRemoteBean.getPush();
-      return push == null ? null : Arrays.asList(push);
+      return push == null ? Collections.<String>emptyList() : Arrays.asList(push);
     }
 
     @NotNull

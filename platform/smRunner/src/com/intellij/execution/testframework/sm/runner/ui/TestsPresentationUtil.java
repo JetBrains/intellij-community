@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.PoolOfTestIcons;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.Set;
 
@@ -145,7 +147,10 @@ public class TestsPresentationUtil {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
     final String text;
-    if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
+    final String presentableName = testProxy.getPresentation();
+    if (presentableName != null) {
+      text = presentableName;
+    } else if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running.tests");
     } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.was.terminated");
@@ -153,6 +158,10 @@ public class TestsPresentationUtil {
       text = SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.results");
     }
     renderer.append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    final String comment = testProxy.getComment();
+    if (comment != null) {
+      renderer.append(" (" + comment + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    }
   }
 
   public static void formatRootNodeWithoutChildren(final SMTestProxy.SMRootTestProxy testProxy,
@@ -420,7 +429,7 @@ public class TestsPresentationUtil {
     } else if (duration < 100) {
       return String.valueOf(duration) + MILLISECONDS_SUFFIX;
     } else {
-      return String.valueOf(duration.floatValue() / 1000) + SECONDS_SUFFIX;
+      return printTime(duration);
     }
   }
 
@@ -466,5 +475,31 @@ public class TestsPresentationUtil {
         printer.print(text, contentType);
       }
     });
+  }
+
+  public static String printTime(final long milliseconds) {
+    if (milliseconds == 0) {
+      return ExecutionBundle.message("junit.runing.info.time.sec.message", "0.0");
+    }
+    long seconds = milliseconds / 1000;
+    if (seconds == 0) {
+      return ExecutionBundle.message("junit.runing.info.time.sec.message", NumberFormat.getInstance().format((double)milliseconds/1000.0));
+    }
+
+    final StringBuilder sb = new StringBuilder();
+    if (seconds >= 3600) {
+      sb.append(seconds / 3600).append(" h ");
+      seconds %= 3600;
+    }
+    
+    if (seconds >= 60) {
+      sb.append(seconds / 60).append(" m ");
+      seconds %= 60;
+    }
+
+    if (seconds > 0 || sb.length() > 0) {
+      sb.append(seconds).append(" s");
+    }
+    return sb.toString();
   }
 }

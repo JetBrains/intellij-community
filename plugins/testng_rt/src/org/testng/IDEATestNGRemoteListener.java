@@ -106,7 +106,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       if (myCurrentClassName != null) {
         onSuiteFinish(myCurrentClassName);
       }
-      myPrintStream.print("##teamcity[testSuiteStarted name =\'" + escapeName(provideLocation ? getShortName(suiteName) : suiteName));
+      myPrintStream.print("\n##teamcity[testSuiteStarted name =\'" + escapeName(provideLocation ? getShortName(suiteName) : suiteName));
       if (provideLocation) {
         myPrintStream.print("\' locationHint = \'java:suite://" + suiteName);
       }
@@ -157,7 +157,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private void fireTestStarted(String methodName, String className) {
-    myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) +
+    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName) +
                           "\' locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\']");
   }
 

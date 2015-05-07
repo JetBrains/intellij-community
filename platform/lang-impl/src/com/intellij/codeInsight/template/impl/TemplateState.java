@@ -55,6 +55,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -963,10 +964,10 @@ public class TemplateState implements Disposable {
   private void cleanupTemplateState(boolean brokenOff) {
     final Editor editor = myEditor;
     fireBeforeTemplateFinished();
-    int oldVar = myCurrentVariableNumber;
-    currentVariableChanged(oldVar);
     if (!isDisposed()) {
+      int oldVar = myCurrentVariableNumber;
       setCurrentVariableNumber(-1);
+      currentVariableChanged(oldVar);
       TemplateManagerImpl.clearTemplateState(editor);
       fireTemplateFinished(brokenOff);
     }
@@ -1249,7 +1250,7 @@ public class TemplateState implements Disposable {
     if (myFinished) return;
     myFinished = true;
     for (TemplateEditingListener listener : myListeners) {
-      listener.templateFinished(myTemplate, brokenOff);
+      listener.templateFinished(ObjectUtils.chooseNotNull(myTemplate, myPrevTemplate), brokenOff);
     }
   }
 

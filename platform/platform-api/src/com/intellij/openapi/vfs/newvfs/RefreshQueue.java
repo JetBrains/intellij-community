@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public abstract class RefreshQueue {
     refresh(async, recursive, finishRunnable, getDefaultModalityState(), files);
   }
 
-  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull Collection<VirtualFile> files) {
+  public final void refresh(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull Collection<? extends VirtualFile> files) {
     refresh(async, recursive, finishRunnable, getDefaultModalityState(), files);
   }
 
@@ -62,7 +62,7 @@ public abstract class RefreshQueue {
                             boolean recursive,
                             @Nullable Runnable finishRunnable,
                             @NotNull ModalityState state,
-                            @NotNull Collection<VirtualFile> files) {
+                            @NotNull Collection<? extends VirtualFile> files) {
     RefreshSession session = createSession(async, recursive, finishRunnable, state);
     session.addAllFiles(files);
     session.launch();

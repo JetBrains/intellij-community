@@ -41,7 +41,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
+    assertEquals("10 s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_TestPassed() {
@@ -50,7 +50,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
+    assertEquals("10 s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_TestError() {
@@ -59,7 +59,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
+    assertEquals("10 s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_TestTerminated() {
@@ -68,7 +68,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<TERMINATED>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(10000);
-    assertEquals("TERMINATED: " + String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
+    assertEquals("TERMINATED: 10 s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_TestIgnored() {
@@ -78,7 +78,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(mySimpleTest));
+    assertEquals("10 s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_Duration_Zero() {
@@ -132,7 +132,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(1000);
-    assertEquals(String.valueOf((float)1) + " s", myColumn.valueOf(mySimpleTest));
+    assertEquals("1 s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_Duration_1001() {
@@ -141,7 +141,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<UNKNOWN>", myColumn.valueOf(mySimpleTest));
 
     mySimpleTest.setDuration(1001);
-    assertEquals(String.valueOf((float)1.001) + " s", myColumn.valueOf(mySimpleTest));
+    assertEquals("1 s", myColumn.valueOf(mySimpleTest));
   }
 
   public void testValueOf_SuiteEmpty() {
@@ -176,7 +176,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<UNKNOWN>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(suite));
+    assertEquals("10 s", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuiteError() {
@@ -190,7 +190,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<UNKNOWN>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(suite));
+    assertEquals("10 s", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuitePassed() {
@@ -204,7 +204,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<UNKNOWN>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals(String.valueOf((float)10) + " s", myColumn.valueOf(suite));
+    assertEquals("10 s", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuiteTerminated() {
@@ -217,7 +217,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<TERMINATED>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals("TERMINATED: " + String.valueOf((float)10) + " s", myColumn.valueOf(suite));
+    assertEquals("TERMINATED: 10 s", myColumn.valueOf(suite));
   }
 
   public void testValueOf_SuiteRunning() {
@@ -230,7 +230,7 @@ public class ColumnDurationTest extends BaseColumnRenderingTest {
     assertEquals("<RUNNING>", myColumn.valueOf(suite));
 
     test.setDuration(10000);
-    assertEquals("RUNNING: " + String.valueOf((float)10) + " s", myColumn.valueOf(suite));
+    assertEquals("RUNNING: 10 s", myColumn.valueOf(suite));
   }
 
   public void testTotal_Test() {

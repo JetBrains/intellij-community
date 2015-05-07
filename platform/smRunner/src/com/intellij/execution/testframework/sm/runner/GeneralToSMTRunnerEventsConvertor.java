@@ -115,6 +115,21 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   }
 
   @Override
+  public void onRootPresentationAdded(final String rootName, final String comment, final String rootLocation) {
+    addToInvokeLater(new Runnable() {
+      @Override
+      public void run() {
+        myTestsRootNode.setPresentation(rootName);
+        myTestsRootNode.setComment(comment);
+        myTestsRootNode.setRootLocationUrl(rootLocation);
+        if (myLocator != null) {
+          myTestsRootNode.setLocator(myLocator);
+        }
+      }
+    });
+  }
+
+  @Override
   public void onSuiteTreeNodeAdded(final String testName, final String locationHint) {
     myTreeBuildBeforeStart = true;
     addToInvokeLater(new Runnable() {

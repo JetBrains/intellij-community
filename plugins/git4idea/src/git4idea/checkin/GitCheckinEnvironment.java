@@ -21,6 +21,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,7 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
+import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.*;
@@ -616,7 +617,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           myAuthorField.setEditor(comboboxEditor);
           EditorEx editor = (EditorEx)comboboxEditor.getEditor();
           assert editor != null;
-          SpellCheckingEditorCustomization.getInstance(false).customize(editor);
+          EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+          if (customization != null) {
+            customization.customize(editor);
+          }
         }
       };
       myAuthorField.setMinimumAndPreferredWidth(100);

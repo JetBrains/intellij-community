@@ -18,9 +18,9 @@ package com.intellij.spellchecker.inspector;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.spellchecker.inspections.*;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.Consumer;
 import junit.framework.Assert;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -32,9 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class SplitterTest extends TestCase {
-
-
+public class SplitterTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testSplitSimpleCamelCase() {
     String text = "simpleCamelCase";
     correctListToCheck(IdentifierSplitter.getInstance(), text, "simple", "Camel", "Case");

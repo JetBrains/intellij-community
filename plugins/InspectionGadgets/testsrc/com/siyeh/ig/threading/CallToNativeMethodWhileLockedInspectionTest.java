@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing;
+package com.siyeh.ig.threading;
 
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
-* @author Eugene Zhuravlev
-*         Date: 6/26/13
-*/
-final class UpdateSemaphore extends Semaphore {
-  private volatile boolean myIsCanceled = false;
-  
-  UpdateSemaphore() {
+ * @author Bas Leijdekkers
+ */
+public class CallToNativeMethodWhileLockedInspectionTest extends LightInspectionTestCase {
+
+  public void testCallToNativeMethodWhileLocked() {
+    doTest();
   }
-  
-  boolean isUpdateCanceled() {
-    return myIsCanceled;
-  }
-  
-  void reportUpdateCanceled() {
-    myIsCanceled = true;
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new CallToNativeMethodWhileLockedInspection();
   }
 }

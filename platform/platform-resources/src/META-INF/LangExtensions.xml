@@ -604,11 +604,6 @@
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"
                            id="editor.preferences.appearance"
                            key="tab.editor.settings.appearance" bundle="messages.ApplicationBundle"/>
-    <editorCustomization implementation="com.intellij.ui.SoftWrapsEditorCustomization"/>
-    <editorCustomization implementation="com.intellij.ui.HorizontalScrollBarEditorCustomization"/>
-    <editorCustomization implementation="com.intellij.ui.AdditionalPageAtBottomEditorCustomization"/>
-    <editorCustomization implementation="com.intellij.ui.OneLineEditorCustomization"/>
-    <editorCustomization implementation="com.intellij.ui.RightMarginEditorCustomization"/>
 
     <!-- Colors & Fonts-->
     <applicationConfigurable groupId="editor" groupWeight="180" dynamic="true" instance="com.intellij.application.options.colors.ColorAndFontOptions"

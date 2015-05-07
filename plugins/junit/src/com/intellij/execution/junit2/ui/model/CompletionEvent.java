@@ -16,14 +16,14 @@
 
 package com.intellij.execution.junit2.ui.model;
 
-import com.intellij.execution.junit2.ui.Formatters;
+import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 
 public class CompletionEvent extends StateEvent {
   private final boolean myNormalExit;
 
   public CompletionEvent(final boolean normalExit, final long time) {
     super(normalExit ? TerminatedType.DONE: TerminatedType.TERNINATED, 
-          time >= 0 ? "in " + Formatters.printTime(time) : "");
+          time >= 0 ? "in " + TestsPresentationUtil.printTime(time) : "");
     myNormalExit = normalExit;
   }
 

@@ -16,15 +16,15 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -32,15 +32,14 @@ import java.util.zip.ZipFile;
 
 class JarLoader extends Loader {
   private final URL myURL;
-  private final boolean myCanLockJar;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
 
-  JarLoader(URL url, boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
+  // todo drop unused parameter
+  JarLoader(URL url, @SuppressWarnings("unused") boolean canLockJar, int index, boolean preloadJarContents) throws IOException {
     super(new URL(URLUtil.JAR_PROTOCOL, "", -1, url + "!/"), index);
     myURL = url;
-    myCanLockJar = canLockJar;
 
-    ZipFile zipFile = acquireZipFile();
+    ZipFile zipFile = new ZipFile(getFileUrl());
     try {
       if (preloadJarContents) {
         JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL());
@@ -50,29 +49,23 @@ class JarLoader extends Loader {
       }
     }
     finally {
-      releaseZipFile(zipFile);
-    }
-  }
-
-  private ZipFile acquireZipFile() throws IOException {
-    String path = FileUtil.unquote(myURL.getFile());
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    return myCanLockJar ? ZipFileCache.acquire(path) : new ZipFile(path);
-  }
-
-  private void releaseZipFile(ZipFile zipFile) throws IOException {
-    if (myCanLockJar) {
-      ZipFileCache.release(zipFile);
-    }
-    else {
       zipFile.close();
+    }
+  }
+
+  private File getFileUrl() throws IOException {
+    try {
+      return new File(myURL.toURI());
+    }
+    catch (URISyntaxException e) {
+      throw new IOException(e);
     }
   }
 
   @NotNull
   @Override
   public ClasspathCache.LoaderData buildData() throws IOException {
-    ZipFile zipFile = acquireZipFile();
+    ZipFile zipFile = new ZipFile(getFileUrl());
     try {
       ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -85,7 +78,7 @@ class JarLoader extends Loader {
       return loaderData;
     }
     finally {
-      releaseZipFile(zipFile);
+      zipFile.close();
     }
   }
 
@@ -99,7 +92,7 @@ class JarLoader extends Loader {
     }
 
     try {
-      ZipFile zipFile = acquireZipFile();
+      ZipFile zipFile = new ZipFile(getFileUrl());
       try {
         ZipEntry entry = zipFile.getEntry(name);
         if (entry != null) {
@@ -107,7 +100,7 @@ class JarLoader extends Loader {
         }
       }
       finally {
-        releaseZipFile(zipFile);
+        zipFile.close();
       }
     }
     catch (Exception e) {
