@@ -188,9 +188,9 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     @Override
     public Dimension getPreferredSize() {
       final Dimension preferredSize = super.getPreferredSize();
-      int deltaWidth = AllIcons.Ide.Statusbar_arrows.getIconWidth() + myIconTextGap * 2;
+      int deltaWidth = AllIcons.Ide.Statusbar_arrows.getIconWidth();
       if (myIcon != null) {
-        deltaWidth += myIcon.getIconWidth() + myIconTextGap * 2;
+        deltaWidth += myIcon.getIconWidth();
       }
       return new Dimension(preferredSize.width + deltaWidth, preferredSize.height);
     }
@@ -199,5 +199,4 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
       myIcon = icon;
     }
   }
-
 }
