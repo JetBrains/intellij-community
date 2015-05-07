@@ -153,7 +153,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private static String getClassName(ITestResult result) {
-    return result.getTestClass().getName();
+    return result.getMethod().getTestClass().getName();
   }
 
   private static String getTestMethodName(ITestResult result) {
