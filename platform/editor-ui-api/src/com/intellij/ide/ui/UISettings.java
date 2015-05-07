@@ -291,7 +291,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
       }
     }
-    UIUtil.setHintingForLCDText(g2d);
   }
 
   /**
