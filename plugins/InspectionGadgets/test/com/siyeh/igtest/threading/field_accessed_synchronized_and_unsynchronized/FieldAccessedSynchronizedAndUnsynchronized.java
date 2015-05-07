@@ -5,6 +5,7 @@ public class FieldAccessedSynchronizedAndUnsynchronized
     private final Object m_lock = new Object();          
     private Object <warning descr="Field 'm_contents' is accessed in both synchronized and unsynchronized contexts">m_contents</warning> = new Object();
     private Object <warning descr="Field 'a' is accessed in both synchronized and unsynchronized contexts">a</warning>;
+    private Object b;
 
     public void foo()
     {
@@ -12,6 +13,7 @@ public class FieldAccessedSynchronizedAndUnsynchronized
         {
             m_contents = new Object();
             a = new Object();
+            b = new Object();
         }
         getContents();
     }
@@ -30,6 +32,11 @@ public class FieldAccessedSynchronizedAndUnsynchronized
         Runnable r = () -> {
             System.out.println(a);
         };
+    }
+
+    public void h() {
+        assert Thread.holdsLock(m_lock);
+        System.out.println(b);
     }
 
 }
