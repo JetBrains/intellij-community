@@ -16,15 +16,14 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
@@ -53,13 +52,8 @@ class JarLoader extends Loader {
     }
   }
 
-  private File getFileUrl() throws IOException {
-    try {
-      return new File(myURL.toURI());
-    }
-    catch (URISyntaxException e) {
-      throw new IOException(e);
-    }
+  private String getFileUrl() throws IOException {
+    return FileUtil.unquote(myURL.getFile());
   }
 
   @NotNull
