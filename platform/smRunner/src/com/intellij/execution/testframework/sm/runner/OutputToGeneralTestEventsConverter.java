@@ -215,10 +215,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
 
-  private void fireRootPresentationAdded(String rootName, @Nullable String comment) {
+  private void fireRootPresentationAdded(String rootName, @Nullable String comment, String rootLocation) {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onRootPresentationAdded(rootName, comment);
+      processor.onRootPresentationAdded(rootName, comment, rootLocation);
     }
   }
 
@@ -501,7 +501,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
       }
       else if (ROOT_PRESENTATION.equals(name)) {
         final Map<String, String> attributes = msg.getAttributes();
-        fireRootPresentationAdded(attributes.get("name"), attributes.get("comment"));
+        fireRootPresentationAdded(attributes.get("name"), attributes.get("comment"), attributes.get("location"));
       }
       else {
         GeneralToSMTRunnerEventsConvertor.logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);

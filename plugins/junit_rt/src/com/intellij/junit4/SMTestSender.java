@@ -72,7 +72,8 @@ public class SMTestSender extends RunListener {
       }
 
       myPrintStream.println("##teamcity[rootName name = \'" + escapeName(name) + 
-                            (comment != null ? ("\' comment = \'" + escapeName(comment)) : "") + 
+                            (comment != null ? ("\' comment = \'" + escapeName(comment)) : "") + "\'" +
+                            " location = \'java:suite://" + escapeName(myCurrentClassName) +
                             "\']");
       myCurrentClassName = getShortName(myCurrentClassName);
     }

@@ -18,6 +18,7 @@ package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.junit2.states.CumulativeStatistics;
 import com.intellij.execution.junit2.states.Statistics;
+import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 
 class ActualStatistics implements TestStatistics {
   private final CumulativeStatistics myStatistics = new CumulativeStatistics();
@@ -32,7 +33,7 @@ class ActualStatistics implements TestStatistics {
   }
 
   public String getTime() {
-    return myPrefix + Formatters.printTime(myStatistics.getTime());
+    return myPrefix + TestsPresentationUtil.printTime(myStatistics.getTime());
   }
 
   public String getMemoryUsageDelta() {

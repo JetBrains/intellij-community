@@ -50,7 +50,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   // tree construction events
 
-  public void onRootPresentationAdded(String rootName, String comment) {}
+  public void onRootPresentationAdded(String rootName, String comment, String rootLocation) {}
   
   public void onSuiteTreeNodeAdded(String testName, String locationHint) { }
 
