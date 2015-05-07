@@ -1001,7 +1001,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     List<FileType> notExternalizableFileTypes = new ArrayList<FileType>();
     for (FileType type : mySchemesManager.getAllSchemes()) {
-      if (!(type instanceof AbstractFileType)) {
+      if (!(type instanceof AbstractFileType) || myDefaultTypes.contains(type)) {
         notExternalizableFileTypes.add(type);
       }
     }
