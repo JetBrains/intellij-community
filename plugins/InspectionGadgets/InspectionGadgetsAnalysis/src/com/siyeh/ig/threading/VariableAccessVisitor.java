@@ -21,6 +21,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
+import com.siyeh.ig.psiutils.SynchronizationUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -58,6 +59,14 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
       m_inSynchronizedContext = false;
     }
     super.visitClass(classToVisit);
+    m_inSynchronizedContext = wasInSync;
+  }
+
+  @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    final boolean wasInSync = m_inSynchronizedContext;
+    m_inSynchronizedContext = false;
+    super.visitLambdaExpression(expression);
     m_inSynchronizedContext = wasInSync;
   }
 
@@ -126,6 +135,15 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
     }
     super.visitCodeBlock(block);
     m_inSynchronizedContext = wasInSync;
+  }
+
+  @Override
+  public void visitAssertStatement(PsiAssertStatement statement) {
+    final PsiExpression condition = statement.getAssertCondition();
+    if (SynchronizationUtil.isCallToHoldsLock(condition)) {
+      m_inSynchronizedContext = true;
+    }
+    super.visitAssertStatement(statement);
   }
 
   @Override
