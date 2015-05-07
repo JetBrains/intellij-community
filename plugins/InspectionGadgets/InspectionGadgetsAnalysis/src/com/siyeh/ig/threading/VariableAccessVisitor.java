@@ -62,6 +62,14 @@ class VariableAccessVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    final boolean wasInSync = m_inSynchronizedContext;
+    m_inSynchronizedContext = false;
+    super.visitLambdaExpression(expression);
+    m_inSynchronizedContext = wasInSync;
+  }
+
+  @Override
   public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
     super.visitReferenceExpression(ref);
     final PsiExpression qualifier = ref.getQualifierExpression();
