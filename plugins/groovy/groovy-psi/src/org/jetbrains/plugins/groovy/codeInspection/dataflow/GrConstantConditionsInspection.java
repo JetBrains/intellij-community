@@ -32,12 +32,15 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionT
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrNullabilityInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Set;
@@ -65,21 +68,35 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
     public void visitMethod(GrMethod method) {
       final GrOpenBlock block = method.getBlock();
       if (block != null) {
-        check(block, myProblemsHolder, myIsOnTheFly);
+        check(block, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
       }
+    }
+
+    @Override
+    public void visitParameterList(GrParameterList parameterList) {
+      check(parameterList, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
     }
 
     @Override
     public void visitFile(GroovyFileBase file) {
       if (file.isScript()) {
-        check(file, myProblemsHolder, myIsOnTheFly);
+        check(file, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
+      }
+    }
+
+    @Override
+    public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
+      for (GrMembersDeclaration declaration : typeDefinitionBody.getMemberDeclarations()) {
+        if (declaration instanceof GrVariableDeclaration) {
+          check(declaration, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
+        }
       }
     }
   }
 
-  private void check(@NotNull GrControlFlowOwner owner, @NotNull ProblemsHolder holder, final boolean onTheFly) {
+  private static void check(@NotNull PsiElement owner, @NotNull ProblemsHolder holder, final boolean onTheFly, boolean unknownAreNullable) {
     final GrDataFlowRunner<GrNullabilityInstructionVisitor> dfaRunner =
-      new GrDataFlowRunner<GrNullabilityInstructionVisitor>(owner.getProject(), UNKNOWN_MEMBERS_ARE_NULLABLE) {
+      new GrDataFlowRunner<GrNullabilityInstructionVisitor>(owner.getProject(), unknownAreNullable) {
         @Override
         protected boolean shouldCheckTimeLimit() {
           if (!onTheFly) return false;

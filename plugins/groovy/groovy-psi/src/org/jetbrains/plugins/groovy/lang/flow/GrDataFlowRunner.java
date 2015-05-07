@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -40,9 +39,7 @@ public class GrDataFlowRunner<V extends GrInstructionVisitor<V>> extends Abstrac
   @Nullable
   @Override
   protected Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, V visitor) {
-    return psiBlock instanceof GrControlFlowOwner
-           ? Collections.singletonList(createMemoryState())
-           : null;
+    return Collections.singletonList(createMemoryState());
   }
 
   @NotNull
