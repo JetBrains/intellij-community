@@ -66,7 +66,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public synchronized void onTestSkipped(ITestResult result) {
-    onTestFinished(getMethodName(result));
+    myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getMethodName(result)) + "\']");
   }
 
   public synchronized void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
