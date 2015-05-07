@@ -176,6 +176,7 @@ public class FileManagerImpl implements FileManager {
     myVFileToViewProviderMap.clear();
     myVFileToPsiDirMap.clear();
     processQueue();
+    ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
   }
 
   @Override
