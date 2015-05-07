@@ -29,10 +29,7 @@ import com.intellij.xml.XmlTagNameProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
   @Override
