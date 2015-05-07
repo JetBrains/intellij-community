@@ -17,9 +17,12 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.webcore.packaging.RepoPackage;
+import com.jetbrains.python.PythonHelpersLocator;
 import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +57,8 @@ public class PyPIPackageUtil {
   @NonNls public static final String PYPI_URL = "https://pypi.python.org/pypi";
   @NonNls public static final String PYPI_LIST_URL = "https://pypi.python.org/pypi?%3Aaction=index";
 
+  public static Map<String, String> PACKAGES_TOPLEVEL = new HashMap<String, String>();
+
   public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
 
   private XmlRpcClient myXmlRpcClient;
@@ -62,6 +67,31 @@ public class PyPIPackageUtil {
   private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
   private Set<RepoPackage> myAdditionalPackageNames;
   @Nullable private volatile Set<String> myPackageNames = null;
+
+
+  static {
+    try {
+      fillPackages();
+    }
+    catch (IOException e) {
+      LOG.error("Cannot find \"packages\". " + e.getMessage());
+    }
+  }
+
+  private static void fillPackages() throws IOException {
+    FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/packages"));
+    try {
+      final String text = FileUtil.loadTextAndClose(reader);
+      final List<String> lines = StringUtil.split(text, "\n");
+      for (String line : lines) {
+        final List<String> split = StringUtil.split(line, " ");
+        PACKAGES_TOPLEVEL.put(split.get(0), split.get(1));
+      }
+    }
+    finally {
+      reader.close();
+    }
+  }
 
   public static Set<String> getPackageNames(final String url) throws IOException {
     final TreeSet<String> names = new TreeSet<String>();
