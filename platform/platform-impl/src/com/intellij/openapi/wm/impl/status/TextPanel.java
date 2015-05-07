@@ -233,4 +233,11 @@ public class TextPanel extends JComponent {
       myIcon = icon;
     }
   }
+
+  public static class PlusTwo extends TextPanel {
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      return new Dimension(size.width + 2, size.height);
+    }
+  }
 }
