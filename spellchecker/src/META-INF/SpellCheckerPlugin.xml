@@ -26,7 +26,6 @@
                     serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
     <projectService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"
                     serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
-    <editorCustomization implementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomization"/>
     <projectConfigurable groupId="editor" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="com.intellij.spellchecker.util.SpellCheckerBundle" />
 
 
