@@ -13,8 +13,11 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -190,7 +193,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
    * Run configuration.
    *
    * @param settings settings (if have any, null otherwise)
-   * @param config configuration to run
+   * @param config   configuration to run
    * @throws Exception
    */
   protected void runConfiguration(@Nullable final RunnerAndConfigurationSettings settings,
@@ -269,6 +272,54 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   public void allTestsPassed() {
     Assert.assertEquals(output(), 0, myTestProxy.getChildren(Filter.NOT_PASSED).size());
     Assert.assertEquals(output(), 0, failedTestsCount());
+  }
+
+  /**
+   * Creates {@link MockPrinter} filled with test output. Use it to check what output test has.
+   *
+   * @param test test to fill mock printer with
+   * @return filled print.
+   */
+  @NotNull
+  protected static MockPrinter getMockPrinter(@NotNull final Printable test) {
+    final MockPrinter printer = new MockPrinter();
+    test.printOn(printer);
+    return printer;
+  }
+
+  /**
+   * Searches for test by its name recursevly in {@link #myTestProxy}
+   *
+   * @param testName test name to find
+   * @return test
+   * @throws AssertionError if no test found
+   */
+  @NotNull
+  public AbstractTestProxy findTestByName(@NotNull final String testName) {
+    final AbstractTestProxy test = findTestByName(testName, myTestProxy);
+    assert test != null : "No test found with name" + testName;
+    return test;
+  }
+
+  /**
+   * Searches for test by its name recursevly in test, passed as arumuent.
+   *
+   * @param testName test name to find
+   * @param test     root test
+   * @return test or null if not found
+   */
+  @Nullable
+  private static AbstractTestProxy findTestByName(@NotNull final String testName, @NotNull final AbstractTestProxy test) {
+    if (test.getName().equals(testName)) {
+      return test;
+    }
+    for (final AbstractTestProxy testProxy : test.getChildren()) {
+      final AbstractTestProxy result = findTestByName(testName, testProxy);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
   }
 
   public int failedTestsCount() {
