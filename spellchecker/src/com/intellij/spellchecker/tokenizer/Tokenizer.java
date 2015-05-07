@@ -15,10 +15,16 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class Tokenizer<T extends PsiElement> {
 
   public abstract void tokenize(@NotNull T element, TokenConsumer consumer);
+
+  @NotNull
+  public TextRange getHighlightingRange(PsiElement element, int offset, TextRange textRange) {
+    return TextRange.from(offset + textRange.getStartOffset(), textRange.getLength());
+  }
 }
