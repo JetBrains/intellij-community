@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ public class ManifestHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testMainClass() {
     doTest(
       "Main-Class: <error descr=\"Invalid reference\"></error>\n" +
-      "Main-Class: org.<error descr=\"Cannot resolve\">acme</error>.Main\n" +
-      "Main-Class: java.lang.<error descr=\"Invalid main class\">String</error>\n"
+      "Main-Class: <error descr=\"Cannot resolve class 'org.acme.Main'\">org.acme.Main</error>\n" +
+      "Main-Class: <error descr=\"Invalid main class\">java.lang.String</error>\n"
     );
   }
 

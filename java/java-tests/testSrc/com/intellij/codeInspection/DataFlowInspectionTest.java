@@ -352,6 +352,25 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
+  public void testBooleanPreconditions() {
+    myFixture.addClass("package com.google.common.base; public class Preconditions { " +
+                       "public static <T> T checkArgument(boolean b) {}\n" +
+                       "public static <T> T checkArgument(boolean b, String msg) {}\n" +
+                       "public static <T> T checkState(boolean b, String msg) {}\n" +
+                       "}");
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  public void testGoogleTruth() {
+    myFixture.addClass("package com.google.common.truth; public class Truth { " +
+                       "public static Subject assertThat(Object o) {}\n" +
+                       "}");
+    myFixture.addClass("package com.google.common.truth; public class Subject { public void isNotNull() {} }");
+    myFixture.enableInspections(new DataFlowInspection());
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
   public void testGuavaCheckNotNull() {
     myFixture.addClass("package com.google.common.base; public class Preconditions { " +
                        "public static <T> T checkNotNull(T reference) {}\n" +

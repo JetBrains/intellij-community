@@ -95,6 +95,10 @@ class Profiler(object):
         return self.profiling_backend.getstats()
 
     def dump_snapshot(self, filename):
+        dir = os.path.dirname(filename)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
         self.profiling_backend.dump_stats(filename)
         return filename
 
@@ -116,6 +120,10 @@ if __name__ == '__main__':
     port = int(sys.argv[2])
     file = sys.argv[3]
 
+    del sys.argv[0]
+    del sys.argv[0]
+    del sys.argv[0]
+
     profiler = Profiler()
 
     try:
@@ -126,7 +134,3 @@ if __name__ == '__main__':
         sys.exit(1)
 
     profiler.run(file)
-
-
-
-

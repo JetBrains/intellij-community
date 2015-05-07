@@ -443,12 +443,14 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     @NotNull private final TIntHashSet mySelectedCommits;
     @Nullable private final Integer myVisibleSelectedCommit;
     @Nullable private final Integer myDelta;
+    private final boolean myScrollToTop;
 
 
     public Selection(@NotNull VcsLogGraphTable table) {
       myTable = table;
       List<Integer> selectedRows = ContainerUtil.sorted(toList(myTable.getSelectedRows()));
       Couple<Integer> visibleRows = TableScrollingUtil.getVisibleRows(myTable);
+      myScrollToTop = visibleRows.first - 1 == 0;
 
       VisibleGraph<Integer> graph = myTable.myDataPack.getVisibleGraph();
 
@@ -495,15 +497,24 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         });
 
       }
-      if (scrollToSelection && toSelectAndScroll.second != null) {
-        assert myDelta != null;
-        Rectangle startRect = myTable.getCellRect(toSelectAndScroll.second, 0, true);
-        myTable.scrollRectToVisible(new Rectangle(startRect.x, Math.max(startRect.y - myDelta, 0), startRect.width, myTable.getVisibleRect().height));
+      if (scrollToSelection) {
+        if (myScrollToTop) {
+          scrollToRow(0, 0);
+        } else if (toSelectAndScroll.second != null) {
+          assert myDelta != null;
+          scrollToRow(toSelectAndScroll.second, myDelta);
+        }
       }
       // sometimes commits that were selected are now collapsed
       // currently in this case selection disappears
       // in the future we need to create a method in LinearGraphController that allows to calculate visible commit for our commit
       // or answer from collapse action could return a map that gives us some information about what commits were collapsed and where
+    }
+
+    private void scrollToRow(Integer row, Integer delta) {
+      Rectangle startRect = myTable.getCellRect(row, 0, true);
+      myTable.scrollRectToVisible(
+        new Rectangle(startRect.x, Math.max(startRect.y - delta, 0), startRect.width, myTable.getVisibleRect().height));
     }
 
     @NotNull

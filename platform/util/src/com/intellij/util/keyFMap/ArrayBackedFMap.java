@@ -18,7 +18,7 @@ package com.intellij.util.keyFMap;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-class ArrayBackedFMap implements KeyFMap {
+public class ArrayBackedFMap implements KeyFMap {
   static final int ARRAY_THRESHOLD = 8;
   private final int[] keys;
   private final Object[] values;
@@ -133,5 +133,32 @@ class ArrayBackedFMap implements KeyFMap {
   @Override
   public boolean isEmpty() {
     return false;
+  }
+
+  @NotNull
+  public int[] getKeyIds() {
+    return keys;
+  }
+
+  @NotNull
+  @Override
+  public Key[] getKeys() {
+    return getKeysByIndices(keys);
+  }
+
+  @NotNull
+  public Object[] getValues() {
+    return values;
+  }
+
+  @NotNull
+  static Key[] getKeysByIndices(int[] indexes) {
+    Key[] result = new Key[indexes.length];
+
+    for (int i =0; i < indexes.length; i++) {
+      result[i] = Key.getKeyByIndex(indexes[i]);
+    }
+
+    return result;
   }
 }

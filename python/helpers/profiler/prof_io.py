@@ -3,6 +3,7 @@ import traceback
 from _prof_imports import TSerialization
 from _prof_imports import TJSONProtocol
 from _prof_imports import ProfilerRequest
+from _prof_imports import IS_PY3K
 
 from prof_util import ProfDaemonThread
 
@@ -38,7 +39,11 @@ def socket_read_n(sock, n):
         Raise RuntimeError if the connection closed before
         n bytes were read.
     """
-    buf = ''
+    if IS_PY3K:
+        buf = bytearray()
+    else:
+        buf = ''
+
     while n > 0:
         data = sock.recv(n)
         if data == '':

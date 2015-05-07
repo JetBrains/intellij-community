@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.stubs.model;
+package com.intellij.openapi.options;
 
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.Stubbed;
-import com.intellij.util.xml.DomElement;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Dmitry Avdeev
- *         Date: 8/3/12
+ * @author Irina.Chernushina on 4/22/2015.
  */
-@Stubbed
-public interface Foo extends DomElement {
-
-  @Stubbed
-  GenericDomValue<String> getId();
-
-  @Stubbed
-  List<GenericDomValue<String>> getLists();
-
-  @Stubbed
-  List<Bar> getBars();
-
-  Bar addBar();
+public interface SchemeFactory<T extends Scheme> {
+  T createNewScheme(@Nullable String name);
 }

@@ -200,13 +200,13 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
   }
 
   @Override
-  public int bufferMaxLinesCount() {
+  public int getBufferMaxLinesCount() {
     final int linesCount = Registry.get("terminal.buffer.max.lines.count").asInteger();
     if (linesCount > 0) {
       return linesCount;
     }
     else {
-      return super.bufferMaxLinesCount();
+      return super.getBufferMaxLinesCount();
     }
   }
 
