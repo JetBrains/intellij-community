@@ -198,7 +198,14 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void testSingleMethod() throws Exception {
     final Description rootDescription = Description.createTestDescription("TestA", "testName");
-    doTest(rootDescription, "##teamcity[suiteTreeNode name='testName' locationHint='java:test://TestA.testName']\n");
+    doTest(rootDescription, Collections.singletonList(rootDescription), 
+           "##teamcity[suiteTreeNode name='testName' locationHint='java:test://TestA.testName']\n",
+           "##teamcity[enteredTheMatrix]\n" +
+           "##teamcity[rootName name = 'TestA' location = 'java:suite://TestA']\n" +
+           "##teamcity[testStarted name='testName' locationHint='java:test://TestA.testName']\n" +
+           "\n" +
+           "##teamcity[testFinished name='testName']\n" +
+           "##teamcity[testSuiteFinished name='TestA']\n");
   }
 
   @Test

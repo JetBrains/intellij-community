@@ -18,6 +18,7 @@ package com.intellij.spellchecker.inspections;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public class PlainTextSplitter extends BaseSplitter {
 
   @NonNls
   private static final
-  Pattern SPLIT_PATTERN = Pattern.compile("(\\s)");
+  Pattern SPLIT_PATTERN = Pattern.compile("(\\s|\b)");
 
   @NonNls
   private static final Pattern MAIL =
@@ -50,6 +51,11 @@ public class PlainTextSplitter extends BaseSplitter {
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
     if (text == null || StringUtil.isEmpty(text)) {
+      return;
+    }
+
+    final String substring = StringUtil.replaceChar(StringUtil.replaceChar(range.substring(text), '\b', '\n'), '\f', '\n');
+    if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(substring).replaceAll("")) != null) {
       return;
     }
 
