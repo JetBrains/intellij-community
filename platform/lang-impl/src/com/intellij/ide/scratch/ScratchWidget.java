@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,9 +104,8 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     Project project = getProject();
     if (project == null) return;
     VirtualFile file = getSelectedFile();
-    if (file == null) return;
     ScratchFileService fileService = ScratchFileService.getInstance();
-    if (fileService.getRootType(file) instanceof ScratchRootType) {
+    if (file != null && fileService.getRootType(file) instanceof ScratchRootType) {
       Language lang = fileService.getScratchesMapping().getMapping(file);
       if (lang == null) {
         lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
