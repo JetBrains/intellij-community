@@ -351,7 +351,7 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   private static void log(String message) {
-    //System.out.println(message);
+    System.out.println(message);
   }
 
   private void ensureRedetected(VirtualFile vFile, Set<VirtualFile> detectorCalled) {
@@ -509,5 +509,19 @@ public class FileTypesTest extends PlatformTestCase {
     if (map != null) {
       fail(JDOMUtil.writeElement(map));
     }
+  }
+
+  public void testDefaultFileType() throws Exception {
+    FileType idl = myFileTypeManager.findFileTypeByName("IDL");
+    myFileTypeManager.associatePattern(idl, "*.xxx");
+    Element element = myFileTypeManager.getState();
+    log(JDOMUtil.writeElement(element));
+    myFileTypeManager.removeAssociatedExtension(idl, "xxx");
+    myFileTypeManager.clearForTests();
+    myFileTypeManager.initStandardFileTypes();
+    myFileTypeManager.loadState(element);
+    myFileTypeManager.initComponent();
+    FileType extensions = myFileTypeManager.getFileTypeByExtension("xxx");
+    assertEquals("IDL", extensions.getName());
   }
 }

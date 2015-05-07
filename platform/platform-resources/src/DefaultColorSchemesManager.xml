@@ -306,9 +306,11 @@
       </option>
       <option name="WARNING_ATTRIBUTES">
         <value>
-          <option name="EFFECT_COLOR" value="e68110" />
+          <option name="FOREGROUND"/>
+          <option name="BACKGROUND" value="f6ebbc"/>
+          <option name="EFFECT_COLOR"/>
+          <option name="EFFECT_TYPE" value="1"/>
           <option name="ERROR_STRIPE_COLOR" value="ebc700" />
-          <option name="EFFECT_TYPE" value="2" />
         </value>
       </option>
       <option name="GENERIC_SERVER_ERROR_OR_WARNING">
@@ -2579,9 +2581,9 @@
       </option>
       <option name="WARNING_ATTRIBUTES">
         <value>
-          <option name="EFFECT_COLOR" value="af8000" />
-          <option name="ERROR_STRIPE_COLOR" value="be9117" />
+          <option name="BACKGROUND" value="52503a" />
           <option name="EFFECT_TYPE" value="2" />
+          <option name="ERROR_STRIPE_COLOR" value="be9117" />
         </value>
       </option>
       <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
