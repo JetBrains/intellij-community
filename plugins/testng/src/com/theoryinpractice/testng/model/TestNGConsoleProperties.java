@@ -39,7 +39,14 @@ public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<Test
   @NotNull
   @Override
   protected GlobalSearchScope initScope() {
-    return myConfiguration.getPersistantData().getScope().getSourceScope(myConfiguration).getGlobalSearchScope();
+    final String testObject = myConfiguration.getPersistantData().TEST_OBJECT;
+    if (TestType.CLASS.getType().equals(testObject) ||
+        TestType.METHOD.getType().equals(testObject)) {
+      return super.initScope();
+    }
+    else {
+      return myConfiguration.getPersistantData().getScope().getSourceScope(myConfiguration).getGlobalSearchScope();
+    }
   }
 
   @Override

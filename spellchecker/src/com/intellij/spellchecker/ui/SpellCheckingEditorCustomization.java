@@ -22,6 +22,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -45,19 +46,25 @@ import java.util.Map;
  * @since Aug 20, 2010 3:54:42 PM
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
+  /**
+   * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getEnabledCustomization()} instead
+   */
+  public static final SpellCheckingEditorCustomization ENABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
 
-  public static final SpellCheckingEditorCustomization ENABLED = new SpellCheckingEditorCustomization(true);
-  public static final SpellCheckingEditorCustomization DISABLED = new SpellCheckingEditorCustomization(false);
+  /**
+   * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getDisabledCustomization()} instead
+   */
+  public static final SpellCheckingEditorCustomization DISABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
 
   private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<String, LocalInspectionToolWrapper>();
   private static final boolean READY = init();
 
   @NotNull
   public static SpellCheckingEditorCustomization getInstance(boolean enabled) {
-    return enabled ? ENABLED : DISABLED;
+    return (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(enabled);
   }
 
-  private SpellCheckingEditorCustomization(boolean enabled) {
+  SpellCheckingEditorCustomization(boolean enabled) {
     super(enabled);
   }
 

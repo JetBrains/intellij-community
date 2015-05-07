@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
@@ -47,7 +48,7 @@ public class SpellCheckingEditorCustomizationTest extends LightPlatformCodeInsig
       myFixture.configureByText(PlainTextFileType.INSTANCE, document);
       myFixture.enableInspections(new SpellCheckingInspection());
 
-      SpellCheckingEditorCustomization.getInstance(enabled).customize((EditorEx)myFixture.getEditor());
+      SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(enabled).customize((EditorEx)myFixture.getEditor());
 
       myFixture.checkHighlighting();
     }

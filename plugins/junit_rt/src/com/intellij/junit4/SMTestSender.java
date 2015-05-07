@@ -61,7 +61,7 @@ public class SMTestSender extends RunListener {
   }
 
   public void testRunStarted(Description description) throws Exception {
-    myPrintStream.println("##teamcity[enteredTheMatrix]\n");
+    myPrintStream.println("##teamcity[enteredTheMatrix]");
     if (myCurrentClassName != null && !myCurrentClassName.startsWith("[")) {
       int lastPointIdx = myCurrentClassName.lastIndexOf('.');
       String name = myCurrentClassName;
@@ -73,20 +73,20 @@ public class SMTestSender extends RunListener {
 
       myPrintStream.println("##teamcity[rootName name = \'" + escapeName(name) + 
                             (comment != null ? ("\' comment = \'" + escapeName(comment)) : "") + 
-                            "\']\n");
+                            "\']");
       myCurrentClassName = getShortName(myCurrentClassName);
     }
   }
 
   public void testRunFinished(Result result) throws Exception {
     if (myParamName != null) {
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']\n");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(myParamName) + "\']");
     }
     if (myCurrentClassName != null) {
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']\n");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(myCurrentClassName) + "\']");
     }
     if (myCurrentSuiteName != null) {
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(myCurrentSuiteName)) + "\']\n");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(myCurrentSuiteName)) + "\']");
     }
   }
 

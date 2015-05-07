@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.spellchecker.tokenizer;
+package com.siyeh.ig.threading;
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class Tokenizer<T extends PsiElement> {
+/**
+ * @author Bas Leijdekkers
+ */
+public class CallToNativeMethodWhileLockedInspectionTest extends LightInspectionTestCase {
 
-  public abstract void tokenize(@NotNull T element, TokenConsumer consumer);
+  public void testCallToNativeMethodWhileLocked() {
+    doTest();
+  }
 
-  @NotNull
-  public TextRange getHighlightingRange(PsiElement element, int offset, TextRange textRange) {
-    return TextRange.from(offset + textRange.getStartOffset(), textRange.getLength());
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new CallToNativeMethodWhileLockedInspection();
   }
 }

@@ -19,7 +19,6 @@
     <orderEntry type="module" module-name="images" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="dvcs-api" />
-    <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
   </component>
 </module>
