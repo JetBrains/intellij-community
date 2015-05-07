@@ -37,15 +37,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
@@ -826,7 +824,15 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         modificationCountForChildren = ourSettingsModificationCount;
       }
 
-      final long currentStamp = myProject != null ? PsiManager.getInstance(myProject).getModificationTracker().getModificationCount() : -1;
+      final Object o = unwrapValue(getValue());
+      long currentStamp = -1;
+      if (o instanceof StubBasedPsiElement && ((StubBasedPsiElement)o).getStub() != null) {
+        currentStamp = ((StubBasedPsiElement)o).getContainingFile().getModificationStamp();
+      } else if (o instanceof PsiElement && ((PsiElement)o).getNode() instanceof CompositeElement) {
+        currentStamp = ((CompositeElement)((PsiElement)o).getNode()).getModificationCount();
+      } else if (o instanceof ModificationTracker) {
+        currentStamp = ((ModificationTracker)o).getModificationCount();
+      }
       if (childrenStamp != currentStamp) {
         resetChildren();
         childrenStamp = currentStamp;
