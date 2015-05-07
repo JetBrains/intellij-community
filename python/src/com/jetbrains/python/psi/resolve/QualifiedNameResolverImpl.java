@@ -257,7 +257,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
     if (!myWithoutForeign) {
       for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
-        PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext);
+        PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext, !myWithoutRoots);
         if (foreign != null) {
           myForeignResults.add(foreign);
         }
