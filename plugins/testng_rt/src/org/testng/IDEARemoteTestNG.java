@@ -78,6 +78,7 @@ public class IDEARemoteTestNG extends TestNG {
         addListener((ISuiteListener) new IDEATestNGRemoteListener());
         addListener((ITestListener)  new IDEATestNGRemoteListener());
         super.run();
+        System.exit(0);
       }
       else {
         System.err.println("Nothing found to run");
