@@ -1,5 +1,6 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyTestTestTask;
 import org.hamcrest.Matchers;
@@ -29,9 +30,12 @@ public class PythonPyTestingTest extends PyEnvTestCase {
         assertEquals(9, allTestsCount());
         assertEquals(5, passedTestsCount());
         assertEquals(4, failedTestsCount());
-        Assert.assertThat("No test stdout", getMockPrinter(findTestByName("testOne")).getStdOut(), Matchers.startsWith("I am test1"));
+        Assert
+          .assertThat("No test stdout", MockPrinter.fillPrinter(findTestByName("testOne")).getStdOut(), Matchers.startsWith("I am test1"));
+
         // Ensure test has stdout even it fails
-        Assert.assertThat("No stdout for fail", getMockPrinter(findTestByName("testFail")).getStdOut(), Matchers.startsWith("I will fail"));
+        Assert.assertThat("No stdout for fail", MockPrinter.fillPrinter(findTestByName("testFail")).getStdOut(),
+                          Matchers.startsWith("I will fail"));
       }
     });
   }

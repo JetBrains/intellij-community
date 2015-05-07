@@ -275,19 +275,6 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   }
 
   /**
-   * Creates {@link MockPrinter} filled with test output. Use it to check what output test has.
-   *
-   * @param test test to fill mock printer with
-   * @return filled print.
-   */
-  @NotNull
-  protected static MockPrinter getMockPrinter(@NotNull final Printable test) {
-    final MockPrinter printer = new MockPrinter();
-    test.printOn(printer);
-    return printer;
-  }
-
-  /**
    * Searches for test by its name recursevly in {@link #myTestProxy}
    *
    * @param testName test name to find
