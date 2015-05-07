@@ -9,8 +9,8 @@ import org.testng.internal.IResultListener;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,59 +20,63 @@ import java.util.Map;
 public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener{
 
   public static final String INVOCATION_NUMBER = "invocation number: ";
-  private PrintStream myPrintStream = System.out;
-  private String myCurrentClassName;
+  private final PrintStream myPrintStream;
+  private String myCurrentClassName = null;
   private String myMethodName;
-  private int    myInvocationCount = 0;
+  private int myInvocationCount = 0;
+  private final Map<ITestResult, Integer> myMap = Collections.synchronizedMap(new HashMap<ITestResult, Integer>());
 
-  public IDEATestNGRemoteListener() {}
+  public IDEATestNGRemoteListener() {
+    myPrintStream = System.out;
+  }
 
   public IDEATestNGRemoteListener(PrintStream printStream) {
     myPrintStream = printStream;
   }
 
-  public void onStart(ISuite suite) {
+  public synchronized void onStart(final ISuite suite) {
     myPrintStream.println("##teamcity[enteredTheMatrix]");
     onSuiteStart(suite.getName(), false);
   }
 
-  public void onFinish(ISuite suite) {
+  public synchronized void onFinish(ISuite suite) {
     onSuiteFinish(suite.getName());
   }
 
-  public void onConfigurationSuccess(ITestResult result) {
+  public synchronized void onConfigurationSuccess(ITestResult result) {
     onConfigurationSuccess(getClassName(result), getTestMethodName(result));
   }
 
-  public void onConfigurationFailure(ITestResult result) {
+  public synchronized void onConfigurationFailure(ITestResult result) {
     onConfigurationFailure(getClassName(result), getTestMethodName(result), result.getThrowable());
   }
 
-  public void onConfigurationSkip(ITestResult itr) {}
+  public synchronized void onConfigurationSkip(ITestResult itr) {}
 
-  public void onTestStart(ITestResult result) {
-    onTestStart(getClassName(result), getMethodName(result, false));
+  public synchronized void onTestStart(ITestResult result) {
+    onTestStart(getClassName(result), getMethodName(result, true));
   }
   
-  public void onTestSuccess(ITestResult result) {
+  public synchronized void onTestSuccess(ITestResult result) {
     onTestFinished(getMethodName(result));
   }
 
-  public void onTestFailure(ITestResult result) {
+  public synchronized void onTestFailure(ITestResult result) {
     onTestFailure(result.getThrowable(), getMethodName(result));
   }
 
-  public void onTestSkipped(ITestResult result) {
-    onTestFinished(getMethodName(result));
+  public synchronized void onTestSkipped(ITestResult result) {
+    myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getMethodName(result)) + "\']");
   }
 
-  public void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
+  public synchronized void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
 
-  public void onStart(ITestContext context) {}
+  public synchronized void onStart(ITestContext context) {}
 
-  public void onFinish(ITestContext context) {
-    if (myCurrentClassName != null) {
-      onSuiteFinish(myCurrentClassName);
+  public synchronized void onFinish(ITestContext context) {
+    final String currentClassName = myCurrentClassName;
+    if (currentClassName != null) {
+      onSuiteFinish(currentClassName);
     }
   }
 
@@ -162,7 +166,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private String getMethodName(ITestResult result) {
-    return getMethodName(result, true);
+    return getMethodName(result, false);
   }
 
   private String getMethodName(ITestResult result, boolean changeCount) {
@@ -173,9 +177,13 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       myMethodName = methodName;
     }
     if (parameters.length > 0) {
-      final List<Integer> invocationNumbers = result.getMethod().getInvocationNumbers();
-      methodName += "[" + parameters[0].toString() + " (" + INVOCATION_NUMBER +
-                    (invocationNumbers.isEmpty() ? myInvocationCount : invocationNumbers.get(myInvocationCount)) + ")" + "]";
+      Integer invocationCount = myMap.get(result);
+      if (invocationCount == null) {
+        invocationCount = myInvocationCount;
+        myMap.put(result, invocationCount);
+      }
+      
+      methodName += "[" + parameters[0].toString() + " (" + INVOCATION_NUMBER + invocationCount + ")" + "]";
       if (changeCount) {
         myInvocationCount++;
       }

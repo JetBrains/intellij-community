@@ -81,8 +81,9 @@ public class KeyStrokeAdapter implements KeyListener {
    * @see KeyStroke#getKeyStrokeForEvent(KeyEvent)
    */
   public static KeyStroke getDefaultKeyStroke(KeyEvent event) {
+    if (event == null || event.isConsumed()) return null;
     // On Windows and Mac it is preferable to use normal key code here
-    boolean extendedKeyCodeFirst = !SystemInfo.isWindows && !SystemInfo.isMac;
+    boolean extendedKeyCodeFirst = !SystemInfo.isWindows && !SystemInfo.isMac && event.getModifiers() == 0;
     KeyStroke stroke = getKeyStroke(event, extendedKeyCodeFirst);
     return stroke != null ? stroke : getKeyStroke(event, !extendedKeyCodeFirst);
   }
