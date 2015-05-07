@@ -790,21 +790,19 @@ public class PsiClassImplUtil {
 
   @Nullable
   public static PsiClass getSuperClass(@NotNull PsiClass psiClass) {
-    PsiManager manager = psiClass.getManager();
-    GlobalSearchScope resolveScope = psiClass.getResolveScope();
 
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (psiClass.isInterface()) {
-      return facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+      String className = CommonClassNames.JAVA_LANG_OBJECT;
+      return findSpecialSuperClass(psiClass, className);
     }
     if (psiClass.isEnum()) {
-      return facade.findClass(CommonClassNames.JAVA_LANG_ENUM, resolveScope);
+      return findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_ENUM);
     }
 
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassReference = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassReference.resolve();
-      if (baseClass == null || baseClass.isInterface()) return facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+      if (baseClass == null || baseClass.isInterface()) return findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
       return baseClass;
     }
 
@@ -812,10 +810,15 @@ public class PsiClassImplUtil {
 
     final PsiClassType[] referenceElements = psiClass.getExtendsListTypes();
 
-    if (referenceElements.length == 0) return facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+    if (referenceElements.length == 0) return findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
 
-    PsiClass psiResoved = referenceElements[0].resolve();
-    return psiResoved == null ? facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope) : psiResoved;
+    PsiClass psiResolved = referenceElements[0].resolve();
+    return psiResolved == null ? findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT) : psiResolved;
+  }
+
+  @Nullable
+  private static PsiClass findSpecialSuperClass(@NotNull PsiClass psiClass, String className) {
+    return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(className, psiClass.getResolveScope());
   }
 
   @NotNull
@@ -832,7 +835,7 @@ public class PsiClassImplUtil {
     PsiClassType[] extendsListTypes = psiClass.getExtendsListTypes();
 
     if (psiClass.isInterface()) {
-      return resolveClassReferenceList(extendsListTypes, psiClass.getManager(), psiClass.getResolveScope(), true);
+      return resolveClassReferenceList(extendsListTypes, psiClass, true);
     }
 
     if (psiClass instanceof PsiAnonymousClass) {
@@ -841,28 +844,25 @@ public class PsiClassImplUtil {
       PsiClass baseClass = baseClassReference.resolve();
       if (baseClass != null) {
         if (baseClass.isInterface()) {
-          PsiClass objectClass =
-            JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
+          PsiClass objectClass = findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
           return objectClass != null ? new PsiClass[]{objectClass, baseClass} : new PsiClass[]{baseClass};
         }
         return new PsiClass[]{baseClass};
       }
 
-      PsiClass objectClass =
-        JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
+      PsiClass objectClass = findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
       return objectClass != null ? new PsiClass[]{objectClass} : PsiClass.EMPTY_ARRAY;
     }
     if (psiClass instanceof PsiTypeParameter) {
       if (extendsListTypes.length == 0) {
-        final PsiClass objectClass =
-          JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiClass.getResolveScope());
+        final PsiClass objectClass = findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
         return objectClass != null ? new PsiClass[]{objectClass} : PsiClass.EMPTY_ARRAY;
       }
-      return resolveClassReferenceList(extendsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
+      return resolveClassReferenceList(extendsListTypes, psiClass, false);
     }
 
     PsiClassType[] implementsListTypes = psiClass.getImplementsListTypes();
-    PsiClass[] interfaces = resolveClassReferenceList(implementsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
+    PsiClass[] interfaces = resolveClassReferenceList(implementsListTypes, psiClass, false);
 
     PsiClass superClass = getSuperClass(psiClass);
     if (superClass == null) return interfaces;
@@ -917,11 +917,10 @@ public class PsiClassImplUtil {
 
   private static PsiClassType getEnumSuperType(@NotNull PsiClass psiClass, @NotNull PsiElementFactory factory) {
     PsiClassType superType;
-    final PsiManager manager = psiClass.getManager();
-    final PsiClass enumClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Enum", psiClass.getResolveScope());
+    final PsiClass enumClass = findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_ENUM);
     if (enumClass == null) {
       try {
-        superType = (PsiClassType)factory.createTypeFromText("java.lang.Enum", null);
+        superType = (PsiClassType)factory.createTypeFromText(CommonClassNames.JAVA_LANG_ENUM, null);
       }
       catch (IncorrectOperationException e) {
         superType = null;
@@ -957,8 +956,7 @@ public class PsiClassImplUtil {
   @NotNull
   public static PsiClass[] getInterfaces(@NotNull PsiClass psiClass) {
     if (psiClass.isInterface()) {
-      final PsiClassType[] extendsListTypes = psiClass.getExtendsListTypes();
-      return resolveClassReferenceList(extendsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
+      return resolveClassReferenceList(psiClass.getExtendsListTypes(), psiClass, false);
     }
 
     if (psiClass instanceof PsiAnonymousClass) {
@@ -968,17 +966,16 @@ public class PsiClassImplUtil {
     }
 
     final PsiClassType[] implementsListTypes = psiClass.getImplementsListTypes();
-    return resolveClassReferenceList(implementsListTypes, psiClass.getManager(), psiClass.getResolveScope(), false);
+    return resolveClassReferenceList(implementsListTypes, psiClass, false);
   }
 
   @NotNull
   private static PsiClass[] resolveClassReferenceList(@NotNull PsiClassType[] listOfTypes,
-                                                      @NotNull PsiManager manager,
-                                                      @NotNull GlobalSearchScope resolveScope,
+                                                      @NotNull PsiClass psiClass,
                                                       boolean includeObject) {
     PsiClass objectClass = null;
     if (includeObject) {
-      objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+      objectClass = findSpecialSuperClass(psiClass, CommonClassNames.JAVA_LANG_OBJECT);
       if (objectClass == null) includeObject = false;
     }
     if (listOfTypes.length == 0) {
