@@ -63,6 +63,14 @@ public class BranchesPanel extends JPanel {
     });
   }
 
+  @Override
+  public Dimension getPreferredSize() {
+    if (!isVisible()) {
+      return new Dimension(0, 0);
+    }
+    return super.getPreferredSize();
+  }
+
   private void recreateComponents() {
     for (Map.Entry<VirtualFile, List<RefGroup>> entry : myRefGroups.entrySet()) {
       if (myRoots == null || myRoots.contains(entry.getKey())) {
