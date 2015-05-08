@@ -2,6 +2,7 @@ __author__ = 'traff'
 
 import threading
 import os
+import tempfile
 from _prof_imports import Stats, FuncStat, Function
 
 class ProfDaemonThread(threading.Thread):
@@ -16,9 +17,12 @@ class ProfDaemonThread(threading.Thread):
     def OnRun(self):
         pass
 
-def generate_snapshot_filepath(basepath):
+def generate_snapshot_filepath(basepath, local_temp_dir=False):
     if basepath is None:
-        return None
+        basepath = 'snapshot'
+    if local_temp_dir:
+        basepath = os.path.join(tempfile.gettempdir(), os.path.basename(basepath))
+
     n = 0
     path = basepath + '.pstat'
     while os.path.exists(path):
