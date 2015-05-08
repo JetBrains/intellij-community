@@ -1552,7 +1552,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag();
     boolean requiresRebuildWasSet = ourRebuildStatus.get(indexId).compareAndSet(OK, REQUIRES_REBUILD);
-    if (requiresRebuildWasSet) LOG.info("Rebuild requested for index " + indexId, throwable);
+    if (requiresRebuildWasSet) {
+      String message = "Rebuild requested for index " + indexId;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(message, throwable);
+      } else {
+        LOG.info(message, throwable);
+      }
+    }
   }
 
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {

@@ -32,7 +32,6 @@ import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,8 +50,8 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private volatile PsiElementFinder[] myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
-  private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
-  private final ConcurrentMap<String, Map<GlobalSearchScope, PsiClass>> myClassCache = ContainerUtil.createConcurrentSoftMap();
+  private final ConcurrentMap<String, PsiPackage> myPackageCache = ContainerUtil.createConcurrentSoftValueMap();
+  private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
@@ -76,7 +75,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           final long now = modificationTracker.getJavaStructureModificationCount();
           if (lastTimeSeen != now) {
             lastTimeSeen = now;
-            myPackageCache = null;
+            myPackageCache.clear();
           }
         }
       });
@@ -89,16 +88,16 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
-    Map<GlobalSearchScope, PsiClass> map = myClassCache.get(qualifiedName);
+    Map<String, PsiClass> map = myClassCache.get(scope);
     if (map == null) {
-      map = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
-      map = ConcurrencyUtil.cacheOrGet(myClassCache, qualifiedName, map);
+      map = ContainerUtil.createConcurrentWeakValueMap();
+      map = ConcurrencyUtil.cacheOrGet(myClassCache, scope, map);
     }
-    PsiClass result = map.get(scope);
+    PsiClass result = map.get(qualifiedName);
     if (result == null) {
       result = doFindClass(qualifiedName, scope);
       if (result != null) {
-        map.put(scope, result);
+        map.put(qualifiedName, result);
       }
     }
 
@@ -213,12 +212,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
-    ConcurrentMap<String, PsiPackage> cache = SoftReference.dereference(myPackageCache);
-    if (cache == null) {
-      myPackageCache = new SoftReference<ConcurrentMap<String, PsiPackage>>(cache = ContainerUtil.newConcurrentMap());
-    }
-
-    PsiPackage aPackage = cache.get(qualifiedName);
+    PsiPackage aPackage = myPackageCache.get(qualifiedName);
     if (aPackage != null) {
       return aPackage;
     }
@@ -226,7 +220,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     for (PsiElementFinder finder : filteredFinders()) {
       aPackage = finder.findPackage(qualifiedName);
       if (aPackage != null) {
-        return ConcurrencyUtil.cacheOrGet(cache, qualifiedName, aPackage);
+        return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
       }
     }
 
