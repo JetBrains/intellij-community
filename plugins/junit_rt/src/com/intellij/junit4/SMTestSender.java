@@ -32,6 +32,8 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 public class SMTestSender extends RunListener {
@@ -128,13 +130,22 @@ public class SMTestSender extends RunListener {
   }
 
   public void testFailure(Failure failure) throws Exception {
-    final String failureMessage = failure.getMessage();
-    final String trace = failure.getTrace();
     final Map attrs = new HashMap();
     attrs.put("name", JUnit4ReflectionUtil.getMethodName(failure.getDescription()));
-    final ComparisonFailureData notification = createExceptionNotification(failure.getException());
-    ComparisonFailureData.registerSMAttributes(notification, trace, failureMessage, attrs);
-    myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
+    try {
+      final String trace = failure.getTrace();
+      final ComparisonFailureData notification = createExceptionNotification(failure.getException());
+      ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs);
+    }
+    catch (Throwable e) {
+      final StringWriter stringWriter = new StringWriter();
+      final PrintWriter writer = new PrintWriter(stringWriter);
+      e.printStackTrace(writer);
+      ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs);
+    }
+    finally {
+      myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
+    }
   }
 
   public void testAssumptionFailure(Failure failure) {
