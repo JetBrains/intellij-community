@@ -205,12 +205,12 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
   @Nullable
   public ServerSocket getForkSocket() {
-    if (myForkSocket == null && !Comparing.strEqual(getForkMode(), "none") && getRunnerSettings() != null) {
+    if (myForkSocket == null && (!Comparing.strEqual(getForkMode(), "none") || forkPerModule()) && getRunnerSettings() != null) {
       try {
         myForkSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
       }
       catch (IOException e) {
-        e.printStackTrace();
+        LOG.error(e);
       }
     }
     return myForkSocket;
