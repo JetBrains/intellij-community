@@ -18,12 +18,8 @@ package org.testng;
 
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.testng.collections.Lists;
-import org.testng.xml.XmlClass;
-import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
-import org.testng.xml.XmlTest;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -50,27 +46,6 @@ public class IDEARemoteTestNG extends TestNG {
       if(suites.size() > 0) {
 
         int testCount= 0;
-
-        for (XmlSuite suite : suites) {
-          System.out.println("##teamcity[suiteTreeStarted name=\'" + suite.getName() + "\' locationHint=\'java:suite://" + suite.getName() + "\']");
-          final List<XmlTest> tests = suite.getTests();
-          for (XmlTest test : tests) {
-            for (XmlClass aClass : test.getXmlClasses()) {
-              final String shortName = IDEATestNGRemoteListener.getShortName(aClass.getName());
-              System.out.println("##teamcity[suiteTreeStarted name=\'" +
-                                 shortName + "\' locationHint=\'java:suite://" + aClass.getName() +  "\']");
-              if (myParam != null) {
-                for (XmlInclude include : aClass.getIncludedMethods()) {
-                  aClass.setIncludedMethods(Arrays.asList(new XmlInclude(include.getName(), Arrays.asList(Integer.parseInt(myParam)), 0)));
-                }
-              }
-
-              System.out.println("##teamcity[suiteTreeEnded name=\'" + shortName + "\']");
-            }
-            testCount += test.getClasses().size();
-          }
-          System.out.println("##teamcity[suiteTreeEnded name=\'" + suite.getName() + "\']");
-        }
 
         final HashMap<String, String> map = new HashMap<String, String>();
         map.put("count", String.valueOf(testCount));
