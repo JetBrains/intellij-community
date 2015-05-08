@@ -29,10 +29,7 @@ import com.intellij.xml.XmlTagNameProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
   @Override
@@ -50,12 +47,15 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     @SuppressWarnings("unchecked") List<XmlElementDescriptor> variants = TagNameVariantCollector
       .getTagDescriptors(tag, namespaces, nsInfo);
 
+    final Set<String> visited = new HashSet<String>();
     for (int i = 0; i < variants.size(); i++) {
       XmlElementDescriptor descriptor = variants.get(i);
       String qname = descriptor.getName(tag);
+      if (!visited.add(qname)) continue;
       if (!prefix.isEmpty() && qname.startsWith(prefix + ":")) {
         qname = qname.substring(prefix.length() + 1);
       }
+
       PsiElement declaration = descriptor.getDeclaration();
       LookupElementBuilder lookupElement = declaration == null ? LookupElementBuilder.create(qname) : LookupElementBuilder.create(declaration, qname);
       final int separator = qname.indexOf(':');

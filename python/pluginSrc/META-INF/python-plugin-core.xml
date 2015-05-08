@@ -40,6 +40,8 @@
     <action id="PyManagePackages" class="com.jetbrains.python.packaging.PyManagePackagesAction" text="Manage Python Packages...">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
+
+    <action overrides="true" id="ForceStepInto" class="com.jetbrains.python.debugger.PyForceStepIntoAction"/>
   </actions>
 
 </idea-plugin>

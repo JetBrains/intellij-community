@@ -24,6 +24,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -76,6 +77,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   public static final String GROUP_EXE_OPTIONS = "Exe Options";
   public static final String GROUP_DEBUGGER = "Debugger";
+  public static final String GROUP_PROFILER = "Profiler";
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
 
@@ -130,6 +132,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected ConsoleView createAndAttachConsole(Project project, ProcessHandler processHandler, Executor executor)
     throws ExecutionException {
     final ConsoleView consoleView = createConsoleBuilder(project).getConsole();
+    consoleView.addMessageFilter(new UrlFilter());
 
     addTracebackFilter(project, consoleView, processHandler);
 
@@ -242,6 +245,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     ParametersList params = commandLine.getParametersList();
     params.addParamsGroup(GROUP_EXE_OPTIONS);
     params.addParamsGroup(GROUP_DEBUGGER);
+    params.addParamsGroup(GROUP_PROFILER);
     params.addParamsGroup(GROUP_SCRIPT);
   }
 

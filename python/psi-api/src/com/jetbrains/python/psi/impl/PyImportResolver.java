@@ -28,5 +28,5 @@ public interface PyImportResolver {
   ExtensionPointName<PyImportResolver> EP_NAME = ExtensionPointName.create("Pythonid.importResolver");
 
   @Nullable
-  PsiElement resolveImportReference(QualifiedName name, QualifiedNameResolveContext context);
+  PsiElement resolveImportReference(QualifiedName name, QualifiedNameResolveContext context, boolean withRoots);
 }

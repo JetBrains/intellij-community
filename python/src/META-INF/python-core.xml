@@ -582,6 +582,7 @@
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
     <extensionPoint qualifiedName="Pythonid.breakpointHandler" interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"/>
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider" interface="com.jetbrains.python.console.PyConsoleOptionsProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -630,6 +631,7 @@
     <!-- NumPy -->
     <pyModuleMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyModuleMembersProvider"/>
     <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider"/>
+    <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
   </extensions>
 
   <project-components>
@@ -732,13 +734,6 @@
             description="Attach debugger to a Python process">
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
-    </action>
-
-    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode"
-            text="Step Into My Code" description="Step to the next line executed ignoring libraries">
-      <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
-      <keyboard-shortcut keymap="$default" first-keystroke="alt shift F7"/>
     </action>
 
     <group id="PyPackagingMenu" text="Packaging">

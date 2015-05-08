@@ -29,6 +29,18 @@ public class MockPrinter implements Printer {
   protected final StringBuilder myStdErr = new StringBuilder();
   protected final StringBuilder myStdSys = new StringBuilder();
 
+  /**
+   * Creates printer and prints printable on it.
+   * @param printable printable to print on this printer
+   * @return printer filled with printable output
+   */
+  @NotNull
+  public static MockPrinter fillPrinter(@NotNull Printable printable) {
+    MockPrinter printer = new MockPrinter();
+    printable.printOn(printer);
+    return printer;
+  }
+
   public MockPrinter() {
     this(true);
   }
