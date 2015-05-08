@@ -74,7 +74,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   public EncodingPanel(@NotNull final Project project) {
     super(project);
     update = new Alarm(this);
-    myComponent = new TextPanel.PlusTwo() {
+    myComponent = new TextPanel.ExtraSize() {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
@@ -96,7 +96,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         return true;
       }
     }.installOn(myComponent);
-    myComponent.setBorder(WidgetBorder.INSTANCE);
+    myComponent.setBorder(WidgetBorder.WIDE);
   }
 
   @Nullable("returns null if charset set cannot be determined from content")

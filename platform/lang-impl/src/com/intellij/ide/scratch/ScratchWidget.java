@@ -46,7 +46,7 @@ import java.util.List;
 
 class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.Multiframe, CustomStatusBarWidget {
   static final String WIDGET_ID = "Scratch";
-  private final TextPanel.WithArrows myPanel = new TextPanel.WithArrows();
+  private final TextPanel.WithIconAndArrows myPanel = new TextPanel.WithIconAndArrows();
 
   public ScratchWidget(Project project) {
     super(project);
@@ -109,7 +109,7 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
         lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
       }
       myPanel.setText(lang.getDisplayName());
-      myPanel.setBorder(WidgetBorder.INSTANCE);
+      myPanel.setBorder(WidgetBorder.WIDE);
       myPanel.setIcon(getDefaultIcon(lang));
       myPanel.setVisible(true);
     }

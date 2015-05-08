@@ -61,7 +61,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
   public LineSeparatorPanel(@NotNull final Project project) {
     super(project);
 
-    myComponent = new TextPanel.PlusTwo() {
+    myComponent = new TextPanel.ExtraSize() {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
@@ -83,7 +83,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
         return true;
       }
     }.installOn(myComponent);
-    myComponent.setBorder(WidgetBorder.INSTANCE);
+    myComponent.setBorder(WidgetBorder.WIDE);
   }
 
   private void update() {
