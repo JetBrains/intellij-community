@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -112,7 +113,7 @@ public class LabelPainters {
 
       g2.setColor(JBColor.BLACK);
       int x = paddingX + textPadding + TEXT_PADDING_X;
-      int y = paddingY + fontMetrics.getHeight() / 2 + TOP_TEXT_PADDING + (fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
+      int y = paddingY + SimpleColoredComponent.getTextBaseLine(fontMetrics, height);
       g2.drawString(text, x, y);
 
       return new Rectangle(x, y, width, height);
