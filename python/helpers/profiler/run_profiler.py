@@ -67,7 +67,7 @@ class Profiler(object):
 
     def process(self, message):
         if hasattr(message, 'save_snapshot'):
-            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath) if not remote_run else None)
+            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath, remote_run), remote_run)
         else:
             raise AssertionError("Unknown request %s" % dir(message))
 
@@ -84,7 +84,7 @@ class Profiler(object):
         pydev_imports.execfile(file, globals, globals)  # execute the script
 
         self.stop_profiling()
-        self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path) if not remote_run else None)
+        self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path, remote_run), remote_run)
 
     def start_profiling(self):
         self.profiling_backend.enable()
@@ -104,11 +104,13 @@ class Profiler(object):
         self.profiling_backend.dump_stats(filename)
         return filename
 
-    def save_snapshot(self, id, filename):
+    def save_snapshot(self, id, filename, send_stat=False):
         self.stop_profiling()
         if filename is not None:
             filename = self.dump_snapshot(filename)
             print('Snapshot saved to %s' % filename)
+
+        if not send_stat:
             response = ProfilerResponse(id=id, snapshot_filepath=filename)
         else:
             response = ProfilerResponse(id=id)

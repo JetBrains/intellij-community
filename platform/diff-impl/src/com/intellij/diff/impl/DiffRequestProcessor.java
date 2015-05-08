@@ -299,6 +299,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected void onAfterNavigate() {
   }
 
+  @CalledInAwt
   protected void onDispose() {
   }
 

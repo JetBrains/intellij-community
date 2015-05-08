@@ -714,6 +714,33 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
+  public void testDisplacementByIsomorphicTree() throws Exception {
+    File top = createTestDir("top");
+    File up = createTestDir(top, "up");
+    File middle = createTestDir(up, "middle");
+    File file = createTestFile(middle, "file.txt", "original content");
+    File up_copy = new File(top, "up_copy");
+    FileUtil.copyDir(up, up_copy);
+    FileUtil.writeToFile(file, "new content");
+
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+    assertEquals("new content", VfsUtilCore.loadText(vFile));
+
+    LocalFileSystem.WatchRequest request = watch(up);
+    try {
+      myAccept = true;
+      FileUtil.rename(up, new File(top, "up.bak"));
+      FileUtil.rename(up_copy, up);
+      assertEvent(VFileContentChangeEvent.class, file.getPath());
+      assertTrue(vFile.isValid());
+      assertEquals("original content", VfsUtilCore.loadText(vFile));
+    }
+    finally {
+      unwatch(request);
+    }
+  }
+
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(File watchFile) {

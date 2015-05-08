@@ -458,15 +458,18 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         result.add(e);
       }
 
-      //cleanTheWorld();
       try {
-        myEditorListenerTracker.checkListenersLeak();
+        if (myEditorListenerTracker != null) {
+          myEditorListenerTracker.checkListenersLeak();
+        }
       }
       catch (AssertionError error) {
         result.add(error);
       }
       try {
-        myThreadTracker.checkLeak();
+        if (myThreadTracker != null) {
+          myThreadTracker.checkLeak();
+        }
       }
       catch (AssertionError error) {
         result.add(error);
@@ -477,9 +480,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       catch (Throwable error) {
         result.add(error);
       }
-      //if (directoryIndex != null) {
-      //  directoryIndex.assertAncestorConsistent();
-      //}
     }
     finally {
       myProjectManager = null;
