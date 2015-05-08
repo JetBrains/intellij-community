@@ -494,7 +494,7 @@ public class ByWord {
 
         Range expand = new Range(range.start1 + startCut, range.end1 - endCut, range.start2 + startCut, range.end2 - endCut);
 
-        if (!isEmpty(expand)) {
+        if (!expand.isEmpty()) {
           myChanges.add(expand);
         }
       }
@@ -528,7 +528,7 @@ public class ByWord {
       for (Range range : myIterable.iterateChanges()) {
         Range trimmed = trim(myText1, myText2, range);
 
-        if (!isEmpty(trimmed)) {
+        if (!trimmed.isEmpty()) {
           myChanges.add(trimmed);
         }
       }
@@ -580,7 +580,7 @@ public class ByWord {
 
         Range trimmed = new Range(start1, end1, start2, end2);
 
-        if (!isEmpty(trimmed)) {
+        if (!trimmed.isEmpty()) {
           myChanges.add(trimmed);
         }
       }

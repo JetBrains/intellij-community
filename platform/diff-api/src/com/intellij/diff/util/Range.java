@@ -56,4 +56,8 @@ public class Range {
   public String toString() {
     return "[" + start1 + ", " + end1 + ") - [" + start2 + ", " + end2 + ")";
   }
+
+  public boolean isEmpty() {
+    return start1 == end1 && start2 == end2;
+  }
 }
