@@ -1807,7 +1807,11 @@ public class PyUtil {
   public static boolean isInScratchFile(@NotNull PsiElement element) {
     final ScratchFileService service = ScratchFileService.getInstance();
     final PsiFile file = element.getContainingFile();
-    return service != null && file != null && service.getRootType(file.getVirtualFile()) != null;
+    if (file != null) {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      return service != null && virtualFile != null && service.getRootType(virtualFile) != null;
+    }
+    return false;
   }
 
   /**
