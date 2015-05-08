@@ -32,7 +32,6 @@ import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,7 +50,7 @@ import java.util.concurrent.ConcurrentMap;
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private volatile PsiElementFinder[] myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
-  private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
+  private final ConcurrentMap<String, PsiPackage> myPackageCache = ContainerUtil.createConcurrentSoftValueMap();
   private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
@@ -76,7 +75,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           final long now = modificationTracker.getJavaStructureModificationCount();
           if (lastTimeSeen != now) {
             lastTimeSeen = now;
-            myPackageCache = null;
+            myPackageCache.clear();
           }
         }
       });
@@ -213,12 +212,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
-    ConcurrentMap<String, PsiPackage> cache = SoftReference.dereference(myPackageCache);
-    if (cache == null) {
-      myPackageCache = new SoftReference<ConcurrentMap<String, PsiPackage>>(cache = ContainerUtil.newConcurrentMap());
-    }
-
-    PsiPackage aPackage = cache.get(qualifiedName);
+    PsiPackage aPackage = myPackageCache.get(qualifiedName);
     if (aPackage != null) {
       return aPackage;
     }
@@ -226,7 +220,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     for (PsiElementFinder finder : filteredFinders()) {
       aPackage = finder.findPackage(qualifiedName);
       if (aPackage != null) {
-        return ConcurrencyUtil.cacheOrGet(cache, qualifiedName, aPackage);
+        return ConcurrencyUtil.cacheOrGet(myPackageCache, qualifiedName, aPackage);
       }
     }
 
