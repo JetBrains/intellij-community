@@ -138,7 +138,7 @@ class VisiblePackBuilderTest {
   data class Ref(val name : String, val commit : Int)
   data class Data(val user: VcsUser? = DEFAULT_USER, val subject: String = "default commit message")
 
-  class Graph(val commits: List<GraphCommit<Int>>,
+  inner class Graph(val commits: List<GraphCommit<Int>>,
               val refs: Set<VisiblePackBuilderTest.Ref>,
               val data: HashMap<GraphCommit<Int>, Data>) {
     val root = MockVirtualFile("root") : VirtualFile
@@ -198,7 +198,7 @@ class VisiblePackBuilderTest {
     return builder.done()
   }
 
-  class GraphBuilder {
+  inner class GraphBuilder {
     val commits = ArrayList<GraphCommit<Int>>()
     val refs = HashSet<Ref>()
     val data = HashMap<GraphCommit<Int>, Data>()
