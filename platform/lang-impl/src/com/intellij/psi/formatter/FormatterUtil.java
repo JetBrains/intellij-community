@@ -15,13 +15,13 @@
  */
 package com.intellij.psi.formatter;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vcs.checkin.ReformatBeforeCheckinHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -38,8 +38,9 @@ import java.util.Collections;
 
 public class FormatterUtil {
 
+  public static final String REFORMAT_BEFORE_COMMIT_COMMAND_NAME = CodeInsightBundle.message("process.reformat.code.before.commit");
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtilRt.newHashSet(
-    ReformatCodeProcessor.COMMAND_NAME, ReformatBeforeCheckinHandler.COMMAND_NAME
+    ReformatCodeProcessor.COMMAND_NAME, REFORMAT_BEFORE_COMMIT_COMMAND_NAME
   ));
 
   private FormatterUtil() {

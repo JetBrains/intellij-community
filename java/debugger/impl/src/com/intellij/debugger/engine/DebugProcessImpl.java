@@ -74,6 +74,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
@@ -1762,6 +1763,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public GlobalSearchScope getSearchScope() {
     LOG.assertTrue(mySession != null, "Accessing debug session before its initialization");
     return mySession.getSearchScope();
+  }
+
+  public void reattach(final DebugEnvironment environment) throws ExecutionException {
+    ApplicationManager.getApplication().assertIsDispatchThread(); //TODO: remove this requirement
+    ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
+    myState.set(STATE_INITIAL);
+    myConnection = environment.getRemoteConnection();
+    getManagerThread().restartIfNeeded();
+    createVirtualMachine(environment.getSessionName(), environment.isPollConnection());
   }
 
   @Nullable

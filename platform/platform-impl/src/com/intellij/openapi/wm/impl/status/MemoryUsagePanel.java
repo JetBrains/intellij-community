@@ -163,12 +163,6 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
         g2.drawLine(xOffset + usedBarLength + unusedBarLength, yOffset, xOffset + usedBarLength + unusedBarLength, barHeight);
       }
 
-      // frame
-      if (!UIUtil.isUnderDarcula()) {
-        g2.setColor(USED_COLOR_2);
-        g2.drawRect(xOffset, yOffset, totalBarLength - 1, barHeight - 1);
-      }
-
       // label
       g2.setFont(getFont());
       final long used = usedMem / MEGABYTE;

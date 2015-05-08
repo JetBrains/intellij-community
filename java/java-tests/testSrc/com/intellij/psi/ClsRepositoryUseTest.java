@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
+import java.io.IOException;
 
 @PlatformTestCase.WrapInCommand
 public class ClsRepositoryUseTest extends PsiTestCase {
@@ -65,7 +66,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     super.tearDown();
   }
 
-  public void testClassFileUpdate() throws Exception {
+  public void testClassFileUpdate() throws IOException {
     final File classes = createTempDir("classes", false);
 
     final File com = new File(classes, "com");
@@ -265,7 +266,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals(aClass, inners[0].getParent());
   }
 
-  public void testModifierList() throws Exception {
+  public void testModifierList() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -321,7 +322,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertTrue(field.isDeprecated());
   }
 
-  public void testFieldType() throws Exception {
+  public void testFieldType() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -343,7 +344,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertTrue(type2 instanceof PsiArrayType);
   }
 
-  public void testMethodType() throws Exception {
+  public void testMethodType() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -360,7 +361,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertNull(method3.getReturnType());
   }
 
-  public void testIsConstructor() throws Exception {
+  public void testIsConstructor() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -372,7 +373,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertTrue(method3.isConstructor());
   }
 
-  public void testComponentType() throws Exception {
+  public void testComponentType() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -388,7 +389,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertFalse(componentType instanceof PsiArrayType);
   }
 
-  public void testTypeReference() throws Exception {
+  public void testTypeReference() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -405,7 +406,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals("Object", type2.getPresentableText());
   }
 
-  public void testResolveTypeReference() throws Exception {
+  public void testResolveTypeReference() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -417,7 +418,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals(objectClass, target1);
   }
 
-  public void testInitializer() throws Exception {
+  public void testInitializer() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -435,7 +436,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertNull(field2.getInitializer());
   }
 
-  public void testExtendsList() throws Exception {
+  public void testExtendsList() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -448,7 +449,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals("java.util.ArrayList", refs[0].getCanonicalText());
   }
 
-  public void testImplementsList() throws Exception {
+  public void testImplementsList() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -461,7 +462,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals("java.lang.Cloneable", refs[0].getCanonicalText());
   }
 
-  public void testThrowsList() throws Exception {
+  public void testThrowsList() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -476,7 +477,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals("java.io.IOException", refs[1].getCanonicalText());
   }
 
-  public void testParameters() throws Exception {
+  public void testParameters() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyClass", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -511,7 +512,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals("o", parameters[1].getName());
   }
 
-  public void testGenericClass() throws Exception {
+  public void testGenericClass() {
     disableJdk();
 
     PsiClass map = myJavaFacade.findClass("java.util.HashMap", RESOLVE_SCOPE);
@@ -551,7 +552,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     ModuleRootModificationUtil.setModuleSdk(myModule, null);
   }
 
-  public void testGenericReturnType() throws Exception {
+  public void testGenericReturnType() {
     disableJdk();
 
     final PsiClass map = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP, RESOLVE_SCOPE);
@@ -577,12 +578,12 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertTrue(typeSetOfEntriesOfStringAndInteger.isAssignableFrom(substitutedEntrySetReturnType));
   }
 
-  public void testGenericInheritance() throws Exception {
+  public void testGenericInheritance() {
     final String text = "import java.util.*;\n" +
                         "class Dummy {\n" +
                         "  { Map<Integer, Integer> list = new HashMap<Integer, Integer>();}\n" +
                         "}";
-    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("Dummy.java", JavaFileType.INSTANCE, text);
+    PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(myProject).createFileFromText("Dummy.java", JavaFileType.INSTANCE, text);
 
     PsiDeclarationStatement decl = (PsiDeclarationStatement)file.getClasses()[0].getInitializers()[0].getBody().getStatements()[0];
     PsiVariable list = (PsiVariable)decl.getDeclaredElements()[0];
@@ -593,7 +594,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertTrue(list.getType().isAssignableFrom(type));
   }
 
-  public void testSimplerGenericInheritance() throws Exception {
+  public void testSimplerGenericInheritance() {
     PsiElementFactory factory = myJavaFacade.getElementFactory();
     PsiClass map = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP, RESOLVE_SCOPE);
     PsiClass hashMap = myJavaFacade.findClass("java.util.HashMap", RESOLVE_SCOPE);
@@ -601,7 +602,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertTrue(factory.createType(map).isAssignableFrom(factory.createType(hashMap)));
   }
 
-  public void testAnnotations() throws Exception {
+  public void testAnnotations() {
     PsiClass aClass = myJavaFacade.findClass("pack.Annotated", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -635,7 +636,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertTrue(annotations[0].getText().equals("@pack.Annotation"));
   }
 
-  public void testAnnotationMethodDefault() throws Exception {
+  public void testAnnotationMethodDefault() {
     PsiClass aClass = myJavaFacade.findClass("pack.Annotation", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -646,7 +647,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertTrue(defaultValue != null);
   }
 
-  public void testIndeterminateInAnnotationMethodDefault() throws Exception {
+  public void testIndeterminateInAnnotationMethodDefault() {
     final PsiClass aClass = myJavaFacade.findClass("pack.Annotation2", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -666,7 +667,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     }
   }
 
-  public void testEnum() throws Exception {
+  public void testEnum() {
     PsiClass aClass = myJavaFacade.findClass("pack.MyEnum", GlobalSearchScope.allScope(myProject));
     assert aClass != null;
     checkValid(aClass);
@@ -679,7 +680,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     checkEnumConstant("BLUE", fields[2], type);
   }
 
-  public void testVariance() throws Exception {
+  public void testVariance() {
     final PsiClass aClass = myJavaFacade.findClass("pack.Variance", RESOLVE_SCOPE);
     assert aClass != null;
     checkValid(aClass);
@@ -698,7 +699,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals(type, field.getType());
   }
 
-  public void testInvariantParsing() throws Exception {
+  public void testInvariantParsing() {
     final PsiClass collection = myJavaFacade.findClass("pack.Variance", RESOLVE_SCOPE);
     assertNotNull(collection);
     final PsiMethod[] methods = collection.findMethodsByName("removeAll", false);
@@ -718,7 +719,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
     assertEquals(PsiWildcardType.createUnbounded(myPsiManager), substitution);
   }
 
-  public void testInvariantParsing2() throws Exception {
+  public void testInvariantParsing2() {
     disableJdk();
     final PsiClass collection = myJavaFacade.findClass("java.util.Collection", RESOLVE_SCOPE);
     assertNotNull(collection);
@@ -740,7 +741,7 @@ public class ClsRepositoryUseTest extends PsiTestCase {
   }
 
   @SuppressWarnings("ConstantConditions")
-  public void testModifiers() throws Exception {
+  public void testModifiers() {
     PsiClass psiClass = myJavaFacade.findClass("pack.Modifiers", RESOLVE_SCOPE);
     assertNotNull(psiClass);
 

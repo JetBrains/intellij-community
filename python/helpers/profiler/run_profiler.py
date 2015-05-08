@@ -9,11 +9,12 @@ import os
 from prof_io import ProfWriter, ProfReader
 from pydevd_utils import save_main_module
 import pydev_imports
-from prof_util import generate_snapshot_filepath
+from prof_util import generate_snapshot_filepath, statsToResponse
 
 from _prof_imports import ProfilerResponse
 
 base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
+remote_run = bool(os.getenv('PYCHARM_REMOTE_RUN', ''))
 
 def StartClient(host, port):
     """ connects to a host/port """
@@ -66,7 +67,7 @@ class Profiler(object):
 
     def process(self, message):
         if hasattr(message, 'save_snapshot'):
-            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath))
+            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath) if not remote_run else None)
         else:
             raise AssertionError("Unknown request %s" % dir(message))
 
@@ -83,7 +84,7 @@ class Profiler(object):
         pydev_imports.execfile(file, globals, globals)  # execute the script
 
         self.stop_profiling()
-        self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path))
+        self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path) if not remote_run else None)
 
     def start_profiling(self):
         self.profiling_backend.enable()
@@ -92,7 +93,8 @@ class Profiler(object):
         self.profiling_backend.disable()
 
     def get_snapshot(self):
-        return self.profiling_backend.getstats()
+        self.profiling_backend.create_stats()
+        return self.profiling_backend.stats
 
     def dump_snapshot(self, filename):
         dir = os.path.dirname(filename)
@@ -104,13 +106,16 @@ class Profiler(object):
 
     def save_snapshot(self, id, filename):
         self.stop_profiling()
-        filename = self.dump_snapshot(filename)
+        if filename is not None:
+            filename = self.dump_snapshot(filename)
+            print('Snapshot saved to %s' % filename)
+            response = ProfilerResponse(id=id, snapshot_filepath=filename)
+        else:
+            response = ProfilerResponse(id=id)
+            statsToResponse(self.get_snapshot(), response)
 
-        m = ProfilerResponse(id=id, snapshot_filepath=filename)
 
-        print('Snapshot saved to %s' % filename)
-
-        self.writer.addCommand(m)
+        self.writer.addCommand(response)
         self.start_profiling()
 
 

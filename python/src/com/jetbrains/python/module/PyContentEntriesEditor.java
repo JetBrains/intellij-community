@@ -124,7 +124,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   }
 
   @Override
-  protected MyContentEntryEditor createContentEntryEditor(String contentEntryUrl) {
+  protected ContentEntryEditor createContentEntryEditor(String contentEntryUrl) {
     myContentEntryEditor = new MyContentEntryEditor(contentEntryUrl, getEditHandlers());
     return myContentEntryEditor;
   }
@@ -171,7 +171,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
       }
       VirtualFilePointer root = getRoot(provider, folder);
       if (root != null) {
-        provider.removeRoot(contentEntry, root);
+        provider.removeRoot(contentEntry, root, getModel());
         fireUpdate();
       }
     }
