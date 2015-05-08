@@ -446,6 +446,11 @@ public class IconUtil {
       }
     }
 
+    return createImageIcon(img);
+  }
+
+  @NotNull
+  public static JBImageIcon createImageIcon(@NotNull final BufferedImage img) {
     return new JBImageIcon(img) {
       @Override
       public int getIconWidth() {
