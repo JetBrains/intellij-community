@@ -29,6 +29,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -45,6 +46,8 @@ public class MavenKeymapExtension implements KeymapExtension {
                                                                       MavenIcons.PhasesClosed
     );
     if (project == null) return result;
+    MavenGeneralSettings generalSettings = MavenProjectsManager.getInstance(project).getGeneralSettings();
+    if (! generalSettings.isEnableKeymapOptions()) return result;
 
     Comparator<MavenProject> projectComparator = new Comparator<MavenProject>() {
       public int compare(MavenProject o1, MavenProject o2) {
