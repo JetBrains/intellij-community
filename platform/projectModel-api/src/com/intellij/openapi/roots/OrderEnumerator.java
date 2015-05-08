@@ -88,7 +88,8 @@ public abstract class OrderEnumerator {
   }
 
   /**
-   * Recursively process modules on which the module depends
+   * Recursively process modules on which the module depends. This flag is ignored for modules imported from Maven because for such modules
+   * transitive dependencies are propagated to the root module during importing.
    *
    * @return this instance
    */
