@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.vcs.checkin;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -25,6 +24,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.ui.NonFocusableCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +34,6 @@ import java.awt.*;
 import java.util.Collection;
 
 public class ReformatBeforeCheckinHandler extends CheckinHandler implements CheckinMetaHandler {
-
-  public static final String COMMAND_NAME = CodeInsightBundle.message("process.reformat.code.before.commit");
-  
   protected final Project myProject;
   private final CheckinProjectPanel myPanel;
 
@@ -94,7 +91,7 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
 
     if (reformat(configuration, true)) {
       new ReformatCodeProcessor(
-        myProject, CheckinHandlerUtil.getPsiFiles(myProject, files), COMMAND_NAME, performCheckoutAction, true
+        myProject, CheckinHandlerUtil.getPsiFiles(myProject, files), FormatterUtil.REFORMAT_BEFORE_COMMIT_COMMAND_NAME, performCheckoutAction, true
       ).run();
     }
     else {

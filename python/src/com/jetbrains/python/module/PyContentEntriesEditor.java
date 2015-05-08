@@ -124,7 +124,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   }
 
   @Override
-  protected MyContentEntryEditor createContentEntryEditor(String contentEntryUrl) {
+  protected ContentEntryEditor createContentEntryEditor(String contentEntryUrl) {
     myContentEntryEditor = new MyContentEntryEditor(contentEntryUrl, getEditHandlers());
     return myContentEntryEditor;
   }
