@@ -171,31 +171,23 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       documents[1] = ((DocumentContent)contents.get(1)).getDocument();
       documents[2] = ((DocumentContent)contents.get(2)).getDocument();
 
-      DocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<DocumentData>() {
+      CharSequence[] sequences = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
         @Override
-        public DocumentData compute() {
+        public CharSequence[] compute() {
           CharSequence[] sequences = new CharSequence[3];
           sequences[0] = documents[0].getImmutableCharSequence();
           sequences[1] = documents[1].getImmutableCharSequence();
           sequences[2] = documents[2].getImmutableCharSequence();
-
-          long[] stamps = new long[3];
-          stamps[0] = documents[0].getModificationStamp();
-          stamps[1] = documents[1].getModificationStamp();
-          stamps[2] = documents[2].getModificationStamp();
-
-          return new DocumentData(stamps, sequences);
+          return sequences;
         }
       });
 
-      // TODO: cache results
-      CharSequence[] sequences = data.getSequences();
       ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
       FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
       FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
       List<MergeLineFragment> mergeFragments = MergeUtil.buildFair(fragments1, fragments2, indicator);
 
-      return apply(mergeFragments, data.getStamps(), comparisonPolicy);
+      return apply(mergeFragments, comparisonPolicy);
     }
     catch (DiffTooBigException ignore) {
       return new Runnable() {
@@ -229,15 +221,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
   @NotNull
   private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
-                         @NotNull final long[] stamps,
                          @NotNull final ComparisonPolicy comparisonPolicy) {
     return new Runnable() {
       @Override
       public void run() {
-        if (myEditors.get(0).getDocument().getModificationStamp() != stamps[0]) return;
-        if (myEditors.get(1).getDocument().getModificationStamp() != stamps[1]) return;
-        if (myEditors.get(2).getDocument().getModificationStamp() != stamps[2]) return;
-
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
@@ -635,29 +622,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     @Override
     protected int getChangesCount() {
       return myDiffChanges.size() + myInvalidDiffChanges.size();
-    }
-  }
-
-  private static class DocumentData {
-    @NotNull private final long[] myStamps;
-    @NotNull private final CharSequence[] mySequences;
-
-    public DocumentData(@NotNull long[] stamps, @NotNull CharSequence[] sequences) {
-      assert stamps.length == 3;
-      assert sequences.length == 3;
-
-      myStamps = stamps;
-      mySequences = sequences;
-    }
-
-    @NotNull
-    public long[] getStamps() {
-      return myStamps;
-    }
-
-    @NotNull
-    public CharSequence[] getSequences() {
-      return mySequences;
     }
   }
 
