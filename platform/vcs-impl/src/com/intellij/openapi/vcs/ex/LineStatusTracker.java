@@ -868,12 +868,21 @@ public class LineStatusTracker {
     }
   }
 
+  public CharSequence getCurrentContent(@NotNull Range range) {
+    synchronized (myLock) {
+      TextRange textRange = getCurrentTextRange(range);
+      final int startOffset = textRange.getStartOffset();
+      final int endOffset = textRange.getEndOffset();
+      return myDocument.getImmutableCharSequence().subSequence(startOffset, endOffset);
+    }
+  }
+
   public CharSequence getVcsContent(@NotNull Range range) {
     synchronized (myLock) {
       TextRange textRange = getVcsRange(range);
       final int startOffset = textRange.getStartOffset();
       final int endOffset = textRange.getEndOffset();
-      return myVcsDocument.getCharsSequence().subSequence(startOffset, endOffset);
+      return myVcsDocument.getImmutableCharSequence().subSequence(startOffset, endOffset);
     }
   }
 

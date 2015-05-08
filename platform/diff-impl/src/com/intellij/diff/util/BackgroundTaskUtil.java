@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -138,5 +139,27 @@ public class BackgroundTaskUtil {
     if (indicator.isCanceled()) return;
     result.run();
     indicator.stop();
+  }
+
+  @CalledInAwt
+  @Nullable
+  public static <T> T tryComputeFast(@NotNull final Function<ProgressIndicator, T> backgroundTask,
+                                     final int waitMillis) {
+    final Ref<T> resultRef = new Ref<T>();
+    ProgressIndicator indicator = executeAndTryWait(new Function<ProgressIndicator, Runnable>() {
+      @Override
+      public Runnable fun(final ProgressIndicator indicator) {
+        final T result = backgroundTask.fun(indicator);
+        return new Runnable() {
+          @Override
+          public void run() {
+            resultRef.set(result);
+          }
+        };
+      }
+    }, null, waitMillis, false);
+    indicator.cancel();
+
+    return resultRef.get();
   }
 }
