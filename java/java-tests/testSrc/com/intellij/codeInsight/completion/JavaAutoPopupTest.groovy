@@ -39,6 +39,8 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.event.DocumentAdapter
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
@@ -950,6 +952,15 @@ class Foo {
     for (a1 in 0..actions) {
       for (a2 in 0..actions) {
         myFixture.configureByText("$a1 $a2 .java", src)
+        myFixture.editor.document.addDocumentListener(new DocumentAdapter() {
+          @Override
+          void documentChanged(DocumentEvent e) {
+            if (e.newFragment.toString().contains("a")) {
+              fail(e.toString())
+            }
+            super.documentChanged(e)
+          }
+        })
         myFixture.type 'i'
         joinSomething(a1)
         myFixture.type 'f'
