@@ -39,7 +39,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.compiled.ClassFileDecompilers;
@@ -108,12 +107,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   private ClsFileImpl(@NotNull FileViewProvider viewProvider, boolean forDecompiling) {
     super(null);
-
-    if (!forDecompiling && !(StubTreeLoader.getInstance() instanceof CoreStubTreeLoader)) {
-      VirtualFile file = viewProvider.getVirtualFile();
-      assert file instanceof VirtualFileWithId : file + " [" + file.getClass() + "]";
-    }
-
     myViewProvider = viewProvider;
     myIsForDecompiling = forDecompiling;
     JavaElementType.CLASS.getIndex();  // initialize Java stubs
