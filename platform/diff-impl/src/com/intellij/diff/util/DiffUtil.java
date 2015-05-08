@@ -653,7 +653,7 @@ public class DiffUtil {
   @NotNull
   public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2) {
     TextRange otherRange = getLinesRange(document, line1, line2);
-    return document.getCharsSequence().subSequence(otherRange.getStartOffset(), otherRange.getEndOffset());
+    return document.getImmutableCharSequence().subSequence(otherRange.getStartOffset(), otherRange.getEndOffset());
   }
 
   @NotNull
