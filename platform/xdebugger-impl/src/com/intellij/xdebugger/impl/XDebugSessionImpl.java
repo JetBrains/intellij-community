@@ -302,10 +302,14 @@ public class XDebugSessionImpl implements XDebugSession {
     disableSlaveBreakpoints(dependentBreakpointManager);
     processAllBreakpoints(true, false);
 
-    myBreakpointListener = new MyBreakpointListener();
-    breakpointManager.addBreakpointListener(myBreakpointListener);
-    myDependentBreakpointListener = new MyDependentBreakpointListener();
-    dependentBreakpointManager.addListener(myDependentBreakpointListener);
+    if (myBreakpointListener == null) {
+      myBreakpointListener = new MyBreakpointListener();
+      breakpointManager.addBreakpointListener(myBreakpointListener);
+    }
+    if (myDependentBreakpointListener == null) {
+      myDependentBreakpointListener = new MyDependentBreakpointListener();
+      dependentBreakpointManager.addListener(myDependentBreakpointListener);
+    }
   }
 
   @Override

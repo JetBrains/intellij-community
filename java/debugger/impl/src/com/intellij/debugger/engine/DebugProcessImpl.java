@@ -1769,6 +1769,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     ApplicationManager.getApplication().assertIsDispatchThread(); //TODO: remove this requirement
     ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
     myState.set(STATE_INITIAL);
+    myRequestManager.processDetached(this, false);
     myConnection = environment.getRemoteConnection();
     getManagerThread().restartIfNeeded();
     createVirtualMachine(environment.getSessionName(), environment.isPollConnection());

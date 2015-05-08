@@ -658,4 +658,16 @@ interface TxANotAnno {}
     assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
   }
 
+  public void testNoStatsInSuperInvocation() {
+    checkPreferredItems 0, 'put', 'putAll'
+
+    myFixture.type('\n')
+    assert myFixture.editor.document.text.contains("put")
+    
+    myFixture.type(');\nsuper.')
+    myFixture.completeBasic()
+
+    assertPreferredItems 0, 'get'
+  }
+
 }

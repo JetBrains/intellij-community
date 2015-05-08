@@ -56,7 +56,7 @@ public abstract class PyRootTypeProvider {
 
   public abstract boolean isMine(ContentFolder folder);
 
-  public void removeRoot(ContentEntry contentEntry, @NotNull final VirtualFilePointer root) {
+  public void removeRoot(ContentEntry contentEntry, @NotNull final VirtualFilePointer root, ModifiableRootModel model) {
     getRoots().remove(contentEntry, root);
   }
   public abstract MultiMap<ContentEntry, VirtualFilePointer> getRoots();
