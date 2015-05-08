@@ -47,9 +47,6 @@ public interface RepositoryManager<T extends Repository> {
   @Nullable
   T getRepositoryForFile(@NotNull VirtualFile file);
 
-  @Nullable
-  T getRepositoryForFile(@NotNull VirtualFile file, boolean updateIfNeeded);
-
   /**
    * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git ot Hg repository.
    */

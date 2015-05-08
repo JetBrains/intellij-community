@@ -34,7 +34,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ComplexFocusedComponentWrapper;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -235,20 +234,8 @@ public class CreatePatchConfigurationPanel {
     return myIncludedChanges;
   }
 
-  @NotNull
   public JComponent getPanel() {
-    return new ComplexFocusedComponentWrapper(
-      !myIncludeBaseRevisionTextCheckBox.isVisible() || myChanges.isEmpty() ? myMainPanel : myPanelWithSelectedFiles) {
-      @Override
-      public JComponent getPreferredFocusedSimpleComponent() {
-        return getPreferredFocusComponent();
-      }
-    };
-  }
-
-  @NotNull
-  public JComponent getPreferredFocusComponent() {
-    return myFileNameField;
+    return !myIncludeBaseRevisionTextCheckBox.isVisible() || myChanges.isEmpty() ? myMainPanel : myPanelWithSelectedFiles;
   }
 
   public void installOkEnabledListener(final Consumer<Boolean> runnable) {

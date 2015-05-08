@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -298,7 +299,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   private boolean belongsToThisRepository(VirtualFile file) {
     // this check should be quick
     // we shouldn't create a full instance repository here because it may lead to SOE while many unversioned files will be processed
-    final GitRepository repository = myRepositoryManager.getRepositoryForFile(file, false);
+    final GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(DvcsUtil.getVcsRoot(myProject, file));
     return repository != null && repository.getRoot().equals(myRoot);
   }
 }

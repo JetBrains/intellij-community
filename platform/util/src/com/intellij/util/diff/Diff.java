@@ -80,9 +80,17 @@ public class Diff {
       changes = patienceIntLCS.getChanges();
     }
     else {
-      IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
-      intLCS.execute();
-      changes = intLCS.getChanges();
+      try {
+        IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
+        intLCS.execute();
+        changes = intLCS.getChanges();
+      }
+      catch (FilesTooBigForDiffException e) {
+        PatienceIntLCS patienceIntLCS = new PatienceIntLCS(discarded[0], discarded[1]);
+        patienceIntLCS.failOnSmallSizeReduction();
+        patienceIntLCS.execute();
+        changes = patienceIntLCS.getChanges();
+      }
     }
 
     reindexer.reindex(changes, builder);

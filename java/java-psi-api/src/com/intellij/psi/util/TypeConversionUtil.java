@@ -830,7 +830,7 @@ public class TypeConversionUtil {
              && rText.endsWith(lText)
              && rText.charAt(rText.length() - lText.length() - 1) == '.';
     }
-    return isClassAssignable(leftResult, rightResult, allowUncheckedConversion);
+    return isClassAssignable(leftResult, rightResult, allowUncheckedConversion, left.getResolveScope());
   }
 
   private static boolean isAssignableFromWildcard(@NotNull PsiType left, @NotNull PsiWildcardType rightWildcardType) {
@@ -923,18 +923,19 @@ public class TypeConversionUtil {
 
   private static boolean isClassAssignable(@NotNull PsiClassType.ClassResolveResult leftResult,
                                            @NotNull PsiClassType.ClassResolveResult rightResult,
-                                           boolean allowUncheckedConversion) {
+                                           boolean allowUncheckedConversion, GlobalSearchScope resolveScope) {
     final PsiClass leftClass = leftResult.getElement();
     final PsiClass rightClass = rightResult.getElement();
-    return leftClass != null
-           && rightClass != null
-           && InheritanceUtil.isInheritorOrSelf(rightClass, leftClass, true)
-           && typeParametersAgree(leftResult, rightResult, allowUncheckedConversion);
+    if (leftClass == null || rightClass == null) return false;
+
+    PsiSubstitutor superSubstitutor = JavaClassSupers.getInstance().getSuperClassSubstitutor(leftClass, rightClass, resolveScope,
+                                                                                             rightResult.getSubstitutor());
+    return superSubstitutor != null && typeParametersAgree(leftResult, rightResult, allowUncheckedConversion, superSubstitutor);
   }
 
   private static boolean typeParametersAgree(@NotNull PsiClassType.ClassResolveResult leftResult,
                                              @NotNull PsiClassType.ClassResolveResult rightResult,
-                                             boolean allowUncheckedConversion) {
+                                             boolean allowUncheckedConversion, PsiSubstitutor superSubstitutor) {
     PsiSubstitutor rightSubstitutor = rightResult.getSubstitutor();
     PsiClass leftClass = leftResult.getElement();
     PsiClass rightClass = rightResult.getElement();
@@ -945,7 +946,7 @@ public class TypeConversionUtil {
     PsiSubstitutor leftSubstitutor = leftResult.getSubstitutor();
 
     if (!leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
-      rightSubstitutor = getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
+      rightSubstitutor = superSubstitutor;
       rightClass = leftClass;
     }
     else if (!PsiUtil.typeParametersIterator(rightClass).hasNext()) return true;
@@ -1063,7 +1064,7 @@ public class TypeConversionUtil {
    *
    * @return substitutor (never returns <code>null</code>)
    * @see PsiClass#isInheritor(PsiClass, boolean)
-   * @see InheritanceUtil#isInheritorOrSelf(com.intellij.psi.PsiClass, com.intellij.psi.PsiClass, boolean)
+   * @see InheritanceUtil#isInheritorOrSelf(PsiClass, PsiClass, boolean)
    */
   @NotNull
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
