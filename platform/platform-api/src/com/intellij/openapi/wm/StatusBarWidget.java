@@ -17,9 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.ui.Gray;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,14 +84,8 @@ public interface StatusBarWidget extends Disposable {
 
   class WidgetBorder implements Border {
     public static final WidgetBorder INSTANCE = new WidgetBorder();
-    private static final Color SEPARATOR_COLOR = UIUtil.getPanelBackground().darker();
 
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      if (UIUtil.isUnderDarcula()) return;
-      final Graphics2D g2 = (Graphics2D)g.create();
-      g2.setColor(UIUtil.isUnderIntelliJLaF() ? Gray._200 : SEPARATOR_COLOR);
-      g2.drawLine(x, y, x, y + height);
-      g2.dispose();
     }
 
     public Insets getBorderInsets(Component c) {
