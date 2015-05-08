@@ -46,10 +46,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ListIterator;
@@ -72,6 +69,22 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public SpeedSearchBase(Comp component) {
     myComponent = component;
 
+    myComponent.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentHidden(ComponentEvent event) {
+        manageSearchPopup(null);
+      }
+
+      @Override
+      public void componentMoved(ComponentEvent event) {
+        moveSearchPopup();
+      }
+
+      @Override
+      public void componentResized(ComponentEvent event) {
+        moveSearchPopup();
+      }
+    });
     myComponent.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
@@ -568,7 +581,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       return;
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
-    if (myPopupLayeredPane == null) return; // See # 27482. Somewho it does happen...
+    moveSearchPopup();
+  }
+
+  private void moveSearchPopup() {
+    if (myComponent == null || mySearchPopup == null || myPopupLayeredPane == null) return;
     Point lPaneP = myPopupLayeredPane.getLocationOnScreen();
     Point componentP = getComponentLocationOnScreen();
     Rectangle r = getComponentVisibleRect();

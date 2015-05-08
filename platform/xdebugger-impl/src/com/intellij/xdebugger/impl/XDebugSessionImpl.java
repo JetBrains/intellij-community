@@ -287,6 +287,10 @@ public class XDebugSessionImpl implements XDebugSession {
     return mySessionTab;
   }
 
+  public void reset() {
+    breakpointsInitialized = false;
+  }
+
   @Override
   public void initBreakpoints() {
     ApplicationManager.getApplication().assertReadAccessAllowed();

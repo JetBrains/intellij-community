@@ -109,8 +109,9 @@ public class GeneralCommandLineTest {
     File dir = FileUtil.createTempDirectory("path with spaces 'and quotes' и юникодом ", ".tmp");
     try {
       GeneralCommandLine commandLine = makeJavaCommand(ParamPassingTest.class, dir);
+      commandLine.addParameter("test");
       String output = execAndGetOutput(commandLine, null);
-      assertEquals("=====\n=====\n", StringUtil.convertLineSeparators(output));
+      assertEquals("test\n", StringUtil.convertLineSeparators(output));
     }
     finally {
       FileUtil.delete(dir);

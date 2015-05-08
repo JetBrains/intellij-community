@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.scratch;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.editor.Editor;
@@ -47,8 +46,7 @@ import java.util.List;
 
 class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.Multiframe, CustomStatusBarWidget {
   static final String WIDGET_ID = "Scratch";
-
-  private final MyTextPanel myPanel = new MyTextPanel();
+  private final TextPanel.WithArrows myPanel = new TextPanel.WithArrows();
 
   public ScratchWidget(Project project) {
     super(project);
@@ -104,9 +102,8 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     Project project = getProject();
     if (project == null) return;
     VirtualFile file = getSelectedFile();
-    if (file == null) return;
     ScratchFileService fileService = ScratchFileService.getInstance();
-    if (fileService.getRootType(file) instanceof ScratchRootType) {
+    if (file != null && fileService.getRootType(file) instanceof ScratchRootType) {
       Language lang = fileService.getScratchesMapping().getMapping(file);
       if (lang == null) {
         lang = LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)file.getFileType()).getLanguage(), file, project);
@@ -157,48 +154,4 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     LanguageFileType associatedLanguage = language.getAssociatedFileType();
     return associatedLanguage != null ? associatedLanguage.getIcon() : null;
   }
-
-  private static class MyTextPanel extends TextPanel {
-    private int myIconTextGap = 2;
-    private Icon myIcon;
-
-    @Override
-    protected void paintComponent(@NotNull final Graphics g) {
-      super.paintComponent(g);
-      if (getText() != null) {
-        Rectangle r = getBounds();
-        Insets insets = getInsets();
-        AllIcons.Ide.Statusbar_arrows.paintIcon(this, g, r.width - insets.right - AllIcons.Ide.Statusbar_arrows.getIconWidth() - 2,
-                                                r.height / 2 - AllIcons.Ide.Statusbar_arrows.getIconHeight() / 2);
-        if (myIcon != null) {
-          myIcon.paintIcon(this, g, insets.left - myIconTextGap - myIcon.getIconWidth(), r.height / 2 - myIcon.getIconHeight() / 2);
-        }
-      }
-    }
-
-    @NotNull
-    @Override
-    public Insets getInsets() {
-      Insets insets = super.getInsets();
-      if (myIcon != null) {
-        insets.left += myIcon.getIconWidth() + myIconTextGap * 2;
-      }
-      return insets;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      final Dimension preferredSize = super.getPreferredSize();
-      int deltaWidth = AllIcons.Ide.Statusbar_arrows.getIconWidth() + myIconTextGap * 2;
-      if (myIcon != null) {
-        deltaWidth += myIcon.getIconWidth() + myIconTextGap * 2;
-      }
-      return new Dimension(preferredSize.width + deltaWidth, preferredSize.height);
-    }
-
-    public void setIcon(Icon icon) {
-      myIcon = icon;
-    }
-  }
-
 }

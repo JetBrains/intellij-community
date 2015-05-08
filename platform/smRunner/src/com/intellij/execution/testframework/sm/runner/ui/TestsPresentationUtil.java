@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner.ui;
 
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.PoolOfTestIcons;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.text.NumberFormat;
 import java.util.List;
 import java.util.Set;
 
@@ -49,9 +47,6 @@ import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcon
  */
 public class TestsPresentationUtil {
   @NonNls private static final String DOUBLE_SPACE = "  ";
-  @NonNls private static final String SECONDS_SUFFIX = " " + SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.seconds");
-  @NonNls private static final String MILLISECONDS_SUFFIX = " " + SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.milliseconds");
-  @NonNls private static final String WORLD_CREATION_TIME = "0" + SECONDS_SUFFIX;
   @NonNls private static final String DURATION_UNKNOWN = SMTestsRunnerBundle.message(
       "sm.test.runner.ui.tabs.statistics.columns.duration.unknown");
   @NonNls private static final String DURATION_NO_TESTS = SMTestsRunnerBundle.message(
@@ -133,7 +128,7 @@ public class TestsPresentationUtil {
     if (endTime != 0) {
       final long time = endTime - startTime;
       sb.append(DOUBLE_SPACE);
-      sb.append('(').append(convertToSecondsOrMs(time)).append(')');
+      sb.append('(').append(StringUtil.formatDuration(time)).append(')');
     }
     sb.append(DOUBLE_SPACE);
 
@@ -415,21 +410,7 @@ public class TestsPresentationUtil {
              ? DURATION_NO_TESTS
              : DURATION_UNKNOWN;
     } else {
-      return convertToSecondsOrMs(duration.longValue());
-    }
-  }
-
-  /**
-   * @param duration In milliseconds
-   * @return Value in seconds or millisecond depending on its value
-   */
-  private static String convertToSecondsOrMs(@NotNull final Long duration) {
-    if (duration == 0) {
-      return WORLD_CREATION_TIME;
-    } else if (duration < 100) {
-      return String.valueOf(duration) + MILLISECONDS_SUFFIX;
-    } else {
-      return printTime(duration);
+      return StringUtil.formatDuration(duration.longValue());
     }
   }
 
@@ -475,31 +456,5 @@ public class TestsPresentationUtil {
         printer.print(text, contentType);
       }
     });
-  }
-
-  public static String printTime(final long milliseconds) {
-    if (milliseconds == 0) {
-      return ExecutionBundle.message("junit.runing.info.time.sec.message", "0.0");
-    }
-    long seconds = milliseconds / 1000;
-    if (seconds == 0) {
-      return ExecutionBundle.message("junit.runing.info.time.sec.message", NumberFormat.getInstance().format((double)milliseconds/1000.0));
-    }
-
-    final StringBuilder sb = new StringBuilder();
-    if (seconds >= 3600) {
-      sb.append(seconds / 3600).append(" h ");
-      seconds %= 3600;
-    }
-    
-    if (seconds >= 60) {
-      sb.append(seconds / 60).append(" m ");
-      seconds %= 60;
-    }
-
-    if (seconds > 0 || sb.length() > 0) {
-      sb.append(seconds).append(" s");
-    }
-    return sb.toString();
   }
 }

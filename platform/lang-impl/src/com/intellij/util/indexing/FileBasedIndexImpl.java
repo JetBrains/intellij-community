@@ -25,10 +25,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationAdapter;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.EditorHighlighterCache;
@@ -1552,7 +1549,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag();
     boolean requiresRebuildWasSet = ourRebuildStatus.get(indexId).compareAndSet(OK, REQUIRES_REBUILD);
-    if (requiresRebuildWasSet) LOG.info("Rebuild requested for index " + indexId, throwable);
+    if (requiresRebuildWasSet) {
+      String message = "Rebuild requested for index " + indexId;
+      Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode() && app.isReadAccessAllowed() && !app.isDispatchThread()) {
+        LOG.error(message, throwable);
+      } else {
+        LOG.info(message, throwable);
+      }
+    }
   }
 
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
