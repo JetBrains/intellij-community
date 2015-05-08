@@ -86,8 +86,12 @@ public class PatienceIntLCS {
         int matched = matching[0].length;
         assert matched > 0;
 
+        c1 = matching[0][0];
+        c2 = matching[1][0];
+
+        checkReduction(c1, c2);
         PatienceIntLCS patienceDiff =
-          new PatienceIntLCS(myFirst, mySecond, start1, matching[0][0], start2, matching[1][0], myChanges1, myChanges2);
+          new PatienceIntLCS(myFirst, mySecond, start1, c1, start2, c2, myChanges1, myChanges2);
         patienceDiff.execute();
 
         for (int i = 1; i < matching[0].length; i++) {
