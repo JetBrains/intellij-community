@@ -311,8 +311,8 @@ public class FrameWrapper implements Disposable, DataProvider {
       extendedState = -1;
     }
     else {
-      location = dimensionService.getLocation(myDimensionKey);
-      size = dimensionService.getSize(myDimensionKey);
+      location = dimensionService.getSharedLocation(myDimensionKey);
+      size = dimensionService.getSharedSize(myDimensionKey);
       extendedState = dimensionService.getExtendedState(myDimensionKey);
     }
 
@@ -337,8 +337,8 @@ public class FrameWrapper implements Disposable, DataProvider {
   private static void saveFrameState(String dimensionKey, Component frame) {
     DimensionService dimensionService = DimensionService.getInstance();
     if (dimensionKey == null || dimensionService == null) return;
-    dimensionService.setLocation(dimensionKey, frame.getLocation());
-    dimensionService.setSize(dimensionKey, frame.getSize());
+    dimensionService.setSharedLocation(dimensionKey, frame.getLocation());
+    dimensionService.setSharedSize(dimensionKey, frame.getSize());
     if (frame instanceof JFrame) {
       dimensionService.setExtendedState(dimensionKey, ((JFrame)frame).getExtendedState());
     }

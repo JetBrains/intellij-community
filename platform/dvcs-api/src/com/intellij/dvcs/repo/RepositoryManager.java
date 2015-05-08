@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * RepositoryManager initializes and stores {@link Repository repositories} for Git or Hgroots defined in the project.
+ * RepositoryManager initializes and stores {@link Repository repositories} for Git or HgRoots defined in the project.
  *
  * @author Kirill Likhodedov
  */
@@ -46,6 +46,9 @@ public interface RepositoryManager<T extends Repository> {
    */
   @Nullable
   T getRepositoryForFile(@NotNull VirtualFile file);
+
+  @Nullable
+  T getRepositoryForFile(@NotNull VirtualFile file, boolean updateIfNeeded);
 
   /**
    * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git ot Hg repository.

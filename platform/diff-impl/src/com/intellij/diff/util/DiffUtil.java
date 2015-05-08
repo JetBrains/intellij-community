@@ -189,6 +189,13 @@ public class DiffUtil {
     editor.reinitSettings();
   }
 
+  public static boolean isMirrored(@NotNull Editor editor) {
+    if (editor instanceof EditorEx) {
+      return ((EditorEx)editor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT;
+    }
+    return false;
+  }
+
   //
   // Scrolling
   //

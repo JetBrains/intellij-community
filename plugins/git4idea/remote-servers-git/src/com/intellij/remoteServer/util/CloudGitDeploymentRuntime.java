@@ -176,18 +176,21 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     GitRepository repository = findOrCreateRepository();
     addOrResetGitRemote(application, repository);
 
-    if (firstDeploy) {
-      add();
-      commit();
-      return;
-    }
-
     final LocalChangeList activeChangeList = myChangeListManager.getDefaultChangeList();
-    if (activeChangeList == null) {
+
+    if (activeChangeList != null && !firstDeploy) {
+      commitWithChangesDialog(activeChangeList);
+    }
+    else {
       add();
       commit();
-      return;
     }
+    repository.update();
+    pushApplication(application);
+  }
+
+  protected void commitWithChangesDialog(final @NotNull LocalChangeList activeChangeList)
+    throws ServerRuntimeException {
 
     Collection<Change> changes = activeChangeList.getChanges();
     final List<Change> relevantChanges = new ArrayList<Change>();
@@ -230,16 +233,13 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
     if (commitStarted != null && commitStarted) {
       commitSemaphore.waitFor();
       if (!commitSucceeded.get()) {
-        repository.update();
+        getRepository().update();
         throw new ServerRuntimeException("Commit failed");
       }
     }
     else {
       throw new ServerRuntimeException("Deploy interrupted");
     }
-
-    repository.update();
-    pushApplication(application);
   }
 
   private boolean isRelevant(ContentRevision contentRevision) throws ServerRuntimeException {
@@ -438,12 +438,16 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   }
 
   protected void commit() throws ServerRuntimeException {
+    commit(COMMIT_MESSAGE);
+  }
+
+  protected void commit(String message) throws ServerRuntimeException {
     try {
       if (GitUtil.hasLocalChanges(true, getProject(), myContentRoot)) {
         GitSimpleHandler handler = new GitSimpleHandler(getProject(), myContentRoot, GitCommand.COMMIT);
         handler.setSilent(false);
         handler.setStdoutSuppressed(false);
-        handler.addParameters("-m", COMMIT_MESSAGE);
+        handler.addParameters("-m", message);
         handler.endOptions();
         handler.run();
       }

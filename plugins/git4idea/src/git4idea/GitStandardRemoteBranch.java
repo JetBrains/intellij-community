@@ -37,11 +37,6 @@ public class GitStandardRemoteBranch extends GitRemoteBranch {
   }
 
   @Override
-  public boolean isRemote() {
-    return true;
-  }
-
-  @Override
   @NotNull
   public GitRemote getRemote() {
     return myRemote;

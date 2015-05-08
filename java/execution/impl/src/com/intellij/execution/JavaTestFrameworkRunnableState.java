@@ -201,6 +201,21 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     return javaParameters;
   }
 
+  private ServerSocket myForkSocket = null;
+
+  @Nullable
+  public ServerSocket getForkSocket() {
+    if (myForkSocket == null && (!Comparing.strEqual(getForkMode(), "none") || forkPerModule()) && getRunnerSettings() != null) {
+      try {
+        myForkSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    return myForkSocket;
+  }
+
   protected void appendForkInfo(Executor executor) throws ExecutionException {
     final String forkMode = getForkMode();
     if (Comparing.strEqual(forkMode, "none")) {

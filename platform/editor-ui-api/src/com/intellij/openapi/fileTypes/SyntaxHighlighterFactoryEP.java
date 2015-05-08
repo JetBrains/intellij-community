@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing;
+package com.intellij.openapi.fileTypes;
 
-import com.intellij.util.concurrency.Semaphore;
+import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.util.xmlb.annotations.Attribute;
 
-/**
-* @author Eugene Zhuravlev
-*         Date: 6/26/13
-*/
-final class UpdateSemaphore extends Semaphore {
-  private volatile boolean myIsCanceled = false;
-  
-  UpdateSemaphore() {
-  }
-  
-  boolean isUpdateCanceled() {
-    return myIsCanceled;
-  }
-  
-  void reportUpdateCanceled() {
-    myIsCanceled = true;
+public class SyntaxHighlighterFactoryEP extends LanguageExtensionPoint<SyntaxHighlighterFactory> {
+  // For backward compatibility
+  @Deprecated
+  @Attribute("key")
+  public String key;
+
+  @Override
+  public String getKey() {
+    final String result = super.getKey();
+    if (result != null) {
+      return result;
+    }
+
+    //noinspection deprecation
+    return key;
   }
 }

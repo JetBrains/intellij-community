@@ -37,15 +37,17 @@ public class IntelliJCheckBoxUI extends DarculaCheckBoxUI {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
     g.setStroke(new BasicStroke(JBUI.scale(1) *2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
 
-    g.setPaint(getShadowColor(enabled, true));
     final int x1 = JBUI.scale(5);
     final int y1 = JBUI.scale(9);
     final int x2 = JBUI.scale(7);
     final int y2 = JBUI.scale(11);
-    g.drawLine(x1, y1, x2, y2);
-    g.drawLine(x2, y2, w-JBUI.scale(2) - 1, JBUI.scale(5));
+    if (enabled) {
+      g.setPaint(getShadowColor(true, true));
+      g.drawLine(x1, y1, x2, y2);
+      g.drawLine(x2, y2, w - JBUI.scale(2) - 1, JBUI.scale(5));
+    }
     g.setPaint(getCheckSignColor(enabled, true));
     g.drawLine(x1, y1 - 2, x2, y2 - 2);
-    g.drawLine(x2, y2 - 2, w-JBUI.scale(2) - 1, JBUI.scale(5) - 2);
+    g.drawLine(x2, y2 - 2, w - JBUI.scale(2) - 1, JBUI.scale(5) - 2);
   }
 }

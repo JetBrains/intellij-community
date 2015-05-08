@@ -267,10 +267,15 @@ public class SMTestProxy extends AbstractTestProxy {
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     //determines location of test proxy
-    if (myLocationUrl != null && myLocator != null) {
-      String protocolId = VirtualFileManager.extractProtocol(myLocationUrl);
+    final String locationUrl = myLocationUrl;
+    return getLocation(project, searchScope, locationUrl);
+  }
+
+  protected Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, String locationUrl) {
+    if (locationUrl != null && myLocator != null) {
+      String protocolId = VirtualFileManager.extractProtocol(locationUrl);
       if (protocolId != null) {
-        String path = VirtualFileManager.extractPath(myLocationUrl);
+        String path = VirtualFileManager.extractPath(locationUrl);
         if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
           List<Location> locations = myLocator.getLocation(protocolId, path, project, searchScope);
           if (!locations.isEmpty()) {
@@ -740,6 +745,10 @@ public class SMTestProxy extends AbstractTestProxy {
   public static class SMRootTestProxy extends SMTestProxy {
     private boolean myTestsReporterAttached; // false by default
 
+    private String myPresentation;
+    private String myComment;
+    private String myRootLocationUrl;
+
     public SMRootTestProxy() {
       super("[root]", true, null);
     }
@@ -750,6 +759,33 @@ public class SMTestProxy extends AbstractTestProxy {
 
     public boolean isTestsReporterAttached() {
       return myTestsReporterAttached;
+    }
+
+    public String getPresentation() {
+      return myPresentation;
+    }
+
+    public void setPresentation(String presentation) {
+      myPresentation = presentation;
+    }
+
+    public void setComment(String comment) {
+      myComment = comment;
+    }
+
+    public String getComment() {
+      return myComment;
+    }
+
+    public void setRootLocationUrl(String locationUrl) {
+      myRootLocationUrl = locationUrl;
+    }
+
+    @Nullable
+    @Override
+    public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+      return myRootLocationUrl != null ? super.getLocation(project, searchScope, myRootLocationUrl) 
+                                       : super.getLocation(project, searchScope);
     }
 
     @Override

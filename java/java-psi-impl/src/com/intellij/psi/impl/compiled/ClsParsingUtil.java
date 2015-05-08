@@ -189,6 +189,7 @@ public class ClsParsingUtil {
     return StringUtil.isJavaIdentifier(identifier) && !JavaLexer.isKeyword(identifier, level);
   }
 
+  @Nullable
   public static LanguageLevel getLanguageLevelByVersion(int major) {
     switch (major) {
       case Opcodes.V1_1:
@@ -213,7 +214,7 @@ public class ClsParsingUtil {
         return LanguageLevel.JDK_1_8;
 
       default:
-        return LanguageLevel.HIGHEST;
+        return null;
     }
   }
 }

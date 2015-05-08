@@ -29,7 +29,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   @Override
   @Nullable
   public T getRepositoryForRoot(@Nullable VirtualFile root) {
-    Repository repository = myGlobalRepositoryManager.getRepositoryForRoot(root);
+    Repository repository = myGlobalRepositoryManager.getRepositoryForRoot(root, true);
     //noinspection unchecked
     return isRootValid(repository) ? (T)repository : null;
   }
@@ -52,7 +52,13 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   @Override
   @Nullable
   public T getRepositoryForFile(@NotNull VirtualFile file) {
-    Repository repository = myGlobalRepositoryManager.getRepositoryForFile(file);
+    return getRepositoryForFile(file, true);
+  }
+
+  @Override
+  @Nullable
+  public T getRepositoryForFile(@NotNull VirtualFile file, boolean updateIfNeeded) {
+    Repository repository = myGlobalRepositoryManager.getRepositoryForFile(file, updateIfNeeded);
     //noinspection unchecked
     return repository != null && myVcs.equals(repository.getVcs()) ? (T)repository : null;
   }

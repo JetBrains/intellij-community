@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,8 +185,10 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           if (stream.readInt() == 0xCAFEBABE) {
             int minor = stream.readUnsignedShort();
             int major = stream.readUnsignedShort();
+            StringBuilder info = new StringBuilder().append("bytecode version: ").append(major).append('.').append(minor);
             LanguageLevel level = ClsParsingUtil.getLanguageLevelByVersion(major);
-            return "bytecode version: " + major + "." + minor + " (" + level.getName() + ")";
+            if (level != null) info.append(" (").append(level.getName()).append(')');
+            return info.toString();
           }
         }
         finally {

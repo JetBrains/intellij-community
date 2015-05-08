@@ -43,18 +43,21 @@ import java.util.*;
 public class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");
 
-  private final InconsistentResourceBundleInspectionProvider[] myInspectionProviders;
+  private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders =
+    new NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]>() {
+    @NotNull
+    @Override
+    protected InconsistentResourceBundleInspectionProvider[] compute() {
+      return new InconsistentResourceBundleInspectionProvider[] {
+        new PropertiesKeysConsistencyInspectionProvider(),
+        new DuplicatedPropertiesInspectionProvider(),
+        new MissingTranslationsInspectionProvider(),
+        new PropertiesPlaceholdersInspectionProvider(),
+        new InconsistentPropertiesEndsInspectionProvider(),
+      };
+    }
+  };
   private final Map<String, Boolean> mySettings = new LinkedHashMap<String, Boolean>();
-
-  public InconsistentResourceBundleInspection() {
-    myInspectionProviders = new InconsistentResourceBundleInspectionProvider[] {
-      new PropertiesKeysConsistencyInspectionProvider(),
-      new DuplicatedPropertiesInspectionProvider(),
-      new MissingTranslationsInspectionProvider(),
-      new PropertiesPlaceholdersInspectionProvider(),
-      new InconsistentPropertiesEndsInspectionProvider(),
-    };
-  }
 
   @Override
   @NotNull
@@ -99,7 +102,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
         }
       }
     });
-    for (final InconsistentResourceBundleInspectionProvider provider : myInspectionProviders) {
+    for (final InconsistentResourceBundleInspectionProvider provider : myInspectionProviders.getValue()) {
       panel.addCheckbox(provider.getPresentableName(), provider.getName());
     }
     return panel;
@@ -170,7 +173,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
       }
       keysUpToParent.put(f, keys);
     }
-    for (final InconsistentResourceBundleInspectionProvider provider : myInspectionProviders) {
+    for (final InconsistentResourceBundleInspectionProvider provider : myInspectionProviders.getValue()) {
       if (isProviderEnabled(provider.getName())) {
         provider.check(parents, files, keysUpToParent, propertiesFilesNamesMaps, manager, globalContext.getRefManager(),
                        problemDescriptionsProcessor);
@@ -185,7 +188,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   @TestOnly
   public void enableProviders(final Class<? extends InconsistentResourceBundleInspectionProvider>... providerClasses) {
     Set<Class<? extends InconsistentResourceBundleInspectionProvider>> providersToEnable = ContainerUtil.newHashSet(providerClasses);
-    for (InconsistentResourceBundleInspectionProvider inspectionProvider : myInspectionProviders) {
+    for (InconsistentResourceBundleInspectionProvider inspectionProvider : myInspectionProviders.getValue()) {
       if (providersToEnable.contains(inspectionProvider.getClass())) {
         mySettings.put(inspectionProvider.getName(), true);
       }
@@ -194,7 +197,7 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
 
   @TestOnly
   public void disableAllProviders() {
-    for (InconsistentResourceBundleInspectionProvider inspectionProvider : myInspectionProviders) {
+    for (InconsistentResourceBundleInspectionProvider inspectionProvider : myInspectionProviders.getValue()) {
       mySettings.put(inspectionProvider.getName(), false);
     }
   }

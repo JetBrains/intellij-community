@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -187,5 +189,55 @@ public class TextPanel extends JComponent {
 
   public void setExplicitSize(@Nullable Dimension explicitSize) {
     myExplicitSize = explicitSize;
+  }
+
+  public static class WithArrows extends TextPanel {
+    private final static int GAP = 2;
+    @Nullable private Icon myIcon;
+
+    @Override
+    protected void paintComponent(@NotNull final Graphics g) {
+      super.paintComponent(g);
+      if (getText() != null) {
+        Rectangle r = getBounds();
+        Insets insets = getInsets();
+        AllIcons.Ide.Statusbar_arrows.paintIcon(this, g, r.width - insets.right - AllIcons.Ide.Statusbar_arrows.getIconWidth() - 2,
+                                                r.height / 2 - AllIcons.Ide.Statusbar_arrows.getIconHeight() / 2);
+        if (myIcon != null) {
+          myIcon.paintIcon(this, g, insets.left - GAP - myIcon.getIconWidth(), r.height / 2 - myIcon.getIconHeight() / 2);
+        }
+      }
+    }
+
+    @NotNull
+    @Override
+    public Insets getInsets() {
+      Insets insets = super.getInsets();
+      if (myIcon != null) {
+        insets.left += myIcon.getIconWidth() + GAP * 2;
+      }
+      return insets;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      final Dimension preferredSize = super.getPreferredSize();
+      int deltaWidth = AllIcons.Ide.Statusbar_arrows.getIconWidth();
+      if (myIcon != null) {
+        deltaWidth += myIcon.getIconWidth();
+      }
+      return new Dimension(preferredSize.width + deltaWidth, preferredSize.height);
+    }
+
+    public void setIcon(@Nullable Icon icon) {
+      myIcon = icon;
+    }
+  }
+
+  public static class PlusTwo extends TextPanel {
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      return new Dimension(size.width + 2, size.height);
+    }
   }
 }

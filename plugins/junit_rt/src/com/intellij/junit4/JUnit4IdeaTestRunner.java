@@ -51,9 +51,14 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       else if (request instanceof FilterRequest) {
         description = getFilteredDescription(request, description);
       }
-      TreeSender.sendTree(this, description, sendTree);
+
       if (myTestsListener instanceof SMTestSender) {
-        ((SMTestSender)myTestsListener).sendTree(description);
+        if (sendTree) {
+          ((SMTestSender)myTestsListener).sendTree(description);
+        }
+        sendTree = false;
+      } else {
+        TreeSender.sendTree(this, description, sendTree);
       }
     }
     catch (Exception e) {

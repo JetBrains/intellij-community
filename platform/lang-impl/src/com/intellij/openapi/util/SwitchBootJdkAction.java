@@ -37,6 +37,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author denis
@@ -216,13 +218,15 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       ArrayList<JdkBundleDescriptor> jdkPathsList = new ArrayList<JdkBundleDescriptor>();
       if (!SystemInfo.isMac) return jdkPathsList;
 
-      jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X));
-      jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X));
+      jdkPathsList.add(new JdkBundleDescriptor(new File(PathManager.getHomePath() + File.separator + "jre" + File.separator + "jdk" ), "JDK bundled with IDE"));
+
+      jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X, "1.6.0"));
+      jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, "jdk1.8.0_(\\d*).jdk"));
 
       return jdkPathsList;
     }
 
-    private static ArrayList<JdkBundleDescriptor> jdkBundlesFromLocation(String jdkLocationOnMacOsX) {
+    private static ArrayList<JdkBundleDescriptor> jdkBundlesFromLocation(String jdkLocationOnMacOsX, String filter) {
 
       ArrayList<JdkBundleDescriptor> localJdkPathsList = new ArrayList<JdkBundleDescriptor>();
 
@@ -235,9 +239,38 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
       File[] filesInStandardJdkLocation = standardJdkLocationOnMacFile.listFiles();
 
+      int latestUpdateNumber = 0;
+      JdkBundleDescriptor latestBundle = null;
+
+      String regex = filter;
+
+      Pattern p = Pattern.compile(regex);
+
       for (File possibleJdkBundle : filesInStandardJdkLocation) {
         // todo add some logic to verify the bundle
-        localJdkPathsList.add(new JdkBundleDescriptor(possibleJdkBundle, possibleJdkBundle.getName()));
+
+        Matcher m = p.matcher(possibleJdkBundle.getName());
+
+
+        while(m.find()) {
+          try {
+            if (m.groupCount() > 0) {
+              int updateNumber = Integer.parseInt(m.group(1));
+              if (latestUpdateNumber < updateNumber) {
+                latestBundle = new JdkBundleDescriptor(possibleJdkBundle, possibleJdkBundle.getName());
+              }
+            } else {
+              latestBundle = new JdkBundleDescriptor(possibleJdkBundle, possibleJdkBundle.getName());
+            }
+          } catch (NumberFormatException nfe) {
+            LOG.error("Fail parsing update number");
+          }
+        }
+
+      }
+
+      if (latestBundle != null) {
+        localJdkPathsList.add(latestBundle);
       }
 
       return localJdkPathsList;

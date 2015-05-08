@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.Patches;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 
@@ -80,8 +81,9 @@ public class KeyStrokeAdapter implements KeyListener {
    * @see KeyStroke#getKeyStrokeForEvent(KeyEvent)
    */
   public static KeyStroke getDefaultKeyStroke(KeyEvent event) {
+    if (event == null || event.isConsumed()) return null;
     // On Windows and Mac it is preferable to use normal key code here
-    boolean extendedKeyCodeFirst = !SystemInfo.isWindows && !SystemInfo.isMac;
+    boolean extendedKeyCodeFirst = !SystemInfo.isWindows && !SystemInfo.isMac && event.getModifiers() == 0;
     KeyStroke stroke = getKeyStroke(event, extendedKeyCodeFirst);
     return stroke != null ? stroke : getKeyStroke(event, !extendedKeyCodeFirst);
   }
@@ -137,6 +139,8 @@ public class KeyStrokeAdapter implements KeyListener {
   // TODO: HACK because of Java7 required:
   // replace later with event.getExtendedKeyCode()
   private static int getExtendedKeyCode(KeyEvent event) {
+    //noinspection ConstantConditions
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
     try {
       Method method = KeyEvent.class.getMethod("getExtendedKeyCode");
       if (!method.isAccessible()) {

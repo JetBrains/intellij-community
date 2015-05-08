@@ -221,11 +221,11 @@ public class JUnitStarter {
       }
       if (ourCommandFileName != null) {
         if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
-          return JUnitForkedStarter.startForkedVMs(ourWorkingDirs, args, isJUnit4, listeners, name, out, err, ourForkMode, ourCommandFileName);
+          return new JUnitForkedStarter().startForkedVMs(ourWorkingDirs, args, isJUnit4, listeners, name, out, err, ourForkMode, ourCommandFileName);
         }
       }
       testRunner.setStreams(out, err, 0);
-      return testRunner.startRunnerWithArgs(args, listeners, name, ourCount, !SM_RUNNER);
+      return testRunner.startRunnerWithArgs(args, listeners, name, ourCount, true);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

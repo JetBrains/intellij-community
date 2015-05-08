@@ -39,9 +39,11 @@ public class RadioUpDownListener extends KeyAdapter {
     if (selected != -1) {
       if (e.getKeyCode() == KeyEvent.VK_UP) {
         up(selected, selected);
+        e.consume();
       }
       else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
         down(selected, selected);
+        e.consume();
       }
     }
   }

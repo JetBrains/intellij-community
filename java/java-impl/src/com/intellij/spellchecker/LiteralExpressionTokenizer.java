@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.tokenizer.EscapeSequenceTokenizer;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
-import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -33,7 +32,7 @@ import java.util.Collections;
 /**
  * @author shkate@jetbrains.com
  */
-public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> {
+public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiteralExpression> {
   @Override
   public void tokenize(@NotNull PsiLiteralExpression element, TokenConsumer consumer) {
     PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl)element;
@@ -63,6 +62,6 @@ public class LiteralExpressionTokenizer extends Tokenizer<PsiLiteralExpression> 
     int[] offsets = new int[text.length()+1];
     PsiLiteralExpressionImpl.parseStringCharacters(text, unescapedText, offsets);
 
-    EscapeSequenceTokenizer.processTextWithOffsets(element, consumer, unescapedText, offsets, 1);
+    processTextWithOffsets(element, consumer, unescapedText, offsets, 1);
   }
 }

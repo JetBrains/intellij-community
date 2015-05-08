@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
  */
 public class GroovySpellcheckingStrategy extends SpellcheckingStrategy {
   private final GrDocCommentTokenizer myDocCommentTokenizer = new GrDocCommentTokenizer();
-  private final Tokenizer<PsiElement> myStringTokenizer = new Tokenizer<PsiElement>() {
+  private final Tokenizer<PsiElement> myStringTokenizer = new EscapeSequenceTokenizer<PsiElement>() {
     @Override
     public void tokenize(@NotNull PsiElement literal, TokenConsumer consumer) {
       String text = GrStringUtil.removeQuotes(literal.getText());
@@ -43,7 +43,7 @@ public class GroovySpellcheckingStrategy extends SpellcheckingStrategy {
         StringBuilder unescapedText = new StringBuilder();
         int[] offsets = new int[text.length() + 1];
         GrStringUtil.parseStringCharacters(text, unescapedText, offsets);
-        EscapeSequenceTokenizer.processTextWithOffsets(literal, consumer, unescapedText, offsets, GrStringUtil.getStartQuote(literal.getText()).length());
+        processTextWithOffsets(literal, consumer, unescapedText, offsets, GrStringUtil.getStartQuote(literal.getText()).length());
       }
     }
   };

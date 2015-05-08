@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
+import com.intellij.rt.execution.junit.JUnitForkedStarter;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.util.Function;
@@ -478,5 +479,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   protected void passForkMode(String forkMode, File tempFile) throws ExecutionException {
     getJavaParameters().getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
+    if (getForkSocket() != null) {
+      getJavaParameters().getProgramParametersList().add(JUnitForkedStarter.DEBUG_SOCKET + getForkSocket().getLocalPort());
+    }
   }
 }

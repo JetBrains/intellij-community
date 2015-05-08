@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
@@ -43,7 +42,7 @@ public class ZipHandler extends ArchiveHandler {
     Map<String, EntryInfo> map = new THashMap<String, EntryInfo>();
     map.put("", createRootEntry());
 
-    ZipFile zip = getZipFile();
+    ZipFile zip = new ZipFile(getFileToUse());
     try {
       Enumeration<? extends ZipEntry> entries = zip.entries();
       while (entries.hasMoreElements()) {
@@ -51,7 +50,7 @@ public class ZipHandler extends ArchiveHandler {
       }
     }
     finally {
-      ZipFileCache.release(zip);
+      zip.close();
     }
 
     return map;
@@ -60,11 +59,6 @@ public class ZipHandler extends ArchiveHandler {
   @NotNull
   protected File getFileToUse() {
     return getFile();
-  }
-
-  @NotNull
-  private ZipFile getZipFile() throws IOException {
-    return ZipFileCache.acquire(getFileToUse().getPath());
   }
 
   @NotNull
@@ -117,7 +111,7 @@ public class ZipHandler extends ArchiveHandler {
   @NotNull
   @Override
   public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
-    ZipFile zip = getZipFile();
+    ZipFile zip = new ZipFile(getFileToUse());
     try {
       ZipEntry entry = zip.getEntry(relativePath);
       if (entry != null) {
@@ -133,7 +127,7 @@ public class ZipHandler extends ArchiveHandler {
       }
     }
     finally {
-      ZipFileCache.release(zip);
+      zip.close();
     }
 
     return ArrayUtil.EMPTY_BYTE_ARRAY;

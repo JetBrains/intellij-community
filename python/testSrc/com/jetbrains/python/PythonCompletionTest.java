@@ -770,4 +770,9 @@ public class PythonCompletionTest extends PyTestCase {
   public void testStructuralType() {
     doTest();
   }
+
+  // PY-11214
+  public void testNext() {
+    doTest();
+  }
 }

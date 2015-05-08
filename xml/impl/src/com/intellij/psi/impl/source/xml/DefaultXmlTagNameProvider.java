@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.completion.XmlTagInsertHandler;
@@ -73,10 +75,10 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
     for (int i = 0; i < variants.size(); i++) {
       XmlElementDescriptor descriptor = variants.get(i);
       String qname = descriptor.getName(tag);
+      if (!visited.add(qname)) continue;
       if (!prefix.isEmpty() && qname.startsWith(prefix + ":")) {
         qname = qname.substring(prefix.length() + 1);
       }
-      if (!visited.add(qname)) continue;
 
       PsiElement declaration = descriptor.getDeclaration();
       LookupElementBuilder lookupElement = declaration == null ? LookupElementBuilder.create(qname) : LookupElementBuilder.create(declaration, qname);
@@ -100,6 +102,16 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
   }
 
   private static List<LookupElement> getRootTagsVariants(final XmlTag tag, final List<LookupElement> elements) {
+
+    elements.add(LookupElementBuilder.create("?xml version=\"1.0\" encoding=\"\" ?>").withPresentableText("<?xml version=\"1.0\" encoding=\"\" ?>").withInsertHandler(
+      new InsertHandler<LookupElement>() {
+        @Override
+        public void handleInsert(InsertionContext context, LookupElement item) {
+          int offset = context.getEditor().getCaretModel().getOffset();
+          context.getEditor().getCaretModel().moveToOffset(offset - 4);
+          AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor());
+        }
+      }));
     final FileBasedIndex fbi = FileBasedIndex.getInstance();
     CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<String>();
     fbi.processAllKeys(XmlNamespaceIndex.NAME, processor, tag.getProject());

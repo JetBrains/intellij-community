@@ -304,9 +304,16 @@ class GitRepositoryReader {
       return new GitSvnRemoteBranch(fullBranchName, hash);
     }
     else {
-      String remoteName = stdName.substring(0, slash);
-      String branchName = stdName.substring(slash + 1);
-      GitRemote remote = GitUtil.findRemoteByName(remotes, remoteName);
+      GitRemote remote;
+      String remoteName;
+      String branchName;
+      do {
+        remoteName = stdName.substring(0, slash);
+        branchName = stdName.substring(slash + 1);
+        remote = GitUtil.findRemoteByName(remotes, remoteName);
+        slash = stdName.indexOf('/', slash + 1);
+      } while(remote == null && slash >= 0);
+
       if (remote == null) {
         // user may remove the remote section from .git/config, but leave remote refs untouched in .git/refs/remotes
         LOG.debug(String.format("No remote found with the name [%s]. All remotes: %s", remoteName, remotes));
