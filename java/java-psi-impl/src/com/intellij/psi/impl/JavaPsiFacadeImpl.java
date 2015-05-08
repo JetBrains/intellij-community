@@ -52,7 +52,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private volatile PsiElementFinder[] myElementFinders;
   private final PsiConstantEvaluationHelper myConstantEvaluationHelper;
   private volatile SoftReference<ConcurrentMap<String, PsiPackage>> myPackageCache;
-  private final ConcurrentMap<String, Map<GlobalSearchScope, PsiClass>> myClassCache = ContainerUtil.createConcurrentSoftMap();
+  private final ConcurrentMap<GlobalSearchScope, Map<String, PsiClass>> myClassCache = ContainerUtil.createConcurrentWeakKeySoftValueMap();
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
@@ -89,16 +89,16 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
-    Map<GlobalSearchScope, PsiClass> map = myClassCache.get(qualifiedName);
+    Map<String, PsiClass> map = myClassCache.get(scope);
     if (map == null) {
-      map = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
-      map = ConcurrencyUtil.cacheOrGet(myClassCache, qualifiedName, map);
+      map = ContainerUtil.createConcurrentWeakValueMap();
+      map = ConcurrencyUtil.cacheOrGet(myClassCache, scope, map);
     }
-    PsiClass result = map.get(scope);
+    PsiClass result = map.get(qualifiedName);
     if (result == null) {
       result = doFindClass(qualifiedName, scope);
       if (result != null) {
-        map.put(scope, result);
+        map.put(qualifiedName, result);
       }
     }
 
