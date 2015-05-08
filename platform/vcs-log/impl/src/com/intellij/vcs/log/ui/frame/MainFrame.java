@@ -21,11 +21,11 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
@@ -88,7 +88,8 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     // initialize components
     myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataHolder, initialDataPack);
     myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI, initialDataPack.getRefsModel());
-    myBranchesPanel.setVisible(settings.isShowBranchesPanel());
+    JComponent branchScrollPane = myBranchesPanel.createScrollPane();
+    branchScrollPane.setVisible(settings.isShowBranchesPanel());
     myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager(), initialDataPack);
 
     myChangesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
@@ -112,7 +113,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
-    toolbars.add(myBranchesPanel.createScrollPane(), BorderLayout.CENTER);
+    toolbars.add(branchScrollPane, BorderLayout.CENTER);
     JComponent toolbarsAndTable = new JPanel(new BorderLayout());
     toolbarsAndTable.add(toolbars, BorderLayout.NORTH);
     toolbarsAndTable.add(myDetailsSplitter, BorderLayout.CENTER);
@@ -290,7 +291,13 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   }
 
   public void setBranchesPanelVisible(boolean visible) {
-    myBranchesPanel.setVisible(visible);
+    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, myBranchesPanel);
+    if (scrollPane != null) {
+      scrollPane.setVisible(visible);
+    }
+    else {
+      myBranchesPanel.setVisible(visible);
+    }
   }
 
   @Override

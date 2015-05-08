@@ -6,6 +6,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ScrollUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -61,14 +62,6 @@ public class BranchesPanel extends JPanel {
         }
       }
     });
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    if (!isVisible()) {
-      return new Dimension(0, 0);
-    }
-    return super.getPreferredSize();
   }
 
   private void recreateComponents() {
