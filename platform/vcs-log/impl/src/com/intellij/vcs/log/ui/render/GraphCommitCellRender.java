@@ -66,7 +66,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
       int paddingX = (myGraphImage != null ? myGraphImage.getWidth() : 0) + PrintParameters.LABEL_PADDING;
       Map<String, Color> labelsForReferences = collectLabelsForRefs(myRefs);
       for (Map.Entry<String, Color> entry : labelsForReferences.entrySet()) {
-        Dimension size = myLabelPainter.calculateSize(entry.getKey(), g.getFontMetrics());
+        Dimension size = myLabelPainter.calculateSize(entry.getKey(), g.getFontMetrics(LabelPainters.getFont()));
         int paddingY = (myGraphTable.getRowHeight() - size.height) / 2;
         myLabelPainter.paintLabel((Graphics2D)g, entry.getKey(), paddingX, paddingY, entry.getValue());
         paddingX += size.width + PrintParameters.LABEL_PADDING;
