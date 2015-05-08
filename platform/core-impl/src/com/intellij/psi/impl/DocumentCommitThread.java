@@ -109,6 +109,7 @@ public class DocumentCommitThread extends DocumentCommitProcessor implements Run
     });
     log("Starting thread", null, false);
     Thread thread = new Thread(this, NAME);
+    thread.setDaemon(true);
     thread.start();
   }
 
