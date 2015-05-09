@@ -85,19 +85,17 @@ public class BranchesPanel extends JPanel {
 
     LinkedHashMap<VirtualFile, List<RefGroup>> groups = ContainerUtil.newLinkedHashMap();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
-      VirtualFile root = entry.getKey();
-      List<RefGroup> list = ContainerUtil.newArrayList();
-      list.addAll(expandExpandableGroups(myDataHolder.getLogProvider(root).getReferenceManager().group(entry.getValue())));
-      groups.put(root, list);
+      groups.put(entry.getKey(),
+                 expandExpandableGroups(myDataHolder.getLogProvider(entry.getKey()).getReferenceManager().group(entry.getValue())));
     }
 
     return groups;
   }
 
-  private static Collection<RefGroup> expandExpandableGroups(List<RefGroup> refGroups) {
-    Collection<RefGroup> groups = ContainerUtil.newArrayList();
+  private static List<RefGroup> expandExpandableGroups(List<RefGroup> refGroups) {
+    List<RefGroup> groups = ContainerUtil.newArrayList();
     for (RefGroup group : refGroups) {
-      if (group.isExpanded()) {
+      if (group.isExpanded() || group.getRefs().size() == 1) {
         groups.addAll(ContainerUtil.map(group.getRefs(), new Function<VcsRef, RefGroup>() {
           @Override
           public RefGroup fun(VcsRef ref) {
