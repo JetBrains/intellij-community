@@ -54,25 +54,25 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   }
 
   @NotNull
-  public static JBColor getBackgroundVersion(@NotNull final Color rootColor) {
+  public static JBColor getBackgroundColor(@NotNull final Color baseRootColor) {
     return new JBColor(new NotNullProducer<Color>() {
       @NotNull
       @Override
       public Color produce() {
-        return ColorUtil.mix(rootColor, UIUtil.getTableBackground(), 0.75);
+        return ColorUtil.mix(baseRootColor, UIUtil.getTableBackground(), 0.75);
       }
     });
   }
 
   @NotNull
-  public static JBColor getIndicatorVersion(@NotNull final Color rootColor) {
-    if (Registry.is("vcs.log.square.labels")) return getBackgroundVersion(rootColor);
+  public static JBColor getIndicatorColor(@NotNull final Color baseRootColor) {
+    if (Registry.is("vcs.log.square.labels")) return getBackgroundColor(baseRootColor);
     return new JBColor(new NotNullProducer<Color>() {
       @NotNull
       @Override
       public Color produce() {
-        if (UIUtil.isUnderDarcula()) return rootColor;
-        return ColorUtil.darker(ColorUtil.softer(rootColor), 2);
+        if (UIUtil.isUnderDarcula()) return baseRootColor;
+        return ColorUtil.darker(ColorUtil.softer(baseRootColor), 2);
       }
     });
   }

@@ -410,7 +410,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   public static JBColor getRootBackgroundColor(@NotNull VirtualFile root, @NotNull VcsLogColorManager colorManager) {
-    return VcsLogColorManagerImpl.getBackgroundVersion(colorManager.getRootColor(root));
+    return VcsLogColorManagerImpl.getBackgroundColor(colorManager.getRootColor(root));
   }
 
   public void handleAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange, @Nullable Selection previousSelection) {

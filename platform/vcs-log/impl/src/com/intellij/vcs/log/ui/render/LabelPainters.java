@@ -55,7 +55,7 @@ public class LabelPainters {
 
     public void paintReference(@NotNull VcsRef reference, @NotNull Graphics g, int paddingX, int paddingY) {
       myLabelPainter.paintLabel((Graphics2D)g, reference.getName(), paddingX, paddingY, reference.getType().getBackgroundColor(),
-                                VcsLogColorManagerImpl.getIndicatorVersion(myColorManager.getRootColor(reference.getRoot())));
+                                VcsLogColorManagerImpl.getIndicatorColor(myColorManager.getRootColor(reference.getRoot())));
     }
 
     public Rectangle paintLabel(@NotNull String text,

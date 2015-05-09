@@ -117,7 +117,7 @@ public class BranchesPanel extends JPanel {
       for (RefGroup group : entry.getValue()) {
         // it is assumed here that all refs in a single group belong to a single root
         if (myRoots == null || myRoots.contains(root)) {
-          Color rootIndicatorColor = VcsLogColorManagerImpl.getIndicatorVersion(myUI.getColorManager().getRootColor(root));
+          Color rootIndicatorColor = VcsLogColorManagerImpl.getIndicatorColor(myUI.getColorManager().getRootColor(root));
           Rectangle rectangle = myReferencePainter
             .paintLabel(group.getName(), g, paddingX, (getHeight() - myReferencePainter.getHeight(this)) / 2 - VERTICAL_SPACE, group.getBgColor(),
                         rootIndicatorColor);
