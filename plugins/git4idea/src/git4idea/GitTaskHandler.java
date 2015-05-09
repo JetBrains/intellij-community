@@ -43,7 +43,7 @@ public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
 
   @Override
   protected void checkout(@NotNull String taskName, @NotNull List<GitRepository> repos, @Nullable Runnable callInAwtLater) {
-    myBrancher.checkout(taskName, repos, callInAwtLater);
+    myBrancher.checkout(taskName, false, repos, callInAwtLater);
   }
 
   @Override

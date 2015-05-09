@@ -236,10 +236,11 @@ public class GitImpl implements Git {
   @NotNull
   @Override
   public GitCommandResult checkout(@NotNull GitRepository repository,
-                                          @NotNull String reference,
-                                          @Nullable String newBranch,
-                                          boolean force,
-                                          @NotNull GitLineHandlerListener... listeners) {
+                                   @NotNull String reference,
+                                   @Nullable String newBranch,
+                                   boolean force,
+                                   boolean detach,
+                                   @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
@@ -247,7 +248,7 @@ public class GitImpl implements Git {
       h.addParameters("--force");
     }
     if (newBranch == null) { // simply checkout
-      h.addParameters(reference);
+      h.addParameters(detach ? reference + "^0" : reference); // we could use `--detach` here, but it is supported only since 1.7.5.
     } 
     else { // checkout reference as new branch
       h.addParameters("-b", newBranch, reference);

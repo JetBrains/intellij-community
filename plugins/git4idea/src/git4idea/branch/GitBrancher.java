@@ -60,18 +60,21 @@ public interface GitBrancher {
    *    If local changes prevent the checkout, shows the list of them and proposes to make a "smart checkout":
    *    stash-checkout-unstash.</p>
    * <p>Doesn't check the reference for validity.</p>
-   *
    * @param reference      reference to be checked out.
+   * @param detach         if true, checkout operation will put the repository into the detached HEAD state
+   *                       (useful if one wants to checkout a remote branch position, but not create a new tracking local branch);
+   *                       if false, it will behave the same as {@code git checkout} command does, i.e. switch to the local branch,
+   *                       create a local branch tracking the given remote branch, checkout hash or tag into the detached HEAD.
    * @param repositories   repositories to operate on.
    * @param callInAwtLater the Runnable that should be called after execution of the method (both successful and unsuccessful).
-   *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
+ *                       If given, it will be called in the EDT {@link javax.swing.SwingUtilities#invokeLater(Runnable) later}.
    */
-  void checkout(@NotNull String reference, @NotNull List<GitRepository> repositories, @Nullable Runnable callInAwtLater);
+  void checkout(@NotNull String reference, boolean detach, @NotNull List<GitRepository> repositories, @Nullable Runnable callInAwtLater);
 
   /**
    * Creates and checks out a new local branch starting from the given reference:
    * {@code git checkout -b <branchname> <start-point>}. <br/>
-   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, java.util.List, Runnable)}.
+   * Provides the "smart checkout" procedure the same as in {@link #checkout(String, boolean, List, Runnable)}.
    *
    * @param newBranchName  the name of the new local branch.
    * @param startPoint     the reference to checkout.
