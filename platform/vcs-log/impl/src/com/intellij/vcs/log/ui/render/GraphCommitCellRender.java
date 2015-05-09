@@ -31,7 +31,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final GraphCellPainter myPainter;
   @NotNull private final VcsLogGraphTable myGraphTable;
-  @NotNull private final LabelPainters.LabelPainter myLabelPainter;
+  @NotNull private final TextLabelPainter myTextLabelPainter;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
 
   @Nullable private PaintInfo myGraphImage;
@@ -43,7 +43,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
     myDataHolder = dataHolder;
     myPainter = painter;
     myGraphTable = table;
-    myLabelPainter = LabelPainters.createPainter(false);
+    myTextLabelPainter = TextLabelPainter.createPainter(false);
     myIssueLinkRenderer = new IssueLinkRenderer(dataHolder.getProject(), this);
   }
 
@@ -55,7 +55,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
   }
 
   public int getPreferredHeight() {
-    return myLabelPainter.calculateSize("", getFontMetrics(LabelPainters.getFont())).height + 4;
+    return myTextLabelPainter.calculateSize("", getFontMetrics(TextLabelPainter.getFont())).height + 4;
   }
 
   @Override
@@ -66,9 +66,9 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
       int paddingX = (myGraphImage != null ? myGraphImage.getWidth() : 0) + PrintParameters.LABEL_PADDING;
       Map<String, Color> labelsForReferences = collectLabelsForRefs(myRefs);
       for (Map.Entry<String, Color> entry : labelsForReferences.entrySet()) {
-        Dimension size = myLabelPainter.calculateSize(entry.getKey(), g.getFontMetrics(LabelPainters.getFont()));
+        Dimension size = myTextLabelPainter.calculateSize(entry.getKey(), g.getFontMetrics(TextLabelPainter.getFont()));
         int paddingY = (myGraphTable.getRowHeight() - size.height) / 2;
-        myLabelPainter.paintLabel((Graphics2D)g, entry.getKey(), paddingX, paddingY, entry.getValue());
+        myTextLabelPainter.paint((Graphics2D)g, entry.getKey(), paddingX, paddingY, entry.getValue());
         paddingX += size.width + PrintParameters.LABEL_PADDING;
       }
     }
@@ -148,7 +148,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
 
     int paddingX = 2 * PrintParameters.LABEL_PADDING;
     for (String label : collectLabelsForRefs(references).keySet()) {
-      Dimension size = myLabelPainter.calculateSize(label, this.getFontMetrics(LabelPainters.getFont()));
+      Dimension size = myTextLabelPainter.calculateSize(label, this.getFontMetrics(TextLabelPainter.getFont()));
       paddingX += size.width + PrintParameters.LABEL_PADDING;
     }
     return paddingX;

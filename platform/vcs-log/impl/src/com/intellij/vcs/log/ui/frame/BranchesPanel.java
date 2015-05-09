@@ -18,7 +18,7 @@ import com.intellij.vcs.log.impl.SingletonRefGroup;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.ui.render.LabelPainters.ReferencePainter;
+import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,7 @@ public class BranchesPanel extends JPanel {
   private final VcsLogUiImpl myUI;
 
   private LinkedHashMap<VirtualFile, List<RefGroup>> myRefGroups;
-  private final ReferencePainter myReferencePainter;
+  private final VcsRefPainter myReferencePainter;
   @Nullable private Collection<VirtualFile> myRoots = null;
 
   private Map<Integer, RefGroup> myRefPositions = ContainerUtil.newHashMap();
@@ -53,7 +53,7 @@ public class BranchesPanel extends JPanel {
     myDataHolder = dataHolder;
     myUI = UI;
     myRefGroups = getRefsToDisplayOnPanel(initialRefsModel);
-    myReferencePainter = new ReferencePainter(myUI.getColorManager(), true);
+    myReferencePainter = new VcsRefPainter(myUI.getColorManager(), true);
 
     setPreferredSize(new Dimension(-1, myReferencePainter.getHeight(this) + UIUtil.DEFAULT_VGAP + VERTICAL_SPACE));
 
@@ -119,8 +119,9 @@ public class BranchesPanel extends JPanel {
         if (myRoots == null || myRoots.contains(root)) {
           Color rootIndicatorColor = VcsLogColorManagerImpl.getIndicatorColor(myUI.getColorManager().getRootColor(root));
           Rectangle rectangle = myReferencePainter
-            .paintLabel(group.getName(), g, paddingX, (getHeight() - myReferencePainter.getHeight(this)) / 2 - VERTICAL_SPACE, group.getBgColor(),
-                        rootIndicatorColor);
+            .paint(group.getName(), g, paddingX, (getHeight() - myReferencePainter.getHeight(this)) / 2 - VERTICAL_SPACE,
+                   group.getBgColor(),
+                   rootIndicatorColor);
           paddingX += rectangle.width + SMALL_ROOTS_GAP;
           myRefPositions.put(rectangle.x, group);
         }
@@ -179,7 +180,7 @@ public class BranchesPanel extends JPanel {
     @NotNull private final SingleReferenceComponent myRendererComponent;
     @NotNull private final ListCellRenderer myCellRenderer;
 
-    ReferencePopupComponent(@NotNull RefGroup group, @NotNull VcsLogUiImpl ui, @NotNull ReferencePainter referencePainter) {
+    ReferencePopupComponent(@NotNull RefGroup group, @NotNull VcsLogUiImpl ui, @NotNull VcsRefPainter referencePainter) {
       super(new BorderLayout());
       myUi = ui;
 
@@ -268,12 +269,12 @@ public class BranchesPanel extends JPanel {
   private static class SingleReferenceComponent extends JPanel {
     private static final int PADDING_Y = 2;
     private static final int PADDING_X = 5;
-    @NotNull private final ReferencePainter myReferencePainter;
+    @NotNull private final VcsRefPainter myReferencePainter;
 
     @Nullable private VcsRef myReference;
     public boolean mySelected;
 
-    public SingleReferenceComponent(@NotNull ReferencePainter referencePainter) {
+    public SingleReferenceComponent(@NotNull VcsRefPainter referencePainter) {
       myReferencePainter = referencePainter;
     }
 
@@ -283,7 +284,7 @@ public class BranchesPanel extends JPanel {
       g.fillRect(0, 0, getWidth(), getHeight());
 
       if (myReference != null) {
-        myReferencePainter.paintReference(myReference, g, PADDING_X, PADDING_Y);
+        myReferencePainter.paint(myReference, g, PADDING_X, PADDING_Y);
       }
     }
 

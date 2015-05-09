@@ -43,7 +43,7 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.render.LabelPainters.ReferencePainter;
+import com.intellij.vcs.log.ui.render.VcsRefPainter;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
@@ -456,12 +456,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   private static class ReferencesPanel extends JPanel {
-    @NotNull private final ReferencePainter myReferencePainter;
+    @NotNull private final VcsRefPainter myReferencePainter;
     @NotNull private List<VcsRef> myReferences;
 
     ReferencesPanel(@NotNull VcsLogColorManager colorManager) {
       super(new FlowLayout(FlowLayout.LEADING, 5, 2));
-      myReferencePainter = new ReferencePainter(colorManager, false);
+      myReferencePainter = new VcsRefPainter(colorManager, false);
       myReferences = Collections.emptyList();
       setOpaque(false);
     }
@@ -484,10 +484,10 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   }
 
   private static class SingleReferencePanel extends JPanel {
-    @NotNull private final ReferencePainter myRefPainter;
+    @NotNull private final VcsRefPainter myRefPainter;
     @NotNull private VcsRef myReference;
 
-    SingleReferencePanel(@NotNull ReferencePainter referencePainter, @NotNull VcsRef reference) {
+    SingleReferencePanel(@NotNull VcsRefPainter referencePainter, @NotNull VcsRef reference) {
       myRefPainter = referencePainter;
       myReference = reference;
       setOpaque(false);
@@ -495,7 +495,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     @Override
     protected void paintComponent(Graphics g) {
-      myRefPainter.paintReference(myReference, g, 0, 0);
+      myRefPainter.paint(myReference, g, 0, 0);
     }
 
     @Override
