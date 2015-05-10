@@ -23,17 +23,23 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.flow.GrControlFlowAnalyzerImpl;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import static org.jetbrains.plugins.groovy.actions.DumpGroovyControlFlowAction.collectControlFlowOwners;
 
 public class DumpNewGroovyControlFlow extends AnAction implements DumbAware {
 
@@ -46,8 +52,8 @@ public class DumpNewGroovyControlFlow extends AnAction implements DumbAware {
     if (!(psiFile instanceof GroovyFile)) return;
 
     int offset = editor.getCaretModel().getOffset();
-
-    final List<GrControlFlowOwner> controlFlowOwners = collectControlFlowOwners(psiFile, editor, offset);
+    final GroovyPsiElement underCaret = PsiTreeUtil.getParentOfType(psiFile.findElementAt(offset), GroovyPsiElement.class);
+    final List<GroovyPsiElement> controlFlowOwners = collectControlFlowOwners(underCaret);
     if (controlFlowOwners.isEmpty()) return;
     if (controlFlowOwners.size() == 1) {
       passInner(controlFlowOwners.get(0));
@@ -56,14 +62,14 @@ public class DumpNewGroovyControlFlow extends AnAction implements DumbAware {
       IntroduceTargetChooser.showChooser(
         editor,
         controlFlowOwners,
-        new Pass<GrControlFlowOwner>() {
+        new Pass<GroovyPsiElement>() {
           @Override
-          public void pass(GrControlFlowOwner grExpression) {
+          public void pass(GroovyPsiElement grExpression) {
             passInner(grExpression);
           }
-        }, new Function<GrControlFlowOwner, String>() {
+        }, new Function<GroovyPsiElement, String>() {
           @Override
-          public String fun(GrControlFlowOwner flowOwner) {
+          public String fun(GroovyPsiElement flowOwner) {
             return flowOwner.getText();
           }
         }
@@ -71,8 +77,20 @@ public class DumpNewGroovyControlFlow extends AnAction implements DumbAware {
     }
   }
 
+  @NotNull
+  private static List<GroovyPsiElement> collectControlFlowOwners(@Nullable GroovyPsiElement underCaret) {
+    final List<GroovyPsiElement> result = new ArrayList<GroovyPsiElement>();
+    GroovyPsiElement owner = underCaret;
+    do {
+      owner = PsiTreeUtil.getParentOfType(owner, GrMethod.class, GrClosableBlock.class, GrVariableDeclaration.class, GrParameterList.class);
+      if (owner != null) result.add(owner);
+    }
+    while (owner != null);
+    return result;
+  }
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void passInner(GrControlFlowOwner owner) {
+  private static void passInner(GroovyPsiElement owner) {
     GrControlFlowAnalyzerImpl analyzer = new GrControlFlowAnalyzerImpl(new GrDfaValueFactory(owner.getProject(), false), owner);
     ControlFlow flow = analyzer.buildControlFlow();
     System.out.println(owner.getText());

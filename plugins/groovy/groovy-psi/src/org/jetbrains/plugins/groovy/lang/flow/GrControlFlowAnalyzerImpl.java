@@ -53,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -596,7 +597,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     final GrExpression description = assertStatement.getErrorMessage();
     if (condition != null) {
       condition.accept(this);
-
+      addInstruction(new GrCoerceToBooleanInstruction<V>());
       addInstruction(new ConditionalGotoInstruction(flow.getEndOffset(assertStatement), false, condition));
       if (description != null) {
         description.accept(this);
@@ -648,11 +649,24 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   }
 
   @Override
+  public void visitParameterList(GrParameterList parameterList) {
+    startElement(parameterList);
+    for (GrParameter parameter : parameterList.getParameters()) {
+      parameter.accept(this);
+      pop();
+    }
+    finishElement(parameterList);
+  }
+
+  @Override
   public void visitParameter(GrParameter parameter) {
     startElement(parameter);
     final GrExpression initializer = parameter.getInitializerGroovy();
     if (initializer != null) {
       myExpressionHelper.initialize(parameter, initializer);
+    }
+    else {
+      pushUnknown();
     }
     finishElement(parameter);
   }
