@@ -5,13 +5,12 @@ import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes;
 import org.testng.internal.IResultListener;
+import org.testng.xml.XmlTest;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: anna
@@ -21,7 +20,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   public static final String INVOCATION_NUMBER = "invocation number: ";
   private final PrintStream myPrintStream;
-  private String myCurrentClassName = null;
+  private final List<String> myCurrentSuites = new ArrayList<String>();
   private String myMethodName;
   private int myInvocationCount = 0;
   private final Map<ITestResult, Integer> myMap = Collections.synchronizedMap(new HashMap<ITestResult, Integer>());
@@ -44,19 +43,19 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public synchronized void onConfigurationSuccess(ITestResult result) {
-    onConfigurationSuccess(getClassName(result), getTestMethodName(result));
+    onConfigurationSuccess(getTestHierarchy(result), getTestMethodName(result));
   }
 
   public synchronized void onConfigurationFailure(ITestResult result) {
-    onConfigurationFailure(getClassName(result), getTestMethodName(result), result.getThrowable());
+    onConfigurationFailure(getTestHierarchy(result), getTestMethodName(result), result.getThrowable());
   }
 
   public synchronized void onConfigurationSkip(ITestResult itr) {}
 
   public synchronized void onTestStart(ITestResult result) {
-    onTestStart(getClassName(result), getMethodName(result, true));
+    onTestStart(getTestHierarchy(result), getMethodName(result, true));
   }
-  
+
   public synchronized void onTestSuccess(ITestResult result) {
     onTestFinished(getMethodName(result));
   }
@@ -74,62 +73,79 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   public synchronized void onStart(ITestContext context) {}
 
   public synchronized void onFinish(ITestContext context) {
-    final String currentClassName = myCurrentClassName;
-    if (currentClassName != null) {
-      onSuiteFinish(currentClassName);
+    for (int i = myCurrentSuites.size() - 1; i >= 0; i--) {
+      onSuiteFinish(myCurrentSuites.remove(i));
     }
+    myCurrentSuites.clear();
   }
 
-  public void onConfigurationSuccess(String classFQName, String testMethodName) {
-    final String className = getShortName(classFQName);
-    final boolean startedNode = onSuiteStart(classFQName, true);
-    fireTestStarted(testMethodName, classFQName);
+  private static List<String> getTestHierarchy(ITestResult result) {
+    final List<String> hierarchy;
+    final XmlTest xmlTest = result.getTestClass().getXmlTest();
+    if (xmlTest != null) {
+      hierarchy = Arrays.asList(getClassName(result), xmlTest.getName());
+    } else {
+      hierarchy = Collections.singletonList(getClassName(result));
+    }
+    return hierarchy;
+  }
+
+  public void onConfigurationSuccess(List<String> classFQName, String testMethodName) {
+    onSuiteStart(classFQName, true);
+    fireTestStarted(testMethodName, classFQName.get(0));
     onTestFinished(testMethodName);
-    if (startedNode) {
-      myPrintStream.println();
-      onSuiteFinish(className);
-    }
   }
 
-  public void onConfigurationFailure(String classFQName, String testMethodName, Throwable throwable) {
-    final String className = getShortName(classFQName);
-    final boolean start = onSuiteStart(classFQName, true);
-
-    fireTestStarted(testMethodName, classFQName);
+  public void onConfigurationFailure(List<String> classFQName, String testMethodName, Throwable throwable) {
+    onSuiteStart(classFQName, true);
+    fireTestStarted(testMethodName, classFQName.get(0));
     onTestFailure(throwable, testMethodName);
-
-    if (start) {
-      myPrintStream.println();
-      onSuiteFinish(className);
-    }
   }
   
-  public boolean onSuiteStart(String suiteName, boolean provideLocation) {
-    final String className = getShortName(suiteName);
-    if (myCurrentClassName == null || !myCurrentClassName.equals(className)) {
-      if (myCurrentClassName != null) {
-        onSuiteFinish(myCurrentClassName);
-      }
-      myPrintStream.print("\n##teamcity[testSuiteStarted name =\'" + escapeName(provideLocation ? getShortName(suiteName) : suiteName));
+  public boolean onSuiteStart(String classFQName, boolean provideLocation) {
+    return onSuiteStart(Collections.singletonList(classFQName), provideLocation);
+  }
+  
+  public boolean onSuiteStart(List<String> parentsHierarchy, boolean provideLocation) {
+    int idx = 0;
+    String currentClass;
+    String currentParent;
+    while (idx < myCurrentSuites.size() && idx < parentsHierarchy.size()) {
+      currentClass = myCurrentSuites.get(idx);
+      currentParent =parentsHierarchy.get(parentsHierarchy.size() - 1 - idx);
+      if (!currentClass.equals(getShortName(currentParent))) break;
+      idx++;
+    }
+
+    for (int i = myCurrentSuites.size() - 1; i >= idx; i--) {
+      currentClass = myCurrentSuites.remove(i);
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(currentClass) + "\']");
+    }
+
+    for (int i = idx; i < parentsHierarchy.size(); i++) {
+      String fqName = parentsHierarchy.get(parentsHierarchy.size() - 1 - i);
+      String currentClassName = getShortName(fqName);
+      myPrintStream.print("\n##teamcity[testSuiteStarted name =\'" + escapeName(currentClassName));
       if (provideLocation) {
-        myPrintStream.print("\' locationHint = \'java:suite://" + suiteName);
+        myPrintStream.print("\' locationHint = \'java:suite://" + fqName);
       }
       myPrintStream.println("\']");
-      myCurrentClassName = className;
-      myInvocationCount = 0;
-      return true;
+      myCurrentSuites.add(currentClassName);
     }
     return false;
   }
 
   public void onSuiteFinish(String suiteName) {
     myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(suiteName) + "\']");
-    myCurrentClassName = null;
   }
 
   public void onTestStart(String classFQName, String methodName) {
+    onTestStart(Collections.singletonList(classFQName), methodName);
+  }
+
+  public void onTestStart(List<String> classFQName, String methodName) {
     onSuiteStart(classFQName, true);
-    fireTestStarted(methodName, classFQName);
+    fireTestStarted(methodName, classFQName.get(0));
   }
   
   public void onTestFinished(String methodName) {

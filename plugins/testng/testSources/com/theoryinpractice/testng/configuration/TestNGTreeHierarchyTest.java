@@ -28,6 +28,7 @@ import org.testng.xml.XmlTest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Collections;
 
 public class TestNGTreeHierarchyTest {
  
@@ -55,10 +56,10 @@ public class TestNGTreeHierarchyTest {
     final String className = "a.ATest";
     listener.onSuiteStart(className, true);
     for(String methodName : new String[] {"test1", "test2"}) {
-      listener.onConfigurationSuccess(className, "setUp");
+      listener.onConfigurationSuccess(Collections.singletonList(className), "setUp");
       listener.onTestStart(className, methodName);
       listener.onTestFinished(methodName);
-      listener.onConfigurationSuccess(className, "tearDown");
+      listener.onConfigurationSuccess(Collections.singletonList(className), "tearDown");
     }
     listener.onSuiteFinish(className);
 
