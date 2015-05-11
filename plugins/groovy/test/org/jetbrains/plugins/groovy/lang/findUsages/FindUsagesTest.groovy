@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.findUsages
 
-import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesManager
@@ -77,7 +77,7 @@ public class FindUsagesTest extends LightGroovyTestCase {
 
   public void testConstructorUsageInNewExpression() throws Throwable {
     myFixture.configureByFile("ConstructorUsageInNewExpression.groovy");
-    final PsiElement resolved = TargetElementUtilBase.findTargetElement(myFixture.editor, TargetElementUtilBase.instance.referenceSearchFlags);
+    final PsiElement resolved = TargetElementUtil.findTargetElement(myFixture.editor, TargetElementUtil.instance.referenceSearchFlags);
     assertNotNull("Could not resolve reference", resolved);
     final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myFixture.project);
     assertEquals(2, MethodReferencesSearch.search((PsiMethod)resolved, projectScope, true).findAll().size());
@@ -86,7 +86,7 @@ public class FindUsagesTest extends LightGroovyTestCase {
 
   public void testGotoConstructor() throws Throwable {
     myFixture.configureByFile("GotoConstructor.groovy");
-    final PsiElement target = TargetElementUtilBase.findTargetElement(myFixture.editor, TargetElementUtilBase.instance.referenceSearchFlags);
+    final PsiElement target = TargetElementUtil.findTargetElement(myFixture.editor, TargetElementUtil.instance.referenceSearchFlags);
     assertNotNull(target);
     assertInstanceOf(target, PsiMethod.class);
     assertTrue(((PsiMethod)target).constructor);
@@ -180,8 +180,8 @@ public class FindUsagesTest extends LightGroovyTestCase {
   }
 
   private void assertUsageCount(int expectedUsagesCount) {
-    final PsiElement resolved = TargetElementUtilBase.findTargetElement(myFixture.getEditor(),
-                                                                        TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+    final PsiElement resolved = TargetElementUtil.findTargetElement(myFixture.getEditor(),
+                                                                        TargetElementUtil.getInstance().getReferenceSearchFlags());
     assertNotNull("Could not resolve reference", resolved);
     doFind(expectedUsagesCount, resolved);
   }

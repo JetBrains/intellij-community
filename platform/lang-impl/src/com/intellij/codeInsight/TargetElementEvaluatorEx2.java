@@ -26,6 +26,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * Advanced customization interface used in {@link TargetElementUtil} class to support specifics of various languages.
+ * The exact API is not documented and is subject to change.
+ * Please refer to {@link TargetElementUtil} for additional information.  
+ */
 public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluator {
   @Nullable 
   public PsiElement getNamedElement(@NotNull PsiElement element) {

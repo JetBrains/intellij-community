@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.ant.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -72,11 +72,11 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
   @Nullable
   private static PsiElement[] getPsiElementsIn(final Editor editor, final PsiFile psiFile) {
     try {
-      final PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      final PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
       if (reference == null) {
         return null;
       }
-      final Collection<PsiElement> candidates = TargetElementUtilBase.getInstance().getTargetCandidates(reference);
+      final Collection<PsiElement> candidates = TargetElementUtil.getInstance().getTargetCandidates(reference);
       return ContainerUtil.toArray(candidates, new PsiElement[candidates.size()]);
     }
     catch (IndexNotReadyException e) {

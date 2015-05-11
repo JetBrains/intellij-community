@@ -20,7 +20,7 @@
  */
 package com.theoryinpractice.testng.intention;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.java.JavaLanguage;
@@ -56,7 +56,7 @@ public class TestNGOrderEntryFix implements IntentionAction {
     if (!(file instanceof PsiJavaFile)) return false;
     if (!file.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
 
-    final PsiReference reference = TargetElementUtilBase.findReference(editor);
+    final PsiReference reference = TargetElementUtil.findReference(editor);
     if (!(reference instanceof PsiJavaCodeReferenceElement)) return false;
     if (reference.resolve() != null) return false;
     @NonNls final String referenceName = ((PsiJavaCodeReferenceElement)reference).getReferenceName();
@@ -72,7 +72,7 @@ public class TestNGOrderEntryFix implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)TargetElementUtilBase.findReference(editor);
+    final PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)TargetElementUtil.findReference(editor);
     LOG.assertTrue(reference != null);
     String jarPath = PathUtil.getJarPathForClass(Test.class);
     final VirtualFile virtualFile = file.getVirtualFile();

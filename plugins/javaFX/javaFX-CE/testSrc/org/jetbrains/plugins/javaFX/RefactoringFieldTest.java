@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.javaFX;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -39,15 +39,16 @@ public class RefactoringFieldTest extends AbstractJavaFXTestCase {
   }
 
   protected void performRename(String newName) {
-    PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase
-      .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil
+                                                                                      .ELEMENT_NAME_ACCEPTED |
+                                                                                    TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 
     new RenameProcessor(getProject(), element, newName, false, false).run();
   }
 
    private void performDelete() {
-    final PsiElement psiElement = TargetElementUtilBase
-      .findTargetElement(myFixture.getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    final PsiElement psiElement = TargetElementUtil
+      .findTargetElement(myFixture.getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull("No element found in text:\n" + myFixture.getFile().getText(), psiElement);
     SafeDeleteHandler.invoke(getProject(), new PsiElement[]{psiElement}, true);
   }

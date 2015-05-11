@@ -36,7 +36,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
-public class SMTestSender extends RunListener {
+public class JUnit4TestListener extends RunListener {
   private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
   private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
   private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
@@ -48,11 +48,11 @@ public class SMTestSender extends RunListener {
   private final PrintStream myPrintStream;
   private String myRootName;
 
-  public SMTestSender() {
+  public JUnit4TestListener() {
     myPrintStream = System.out;
   }
 
-  public SMTestSender(PrintStream printStream) {
+  public JUnit4TestListener(PrintStream printStream) {
     myPrintStream = printStream;
   }
 

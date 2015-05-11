@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.junit;
 
-import com.intellij.junit4.SMTestSender;
+import com.intellij.junit4.JUnit4TestListener;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.Assert;
 import org.junit.Test;
@@ -170,7 +170,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
   private static void doTest(Description root, List<Description> tests, String expectedTree, String expectedStart) throws Exception {
     final StringBuffer buf = new StringBuffer();
-    final SMTestSender sender = new SMTestSender(new PrintStream(new OutputStream() {
+    final JUnit4TestListener sender = new JUnit4TestListener(new PrintStream(new OutputStream() {
       @Override
       public void write(int b) throws IOException {
         buf.append(new String(new byte[]{(byte)b}));
@@ -300,7 +300,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   
   private static void doTest(Description description, String expected) {
     final StringBuffer buf = new StringBuffer();
-    new SMTestSender(new PrintStream(new OutputStream() {
+    new JUnit4TestListener(new PrintStream(new OutputStream() {
       @Override
       public void write(int b) throws IOException {
         buf.append(new String(new byte[]{(byte)b}));
@@ -313,7 +313,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void testProcessEmptyTestCase() throws Exception {
     final Description description = Description.createSuiteDescription("TestA");
-    final Description emptyDescription = Description.createTestDescription(SMTestSender.EMPTY_SUITE_NAME, SMTestSender.EMPTY_SUITE_WARNING);
+    final Description emptyDescription = Description.createTestDescription(JUnit4TestListener.EMPTY_SUITE_NAME, JUnit4TestListener.EMPTY_SUITE_WARNING);
     description.addChild(emptyDescription);
     doTest(description, Collections.singletonList(emptyDescription),
            "##teamcity[suiteTreeNode name='warning' locationHint='java:test://TestA.warning']\n",

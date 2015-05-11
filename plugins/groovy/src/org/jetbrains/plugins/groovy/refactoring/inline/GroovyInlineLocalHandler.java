@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
@@ -70,7 +70,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
   }
 
   public static void invoke(final Project project, Editor editor, final GrVariable local) {
-    final PsiReference invocationReference = editor != null ? TargetElementUtilBase.findReference(editor) : null;
+    final PsiReference invocationReference = editor != null ? TargetElementUtil.findReference(editor) : null;
 
     final InlineLocalVarSettings localVarSettings = createSettings(local, editor, invocationReference != null);
     if (localVarSettings == null) return;
@@ -103,7 +103,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     //search for initializer to inline
     if (invokedOnReference) {
       LOG.assertTrue(editor != null, "null editor but invokedOnReference==true");
-      final PsiReference ref = TargetElementUtilBase.findReference(editor);
+      final PsiReference ref = TargetElementUtil.findReference(editor);
       LOG.assertTrue(ref != null);
 
       PsiElement cur = ref.getElement();

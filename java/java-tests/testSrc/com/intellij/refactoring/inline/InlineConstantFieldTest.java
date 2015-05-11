@@ -1,7 +1,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.LightRefactoringTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -47,8 +47,8 @@ public class InlineConstantFieldTest extends LightRefactoringTestCase {
   }
 
   private void performAction() {
-    PsiElement element = TargetElementUtilBase
-      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtil
+      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
     PsiReferenceExpression refExpr = ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
     assertTrue(element instanceof PsiField);
