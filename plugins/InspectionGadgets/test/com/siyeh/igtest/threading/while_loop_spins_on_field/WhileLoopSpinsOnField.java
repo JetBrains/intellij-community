@@ -69,4 +69,18 @@ class WhileLoopSpinsOnField2
         }
     }
 }
+class WhileLoopSpinsOnFieldFalsePosDemo {
+    private boolean field = false;
 
+    public synchronized void setAndNotify() {
+        field = true;
+        this.notifyAll();
+    }
+
+    public synchronized void waitForStuff() throws InterruptedException {
+        // IDEA incorrectly reports "'while' loop spins on field" here:
+        while (!field) {    // <— this line
+            this.wait();    // this has the effect of synchronizing the field correctly
+        }
+    }
+}
