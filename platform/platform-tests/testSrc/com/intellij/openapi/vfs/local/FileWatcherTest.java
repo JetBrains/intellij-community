@@ -29,7 +29,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.TimeoutUtil;
@@ -45,7 +45,7 @@ import java.util.*;
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 
 @SuppressWarnings("Duplicates")
-public class FileWatcherTest extends PlatformLangTestCase {
+public class FileWatcherTest extends PlatformTestCase {
   private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
   private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
 
