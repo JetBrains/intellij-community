@@ -311,7 +311,12 @@ public class LambdaUtil {
         return ((PsiArrayType)psiType).getComponentType();
       }
     } else if (parent instanceof PsiTypeCastExpression) {
-      final PsiType castType = ((PsiTypeCastExpression)parent).getType();
+      //ensure no capture is performed to target type of cast expression, from 15.16 Cast Expressions:
+      //Casts can be used to explicitly "tag" a lambda expression or a method reference expression with a particular target type. 
+      //To provide an appropriate degree of flexibility, the target type may be a list of types denoting an intersection type, 
+      // provided the intersection induces a functional interface (§9.8).
+      final PsiTypeElement castTypeElement = ((PsiTypeCastExpression)parent).getCastType();
+      final PsiType castType = castTypeElement != null ? castTypeElement.getType() : null;
       if (castType instanceof PsiIntersectionType) {
         final PsiType conjunct = extractFunctionalConjunct((PsiIntersectionType)castType);
         if (conjunct != null) return conjunct;
