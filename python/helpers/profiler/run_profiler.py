@@ -116,7 +116,6 @@ class Profiler(object):
             response = ProfilerResponse(id=id)
             statsToResponse(self.get_snapshot(), response)
 
-
         self.writer.addCommand(response)
         self.start_profiling()
 
@@ -139,5 +138,8 @@ if __name__ == '__main__':
         sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
         traceback.print_exc()
         sys.exit(1)
+
+    # add file path to sys.path
+    sys.path.insert(0, os.path.split(file)[0])
 
     profiler.run(file)
