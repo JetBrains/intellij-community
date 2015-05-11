@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrRenameableLightEle
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyTargetElementEvaluator extends TargetElementUtil {
+public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
 
   public static final Key<Object> NAVIGATION_ELEMENT_IS_NOT_TARGET = Key.create("GroovyTargetElementEvaluator.DONT_FOLLOW_NAVIGATION_ELEMENT");
 

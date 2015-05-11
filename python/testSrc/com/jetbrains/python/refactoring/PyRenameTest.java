@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -39,8 +39,8 @@ public class PyRenameTest extends PyTestCase {
 
   public void testSearchInStrings() {  // PY-670
     myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
-    final PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
-                                                                                        TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+                                                                                          TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertNotNull(element);
     myFixture.renameElement(element, "bar", true, false);
     myFixture.checkResultByFile(RENAME_DATA_PATH + getTestName(true) + "_after.py");

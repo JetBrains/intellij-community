@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -249,7 +249,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       final List<ParameterInfoImpl> parameterInfos = newParametersInfo != null
                                                      ? new ArrayList<ParameterInfoImpl>(Arrays.asList(newParametersInfo))
                                                      : new ArrayList<ParameterInfoImpl>();
-      final PsiReferenceExpression refExpr = TargetElementUtil.findReferenceExpression(editor);
+      final PsiReferenceExpression refExpr = JavaTargetElementEvaluator.findReferenceExpression(editor);
       JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr);
       dialog.setParameterInfos(parameterInfos);
       dialog.show();

@@ -17,7 +17,7 @@ package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -83,7 +83,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
 
       if (elements.length != 1) {
-        if (elements.length == 0 && suggestCandidates(TargetElementUtilBase.findReference(editor, offset)).isEmpty()) {
+        if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
           if (element != null) {
             ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
@@ -98,7 +98,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
       PsiElement element = elements[0];
       PsiElement navElement = element.getNavigationElement();
-      navElement = TargetElementUtilBase.getInstance().getGotoDeclarationTarget(element, navElement);
+      navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
       if (navElement != null) {
         gotoTargetElement(navElement);
       }
@@ -112,7 +112,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
-    PsiElement elementAt = TargetElementUtilBase.getInstance().findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED, offset);
+    PsiElement elementAt = TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
     if (elementAt instanceof PsiNameIdentifierOwner) {
       return (PsiNameIdentifierOwner)elementAt;
     }
@@ -147,11 +147,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
                                               @NotNull PsiElementProcessor<PsiElement> processor,
                                               @NotNull String titlePattern,
                                               @Nullable PsiElement[] elements) {
-    if (TargetElementUtilBase.inVirtualSpace(editor, offset)) {
+    if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return false;
     }
 
-    final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
+    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
 
     if (elements == null || elements.length == 0) {
       final Collection<PsiElement> candidates = suggestCandidates(reference);
@@ -189,7 +189,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (reference == null) {
       return Collections.emptyList();
     }
-    return TargetElementUtilBase.getInstance().getTargetCandidates(reference);
+    return TargetElementUtil.getInstance().getTargetCandidates(reference);
   }
 
   @Override
@@ -205,7 +205,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @NotNull
   public static PsiElement[] findAllTargetElements(Project project, Editor editor, int offset) {
-    if (TargetElementUtilBase.inVirtualSpace(editor, offset)) {
+    if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return PsiElement.EMPTY_ARRAY;
     }
 
@@ -224,7 +224,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (mirror instanceof PsiFile) file = (PsiFile)mirror;
     }
 
-    PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, document, offset));
+    PsiElement elementAt = file.findElementAt(TargetElementUtil.adjustOffset(file, document, offset));
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
       try {
         PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
@@ -243,11 +243,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
     }
 
-    int flags = TargetElementUtilBase.getInstance().getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
+    int flags = TargetElementUtil.getInstance().getAllAccepted() & ~TargetElementUtil.ELEMENT_NAME_ACCEPTED;
     if (!lookupAccepted) {
-      flags &= ~TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED;
+      flags &= ~TargetElementUtil.LOOKUP_ITEM_ACCEPTED;
     }
-    PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
+    PsiElement element = TargetElementUtil.getInstance().findTargetElement(editor, flags, offset);
     if (element != null) {
       return new PsiElement[]{element};
     }

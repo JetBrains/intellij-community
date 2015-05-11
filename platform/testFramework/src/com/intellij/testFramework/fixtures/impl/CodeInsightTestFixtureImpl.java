@@ -17,7 +17,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -679,12 +679,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public PsiElement getElementAtCaret() {
     assertInitialized();
     Editor editor = getCompletionEditor();
-    int findTargetFlags = TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
-    PsiElement element = TargetElementUtilBase.findTargetElement(editor, findTargetFlags);
+    int findTargetFlags = TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.ELEMENT_NAME_ACCEPTED;
+    PsiElement element = TargetElementUtil.findTargetElement(editor, findTargetFlags);
     
     // if no references found in injected fragment, try outer document
     if (element == null && editor instanceof EditorWindow) {
-      element = TargetElementUtilBase.findTargetElement(((EditorWindow)editor).getDelegate(), findTargetFlags);
+      element = TargetElementUtil.findTargetElement(((EditorWindow)editor).getDelegate(), findTargetFlags);
     }
 
     if (element == null) {
@@ -852,8 +852,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public Collection<UsageInfo> testFindUsages(@NotNull @NonNls final String... fileNames) {
     assertInitialized();
     configureByFiles(fileNames);
-    final PsiElement targetElement = TargetElementUtilBase
-      .findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil
+      .findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     Assert.assertNotNull("Cannot find referenced element", targetElement);
     return findUsages(targetElement);
   }
