@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.actions.VcsContextWrapper;
@@ -64,8 +65,8 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   @NotNull
-    public FilePath createFilePathOnNonLocal(final String path, final boolean isDirectory) {
-    return FilePathImpl.createNonLocal(path, isDirectory);
+  public FilePath createFilePathOnNonLocal(final String path, final boolean isDirectory) {
+    return new RemoteFilePath(path, isDirectory);
   }
 
   public FilePath createFilePathOnDeleted(final File file, final boolean isDirectory) {

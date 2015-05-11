@@ -27,8 +27,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.AbstractRefreshablePanel;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
@@ -476,7 +476,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
       myVcs = vcs;
       myPeg = peg;
       try {
-        myPath = FilePathImpl.createNonLocal(
+        myPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(
           version.getRepositoryRoot().appendPath(FileUtil.toSystemIndependentName(version.getPath()), true).toString(), version.isDirectory());
       }
       catch (SVNException e) {

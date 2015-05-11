@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
 import java.nio.charset.Charset;
 
 public class FilePathImpl implements FilePath {
@@ -42,14 +41,13 @@ public class FilePathImpl implements FilePath {
   private final String myName;
   @NotNull private final File myFile;
   private boolean myIsDirectory;
-  private final boolean myLocal;
 
   private FilePathImpl(VirtualFile virtualParent,
                        @NotNull String name,
                        final boolean isDirectory,
                        VirtualFile child,
                        final boolean forDeleted) {
-    this(fileFromVirtual(virtualParent, child, name), isDirectory, true);
+    this(fileFromVirtual(virtualParent, child, name), isDirectory);
     myVirtualParent = virtualParent;
 
     if (!forDeleted) {
@@ -81,14 +79,9 @@ public class FilePathImpl implements FilePath {
   }
 
   public FilePathImpl(@NotNull File file, final boolean isDirectory) {
-    this(file, isDirectory, true);
-  }
-
-  private FilePathImpl(@NotNull File file, final boolean isDirectory, boolean local) {
     myFile = file;
     myName = file.getName();
     myIsDirectory = isDirectory;
-    myLocal = local;
   }
 
   public FilePathImpl(@NotNull VirtualFile virtualFile) {
@@ -127,19 +120,17 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public void refresh() {
-    if (myLocal) {
-      if (myVirtualParent == null) {
-        myVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(myFile);
-      }
-      else {
-        myVirtualFile = myVirtualParent.findChild(myName);
-      }
+    if (myVirtualParent == null) {
+      myVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(myFile);
+    }
+    else {
+      myVirtualFile = myVirtualParent.findChild(myName);
     }
   }
 
   @Override
   public void hardRefresh() {
-    if (myLocal && (myVirtualFile == null || ! myVirtualFile.isValid())) {
+    if (myVirtualFile == null || ! myVirtualFile.isValid()) {
       myVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
     }
   }
@@ -334,38 +325,6 @@ public class FilePathImpl implements FilePath {
     }
   }
 
-  private static Constructor<File> ourFileStringConstructor;
-  private static boolean ourFileStringConstructorInitialized;
-
-  @NotNull
-  public static FilePath createNonLocal(String path, final boolean directory) {
-    path = path.replace('/', File.separatorChar);
-    // avoid filename normalization (IDEADEV-10548)
-    if (!ourFileStringConstructorInitialized) {
-      ourFileStringConstructorInitialized = true;
-      try {
-        ourFileStringConstructor = File.class.getDeclaredConstructor(String.class, int.class);
-        ourFileStringConstructor.setAccessible(true);
-      }
-      catch (Exception ex) {
-        ourFileStringConstructor = null;
-      }
-    }
-    File file = null;
-    try {
-      if (ourFileStringConstructor != null) {
-        file = ourFileStringConstructor.newInstance(path, 1);
-      }
-    }
-    catch (Exception ex) {
-      // reflection call failed, try regular call
-    }
-    if (file == null) {
-      file = new File(path);
-    }
-    return new FilePathImpl(file, directory, false);
-  }
-
   @Override
   @NonNls
   public String toString() {
@@ -374,6 +333,6 @@ public class FilePathImpl implements FilePath {
 
   @Override
   public boolean isNonLocal() {
-    return !myLocal;
+    return false;
   }
 }
