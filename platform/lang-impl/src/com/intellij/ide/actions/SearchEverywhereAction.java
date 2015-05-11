@@ -486,7 +486,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void doNavigate(final int index) {
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getField().getTextEditor()));
+    final DataManager dataManager = DataManager.getInstance();
+    if (dataManager == null) return;
+    final Project project = CommonDataKeys.PROJECT.getData(dataManager.getDataContext(getField().getTextEditor()));
     final Executor executor = ourShiftIsPressed.get()
                               ? DefaultRunExecutor.getRunExecutorInstance()
                               : ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
@@ -575,7 +577,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
 
             if (isRunConfiguration(value)) {
-              ((ChooseRunConfigurationPopup.ItemWrapper)value).perform(project, executor, DataManager.getInstance().getDataContext(c));
+              ((ChooseRunConfigurationPopup.ItemWrapper)value).perform(project, executor, dataManager.getDataContext(c));
             } else {
               GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
               if (isToolWindowAction(value)) return;
@@ -1074,7 +1076,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       PsiElement file;
       myLocationString = null;
       String pattern = "*" + myPopupField.getText();
-      Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
+      Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true);
       if (isMoreItem(index)) {
         cmp = More.get(isSelected);
       } else if (value instanceof VirtualFile
@@ -1281,7 +1283,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   enum WidgetID {CLASSES, FILES, ACTIONS, SETTINGS, SYMBOLS, RUN_CONFIGURATIONS}
 
-  @SuppressWarnings("SSBasedInspection")
+  @SuppressWarnings({"SSBasedInspection", "unchecked"})
   private class CalcThread implements Runnable {
     private final Project project;
     private final String pattern;
