@@ -39,7 +39,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
@@ -1048,12 +1047,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     };
     SearchEverywherePsiRenderer myFileRenderer = new SearchEverywherePsiRenderer(myList);
+    @SuppressWarnings("unchecked")
     ListCellRenderer myActionsRenderer = new GotoActionModel.GotoActionListCellRenderer(Function.TO_STRING);
 
     private String myLocationString;
-    private DefaultPsiElementCellRenderer myPsiRenderer = new DefaultPsiElementCellRenderer() {
-      {setFocusBorderEnabled(false);}
-    };
     private Icon myLocationIcon;
     private Project myProject;
     private JPanel myMainPanel = new JPanel(new BorderLayout());
