@@ -1,8 +1,6 @@
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -185,9 +183,8 @@ public class BranchesPanel extends JPanel {
           myUI.jumpToCommit(ref.getCommitHash(), ref.getRoot());
         }
         else {
-          final ReferencePopupComponent view = new ReferencePopupComponent(myGroup, myUI, myReferencePainter);
-          JBPopup popup = view.getPopup();
-          popup.show(new RelativePoint(ReferenceGroupComponent.this, new Point(e.getX(), ReferenceGroupComponent.this.getHeight())));
+          ReferencePopupBuilder popupBuilder = new ReferencePopupBuilder(myGroup, myUI);
+          popupBuilder.getPopup().showUnderneathOf(ReferenceGroupComponent.this);
         }
       }
     }

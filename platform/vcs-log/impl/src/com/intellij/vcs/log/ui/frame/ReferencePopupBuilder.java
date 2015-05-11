@@ -18,8 +18,10 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsRef;
@@ -35,18 +37,17 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-class ReferencePopupComponent extends JPanel {
+class ReferencePopupBuilder {
   @NotNull private final JBPopup myPopup;
   @NotNull private final JBList myList;
   @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final SingleReferenceComponent myRendererComponent;
   @NotNull private final ListCellRenderer myCellRenderer;
 
-  ReferencePopupComponent(@NotNull RefGroup group, @NotNull VcsLogUiImpl ui, @NotNull VcsRefPainter referencePainter) {
-    super(new BorderLayout());
+  ReferencePopupBuilder(@NotNull RefGroup group, @NotNull VcsLogUiImpl ui) {
     myUi = ui;
 
-    myRendererComponent = new SingleReferenceComponent(referencePainter);
+    myRendererComponent = new SingleReferenceComponent(new VcsRefPainter(ui.getColorManager(), false));
     myCellRenderer = new ListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -58,7 +59,6 @@ class ReferencePopupComponent extends JPanel {
 
     myList = createList(group);
     myPopup = createPopup();
-    add(new JBScrollPane(myList));
   }
 
   private JBList createList(RefGroup group) {
@@ -95,8 +95,13 @@ class ReferencePopupComponent extends JPanel {
   }
 
   private JBPopup createPopup() {
-    return JBPopupFactory.getInstance().
-      createComponentPopupBuilder(this, myList).
+    return JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(ListWithFilter.wrap(myList, ScrollPaneFactory.createScrollPane(myList), new Function<VcsRef, String>() {
+                                     @Override
+                                     public String fun(VcsRef vcsRef) {
+                                       return vcsRef.getName();
+                                     }
+                                   }), myList).
       setCancelOnClickOutside(true).
       setCancelOnWindowDeactivation(true).
       setFocusable(true).
