@@ -22,7 +22,7 @@ import com.intellij.testFramework.PlatformTestCase;
 
 public class HttpVirtualFileTest extends PlatformTestCase {
   public void testPsiFileForRoot() throws Exception {
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl("http://todo.breezejs.com/");
+    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl("http://www.jetbrains.com/");
     assertNotNull(file);
     assertNotNull(PsiManager.getInstance(myProject).findFile(file));
   }
