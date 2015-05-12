@@ -9,7 +9,10 @@ import com.intellij.coverage.listeners.CoverageListener;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.coverage.CoverageConfigurable;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
@@ -25,7 +28,11 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
@@ -139,12 +146,26 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       if (patterns != null) {
         assert filters != null;
         if (element instanceof PsiClass) {
-          final int idx = ArrayUtil.find(filters, ((PsiClass)element).getQualifiedName());
+          final String qualifiedName = ((PsiClass)element).getQualifiedName();
+          final int idx = ArrayUtil.find(filters, qualifiedName);
           if (idx > -1) {
             final RefactoringListeners.Accessor<PsiClass> accessor = new MyClassAccessor(project, patterns, idx, filters);
             final RefactoringElementListener classListener = RefactoringListeners.getClassOrPackageListener(element, accessor);
             if (classListener != null) {
               listener = appendListener(listener, classListener);
+            }
+          }
+          else if (qualifiedName != null){
+            final String packageName = StringUtil.getPackageName(qualifiedName);
+            if (!StringUtil.isEmpty(packageName)) {
+              for (int i = 0; i < filters.length; i++) {
+                String filter = filters[i];
+                if (filter.equals(packageName + ".*")) {
+                  listener = appendListener(listener,
+                                            new RefactoringListeners.RefactorPackageByClass(new MyClassAccessor(project, patterns, i, filters)));
+                  break;
+                }
+              }
             }
           }
         } else if (element instanceof PsiPackage) {
