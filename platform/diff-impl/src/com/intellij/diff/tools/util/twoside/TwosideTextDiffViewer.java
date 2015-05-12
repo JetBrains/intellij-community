@@ -352,11 +352,6 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   // Misc
   //
 
-  @Override
-  protected boolean tryRediffSynchronously() {
-    return myPanel.isWindowFocused();
-  }
-
   @Nullable
   @Override
   protected OpenFileDescriptor getOpenFileDescriptor() {

@@ -82,10 +82,6 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
     return null;
   }
 
-  public boolean isWindowFocused() {
-    return myContext.isWindowFocused();
-  }
-
   public boolean isFocused() {
     return myContext.isFocused();
   }
