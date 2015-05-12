@@ -340,7 +340,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
           }
         }
         catch (Throwable e) {
-          LOG.error("Unable to store project name");
+          LOG.error("Unable to store project name", e);
         }
       }
 
