@@ -120,47 +120,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
       }
 
     });
-    //VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-    //  private FileTypeManager myFileTypeManager = FileTypeManager.getInstance();
-    //
-    //  public void fileDeleted(@NotNull VirtualFileEvent event) {
-    //    updateJdks(event.getFile());
-    //  }
-    //
-    //  @Override
-    //  public void contentsChanged(@NotNull VirtualFileEvent event) {
-    //    updateJdks(event.getFile());
-    //  }
-    //
-    //  @Override
-    //  public void fileCreated(@NotNull VirtualFileEvent event) {
-    //    updateJdks(event.getFile());
-    //  }
-    //
-    //  private void updateJdks(VirtualFile file) {
-    //    if (file.isDirectory() ||
-    //        // avoid calling getFileType() because it will try to detect file type from content for unknown/text file types
-    //        !FileTypes.ARCHIVE.equals(myFileTypeManager.getFileTypeByFileName(file.getName()))) {
-    //      // consider only archive files that may contain libraries
-    //      return;
-    //    }
-    //    for (Sdk sdk : mySdks) {
-    //      final SdkType sdkType = (SdkType)sdk.getSdkType();
-    //      if (!(sdkType instanceof JavaSdkType)) {
-    //        continue;
-    //      }
-    //      final VirtualFile home = sdk.getHomeDirectory();
-    //      if (home == null) {
-    //        continue;
-    //      }
-    //      if (VfsUtilCore.isAncestor(home, file, true)) {
-    //        sdkType.setupSdkPaths(sdk);
-    //        // no need to iterate further assuming the file cannot be under the home of several SDKs
-    //        break;
-    //      }
-    //    }
-    //  }
-    //});
   }
 
   @Override
