@@ -1009,6 +1009,49 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group.addSeparator();
 
+    group.add(new DumbAwareAction("Reset to Default") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        // Get current actionId
+        String actionId = myActionsTree.getSelectedActionId();
+        // Get current keymap
+        Keymap activeKeyMap = mySelectedKeymap;
+        // remove all shortcuts in it
+        activeKeyMap.removeAllActionShortcuts(actionId);
+        // get parent of the active keymap
+        Keymap parentKeyMap = activeKeyMap.getParent();
+
+        // if parent is not found
+        if (parentKeyMap == null) {
+          // .. we suppose that original current keymap from KeyMapManager is a parent (since current was not saved yet)
+          KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
+          parentKeyMap = keymapManager.getActiveKeymap();
+        }
+
+        // add shortcuts and abbreviations from parent keymap
+        Shortcut[] parentShortcuts = parentKeyMap.getShortcuts(actionId);
+        for (Shortcut shortcut : parentShortcuts) {
+          activeKeyMap.addShortcut(actionId, shortcut);
+        }
+
+        if (Registry.is("actionSystem.enableAbbreviations")) {
+          for (final String abbreviation : abbreviations) {
+            activeKeyMap.removeAbbreviation(actionId, abbreviation);
+          }
+
+          String[] parentAbbreviations = parentKeyMap.getAbbreviations();
+          for (String abbreviaton : parentAbbreviations) {
+            activeKeyMap.addAbbreviation(actionId, abbreviaton);
+          }
+        }
+
+        repaintLists();
+        processCurrentKeymapChanged(getCurrentQuickListIds());
+      }
+    });
+
+    group.addSeparator();
+
     for (final Shortcut shortcut : shortcuts) {
       group.add(new DumbAwareAction("Remove " + KeymapUtil.getShortcutText(shortcut)) {
         @Override
