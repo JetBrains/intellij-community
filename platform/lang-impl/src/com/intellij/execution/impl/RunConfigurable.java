@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -51,10 +50,7 @@ import com.intellij.util.config.StorageAccessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.EditableModel;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import net.miginfocom.swing.MigLayout;
@@ -575,12 +571,11 @@ class RunConfigurable extends BaseConfigurable {
     JPanel bottomPanel = new JPanel(new GridBagLayout());
     GridBag g = new GridBag();
 
-    bottomPanel.add(myConfirmation, g.nextLine().coverLine());
-    bottomPanel.add(new JLabel(ExecutionBundle.message("temporary.configurations.limit")), g.nextLine().next());
-    bottomPanel.add(myRecentsLimit, g.next().anchor(GridBagConstraints.WEST));
-    LabeledComponent labeledComponent = create(mySlider, ExecutionBundle.message("use.cycle.buffer.size"));
-    labeledComponent.setLabelLocation(BorderLayout.WEST);
-    bottomPanel.add(labeledComponent, g.nextLine().coverLine());
+    bottomPanel.add(myConfirmation, g.nextLine().anchor(GridBagConstraints.WEST));
+    bottomPanel.add(create(myRecentsLimit, ExecutionBundle.message("temporary.configurations.limit"), BorderLayout.WEST),
+                    g.nextLine().insets(JBUI.insets(10, 0, 0, 0)).anchor(GridBagConstraints.WEST));
+    bottomPanel.add(create(mySlider, ExecutionBundle.message("use.cycle.buffer.size"), BorderLayout.WEST),
+                    g.nextLine().insets(JBUI.insets(5, 0, 0, 0)).anchor(GridBagConstraints.WEST));
 
     myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
