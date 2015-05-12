@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -36,6 +37,8 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -55,6 +58,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +75,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
+import static com.intellij.openapi.ui.LabeledComponent.create;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 class RunConfigurable extends BaseConfigurable {
@@ -102,6 +107,7 @@ class RunConfigurable extends BaseConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurable");
   private final JTextField myRecentsLimit = new JTextField("5", 2);
   private final JCheckBox myConfirmation = new JCheckBox(ExecutionBundle.message("rerun.confirmation.checkbox"), true);
+  private final MyConsoleBufferSlider mySlider = new MyConsoleBufferSlider();
   private final List<Pair<UnnamedConfigurable, JComponent>> myAdditionalSettings = new ArrayList<Pair<UnnamedConfigurable, JComponent>>();
   private Map<ConfigurationFactory, Configurable> myStoredComponents = new HashMap<ConfigurationFactory, Configurable>();
   private ToolbarDecorator myToolbarDecorator;
@@ -570,8 +576,11 @@ class RunConfigurable extends BaseConfigurable {
     GridBag g = new GridBag();
 
     bottomPanel.add(myConfirmation, g.nextLine().coverLine());
-    bottomPanel.add(new JLabel("Temporary configurations limit:"), g.nextLine().next());
+    bottomPanel.add(new JLabel(ExecutionBundle.message("temporary.configurations.limit")), g.nextLine().next());
     bottomPanel.add(myRecentsLimit, g.next().anchor(GridBagConstraints.WEST));
+    LabeledComponent labeledComponent = create(mySlider, ExecutionBundle.message("use.cycle.buffer.size"));
+    labeledComponent.setLabelLocation(BorderLayout.WEST);
+    bottomPanel.add(labeledComponent, g.nextLine().coverLine());
 
     myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -628,6 +637,7 @@ class RunConfigurable extends BaseConfigurable {
     for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
       each.first.reset();
     }
+    mySlider.reset();
 
     setModified(false);
   }
@@ -683,6 +693,8 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     manager.saveOrder();
+    mySlider.apply();
+
     setModified(false);
     myTree.repaint();
   }
@@ -865,6 +877,7 @@ class RunConfigurable extends BaseConfigurable {
     for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
       if (each.first.isModified()) return true;
     }
+    if (mySlider.isModified()) return true;
 
     return false;
   }
@@ -2064,6 +2077,125 @@ class RunConfigurable extends BaseConfigurable {
         return getType((DefaultMutableTreeNode)treeNode.getParent());
       }
       return null;
+    }
+  }
+
+  static final class MyConsoleBufferSlider extends JSlider implements Configurable {
+    private static final Hashtable<Integer, JLabel> DICTIONARY = new Hashtable<Integer, JLabel>();
+    static final int DEFAULT = 0, HALF_MB = 1, ONE_MB = 2, FIVE_MB = 3, TEN_MB = 4, TWENTY_MB = 5, FIFTY_MB = 6, DISABLED = 7;
+    @Nls static final String DEFAULT_LABEL = "Default";
+    @Nls static final String HALF_LABEL = "0.5";
+    @Nls static final String ONE_LABEL = "1";
+    @Nls static final String FIVE_LABEL = "5";
+    @Nls static final String TEN_LABEL = "10";
+    @Nls static final String TWENTY_LABEL = "20";
+    @Nls static final String FIFTY_LABEL = "50";
+    @Nls static final String DISABLED_LABEL = "Disabled";
+
+    static {
+      DICTIONARY.put(DEFAULT, new JLabel(DEFAULT_LABEL));
+      DICTIONARY.put(HALF_MB, new JLabel(HALF_LABEL));
+      DICTIONARY.put(ONE_MB, new JLabel(ONE_LABEL));
+      DICTIONARY.put(FIVE_MB, new JLabel(FIVE_LABEL));
+      DICTIONARY.put(TEN_MB, new JLabel(TEN_LABEL));
+      DICTIONARY.put(TWENTY_MB, new JLabel(TWENTY_LABEL));
+      DICTIONARY.put(FIFTY_MB, new JLabel(FIFTY_LABEL));
+      DICTIONARY.put(DISABLED, new JLabel(DISABLED_LABEL));
+    }
+
+    private int myInitialValue;
+
+    public MyConsoleBufferSlider() {
+      super(HORIZONTAL, DEFAULT, DISABLED, DEFAULT);
+      setMinorTickSpacing(1);
+      setPaintTicks(true);
+      setPaintTrack(true);
+      setSnapToTicks(true);
+      UIUtil.setSliderIsFilled(this, true);
+      setLabelTable(DICTIONARY);
+      setPaintLabels(true);
+      addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          switch (getValue()) {
+            case DEFAULT:
+              RegistryValue value = Registry.get("console.ui.cycle.buffer.size");
+          }
+        }
+      });
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      size.width *= 2;
+      return size;
+    }
+
+    @Nls
+    @Override
+    public String getDisplayName() {
+      return "BufferSizeSlider";
+    }
+
+    @Nullable
+    @Override
+    public String getHelpTopic() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public JComponent createComponent() {
+      return this;
+    }
+
+    @Override
+    public boolean isModified() {
+      return myInitialValue != getValue();
+    }
+
+    @Override
+    public void apply() throws ConfigurationException {
+      JLabel label = DICTIONARY.get(getValue());
+      Registry.get("console.ui.cycle.buffer.size").setValue(label != null? label.getText() : DEFAULT_LABEL);
+    }
+
+    @Override
+    public void reset() {
+      final String s = Registry.get("console.ui.cycle.buffer.size").asString();
+      int value = DEFAULT;
+      if (HALF_LABEL.equals(s))  value = HALF_MB;
+      if (ONE_LABEL.equals(s))  value = ONE_MB;
+      if (FIVE_LABEL.equals(s))  value = FIVE_MB;
+      if (TEN_LABEL.equals(s))  value = TEN_MB;
+      if (TWENTY_LABEL.equals(s))  value = TWENTY_MB;
+      if (FIFTY_LABEL.equals(s))  value = FIFTY_MB;
+      myInitialValue = value;
+      setValue(value);
+    }
+
+    @Override
+    public void disposeUIResources() {
+
+    }
+
+    static boolean isBufferCycleEnabled() {
+      return !DISABLED_LABEL.equals(Registry.get("console.ui.cycle.buffer.size").asString());
+    }
+    static boolean isBufferCycleDefault() {
+      return DEFAULT_LABEL.equals(Registry.get("console.ui.cycle.buffer.size").asString());
+    }
+
+    static int getBufferSize() {
+      String s = Registry.get("console.ui.cycle.buffer.size").asString();
+      if (HALF_LABEL.equals(s)) return 512*1024;
+      try {
+        return Registry.get("console.ui.cycle.buffer.size").asInteger()*1024*1024;
+      }
+      catch (NumberFormatException e) {
+        return 1024*1024;
+      }
     }
   }
 }
