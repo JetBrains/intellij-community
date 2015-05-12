@@ -195,6 +195,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCaptureInReturnStatementOfLambdaExpression() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
