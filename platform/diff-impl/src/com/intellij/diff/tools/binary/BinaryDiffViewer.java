@@ -91,6 +91,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     myEditorProvider1 = editors.first.second;
     myEditor2 = editors.second.first;
     myEditorProvider2 = editors.second.second;
+    assert myEditor1 != null || myEditor2 != null;
 
     if (myEditor1 != null && myEditor2 != null) {
       myEditorFocusListener1 = new MyEditorFocusListener(Side.LEFT);
@@ -105,7 +106,6 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     myContentPanel = new BinaryContentPanel(titlePanel, myEditor1, myEditor2);
 
     myPanel = new BinaryDiffPanel(this, myContentPanel, this, context);
-    if (myEditor1 == null && myEditor2 == null) myPanel.setErrorContent();
 
     myStatusPanel = new MyStatusPanel();
 
