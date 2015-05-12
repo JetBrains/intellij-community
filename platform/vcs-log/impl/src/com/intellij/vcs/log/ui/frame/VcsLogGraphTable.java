@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -70,6 +71,7 @@ import java.util.List;
 import static com.intellij.vcs.log.printer.idea.PrintParameters.HEIGHT_CELL;
 
 public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
+  private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
   public static final int ROOT_INDICATOR_COLORED_WIDTH = 8;
   public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
@@ -332,9 +334,16 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   }
 
   private VcsLogHighlighter.VcsCommitStyle getStyle(int row, int column, String text, boolean hasFocus, final boolean selected) {
-    final RowInfo<Integer> rowInfo = myDataPack.getVisibleGraph().getRowInfo(row);
-
     Component dummyRendererComponent = myDummyRenderer.getTableCellRendererComponent(this, text, selected, hasFocus, row, column);
+
+    VisibleGraph<Integer> visibleGraph = myDataPack.getVisibleGraph();
+    if (row < 0 || row >= visibleGraph.getVisibleCommitCount()) {
+      LOG.error("Visible graph has " + visibleGraph.getVisibleCommitCount() + " commits, yet we want row " + row);
+      return VcsCommitStyleFactory.createStyle(dummyRendererComponent.getForeground(), dummyRendererComponent.getBackground());
+    }
+
+    final RowInfo<Integer> rowInfo = visibleGraph.getRowInfo(row);
+
     VcsLogHighlighter.VcsCommitStyle defaultStyle = VcsCommitStyleFactory
       .createStyle(rowInfo.getRowType() == RowType.UNMATCHED ? JBColor.GRAY : dummyRendererComponent.getForeground(),
                    dummyRendererComponent.getBackground());
