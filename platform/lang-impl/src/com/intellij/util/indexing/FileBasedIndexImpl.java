@@ -1738,13 +1738,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (currentFC != null && currentFC.getUserData(ourPhysicalContentKey) == null) {
       currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
     }
-    // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
-    final Computable<Boolean> update = index.update(inputId, currentFC);
 
-    scheduleUpdate(indexId,
-                   createUpdateComputableWithBufferingDisabled(update),
-                   createIndexedStampUpdateRunnable(indexId, file, currentFC != null)
-    );
+    try {
+      // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
+      final Computable<Boolean> update = index.update(inputId, currentFC);
+      scheduleUpdate(indexId,
+                     createUpdateComputableWithBufferingDisabled(update),
+                     createIndexedStampUpdateRunnable(indexId, file, currentFC != null)
+      );
+    } catch (Throwable throwable) {
+      LOG.error("Exception in update single index:" + throwable);
+      requestRebuild(indexId, throwable);
+    }
   }
 
   static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");
