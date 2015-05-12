@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -109,6 +110,7 @@ class LineLayout {
   }
   
   private static List<BidiRun> createRuns(char[] text) {
+    if (Registry.is("editor.disable.rtl")) return Collections.singletonList(new BidiRun((byte)0, 0, text.length));
     Bidi bidi = new Bidi(text, 0, null, 0, text.length, Bidi.DIRECTION_LEFT_TO_RIGHT);
     int runCount = bidi.getRunCount();
     List<BidiRun> runs = new ArrayList<BidiRun>(runCount);
