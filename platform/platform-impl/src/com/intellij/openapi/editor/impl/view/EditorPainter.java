@@ -37,6 +37,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TFloatArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -283,7 +284,8 @@ class EditorPainter {
     }
   }
 
-  float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, Color effectColor, EffectType effectType) {
+  float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
+                                  @Nullable Color effectColor, @Nullable EffectType effectType) {
     float initialX = x;
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
       fragment.draw(g, x, y);
