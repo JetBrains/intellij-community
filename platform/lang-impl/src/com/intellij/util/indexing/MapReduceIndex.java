@@ -599,17 +599,17 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileForPsiDependentIndex())
       // so we should use different bytes to calculate hash(Id)
       Integer previouslyCalculatedUncommittedHashId = content.getUserData(ourSavedUncommittedHashIdKey);
-      
+
       if (previouslyCalculatedUncommittedHashId == null) {
         Document document = FileDocumentManager.getInstance().getCachedDocument(content.getFile());
-        
+
         if (document != null) {  // if document is not committed
           PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(content.getProject());
-          
+
           if (psiDocumentManager.isUncommited(document)) {
             PsiFile file = psiDocumentManager.getCachedPsiFile(document);
             Charset charset = ((FileContentImpl)content).getCharset();
-            
+
             if (file != null) {
               previouslyCalculatedUncommittedHashId = ContentHashesSupport
                 .calcContentHashIdWithFileType(file.getText().getBytes(charset), charset,
@@ -621,7 +621,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
       if (previouslyCalculatedUncommittedHashId != null) return previouslyCalculatedUncommittedHashId;
     }
-      
+
     Integer previouslyCalculatedContentHashId = content.getUserData(ourSavedContentHashIdKey);
     if (previouslyCalculatedContentHashId == null) {
       byte[] hash = content instanceof FileContentImpl ? ((FileContentImpl)content).getHash():null;
@@ -744,20 +744,14 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       try {
         ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
         updateData.iterateRemovedOrUpdatedKeys(inputId, myRemoveStaleKeyOperation);
-      }
-      catch (Exception e) {
-        throw new StorageException(e);
-      } finally {
-        ValueContainerImpl.ourDebugIndexInfo.set(null);
-      }
-
-      updateData.iterateAddedKeys(inputId, myAddedKeyProcessor);
-
-      try {
+        updateData.iterateAddedKeys(inputId, myAddedKeyProcessor);
         updateData.save(inputId);
       }
-      catch (IOException e) {
+      catch (Throwable e) { // e.g. IOException, AssertionError
         throw new StorageException(e);
+      }
+      finally {
+        ValueContainerImpl.ourDebugIndexInfo.set(null);
       }
     }
     finally {
