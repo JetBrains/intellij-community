@@ -54,6 +54,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -226,6 +229,10 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     else {
       final PsiMethod ctr = expression.resolveMethod();
       callHelper.visitArguments(expression);
+      final GrAnonymousClassDefinition definition = expression.getAnonymousClassDefinition();
+      if (definition != null) {
+        definition.accept(this);
+      }
       exceptionHelper.addConditionalRuntimeThrow();
       addInstruction(new GrMethodCallInstruction(expression, null));
       if (!exceptionHelper.catchStack.isEmpty()) {
@@ -234,6 +241,23 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
 
     finishElement(expression);
+  }
+
+  @Override
+  public void visitAnonymousClassDefinition(GrAnonymousClassDefinition definition) {
+    startElement(definition);
+
+    final GrTypeDefinitionBody body = definition.getBody();
+    for (GrMethod method : body == null ? GrMethod.EMPTY_ARRAY : body.getMethods()) {
+      final GrOpenBlock methodBlock = method.getBlock();
+      if (methodBlock == null) continue;
+      pushUnknown();
+      addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(methodBlock), false, null));
+      methodBlock.accept(this);
+      addInstruction(new GotoInstruction<V>(flow.getEndOffset(definition)));
+    }
+
+    finishElement(definition);
   }
 
   @Override
