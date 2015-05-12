@@ -39,7 +39,6 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
-import io.netty.util.internal.SystemPropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -224,7 +223,7 @@ public class FSRecords implements Forceable {
       final File basePath = basePath();
       basePath.mkdirs();
 
-      String ext = SystemPropertyUtil.get("idea.vfs.files.extension", ".dat");
+      String ext = System.getProperty("idea.vfs.files.extension", ".dat");
       final File namesFile = new File(basePath, "names" + ext);
       final File attributesFile = new File(basePath, "attrib" + ext);
       final File contentsFile = new File(basePath, "content" + ext);
