@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -45,8 +47,8 @@ import org.jetbrains.annotations.Nullable;
 public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   @Override
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
-    XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
-    XStackFrame stackFrame = session.getCurrentStackFrame();
+    final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
+    final XStackFrame stackFrame = session.getCurrentStackFrame();
     final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
     if (evaluator == null) {
       return;
@@ -72,10 +74,29 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     if (text == null) {
       XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
       if (value != null) {
-        text = value.getEvaluationExpression();
+        final EvaluationMode evalMode = mode;
+        value.calculateEvaluationExpression().done(new Consumer<String>() {
+          @Override
+          public void consume(final String text) {
+            AppUIUtil.invokeOnEdt(new Runnable() {
+              @Override
+              public void run() {
+                showDialog(session, dataContext, editorsProvider, stackFrame, evaluator, evalMode, text);
+              }
+            });
+          }
+        });
+        return;
       }
     }
 
+    showDialog(session, dataContext, editorsProvider, stackFrame, evaluator, mode, text);
+  }
+
+  private static void showDialog(@NotNull XDebugSession session,
+                                 DataContext dataContext,
+                                 XDebuggerEditorsProvider editorsProvider,
+                                 XStackFrame stackFrame, XDebuggerEvaluator evaluator, EvaluationMode mode, String text) {
     Language language = null;
     if (stackFrame != null) {
       XSourcePosition position = stackFrame.getSourcePosition();
