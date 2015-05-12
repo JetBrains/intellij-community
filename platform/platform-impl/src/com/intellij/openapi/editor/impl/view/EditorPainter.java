@@ -260,8 +260,10 @@ class EditorPainter {
         @Override
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
-          g.setColor(attributes.getForegroundColor());
-          fragment.draw(g, xStart, y, start, end);
+          if (attributes != null && attributes.getForegroundColor() != null) {
+            g.setColor(attributes.getForegroundColor());
+            fragment.draw(g, xStart, y, start, end);
+          }
           if (fragment.getCurrentFoldRegion() == null) {
             int logicalLine = fragment.getStartLogicalLine();
             if (logicalLine != currentLogicalLine[0]) {
@@ -270,7 +272,7 @@ class EditorPainter {
             }
             paintWhitespace(g, text, xStart, y, start, end, whitespacePaintingStrategy, fragment);
           }
-          if (hasTextEffect(attributes.getEffectColor(), attributes.getEffectType())) {
+          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType())) {
             paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType());
           }
         }
@@ -298,7 +300,7 @@ class EditorPainter {
     return x;
   }
 
-  private static boolean hasTextEffect(Color effectColor, EffectType effectType) {
+  private static boolean hasTextEffect(@Nullable Color effectColor, @Nullable EffectType effectType) {
     return effectColor != null && (effectType == EffectType.LINE_UNDERSCORE ||
                                    effectType == EffectType.BOLD_LINE_UNDERSCORE ||
                                    effectType == EffectType.BOLD_DOTTED_LINE ||
