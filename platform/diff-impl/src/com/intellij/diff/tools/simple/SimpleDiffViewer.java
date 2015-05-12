@@ -77,6 +77,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<SimpleDiffChange>();
 
   @Nullable private final MyFoldingModel myFoldingModel;
+  @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
   @NotNull private final ModifierProvider myModifierProvider;
 
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -158,9 +159,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
+  protected void processContextHints() {
+    super.processContextHints();
+    myInitialScrollHelper.processContext(myRequest);
+  }
+
+  @Override
   protected void updateContextHints() {
-    super.updateContextHints();
     if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+    myInitialScrollHelper.updateContext(myRequest);
+    super.updateContextHints();
   }
 
   //
@@ -171,6 +179,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected void onSlowRediff() {
     super.onSlowRediff();
     myStatusPanel.setBusy(true);
+    myInitialScrollHelper.onSlowRediff();
   }
 
   @Override
@@ -290,7 +299,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
           myFoldingModel.install(data.getFragments(), myRequest, getFoldingModelSettings());
         }
 
-        scrollOnRediff();
+        myInitialScrollHelper.onRediff();
 
         myContentPanel.repaintDivider();
         myStatusPanel.update();
@@ -386,7 +395,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @CalledInAwt
-  @Override
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     if (myDiffChanges.isEmpty()) return false;
     if (myEditor1 == null || myEditor2 == null) return true;
@@ -423,7 +431,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     mySyncScrollSupport.makeVisible(getCurrentSide(), line1, endLine1, line2, endLine2, animated);
   }
 
-  @Override
   protected boolean doScrollToContext(@NotNull DiffNavigationContext context) {
     if (myEditor2 == null) return false;
 
@@ -1048,6 +1055,28 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {
       myPaintable.paintOnDivider(gg, divider);
+    }
+  }
+
+  private class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
+    @Override
+    protected boolean doScrollToChange() {
+      if (myScrollToChange == null) return false;
+      SimpleDiffViewer.this.doScrollToChange(myScrollToChange);
+      return true;
+    }
+
+    @Override
+    protected boolean doScrollToFirstChange() {
+      SimpleDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
+      return true;
+    }
+
+    @Override
+    protected boolean doScrollToContext() {
+      if (myNavigationContext == null) return false;
+      SimpleDiffViewer.this.doScrollToContext(myNavigationContext);
+      return true;
     }
   }
 }

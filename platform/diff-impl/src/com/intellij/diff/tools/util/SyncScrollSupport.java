@@ -17,6 +17,7 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -33,6 +34,8 @@ import java.awt.*;
 import java.util.List;
 
 public class SyncScrollSupport {
+  private static final Logger LOG = Logger.getInstance(SyncScrollSupport.class);
+
   public interface SyncScrollable {
     @CalledInAwt
     boolean isSyncScrollEnabled();
@@ -49,7 +52,8 @@ public class SyncScrollSupport {
     @NotNull private final MyScrollHelper myHelper1;
     @NotNull private final MyScrollHelper myHelper2;
 
-    public boolean myDuringSyncScroll = false;
+    private boolean myDisabled = false;
+    private boolean myDuringSyncScroll = false;
 
     public TwosideSyncScrollSupport(@NotNull Editor editor1, @NotNull Editor editor2, @NotNull SyncScrollable scrollable) {
       myEditor1 = editor1;
@@ -60,8 +64,22 @@ public class SyncScrollSupport {
       myHelper2 = create(myEditor2, myEditor1, myScrollable, Side.RIGHT);
     }
 
+    public boolean isDuringSyncScroll() {
+      return myDuringSyncScroll;
+    }
+
+    public boolean setDisabled(boolean value) {
+      if (myDisabled == value) LOG.warn(new Throwable("myDisabled == value: " + myDisabled + " - " + value));
+      return myDisabled = value;
+    }
+
+    @NotNull
+    public SyncScrollable getScrollable() {
+      return myScrollable;
+    }
+
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      if (!myScrollable.isSyncScrollEnabled() || myDuringSyncScroll) return;
+      if (!myScrollable.isSyncScrollEnabled() || myDuringSyncScroll || myDisabled) return;
 
       myDuringSyncScroll = true;
       try {
@@ -75,15 +93,6 @@ public class SyncScrollSupport {
       finally {
         myDuringSyncScroll = false;
       }
-    }
-
-    @NotNull
-    public SyncScrollable getScrollable() {
-      return myScrollable;
-    }
-
-    public boolean isDuringSyncScroll() {
-      return myDuringSyncScroll;
     }
 
     public void makeVisible(@NotNull Side masterSide,
@@ -142,7 +151,8 @@ public class SyncScrollSupport {
     @NotNull private final MyScrollHelper myHelper21;
     @NotNull private final MyScrollHelper myHelper22;
 
-    public boolean myDuringSyncScroll = false;
+    private boolean myDisabled = false;
+    private boolean myDuringSyncScroll = false;
 
     public ThreesideSyncScrollSupport(@NotNull List<? extends Editor> editors,
                                       @NotNull SyncScrollable scrollable1,
@@ -160,8 +170,13 @@ public class SyncScrollSupport {
       myHelper22 = create(editors.get(2), editors.get(1), myScrollable2, Side.RIGHT);
     }
 
+    public boolean setDisabled(boolean value) {
+      if (myDisabled == value) LOG.warn(new Throwable("myDisabled == value: " + myDisabled + " - " + value));
+      return myDisabled = value;
+    }
+
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      if (myDuringSyncScroll) return;
+      if (myDuringSyncScroll || myDisabled) return;
 
       myDuringSyncScroll = true;
       try {

@@ -73,6 +73,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
 
   @NotNull private final MyFoldingModel myFoldingModel;
+  @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
 
   public SimpleThreesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -135,9 +136,16 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
+  protected void processContextHints() {
+    super.processContextHints();
+    myInitialScrollHelper.processContext(myRequest);
+  }
+
+  @Override
   protected void updateContextHints() {
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+    myInitialScrollHelper.updateContext(myRequest);
   }
 
   //
@@ -148,6 +156,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   protected void onSlowRediff() {
     super.onSlowRediff();
     myStatusPanel.setBusy(true);
+    myInitialScrollHelper.onSlowRediff();
   }
 
   @Override
@@ -238,7 +247,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
         myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
 
-        scrollOnRediff();
+        myInitialScrollHelper.onRediff();
 
         myContentPanel.repaintDividers();
         myStatusPanel.update();
@@ -324,7 +333,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @CalledInAwt
-  @Override
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     if (myDiffChanges.isEmpty()) return false;
 
@@ -687,6 +695,21 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     public void paintOnScrollbar(@NotNull Graphics2D gg, int width) {
       myPaintable2.paintOnScrollbar(gg, width);
+    }
+  }
+
+  private class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
+    @Override
+    protected boolean doScrollToChange() {
+      if (myScrollToChange == null) return false;
+      SimpleThreesideDiffViewer.this.doScrollToChange(myScrollToChange);
+      return true;
+    }
+
+    @Override
+    protected boolean doScrollToFirstChange() {
+      SimpleThreesideDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
+      return true;
     }
   }
 }
