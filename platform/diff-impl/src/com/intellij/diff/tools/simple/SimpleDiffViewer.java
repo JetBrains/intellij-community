@@ -704,7 +704,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
-        change.replaceChange(side);
+        replaceChange(change, side);
       }
     }
   }
@@ -723,7 +723,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
-        change.appendChange(side);
+        appendChange(change, side);
       }
     }
   }
@@ -742,9 +742,46 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
-        change.replaceChange(side.other());
+        replaceChange(change, side.other());
       }
     }
+  }
+
+  @CalledWithWriteLock
+  public void replaceChange(@NotNull SimpleDiffChange change, @NotNull final Side sourceSide) {
+    assert myEditor1 != null && myEditor2 != null;
+
+    if (!change.isValid()) return;
+
+    final Document document1 = myEditor1.getDocument();
+    final Document document2 = myEditor2.getDocument();
+
+    DiffUtil.applyModification(sourceSide.other().select(document1, document2),
+                               change.getStartLine(sourceSide.other()), change.getEndLine(sourceSide.other()),
+                               sourceSide.select(document1, document2),
+                               change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+
+    change.destroyHighlighter();
+    myDiffChanges.remove(change);
+  }
+
+  @CalledWithWriteLock
+  public void appendChange(@NotNull SimpleDiffChange change, @NotNull final Side sourceSide) {
+    assert myEditor1 != null && myEditor2 != null;
+
+    if (!change.isValid()) return;
+    if (change.getStartLine(sourceSide) == change.getEndLine(sourceSide)) return;
+
+    final Document document1 = myEditor1.getDocument();
+    final Document document2 = myEditor2.getDocument();
+
+    DiffUtil.applyModification(sourceSide.other().select(document1, document2),
+                               change.getEndLine(sourceSide.other()), change.getEndLine(sourceSide.other()),
+                               sourceSide.select(document1, document2),
+                               change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+
+    change.destroyHighlighter();
+    myDiffChanges.remove(change);
   }
 
   private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
