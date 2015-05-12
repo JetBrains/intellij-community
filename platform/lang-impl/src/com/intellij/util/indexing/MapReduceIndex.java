@@ -536,9 +536,10 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         });
 
         //noinspection ThrowableResultOfMethodCallIgnored
-        if (exRef.get() != null) {
-          LOG.info(exRef.get());
-          FileBasedIndex.getInstance().requestRebuild(myIndexId);
+        StorageException nestedException = exRef.get();
+        if (nestedException != null) {
+          LOG.info("Exception during updateWithMap:" + nestedException);
+          FileBasedIndex.getInstance().requestRebuild(myIndexId, nestedException);
           return Boolean.FALSE;
         }
         return Boolean.TRUE;
