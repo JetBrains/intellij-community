@@ -299,7 +299,7 @@ public class PsiImplUtil {
     return null;
   }
 
-  private static boolean isFromDGM(GrGdkMethod resolved) {
+  public static boolean isFromDGM(GrGdkMethod resolved) {
     final PsiClass containingClass = resolved.getStaticMethod().getContainingClass();
     return containingClass != null && GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName());
   }

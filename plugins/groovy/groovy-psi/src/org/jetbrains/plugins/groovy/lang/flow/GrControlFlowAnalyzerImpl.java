@@ -56,9 +56,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -286,7 +288,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     if (condition != null) {
       condition.accept(this);
-      coerceToBoolean();
+      coerceToBoolean(condition);
       addInstruction(new ConditionalGotoInstruction(ifFalseOffset, true, condition));
     }
 
@@ -621,7 +623,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     final GrExpression description = assertStatement.getErrorMessage();
     if (condition != null) {
       condition.accept(this);
-      addInstruction(new GrCoerceToBooleanInstruction<V>());
+      coerceToBoolean(condition);
       addInstruction(new ConditionalGotoInstruction(flow.getEndOffset(assertStatement), false, condition));
       if (description != null) {
         description.accept(this);
@@ -701,7 +703,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
     final GrExpression condition = expression.getCondition();
     condition.accept(this);
-    coerceToBoolean();
+    coerceToBoolean(condition);
     addInstruction(new DupInstruction<V>());
     addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(expression), false, condition));
     pop();
@@ -724,7 +726,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     final GrExpression thenBranch = expression.getThenBranch();
     final GrExpression elseBranch = expression.getElseBranch();
     condition.accept(this);
-    coerceToBoolean();
+    coerceToBoolean(condition);
     final ConditionalGotoInstruction<V> gotoElse = addInstruction(new ConditionalGotoInstruction<V>(null, true, condition));
 
     if (thenBranch == null) {
@@ -794,7 +796,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     else {
       operand.accept(this);
       if (expression.getOperationTokenType() == mLNOT) {
-        coerceToBoolean();
+        coerceToBoolean(operand);
         addInstruction(new NotInstruction<V>());
       }
       else {
@@ -829,13 +831,13 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (operatorToken == mLAND || operatorToken == mLOR) {
       final boolean isAnd = operatorToken == mLAND;
       left.accept(this);
-      coerceToBoolean();
+      coerceToBoolean(left);
       addInstruction(new DupInstruction<V>());
       addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(expression), isAnd, left));
       pop();
       right.accept(this);
 
-      coerceToBoolean();
+      coerceToBoolean(right);
       final ConditionalGotoInstruction<V> gotoSuccess = addInstruction(new ConditionalGotoInstruction<V>(null, false, right));
       push(factory.getConstFactory().getFalse());
       addInstruction(new GotoInstruction<V>(flow.getEndOffset(expression)));
@@ -1033,7 +1035,46 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     push(factory.getConstFactory().getNull());
   }
 
-  private void coerceToBoolean() {
-    addInstruction(new GrCoerceToBooleanInstruction<V>());
+  private void coerceToBoolean(@NotNull GrExpression expression) {
+    final PsiType type = expression.getType();
+    if (type != null) {
+      final GroovyResolveResult[] results = ResolveUtil.getMethodCandidates(type, "asBoolean", expression);
+      if (results.length == 1) {
+        final GroovyResolveResult result = results[0];
+        final PsiElement element = result.getElement();
+        if (element instanceof GrGdkMethod && PsiImplUtil.isFromDGM((GrGdkMethod)element)) {
+          // it means no overloads found
+          addInstruction(new GrCoerceToBooleanInstruction<V>());
+        }
+        else {
+          // compare top of stack with null
+          addInstruction(new DupInstruction<V>());
+          pushNull();
+          addInstruction(new BinopInstruction<V>(DfaRelation.EQ, null, expression.getProject()));
+
+          final ConditionalGotoInstruction<V> gotoNotNull = addInstruction(new ConditionalGotoInstruction<V>(null, true, null));
+          // null coerces to false always 
+          pop();
+          push(factory.getConstFactory().getFalse());
+          final GotoInstruction<V> gotoEnd = addInstruction(new GotoInstruction<V>(null));
+
+          // found some non-DGM method, call it, qualifier is expression itself and already on top of stack
+          gotoNotNull.setOffset(flow.getNextOffset());
+          addInstruction(new GrMethodCallInstruction<V>(expression, GrExpression.EMPTY_ARRAY, result));
+          gotoEnd.setOffset(flow.getNextOffset());
+        }
+      }
+      else if (results.length > 1) {
+        // do not know what to do
+        pop();
+        pushUnknown();
+      }
+      else {
+        addInstruction(new GrCoerceToBooleanInstruction<V>());
+      }
+    }
+    else {
+      addInstruction(new GrCoerceToBooleanInstruction<V>());
+    }
   }
 }

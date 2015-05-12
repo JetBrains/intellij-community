@@ -30,8 +30,12 @@ public class GrDfaConstValueFactory extends DfaConstValue.Factory {
   private final DfaConstValue myCoercedToFalse;
 
   private class DfaCoercionValue extends DfaConstValue {
-    public DfaCoercionValue(GrDfaValueFactory factory) {
+
+    private final boolean myTo;
+
+    public DfaCoercionValue(GrDfaValueFactory factory, boolean to) {
       super(new Object(), factory, null);
+      myTo = to;
     }
 
     @Override
@@ -40,13 +44,18 @@ public class GrDfaConstValueFactory extends DfaConstValue.Factory {
       if (this == myCoercedToFalse) return myCoercedToTrue;
       return super.createNegated(); // should never happen
     }
+
+    @Override
+    public String toString() {
+      return "c/ " + myTo;
+    }
   }
 
   GrDfaConstValueFactory(GrDfaValueFactory factory) {
     super(factory);
     myFactory = factory;
-    myCoercedToTrue = new DfaCoercionValue(factory);
-    myCoercedToFalse = new DfaCoercionValue(factory);
+    myCoercedToTrue = new DfaCoercionValue(factory, true);
+    myCoercedToFalse = new DfaCoercionValue(factory, false);
   }
 
   public DfaConstValue getCoercedToTrue() {
