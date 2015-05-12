@@ -56,6 +56,10 @@ public interface FilePath {
 
   String getPresentableUrl();
 
+  /**
+   * @deprecated to remove in IDEA 16. Use {@link com.intellij.openapi.fileEditor.FileDocumentManager#getDocument(VirtualFile)}.
+   */
+  @Deprecated
   @Nullable
   Document getDocument();
 
