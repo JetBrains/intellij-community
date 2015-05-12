@@ -1747,9 +1747,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                      createUpdateComputableWithBufferingDisabled(update),
                      createIndexedStampUpdateRunnable(indexId, file, currentFC != null)
       );
-    } catch (Throwable throwable) {
-      LOG.error("Exception in update single index:" + throwable);
-      requestRebuild(indexId, throwable);
+    } catch (RuntimeException exception) {
+      Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
+      if (causeToRebuildIndex != null) {
+        LOG.error("Exception in update single index:" + exception);
+        requestRebuild(indexId, exception);
+        return;
+      }
+      throw exception;
     }
   }
 
