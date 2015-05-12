@@ -191,7 +191,7 @@ public class TextPanel extends JComponent {
     myExplicitSize = explicitSize;
   }
 
-  public static class WithArrows extends TextPanel {
+  public static class WithIconAndArrows extends TextPanel {
     private final static int GAP = 2;
     @Nullable private Icon myIcon;
 
@@ -201,8 +201,9 @@ public class TextPanel extends JComponent {
       if (getText() != null) {
         Rectangle r = getBounds();
         Insets insets = getInsets();
-        AllIcons.Ide.Statusbar_arrows.paintIcon(this, g, r.width - insets.right - AllIcons.Ide.Statusbar_arrows.getIconWidth() - 2,
-                                                r.height / 2 - AllIcons.Ide.Statusbar_arrows.getIconHeight() / 2);
+        Icon arrows = AllIcons.Ide.Statusbar_arrows;
+        arrows.paintIcon(this, g, r.width - insets.right - arrows.getIconWidth() - 1,
+                         r.height / 2 - arrows.getIconHeight() / 2);
         if (myIcon != null) {
           myIcon.paintIcon(this, g, insets.left - GAP - myIcon.getIconWidth(), r.height / 2 - myIcon.getIconHeight() / 2);
         }
@@ -234,10 +235,10 @@ public class TextPanel extends JComponent {
     }
   }
 
-  public static class PlusTwo extends TextPanel {
+  public static class ExtraSize extends TextPanel {
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      return new Dimension(size.width + 2, size.height);
+      return new Dimension(size.width + 3, size.height);
     }
   }
 }

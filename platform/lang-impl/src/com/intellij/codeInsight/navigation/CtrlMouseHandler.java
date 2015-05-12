@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.hint.HintManager;
@@ -490,12 +490,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
     else if (browseMode == BrowseMode.Declaration) {
-      final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+      final PsiReference ref = TargetElementUtil.findReference(editor, offset);
       final List<PsiElement> resolvedElements = ref == null ? Collections.<PsiElement>emptyList() : resolve(ref);
       final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
 
       final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset, false);
-      final PsiElement elementAtPointer = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
+      final PsiElement elementAtPointer = file.findElementAt(TargetElementUtil.adjustOffset(file, editor.getDocument(), offset));
 
       if (targetElements != null) {
         if (targetElements.length == 0) {
@@ -519,7 +519,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
     else if (browseMode == BrowseMode.Implementation) {
-      final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
+      final PsiElement element = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
       PsiElement[] targetElements = new ImplementationSearcher() {
         @Override
         @NotNull

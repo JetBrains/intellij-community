@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.hint.actions;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -54,9 +54,9 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
 
 
     if (editor != null) {
-      PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      PsiReference ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
       if (element == null && ref != null) {
-        element = TargetElementUtilBase.getInstance().adjustReference(ref);
+        element = TargetElementUtil.getInstance().adjustReference(ref);
       }
     }
 

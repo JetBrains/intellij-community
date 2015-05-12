@@ -52,9 +52,9 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
         description = getFilteredDescription(request, description);
       }
 
-      if (myTestsListener instanceof SMTestSender) {
+      if (myTestsListener instanceof JUnit4TestListener) {
         if (sendTree) {
-          ((SMTestSender)myTestsListener).sendTree(description);
+          ((JUnit4TestListener)myTestsListener).sendTree(description);
         }
         sendTree = false;
       } else {
@@ -189,7 +189,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
 
   public void setStreams(Object segmentedOut, Object segmentedErr, int lastIdx) {
     if (JUnitStarter.SM_RUNNER) {
-      myTestsListener = new SMTestSender();
+      myTestsListener = new JUnit4TestListener();
     } else {
       myRegistry = new JUnit4OutputObjectRegistry((PacketProcessor)segmentedOut, lastIdx);
       myTestsListener = new JUnit4TestResultsSender(myRegistry);

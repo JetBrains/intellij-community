@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -29,8 +28,6 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.Consumer;
-
-import java.util.Calendar;
 
 public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
@@ -168,8 +165,8 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     doTest3Modules();
   }
 
-  @Bombed(user = "peter,anna", year = 2015, month = Calendar.MAY, day = 15)
   public void testCloseableAutoCloseable() {
+    IdeaTestUtil.setModuleLanguageLevel(myJava7Module, LanguageLevel.JDK_1_7);
     ModuleRootModificationUtil.addDependency(myJava7Module, myJava3Module);
     final String name = getTestName(false);
     myFixture.copyFileToProject("java3/p/" + name + ".java");

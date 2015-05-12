@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -98,7 +98,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private final ActionManagerEx myActionManagerEx;
 
-  private final TargetElementUtilBase myTargetElementUtilBase;
+  private final TargetElementUtil myTargetElementUtil;
 
   private boolean myCloseOnSneeze;
   
@@ -160,7 +160,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return ServiceManager.getService(project, DocumentationManager.class);
   }
 
-  public DocumentationManager(final Project project, ActionManagerEx managerEx, TargetElementUtilBase targetElementUtilBase) {
+  public DocumentationManager(final Project project, ActionManagerEx managerEx, TargetElementUtil targetElementUtil) {
     super(project);
     myActionManagerEx = managerEx;
     final AnActionListener actionListener = new AnActionListener() {
@@ -199,7 +199,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     };
     myActionManagerEx.addAnActionListener(actionListener, project);
     myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myProject);
-    myTargetElementUtilBase = targetElementUtilBase;
+    myTargetElementUtil = targetElementUtil;
   }
 
   private void closeDocHint() {
@@ -569,7 +569,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    */
   @Nullable
   private PsiElement findTargetElementUnsafe(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
-    TargetElementUtilBase util = TargetElementUtilBase.getInstance();
+    TargetElementUtil util = TargetElementUtil.getInstance();
     PsiElement element = assertSameProject(getElementFromLookup(editor, file));
     if (element == null && file != null) {
       final DocumentationProvider documentationProvider = getProviderFromElement(file);
@@ -579,11 +579,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (element == null) {
-      element = assertSameProject(util.findTargetElement(editor, myTargetElementUtilBase.getAllAccepted(), offset));
+      element = assertSameProject(util.findTargetElement(editor, myTargetElementUtil.getAllAccepted(), offset));
 
       // Allow context doc over xml tag content
       if (element != null || contextElement != null) {
-        final PsiElement adjusted = assertSameProject(util.adjustElement(editor, myTargetElementUtilBase.getAllAccepted(), element, contextElement));
+        final PsiElement adjusted = assertSameProject(util.adjustElement(editor, myTargetElementUtil.getAllAccepted(), element, contextElement));
         if (adjusted != null) {
           element = adjusted;
         }
@@ -591,7 +591,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (element == null) {
-      final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+      final PsiReference ref = TargetElementUtil.findReference(editor, offset);
       if (ref != null) {
         element = assertSameProject(util.adjustReference(ref));
         if (ref instanceof PsiPolyVariantReference) {
@@ -617,7 +617,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
         int offset = editor.getCaretModel().getOffset();
         if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
-        PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+        PsiReference ref = TargetElementUtil.findReference(editor, offset);
         PsiElement contextElement = file == null? null : file.findElementAt(offset);
         PsiElement targetElement = ref != null ? ref.getElement() : contextElement;
         if (targetElement != null) {

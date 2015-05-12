@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
@@ -1801,6 +1802,16 @@ public class PyUtil {
   public static boolean isObjectType(@NotNull PyType type, @NotNull PsiElement anchor) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
     return type == builtinCache.getObjectType() || type == builtinCache.getOldstyleClassobjType();
+  }
+
+  public static boolean isInScratchFile(@NotNull PsiElement element) {
+    final ScratchFileService service = ScratchFileService.getInstance();
+    final PsiFile file = element.getContainingFile();
+    if (file != null) {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      return service != null && virtualFile != null && service.getRootType(virtualFile) != null;
+    }
+    return false;
   }
 
   /**

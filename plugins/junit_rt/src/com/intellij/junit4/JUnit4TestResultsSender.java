@@ -29,8 +29,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class JUnit4TestResultsSender extends RunListener {
   private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = ComparisonFailure.class.getName();
@@ -108,7 +106,7 @@ public class JUnit4TestResultsSender extends RunListener {
   
   private static PacketFactory createExceptionNotification(Throwable assertion) {
     if (assertion instanceof KnownException) return ((KnownException)assertion).getPacketFactory();
-    final ComparisonFailureData notification = SMTestSender.createExceptionNotification(assertion);
+    final ComparisonFailureData notification = JUnit4TestListener.createExceptionNotification(assertion);
     if (notification != null) {
       return ComparisonDetailsExtractor.create(assertion, notification.getExpected(), notification.getActual());
     }

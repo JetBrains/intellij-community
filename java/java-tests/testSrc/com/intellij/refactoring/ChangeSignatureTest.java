@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -397,7 +397,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   public void testPropagateParameter() {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
-    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;
     final PsiClass containingClass = method.getContainingClass();

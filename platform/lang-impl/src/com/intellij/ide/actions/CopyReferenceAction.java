@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.IdeBundle;
@@ -121,7 +121,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       if (nameIdentifier != null) {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
       } else {
-        PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+        PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
         if (reference != null) {
           highlightManager.addOccurrenceHighlights(editor, new PsiReference[]{reference}, attributes, true, null);
         } else if (element != PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument())) {
@@ -135,7 +135,7 @@ public class CopyReferenceAction extends DumbAwareAction {
   private static List<PsiElement> getElementsToCopy(@Nullable final Editor editor, final DataContext dataContext) {
     List<PsiElement> elements = ContainerUtil.newArrayList();
     if (editor != null) {
-      PsiReference reference = TargetElementUtilBase.findReference(editor);
+      PsiReference reference = TargetElementUtil.findReference(editor);
       if (reference != null) {
         ContainerUtil.addIfNotNull(elements, reference.getElement());
       }
@@ -241,7 +241,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     if (result != null) return result;
 
     if (editor != null) { //IDEA-70346
-      PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
       if (reference != null) {
         result = getQualifiedNameFromProviders(reference.resolve());
         if (result != null) return result;

@@ -15,6 +15,15 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -24,6 +33,8 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Tests for a type system based on mypy's typing module.
@@ -304,6 +315,59 @@ public class PyTypingTest extends PyTestCase {
            "def foo(x):\n" +
            "    with x as expr:  # type: int\n" +
            "        pass\n");
+  }
+
+  public void testStringLiteralInjection() {
+    doTestInjectedText("class C:\n" +
+                       "    def foo(self, expr: '<caret>C'):\n" +
+                       "        pass\n",
+                       "C");
+  }
+
+  public void testStringLiteralInjectionParameterizedType() {
+    doTestInjectedText("from typing import Union, List\n" +
+                       "\n" +
+                       "class C:\n" +
+                       "    def foo(self, expr: '<caret>Union[List[C], C]'):\n" +
+                       "        pass\n",
+                       "Union[List[C], C]");
+  }
+
+  // PY-15810
+  public void testNoStringLiteralInjectionForNonTypingStrings() {
+    doTestNoInjectedText("class C:\n" +
+                         "    def foo(self, expr: '<caret>foo bar'):\n" +
+                         "        pass\n");
+  }
+
+  private void doTestNoInjectedText(@NotNull String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
+    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(getElementAtCaret());
+    assertNull(host);
+  }
+
+  private void doTestInjectedText(@NotNull String text, @NotNull String expected) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
+    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(getElementAtCaret());
+    assertNotNull(host);
+    final List<Pair<PsiElement, TextRange>> files = languageManager.getInjectedPsiFiles(host);
+    assertNotNull(files);
+    assertFalse(files.isEmpty());
+    final PsiElement injected = files.get(0).getFirst();
+    assertEquals(expected, injected.getText());
+  }
+
+  @NotNull
+  private PsiElement getElementAtCaret() {
+    final Editor editor = myFixture.getEditor();
+    final Document document = editor.getDocument();
+    final PsiFile file = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
+    assertNotNull(file);
+    final PsiElement element = file.findElementAt(myFixture.getCaretOffset());
+    assertNotNull(element);
+    return element;
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {

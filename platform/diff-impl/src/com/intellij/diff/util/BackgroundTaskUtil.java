@@ -21,7 +21,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,59 +34,38 @@ import java.util.concurrent.atomic.AtomicReference;
  * Executor to perform <possibly> long operations on pooled thread
  * Is is used to reduce blinking, in case of fast end of background task.
  */
-public class WaitingBackgroundableTaskExecutor {
+public class BackgroundTaskUtil {
   private static final Runnable TOO_SLOW_OPERATION = new EmptyRunnable();
 
-  private int myModificationStamp = 0;
-  @Nullable private ProgressIndicator myProgressIndicator;
-
   @CalledInAwt
-  public int getModificationStamp() {
-    return myModificationStamp;
+  @NotNull
+  public static ProgressIndicator executeAndTryWait(@NotNull final Function<ProgressIndicator, Runnable> backgroundTask,
+                                                    @Nullable final Runnable onSlowAction,
+                                                    final int waitMillis) {
+    return executeAndTryWait(backgroundTask, onSlowAction, waitMillis, false);
   }
 
   @CalledInAwt
-  public void abort() {
-    if (myProgressIndicator != null) {
-      myProgressIndicator.cancel();
-      myProgressIndicator = null;
-      myModificationStamp++;
-    }
-  }
-
-  @CalledInAwt
-  public void execute(@NotNull final Convertor<ProgressIndicator, Runnable> backgroundTask,
-                      @Nullable final Runnable onSlowAction,
-                      final int waitMillis) {
-    execute(backgroundTask, onSlowAction, waitMillis, false);
-  }
-
-  @CalledInAwt
-  public void execute(@NotNull final Convertor<ProgressIndicator, Runnable> backgroundTask,
-                      @Nullable final Runnable onSlowAction,
-                      final int waitMillis,
-                      final boolean forceEDT) {
-    abort();
-
-    myModificationStamp++;
-    final int modificationStamp = myModificationStamp;
-
+  @NotNull
+  public static ProgressIndicator executeAndTryWait(@NotNull final Function<ProgressIndicator, Runnable> backgroundTask,
+                                                    @Nullable final Runnable onSlowAction,
+                                                    final int waitMillis,
+                                                    final boolean forceEDT) {
     final ModalityState modality = ModalityState.current();
-    myProgressIndicator = new EmptyProgressIndicator() {
+    final ProgressIndicator indicator = new EmptyProgressIndicator() {
       @NotNull
       @Override
       public ModalityState getModalityState() {
         return modality;
       }
     };
-    final ProgressIndicator indicator = myProgressIndicator;
 
     final Semaphore semaphore = new Semaphore(0);
     final AtomicReference<Runnable> resultRef = new AtomicReference<Runnable>();
 
     if (forceEDT) {
-      Runnable result = backgroundTask.convert(indicator);
-      finish(result, modificationStamp, indicator);
+      Runnable callback = backgroundTask.fun(indicator);
+      finish(callback, indicator);
     }
     else {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
@@ -95,18 +74,18 @@ public class WaitingBackgroundableTaskExecutor {
           ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
             @Override
             public void run() {
-              final Runnable result = backgroundTask.convert(indicator);
+              final Runnable callback = backgroundTask.fun(indicator);
 
               if (indicator.isCanceled()) {
                 semaphore.release();
                 return;
               }
 
-              if (!resultRef.compareAndSet(null, result)) {
+              if (!resultRef.compareAndSet(null, callback)) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
                   @Override
                   public void run() {
-                    finish(result, modificationStamp, indicator);
+                    finish(callback, indicator);
                   }
                 }, modality);
               }
@@ -123,19 +102,20 @@ public class WaitingBackgroundableTaskExecutor {
       }
       if (!resultRef.compareAndSet(null, TOO_SLOW_OPERATION)) {
         // update presentation in the same thread to reduce blinking, caused by 'invokeLater' and fast background operation
-        finish(resultRef.get(), modificationStamp, indicator);
+        finish(resultRef.get(), indicator);
       }
       else {
         if (onSlowAction != null) onSlowAction.run();
       }
     }
+
+    return indicator;
   }
 
   @CalledInAwt
-  private void finish(@NotNull Runnable result, int modificationStamp, @NotNull ProgressIndicator indicator) {
+  private static void finish(@NotNull Runnable result, @NotNull ProgressIndicator indicator) {
     if (indicator.isCanceled()) return;
-    if (myModificationStamp != modificationStamp) return;
-
     result.run();
+    indicator.stop();
   }
 }

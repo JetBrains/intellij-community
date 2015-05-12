@@ -23,7 +23,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.vcs.DirectoryData;
 import com.intellij.util.ThrowableRunnable;
@@ -37,7 +37,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VfsUtilTest extends PlatformLangTestCase {
+public class VfsUtilTest extends PlatformTestCase {
   @Override
   protected boolean isRunInEdt() {
     return false;

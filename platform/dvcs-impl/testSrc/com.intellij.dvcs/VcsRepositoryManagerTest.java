@@ -120,12 +120,12 @@ public class VcsRepositoryManagerTest extends UsefulTestCase {
 
   public void testRepositoryInfoReadingWhileModifying() throws Exception {
     final VirtualFile repositoryFile = createExternalRepository();
-    assertNotNull(myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile, true));
+    assertNotNull(myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile));
 
     FutureTask<Repository> readExistingRepo = new FutureTask<Repository>(new Callable<Repository>() {
       @Override
       public Repository call() throws Exception {
-        return myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile, true);
+        return myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile);
       }
     });
 

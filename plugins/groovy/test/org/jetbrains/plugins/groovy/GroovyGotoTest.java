@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -43,8 +43,8 @@ public class GroovyGotoTest extends LightCodeInsightFixtureTestCase {
     for (String file : files) {
       myFixture.configureByFile(file);
     }
-    final TargetElementUtilBase targetUtil = TargetElementUtilBase.getInstance();
-    final PsiElement target = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), targetUtil.getReferenceSearchFlags());
+    final TargetElementUtil targetUtil = TargetElementUtil.getInstance();
+    final PsiElement target = TargetElementUtil.findTargetElement(myFixture.getEditor(), targetUtil.getReferenceSearchFlags());
     assertTrue(verifier.value(target));
   }
 

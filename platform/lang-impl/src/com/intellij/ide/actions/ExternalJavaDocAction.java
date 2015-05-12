@@ -16,7 +16,7 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -147,7 +147,7 @@ public class ExternalJavaDocAction extends AnAction {
   private static PsiElement getElement(DataContext dataContext, Editor editor) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null && editor != null) {
-      PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
       if (reference != null) {
         element = reference.getElement();
       }

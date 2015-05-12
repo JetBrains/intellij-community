@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -31,6 +32,9 @@ import org.jetbrains.annotations.NonNls;
 * @author peter
 */
 public class MetaRegistryTest extends LightPlatformTestCase {
+  public MetaRegistryTest() {
+    PlatformTestCase.autodetectPlatformPrefix();
+  }
 
   public void testChangingMetaData() throws Throwable {
     final boolean[] flag = {false};

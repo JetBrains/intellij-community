@@ -19,45 +19,8 @@
  */
 package com.intellij.util.io;
 
-import org.jetbrains.annotations.NotNull;
-
-class PoolPageKey implements Comparable<PoolPageKey> {
-  private RandomAccessDataFile owner;
-  private long offset;
-
+class PoolPageKey extends FileChunkKey<RandomAccessDataFile> {
   public PoolPageKey(final RandomAccessDataFile owner, final long offset) {
-    this.owner = owner;
-    this.offset = offset;
-  }
-
-  public int hashCode() {
-    return (int)(owner.hashCode() * 31 + offset);
-  }
-
-  public RandomAccessDataFile getOwner() {
-    return owner;
-  }
-
-  public long getOffset() {
-    return offset;
-  }
-
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
-  public boolean equals(final Object obj) {
-    PoolPageKey k = (PoolPageKey)obj;
-    return k.owner == owner && k.offset == offset;
-  }
-
-  public void setup(RandomAccessDataFile owner, long offset) {
-    this.owner = owner;
-    this.offset = offset;
-  }
-
-  @Override
-  public int compareTo(@NotNull final PoolPageKey o) {
-    if (owner != o.owner) {
-      return owner.hashCode() - o.owner.hashCode();
-    }
-    return offset == o.offset ? 0 : offset - o.offset < 0 ? -1 : 1;
+    super(owner, offset);
   }
 }

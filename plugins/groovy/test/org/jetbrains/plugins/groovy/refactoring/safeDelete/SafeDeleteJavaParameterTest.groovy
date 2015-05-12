@@ -15,10 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.safeDelete
 
-import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
-import com.intellij.refactoring.safeDelete.SafeDeleteProcessor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -63,8 +62,8 @@ class X{}
     myFixture.configureByText('test.java', java)
     def groovyFile = myFixture.addFileToProject('test.groovy', groovy)
 
-    final PsiElement psiElement = TargetElementUtilBase
-            .findTargetElement(myFixture.editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    final PsiElement psiElement = TargetElementUtil
+            .findTargetElement(myFixture.editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 
     SafeDeleteHandler.invoke(myFixture.project, [psiElement] as PsiElement[], true)
 

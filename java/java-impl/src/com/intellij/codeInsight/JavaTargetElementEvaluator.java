@@ -30,21 +30,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TargetElementUtil extends TargetElementEvaluatorEx2 implements TargetElementUtilExtender{
+public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implements TargetElementUtilExtender{
   public static final int NEW_AS_CONSTRUCTOR = 0x04;
   public static final int THIS_ACCEPTED = 0x10;
   public static final int SUPER_ACCEPTED = 0x20;
 
   @Override
-  public int getAdditionalAccepted() {
+  public int getAllAdditionalFlags() {
     return NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
+  /**
+   * Accepts THIS or SUPER but not NEW_AS_CONSTRUCTOR.
+   */
   @Override
   public int getAdditionalDefinitionSearchFlags() {
     return THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
+  /**
+   * Accepts NEW_AS_CONSTRUCTOR but not THIS or SUPER.
+   */
   @Override
   public int getAdditionalReferenceSearchFlags() {
     return NEW_AS_CONSTRUCTOR;
@@ -100,7 +106,7 @@ public class TargetElementUtil extends TargetElementEvaluatorEx2 implements Targ
                                                        @Nullable PsiElement refElement) {
     PsiReference ref = null;
     if (refElement == null) {
-      ref = TargetElementUtilBase.findReference(editor, offset);
+      ref = TargetElementUtil.findReference(editor, offset);
       if (ref instanceof PsiJavaReference) {
         refElement = ((PsiJavaReference)ref).advancedResolve(true).getElement();
       }
@@ -118,7 +124,7 @@ public class TargetElementUtil extends TargetElementEvaluatorEx2 implements Targ
     if (refElement != null) {
       if ((flags & NEW_AS_CONSTRUCTOR) != 0) {
         if (ref == null) {
-          ref = TargetElementUtilBase.findReference(editor, offset);
+          ref = TargetElementUtil.findReference(editor, offset);
         }
         if (ref != null) {
           PsiElement parent = ref.getElement().getParent();
@@ -170,7 +176,7 @@ public class TargetElementUtil extends TargetElementEvaluatorEx2 implements Targ
 
   @Nullable
   public static PsiReferenceExpression findReferenceExpression(Editor editor) {
-    final PsiReference ref = TargetElementUtilBase.findReference(editor);
+    final PsiReference ref = TargetElementUtil.findReference(editor);
     return ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
   }
 

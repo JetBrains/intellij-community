@@ -16,7 +16,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -24,7 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -68,17 +69,17 @@ public class ElementToWorkOn {
     PsiExpression expr = null;
 
     if (!editor.getSelectionModel().hasSelection()) {
-      PsiElement element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase
-        .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase
-        .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase
-        .LOOKUP_ITEM_ACCEPTED);
+      PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil
+                                                                         .ELEMENT_NAME_ACCEPTED | TargetElementUtil
+                                                                         .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil
+                                                                         .LOOKUP_ITEM_ACCEPTED);
       if (element instanceof PsiLocalVariable) {
         localVar = (PsiLocalVariable) element;
         PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
         if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiReferenceExpression) {
           expr = (PsiExpression) elementAt.getParent();
         } else {
-          final PsiReference reference = TargetElementUtilBase.findReference(editor);
+          final PsiReference reference = TargetElementUtil.findReference(editor);
           if (reference != null) {
             final PsiElement refElement = reference.getElement();
             if (refElement instanceof PsiReferenceExpression) {

@@ -20,7 +20,7 @@ import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.util.WaitingBackgroundableTaskExecutor;
+import com.intellij.diff.util.DiffTaskQueue;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -31,8 +31,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Alarm;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -47,9 +46,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @NotNull protected final DiffContext myContext;
   @NotNull protected final ContentDiffRequest myRequest;
 
-  @NotNull private final WaitingBackgroundableTaskExecutor myTaskExecutor = new WaitingBackgroundableTaskExecutor();
-  @NotNull private final Alarm myAlarm = new Alarm();
-
+  @NotNull private final DiffTaskQueue myTaskExecutor = new DiffTaskQueue();
   @NotNull private final AtomicBoolean myDisposed = new AtomicBoolean(false);
 
   public DiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
@@ -75,15 +72,11 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   public final void dispose() {
     if (!myDisposed.compareAndSet(false, true)) return;
 
-    Disposer.dispose(myAlarm);
-    abortRediff();
-
     onDispose();
 
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        abortRediff();
         onDisposeAwt();
       }
     });
@@ -92,14 +85,10 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @CalledInAwt
   public final void scheduleRediff() {
     if (myDisposed.get()) return;
-    myTaskExecutor.abort();
-    final int modificationStamp = myTaskExecutor.getModificationStamp();
 
-    myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
+    myTaskExecutor.abortAndSchedule(new Runnable() {
       @Override
       public void run() {
-        if (modificationStamp != myTaskExecutor.getModificationStamp()) return;
         rediff();
       }
     }, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
@@ -127,10 +116,10 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     int waitMillis = trySync || tryRediffSynchronously() ? ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS : 0;
 
-    myTaskExecutor.execute(
-      new Convertor<ProgressIndicator, Runnable>() {
+    myTaskExecutor.executeAndTryWait(
+      new Function<ProgressIndicator, Runnable>() {
         @Override
-        public Runnable convert(ProgressIndicator indicator) {
+        public Runnable fun(ProgressIndicator indicator) {
           return performRediff(indicator);
         }
       },
@@ -199,6 +188,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected abstract Runnable performRediff(@NotNull ProgressIndicator indicator);
 
   protected void onDispose() {
+    Disposer.dispose(myTaskExecutor);
   }
 
   @CalledInAwt

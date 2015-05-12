@@ -24,7 +24,7 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.Processor;
@@ -40,7 +40,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 @SkipSlowTestLocally
-public class VfsUtilPerformanceTest extends PlatformLangTestCase {
+public class VfsUtilPerformanceTest extends PlatformTestCase {
   @Override
   protected boolean isRunInEdt() {
     return false;

@@ -130,4 +130,23 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     });
     assertNull(TestMethods.getTestPresentation(testProxy, project, searchScope));
   }
+
+  public void testInnerClass() throws Exception {
+    myFixture.addClass("public class TestClass {\n" +
+                       "    public static class Tests extends junit.framework.TestCase {\n" +
+                       "        public void testFoo() throws Exception {}\n" +
+                       "    }\n" +
+                       "}");
+
+    final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass$Tests.testFoo");
+    final Project project = getProject();
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
+    Location location = testProxy.getLocation(project, searchScope);
+    assertNotNull(location);
+    PsiElement element = location.getPsiElement();
+    assertTrue(element instanceof PsiMethod);
+    String name = ((PsiMethod)element).getName();
+    assertEquals(name, "testFoo");
+  }
 }
