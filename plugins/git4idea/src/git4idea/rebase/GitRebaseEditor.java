@@ -89,8 +89,10 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     myCommitsTable.setDefaultRenderer(String.class, new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-        append(value.toString());
-        SpeedSearchUtil.applySpeedSearchHighlighting(myCommitsTable, this, true, selected);
+        if (value != null) {
+          append(value.toString());
+          SpeedSearchUtil.applySpeedSearchHighlighting(myCommitsTable, this, true, selected);
+        }
       }
     });
 
