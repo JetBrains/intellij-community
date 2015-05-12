@@ -205,6 +205,46 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
+  public void testPackageWithoutDescriptionBefore() throws Exception {
+    final Description root = Description.createSuiteDescription("root");
+    final ArrayList<Description> tests = new ArrayList<Description>();
+    for (String className : new String[]{"a.TestA", "a.TestB"}) {
+      final Description aTestClass = Description.createSuiteDescription(className);
+      root.addChild(aTestClass);
+      final Description testDescription = Description.createTestDescription(className, "testName");
+      aTestClass.addChild(testDescription);
+      tests.add(testDescription);
+    }
+
+    final StringBuffer buf = new StringBuffer();
+    final JUnit4TestListener sender = new JUnit4TestListener(new PrintStream(new OutputStream() {
+      @Override
+      public void write(int b) throws IOException {
+        buf.append(new String(new byte[]{(byte)b}));
+      }
+    }));
+  
+    sender.testRunStarted(root);
+    for (Description test : tests) {
+      sender.testStarted(test);
+      sender.testFinished(test);
+    }
+    sender.testRunFinished(new Result());
+
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "##teamcity[testSuiteStarted name='TestA' locationHint='java:suite://a.TestA']\n" +
+                                          "##teamcity[testStarted name='testName' locationHint='java:test://a.TestA.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName']\n" +
+                                          "##teamcity[testSuiteFinished name='TestA']\n" +
+                                          "##teamcity[testSuiteStarted name='TestB' locationHint='java:suite://a.TestB']\n" +
+                                          "##teamcity[testStarted name='testName' locationHint='java:test://a.TestB.testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName']\n" +
+                                          "##teamcity[testSuiteFinished name='TestB']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
   public void testParameterizedTestsUpsideDown() throws Exception {
     final Description aTestClass = Description.createSuiteDescription("ATest");
     final ArrayList<Description> tests = new ArrayList<Description>();
