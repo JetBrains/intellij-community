@@ -35,6 +35,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
+import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.util.containers.HashSet;
@@ -113,6 +114,16 @@ public class GridCellImpl implements GridCell {
       @Override
       public void resetDropOver(TabInfo tabInfo) {
         ((RunnerContentUi)myContext).myTabs.resetDropOver(tabInfo);
+      }
+
+      @Override
+      protected TabLabel createTabLabel(TabInfo info) {
+        return new TabLabel(this, info) {
+          @Override
+          public void setAlignmentToCenter(boolean toCenter) {
+            super.setAlignmentToCenter(false);
+          }
+        };
       }
     }.setDataProvider(new DataProvider() {
       @Override
