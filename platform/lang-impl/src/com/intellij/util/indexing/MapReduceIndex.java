@@ -19,6 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -747,6 +748,9 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         updateData.iterateRemovedOrUpdatedKeys(inputId, myRemoveStaleKeyOperation);
         updateData.iterateAddedKeys(inputId, myAddedKeyProcessor);
         updateData.save(inputId);
+      }
+      catch (ProcessCanceledException pce) {
+        throw pce; // extra care
       }
       catch (Throwable e) { // e.g. IOException, AssertionError
         throw new StorageException(e);
