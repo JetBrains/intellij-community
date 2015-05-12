@@ -17,17 +17,21 @@ package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
-import com.intellij.diff.contents.*;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.util.StatusPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -48,16 +52,12 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.ui.AnimatedIcon;
-import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.IOException;
@@ -472,27 +472,10 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     return super.getData(dataId);
   }
 
-  private static class MyStatusPanel extends JPanel {
-    private final AnimatedIcon myBusySpinner;
-
-    public MyStatusPanel() {
-      super(new BorderLayout());
-      myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
-      myBusySpinner.setVisible(false);
-
-      add(myBusySpinner, BorderLayout.WEST);
-      setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
-    }
-
-    public void setBusy(boolean busy) {
-      if (busy) {
-        myBusySpinner.setVisible(true);
-        myBusySpinner.resume();
-      }
-      else {
-        myBusySpinner.setVisible(false);
-        myBusySpinner.suspend();
-      }
+  private static class MyStatusPanel extends StatusPanel {
+    @Override
+    protected int getChangesCount() {
+      return -1;
     }
   }
 
