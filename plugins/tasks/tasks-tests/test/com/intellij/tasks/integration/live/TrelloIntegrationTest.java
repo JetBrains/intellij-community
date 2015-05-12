@@ -33,6 +33,7 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
 
   private static final String CARD_1_1_1_NAME = "Card 1-1-1";
   private static final String CARD_1_1_1_ID = "53c416d8b4bd36fb078446e5";
+  private static final String CARD_1_1_1_NUMBER = "1";
 
   // Labels and colors
   private static final String LABELS_AND_COLORS_BOARD_NAME = "Labels and Colors";
@@ -215,6 +216,14 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
     assertNotNull(card);
     assertEquals(STATE_UPDATES_BOARD_ID, card.getIdBoard());
     assertEquals(BACKLOG_LIST_ID, card.getIdList());
+  }
+
+  // IDEA-139903
+  public void testCardBoardLocalNumber() throws Exception {
+    final TrelloCard card = myRepository.fetchCardById(CARD_1_1_1_ID);
+    assertNotNull(card);
+    assertEquals(CARD_1_1_1_ID, card.getId());
+    assertEquals(CARD_1_1_1_NUMBER, new TrelloTask(card, myRepository).getNumber());
   }
 
   static void assertObjectsNamed(@NotNull String message, @NotNull Collection<? extends TrelloModel> objects, @NotNull String... names) {
