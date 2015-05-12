@@ -39,6 +39,7 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
+import io.netty.util.internal.SystemPropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,11 +224,12 @@ public class FSRecords implements Forceable {
       final File basePath = basePath();
       basePath.mkdirs();
 
-      final File namesFile = new File(basePath, "names.dat");
-      final File attributesFile = new File(basePath, "attrib.dat");
-      final File contentsFile = new File(basePath, "content.dat");
-      final File contentsHashesFile = new File(basePath, "contentHashes.dat");
-      final File recordsFile = new File(basePath, "records.dat");
+      String ext = SystemPropertyUtil.get("idea.vfs.files.extension", ".dat");
+      final File namesFile = new File(basePath, "names" + ext);
+      final File attributesFile = new File(basePath, "attrib" + ext);
+      final File contentsFile = new File(basePath, "content" + ext);
+      final File contentsHashesFile = new File(basePath, "contentHashes" + ext);
+      final File recordsFile = new File(basePath, "records" + ext);
 
       if (!namesFile.exists()) {
         invalidateIndex();
