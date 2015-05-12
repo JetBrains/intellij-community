@@ -529,8 +529,11 @@ public class HighlightMethodUtil {
     }
     else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
       final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(referenceToMethod);
-      final String staticInterfaceMethodMessage = LambdaUtil
-        .getInvalidQualifier4StaticInterfaceMethodMessage((PsiMethod)element, referenceToMethod, resolveResult.getCurrentFileResolveScope(), languageLevel);
+      final String staticInterfaceMethodMessage = 
+        element instanceof PsiMethod 
+        ? LambdaUtil.getInvalidQualifier4StaticInterfaceMethodMessage((PsiMethod)element, referenceToMethod, 
+                                                                      resolveResult.getCurrentFileResolveScope(), languageLevel) 
+        : null;
       description = staticInterfaceMethodMessage != null 
                     ? staticInterfaceMethodMessage 
                     : HighlightUtil.buildProblemWithStaticDescription(element);
