@@ -247,31 +247,6 @@ class A {
 '''
   }
 
-  void "test literals are not null"() {
-    testHighlighting '''
-def testList() {
-    if (<warning descr="Condition '[] == null' is always false">[] == null</warning>) {}
-    if (<warning descr="Condition '[] != null' is always true">[] != null</warning>) {}
-    if (<warning descr="Condition '[1,2] == null' is always false">[1,2] == null</warning>) {}
-    if (<warning descr="Condition '[1,2] != null' is always true">[1,2] != null</warning>) {}
-}
-
-def testMap() {
-    if (<warning descr="Condition '[:] == null' is always false">[:] == null</warning>) {}
-    if (<warning descr="Condition '[:] != null' is always true">[:] != null</warning>) {}
-    if (<warning descr="Condition '[a:1, b:2] == null' is always false">[a:1, b:2] == null</warning>) {}
-    if (<warning descr="Condition '[a:1, b:2] !=null' is always true">[a:1, b:2] !=null</warning>) {}
-}
-
-def testClosure() {
-    if (<warning descr="Condition '{} == null' is always false">{} == null</warning>) {}
-    if (<warning descr="Condition '{} != null' is always true">{} != null</warning>) {}
-    if (<warning descr="Condition '({}) == null' is always false">({}) == null</warning>) {}
-    if (<warning descr="Condition '({}) != null' is always true">({}) != null</warning>) {}
-}
-'''
-  }
-
   void "test not null parameter"() {
     testHighlighting '''
 import org.jetbrains.annotations.NotNull
