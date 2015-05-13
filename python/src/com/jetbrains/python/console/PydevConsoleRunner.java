@@ -239,13 +239,22 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   }
 
   public static Map<String, String> addDefaultEnvironments(Sdk sdk, Map<String, String> envs, @NotNull Project project) {
-    Charset defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-
-    final String encoding = defaultCharset.name();
-    setPythonIOEncoding(setPythonUnbuffered(envs), encoding);
+    setCorrectStdOutEncoding(envs, project);
 
     PythonSdkFlavor.initPythonPath(envs, true, PythonCommandLineState.getAddedPaths(sdk));
     return envs;
+  }
+
+  /**
+   * Add requered ENV var to Python task to set its stdout charset to current project charset to allow it print correctly.
+   * @param envs map of envs to add variable
+   * @param project current project
+   */
+  public static void setCorrectStdOutEncoding(@NotNull final Map<String, String> envs, @NotNull final Project project) {
+    final Charset defaultCharset = EncodingProjectManager.getInstance(project).getDefaultCharset();
+
+    final String encoding = defaultCharset.name();
+    setPythonIOEncoding(setPythonUnbuffered(envs), encoding);
   }
 
 

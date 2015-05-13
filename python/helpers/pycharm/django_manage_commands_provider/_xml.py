@@ -24,6 +24,7 @@ TODO: Since Django 1.8 we can fetch much more info from argparse like positional
 """
 from xml.dom import minidom
 from xml.dom.minidom import Element
+from utils import VersionAgnosticUtils
 
 __author__ = 'Ilya.Kazakevich'
 
@@ -91,7 +92,7 @@ class XmlDumper(object):
         :type command_args_text str
         """
         assert bool(self.__command_element), "Not in a a command"
-        self.__command_element.setAttribute("args", command_args_text)
+        self.__command_element.setAttribute("args", VersionAgnosticUtils().to_unicode(command_args_text))
 
     def add_command_option(self, long_opt_names, short_opt_names, help_text, argument_info):
         """
@@ -152,4 +153,5 @@ class XmlDumper(object):
         :return: current commands as XML as described in package
         :rtype str
         """
-        return self.__document.toprettyxml()
+        document = self.__document.toxml(encoding="utf-8")
+        return VersionAgnosticUtils().to_unicode(document.decode("utf-8") if isinstance(document, bytes) else document)
