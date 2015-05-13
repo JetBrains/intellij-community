@@ -102,7 +102,7 @@ public class PushLog extends JPanel implements DataProvider {
         if (node instanceof TooltipNode) {
           return KeymapUtil.createTooltipText(
             ((TooltipNode)node).getTooltip() +
-            "<p style='font-style:italic;color:gray;'>QuickDoc available", quickDocAction) + "</p>";
+            "<p style='font-style:italic;color:gray;'>Show commit details", quickDocAction) + "</p>";
         }
         return "";
       }
@@ -209,7 +209,6 @@ public class PushLog extends JPanel implements DataProvider {
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     //override default tree behaviour.
     myTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "");
-    //String name="push.show.commit.details";
     MyShowCommitInfoAction showCommitInfoAction = new MyShowCommitInfoAction();
     showCommitInfoAction.registerCustomShortcutSet(quickDocAction.getShortcutSet(), myTree);
 

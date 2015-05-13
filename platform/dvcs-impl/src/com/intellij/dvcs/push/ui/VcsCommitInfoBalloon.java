@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -46,7 +45,8 @@ public class VcsCommitInfoBalloon {
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "");
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
-    myEditorPane.setBorder(new EmptyBorder(2, 4, 2, 4));
+    myEditorPane.setFont(UIUtil.getToolTipFont());
+    myEditorPane.setBorder(HintUtil.createHintBorder());
     myEditorPane.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
