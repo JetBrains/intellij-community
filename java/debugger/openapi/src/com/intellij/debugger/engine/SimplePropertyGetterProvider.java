@@ -16,15 +16,11 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Nikolay.Tropin
- * @deprecated Use {@link SimplePropertyGetterProvider} instead
- */
-@Deprecated
-public interface SimpleGetterProvider {
-  ExtensionPointName<SimpleGetterProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.simpleGetterProvider");
+public interface SimplePropertyGetterProvider {
+  ExtensionPointName<SimplePropertyGetterProvider> EP_NAME = ExtensionPointName.create("com.intellij.debugger.simplePropertyGetterProvider");
 
-  boolean isSimpleGetter(PsiMethod method);
+  boolean isInsideSimpleGetter(@NotNull PsiElement element);
 }
