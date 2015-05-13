@@ -30,7 +30,6 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.formatter.PyCodeStyleSettings.DictAlignment;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +38,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
+import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
 
 /**
  * @author yole
@@ -344,7 +346,7 @@ public class PyBlock implements ASTBlock {
       childIndent = Indent.getNormalIndent();
     }
 
-    if (settings.DICT_ALIGNMENT == DictAlignment.ON_VALUE.ordinal()) {
+    if (settings.DICT_ALIGNMENT == DICT_ALIGNMENT_ON_VALUE) {
       if (isDictLiteralPropertyValue(child) && !ourListElementTypes.contains(childType)) {
         childAlignment = myParent.myDictAlignment;
       }
@@ -354,7 +356,7 @@ public class PyBlock implements ASTBlock {
         childAlignment = myParent.myParent.myDictAlignment;
       }
     }
-    else if (myContext.getPySettings().DICT_ALIGNMENT == DictAlignment.ON_COLON.ordinal()) {
+    else if (myContext.getPySettings().DICT_ALIGNMENT == DICT_ALIGNMENT_ON_COLON) {
       if (isInsideDictLiteralKeyValue(child) && childType == PyTokenTypes.COLON) {
         childAlignment = myParent.myDictAlignment;
       }

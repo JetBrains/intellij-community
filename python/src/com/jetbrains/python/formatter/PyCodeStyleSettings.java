@@ -34,6 +34,10 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
       this.description = description;
     }
 
+    public int asInt() {
+      return ordinal();
+    }
+
     @Override
     public String toString() {
       return description;
@@ -41,9 +45,9 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   }
 
   // Unfortunately, the old serializer for code style settings can't handle enums
-  public static final int KEY_VALUE_DO_NOT_ALIGN = DictAlignment.NONE.ordinal();
-  public static final int KEY_VALUE_ALIGN_ON_VALUE = DictAlignment.ON_VALUE.ordinal();
-  public static final int KEY_VALUE_ALIGN_ON_COLON = DictAlignment.ON_COLON.ordinal();
+  public static final int DICT_ALIGNMENT_NONE = DictAlignment.NONE.asInt();
+  public static final int DICT_ALIGNMENT_ON_VALUE = DictAlignment.ON_VALUE.asInt();
+  public static final int DICT_ALIGNMENT_ON_COLON = DictAlignment.ON_COLON.asInt();
 
   public boolean SPACE_WITHIN_BRACES = false;
   public boolean SPACE_BEFORE_PY_COLON = false;
@@ -55,7 +59,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public int BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS = 2;
   // TODO make boolean (it needs special editor in BlankLinesPanel)
-  public int BLANKS_LINES_AT_FILE_END = 1;
+  public boolean BLANK_LINE_AT_FILE_END = true;
 
   public boolean ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
   public boolean ALIGN_MULTILINE_IMPORTS = true;
@@ -66,7 +70,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_AFTER_NUMBER_SIGN = true;
   public boolean SPACE_BEFORE_NUMBER_SIGN = true;
 
-  public int DICT_ALIGNMENT = KEY_VALUE_DO_NOT_ALIGN;
+  public int DICT_ALIGNMENT = DICT_ALIGNMENT_NONE;
 
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);

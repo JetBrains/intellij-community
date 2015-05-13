@@ -88,7 +88,6 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
       consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS",
                                 "Around top-level classes and functions:",
                                 BLANK_LINES);
-      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANKS_LINES_AT_FILE_END", "Blank lines at the end of file", BLANK_LINES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",

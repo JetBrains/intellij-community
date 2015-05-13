@@ -45,7 +45,7 @@
               <text value="Dict alignment:"/>
             </properties>
           </component>
-          <component id="b4945" class="com.intellij.ui.components.JBCheckBox" binding="myAddTrailingLineFeedCheckbox" default-binding="true">
+          <component id="b4945" class="com.intellij.ui.components.JBCheckBox" binding="myAddTrailingBlankLineCheckbox" default-binding="true">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
