@@ -153,6 +153,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     if (content instanceof DirectoryContent) return true;
     if (content instanceof FileContent &&
         content.getContentType() instanceof ArchiveFileType &&
+        ((FileContent)content).getFile().isValid() &&
         ((FileContent)content).getFile().isInLocalFileSystem()) {
       return true;
     }

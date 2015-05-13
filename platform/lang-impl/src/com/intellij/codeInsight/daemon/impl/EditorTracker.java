@@ -54,7 +54,7 @@ public class EditorTracker extends AbstractProjectComponent {
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
   private final Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
   private final Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
-  private List<Editor> myActiveEditors = Collections.emptyList();
+  private List<Editor> myActiveEditors = Collections.emptyList(); // accessed in EDT only
 
   private final EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
 
@@ -186,7 +186,8 @@ public class EditorTracker extends AbstractProjectComponent {
   }
 
   @NotNull
-  public List<Editor> getActiveEditors() {
+  List<Editor> getActiveEditors() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myActiveEditors;
   }
 
@@ -210,6 +211,7 @@ public class EditorTracker extends AbstractProjectComponent {
   }
 
   void setActiveEditors(@NotNull List<Editor> editors) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myActiveEditors = editors;
 
     if (LOG.isDebugEnabled()) {

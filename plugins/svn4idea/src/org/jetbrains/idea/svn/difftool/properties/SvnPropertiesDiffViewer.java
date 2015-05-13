@@ -206,7 +206,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
       assert myEditor1 != null && myEditor2 != null;
-      Graphics2D gg = getDividerGraphics(g, divider);
+      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, getEditor1().getComponent());
       Rectangle clip = gg.getClipBounds();
       if (clip == null) return;
 

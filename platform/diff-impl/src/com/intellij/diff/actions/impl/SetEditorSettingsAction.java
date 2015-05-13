@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class SetEditorSettingsAction extends ActionGroup implements DumbAware {
+public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final TextDiffSettingsHolder.TextDiffSettings myTextSettings;
   @NotNull private final List<? extends Editor> myEditors;
 
@@ -125,7 +125,7 @@ public abstract class SetEditorSettingsAction extends ActionGroup implements Dum
         @Override
         public void applyDefaults(@NotNull List<? extends Editor> editors) {
           for (Editor editor : editors) {
-            if (editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS) != null) myForcedSoftWrap = true;
+            if (editor != null && editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS) != null) myForcedSoftWrap = true;
           }
           super.applyDefaults(editors);
         }
@@ -157,8 +157,9 @@ public abstract class SetEditorSettingsAction extends ActionGroup implements Dum
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
+      setSelected(state);
       for (Editor editor : myEditors) {
-        setSelected(state);
+        if (editor == null) continue;
         apply(editor, state);
       }
     }
@@ -171,6 +172,7 @@ public abstract class SetEditorSettingsAction extends ActionGroup implements Dum
 
     public void applyDefaults(@NotNull List<? extends Editor> editors) {
       for (Editor editor : editors) {
+        if (editor == null) continue;
         apply(editor, isSelected());
       }
     }
