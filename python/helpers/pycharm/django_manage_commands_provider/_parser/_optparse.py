@@ -3,7 +3,7 @@
 Fetches arguments from optparse-based Django (< 1.8)
 """
 __author__ = 'Ilya.Kazakevich'
-from _parser import _utils
+from django_manage_commands_provider._parser import _utils
 
 
 # noinspection PyUnusedLocal

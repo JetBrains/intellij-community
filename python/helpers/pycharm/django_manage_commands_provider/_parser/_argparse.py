@@ -4,7 +4,7 @@ Fetches arguments from argparse-based Django (1.8+)
 """
 from argparse import Action, _StoreTrueAction, _StoreFalseAction
 
-from _parser import _utils
+from django_manage_commands_provider._parser import _utils
 
 
 __author__ = 'Ilya.Kazakevich'
