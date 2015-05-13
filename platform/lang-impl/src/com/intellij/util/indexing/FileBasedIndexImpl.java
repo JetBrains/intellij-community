@@ -1553,6 +1553,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       String message = "Rebuild requested for index " + indexId;
       Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() && app.isReadAccessAllowed() && !app.isDispatchThread()) {
+        // shouldn't happen in tests in general; so fail early with the exception that caused index to be rebuilt.
+        // otherwise reindexing will fail anyway later, but with a much more cryptic assertion
         LOG.error(message, throwable);
       } else {
         LOG.info(message, throwable);
