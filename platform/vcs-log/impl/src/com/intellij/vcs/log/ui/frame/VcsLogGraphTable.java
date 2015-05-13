@@ -83,7 +83,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
   @NotNull private final VcsLogUiImpl myUI;
   private final VcsLogDataHolder myLogDataHolder;
-  private final GraphCommitCellRender myGraphCommitCellRender;
   private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
   private final TableModelListener myColumnSizeInitializer = new TableModelListener() {
@@ -110,10 +109,9 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     super();
     myUI = UI;
     myLogDataHolder = logDataHolder;
-    myGraphCommitCellRender = new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, this);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
-    setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRender);
+    setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myUI.getColorManager(), logDataHolder, myGraphCellPainter, this));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
     setRowHeight(HEIGHT_CELL);
