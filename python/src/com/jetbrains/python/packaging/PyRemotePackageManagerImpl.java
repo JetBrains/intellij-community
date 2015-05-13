@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,6 +180,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
       if (manager != null) {
         try {
           manager.runVagrant(myVagrantFolder, myMachineName);
+          PythonSdkType.getInstance().setupSdkPaths(mySdk);
           clearCaches();
         }
         catch (ExecutionException e) {
