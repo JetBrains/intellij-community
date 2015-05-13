@@ -31,10 +31,9 @@ import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
-import org.testng.IDEATestNGRemoteListener;
 
 public abstract class TestNGConfigurationProducer extends JavaRunConfigurationProducerBase<TestNGConfiguration> implements Cloneable {
 
@@ -71,13 +70,6 @@ public abstract class TestNGConfigurationProducer extends JavaRunConfigurationPr
   }
   
   public static String getInvocationNumber(String str) {
-    final int indexOf = str.indexOf(IDEATestNGRemoteListener.INVOCATION_NUMBER);
-    if (indexOf > 0) {
-      final int lastIdx = str.indexOf(")", indexOf);
-      if (lastIdx > 0) {
-        return str.substring(indexOf + IDEATestNGRemoteListener.INVOCATION_NUMBER.length(), lastIdx);
-      }
-    }
-    return null;
+    return StringUtil.trimEnd(StringUtil.trimStart(str, "["), "]");
   }
 }

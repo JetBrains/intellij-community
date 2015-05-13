@@ -88,7 +88,7 @@ public class TestNGTestClass extends TestNGTestObject {
   public boolean isConfiguredByElement(PsiElement element) {
     element = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
     if (element instanceof PsiClass) {
-      return Comparing.strEqual(myConfig.getPersistantData().getMethodName(), JavaExecutionUtil.getRuntimeQualifiedName((PsiClass) element));
+      return Comparing.strEqual(myConfig.getPersistantData().getMainClassName(), JavaExecutionUtil.getRuntimeQualifiedName((PsiClass) element));
     }
     return false;
   }

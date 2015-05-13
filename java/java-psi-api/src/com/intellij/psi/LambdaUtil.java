@@ -424,6 +424,12 @@ public class LambdaUtil {
     return typeByExpression instanceof PsiMethodReferenceType || typeByExpression instanceof PsiLambdaExpressionType || typeByExpression instanceof PsiLambdaParameterType;
   }
 
+  public static boolean isLambdaReturnExpression(PsiElement element) {
+    final PsiElement parent = element.getParent();
+    return parent instanceof PsiLambdaExpression ||
+           parent instanceof PsiReturnStatement && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class) != null;
+  }
+  
   public static PsiReturnStatement[] getReturnStatements(PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
     return body instanceof PsiCodeBlock ? PsiUtil.findReturnStatements((PsiCodeBlock)body) : PsiReturnStatement.EMPTY_ARRAY;

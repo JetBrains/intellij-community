@@ -32,12 +32,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
@@ -367,9 +369,9 @@ public class IdeEventQueue extends EventQueue {
       return;
     }
 
-    fixNonEnglishKeyboardLayouts(e);
-
     e = InertialMouseRouter.changeSourceIfNeeded(e);
+
+    e = fixNonEnglishKeyboardLayouts(e);
 
     e = mapEvent(e);
 
@@ -404,18 +406,101 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private static void fixNonEnglishKeyboardLayouts(AWTEvent e) {
-    if (!Registry.is("ide.non.english.keyboard.layout.fix")) return;
+  private static int ctrlIsPressedCount = 0;
+  private static boolean leftAltIsPressed = false;
+  //private static boolean altGrIsPressed = false;
+
+  private static AWTEvent fixNonEnglishKeyboardLayouts(AWTEvent e) {
+    if (!Registry.is("ide.non.english.keyboard.layout.fix")) return e;
+
     if (e instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)e;
+
+      // Alt,keyChar=Undefined keyChar,modifiers=Ctrl+Alt,extModifiers=Ctrl+Alt+Button5,keyLocation=KEY_LOCATION_RIGHT
+
+      //if (ke.getKeyCode() == KeyEvent.VK_ALT && ke.getID() == KeyEvent.KEY_PRESSED) {
+      //
+      //    if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT) {
+      //      if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK))
+      //      {
+      //        altGrIsPressed = true;
+      //      }
+      //    }
+      //
+      //} else {
+      //      altGrIsPressed = false;
+      //}
+
+      if (ke.getID() == KeyEvent.KEY_PRESSED) {
+        switch (ke.getKeyCode()) {
+          case (KeyEvent.VK_CONTROL):
+            if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
+              ctrlIsPressedCount++;
+            }
+            break;
+          case (KeyEvent.VK_ALT):
+            if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
+              if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
+                leftAltIsPressed = true;
+              }
+            }
+            break;
+        }
+      } else if (ke.getID() == KeyEvent.KEY_RELEASED) {
+        switch (ke.getKeyCode()) {
+          case (KeyEvent.VK_CONTROL):
+            ctrlIsPressedCount--;
+            break;
+          case (KeyEvent.VK_ALT):
+            if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
+              leftAltIsPressed = false;
+            }
+            break;
+        }
+      }
+
+
+
+
       Integer keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
       if (keyCodeFromChar != null) {
         if (keyCodeFromChar != ke.getKeyCode()) {
           // non-english layout
           ke.setKeyCode(keyCodeFromChar);
         }
+
+        // Try to get it from editor
+        Component sourceComponent = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+
+        //for (int i = 0; sourceComponent == null && i < WindowManagerEx.getInstanceEx().getAllProjectFrames().length; i++) {
+        //  sourceComponent = WindowManagerEx.getInstanceEx().getAllProjectFrames()[i].getComponent();
+        //}
+
+        if (sourceComponent != null) {
+          if (sourceComponent.getInputContext().getLocale().getLanguage().equals("de")) {
+            if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != 0 /*&& ke.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT*/) {
+              // On German keyboard layout on Windows  we are getting on key press
+              // ctrl + alt instead of AltGr
+
+              int modifiers = ke.getModifiersEx() ^ InputEvent.ALT_DOWN_MASK ^ InputEvent.CTRL_DOWN_MASK;
+
+              if (ctrlIsPressedCount > 1) {
+                modifiers |= InputEvent.CTRL_DOWN_MASK;
+              }
+
+              if (leftAltIsPressed) {
+                modifiers |= InputEvent.ALT_MASK;
+              }
+
+              //noinspection MagicConstant
+              e = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), modifiers,
+                               ke.getKeyCode(), ke.getKeyChar(), ke.getKeyLocation());
+            }
+          }
+        }
       }
     }
+    return e;
   }
 
   private static AWTEvent mapEvent(AWTEvent e) {

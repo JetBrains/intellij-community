@@ -415,6 +415,9 @@ public class PsiImplUtil {
   private static PsiType doNormalizeWildcardByPosition(final PsiType type, @NotNull PsiExpression expression, final PsiExpression toplevel) {
     if (type instanceof PsiCapturedWildcardType) {
       final PsiWildcardType wildcardType = ((PsiCapturedWildcardType)type).getWildcard();
+      if (expression instanceof PsiReferenceExpression && LambdaUtil.isLambdaReturnExpression(expression)) {
+        return type;
+      }
 
       if (PsiUtil.isAccessedForWriting(toplevel)) {
         return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);

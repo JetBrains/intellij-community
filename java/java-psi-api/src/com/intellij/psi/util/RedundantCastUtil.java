@@ -330,7 +330,8 @@ public class RedundantCastUtil {
             PsiTypeCastExpression castExpression = (PsiTypeCastExpression) deparenthesizeExpression(newArgs[i]);
             PsiExpression castOperand = castExpression.getOperand();
             if (castOperand == null) return;
-            castExpression.replace(castOperand);
+            final PsiMethod oldFunctionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(castOperand);
+            newArgs[i] = (PsiExpression)castExpression.replace(castOperand);
             if (newCall instanceof PsiEnumConstant) {
               // do this manually, because PsiEnumConstantImpl.resolveMethodGenerics() will assert (no containing class for the copy)
               final PsiEnumConstant enumConstant = (PsiEnumConstant)expression;
@@ -344,8 +345,13 @@ public class RedundantCastUtil {
             } else {
               final JavaResolveResult newResult = newCall.resolveMethodGenerics();
               if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() &&
-                Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) {
-                addToResults(cast);
+                  Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) {
+                final PsiMethod newFunctionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(newArgs[i]);
+                if (oldFunctionalInterfaceMethod == null ||
+                    newFunctionalInterfaceMethod != null && (newFunctionalInterfaceMethod == oldFunctionalInterfaceMethod || 
+                                                             MethodSignatureUtil.isSuperMethod(newFunctionalInterfaceMethod, oldFunctionalInterfaceMethod))) {
+                  addToResults(cast);
+                }
               }
             }
           }

@@ -24,6 +24,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -163,10 +165,22 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
           if (disabled[0]) return false;
         }
         final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
-        return functionalInterfaceType != null &&
-               LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null &&
-               LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType) &&
-               LambdaUtil.isFunctionalType(functionalInterfaceType);
+        if (functionalInterfaceType != null &&
+            LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType) &&
+            LambdaUtil.isFunctionalType(functionalInterfaceType)) {
+          final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+          if (interfaceMethod != null) {
+            final PsiSubstitutor substitutor =
+              LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(functionalInterfaceType));
+            for (PsiType type : interfaceMethod.getSignature(substitutor).getParameterTypes()) {
+              if (!PsiTypesUtil.isDenotableType(type)) {
+                return false;
+              }
+            }
+            final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+            return PsiTypesUtil.isDenotableType(returnType);
+          }
+        }
       }
       return false;
     }
