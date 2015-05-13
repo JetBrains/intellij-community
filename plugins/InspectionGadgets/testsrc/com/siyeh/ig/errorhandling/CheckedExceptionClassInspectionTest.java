@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.siyeh.ig.errorhandling;
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 6:29:03 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * @author Bas Leijdekkers
  */
-package com.intellij.openapi.editor.actions;
+public class CheckedExceptionClassInspectionTest extends LightInspectionTestCase {
 
-public class CutLineEndAction extends TextComponentEditorAction {
-  public CutLineEndAction() {
-    super(new CutLineActionHandler(false, true, true));
+  public void testCheckedExceptionClass() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new CheckedExceptionClassInspection();
   }
 }

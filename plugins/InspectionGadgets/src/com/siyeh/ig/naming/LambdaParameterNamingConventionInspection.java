@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.siyeh.ig.naming;
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 14, 2002
- * Time: 6:29:03 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.RenameFix;
+
+/**
+ * @author Bas Leijdekkers
  */
-package com.intellij.openapi.editor.actions;
+public class LambdaParameterNamingConventionInspection extends LambdaParameterNamingConventionInspectionBase {
 
-public class CutLineEndAction extends TextComponentEditorAction {
-  public CutLineEndAction() {
-    super(new CutLineActionHandler(false, true, true));
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new RenameFix();
   }
 }

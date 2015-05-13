@@ -29,17 +29,16 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
@@ -411,7 +410,7 @@ public class IdeEventQueue extends EventQueue {
   //private static boolean altGrIsPressed = false;
 
   private static AWTEvent fixNonEnglishKeyboardLayouts(AWTEvent e) {
-    if (!Registry.is("ide.non.english.keyboard.layout.fix")) return e;
+    if (!KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled()) return e;
 
     if (e instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)e;

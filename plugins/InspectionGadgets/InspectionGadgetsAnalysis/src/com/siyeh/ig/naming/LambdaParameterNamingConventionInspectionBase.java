@@ -20,21 +20,24 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class ParameterNamingConventionInspectionBase extends ConventionInspection {
+/**
+ * @author Bas Leijdekkers
+ */
+public class LambdaParameterNamingConventionInspectionBase extends ConventionInspection {
+
   private static final int DEFAULT_MIN_LENGTH = 1;
   private static final int DEFAULT_MAX_LENGTH = 20;
 
   @Override
   @NotNull
   public String getID() {
-    return "MethodParameterNamingConvention";
+    return "LambdaParameterNamingConvention";
   }
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "parameter.naming.convention.display.name");
+    return InspectionGadgetsBundle.message("lambda.parameter.naming.convention.display.name");
   }
 
   @Override
@@ -45,19 +48,15 @@ public class ParameterNamingConventionInspectionBase extends ConventionInspectio
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final String parametername = (String)infos[0];
-    if (parametername.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "parameter.naming.convention.problem.descriptor.short");
+    final String parameterName = (String)infos[0];
+    if (parameterName.length() < getMinLength()) {
+      return InspectionGadgetsBundle.message("lambda.parameter.naming.convention.problem.descriptor.short");
     }
-    else if (parametername.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "parameter.naming.convention.problem.descriptor.long");
+    else if (parameterName.length() > getMaxLength()) {
+      return InspectionGadgetsBundle.message("lambda.parameter.naming.convention.problem.descriptor.long");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "parameter.naming.convention.problem.descriptor.regex.mismatch",
-        getRegex());
+      return InspectionGadgetsBundle.message("lambda.parameter.naming.convention.problem.descriptor.regex.mismatch", getRegex());
     }
   }
 
@@ -86,9 +85,7 @@ public class ParameterNamingConventionInspectionBase extends ConventionInspectio
     @Override
     public void visitParameter(@NotNull PsiParameter variable) {
       final PsiElement scope = variable.getDeclarationScope();
-      if (scope instanceof PsiCatchSection ||
-          scope instanceof PsiForeachStatement ||
-          scope instanceof PsiLambdaExpression) {
+      if (!(scope instanceof PsiLambdaExpression)) {
         return;
       }
       final String name = variable.getName();

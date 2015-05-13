@@ -22,6 +22,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
@@ -668,6 +669,12 @@ interface TxANotAnno {}
     myFixture.completeBasic()
 
     assertPreferredItems 0, 'get'
+  }
+
+  public void testLiveTemplateOrdering() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    checkPreferredItems(0, 'return')
+    assert lookup.items[-1].lookupString == 'ritar'
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,45 +16,58 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class CheckedExceptionClassInspection extends BaseInspection {
+/**
+ * @author Bas Leijdekkers
+ */
+public class ExtendsThrowableInspection extends BaseInspection {
 
-  @Override
+  @Nls
   @NotNull
+  @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "checked.exception.class.display.name");
+    return InspectionGadgetsBundle.message("extends.throwable.display.name");
   }
 
-  @Override
   @NotNull
+  @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "checked.exception.class.problem.descriptor");
+    final PsiClass aClass = (PsiClass)infos[0];
+    if (aClass instanceof PsiAnonymousClass) {
+      return InspectionGadgetsBundle.message("anonymous.extends.throwable.problem.descriptor");
+    } else {
+      return InspectionGadgetsBundle.message("extends.throwable.problem.descriptor");
+    }
   }
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new CheckedExceptionClassVisitor();
+    return new ExtendsThrowableVisitor();
   }
 
-  private static class CheckedExceptionClassVisitor extends BaseInspectionVisitor {
+  private static class ExtendsThrowableVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_EXCEPTION)) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
         return;
       }
-      if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
+      final PsiClass superClass = aClass.getSuperClass();
+      if (superClass == null) {
         return;
       }
-      registerClassError(aClass);
+      final String superclassName = superClass.getQualifiedName();
+      if (!CommonClassNames.JAVA_LANG_THROWABLE.equals(superclassName)) {
+        return;
+      }
+      registerClassError(aClass, aClass);
     }
   }
 }

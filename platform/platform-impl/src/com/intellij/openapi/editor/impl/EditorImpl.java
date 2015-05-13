@@ -875,6 +875,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private static boolean firstCharTyped = true;
+
   private void initComponent() {
     myPanel.setLayout(new BorderLayout());
 
@@ -931,6 +933,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myEditorComponent.addKeyListener(new KeyListener() {
       @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() >= KeyEvent.VK_A && e.getKeyCode() <= KeyEvent.VK_Z) {
+          myCharKeyPressed = true;
+        }
+        KeyboardInternationalizationNotificationManager.showNotification();
+      }
+
+      @Override
       public void keyTyped(@NotNull KeyEvent event) {
         myNeedToSelectPreviousChar = false;
         if (event.isConsumed()) {
@@ -938,13 +948,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         if (processKeyTyped(event)) {
           event.consume();
-        }
-      }
-
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() >= KeyEvent.VK_A && e.getKeyCode() <= KeyEvent.VK_Z) {
-          myCharKeyPressed = true;
         }
       }
 

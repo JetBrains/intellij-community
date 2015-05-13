@@ -860,6 +860,9 @@
                      level="WARNING" implementationClass="com.siyeh.ig.encapsulation.UseOfAnotherObjectsPrivateFieldInspection"/>
 
     <!--group.names.error.handling-->
+    <localInspection groupPath="Java" language="JAVA" shortName="ExtendsThrowable" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="extends.throwable.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling"
+                     enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.errorhandling.ExtendsThrowableInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ProhibitedExceptionCaught" shortName="BadExceptionCaught" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="bad.exception.caught.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling"
                      enabledByDefault="false" level="WARNING"

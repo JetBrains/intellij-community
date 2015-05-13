@@ -25,18 +25,25 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -60,6 +67,7 @@ import java.util.Properties;
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator;
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Vladislav.Soroka
@@ -77,20 +85,58 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @org.junit.runners.Parameterized.Parameter(0)
   public String gradleVersion;
   private GradleProjectSettings myProjectSettings;
+  private String myGradleJdkName;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
+    final String jdkHome = getJdkHome();
+    if (jdkHome != null) {
+      myGradleJdkName = "Gradle JDK";
+      assertNull("JDK " + myGradleJdkName + " already exists", ProjectJdkTable.getInstance().findJdk(myGradleJdkName));
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(jdkHome));
+          Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, myGradleJdkName);
+          assertNotNull("Cannot create JDK for " + jdkHome, jdk);
+          SdkConfigurationUtil.addSdk(jdk);
+        }
+      }.execute();
+    }
     myProjectSettings = new GradleProjectSettings();
     GradleSettings.getInstance(myProject).setGradleVmOptions("-Xmx64m -XX:MaxPermSize=64m");
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
     configureWrapper();
   }
 
+  @Nullable
+  public static String getJdkHome() {
+    String javaHome = SystemProperties.getJavaHome();
+    List<String> paths =
+      ContainerUtil.packNullables(javaHome, new File(javaHome).getParent(), System.getenv("JDK_16_x64"), System.getenv("JDK_16"));
+    for (String path : paths) {
+      if (JdkUtil.checkForJdk(new File(path))) {
+        return path;
+      }
+    }
+    assumeTrue("Cannot find JDK, checked paths: " + paths, false);
+    return null;
+  }
+
   @Override
   public void tearDown() throws Exception {
     try {
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          Sdk old = ProjectJdkTable.getInstance().findJdk(myGradleJdkName);
+          if (old != null) {
+            SdkConfigurationUtil.removeSdk(old);
+          }
+        }
+      }.execute();
       Messages.setTestDialog(TestDialog.DEFAULT);
       FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
     }
@@ -136,7 +182,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       public void onProjectsLinked(@NotNull Collection settings) {
         final Object item = ContainerUtil.getFirstItem(settings);
         if (item instanceof GradleProjectSettings) {
-          ((GradleProjectSettings)item).setGradleJvm(null);
+          ((GradleProjectSettings)item).setGradleJvm(myGradleJdkName);
         }
       }
     });
