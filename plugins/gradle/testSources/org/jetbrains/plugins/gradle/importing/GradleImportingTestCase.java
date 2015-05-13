@@ -112,7 +112,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Nullable
-  private static String getJdkHome() {
+  public static String getJdkHome() {
     String javaHome = SystemProperties.getJavaHome();
     List<String> paths =
       ContainerUtil.packNullables(javaHome, new File(javaHome).getParent(), System.getenv("JDK_16_x64"), System.getenv("JDK_16"));
