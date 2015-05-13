@@ -135,6 +135,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
   public void updateDataPack(@NotNull VisiblePack dataPack) {
     myFilterUi.updateDataPack(dataPack);
     myDetailsPanel.updateDataPack(dataPack);
+    myGraphTable.updateDataPack(dataPack);
   }
 
   private void updateWhenDetailsAreLoaded(final CommitSelectionListener selectionChangeListener) {
