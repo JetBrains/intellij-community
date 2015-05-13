@@ -370,12 +370,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
         
-        if (renderersChanged) {
+        if (myUseNewRendering && renderersChanged) {
           updateGutterSize();
         }
         
         boolean errorStripeNeedsRepaint = renderersChanged || highlighter.getErrorStripeMarkColor() != null;
-        if (myDocumentChangeInProgress) {
+        if (myUseNewRendering && myDocumentChangeInProgress) {
           // postpone repaint request, as folding model can be in inconsistent state and so coordinate 
           // conversions might give incorrect results
           myErrorStripeNeedsRepaint |= errorStripeNeedsRepaint;
@@ -400,6 +400,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
         if (errorStripeNeedsRepaint) {
           ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
+        }
+
+        if (!myUseNewRendering && renderersChanged) {
+          updateGutterSize();
         }
 
         updateCaretCursor();
