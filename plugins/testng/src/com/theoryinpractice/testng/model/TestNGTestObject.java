@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
+import com.intellij.util.ArrayUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
@@ -100,6 +101,9 @@ public abstract class TestNGTestObject {
               JavaPsiFacade.getInstance(project).findClass(TestNGUtil.TEST_ANNOTATION_FQN, GlobalSearchScope.allScope(project));
             LOG.assertTrue(testAnnotation != null);
             for (PsiMember psiMember : AnnotatedMembersSearch.search(testAnnotation, getSearchScope())) {
+              final PsiClass containingClass = psiMember.getContainingClass();
+              if (containingClass == null) continue;
+              if (ArrayUtil.find(classes, containingClass) < 0) continue;
               final PsiAnnotation annotation = AnnotationUtil.findAnnotation(psiMember, TestNGUtil.TEST_ANNOTATION_FQN);
               if (TestNGUtil.isAnnotatedWithParameter(annotation, "groups", groupDependencies)) {
                 if (appendMember(psiMember, alreadyMarkedToBeChecked, results)) {

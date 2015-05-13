@@ -38,7 +38,7 @@ enum Operation {
   <error descr="'valueOf(String)' is already defined in 'Operation'">void valueOf(String s)</error> {}
 }
 
-class exte extends <error descr="Cannot inherit from final 'Operation'">Operation</error> {
+<error descr="There is no default constructor available in 'Operation'">class exte extends <error descr="Cannot inherit from final 'Operation'">Operation</error></error> {
 }
 
 class use {

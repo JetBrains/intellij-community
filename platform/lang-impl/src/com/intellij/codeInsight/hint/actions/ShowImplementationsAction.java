@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -142,9 +142,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     PsiReference ref = null;
     if (editor != null) {
-      ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
       if (element == null && ref != null) {
-        element = TargetElementUtilBase.getInstance().adjustReference(ref);
+        element = TargetElementUtil.getInstance().adjustReference(ref);
       }
     }
 
@@ -187,9 +187,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   protected static PsiElement getElement(Project project, PsiFile file, Editor editor, PsiElement element) {
     if (element == null && editor != null) {
-      element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getAllAccepted());
+      element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().getAllAccepted());
       final PsiElement adjustedElement =
-        TargetElementUtilBase.getInstance().adjustElement(editor, TargetElementUtilBase.getInstance().getAllAccepted(), element, null);
+        TargetElementUtil.getInstance().adjustElement(editor, TargetElementUtil.getInstance().getAllAccepted(), element, null);
       if (adjustedElement != null) {
         element = adjustedElement;
       }

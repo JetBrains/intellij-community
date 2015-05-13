@@ -49,12 +49,12 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
   protected abstract Self newInstance(Meta<T> meta);
 
   @NotNull
-  public final FluentIterable<T> rawIterable() {
+  public final JBIterable<T> rawIterable() {
     return rawIterableImpl().filter(newResultFilter());
   }
 
   @NotNull
-  protected FluentIterable<T> rawIterableImpl() {
+  protected JBIterable<T> rawIterableImpl() {
     return preOrderTraversal(getRoots());
   }
 
@@ -100,11 +100,11 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
 
   @NotNull
   @Override
-  public FluentIterable<T> children(@NotNull T node) {
+  public JBIterable<T> children(@NotNull T node) {
     if (!myMeta.expandFilter.value(node) && !Conditions.oneOf(myMeta.roots).value(node)) {
-      return FluentIterable.from(Collections.<T>emptyList());
+      return JBIterable.from(Collections.<T>emptyList());
     }
-    return FluentIterable.from(childrenImpl(node)).filter(Conditions.not(myMeta.excludeFilter));
+    return JBIterable.from(childrenImpl(node)).filter(Conditions.not(myMeta.excludeFilter));
   }
 
   protected abstract Iterable<? extends T> childrenImpl(T node);

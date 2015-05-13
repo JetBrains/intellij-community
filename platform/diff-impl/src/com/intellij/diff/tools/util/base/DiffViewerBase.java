@@ -147,13 +147,17 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     return myRequest;
   }
 
+  public boolean isDisposed() {
+    return myDisposed.get();
+  }
+
   //
   // Abstract
   //
 
   @CalledInAwt
   protected boolean tryRediffSynchronously() {
-    return true;
+    return myContext.isWindowFocused();
   }
 
   @Nullable

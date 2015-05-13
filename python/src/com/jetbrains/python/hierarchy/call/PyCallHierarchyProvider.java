@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.hierarchy.call;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.HierarchyProvider;
@@ -50,9 +50,9 @@ public class PyCallHierarchyProvider implements HierarchyProvider {
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         if (file == null) return null;
 
-        element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
-                                                                  TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
-                                                                  TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED);
+        element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+                                                              TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+                                                              TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
         if (element instanceof PyFunction || element instanceof PyClass || element instanceof PyFile) {
           return element;
         }

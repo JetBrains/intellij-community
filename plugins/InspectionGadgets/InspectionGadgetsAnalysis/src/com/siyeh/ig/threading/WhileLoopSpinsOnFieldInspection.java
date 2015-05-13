@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,10 +74,26 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       if (field == null) {
         return;
       }
-      if (body != null && VariableAccessUtils.variableIsAssigned(field, body)) {
+      if (body != null && (VariableAccessUtils.variableIsAssigned(field, body) ||
+                           containsWaitCall(body))) {
         return;
       }
       registerStatementError(statement);
+    }
+
+    private boolean containsWaitCall(PsiElement element) {
+      final boolean[] result = new boolean[1];
+      element.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          super.visitMethodCallExpression(expression);
+          if (ThreadingUtils.isWaitCall(expression)) {
+            result[0] = true;
+            stopWalking();
+          }
+        }
+      });
+      return result[0];
     }
 
     @Nullable

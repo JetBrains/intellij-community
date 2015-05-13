@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   private final PsiManager myManager;
-  protected long myLastPsiTimeStamp = -1;
+  protected volatile long myLastPsiTimeStamp = -1;
 
   public PsiCachedValue(@NotNull PsiManager manager) {
     myManager = manager;

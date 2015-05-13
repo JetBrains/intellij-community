@@ -77,6 +77,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<SimpleDiffChange>();
 
   @Nullable private final MyFoldingModel myFoldingModel;
+  @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
   @NotNull private final ModifierProvider myModifierProvider;
 
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
@@ -158,9 +159,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
+  protected void processContextHints() {
+    super.processContextHints();
+    myInitialScrollHelper.processContext(myRequest);
+  }
+
+  @Override
   protected void updateContextHints() {
-    super.updateContextHints();
     if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+    myInitialScrollHelper.updateContext(myRequest);
+    super.updateContextHints();
   }
 
   //
@@ -171,6 +179,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected void onSlowRediff() {
     super.onSlowRediff();
     myStatusPanel.setBusy(true);
+    myInitialScrollHelper.onSlowRediff();
   }
 
   @Override
@@ -241,7 +250,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addTooBigContentNotification();
+          myPanel.addNotification(DiffNotifications.DIFF_TOO_BIG);
         }
       };
     }
@@ -250,7 +259,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addOperationCanceledNotification();
+          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
         }
       };
     }
@@ -260,7 +269,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addDiffErrorNotification();
+          myPanel.addNotification(DiffNotifications.ERROR);
         }
       };
     }
@@ -277,7 +286,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
-        if (data.isEqualContent()) myPanel.addContentsEqualNotification();
+        if (data.isEqualContent()) myPanel.addNotification(DiffNotifications.EQUAL_CONTENTS);
 
         if (data.getFragments() != null) {
           for (LineFragment fragment : data.getFragments()) {
@@ -290,7 +299,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
           myFoldingModel.install(data.getFragments(), myRequest, getFoldingModelSettings());
         }
 
-        scrollOnRediff();
+        myInitialScrollHelper.onRediff();
 
         myContentPanel.repaintDivider();
         myStatusPanel.update();
@@ -386,7 +395,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @CalledInAwt
-  @Override
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     if (myDiffChanges.isEmpty()) return false;
     if (myEditor1 == null || myEditor2 == null) return true;
@@ -423,7 +431,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     mySyncScrollSupport.makeVisible(getCurrentSide(), line1, endLine1, line2, endLine2, animated);
   }
 
-  @Override
   protected boolean doScrollToContext(@NotNull DiffNavigationContext context) {
     if (myEditor2 == null) return false;
 
@@ -697,7 +704,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
-        change.replaceChange(side);
+        replaceChange(change, side);
       }
     }
   }
@@ -716,7 +723,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
-        change.appendChange(side);
+        appendChange(change, side);
       }
     }
   }
@@ -735,9 +742,46 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     protected void apply(@NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
       for (SimpleDiffChange change : changes) {
-        change.replaceChange(side.other());
+        replaceChange(change, side.other());
       }
     }
+  }
+
+  @CalledWithWriteLock
+  public void replaceChange(@NotNull SimpleDiffChange change, @NotNull final Side sourceSide) {
+    assert myEditor1 != null && myEditor2 != null;
+
+    if (!change.isValid()) return;
+
+    final Document document1 = myEditor1.getDocument();
+    final Document document2 = myEditor2.getDocument();
+
+    DiffUtil.applyModification(sourceSide.other().select(document1, document2),
+                               change.getStartLine(sourceSide.other()), change.getEndLine(sourceSide.other()),
+                               sourceSide.select(document1, document2),
+                               change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+
+    change.destroyHighlighter();
+    myDiffChanges.remove(change);
+  }
+
+  @CalledWithWriteLock
+  public void appendChange(@NotNull SimpleDiffChange change, @NotNull final Side sourceSide) {
+    assert myEditor1 != null && myEditor2 != null;
+
+    if (!change.isValid()) return;
+    if (change.getStartLine(sourceSide) == change.getEndLine(sourceSide)) return;
+
+    final Document document1 = myEditor1.getDocument();
+    final Document document2 = myEditor2.getDocument();
+
+    DiffUtil.applyModification(sourceSide.other().select(document1, document2),
+                               change.getEndLine(sourceSide.other()), change.getEndLine(sourceSide.other()),
+                               sourceSide.select(document1, document2),
+                               change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+
+    change.destroyHighlighter();
+    myDiffChanges.remove(change);
   }
 
   private class MyToggleExpandByDefaultAction extends ToggleExpandByDefaultAction {
@@ -874,7 +918,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
       if (myEditor1 == null || myEditor2 == null) return;
-      Graphics2D gg = getDividerGraphics(g, divider);
+      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, myEditor1.getComponent());
 
       gg.setColor(DiffDrawUtil.getDividerColor(myEditor1));
       gg.fill(gg.getClipBounds());
@@ -1048,6 +1092,28 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider) {
       myPaintable.paintOnDivider(gg, divider);
+    }
+  }
+
+  private class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
+    @Override
+    protected boolean doScrollToChange() {
+      if (myScrollToChange == null) return false;
+      SimpleDiffViewer.this.doScrollToChange(myScrollToChange);
+      return true;
+    }
+
+    @Override
+    protected boolean doScrollToFirstChange() {
+      SimpleDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
+      return true;
+    }
+
+    @Override
+    protected boolean doScrollToContext() {
+      if (myNavigationContext == null) return false;
+      SimpleDiffViewer.this.doScrollToContext(myNavigationContext);
+      return true;
     }
   }
 }

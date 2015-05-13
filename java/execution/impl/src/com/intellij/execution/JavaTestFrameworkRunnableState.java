@@ -109,7 +109,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
       return null;
     }
     getJavaParameters().getVMParametersList().addProperty("idea." + getFrameworkId() + ".sm_runner");
-    getJavaParameters().getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
+    getJavaParameters().getClassPath().addFirst(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
 
     final RunnerSettings runnerSettings = getRunnerSettings();
 
@@ -191,8 +191,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     finally {
       getConfiguration().setProgramParameters(parameters);
     }
-    JavaSdkUtil.addRtJar(javaParameters.getClassPath());
-
+    javaParameters.getClassPath().addFirst(JavaSdkUtil.getIdeaRtJarPath());
     configureClasspath(javaParameters);
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {

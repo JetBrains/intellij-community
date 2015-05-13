@@ -40,10 +40,10 @@ public class XmlTargetElementEvaluator extends TargetElementEvaluatorEx2 {
     if (parent instanceof XmlText || parent instanceof XmlAttributeValue) {
       final PsiElement gParent = parent.getParent();
       if (gParent == null) return null;
-      return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, gParent.getTextRange().getStartOffset() + 1);
+      return TargetElementUtil.getInstance().findTargetElement(editor, flags, gParent.getTextRange().getStartOffset() + 1);
     }
     else if (parent instanceof XmlTag || parent instanceof XmlAttribute) {
-      return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, parent.getTextRange().getStartOffset() + 1);
+      return TargetElementUtil.getInstance().findTargetElement(editor, flags, parent.getTextRange().getStartOffset() + 1);
     }
     return null;
   }

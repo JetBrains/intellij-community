@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.psi.*;
@@ -57,7 +57,7 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
       GotoDeclarationAction.findAllTargetElements(getProject(), getEditor(), offset);
     assertEquals(Arrays.asList(elements).toString(), 0, elements.length);
 
-    final TargetElementUtilBase elementUtilBase = TargetElementUtilBase.getInstance();
+    final TargetElementUtil elementUtilBase = TargetElementUtil.getInstance();
     final PsiReference reference = getFile().findReferenceAt(offset);
     assertNotNull(reference);
     final Collection<PsiElement> candidates = elementUtilBase.getTargetCandidates(reference);
@@ -70,7 +70,7 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     final int offset = getEditor().getCaretModel().getOffset();
     final PsiReference reference = getFile().findReferenceAt(offset);
     assertNotNull(reference);
-    final Collection<PsiElement> candidates = TargetElementUtilBase.getInstance().getTargetCandidates(reference);
+    final Collection<PsiElement> candidates = TargetElementUtil.getInstance().getTargetCandidates(reference);
     assertEquals(candidates.toString(), 1, candidates.size());
     final PsiElement item = ContainerUtil.getFirstItem(candidates);
     assertNotNull(item);

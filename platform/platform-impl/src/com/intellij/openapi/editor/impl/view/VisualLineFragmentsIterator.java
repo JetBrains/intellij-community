@@ -271,7 +271,9 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       if (myDelegate == null) {
         LineLayout foldRegionLayout = myView.getFoldRegionLayout(myFoldRegion);
         TextAttributes attributes = myView.getEditor().getFoldingModel().getPlaceholderAttributes();
-        myView.getPainter().paintLineLayoutWithEffect(g, foldRegionLayout, x, y, attributes.getEffectColor(), attributes.getEffectType());
+        myView.getPainter().paintLineLayoutWithEffect(g, foldRegionLayout, x, y, 
+                                                      attributes == null ? null : attributes.getEffectColor(),
+                                                      attributes == null ? null : attributes.getEffectType());
       }
       else {
         int lineStartOffset = myDocument.getLineStartOffset(myCurrentStartLogicalLine);

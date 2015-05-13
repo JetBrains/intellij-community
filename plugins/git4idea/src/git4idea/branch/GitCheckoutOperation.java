@@ -52,13 +52,20 @@ class GitCheckoutOperation extends GitBranchOperation {
   public static final String ROLLBACK_PROPOSAL_FORMAT = "You may rollback (checkout back to previous branch) not to let branches diverge.";
 
   @NotNull private final String myStartPointReference;
+  private final boolean myDetach;
   @Nullable private final String myNewBranch;
 
-  GitCheckoutOperation(@NotNull Project project, GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
+  GitCheckoutOperation(@NotNull Project project,
+                       GitPlatformFacade facade,
+                       @NotNull Git git,
+                       @NotNull GitBranchUiHandler uiHandler,
                        @NotNull Collection<GitRepository> repositories,
-                       @NotNull String startPointReference, @Nullable String newBranch) {
+                       @NotNull String startPointReference,
+                       boolean detach,
+                       @Nullable String newBranch) {
     super(project, facade, git, uiHandler, repositories);
     myStartPointReference = startPointReference;
+    myDetach = detach;
     myNewBranch = newBranch;
   }
   
@@ -78,8 +85,8 @@ class GitCheckoutOperation extends GitBranchOperation {
         GitUntrackedFilesOverwrittenByOperationDetector untrackedOverwrittenByCheckout =
           new GitUntrackedFilesOverwrittenByOperationDetector(root);
 
-        GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false,
-                                               localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout);
+        GitCommandResult result = myGit.checkout(repository, myStartPointReference, myNewBranch, false, myDetach,
+                                                 localChangesDetector, unmergedFiles, untrackedOverwrittenByCheckout);
         if (result.success()) {
           refresh(repository);
           markSuccessful(repository);
@@ -171,7 +178,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     GitCompoundResult checkoutResult = new GitCompoundResult(myProject);
     GitCompoundResult deleteResult = new GitCompoundResult(myProject);
     for (GitRepository repository : getSuccessfulRepositories()) {
-      GitCommandResult result = myGit.checkout(repository, myCurrentHeads.get(repository), null, true);
+      GitCommandResult result = myGit.checkout(repository, myCurrentHeads.get(repository), null, true, false);
       checkoutResult.append(repository, result);
       if (result.success() && myNewBranch != null) {
         /*
@@ -235,7 +242,7 @@ class GitCheckoutOperation extends GitBranchOperation {
                                    @NotNull String reference, @Nullable String newBranch, boolean force) {
     GitCompoundResult compoundResult = new GitCompoundResult(myProject);
     for (GitRepository repository : repositories) {
-      compoundResult.append(repository, myGit.checkout(repository, reference, newBranch, force));
+      compoundResult.append(repository, myGit.checkout(repository, reference, newBranch, force, myDetach));
     }
     if (compoundResult.totalSuccess()) {
       return true;

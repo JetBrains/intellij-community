@@ -8,7 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.UnmodifiableIterator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteredTraverser;
-import com.intellij.util.containers.FluentIterable;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +67,7 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
   @Nullable
   public T getRawDeepestLast() {
     for (T result = getRoot(), last; result != null; result = last) {
-      FluentIterable<T> children = FluentIterable.from(children(result));
+      JBIterable<T> children = JBIterable.from(children(result));
       if (children.isEmpty()) return result;
       //noinspection AssignmentToForLoopParameter
       last = children.last();
@@ -90,7 +90,7 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
     protected Iterable<PsiElement> childrenImpl(@NotNull final PsiElement node) {
       final Ref<PsiElement> ref = Ref.create(node.getFirstChild());
       if (ref.isNull()) return Collections.emptyList();
-      return new FluentIterable<PsiElement>() {
+      return new JBIterable<PsiElement>() {
         @Override
         public Iterator<PsiElement> iterator() {
           if (ref.isNull()) return ContainerUtil.emptyIterator();
@@ -151,7 +151,7 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
     protected Iterable<ASTNode> childrenImpl(@NotNull final ASTNode node) {
       final Ref<ASTNode> ref = Ref.create(node.getFirstChildNode());
       if (ref.isNull()) return Collections.emptyList();
-      return new FluentIterable<ASTNode>() {
+      return new JBIterable<ASTNode>() {
         @Override
         public Iterator<ASTNode> iterator() {
           if (ref.isNull()) return ContainerUtil.emptyIterator();
@@ -214,7 +214,7 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
 
     @Override
     protected Iterable<T> childrenImpl(@NotNull final T node) {
-      return new FluentIterable<T>() {
+      return new JBIterable<T>() {
         @Override
         public Iterator<T> iterator() {
           Ref<T[]> ref = Ref.create();

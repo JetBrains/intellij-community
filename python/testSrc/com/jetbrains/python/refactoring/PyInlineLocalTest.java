@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
@@ -46,8 +46,8 @@ public class PyInlineLocalTest extends PyTestCase {
 
   private boolean performRefactoring(@Nullable String expectedError) {
     try {
-      final PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(),
-                                                                         TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+      final PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(),
+                                                                     TargetElementUtil.getInstance().getReferenceSearchFlags());
       final PyInlineLocalHandler handler = PyInlineLocalHandler.getInstance();
       handler.inlineElement(myFixture.getProject(), myFixture.getEditor(), element);
       if (expectedError != null) fail("expected error: '" + expectedError + "', got none");

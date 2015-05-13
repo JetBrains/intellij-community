@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestFileType;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -27,10 +26,6 @@ import static org.junit.Assert.assertArrayEquals;
  * @author max
  */
 public class FoldingTest extends AbstractEditorTest {
-  static {
-    PlatformTestCase.autodetectPlatformPrefix();
-  }
-
   private FoldingModelEx myModel;
 
   @Override

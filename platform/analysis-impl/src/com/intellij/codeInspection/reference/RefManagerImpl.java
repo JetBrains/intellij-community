@@ -71,7 +71,7 @@ public class RefManagerImpl extends RefManager {
   private final Project myProject;
   private AnalysisScope myScope;
   private RefProject myRefProject;
-  private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = ContainerUtil.newConcurrentMap();
+  private final Map<PsiAnchor, RefElement> myRefTable = new THashMap<PsiAnchor, RefElement>(); // guarded by myRefTable
 
   private final ConcurrentMap<Module, RefModule> myModules = ContainerUtil.newConcurrentMap();
   private final ProjectIterator myProjectIterator = new ProjectIterator();
@@ -129,7 +129,9 @@ public class RefManagerImpl extends RefManager {
   public void cleanup() {
     myScope = null;
     myRefProject = null;
-    myRefTable.clear();
+    synchronized (myRefTable) {
+      myRefTable.clear();
+    }
     myModules.clear();
     myContext = null;
 
@@ -335,7 +337,10 @@ public class RefManagerImpl extends RefManager {
 
   @NotNull
   public List<RefElement> getSortedElements() {
-    List<RefElement> answer = new ArrayList<RefElement>(myRefTable.values());
+    List<RefElement> answer;
+    synchronized (myRefTable) {
+      answer = new ArrayList<RefElement>(myRefTable.values());
+    }
     ContainerUtil.quickSort(answer, new Comparator<RefElement>() {
       @Override
       public int compare(RefElement o1, RefElement o2) {
@@ -362,15 +367,17 @@ public class RefManagerImpl extends RefManager {
       extension.removeReference(refElem);
     }
 
-    if (element != null && myRefTable.remove(createAnchor(element)) != null) return;
+    synchronized (myRefTable) {
+      if (element != null && myRefTable.remove(createAnchor(element)) != null) return;
 
-    //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
-    for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {
-      RefElement value = entry.getValue();
-      if (value == refElem) {
+      //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
+      for (Map.Entry<PsiAnchor, RefElement> entry : myRefTable.entrySet()) {
+        RefElement value = entry.getValue();
         PsiAnchor anchor = entry.getKey();
-        myRefTable.remove(anchor, refElem);
-        return;
+        if (value == refElem) {
+          myRefTable.remove(anchor);
+          break;
+        }
       }
     }
   }
@@ -526,25 +533,25 @@ public class RefManagerImpl extends RefManager {
                                                           @Nullable Consumer<T> whenCached) {
 
     PsiAnchor psiAnchor = createAnchor(element);
-    //noinspection unchecked
-    T result = (T)myRefTable.get(psiAnchor);
+    T result;
+    synchronized (myRefTable) {
+      //noinspection unchecked
+      result = (T)myRefTable.get(psiAnchor);
 
-    if (result != null) return result;
+      if (result != null) return result;
 
-    if (!isValidPointForReference()) {
-      //LOG.assertTrue(true, "References may become invalid after process is finished");
-      return null;
+      if (!isValidPointForReference()) {
+        //LOG.assertTrue(true, "References may become invalid after process is finished");
+        return null;
+      }
+
+      result = factory.create();
+      if (result == null) return null;
+
+      myRefTable.put(psiAnchor, result);
     }
-
-    result = factory.create();
-    if (result == null) return null;
-
-    RefElement prev = myRefTable.putIfAbsent(psiAnchor, result);
-    if (prev == null) {
-      if (whenCached != null) whenCached.consume(result);
-    }
-    else {
-      result = (T)prev;
+    if (whenCached != null) {
+      whenCached.consume(result);
     }
 
     return result;

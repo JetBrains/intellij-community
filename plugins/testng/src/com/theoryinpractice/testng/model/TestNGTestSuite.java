@@ -17,8 +17,13 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.xml.XmlFile;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.testng.xml.Parser;
 
@@ -57,5 +62,14 @@ public class TestNGTestSuite extends TestNGTestObject {
     catch (Exception e) {
       throw new RuntimeConfigurationException("Unable to parse '" + data.getSuiteName() + "' specified");
     }
+  }
+
+  @Override
+  public boolean isConfiguredByElement(PsiElement element) {
+    if (element instanceof XmlFile) {
+      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+      return virtualFile != null && Comparing.strEqual(myConfig.getPersistantData().getSuiteName(), virtualFile.getPath());
+    }
+    return false;
   }
 }

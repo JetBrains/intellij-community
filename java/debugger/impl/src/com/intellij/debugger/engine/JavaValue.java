@@ -54,6 +54,8 @@ import com.sun.jdi.ArrayType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -457,14 +459,17 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     return myValueDescriptor.canSetValue() ? new JavaValueModifier(this) : null;
   }
 
-
   private volatile String evaluationExpression = null;
-  @Nullable
+
+  @NotNull
   @Override
-  public String getEvaluationExpression() {
-    if (evaluationExpression == null) {
-      // TODO: change API to allow to calculate it asynchronously
-      myEvaluationContext.getManagerThread().invokeAndWait(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
+  public Promise<String> calculateEvaluationExpression() {
+    if (evaluationExpression != null) {
+      return Promise.resolve(evaluationExpression);
+    }
+    else {
+      final AsyncPromise<String> res = new AsyncPromise<String>();
+      myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
         @Override
         public Priority getPriority() {
           return Priority.HIGH;
@@ -487,10 +492,11 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               return null;
             }
           });
+          res.setResult(evaluationExpression);
         }
       });
+      return res;
     }
-    return evaluationExpression;
   }
 
   @Override

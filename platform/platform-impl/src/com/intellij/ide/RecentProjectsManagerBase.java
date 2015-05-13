@@ -191,8 +191,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  public static Icon getProjectIcon(String path) {
-    final File file = new File(path + "/.idea/icon.png");
+  public static Icon getProjectIcon(String path, boolean isDark) {
+    File file = isDark ? new File(path + "/.idea/icon_dark.png") : new File(path + "/.idea/icon.png");
     if (file.exists()) {
       final long timestamp = file.lastModified();
       MyIcon icon = ourProjectIcons.get(path);
@@ -200,32 +200,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         return icon.getIcon();
       }
       try {
-        final BufferedImage image = loadAndScaleImage(file);
-        Icon ico = new Icon() {
-          @Override
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (UIUtil.isRetina()) {
-              final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
-              newG.scale(0.5, 0.5);
-              newG.drawImage(image, x/2, y/2, null);
-              newG.scale(1, 1);
-              newG.dispose();
-            }
-            else {
-              g.drawImage(image, x, y, null);
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return UIUtil.isRetina() ? image.getWidth() / 2 : image.getWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return UIUtil.isRetina() ? image.getHeight() / 2 : image.getHeight();
-          }
-        };
+        Icon ico = createIcon(file);
         icon = new MyIcon(ico, timestamp);
         ourProjectIcons.put(path, icon);
         return icon.getIcon();
@@ -235,6 +210,36 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static Icon createIcon(File file) {
+    final BufferedImage image = loadAndScaleImage(file);
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        if (UIUtil.isRetina()) {
+          final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
+          newG.scale(0.5, 0.5);
+          newG.drawImage(image, x/2, y/2, null);
+          newG.scale(1, 1);
+          newG.dispose();
+        }
+        else {
+          g.drawImage(image, x, y, null);
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return UIUtil.isRetina() ? image.getWidth() / 2 : image.getWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return UIUtil.isRetina() ? image.getHeight() / 2 : image.getHeight();
+      }
+    };
   }
 
   private static BufferedImage loadAndScaleImage(File file) {
@@ -249,10 +254,19 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   public static Icon getProjectOrAppIcon(String path) {
-    final Icon icon = getProjectIcon(path);
+    Icon icon = getProjectIcon(path, UIUtil.isUnderDarcula());
     if (icon != null) {
       return icon;
     }
+
+    if (UIUtil.isUnderDarcula()) {
+      //No dark icon for this project
+      icon = getProjectIcon(path, false);
+      if (icon != null) {
+        return icon;
+      }
+    }
+
 
     return AllIcons.Nodes.IdeaProject;
   }

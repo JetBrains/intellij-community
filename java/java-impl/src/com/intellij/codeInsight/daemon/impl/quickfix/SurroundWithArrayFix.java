@@ -21,7 +21,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -74,7 +74,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
       final PsiMethod psiMethod = (PsiMethod)method;
       return checkMethod(element, psiMethod);
     } else if (myMethodCall instanceof PsiMethodCallExpression){
-      final Collection<PsiElement> psiElements = TargetElementUtilBase.getInstance()
+      final Collection<PsiElement> psiElements = TargetElementUtil.getInstance()
         .getTargetCandidates(((PsiMethodCallExpression)myMethodCall).getMethodExpression());
       for (PsiElement psiElement : psiElements) {
         if (psiElement instanceof PsiMethod) {

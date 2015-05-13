@@ -72,9 +72,9 @@ public class SubtypingConstraint implements ConstraintFormula {
       }
 
       if (tBound instanceof PsiCapturedWildcardType) {
-        tBound = ((PsiWildcardType)myT).isExtends() ? ((PsiCapturedWildcardType)tBound).getUpperBound() 
-                                                    : ((PsiCapturedWildcardType)tBound).getLowerBound();
+        tBound = ((PsiCapturedWildcardType)tBound).getUpperBound();
       }
+
       if (myS instanceof PsiCapturedWildcardType) {
         myS = ((PsiCapturedWildcardType)myS).getWildcard();
       }

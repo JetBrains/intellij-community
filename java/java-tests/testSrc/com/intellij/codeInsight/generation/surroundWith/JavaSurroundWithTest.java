@@ -17,6 +17,9 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.java.JavaLanguage;
@@ -172,6 +175,19 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
 
   public void testSurroundWithTryCatchFunctionalExpression() {
     doTest(new JavaWithTryCatchSurrounder());
+  }
+
+  public void testSurroundWithTryCatchProperties() {
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    String old = template.getText();
+    template.setText("// ${DS} \n" +
+                     "${EXCEPTION}.printStackTrace();");
+    try {
+      doTest(new JavaWithTryCatchSurrounder());
+    }
+    finally {
+      template.setText(old);
+    }
   }
 
   public void testSurroundIfBranchWithNoBracesAndComment() {

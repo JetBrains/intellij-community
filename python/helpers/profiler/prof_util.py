@@ -21,7 +21,7 @@ def generate_snapshot_filepath(basepath, local_temp_dir=False):
     if basepath is None:
         basepath = 'snapshot'
     if local_temp_dir:
-        basepath = os.path.join(tempfile.gettempdir(), os.path.basename(basepath))
+        basepath = os.path.join(tempfile.gettempdir(), os.path.basename(basepath.replace('\\', '/')))
 
     n = 0
     path = basepath + '.pstat'

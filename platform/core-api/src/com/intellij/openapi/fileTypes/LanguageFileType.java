@@ -41,7 +41,6 @@ public abstract class LanguageFileType implements FileType{
    * Returns the language used in the files of the type.
    * @return The language instance.
    */
-
   @NotNull
   public final Language getLanguage() {
     return myLanguage;
@@ -71,8 +70,8 @@ public abstract class LanguageFileType implements FileType{
   }
 
   /**
-   * Callers: use {@link com.intellij.openapi.fileTypes.CharsetUtil#extractCharsetFromFileContent(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, FileType, CharSequence)}
-   * Overriders: override {@link #extractCharsetFromFileContent(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile, CharSequence)} instead
+   * Callers: use {@link CharsetUtil#extractCharsetFromFileContent(Project, VirtualFile, FileType, CharSequence)}
+   * Overriders: override {@link #extractCharsetFromFileContent(Project, VirtualFile, CharSequence)} instead
    * @deprecated 
    */
   public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull String content) {

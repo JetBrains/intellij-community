@@ -4,6 +4,7 @@ org.jetbrains.plugins.ruby
 com.jetbrains.php
 org.intellij.clojure
 NodeJS
+Pythonid
 com.jetbrains.lang.ejs
 com.jetbrains.twig
 Karma

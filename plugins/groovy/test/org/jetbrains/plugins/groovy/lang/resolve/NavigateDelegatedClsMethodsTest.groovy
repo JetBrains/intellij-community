@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.resolve
-import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -64,7 +64,7 @@ class A extends Page {
     }
 }
 ''')
-      def instance = TargetElementUtilBase.getInstance()
+      def instance = TargetElementUtil.getInstance()
       def resolved = instance.findTargetElement(editor, instance.allAccepted, editor.caretModel.offset)
       assertInstanceOf resolved, PsiMethod
       assertEquals ('NavigableSupport', (resolved as PsiMethod).containingClass.name)
@@ -82,7 +82,7 @@ class A extends Page {
     }
 }
 ''')
-      def instance = TargetElementUtilBase.getInstance()
+      def instance = TargetElementUtil.getInstance()
       def resolved = instance.findTargetElement(editor, instance.allAccepted, editor.caretModel.offset).navigationElement
       assertInstanceOf resolved, PsiMethod
       assertEquals ('NavigableSupport', (resolved as PsiMethod).containingClass.name)

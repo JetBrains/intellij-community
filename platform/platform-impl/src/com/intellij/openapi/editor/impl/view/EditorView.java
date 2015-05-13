@@ -299,7 +299,9 @@ public class EditorView implements Disposable {
   LineLayout getFoldRegionLayout(FoldRegion foldRegion) {
     LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
     if (layout == null) {
-      layout = new LineLayout(this, foldRegion.getPlaceholderText(), myEditor.getFoldingModel().getPlaceholderAttributes().getFontType(), 
+      TextAttributes placeholderAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
+      layout = new LineLayout(this, foldRegion.getPlaceholderText(), 
+                              placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType(), 
                               myFontRenderContext);
       foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
     }

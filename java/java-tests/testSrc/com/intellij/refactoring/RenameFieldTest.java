@@ -25,7 +25,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -94,8 +94,9 @@ public class RenameFieldTest extends LightRefactoringTestCase {
   }
   
   protected static void perform(String newName) {
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
-      .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil
+                                                                         .ELEMENT_NAME_ACCEPTED |
+                                                                       TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
 
     new RenameProcessor(getProject(), element, newName, false, false).run();
   }
