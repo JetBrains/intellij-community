@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 import com.intellij.openapi.externalSystem.model.ExternalProject;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,7 +32,6 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.VersionMatcherRule;
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
@@ -136,10 +136,8 @@ public abstract class AbstractModelBuilderTest {
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);
-      String jdkHome = GradleImportingTestCase.getJdkHome();
-      if (jdkHome != null) {
-        buildActionExecutor.setJavaHome(new File(jdkHome));
-      }
+      String jdkHome = IdeaTestUtil.requireRealJdkHome();
+      buildActionExecutor.setJavaHome(new File(jdkHome));
       buildActionExecutor.setJvmArguments("-Xmx64m", "-XX:MaxPermSize=64m");
       buildActionExecutor.withArguments("--info", "--recompile-scripts", GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
       allModels = buildActionExecutor.run();
