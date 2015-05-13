@@ -16,7 +16,10 @@
 package com.siyeh.ipp.types;
 
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -26,14 +29,18 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
+import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ReplaceMethodRefWithLambdaIntention extends Intention {
@@ -46,7 +53,10 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {}
+
+  @Override
+  protected void processIntention(final Editor editor, @NotNull PsiElement element) {
     final PsiMethodReferenceExpression referenceExpression = PsiTreeUtil.getParentOfType(element, PsiMethodReferenceExpression.class);
     LOG.assertTrue(referenceExpression != null);
     final PsiElement resolve = referenceExpression.resolve();
@@ -200,15 +210,66 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
 
     final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)referenceExpression
       .replace(JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(buf.toString(), referenceExpression));
+    PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)typeCastExpression.getOperand();
     if (RedundantCastUtil.isCastRedundant(typeCastExpression)) {
       final PsiExpression operand = typeCastExpression.getOperand();
       LOG.assertTrue(operand != null);
-      final PsiLambdaExpression expr = (PsiLambdaExpression)typeCastExpression.replace(operand);
-      final PsiElement body = expr.getBody();
-      final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(expr, body);
+      lambdaExpression = (PsiLambdaExpression)typeCastExpression.replace(operand);
+      final PsiElement body = lambdaExpression.getBody();
+      final PsiExpression singleExpression = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression, body);
       if (singleExpression != null) {
         body.replace(singleExpression);
       } 
+    }
+
+    final PsiLambdaExpression expr = lambdaExpression;
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        introduceQualifierAsLocalVariable(editor, expr);
+      }
+    };
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
+      runnable.run();
+    } else {
+      application.invokeLater(runnable);
+    }
+  }
+
+  private static void introduceQualifierAsLocalVariable(Editor editor, PsiLambdaExpression lambdaExpression) {
+    if (lambdaExpression != null && lambdaExpression.isValid()) {
+      final PsiElement body = lambdaExpression.getBody();
+      PsiExpression methodCall = null;
+      if (body instanceof PsiCodeBlock) {
+        final PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+        LOG.assertTrue(statements.length == 1);
+        final PsiStatement statement = statements[0];
+        if (statement instanceof PsiReturnStatement) {
+          methodCall = ((PsiReturnStatement)statement).getReturnValue();
+        }
+        else if (statement instanceof PsiExpressionStatement) {
+          methodCall = ((PsiExpressionStatement)statement).getExpression();
+        }
+      } else {
+        methodCall = (PsiExpression)body;
+      }
+      PsiExpression qualifierExpression = null;
+      if (methodCall instanceof PsiMethodCallExpression) {
+        qualifierExpression = ((PsiMethodCallExpression)methodCall).getMethodExpression().getQualifierExpression();
+      }
+      else if (methodCall instanceof PsiNewExpression) {
+        qualifierExpression = ((PsiNewExpression)methodCall).getQualifier();
+      }
+
+      if (qualifierExpression != null) {
+        final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+        SideEffectChecker.checkSideEffects(qualifierExpression, sideEffects);
+        if (!sideEffects.isEmpty()) {
+          //ensure introduced before lambda
+          qualifierExpression.putUserData(ElementToWorkOn.PARENT, lambdaExpression);
+          new IntroduceVariableHandler().invoke(qualifierExpression.getProject(), editor, qualifierExpression);
+        }
+      }
     }
   }
 
