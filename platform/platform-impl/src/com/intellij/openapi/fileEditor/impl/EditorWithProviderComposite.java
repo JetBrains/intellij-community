@@ -91,7 +91,7 @@ public class EditorWithProviderComposite extends EditorComposite {
     return new HistoryEntry(getFile(), providers, states, providers[selectedProviderIndex]);
   }
 
-  public void addEditor(FileEditor editor, FileEditorProvider provider) {
+  public void addEditor(@NotNull FileEditor editor, FileEditorProvider provider) {
     addEditor(editor);
     myProviders = ArrayUtil.append(myProviders, provider);
   }
