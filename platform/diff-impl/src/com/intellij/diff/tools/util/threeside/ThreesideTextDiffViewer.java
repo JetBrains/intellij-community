@@ -66,9 +66,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   @NotNull protected final SimpleDiffPanel myPanel;
   @NotNull protected final ThreesideTextContentPanel myContentPanel;
 
-  @NotNull protected final List<EditorEx> myEditors;
-
-  @NotNull protected final List<DocumentContent> myActualContents;
+  @NotNull private final List<EditorEx> myEditors;
+  @NotNull private final List<DocumentContent> myActualContents;
 
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener1 = new MyVisibleAreaListener(Side.LEFT);
   @NotNull private final MyVisibleAreaListener myVisibleAreaListener2 = new MyVisibleAreaListener(Side.RIGHT);
@@ -77,7 +76,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull private final ThreesideFocusTrackerSupport myFocusTrackerSupport;
 
-  @Nullable private ThreesideSyncScrollSupport mySyncScrollListener;
+  @Nullable private ThreesideSyncScrollSupport mySyncScrollSupport;
 
   public ThreesideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request);
@@ -89,10 +88,10 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
 
     myEditors = createEditors();
-    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, myEditors);
+    List<JComponent> titlePanel = DiffUtil.createTextTitles(myRequest, getEditors());
 
-    myFocusTrackerSupport = new ThreesideFocusTrackerSupport(myEditors);
-    myContentPanel = new ThreesideTextContentPanel(myEditors, titlePanel);
+    myFocusTrackerSupport = new ThreesideFocusTrackerSupport(getEditors());
+    myContentPanel = new ThreesideTextContentPanel(getEditors(), titlePanel);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
 
@@ -129,8 +128,8 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
     boolean[] forceReadOnly = checkForceReadOnly();
     List<EditorEx> editors = new ArrayList<EditorEx>(3);
 
-    for (int i = 0; i < myActualContents.size(); i++) {
-      DocumentContent content = myActualContents.get(i);
+    for (int i = 0; i < getActualContents().size(); i++) {
+      DocumentContent content = getActualContents().get(i);
       EditorEx editor = DiffUtil.createEditor(content.getDocument(), myProject, forceReadOnly[i], true);
       DiffUtil.configureEditor(editor, content, myProject);
       editors.add(editor);
@@ -147,7 +146,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   }
 
   private void destroyEditors() {
-    for (EditorEx editor : myEditors) {
+    for (EditorEx editor : getEditors()) {
       myEditorFactory.releaseEditor(editor);
     }
   }
@@ -161,16 +160,16 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   protected void installEditorListeners() {
     super.installEditorListeners();
 
-    myEditors.get(0).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
-    myEditors.get(1).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
+    getEditor(0).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
+    getEditor(1).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener1);
 
-    myEditors.get(1).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener2);
-    myEditors.get(2).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener2);
+    getEditor(1).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener2);
+    getEditor(2).getScrollingModel().addVisibleAreaListener(myVisibleAreaListener2);
 
     SyncScrollSupport.SyncScrollable scrollable1 = getSyncScrollable(Side.LEFT);
     SyncScrollSupport.SyncScrollable scrollable2 = getSyncScrollable(Side.RIGHT);
     if (scrollable1 != null && scrollable2 != null) {
-      mySyncScrollListener = new ThreesideSyncScrollSupport(myEditors, scrollable1, scrollable2);
+      mySyncScrollSupport = new ThreesideSyncScrollSupport(getEditors(), scrollable1, scrollable2);
     }
   }
 
@@ -179,18 +178,18 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   public void destroyEditorListeners() {
     super.destroyEditorListeners();
 
-    myEditors.get(0).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
-    myEditors.get(1).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
+    getEditor(0).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
+    getEditor(1).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener1);
 
-    myEditors.get(1).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
-    myEditors.get(2).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
+    getEditor(1).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
+    getEditor(2).getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener2);
 
-    mySyncScrollListener = null;
+    mySyncScrollSupport = null;
   }
 
   protected void disableSyncScrollSupport(boolean disable) {
-    if (mySyncScrollListener != null) {
-      mySyncScrollListener.setDisabled(disable);
+    if (mySyncScrollSupport != null) {
+      mySyncScrollSupport.setDisabled(disable);
     }
   }
 
@@ -223,18 +222,28 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @NotNull
   public EditorEx getCurrentEditor() {
-    return getCurrentSide().select(myEditors);
+    return getCurrentSide().select(getEditors());
   }
 
   @NotNull
   public DocumentContent getCurrentContent() {
-    return getCurrentSide().select(myActualContents);
+    return getCurrentSide().select(getActualContents());
   }
 
   @NotNull
   @Override
   protected List<? extends EditorEx> getEditors() {
     return myEditors;
+  }
+
+  @NotNull
+  protected EditorEx getEditor(int index) {
+    return myEditors.get(index);
+  }
+
+  @NotNull
+  public List<DocumentContent> getActualContents() {
+    return myActualContents;
   }
 
   @NotNull
@@ -252,7 +261,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
   @CalledInAwt
   protected void scrollToLine(@NotNull ThreeSide side, int line) {
-    Editor editor = side.select(myEditors);
+    Editor editor = side.select(getEditors());
     DiffUtil.scrollEditor(editor, line, false);
     setCurrentSide(side);
   }
@@ -371,7 +380,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
-      if (mySyncScrollListener != null) mySyncScrollListener.visibleAreaChanged(e);
+      if (mySyncScrollSupport != null) mySyncScrollSupport.visibleAreaChanged(e);
       if (Registry.is("diff.divider.repainting.fix")) {
         myContentPanel.repaint();
       }

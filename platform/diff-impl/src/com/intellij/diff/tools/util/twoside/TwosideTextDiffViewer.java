@@ -63,11 +63,11 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @NotNull protected final SimpleDiffPanel myPanel;
   @NotNull protected final TwosideTextContentPanel myContentPanel;
 
-  @Nullable protected final EditorEx myEditor1;
-  @Nullable protected final EditorEx myEditor2;
+  @Nullable private final EditorEx myEditor1;
+  @Nullable private final EditorEx myEditor2;
 
-  @Nullable protected final DocumentContent myActualContent1;
-  @Nullable protected final DocumentContent myActualContent2;
+  @Nullable private final DocumentContent myActualContent1;
+  @Nullable private final DocumentContent myActualContent2;
 
   @NotNull protected final MySetEditorSettingsAction myEditorSettingsAction;
 
@@ -93,8 +93,8 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     myEditor2 = editors.get(1);
     assert myEditor1 != null || myEditor2 != null;
 
-    myFocusTrackerSupport = new TwosideFocusTrackerSupport(myEditor1, myEditor2);
-    myContentPanel = new TwosideTextContentPanel(titlePanel, myEditor1, myEditor2);
+    myFocusTrackerSupport = new TwosideFocusTrackerSupport(getEditor1(), getEditor2());
+    myContentPanel = new TwosideTextContentPanel(titlePanel, getEditor1(), getEditor2());
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
 
@@ -136,13 +136,13 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     // TODO: we may want to set editor highlighter in init() to speedup editor initialization
     EditorEx editor1 = null;
     EditorEx editor2 = null;
-    if (myActualContent1 != null) {
-      editor1 = DiffUtil.createEditor(myActualContent1.getDocument(), myProject, forceReadOnly[0], true);
-      DiffUtil.configureEditor(editor1, myActualContent1, myProject);
+    if (getActualContent1() != null) {
+      editor1 = DiffUtil.createEditor(getActualContent1().getDocument(), myProject, forceReadOnly[0], true);
+      DiffUtil.configureEditor(editor1, getActualContent1(), myProject);
     }
-    if (myActualContent2 != null) {
-      editor2 = DiffUtil.createEditor(myActualContent2.getDocument(), myProject, forceReadOnly[1], true);
-      DiffUtil.configureEditor(editor2, myActualContent2, myProject);
+    if (getActualContent2() != null) {
+      editor2 = DiffUtil.createEditor(getActualContent2().getDocument(), myProject, forceReadOnly[1], true);
+      DiffUtil.configureEditor(editor2, getActualContent2(), myProject);
     }
     if (editor1 != null && editor2 != null) {
       editor1.setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
@@ -170,24 +170,24 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   //
 
   private void destroyEditors() {
-    if (myEditor1 != null) myEditorFactory.releaseEditor(myEditor1);
-    if (myEditor2 != null) myEditorFactory.releaseEditor(myEditor2);
+    if (getEditor1() != null) myEditorFactory.releaseEditor(getEditor1());
+    if (getEditor2() != null) myEditorFactory.releaseEditor(getEditor2());
   }
 
   @CalledInAwt
   @Override
   protected void installEditorListeners() {
     super.installEditorListeners();
-    if (myEditor1 != null) {
-      myEditor1.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
+    if (getEditor1() != null) {
+      getEditor1().getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     }
-    if (myEditor2 != null) {
-      myEditor2.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
+    if (getEditor2() != null) {
+      getEditor2().getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
     }
-    if (myEditor1 != null && myEditor2 != null) {
+    if (getEditor1() != null && getEditor2() != null) {
       SyncScrollSupport.SyncScrollable scrollable = getSyncScrollable();
       if (scrollable != null) {
-        mySyncScrollSupport = new TwosideSyncScrollSupport(myEditor1, myEditor2, scrollable);
+        mySyncScrollSupport = new TwosideSyncScrollSupport(getEditor1(), getEditor2(), scrollable);
       }
     }
   }
@@ -196,11 +196,11 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @Override
   protected void destroyEditorListeners() {
     super.destroyEditorListeners();
-    if (myEditor1 != null) {
-      myEditor1.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
+    if (getEditor1() != null) {
+      getEditor1().getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
     }
-    if (myEditor2 != null) {
-      myEditor2.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
+    if (getEditor2() != null) {
+      getEditor2().getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
     }
     mySyncScrollSupport = null;
   }
@@ -218,14 +218,14 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @NotNull
   @Override
   protected List<? extends EditorEx> getEditors() {
-    if (myEditor1 != null && myEditor2 != null) {
-      return ContainerUtil.list(myEditor1, myEditor2);
+    if (getEditor1() != null && getEditor2() != null) {
+      return ContainerUtil.list(getEditor1(), getEditor2());
     }
-    if (myEditor1 != null) {
-      return Collections.singletonList(myEditor1);
+    if (getEditor1() != null) {
+      return Collections.singletonList(getEditor1());
     }
-    if (myEditor2 != null) {
-      return Collections.singletonList(myEditor2);
+    if (getEditor2() != null) {
+      return Collections.singletonList(getEditor2());
     }
     return Collections.emptyList();
   }
@@ -254,13 +254,13 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @NotNull
   public EditorEx getCurrentEditor() {
     //noinspection ConstantConditions
-    return getCurrentSide().select(myEditor1, myEditor2);
+    return getCurrentSide().select(getEditor1(), getEditor2());
   }
 
   @NotNull
   public DocumentContent getCurrentContent() {
     //noinspection ConstantConditions
-    return getCurrentSide().select(myActualContent1, myActualContent2);
+    return getCurrentSide().select(getActualContent1(), getActualContent2());
   }
 
   @Nullable
@@ -271,6 +271,16 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @Nullable
   protected EditorEx getEditor2() {
     return myEditor2;
+  }
+
+  @Nullable
+  public DocumentContent getActualContent1() {
+    return myActualContent1;
+  }
+
+  @Nullable
+  public DocumentContent getActualContent2() {
+    return myActualContent2;
   }
 
   //
@@ -287,7 +297,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
   @CalledInAwt
   protected void scrollToLine(@NotNull Side side, int line) {
-    Editor editor = side.select(myEditor1, myEditor2);
+    Editor editor = side.select(getEditor1(), getEditor2());
     if (editor == null) return;
     DiffUtil.scrollEditor(editor, line, false);
     setCurrentSide(side);
@@ -346,11 +356,11 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (myEditor1 == null || myEditor2 == null) return;
+      if (getEditor1() == null || getEditor2() == null) return;
 
       if (myScrollToPosition) {
-        EditorEx currentEditor = getCurrentSide().select(myEditor1, myEditor2);
-        EditorEx targetEditor = getCurrentSide().other().select(myEditor1, myEditor2);
+        EditorEx currentEditor = getCurrentSide().select(getEditor1(), getEditor2());
+        EditorEx targetEditor = getCurrentSide().other().select(getEditor1(), getEditor2());
         LogicalPosition position = transferPosition(getCurrentSide(), currentEditor.getCaretModel().getLogicalPosition());
         targetEditor.getCaretModel().moveToLogicalPosition(position);
       }
@@ -364,10 +374,10 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   private class MyOpenInEditorWithMouseAction extends OpenInEditorWithMouseAction {
     @Override
     protected OpenFileDescriptor getDescriptor(@NotNull Editor editor, int line) {
-      if (editor != myEditor1 && editor != myEditor2) return null;
-      Side side = Side.fromLeft(editor == myEditor1);
+      if (editor != getEditor1() && editor != getEditor2()) return null;
+      Side side = Side.fromLeft(editor == getEditor1());
 
-      DocumentContent content = side.select(myActualContent1, myActualContent2);
+      DocumentContent content = side.select(getActualContent1(), getActualContent2());
       if (content == null) return null;
 
       int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));

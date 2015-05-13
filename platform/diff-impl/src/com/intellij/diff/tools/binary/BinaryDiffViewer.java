@@ -91,8 +91,8 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     myEditorProvider2 = editors.second.second;
     assert myEditor1 != null || myEditor2 != null;
 
-    myFocusTrackerSupport = new FocusTrackerSupport.TwosideFocusTrackerSupport(myEditor1, myEditor2);
-    myContentPanel = new BinaryContentPanel(titlePanel, myEditor1, myEditor2);
+    myFocusTrackerSupport = new FocusTrackerSupport.TwosideFocusTrackerSupport(getEditor1(), getEditor2());
+    myContentPanel = new BinaryContentPanel(titlePanel, getEditor1(), getEditor2());
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
 
@@ -182,13 +182,13 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
 
 
   private void destroyEditors() {
-    if (myEditor1 != null) {
+    if (getEditor1() != null) {
       assert myEditorProvider1 != null;
-      myEditorProvider1.disposeEditor(myEditor1);
+      myEditorProvider1.disposeEditor(getEditor1());
     }
-    if (myEditor2 != null) {
+    if (getEditor2() != null) {
       assert myEditorProvider2 != null;
-      myEditorProvider2.disposeEditor(myEditor2);
+      myEditorProvider2.disposeEditor(getEditor2());
     }
   }
 
@@ -341,7 +341,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   @NotNull
   FileEditor getCurrentEditor() {
     //noinspection ConstantConditions
-    return getCurrentSide().select(myEditor1, myEditor2);
+    return getCurrentSide().select(getEditor1(), getEditor2());
   }
 
   @NotNull
@@ -406,14 +406,14 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      assert myEditor1 != null && myEditor2 != null;
+      assert getEditor1() != null && getEditor2() != null;
       setCurrentSide(getCurrentSide().other());
       myPanel.requestFocus();
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(myEditor1 != null && myEditor2 != null);
+      e.getPresentation().setEnabled(getEditor1() != null && getEditor2() != null);
     }
   }
 
