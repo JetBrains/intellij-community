@@ -18,8 +18,12 @@ package org.testng;
 
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.testng.collections.Lists;
+import org.testng.xml.XmlClass;
+import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
+import org.testng.xml.XmlTest;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -46,6 +50,26 @@ public class IDEARemoteTestNG extends TestNG {
       if(suites.size() > 0) {
 
         int testCount= 0;
+
+        for (XmlSuite suite : suites) {
+          final List<XmlTest> tests = suite.getTests();
+          for (XmlTest test : tests) {
+            try {
+              if (myParam != null) {
+                for (XmlClass aClass : test.getXmlClasses()) {
+                  for (XmlInclude include : aClass.getIncludedMethods()) {
+                    final XmlInclude xmlInclude = new XmlInclude(include.getName(), Collections.singletonList(Integer.parseInt(myParam)), 0);
+                    aClass.setIncludedMethods(Collections.singletonList(xmlInclude));
+                  }
+                }
+              }
+            }
+            catch (NumberFormatException e) {
+              System.err.println("Invocation number: expected integer but found: " + myParam);
+            }
+            testCount += test.getClasses().size();
+          }
+        }
 
         final HashMap<String, String> map = new HashMap<String, String>();
         map.put("count", String.valueOf(testCount));

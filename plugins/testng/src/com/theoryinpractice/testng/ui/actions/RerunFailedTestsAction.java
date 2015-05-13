@@ -105,9 +105,8 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
                     }
                     if (location instanceof PsiMemberParameterizedLocation) {
                       final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
-                      final String invocationNumber = TestNGConfigurationProducer.getInvocationNumber(paramSetName);
-                      if (invocationNumber != null) {
-                        strings.add(invocationNumber);
+                      if (paramSetName != null) {
+                        strings.add(TestNGConfigurationProducer.getInvocationNumber(paramSetName));
                       }
                     }
                     psiMethods.put(psiMethod, strings);
