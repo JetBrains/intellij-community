@@ -120,15 +120,11 @@ public class ConsoleBuffer {
   }
 
   public static boolean useCycleBuffer() {
-    if (!RunConfigurable.MyConsoleBufferSlider.isBufferCycleEnabled()) return false;
     final String useCycleBufferProperty = System.getProperty("idea.cycle.buffer.size");
     return useCycleBufferProperty == null || !"disabled".equalsIgnoreCase(useCycleBufferProperty);
   }
 
   public static int getCycleBufferSize() {
-    if (!RunConfigurable.MyConsoleBufferSlider.isBufferCycleDefault()) {
-      return RunConfigurable.MyConsoleBufferSlider.getBufferSize();
-    }
     String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
     if (cycleBufferSizeProperty == null) return 1024 * 1024;
     try {
