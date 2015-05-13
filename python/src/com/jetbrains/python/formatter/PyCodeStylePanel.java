@@ -16,20 +16,23 @@
 package com.jetbrains.python.formatter;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.components.JBCheckBox;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.formatter.PyCodeStyleSettings.DictAlignment;
+import com.jetbrains.python.highlighting.PyHighlighter;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -39,7 +42,7 @@ import java.awt.event.ItemListener;
 public class PyCodeStylePanel extends CodeStyleAbstractPanel {
 
   private JPanel myPanel;
-  private JBCheckBox myAddTrailingLineFeedCheckbox;
+  private JBCheckBox myAddTrailingBlankLineCheckbox;
   private ComboBox myDictAlignmentCombo;
   private JPanel myPreviewPanel;
 
@@ -61,12 +64,18 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
         }
       }
     });
+
+    myAddTrailingBlankLineCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        somethingChanged();
+      }
+    });
   }
 
   @Override
   protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
-    return EditorHighlighterFactory.getInstance().createEditorHighlighter(new LightVirtualFile("a.py"), scheme, null);
-    //return HighlighterFactory.createHighlighter(new PyHighlighter(LanguageLevel.PYTHON26), scheme);
+    return HighlighterFactory.createHighlighter(new PyHighlighter(LanguageLevel.PYTHON26), scheme);
   }
 
   @Override
@@ -88,21 +97,26 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
     for (DictAlignment alignment : DictAlignment.values()) {
-      if (getCustomSettings(settings).DICT_ALIGNMENT == alignment.ordinal()) {
+      if (getCustomSettings(settings).DICT_ALIGNMENT == alignment.asInt()) {
         myDictAlignmentCombo.setSelectedItem(alignment);
         break;
       }
     }
+    myAddTrailingBlankLineCheckbox.setSelected(getCustomSettings(settings).BLANK_LINE_AT_FILE_END);
   }
 
   @Override
   public void apply(CodeStyleSettings settings) {
-    getCustomSettings(settings).DICT_ALIGNMENT = getSelectedDictAlignment().ordinal();
+    final PyCodeStyleSettings customSettings = getCustomSettings(settings);
+    customSettings.DICT_ALIGNMENT = getDictAlignmentAsInt();
+    customSettings.BLANK_LINE_AT_FILE_END = ensureTrailingBlankLine();
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    return getCustomSettings(settings).DICT_ALIGNMENT != getSelectedDictAlignment().ordinal();
+    final PyCodeStyleSettings customSettings = getCustomSettings(settings);
+    return customSettings.DICT_ALIGNMENT != getDictAlignmentAsInt() ||
+           customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine();
   }
 
   @Override
@@ -115,9 +129,12 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
     return settings.getCustomSettings(PyCodeStyleSettings.class);
   }
 
-  @NotNull
-  private DictAlignment getSelectedDictAlignment() {
-    return (DictAlignment)myDictAlignmentCombo.getSelectedItem();
+  private int getDictAlignmentAsInt() {
+    return ((DictAlignment)myDictAlignmentCombo.getSelectedItem()).asInt();
+  }
+
+  private boolean ensureTrailingBlankLine() {
+    return myAddTrailingBlankLineCheckbox.isSelected();
   }
 
   public static final String PREVIEW = "{\n" +
