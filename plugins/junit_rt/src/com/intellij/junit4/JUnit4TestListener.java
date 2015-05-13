@@ -34,6 +34,7 @@ import org.junit.runner.notification.RunListener;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.annotation.Annotation;
 import java.util.*;
 
 public class JUnit4TestListener extends RunListener {
@@ -92,32 +93,29 @@ public class JUnit4TestListener extends RunListener {
     final String classFQN = JUnit4ReflectionUtil.getClassName(description);
 
     final List parents = (List)myParents.get(description);
-    if (parents != null) {
+    List parentsHierarchy = parents != null ? (List)parents.remove(0) : Collections.singletonList(classFQN);
 
-      List parentsHierarchy = (List)parents.remove(0);
-      
-      int idx = 0;
-      String currentClass;
-      String currentParent;
-      while (idx < myStartedSuites.size() && idx < parentsHierarchy.size()) {
-        currentClass = (String)myStartedSuites.get(idx);
-        currentParent = getShortName(JUnit4ReflectionUtil.getClassName((Description)parentsHierarchy.get(parentsHierarchy.size() - 1 - idx)));
-        if (!currentClass.equals(currentParent)) break;
-        idx++;
-      }
+    int idx = 0;
+    String currentClass;
+    String currentParent;
+    while (idx < myStartedSuites.size() && idx < parentsHierarchy.size()) {
+      currentClass = (String)myStartedSuites.get(idx);
+      currentParent = getShortName((String)parentsHierarchy.get(parentsHierarchy.size() - 1 - idx));
+      if (!currentClass.equals(currentParent)) break;
+      idx++;
+    }
 
-      for (int i = myStartedSuites.size() - 1; i >= idx; i--) {
-        currentClass = (String)myStartedSuites.remove(i);
-        myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(currentClass) + "\']");
-      }
+    for (int i = myStartedSuites.size() - 1; i >= idx; i--) {
+      currentClass = (String)myStartedSuites.remove(i);
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(currentClass) + "\']");
+    }
 
-      for (int i = idx; i < parentsHierarchy.size(); i++) {
-        Description parent = (Description)parentsHierarchy.get(parentsHierarchy.size() - 1 - i);
-        final String className = getShortName(JUnit4ReflectionUtil.getClassName(parent));
-        if (!className.equals(myRootName)) {
-          myPrintStream.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\']");
-          myStartedSuites.add(className);
-        }
+    for (int i = idx; i < parentsHierarchy.size(); i++) {
+      final String fqName = (String) parentsHierarchy.get(parentsHierarchy.size() - 1 - i);
+      final String className = getShortName(fqName);
+      if (!className.equals(myRootName)) {
+        myPrintStream.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + (parents == null ? " locationHint=\'java:suite://" + escapeName(fqName) + "\'" : "") + "]");
+        myStartedSuites.add(className);
       }
     }
 
@@ -230,8 +228,11 @@ public class JUnit4TestListener extends RunListener {
   private void sendTree(Description description, Description parent, List currentParents) {
     List pParents = new ArrayList(3);
     pParents.addAll(currentParents);
-    if (parent != null && !myRootName.equals(JUnit4ReflectionUtil.getClassName(parent))) {
-      pParents.add(0, parent);
+    if (parent != null) {
+      final String parentClassName = JUnit4ReflectionUtil.getClassName(parent);
+      if (!myRootName.equals(parentClassName)) {
+        pParents.add(0, parentClassName);
+      }
     }
 
     String className = JUnit4ReflectionUtil.getClassName(description);

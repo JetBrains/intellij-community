@@ -30,13 +30,24 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-/*
- * Executor to perform <possibly> long operations on pooled thread
- * Is is used to reduce blinking, in case of fast end of background task.
- */
 public class BackgroundTaskUtil {
   private static final Runnable TOO_SLOW_OPERATION = new EmptyRunnable();
 
+  /*
+   * Executor to perform <possibly> long operations on pooled thread
+   * It can be used to reduce blinking if background task completed fast. In this case callback will be called without invokeLater().
+   *
+   * Simple approach:
+   *
+   * onSlowAction.run() // show "Loading..."
+   * executeOnPooledThread({
+   *     Runnable callback = backgroundTask(); // some background computations
+   *     invokeLater(callback); // apply changes
+   *   });
+   *
+   * will lead to "Loading..." visible between current moment and execution of invokeLater() event.
+   * This period can be very short and looks like 'jumping' if background operation is fast.
+   */
   @CalledInAwt
   @NotNull
   public static ProgressIndicator executeAndTryWait(@NotNull final Function<ProgressIndicator, Runnable> backgroundTask,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -432,11 +433,15 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     if (object instanceof XValueNodeImpl[]) {
       final XValueNodeImpl[] nodes = (XValueNodeImpl[])object;
       for (XValueNodeImpl node : nodes) {
-        String expression = node.getValueContainer().getEvaluationExpression();
-        if (expression != null) {
-          //noinspection ConstantConditions
-          addWatchExpression(XExpressionImpl.fromText(expression), -1, false);
-        }
+        node.getValueContainer().calculateEvaluationExpression().done(new Consumer<String>() {
+          @Override
+          public void consume(String expression) {
+            if (expression != null) {
+              //noinspection ConstantConditions
+              addWatchExpression(XExpressionImpl.fromText(expression), -1, false);
+            }
+          }
+        });
       }
     }
     else if (object instanceof EventInfo) {

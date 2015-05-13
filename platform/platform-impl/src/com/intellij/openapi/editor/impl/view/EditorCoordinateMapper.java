@@ -180,6 +180,7 @@ class EditorCoordinateMapper {
 
     FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
     if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
+      assert outermostCollapsed.isValid();
       offset = outermostCollapsed.getStartOffset();
     }
 

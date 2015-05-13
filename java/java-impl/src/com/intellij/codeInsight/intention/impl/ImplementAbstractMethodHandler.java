@@ -183,9 +183,9 @@ public class ImplementAbstractMethodHandler {
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, true)) {
       if (!inheritor.isInterface()) {
         final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);
-        LOG.assertTrue(classSubstitutor != null);
-        PsiMethod method = MethodSignatureUtil.findMethodBySignature(inheritor, myMethod.getSignature(classSubstitutor), true);
-        if (method == null || !method.getContainingClass().equals(psiClass)) continue;
+        PsiMethod method = classSubstitutor != null ? MethodSignatureUtil.findMethodBySignature(inheritor, myMethod.getSignature(classSubstitutor), true)
+                                                    : inheritor.findMethodBySignature(myMethod, true);;
+        if (method == null || !psiClass.equals(method.getContainingClass())) continue;
         list.add(inheritor);
       }
     }

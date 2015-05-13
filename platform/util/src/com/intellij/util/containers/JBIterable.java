@@ -26,7 +26,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * A pruned version of com.google.common.collect.FluentIterable.
+ * An in-house version of com.google.common.collect.FluentIterable.
+ *
+ * The original JavaDoc:
  * <p/>
  * {@code FluentIterable} provides a rich interface for manipulating {@code Iterable} instances in a
  * chained fashion. A {@code FluentIterable} can be created from an {@code Iterable}, or from a set
@@ -55,7 +57,8 @@ import java.util.*;
  *
  * @author Marcin Mikosik
  */
-public abstract class FluentIterable<E> implements Iterable<E> {
+public abstract class JBIterable<E> implements Iterable<E> {
+
   // We store 'iterable' and use it instead of 'this' to allow Iterables to perform instanceof
   // checks on the _original_ iterable when FluentIterable.from is used.
   final Iterable<E> myIterable;
@@ -63,11 +66,11 @@ public abstract class FluentIterable<E> implements Iterable<E> {
   /**
    * Constructor for use by subclasses.
    */
-  protected FluentIterable() {
+  protected JBIterable() {
     myIterable = this;
   }
 
-  FluentIterable(@NotNull Iterable<E> iterable) {
+  JBIterable(@NotNull Iterable<E> iterable) {
     myIterable = iterable;
   }
 
@@ -75,9 +78,10 @@ public abstract class FluentIterable<E> implements Iterable<E> {
    * Returns a fluent iterable that wraps {@code iterable}, or {@code iterable} itself if it
    * is already a {@code FluentIterable}.
    */
-  public static <E> FluentIterable<E> from(Iterable<? extends E> iterable) {
-    return iterable instanceof FluentIterable ? (FluentIterable<E>)iterable :
-           new FluentIterable<E>((Iterable<E>)iterable) {
+  @NotNull
+  public static <E> JBIterable<E> from(Iterable<? extends E> iterable) {
+    return iterable instanceof JBIterable ? (JBIterable<E>)iterable :
+           new JBIterable<E>((Iterable<E>)iterable) {
              @Override
              public Iterator<E> iterator() {
                return myIterable.iterator();
@@ -88,8 +92,21 @@ public abstract class FluentIterable<E> implements Iterable<E> {
   /**
    * Returns a fluent iterable containing {@code elements} in the specified order.
    */
-  public static <E> FluentIterable<E> of(E[] elements) {
+  @NotNull
+  public static <E> JBIterable<E> of(E... elements) {
     return from(ContainerUtil.newArrayList(elements));
+  }
+
+  private static final JBIterable EMPTY = new JBIterable() {
+    @Override
+    public Iterator iterator() {
+      return ContainerUtil.emptyIterator();
+    }
+  };
+
+  @NotNull
+  public static <E> JBIterable<E> empty() {
+    return (JBIterable<E>)EMPTY;
   }
 
   /**
@@ -133,27 +150,27 @@ public abstract class FluentIterable<E> implements Iterable<E> {
    * <p>The returned iterable's {@code Iterator} supports {@code remove()} when the corresponding
    * {@code Iterator} supports it.
    */
-  public final FluentIterable<E> append(Iterable<? extends E> other) {
-    return from(ContainerUtil.concat(myIterable, other));
+  public final JBIterable<E> append(Iterable<? extends E> other) {
+    return this == EMPTY ? from(other) : from(ContainerUtil.concat(myIterable, other));
   }
 
   /**
    * Returns a fluent iterable whose iterators traverse first the elements of this fluent iterable,
    * followed by {@code elements}.
    */
-  public final FluentIterable<E> append(E... elements) {
-    return append(Arrays.asList(elements));
+  public final JBIterable<E> append(E[] elements) {
+    return this == EMPTY ? of(elements) : append(Arrays.asList(elements));
   }
 
   /**
    * Returns the elements from this fluent iterable that satisfy a condition. The
    * resulting fluent iterable's iterator does not support {@code remove()}.
    */
-  public final FluentIterable<E> filter(final Condition<? super E> condition) {
+  public final JBIterable<E> filter(final Condition<? super E> condition) {
     return from(new Iterable<E>() {
       @Override
       public Iterator<E> iterator() {
-        return FilteringIterator.create(FluentIterable.this.iterator(), condition);
+        return FilteringIterator.create(JBIterable.this.iterator(), condition);
       }
     });
   }
@@ -162,9 +179,9 @@ public abstract class FluentIterable<E> implements Iterable<E> {
    * Returns the elements from this fluent iterable that are instances of class {@code type}.
    * @param type the type of elements desired
    */
-  public final <T> FluentIterable<T> filter(Class<T> type) {
+  public final <T> JBIterable<T> filter(Class<T> type) {
     //noinspection unchecked
-    return (FluentIterable<T>)filter(Conditions.instanceOf(type));
+    return (JBIterable<T>)filter(Conditions.instanceOf(type));
   }
 
   /**
@@ -176,11 +193,11 @@ public abstract class FluentIterable<E> implements Iterable<E> {
    * contains the corresponding element.
    */
   @NotNull
-  public final <T> FluentIterable<T> transform(@NotNull final Function<? super E, T> function) {
+  public final <T> JBIterable<T> transform(@NotNull final Function<? super E, T> function) {
     return from(new Iterable<T>() {
       @Override
       public Iterator<T> iterator() {
-        final Iterator<E> iterator = FluentIterable.this.iterator();
+        final Iterator<E> iterator = JBIterable.this.iterator();
         return new Iterator<T>() {
           @Override
           public boolean hasNext() {

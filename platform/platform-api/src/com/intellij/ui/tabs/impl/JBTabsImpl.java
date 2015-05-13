@@ -40,7 +40,7 @@ import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.ui.tabs.impl.table.TablePassInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FluentIterable;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.LazyUiDisposable;
@@ -342,7 +342,7 @@ public class JBTabsImpl extends JComponent
       this, JBSwingUtilities.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
         @Override
         public Iterator<JComponent> iterator() {
-          return FluentIterable.from(getVisibleInfos()).filter(Conditions.not(Conditions.is(mySelectedInfo))).transform(
+          return JBIterable.from(getVisibleInfos()).filter(Conditions.not(Conditions.is(mySelectedInfo))).transform(
             new Function<TabInfo, JComponent>() {
               @Override
               public JComponent fun(TabInfo info) {

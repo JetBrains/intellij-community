@@ -59,7 +59,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class TargetElementUtil {
+public class TargetElementUtil extends TargetElementUtilBase {
   public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
   public static final int ELEMENT_NAME_ACCEPTED = 0x02;
   public static final int LOOKUP_ITEM_ACCEPTED = 0x08;

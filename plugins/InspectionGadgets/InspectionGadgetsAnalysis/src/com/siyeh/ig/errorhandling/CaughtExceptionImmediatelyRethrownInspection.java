@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 Bas Leijdekkers
+ * Copyright 2007-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,18 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.DeleteCatchSectionFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableSearchUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -64,87 +61,6 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
     final boolean removeTryCatch = tryStatement.getCatchSections().length == 1 && tryStatement.getFinallyBlock() == null &&
       tryStatement.getResourceList() == null;
     return new DeleteCatchSectionFix(removeTryCatch);
-  }
-
-  private static class DeleteCatchSectionFix extends InspectionGadgetsFix {
-
-    private final boolean removeTryCatch;
-
-    DeleteCatchSectionFix(boolean removeTryCatch) {
-      this.removeTryCatch = removeTryCatch;
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
-      if (removeTryCatch) {
-        return InspectionGadgetsBundle.message("remove.try.catch.quickfix");
-      }
-      else {
-        return InspectionGadgetsBundle.message("delete.catch.section.quickfix");
-      }
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Delete catch statement";
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiParameter)) {
-        return;
-      }
-      final PsiParameter parameter = (PsiParameter)parent;
-      final PsiElement grandParent = parameter.getParent();
-      if (!(grandParent instanceof PsiCatchSection)) {
-        return;
-      }
-      final PsiCatchSection catchSection = (PsiCatchSection)grandParent;
-      final PsiTryStatement tryStatement = catchSection.getTryStatement();
-      if (removeTryCatch) {
-        final PsiCodeBlock codeBlock = tryStatement.getTryBlock();
-        if (codeBlock == null) {
-          return;
-        }
-        final PsiStatement[] statements = codeBlock.getStatements();
-        if (statements.length == 0) {
-          tryStatement.delete();
-          return;
-        }
-        final PsiElement containingElement = tryStatement.getParent();
-        final boolean keepBlock;
-        if (containingElement instanceof PsiCodeBlock) {
-          final PsiCodeBlock parentBlock = (PsiCodeBlock)containingElement;
-          keepBlock = VariableSearchUtils.containsConflictingDeclarations(codeBlock, parentBlock);
-        }
-        else {
-          keepBlock = true;
-        }
-        if (keepBlock) {
-          final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-          final PsiElementFactory factory = psiFacade.getElementFactory();
-          final PsiBlockStatement resultStatement = (PsiBlockStatement)factory.createStatementFromText("{}", element);
-          final PsiCodeBlock resultBlock = resultStatement.getCodeBlock();
-          for (PsiStatement statement : statements) {
-            resultBlock.add(statement);
-          }
-          tryStatement.replace(resultStatement);
-        }
-        else {
-          for (PsiStatement statement : statements) {
-            containingElement.addBefore(statement, tryStatement);
-          }
-          tryStatement.delete();
-        }
-      }
-      else {
-        catchSection.delete();
-      }
-    }
   }
 
   @Override

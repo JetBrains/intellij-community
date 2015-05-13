@@ -77,7 +77,11 @@ public interface Git {
                          @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult checkout(@NotNull GitRepository repository, @NotNull String reference, @Nullable String newBranch, boolean force,
+  GitCommandResult checkout(@NotNull GitRepository repository,
+                            @NotNull String reference,
+                            @Nullable String newBranch,
+                            boolean force,
+                            boolean detach,
                             @NotNull GitLineHandlerListener... listeners);
 
   @NotNull

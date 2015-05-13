@@ -21,6 +21,8 @@ Object $paramName){
        #end
      #elseif ($field.enum)
        #addPrimitiveFieldComparisonCondition($field) ##
+     #elseif ($field.array)
+java.util.Arrays.equals($field.accessor, ${classInstanceName}.$field.accessor)##
      #else
 java.util.Objects.equals($field.accessor, ${classInstanceName}.$field.accessor)##
      #end

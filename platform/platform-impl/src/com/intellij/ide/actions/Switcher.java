@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.*;
@@ -584,7 +585,10 @@ public class Switcher extends AnAction implements DumbAware {
         }
       }.registerCustomShortcutSet(TW_SHORTCUT, this, myPopup);
 
-      final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      if (window == null) {
+        window = WindowManager.getInstance().getFrame(project);
+      }
       myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, myPopup);
       myPopup.showInCenterOf(window);
     }

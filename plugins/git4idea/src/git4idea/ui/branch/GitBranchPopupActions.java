@@ -113,7 +113,7 @@ class GitBranchPopupActions {
         .showInputDialog(myProject, "Enter reference (branch, tag) name or commit hash", "Checkout", Messages.getQuestionIcon());
       if (reference != null) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.checkout(reference, Collections.singletonList(myRepository), null);
+        brancher.checkout(reference, true, Collections.singletonList(myRepository), null);
       }
     }
 
@@ -194,7 +194,7 @@ class GitBranchPopupActions {
       @Override
       public void actionPerformed(AnActionEvent e) {
         GitBrancher brancher = ServiceManager.getService(myProject, GitBrancher.class);
-        brancher.checkout(myBranchName, myRepositories, null);
+        brancher.checkout(myBranchName, false, myRepositories, null);
       }
 
     }
