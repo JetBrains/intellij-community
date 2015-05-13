@@ -224,7 +224,9 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         oldOne = itemWrapper;
       }
     }
-    items.add(NULL_WRAPPER);
+    if (!fileIndex.isInLibrarySource(oldSelection)) {
+      items.add(NULL_WRAPPER);
+    }
     final DirectoryChooser.ItemWrapper selection = chooseSelection(initialTargetDirectorySourceRoot, fileIndex, items, initial, oldOne);
     final ComboBoxModel model = comboBox.getModel();
     if (model instanceof CollectionComboBoxModel) {
