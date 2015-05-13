@@ -16,26 +16,31 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.SuppressQuickFix;
+import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyExpressionCodeFragment;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.inspections.quickfix.PySuppressInspectionFix;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class PyInspection extends LocalInspectionTool {
-  @Pattern(VALID_ID_PATTERN)
-  @NotNull
-  @Override
-  public String getID() {
-    //noinspection PatternValidation
-    return getShortName(super.getID());
-  }
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+/**
+ * @author yole
+ */
+public abstract class PyInspection extends LocalInspectionTool {
   @Nls
   @NotNull
   @Override
@@ -54,20 +59,80 @@ public abstract class PyInspection extends LocalInspectionTool {
     return true;
   }
 
+  @NotNull
+  @Override
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+    List<SuppressQuickFix> result = new ArrayList<SuppressQuickFix>();
+    result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for statement", PyStatement.class) {
+      @Override
+      public PsiElement getContainer(PsiElement context) {
+        if (PsiTreeUtil.getParentOfType(context, PyStatementList.class, false, ScopeOwner.class) != null ||
+            PsiTreeUtil.getParentOfType(context, PyFunction.class, PyClass.class) == null) {
+          return super.getContainer(context);
+        }
+        return null;
+      }
+    });
+    result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for function", PyFunction.class));
+    result.add(new PySuppressInspectionFix(getSuppressId(), "Suppress for class", PyClass.class));
+    return result.toArray(new SuppressQuickFix[result.size()]);
+  }
+
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
-    if (file instanceof PyFileImpl && !((PyFileImpl)file).isAcceptedFor(this.getClass())) {
-      return true;
+    boolean isAccepted = true;
+    if (file instanceof PyFileImpl) {
+      isAccepted = ((PyFileImpl)file).isAcceptedFor(this.getClass());
     }
-    return isSuppressForCodeFragment(element) || super.isSuppressedFor(element);
+    return !isAccepted || isSuppressedForParent(element, PyStatement.class) ||
+           isSuppressedForParent(element, PyFunction.class) ||
+           isSuppressedForParent(element, PyClass.class) ||
+           isSuppressForCodeFragment(element);
   }
 
-  private boolean isSuppressForCodeFragment(@Nullable PsiElement element) {
+  private boolean isSuppressForCodeFragment(PsiElement element) {
     return isSuppressForCodeFragment() && PsiTreeUtil.getParentOfType(element, PyExpressionCodeFragment.class) != null;
   }
 
   protected boolean isSuppressForCodeFragment() {
     return false;
+  }
+
+  private boolean isSuppressedForParent(PsiElement element, final Class<? extends PyElement> parentClass) {
+    PyElement parent = PsiTreeUtil.getParentOfType(element, parentClass, false);
+    if (parent == null) {
+      return false;
+    }
+    return isSuppressedForElement(parent);
+  }
+
+  private boolean isSuppressedForElement(PyElement stmt) {
+    PsiElement prevSibling = stmt.getPrevSibling();
+    if (prevSibling == null) {
+      final PsiElement parent = stmt.getParent();
+      if (parent != null) {
+        prevSibling = parent.getPrevSibling();
+      }
+    }
+    while (prevSibling instanceof PsiComment || prevSibling instanceof PsiWhiteSpace) {
+      if (prevSibling instanceof PsiComment && isSuppressedInComment(prevSibling.getText().substring(1).trim())) {
+        return true;
+      }
+      prevSibling = prevSibling.getPrevSibling();
+    }
+    return false;
+  }
+
+  private static final Pattern SUPPRESS_PATTERN = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP);
+
+  private boolean isSuppressedInComment(String commentText) {
+    Matcher m = SUPPRESS_PATTERN.matcher(commentText);
+    return m.matches() && SuppressionUtil.isInspectionToolIdMentioned(m.group(1), getSuppressId());
+  }
+
+  @NotNull
+  protected String getSuppressId() {
+    return getShortName().replace("Inspection", "");
   }
 }
