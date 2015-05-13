@@ -16,6 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -92,6 +94,12 @@ public class ListExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   protected Integer getCellKeyForPoint(Point point) {
     int rowIndex = myComponent.locationToIndex(point);
     return rowIndex != -1 ? new Integer(rowIndex) : null;
+  }
+
+  @Nullable
+  @Override
+  protected ExpandedSubComponentProvider getExpandedSubComponentProvider() {
+    return ObjectUtils.tryCast(myComponent.getCellRenderer(), ExpandedSubComponentProvider.class);
   }
 
   protected Pair<Component, Rectangle> getCellRendererAndBounds(Integer key) {

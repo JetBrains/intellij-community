@@ -55,6 +55,21 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
 
+  public static Pair<Component, Rectangle> getExpandedSubComponent(Component comp, @NotNull Component child) {
+    if (UIUtil.isAncestor(comp, child)) {
+      return Pair.create(child, SwingUtilities.convertRectangle(child, new Rectangle(child.getSize()), comp));
+    }
+    return Pair.create(comp, null);
+  }
+
+  public static Pair<Component, Rectangle> getExpandedSubComponentPreferred(Component comp, @NotNull Component child) {
+    if (UIUtil.isAncestor(comp, child)) {
+      return Pair.create(child, SwingUtilities.convertRectangle(child, new Rectangle(child.getPreferredSize()), comp));
+    }
+    return Pair.create(comp, null);
+  }
+
+
   protected AbstractExpandableItemsHandler(@NotNull final ComponentType component) {
     myComponent = component;
     myComponent.add(myRendererPane);
@@ -366,6 +381,30 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
     Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
+    ExpandedSubComponentProvider subComponentProvider = getExpandedSubComponentProvider();
+    if (subComponentProvider != null && rendererAndBounds != null) {
+      Component comp = rendererAndBounds.getFirst();
+      myRendererPane.add(comp);
+      try {
+        comp.setBounds(rendererAndBounds.getSecond());
+        comp.validate();
+        Pair<Component, Rectangle> subComponent = subComponentProvider.getExpandedSubComponent(comp);
+        if (subComponent == null) {
+          rendererAndBounds = null;
+        }
+        else if(subComponent.getSecond() == null) {
+          rendererAndBounds = Pair.create(subComponent.getFirst(), rendererAndBounds.getSecond());
+        }
+        else {
+          Point offset = rendererAndBounds.getSecond().getLocation();
+          subComponent.getSecond().translate((int)offset.getX(), (int)offset.getY());
+          rendererAndBounds = subComponent;
+        }
+      }
+      finally {
+        myRendererPane.remove(comp);
+      }
+    }
     if (rendererAndBounds == null) return null;
 
     Component renderer = rendererAndBounds.first;
@@ -448,6 +487,11 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected Rectangle getVisibleRect(KeyType key) {
     return myComponent.getVisibleRect();
+  }
+
+  @Nullable
+  protected ExpandedSubComponentProvider getExpandedSubComponentProvider() {
+    return null;
   }
 
   @Nullable

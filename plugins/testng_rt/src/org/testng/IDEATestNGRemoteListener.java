@@ -175,7 +175,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     catch (Throwable e) {
       notification = null;
     }
-    ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs);
+    ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
     onTestFinished(methodName);
   }

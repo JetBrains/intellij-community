@@ -768,3 +768,23 @@ class ndarray(object):
             out : ndarray
         """
         pass
+
+    def __pow__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__pow__(y) <==> x**y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __divmod__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__divmod__(y) <==> x%y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass

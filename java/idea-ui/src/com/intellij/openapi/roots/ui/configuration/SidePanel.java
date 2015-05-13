@@ -17,11 +17,10 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorWithText;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.History;
@@ -100,6 +99,14 @@ public class SidePanel extends JPanel {
         mySeparatorComponent.setCaptionCentered(false);
       }
 
+      @Nullable
+      @Override
+      public Pair<Component, Rectangle> getExpandedSubComponent(Component comp) {
+        if (myCountLabel.isVisible() && !StringUtil.isEmpty(myCountLabel.getText()))
+          return AbstractExpandableItemsHandler.getExpandedSubComponent(comp, myExtraPanel);
+        return AbstractExpandableItemsHandler.getExpandedSubComponentPreferred(comp, myComponent);
+      }
+
       @Override
       protected Color getForeground() {
         return Registry.is("ide.new.project.settings") ? new JBColor(Gray._60, Gray._140) : super.getForeground();
@@ -124,6 +131,7 @@ public class SidePanel extends JPanel {
 
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        layout();
         myCountLabel.setText("");
         final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if ("Problems".equals(descriptor.getTextFor(value))) {
