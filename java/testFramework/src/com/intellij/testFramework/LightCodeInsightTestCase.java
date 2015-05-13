@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,6 @@ import com.intellij.psi.impl.JavaPsiFacadeEx;
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
  */
 public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected LightCodeInsightTestCase() {
-    IdeaTestCase.initPlatformPrefix();
-  }
-
   public static JavaPsiFacadeEx getJavaFacade() {
     return JavaPsiFacadeEx.getInstanceEx(ourProject);
   }
