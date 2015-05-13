@@ -102,6 +102,9 @@ class DeclarationMover extends LineMover {
 
     PsiElement sibling = down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
     sibling = firstNonWhiteElement(sibling, down);
+    if (down && range.lastElement instanceof PsiEnumConstant && sibling instanceof PsiJavaToken) {
+      sibling = ((PsiJavaToken)sibling).getTokenType() == JavaTokenType.COMMA ? firstNonWhiteElement(sibling.getNextSibling(), true) : null;
+    }
     final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
     info.toMove = range;
     try {
@@ -112,6 +115,9 @@ class DeclarationMover extends LineMover {
       }
       else {
         info.toMove2 = intraClassRange;
+      }
+      if (down ? info.toMove2.startLine < info.toMove.endLine : info.toMove2.endLine > info.toMove.startLine) {
+        return false;
       }
     }
     catch (IllegalMoveException e) {
