@@ -567,6 +567,18 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-14962
+  public void testAlignDictLiteralOnValue() {
+    getCustomSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
+    doTest();
+  }
+
+  // PY-14962
+  public void testAlignDictLiteralOnColon() {
+    getCustomSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
+    doTest();
+  }
+
   // PY-15530
   public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
     doTest();
