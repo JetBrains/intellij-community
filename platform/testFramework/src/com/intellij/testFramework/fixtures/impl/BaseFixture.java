@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
+import com.intellij.util.ui.UIUtil;
 import org.junit.Assert;
 
 /*
@@ -39,7 +40,12 @@ public class BaseFixture implements IdeaTestFixture {
   public void tearDown() throws Exception {
     Assert.assertTrue("setUp() has not been called", myInitialized);
     Assert.assertFalse("tearDown() already has been called", myDisposed);
-    Disposer.dispose(myTestRootDisposable);
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        Disposer.dispose(myTestRootDisposable);
+      }
+    });
     myDisposed = true;
     resetClassFields(getClass());
   }
