@@ -315,13 +315,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myDocumentChangeInProgress;
   private boolean myErrorStripeNeedsRepaint;
 
-  private final TIntFunction myLineNumberAreaWidthFunction = new TIntFunction() {
-    @Override
-    public int execute(int lineNumber) {
-      return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1));
-    }
-  };
-
   static {
     ourCaretBlinkingCommand.start();
   }
@@ -544,7 +537,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       setFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
     }
 
-    myGutterComponent.setLineNumberAreaWidthFunction(myLineNumberAreaWidthFunction);
+    myGutterComponent.setLineNumberAreaWidthFunction(new TIntFunction() {
+        @Override
+        public int execute(int lineNumber) {
+          return getFontMetrics(Font.PLAIN).stringWidth(Integer.toString(lineNumber + 1));
+        }
+      });
     myGutterComponent.updateSize();
     Dimension preferredSize = getPreferredSize();
     myEditorComponent.setSize(preferredSize);
@@ -5799,7 +5797,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       final EditorMouseEventArea eventArea = getMouseEventArea(e);
       myMousePressArea = eventArea;
-      boolean isNavigation = false;
       if (eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
         final FoldRegion range = myGutterComponent.findFoldingAnchorAt(x, y);
         if (range != null) {
@@ -5826,7 +5823,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           myGutterComponent.updateSize();
           validateMousePointer(e);
           e.consume();
-          return isNavigation;
+          return false;
         }
       }
 
@@ -5840,7 +5837,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           else {
             myGutterComponent.mousePressed(e);
           }
-          if (e.isConsumed()) return isNavigation;
+          if (e.isConsumed()) return false;
         }
         x = 0;
       }
@@ -5886,7 +5883,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
 
-      if (e.isPopupTrigger()) return isNavigation;
+      if (e.isPopupTrigger()) return false;
 
       requestFocus();
 
@@ -5894,11 +5891,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       int newStart = mySelectionModel.getSelectionStart();
       int newEnd = mySelectionModel.getSelectionEnd();
-      if (oldStart != newStart && oldEnd != newEnd) {
-        if (oldStart == oldEnd && newStart == newEnd) {
-          isNavigation = true;
-        }
-      }
+      
+      boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
 
       myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(new Point(x, y));
       myMousePressedInsideSelection = mySelectionModel.hasSelection() && caretOffset >= mySelectionModel.getSelectionStart() &&
