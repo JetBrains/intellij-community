@@ -79,7 +79,13 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getTestMethodNameWithParams(result)) + "\']");
   }
 
-  public synchronized void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
+  public synchronized void onTestFailedButWithinSuccessPercentage(ITestResult result) {
+    final Throwable throwable = result.getThrowable();
+    if (throwable != null) {
+      throwable.printStackTrace();
+    }
+    onTestSuccess(result);
+  }
 
   public synchronized void onStart(ITestContext context) {}
 
