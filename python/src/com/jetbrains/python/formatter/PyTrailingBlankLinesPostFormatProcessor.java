@@ -55,6 +55,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
   public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     final PsiFile psiFile = source.getContainingFile();
     if (isApplicableTo(psiFile)) {
+      applyPendingChangesToPsi(source);
       final TextRange whitespaceRange = findTrailingWhitespacesRange(psiFile);
       if (source.getTextRange().intersects(whitespaceRange)) {
         replaceOrDeleteTrailingWhitespaces(psiFile, whitespaceRange);
@@ -68,6 +69,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     if (!isApplicableTo(source)) {
       return rangeToReformat;
     }
+    applyPendingChangesToPsi(source);
     final TextRange oldWhitespaceRange = findTrailingWhitespacesRange(source);
     if (rangeToReformat.intersects(oldWhitespaceRange)) {
       final TextRange newWhitespaceRange = replaceOrDeleteTrailingWhitespaces(source, oldWhitespaceRange);
@@ -89,6 +91,14 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
       }
     }
     return rangeToReformat;
+  }
+
+  private static void applyPendingChangesToPsi(@NotNull PsiElement source) {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(source.getContainingFile().getProject());
+    final Document document = documentManager.getDocument(source.getContainingFile());
+    if (document != null) {
+      documentManager.doPostponedOperationsAndUnblockDocument(document);
+    }
   }
 
   @NotNull
@@ -114,8 +124,6 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     if (document != null) {
       final PyCodeStyleSettings customSettings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class);
       final boolean addLineFeed = customSettings.BLANK_LINE_AT_FILE_END || EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF();
-      // TODO: figure out why this line causes all changes made because of dict alignment to be reverted
-      documentManager.doPostponedOperationsAndUnblockDocument(document);
       try {
         final String text = addLineFeed ? "\n" : "";
         // Do not add extra blank line in empty file
