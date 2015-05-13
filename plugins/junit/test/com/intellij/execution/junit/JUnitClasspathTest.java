@@ -154,9 +154,9 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
     fileContent = replace(fileContent, ModuleRootManager.getInstance(mod2).getContentRoots()[0].getPath(), "MODULE_2");
     fileContent = fileContent.replaceAll(FileUtil.toSystemIndependentName(PathUtil.getJarPathForClass(JUnitStarter.class)) + File.pathSeparator, "");
     fileContent = fileContent.replaceAll(FileUtil.toSystemIndependentName(JavaSdkUtil.getIdeaRtJarPath()) + File.pathSeparator, "");
+    fileContent = replace(fileContent, StringUtil.getPackageName(PathUtil.getJarPathForClass(ServiceMessageTypes.class), File.separatorChar), "APP_HOME");
     fileContent = replace(fileContent, PathManager.getHomePath() + "/community", "IDEA_HOME");
     fileContent = replace(fileContent, PathManager.getHomePath(), "IDEA_HOME");
-    fileContent = replace(fileContent, StringUtil.getPackageName(PathUtil.getJarPathForClass(ServiceMessageTypes.class), File.separatorChar), "APP_HOME");
     fileContent = fileContent.replaceAll(File.pathSeparator, ";");
     return StringUtil.convertLineSeparators(fileContent);
   }
