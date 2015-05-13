@@ -73,6 +73,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
 
   @NotNull private final MyFoldingModel myFoldingModel;
+  @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
 
   public SimpleThreesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -135,9 +136,16 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
+  protected void processContextHints() {
+    super.processContextHints();
+    myInitialScrollHelper.processContext(myRequest);
+  }
+
+  @Override
   protected void updateContextHints() {
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+    myInitialScrollHelper.updateContext(myRequest);
   }
 
   //
@@ -148,6 +156,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   protected void onSlowRediff() {
     super.onSlowRediff();
     myStatusPanel.setBusy(true);
+    myInitialScrollHelper.onSlowRediff();
   }
 
   @Override
@@ -193,7 +202,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addTooBigContentNotification();
+          myPanel.addNotification(DiffNotifications.DIFF_TOO_BIG);
         }
       };
     }
@@ -202,7 +211,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addOperationCanceledNotification();
+          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
         }
       };
     }
@@ -212,7 +221,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addDiffErrorNotification();
+          myPanel.addNotification(DiffNotifications.ERROR);
         }
       };
     }
@@ -238,7 +247,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
         myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
 
-        scrollOnRediff();
+        myInitialScrollHelper.onRediff();
 
         myContentPanel.repaintDividers();
         myStatusPanel.update();
@@ -324,7 +333,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @CalledInAwt
-  @Override
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     if (myDiffChanges.isEmpty()) return false;
 
@@ -591,7 +599,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
-      Graphics2D gg = getDividerGraphics(g, divider);
+      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, myEditors.get(0).getComponent());
 
       gg.setColor(DiffDrawUtil.getDividerColor(myEditors.get(0)));
       gg.fill(gg.getClipBounds());
@@ -687,6 +695,21 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     public void paintOnScrollbar(@NotNull Graphics2D gg, int width) {
       myPaintable2.paintOnScrollbar(gg, width);
+    }
+  }
+
+  private class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
+    @Override
+    protected boolean doScrollToChange() {
+      if (myScrollToChange == null) return false;
+      SimpleThreesideDiffViewer.this.doScrollToChange(myScrollToChange);
+      return true;
+    }
+
+    @Override
+    protected boolean doScrollToFirstChange() {
+      SimpleThreesideDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
+      return true;
     }
   }
 }

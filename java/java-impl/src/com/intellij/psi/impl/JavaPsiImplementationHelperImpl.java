@@ -269,7 +269,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     LOG.assertTrue(catchBodyTemplate != null);
 
-    final Properties props = new Properties();
+    Properties props = FileTemplateManager.getInstance(myProject).getDefaultProperties();
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, exceptionType.getCanonicalText());
     if (context != null && context.isPhysical()) {

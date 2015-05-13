@@ -9,8 +9,8 @@ Module can be called directly, but be sure env var DJANGO_SETTINGS_MODULE is set
 
 import django
 
-from _parser import parser
-import _xml
+from django_manage_commands_provider._parser import parser
+from django_manage_commands_provider import _xml
 
 
 __author__ = 'Ilya.Kazakevich'

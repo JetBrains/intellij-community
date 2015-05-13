@@ -264,27 +264,27 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
     RemoteCredentialsHolder holder = (RemoteCredentialsHolder)o;
 
-    if (myAnonymous != holder.myAnonymous) return false;
     if (myPort != holder.myPort) return false;
-    if (myStorePassphrase != holder.myStorePassphrase) return false;
-    if (myStorePassword != holder.myStorePassword) return false;
+    if (myAnonymous != holder.myAnonymous) return false;
     if (myUseKeyPair != holder.myUseKeyPair) return false;
-    if (!myHost.equals(holder.myHost)) return false;
-    if (myKnownHostsFile != null ? !myKnownHostsFile.equals(holder.myKnownHostsFile) : holder.myKnownHostsFile != null) return false;
-    if (myPassphrase != null ? !myPassphrase.equals(holder.myPassphrase) : holder.myPassphrase != null) return false;
+    if (myStorePassword != holder.myStorePassword) return false;
+    if (myStorePassphrase != holder.myStorePassphrase) return false;
+    if (myHost != null ? !myHost.equals(holder.myHost) : holder.myHost != null) return false;
+    if (myUserName != null ? !myUserName.equals(holder.myUserName) : holder.myUserName != null) return false;
     if (myPassword != null ? !myPassword.equals(holder.myPassword) : holder.myPassword != null) return false;
     if (myPrivateKeyFile != null ? !myPrivateKeyFile.equals(holder.myPrivateKeyFile) : holder.myPrivateKeyFile != null) return false;
-    if (!myUserName.equals(holder.myUserName)) return false;
+    if (myKnownHostsFile != null ? !myKnownHostsFile.equals(holder.myKnownHostsFile) : holder.myKnownHostsFile != null) return false;
+    if (myPassphrase != null ? !myPassphrase.equals(holder.myPassphrase) : holder.myPassphrase != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myHost.hashCode();
+    int result = myHost != null ? myHost.hashCode() : 0;
     result = 31 * result + myPort;
     result = 31 * result + (myAnonymous ? 1 : 0);
-    result = 31 * result + myUserName.hashCode();
+    result = 31 * result + (myUserName != null ? myUserName.hashCode() : 0);
     result = 31 * result + (myPassword != null ? myPassword.hashCode() : 0);
     result = 31 * result + (myUseKeyPair ? 1 : 0);
     result = 31 * result + (myPrivateKeyFile != null ? myPrivateKeyFile.hashCode() : 0);
