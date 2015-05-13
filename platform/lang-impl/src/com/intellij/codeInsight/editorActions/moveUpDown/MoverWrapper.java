@@ -63,8 +63,10 @@ class MoverWrapper {
     final int end2 = StatementUpDownMover.getLineStartSafeOffset(document,myInfo.toMove2.endLine);
     String textToInsert2 = document.getCharsSequence().subSequence(start2, end2).toString();
     if (!StringUtil.endsWithChar(textToInsert2,'\n')) textToInsert2 += '\n';
-    
-    if (new TextRange(start, end).intersectsStrict(new TextRange(start2, end2))) {
+
+    TextRange range = new TextRange(start, end);
+    TextRange range2 = new TextRange(start2, end2);
+    if (range.intersectsStrict(range2) && !range.equals(range2)) {
       LOGGER.error("Wrong move ranges: " + 
                    start + ":" + end + "(" + textToInsert + "), " + start2 + ":" + end2 + "(" + textToInsert2 + "), mover: " + myMover);
       return;
