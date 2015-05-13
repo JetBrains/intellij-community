@@ -56,7 +56,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   private static final String EXEC_LINE = "execLine";
   private static final String EXEC_MULTILINE = "execMultipleLines";
-  private static final String GET_COMPLETIONS = "getSuggestions";
+  private static final String GET_COMPLETIONS = "getCompletions";
   private static final String GET_DESCRIPTION = "getDescription";
   private static final String GET_FRAME = "getFrame";
   private static final String GET_VARIABLE = "getVariable";
