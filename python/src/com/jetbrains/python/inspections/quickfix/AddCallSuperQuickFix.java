@@ -32,10 +32,10 @@ import java.util.List;
 /**
  * For:
  * class B(A):
- *   def __init__(self):
- *       A.__init__(self)           #  inserted
- *       print "Constructor B was called"
- *
+ * def __init__(self):
+ * A.__init__(self)           #  inserted
+ * print "Constructor B was called"
+ * <p/>
  * User: catherine
  */
 public class AddCallSuperQuickFix implements LocalQuickFix {
@@ -52,7 +52,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    PyFunction problemFunction = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class);
+    final PyFunction problemFunction = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class);
     if (problemFunction == null) return;
     final StringBuilder superCall = new StringBuilder();
     final PyClass klass = problemFunction.getContainingClass();
@@ -66,16 +66,18 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     boolean addComma = true;
     if (klass.isNewStyleClass()) {
       addComma = false;
-      if (LanguageLevel.forElement(klass).isPy3K())
+      if (LanguageLevel.forElement(klass).isPy3K()) {
         superCall.append("super().__init__(");
-      else
+      }
+      else {
         superCall.append("super(").append(klass.getName()).append(", self).__init__(");
+      }
     }
     else {
       superCall.append(superClass.getName());
       superCall.append(".__init__(self");
     }
-    StringBuilder newFunction = new StringBuilder("def __init__(self");
+    final StringBuilder newFunction = new StringBuilder("def __init__(self");
 
     buildParameterList(problemFunction, superInit, superCall, newFunction, addComma);
 
@@ -84,14 +86,16 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     PyExpression docstring = null;
     final PyStatement[] statements = statementList.getStatements();
     if (statements.length != 0 && statements[0] instanceof PyExpressionStatement) {
-      PyExpressionStatement st = (PyExpressionStatement)statements[0];
-      if (st.getExpression() instanceof PyStringLiteralExpression)
+      final PyExpressionStatement st = (PyExpressionStatement)statements[0];
+      if (st.getExpression() instanceof PyStringLiteralExpression) {
         docstring = st.getExpression();
+      }
     }
 
     newFunction.append("):\n\t");
-    if (docstring != null)
+    if (docstring != null) {
       newFunction.append(docstring.getText()).append("\n\t");
+    }
     newFunction.append(superCall).append("\n\t");
     boolean first = true;
     for (PyStatement statement : statements) {
@@ -102,22 +106,22 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       newFunction.append(statement.getText()).append("\n\t");
     }
 
-    problemFunction.replace(
-      PyElementGenerator.getInstance(project).createFromText(LanguageLevel.forElement(problemFunction), PyFunction.class,
-                                                             newFunction.toString()));
+    final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+    problemFunction.replace(generator.createFromText(LanguageLevel.forElement(problemFunction), PyFunction.class, newFunction.toString()));
   }
 
-  private static void buildParameterList(@NotNull final PyFunction problemFunction,
-                                            @NotNull final PyFunction superInit,
-                                            @NotNull final StringBuilder superCall,
-                                            @NotNull final StringBuilder newFunction, boolean addComma) {
+  private static void buildParameterList(@NotNull PyFunction problemFunction,
+                                         @NotNull PyFunction superInit,
+                                         @NotNull StringBuilder superCall,
+                                         @NotNull StringBuilder newFunction,
+                                         boolean addComma) {
     final PyParameter[] parameters = problemFunction.getParameterList().getParameters();
     final List<String> problemParams = new ArrayList<String>();
     final List<String> functionParams = new ArrayList<String>();
     String starName = null;
     String doubleStarName = null;
     for (int i = 1; i != parameters.length; i++) {
-      PyParameter p = parameters[i];
+      final PyParameter p = parameters[i];
       functionParams.add(p.getName());
       if (p.getText().startsWith("**")) {
         doubleStarName = p.getText();
@@ -134,43 +138,52 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       newFunction.append(",").append(p.getText());
     }
 
-    addParametersFromSuper(superInit, superCall, newFunction, addComma, problemParams, functionParams, starName, doubleStarName);
+    addParametersFromSuper(superInit, superCall, newFunction, problemParams, functionParams, starName, doubleStarName, addComma);
   }
 
-  private static void addParametersFromSuper(@NotNull final PyFunction superInit, @NotNull final StringBuilder superCall,
-                                             @NotNull final StringBuilder newFunction, boolean addComma,
-                                             @NotNull final List<String> problemParams, @NotNull final List<String> functionParams,
-                                             @Nullable String starName, @Nullable String doubleStarName) {
+  private static void addParametersFromSuper(@NotNull PyFunction superInit,
+                                             @NotNull StringBuilder superCall,
+                                             @NotNull StringBuilder newFunction,
+                                             @NotNull List<String> problemParams,
+                                             @NotNull List<String> functionParams,
+                                             @Nullable String starName,
+                                             @Nullable String doubleStarName,
+                                             boolean addComma) {
     final PyParameterList paramList = superInit.getParameterList();
-    PyParameter[] parameters = paramList.getParameters();
+    final PyParameter[] parameters = paramList.getParameters();
     boolean addDouble = false;
     boolean addStar = false;
     for (int i = 1; i != parameters.length; i++) {
-      PyParameter p = parameters[i];
+      final PyParameter p = parameters[i];
       if (p.getDefaultValue() != null) continue;
       final String param = p.getName();
-      String paramText = p.getText();
+      final String paramText = p.getText();
       if (paramText.startsWith("**")) {
         addDouble = true;
-        if (doubleStarName == null)
+        if (doubleStarName == null) {
           doubleStarName = p.getText();
+        }
         continue;
       }
       if (paramText.startsWith("*")) {
         addStar = true;
-        if (starName == null)
+        if (starName == null) {
           starName = p.getText();
+        }
         continue;
       }
-      if (addComma)
+      if (addComma) {
         superCall.append(",");
+      }
       superCall.append(param);
-      if (!functionParams.contains(param))
+      if (!functionParams.contains(param)) {
         newFunction.append(",").append(param);
+      }
       addComma = true;
     }
-    for(String p : problemParams)
+    for (String p : problemParams) {
       newFunction.append(",").append(p);
+    }
     if (starName != null) {
       newFunction.append(",").append(starName);
       if (addStar) {
