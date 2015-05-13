@@ -39,21 +39,31 @@ def ternary(a) {
 
   void "test null relations"() {
     testHighlighting '''
-def ifNullUnknown(o) {
-    if (o == null) {
-        <warning descr="Method invocation 'o.toString()' may produce 'java.lang.NullPointerException'">o.toString()</warning>
+def ifNullUnknown(a) {
+    if (a == null) {
+        if (<warning descr="Condition 'a' is always false">a</warning>) {}
+        if (<warning descr="Condition '!a' is always true">!a</warning>) {}
+        if (<warning descr="Condition 'a == null' is always true">a == null</warning>) {}
+        if (<warning descr="Condition 'a != null' is always false">a != null</warning>) {}
     } else {
-        o.hashCode()
+        if (a) {}
+        if (!a) {}
+        if (<warning descr="Condition 'a == null' is always false">a == null</warning>) {}
+        if (<warning descr="Condition 'a != null' is always true">a != null</warning>) {}
     }
 }
 
-def ifNotNullUnknown(o) {
-    if (o != null) {
-        if (!o) {
-            o.toString()
-        }
+def ifNotNullUnknown(a) {
+    if (a != null) {
+        if (a) {}
+        if (!a) {}
+        if (<warning descr="Condition 'a == null' is always false">a == null</warning>) {}
+        if (<warning descr="Condition 'a != null' is always true">a != null</warning>) {}
     } else {
-        <warning descr="Method invocation 'o.hashCode()' may produce 'java.lang.NullPointerException'">o.hashCode()</warning>
+        if (<warning descr="Condition 'a' is always false">a</warning>) {}
+        if (<warning descr="Condition '!a' is always true">!a</warning>) {}
+        if (<warning descr="Condition 'a == null' is always true">a == null</warning>) {}
+        if (<warning descr="Condition 'a != null' is always false">a != null</warning>) {}
     }
 }
 '''
@@ -79,8 +89,8 @@ def unknownConditions(a) {
 }
 '''
   }
-  
-  void "test asBoolean() override" () {
+
+  void "test asBoolean() override"() {
     testHighlighting '''
 class OverrideBoolean {
     def asBoolean() { true }
@@ -98,6 +108,22 @@ def testOverrideBoolean(OverrideBoolean a) {
         if (a == null) {}
         if (a != null) {}
     }
+}
+'''
+  }
+
+  void "test several states false condition"() {
+    testHighlighting '''
+def test(a) {
+    def b, c
+    if (a) {
+        b = new Object()
+        c = null
+    } else {
+        b = null
+        c = new Object()
+    }
+    if (<warning descr="Condition 'b == null && c == null' is always false">b == null && <warning descr="Condition 'c == null' is always false">c == null</warning></warning>) {}
 }
 '''
   }
