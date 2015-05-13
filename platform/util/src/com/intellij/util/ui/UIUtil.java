@@ -1631,6 +1631,10 @@ public class UIUtil {
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
       g.fillRect(x, 0, width, height);
 
+      if (active) {
+        g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
+        g.fillRect(x, 0, width, height);
+      }
       g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
       if (drawTopLine) g.drawLine(x, 0, width, 0);
       if (drawBottomLine) g.drawLine(x, height - (isRetina() ? 1 : 2), width, height - (isRetina() ? 1 : 2));
@@ -1638,10 +1642,6 @@ public class UIUtil {
       g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
       g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
 
-      if (active) {
-        g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
-        g.fillRect(x, 0, width, height);
-      }
     } finally {
       config.restore();
     }
