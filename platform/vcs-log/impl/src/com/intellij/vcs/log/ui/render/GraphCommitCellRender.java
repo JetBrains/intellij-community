@@ -10,7 +10,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.printer.idea.GraphCellPainter;
 import com.intellij.vcs.log.printer.idea.PrintParameters;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -36,25 +35,18 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
   @NotNull private final RefPainter myRefPainter;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
 
-  @NotNull private VisibleGraph<Integer> myVisibleGraph;
   @Nullable private PaintInfo myGraphImage;
   @Nullable private Collection<VcsRef> myRefs;
 
   public GraphCommitCellRender(@NotNull VcsLogColorManager colorManager,
                                @NotNull VcsLogDataHolder dataHolder,
                                @NotNull GraphCellPainter painter,
-                               @NotNull VisibleGraph<Integer> graph,
                                @NotNull VcsLogGraphTable table) {
     myDataHolder = dataHolder;
     myPainter = painter;
-    myVisibleGraph = graph;
     myGraphTable = table;
     myRefPainter = new RefPainter(colorManager, false);
     myIssueLinkRenderer = new IssueLinkRenderer(dataHolder.getProject(), this);
-  }
-
-  public void updateVisibleGraph(@NotNull VisibleGraph<Integer> visibleGraph) {
-    myVisibleGraph = visibleGraph;
   }
 
   @Override
@@ -105,7 +97,7 @@ public class GraphCommitCellRender extends ColoredTableCellRenderer {
 
   @Nullable
   private PaintInfo getGraphImage(int row) {
-    Collection<? extends PrintElement> printElements = myVisibleGraph.getRowInfo(row).getPrintElements();
+    Collection<? extends PrintElement> printElements = myGraphTable.getVisibleGraph().getRowInfo(row).getPrintElements();
     int maxIndex = 0;
     for (PrintElement printElement : printElements) {
       maxIndex = Math.max(maxIndex, printElement.getPositionInCurrentRow());

@@ -249,4 +249,8 @@ public class GraphTableModel extends AbstractTableModel {
     myMoreRequested = false;
     fireTableDataChanged();
   }
+
+  public VisiblePack getVisiblePack() {
+    return myDataPack;
+  }
 }
