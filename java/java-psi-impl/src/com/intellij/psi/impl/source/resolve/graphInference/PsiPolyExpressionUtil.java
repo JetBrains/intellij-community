@@ -128,7 +128,7 @@ public class PsiPolyExpressionUtil {
     final PsiElement context = PsiUtil.skipParenthesizedExprUp(expr.getParent());
     return context instanceof PsiExpressionList || 
            context instanceof PsiArrayInitializerExpression || 
-           context instanceof PsiConditionalExpression || 
+           context instanceof PsiConditionalExpression && isPolyExpression((PsiExpression)context) || 
            isAssignmentContext(expr, context);
   }
 
