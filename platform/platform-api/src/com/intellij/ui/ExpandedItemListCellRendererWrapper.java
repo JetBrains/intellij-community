@@ -15,12 +15,14 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
+public class ExpandedItemListCellRendererWrapper implements ListCellRenderer, ExpandedSubComponentProvider {
   @NotNull private final ListCellRenderer myWrappee;
   @NotNull private final ExpandableItemsHandler<Integer> myHandler;
 
@@ -41,5 +43,19 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
   @NotNull
   public ListCellRenderer getWrappee() {
     return myWrappee;
+  }
+
+  @Nullable
+  @Override
+  public Pair<Component, Rectangle> getExpandedSubComponent(Component comp) {
+    if (myWrappee instanceof ExpandedSubComponentProvider) {
+      Pair<Component, Rectangle> res = ((ExpandedSubComponentProvider)myWrappee).getExpandedSubComponent(comp);
+      if (res != null && res.getFirst() != comp) {
+        Component wrapped = new ExpandedItemRendererComponentWrapper(res.getFirst());
+        return Pair.create(wrapped, res.getSecond());
+      }
+      return res;
+    }
+    return Pair.create(comp, null);
   }
 }
