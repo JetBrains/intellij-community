@@ -134,7 +134,14 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     PopupHandler.installPopupHandler(this, VcsLogUiImpl.POPUP_ACTION_GROUP, VcsLogUiImpl.VCS_LOG_TABLE_PLACE);
     TableScrollingUtil.installActions(this, false);
 
-    setModel(new GraphTableModel(initialDataPack, logDataHolder, UI));
+    setModel(new GraphTableModel(initialDataPack, myLogDataHolder, myUI));
+  }
+
+  public void updateDataPack(@NotNull VisiblePack visiblePack) {
+    VcsLogGraphTable.Selection previousSelection = getSelection();
+    getGraphTableModel().setVisiblePack(visiblePack);
+    previousSelection.restore(visiblePack.getVisibleGraph(), true);
+    setPaintBusy(false);
   }
 
   @Override
@@ -443,7 +450,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     return new Selection(this);
   }
 
-  public static class Selection {
+  private static class Selection {
     @NotNull private final VcsLogGraphTable myTable;
     @NotNull private final TIntHashSet mySelectedCommits;
     @Nullable private final Integer myVisibleSelectedCommit;
