@@ -17,7 +17,9 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThrowableRunnable;
 import gnu.trove.TIntArrayList;
 import junit.framework.TestCase;
 
@@ -225,17 +227,21 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
-  public void testLockFreeCOWPerformanceIsAdequateForRegisteringAllIElementTypesReasonablyQuick() {
-    List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
-    long start = System.currentTimeMillis();
-    // see IElementType.ourRegistry
-    for (int i = 0; i < 15000; i++) {
-      my.add(i);
-      assertEquals(i, my.indexOf(i));
-    }
-    long elapsed = System.currentTimeMillis() - start;
-    System.out.println("elapsed = " + elapsed);
-    assertTrue(String.valueOf(elapsed), elapsed < 1000);
+  public void testCOWListPerformanceIsAdequateForRegisteringAllIElementTypesReasonablyQuick() {
+    PlatformTestUtil.startPerformanceTest("COWList add", 1000, new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
+        long start = System.currentTimeMillis();
+        // see IElementType.ourRegistry
+        for (int i = 0; i < 15000; i++) {
+          my.add(i);
+          assertEquals(i, my.indexOf(i));
+        }
+        long elapsed = System.currentTimeMillis() - start;
+        System.out.println("elapsed = " + elapsed);
+      }
+    }).assertTiming();
   }
 
   private static void assertReallyEmpty(List<Object> my) {
