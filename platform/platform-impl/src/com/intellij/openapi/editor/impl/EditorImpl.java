@@ -311,6 +311,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myCharKeyPressed;
   private boolean myNeedToSelectPreviousChar;
+  
+  private boolean myDocumentChangeInProgress;
+  private boolean myErrorStripeNeedsRepaint;
 
   private final TIntFunction myLineNumberAreaWidthFunction = new TIntFunction() {
     @Override
@@ -373,6 +376,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged) {
         if (myDocument.isInBulkUpdate()) return; // bulkUpdateFinished() will repaint anything
+        
+        if (renderersChanged) {
+          updateGutterSize();
+        }
+        
+        boolean errorStripeNeedsRepaint = renderersChanged || highlighter.getErrorStripeMarkColor() != null;
+        if (myDocumentChangeInProgress) {
+          // postpone repaint request, as folding model can be in inconsistent state and so coordinate 
+          // conversions might give incorrect results
+          myErrorStripeNeedsRepaint |= errorStripeNeedsRepaint;
+          return;
+        }
+        
         int textLength = myDocument.getTextLength();
 
         clearTextWidthCache();
@@ -389,13 +405,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
 
         // optimization: there is no need to repaint error stripe if the highlighter is invisible on it
-        if (renderersChanged || highlighter.getErrorStripeMarkColor() != null) {
+        if (errorStripeNeedsRepaint) {
           ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);
         }
 
-        if (renderersChanged) {
-          updateGutterSize();
-        }
         updateCaretCursor();
       }
     };
@@ -1821,6 +1834,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
+    myDocumentChangeInProgress = true;
     if (isStickySelection()) {
       setStickySelection(false);
     }
@@ -1838,7 +1852,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void changedUpdate(DocumentEvent e) {
+    myDocumentChangeInProgress = false;
     if (myDocument.isInBulkUpdate()) return;
+
+    if (myErrorStripeNeedsRepaint) {
+      myMarkupModel.repaint(e.getOffset(), e.getOffset() + e.getNewLength());
+      myErrorStripeNeedsRepaint = false;
+    }
 
     clearTextWidthCache();
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
