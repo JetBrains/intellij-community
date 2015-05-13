@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.flow.instruction;
+package org.jetbrains.plugins.groovy.lang.flow.visitor;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.*;
@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
+import org.jetbrains.plugins.groovy.lang.flow.instruction.*;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaConstValueFactory;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -42,6 +43,8 @@ import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.fo
 import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.handleConstantComparison;
 import static com.intellij.codeInspection.dataFlow.value.DfaRelation.EQ;
 import static com.intellij.codeInspection.dataFlow.value.DfaRelation.UNDEFINED;
+import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_RANGE;
 
 public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstructionVisitor<V>> extends GrInstructionVisitor<V> {
 
@@ -74,7 +77,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
       }
 
       if (var.getInherentNullability() == Nullness.NOT_NULL) {
-        checkNotNullable(memState, dfaSource, NullabilityProblem.assigningToNotNull, instruction.getRExpression());
+        checkNotNullable(memState, dfaSource, assigningToNotNull, instruction.getRExpression());
       }
       final PsiModifierListOwner psi = var.getPsiVariable();
       if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
@@ -86,7 +89,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
       }
     }
     else if (dfaDest instanceof DfaTypeValue && ((DfaTypeValue)dfaDest).isNotNull()) {
-      checkNotNullable(memState, dfaSource, NullabilityProblem.assigningToNotNull, instruction.getRExpression());
+      checkNotNullable(memState, dfaSource, assigningToNotNull, instruction.getRExpression());
     }
 
     memState.push(dfaDest);
@@ -101,7 +104,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     final PsiElement containingMethod = PsiTreeUtil.getParentOfType(instructionReturn, GrMethod.class, GrClosableBlock.class);
     if (containingMethod instanceof PsiModifierListOwner) {
       if (NullableNotNullManager.isNotNull((PsiModifierListOwner)containingMethod)) {
-        checkNotNullable(state, retValue, NullabilityProblem.nullableReturn, instructionReturn);
+        checkNotNullable(state, retValue, nullableReturn, instructionReturn);
       }
     }
     return nextInstruction(instruction, state);
@@ -110,7 +113,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
   @Override
   public DfaInstructionState<V>[] visitDereference(GrDereferenceInstruction<V> instruction, DfaMemoryState state) {
     final DfaValue qualifier = state.pop();
-    if (!checkNotNullable(state, qualifier, NullabilityProblem.fieldAccessNPE, instruction.getExpression())) {
+    if (!checkNotNullable(state, qualifier, fieldAccessNPE, instruction.getExpression())) {
       forceNotNull(myRunner.getFactory(), state, qualifier);
     }
     return nextInstruction(instruction, state);
@@ -120,7 +123,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
   public DfaInstructionState<V>[] visitMethodCallGroovy(final GrMethodCallInstruction<V> instruction, final DfaMemoryState state) {
     final DfaValue[] argValues = myHelper.popAndCheckCallArguments(instruction, state);
     final DfaValue qualifier = state.pop();
-    if (!checkNotNullable(state, qualifier, NullabilityProblem.callNPE, instruction.getCall())) {
+    if (!checkNotNullable(state, qualifier, callNPE, instruction.getCall())) {
       forceNotNull(myRunner.getFactory(), state, qualifier);
     }
 
@@ -151,16 +154,19 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
 
   protected boolean checkNotNullable(DfaMemoryState state,
                                      DfaValue value,
-                                     NullabilityProblem problem,
+                                     GrNullabilityProblem problem,
                                      PsiElement anchor) {
     boolean notNullable = state.checkNotNullable(value);
-    if (notNullable && problem != NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter) {
+    if (notNullable && problem != passingNullableArgumentToNonAnnotatedParameter) {
       state.applyCondition(myRunner.getFactory().getRelationFactory().createRelation(
         value, myRunner.getFactory().getConstFactory().getNull(), DfaRelation.NE, false
       ));
     }
+    report(notNullable, state.isEphemeral(), problem, anchor);
     return notNullable;
   }
+
+  protected void report(boolean ok, boolean ephemeral, GrNullabilityProblem problem, PsiElement anchor) {}
 
   @Override
   public DfaInstructionState<V>[] visitBinop(BinopInstruction<V> instruction, DfaMemoryState memState) {
@@ -235,10 +241,21 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     final DfaValue to = state.pop();
     final DfaValue from = state.pop();
     final GrRangeExpression expression = instruction.getExpression();
-    if (checkNotNullable(state, from, NullabilityProblem.passingNullableToNotNullParameter, expression.getLeftOperand())) {
-      checkNotNullable(state, to, NullabilityProblem.passingNullableToNotNullParameter, expression.getRightOperand());
+
+    final boolean fromOk = state.checkNotNullable(from);
+    final boolean toOk = state.checkNotNullable(to);
+    final boolean inclusive = expression.isInclusive();
+
+    if (!fromOk && (toOk || inclusive)) {
+      report(false, state.isEphemeral(), passingNullableAsRangeBound, expression.getLeftOperand());
+      if (inclusive) forceNotNull(getFactory(), state, from);
     }
-    state.push(myRunner.getFactory().createTypeValue(TypesUtil.createType("groovy.lang.Range", expression), Nullness.NOT_NULL));
+    if (!toOk && (fromOk || inclusive)) {
+      report(false, state.isEphemeral(), passingNullableAsRangeBound, expression.getRightOperand());
+      if (inclusive) forceNotNull(getFactory(), state, to);
+    }
+
+    state.push(myRunner.getFactory().createTypeValue(TypesUtil.createType(GROOVY_LANG_RANGE, expression), Nullness.NOT_NULL));
     return nextInstruction(instruction, state);
   }
 

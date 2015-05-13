@@ -33,6 +33,7 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";
   @NonNls public static final String DEFAULT_GROOVY_METHODS = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
   @NonNls public static final String GROOVY_LANG_SCRIPT = "groovy.lang.Script";
+  @NonNls public static final String GROOVY_LANG_RANGE = "groovy.lang.Range";
   @NonNls public static final String GROOVY_LANG_INT_RANGE = "groovy.lang.IntRange";
   @NonNls public static final String GROOVY_LANG_OBJECT_RANGE = "groovy.lang.ObjectRange";
   @NonNls public static final String GROOVY_LANG_DELEGATE = "groovy.lang.Delegate";

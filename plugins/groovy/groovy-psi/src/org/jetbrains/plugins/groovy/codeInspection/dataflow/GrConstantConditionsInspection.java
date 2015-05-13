@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.RunnerResult;
 import com.intellij.codeInspection.dataFlow.instructions.ConditionalGotoInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
-import org.jetbrains.plugins.groovy.lang.flow.instruction.GrNullabilityInstructionVisitor;
+import org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -44,6 +43,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.*;
 
 public class GrConstantConditionsInspection extends GroovySuppressableInspectionTool {
 
@@ -108,18 +109,18 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
     if (rc == RunnerResult.OK) {
       final Set<PsiElement> alreadyReported = ContainerUtil.newHashSet();
 
-      for (final PsiElement element : visitor.getProblems(NullabilityProblem.callNPE)) {
+      for (final PsiElement element : visitor.getProblems(callNPE)) {
         if (!alreadyReported.add(element)) continue;
         holder.registerProblem(element, InspectionsBundle.message("dataflow.message.npe.method.invocation"));
       }
 
-      for (final PsiElement element : visitor.getProblems(NullabilityProblem.fieldAccessNPE)) {
+      for (final PsiElement element : visitor.getProblems(fieldAccessNPE)) {
         if (!alreadyReported.add(element)) continue;
         final String text = InspectionsBundle.message("dataflow.message.npe.field.access");
         holder.registerProblem(element, text);
       }
 
-      for (final PsiElement element : visitor.getProblems(NullabilityProblem.passingNullableToNotNullParameter)) {
+      for (final PsiElement element : visitor.getProblems(passingNullableToNotNullParameter)) {
         if (!alreadyReported.add(element)) continue;
         final String text = GrInspectionUtil.isNull(element)
                             ? InspectionsBundle.message("dataflow.message.passing.null.argument")
@@ -127,7 +128,7 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
         holder.registerProblem(element, text);
       }
 
-      for (final PsiElement element : visitor.getProblems(NullabilityProblem.assigningToNotNull)) {
+      for (final PsiElement element : visitor.getProblems(assigningToNotNull)) {
         if (!alreadyReported.add(element)) continue;
         final String text = GrInspectionUtil.isNull(element)
                             ? InspectionsBundle.message("dataflow.message.assigning.null")
@@ -135,7 +136,7 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
         holder.registerProblem(element, text);
       }
 
-      for (final PsiElement element : visitor.getProblems(NullabilityProblem.nullableReturn)) {
+      for (final PsiElement element : visitor.getProblems(nullableReturn)) {
         if (!alreadyReported.add(element)) continue;
         final String text = GrInspectionUtil.isNull(element)
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull")
@@ -143,11 +144,19 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
         holder.registerProblem(element, text);
       }
 
-      for (final PsiElement element : visitor.getProblems(NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter)) {
-        if (alreadyReported.contains(element)) continue;
+      for (final PsiElement element : visitor.getProblems(passingNullableArgumentToNonAnnotatedParameter)) {
+        if (!alreadyReported.add(element)) continue;
         final String text = GrInspectionUtil.isNull(element)
                             ? "Passing <code>null</code> argument to non annotated parameter"
                             : "Argument <code>#ref</code> #loc might be null but passed to non annotated parameter";
+        holder.registerProblem(element, text);
+      }
+
+      for (PsiElement element : visitor.getProblems(passingNullableAsRangeBound)) {
+        if (!alreadyReported.add(element)) continue;
+        final String text = GrInspectionUtil.isNull(element)
+                            ? "Passing <code>null</code> bound"
+                            : "Bound <code>#ref</code> #loc might be null";
         holder.registerProblem(element, text);
       }
 

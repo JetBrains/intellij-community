@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.flow.instruction;
+package org.jetbrains.plugins.groovy.lang.flow.visitor;
 
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.NullabilityProblem;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
@@ -34,14 +31,14 @@ public class GrNullabilityInstructionVisitor extends GrGenericStandardInstructio
     super(runner);
   }
 
-  private final MultiMap<NullabilityProblem, PsiElement> myProblems = new MultiMap<NullabilityProblem, PsiElement>();
-  private final Map<Pair<NullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
+  private final MultiMap<GrNullabilityProblem, PsiElement> myProblems = new MultiMap<GrNullabilityProblem, PsiElement>();
+  private final Map<Pair<GrNullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
 
-  public MultiMap<NullabilityProblem, PsiElement> getProblems() {
+  public MultiMap<GrNullabilityProblem, PsiElement> getProblems() {
     return myProblems;
   }
 
-  public Collection<PsiElement> getProblems(final NullabilityProblem kind) {
+  public Collection<PsiElement> getProblems(final GrNullabilityProblem kind) {
     return ContainerUtil.filter(myProblems.get(kind), new Condition<PsiElement>() {
       @Override
       public boolean value(PsiElement psiElement) {
@@ -55,20 +52,19 @@ public class GrNullabilityInstructionVisitor extends GrGenericStandardInstructio
   }
 
   @Override
-  protected boolean checkNotNullable(DfaMemoryState state, DfaValue value, NullabilityProblem problem, PsiElement anchor) {
-    boolean ok = super.checkNotNullable(state, value, problem, anchor);
+  protected void report(boolean ok, boolean ephemeral, GrNullabilityProblem problem, PsiElement anchor) {
     if (!ok && anchor != null) {
       myProblems.putValue(problem, anchor);
     }
-    Pair<NullabilityProblem, PsiElement> key = Pair.create(problem, anchor);
+    Pair<GrNullabilityProblem, PsiElement> key = Pair.create(problem, anchor);
     StateInfo info = myStateInfos.get(key);
     if (info == null) {
       myStateInfos.put(key, info = new StateInfo());
     }
-    if (state.isEphemeral() && !ok) {
+    if (ephemeral && !ok) {
       info.ephemeralNpe = true;
     }
-    else if (!state.isEphemeral()) {
+    else if (!ephemeral) {
       if (ok) {
         info.normalOk = true;
       }
@@ -76,7 +72,6 @@ public class GrNullabilityInstructionVisitor extends GrGenericStandardInstructio
         info.normalNpe = true;
       }
     }
-    return ok;
   }
 
   private static class StateInfo {

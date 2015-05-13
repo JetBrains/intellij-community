@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.flow.instruction;
+package org.jetbrains.plugins.groovy.lang.flow.visitor;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.MethodCallHelper;
+import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -27,6 +30,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.flow.instruction.GrMethodCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
@@ -34,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import java.util.List;
 
 import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.forceNotNull;
+import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.passingNullableArgumentToNonAnnotatedParameter;
+import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.passingNullableToNotNullParameter;
 
 public class GrMethodCallHelper<V extends GrGenericStandardInstructionVisitor<V>> extends MethodCallHelper<GrMethodCallInstruction<V>> {
 
@@ -117,12 +123,12 @@ public class GrMethodCallHelper<V extends GrGenericStandardInstructionVisitor<V>
       final DfaValue arg = arguments.pop();
       final Nullness nullability = instruction.getParameterNullability(expression);
       if (nullability == Nullness.NOT_NULL) {
-        if (!myVisitor.checkNotNullable(state, arg, NullabilityProblem.passingNullableToNotNullParameter, expression)) {
+        if (!myVisitor.checkNotNullable(state, arg, passingNullableToNotNullParameter, expression)) {
           forceNotNull(getFactory(), state, arg);
         }
       }
       else if (nullability == Nullness.UNKNOWN) {
-        myVisitor.checkNotNullable(state, arg, NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter, expression);
+        myVisitor.checkNotNullable(state, arg, passingNullableArgumentToNonAnnotatedParameter, expression);
       }
       result.add(arg);
     }
