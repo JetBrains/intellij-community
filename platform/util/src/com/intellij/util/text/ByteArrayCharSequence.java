@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ByteArrayCharSequence implements CharSequence {
@@ -34,6 +35,7 @@ public class ByteArrayCharSequence implements CharSequence {
     return (char)myChars[index];
   }
 
+  @NotNull
   @Override
   public CharSequence subSequence(int start, int end) {
     return start == 0 && end == length() ? this : new CharSequenceSubSequence(this, start, end);
@@ -45,4 +47,19 @@ public class ByteArrayCharSequence implements CharSequence {
     return StringFactory.createShared(CharArrayUtil.fromSequence(this, 0, length()));
   }
 
+  @NotNull
+  public static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
+    int length = name.length();
+    if (length == 0) return "";
+
+    if (!IOUtil.isAscii(name)) {
+      return new String(name); // So we don't hold whole char[] buffer of a lengthy path on JDK 6
+    }
+
+    byte[] bytes = new byte[length];
+    for (int i = 0; i < length; i++) {
+      bytes[i] = (byte)name.charAt(i);
+    }
+    return new ByteArrayCharSequence(bytes);
+  }
 }
