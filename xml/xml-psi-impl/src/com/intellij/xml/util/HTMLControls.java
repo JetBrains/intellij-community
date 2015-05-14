@@ -108,7 +108,7 @@ public class HTMLControls {
     public Set<String> fromString(@NotNull String value) {
       final THashSet<String> result = new THashSet<String>();
       for (String closingTag : StringUtil.split(value, ",")) {
-        result.add(closingTag.trim());
+        result.add(closingTag.trim().toLowerCase(Locale.US));
       }
       return result;
     }
