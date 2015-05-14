@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -50,7 +51,10 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
                                                boolean declareFinalIfAll,
                                                boolean anyAssignmentLHS,
                                                final InputValidator validator,
-                                               PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                               PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
+    if (replaceChoice == null && ApplicationManager.getApplication().isUnitTestMode()) {
+      replaceChoice = OccurrencesChooser.ReplaceChoice.NO;
+    }
     if (replaceChoice != null) {
       return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS, validator,
                                anchor, replaceChoice);

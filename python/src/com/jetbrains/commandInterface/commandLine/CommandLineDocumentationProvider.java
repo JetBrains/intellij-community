@@ -20,16 +20,19 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.command.Option;
-import com.jetbrains.commandInterface.commandLine.psi.*;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineArgument;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineCommand;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineOption;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineVisitor;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,14 +45,7 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
   @Nullable
   @Override
   public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
-    Help help = findHelp(element);
-    if (help == null && originalElement instanceof PsiWhiteSpace) {
-      // We need to show doc for command even if cursor is right after it
-      final PsiElement elementToTheLeft = originalElement.getPrevSibling();
-      if (elementToTheLeft != null) {
-        help = findHelp(elementToTheLeft);
-      }
-    }
+    final Help help = findHelp(element);
     if (help == null) {
       return null;
     }
@@ -77,18 +73,22 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
   public PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
                                                   @NotNull final PsiFile file,
                                                   @Nullable final PsiElement contextElement) {
-    final CommandLineElement commandLineElement = PsiTreeUtil.getParentOfType(contextElement, CommandLineElement.class);
-    if (commandLineElement != null) {
-      return commandLineElement;
+
+    // First we try to find required parent for context element. Then, for element to the left of caret to support case "command<caret>"
+    for (final PsiElement element : Arrays.asList(contextElement, file.findElementAt(editor.getCaretModel().getOffset() - 1))) {
+      final CommandLineElement commandLineElement = PsiTreeUtil.getParentOfType(element, CommandLineElement.class);
+      if (commandLineElement != null) {
+        return commandLineElement;
+      }
     }
-    return PyUtil.as(file, CommandLineFile.class);
+    return null;
   }
 
   /**
    * Searches for help text for certain element
+   *
    * @param element element to search help for
    * @return help or
-   *
    */
   @Nullable
   private static Help findHelp(@NotNull final PsiElement element) {

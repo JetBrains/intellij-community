@@ -18,10 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.History;
@@ -96,8 +93,10 @@ public class SidePanel extends JPanel {
     myList.setCellRenderer(new GroupedItemsListRenderer(descriptor) {
       JPanel myExtraPanel;
       SidePanelCountLabel myCountLabel;
+      CellRendererPane myValidationParent = new CellRendererPane();
       {
         mySeparatorComponent.setCaptionCentered(false);
+        myList.add(myValidationParent);
       }
 
       @Override
@@ -124,6 +123,7 @@ public class SidePanel extends JPanel {
 
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        layout();
         myCountLabel.setText("");
         final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if ("Problems".equals(descriptor.getTextFor(value))) {
@@ -132,6 +132,14 @@ public class SidePanel extends JPanel {
             myCountLabel.setSelected(isSelected);
             myCountLabel.setText(String.valueOf(errorPane.getErrorsCount()));
           }
+        }
+        if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {
+          Rectangle bounds = list.getCellBounds(index, index);
+          bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
+          AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);
+          myExtraPanel.setSize((int)myExtraPanel.getPreferredSize().getWidth(), myExtraPanel.getHeight());
+          UIUtil.putClientProperty(myExtraPanel, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+          return myExtraPanel;
         }
         return component;
       }

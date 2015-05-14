@@ -32,8 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -202,8 +200,8 @@ public final class ModuleCompilerUtil {
         Module[] modules = provider.getModules();
         List<ModuleSourceSet> result = new ArrayList<ModuleSourceSet>(modules.length * 2);
         for (Module module : modules) {
-          addSourceSetIfAny(result, module, ModuleSourceSet.Type.PRODUCTION, provider);
-          addSourceSetIfAny(result, module, ModuleSourceSet.Type.TEST, provider);
+          addSourceSet(result, module, ModuleSourceSet.Type.PRODUCTION, provider);
+          addSourceSet(result, module, ModuleSourceSet.Type.TEST, provider);
         }
         return result;
       }
@@ -219,22 +217,19 @@ public final class ModuleCompilerUtil {
         enumerator.forEachModule(new Processor<Module>() {
           @Override
           public boolean process(Module module) {
-            addSourceSetIfAny(deps, module, n.getType(), provider);
+            addSourceSet(deps, module, n.getType(), provider);
             return true;
           }
         });
         if (n.getType() == ModuleSourceSet.Type.TEST) {
-          addSourceSetIfAny(deps, n.getModule(), ModuleSourceSet.Type.PRODUCTION, provider);
+          addSourceSet(deps, n.getModule(), ModuleSourceSet.Type.PRODUCTION, provider);
         }
         return deps.iterator();
       }
     }));
   }
 
-  private static void addSourceSetIfAny(List<ModuleSourceSet> result, Module module, ModuleSourceSet.Type type, RootModelProvider provider) {
-    JpsModuleSourceRootType<?> rootType = type == ModuleSourceSet.Type.PRODUCTION ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
-    if (!provider.getRootModel(module).getSourceRoots(rootType).isEmpty()) {
-      result.add(new ModuleSourceSet(module, type));
-    }
+  private static void addSourceSet(List<ModuleSourceSet> result, Module module, ModuleSourceSet.Type type, RootModelProvider provider) {
+    result.add(new ModuleSourceSet(module, type));
   }
 }

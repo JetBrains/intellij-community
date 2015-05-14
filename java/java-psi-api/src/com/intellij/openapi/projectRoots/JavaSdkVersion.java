@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,17 @@ import java.util.Arrays;
  * @author nik
  */
 public enum JavaSdkVersion {
-  JDK_1_0(LanguageLevel.JDK_1_3, "1.0"), JDK_1_1(LanguageLevel.JDK_1_3, "1.1"), JDK_1_2(LanguageLevel.JDK_1_3, "1.2"), JDK_1_3(LanguageLevel.JDK_1_3, "1.3"),
+  JDK_1_0(LanguageLevel.JDK_1_3, "1.0"),
+  JDK_1_1(LanguageLevel.JDK_1_3, "1.1"),
+  JDK_1_2(LanguageLevel.JDK_1_3, "1.2"),
+  JDK_1_3(LanguageLevel.JDK_1_3, "1.3"),
   JDK_1_4(LanguageLevel.JDK_1_4, "1.4"),
   JDK_1_5(LanguageLevel.JDK_1_5, "1.5"),
   JDK_1_6(LanguageLevel.JDK_1_6, "1.6"),
   JDK_1_7(LanguageLevel.JDK_1_7, "1.7"),
   JDK_1_8(LanguageLevel.JDK_1_8, "1.8"),
   JDK_1_9(LanguageLevel.JDK_1_9, "1.9");
-  
+
   private final LanguageLevel myMaxLanguageLevel;
   private final String myDescription;
 
@@ -75,15 +78,16 @@ public enum JavaSdkVersion {
 
   @NotNull
   public static JavaSdkVersion fromLanguageLevel(@NotNull LanguageLevel languageLevel) throws IllegalArgumentException {
-    JavaSdkVersion[] values = values();
-    for (int i = values.length - 1; i >= 0; i--) {
-      JavaSdkVersion version = values[i];
+    if (languageLevel == LanguageLevel.JDK_1_3) {
+      return JDK_1_3;
+    }
+    for (JavaSdkVersion version : values()) {
       if (version.getMaxLanguageLevel().isAtLeast(languageLevel)) {
         return version;
       }
     }
     throw new IllegalArgumentException(
-      "Can't map Java SDK by language level "+languageLevel+". Available values: "+ Arrays.toString(values())
+      "Can't map Java SDK by language level " + languageLevel + ". Available values: " + Arrays.toString(values())
     );
   }
 }

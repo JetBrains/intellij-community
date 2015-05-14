@@ -34,7 +34,6 @@ import org.junit.runner.notification.RunListener;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.annotation.Annotation;
 import java.util.*;
 
 public class JUnit4TestListener extends RunListener {
@@ -132,14 +131,15 @@ public class JUnit4TestListener extends RunListener {
     attrs.put("name", JUnit4ReflectionUtil.getMethodName(failure.getDescription()));
     try {
       final String trace = failure.getTrace();
-      final ComparisonFailureData notification = createExceptionNotification(failure.getException());
-      ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs);
+      final Throwable ex = failure.getException();
+      final ComparisonFailureData notification = createExceptionNotification(ex);
+      ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, ex);
     }
     catch (Throwable e) {
       final StringWriter stringWriter = new StringWriter();
       final PrintWriter writer = new PrintWriter(stringWriter);
       e.printStackTrace(writer);
-      ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs);
+      ComparisonFailureData.registerSMAttributes(null, stringWriter.toString(), e.getMessage(), attrs, e);
     }
     finally {
       myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.Page;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,26 @@ import java.util.Map;
 /**
  * Supports the int <-> Hash persistent mapping.
  */
-public class VcsLogHashMap implements Disposable {
+public class VcsLogHashMapImpl implements Disposable, VcsLogHashMap {
+
+  public static final VcsLogHashMap EMPTY = new VcsLogHashMap() {
+    @Override
+    public int getCommitIndex(@NotNull Hash hash) {
+      return 0;
+    }
+
+    @NotNull
+    @Override
+    public Hash getHash(int commitIndex) {
+      return HashImpl.build("");
+    }
+
+    @Nullable
+    @Override
+    public Hash findHashByString(@NotNull String string) {
+      return null;
+    }
+  };
 
   private static final File LOG_CACHE_APP_DIR = new File(new File(PathManager.getSystemPath(), "vcs-log"), "hashes");
   private static final Logger LOG = Logger.getInstance(VcsLogHashMap.class);
@@ -59,7 +78,7 @@ public class VcsLogHashMap implements Disposable {
 
   private final PersistentEnumerator<Hash> myPersistentEnumerator;
 
-  VcsLogHashMap(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
+  public VcsLogHashMapImpl(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) throws IOException {
     cleanupOldNaming(project, logProviders);
     String logId = calcLogId(project, logProviders);
     final File mapFile = new File(LOG_CACHE_APP_DIR, logId + "." + VERSION);
@@ -113,6 +132,7 @@ public class VcsLogHashMap implements Disposable {
     return myPersistentEnumerator.enumerate(hash);
   }
 
+  @Override
   public int getCommitIndex(@NotNull Hash hash) {
     try {
       return getOrPut(hash);
@@ -122,6 +142,7 @@ public class VcsLogHashMap implements Disposable {
     }
   }
 
+  @Override
   @NotNull
   public Hash getHash(int commitIndex) {
     try {
@@ -136,6 +157,7 @@ public class VcsLogHashMap implements Disposable {
     }
   }
 
+  @Override
   @Nullable
   public Hash findHashByString(@NotNull String string) {
     final String pHash = string.toLowerCase();
@@ -151,28 +173,6 @@ public class VcsLogHashMap implements Disposable {
       LOG.error(e);
       return null;
     }
-  }
-
-  @NotNull
-  public NotNullFunction<Hash, Integer> asIndexGetter() {
-    return new NotNullFunction<Hash, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Hash hash) {
-        return getCommitIndex(hash);
-      }
-    };
-  }
-
-  @NotNull
-  public NotNullFunction<Integer, Hash> asHashGetter() {
-    return new NotNullFunction<Integer, Hash>() {
-      @NotNull
-      @Override
-      public Hash fun(Integer commitIndex) {
-        return getHash(commitIndex);
-      }
-    };
   }
 
   public void flush() {

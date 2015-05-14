@@ -181,7 +181,7 @@ public class HgLogProvider implements VcsLogProvider {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     // branch filter and user filter may be used several times without delimiter
-    if (filterCollection.getBranchFilter() != null) {
+    if (filterCollection.getBranchFilter() != null && !filterCollection.getBranchFilter().getBranchNames().isEmpty()) {
       HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
       if (repository == null) {
         LOG.error("Repository not found for root " + root);

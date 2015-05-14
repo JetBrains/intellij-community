@@ -22,6 +22,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ComparisonFailureData {
+  private static final String ASSERTION_CLASS_NAME = "java.lang.AssertionError";
+  private static final String ASSERTION_FAILED_CLASS_NAME = "junit.framework.AssertionFailedError";
+
   private final String myExpected;
   private final String myActual;
   private final String myFilePath;
@@ -61,7 +64,8 @@ public class ComparisonFailureData {
   public static void registerSMAttributes(ComparisonFailureData notification,
                                           String trace,
                                           String failureMessage,
-                                          Map attrs) {
+                                          Map attrs, 
+                                          Throwable throwable) {
 
     if (notification != null) {
       attrs.put("expected", notification.getExpected());
@@ -77,9 +81,25 @@ public class ComparisonFailureData {
     }
     else {
       attrs.put("details", trace);
-      attrs.put("error", "true");
+
+      Throwable throwableCause = null;
+      try {
+        throwableCause = throwable.getCause();
+      }
+      catch (Throwable ignored) {}
+
+      if (!isAssertionError(throwable.getClass()) && !isAssertionError(throwableCause != null ? throwableCause.getClass() : null)) {
+        attrs.put("error", "true");
+      }
       attrs.put("message", failureMessage != null ? failureMessage : "");
     }
+  }
+
+  public static boolean isAssertionError(Class throwableClass) {
+    if (throwableClass == null) return false;
+    final String throwableClassName = throwableClass.getName();
+    if (throwableClassName.equals(ASSERTION_CLASS_NAME) || throwableClassName.equals(ASSERTION_FAILED_CLASS_NAME)) return true;
+    return isAssertionError(throwableClass.getSuperclass());
   }
 
   public String getFilePath() {

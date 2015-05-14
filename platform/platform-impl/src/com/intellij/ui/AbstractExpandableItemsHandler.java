@@ -23,6 +23,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,15 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private KeyType myKey;
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
+
+  public static void setRelativeBounds(@NotNull Component parent, @NotNull Rectangle bounds,
+                                       @NotNull Component child, @NotNull Container validationParent) {
+    validationParent.add(parent);
+    parent.setBounds(bounds);
+    parent.validate();
+    child.setLocation(SwingUtilities.convertPoint(child, 0, 0, parent));
+    validationParent.remove(parent);
+  }
 
   protected AbstractExpandableItemsHandler(@NotNull final ComponentType component) {
     myComponent = component;
@@ -365,13 +375,19 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
+    UIUtil.putClientProperty(myComponent, EXPANDED_RENDERER, true);
     Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
+    UIUtil.putClientProperty(myComponent, EXPANDED_RENDERER, null);
     if (rendererAndBounds == null) return null;
 
-    Component renderer = rendererAndBounds.first;
-    if (!(renderer instanceof JComponent)) return null;
+    JComponent renderer = ObjectUtils.tryCast(rendererAndBounds.first, JComponent.class);
+    if (renderer == null) return null;
+    if (renderer.getClientProperty(DISABLE_EXPANDABLE_HANDLER) != null) return null;
 
-    if (((JComponent)renderer).getClientProperty(DISABLE_EXPANDABLE_HANDLER) != null) return null;
+    if (UIUtil.getClientProperty((JComponent)rendererAndBounds.getFirst(), USE_RENDERER_BOUNDS) == Boolean.TRUE) {
+      rendererAndBounds.getSecond().translate(renderer.getX(), renderer.getY());
+      rendererAndBounds.getSecond().setSize(renderer.getSize());
+    }
 
     myKeyItemBounds = rendererAndBounds.second;
 

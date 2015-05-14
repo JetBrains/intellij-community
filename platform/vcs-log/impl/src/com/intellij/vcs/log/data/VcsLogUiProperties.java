@@ -38,7 +38,7 @@ import java.util.List;
 @State(name = "Vcs.Log.UiProperties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProperties.State> {
 
-  private static final int RECENTLY_FILTERED_USERS_AMOUNT = 5;
+  private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
 
   private State myState = new State();
 
@@ -79,18 +79,18 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
     addRecentGroup(usersInGroup, myState.RECENTLY_FILTERED_USER_GROUPS);
   }
 
-  public void addRecentlyFilteredBranchGroup(@NotNull List<String> usersInGroup) {
-    addRecentGroup(usersInGroup, myState.RECENTLY_FILTERED_BRANCH_GROUPS);
+  public void addRecentlyFilteredBranchGroup(@NotNull List<String> valuesInGroup) {
+    addRecentGroup(valuesInGroup, myState.RECENTLY_FILTERED_BRANCH_GROUPS);
   }
 
-  private static void addRecentGroup(@NotNull List<String> usersInGroup, @NotNull Deque<UserGroup> stateField) {
+  private static void addRecentGroup(@NotNull List<String> valuesInGroup, @NotNull Deque<UserGroup> stateField) {
     UserGroup group = new UserGroup();
-    group.users = usersInGroup;
+    group.users = valuesInGroup;
     if (stateField.contains(group)) {
       return;
     }
     stateField.addFirst(group);
-    if (stateField.size() > RECENTLY_FILTERED_USERS_AMOUNT) {
+    if (stateField.size() > RECENTLY_FILTERED_VALUES_LIMIT) {
       stateField.removeLast();
     }
   }

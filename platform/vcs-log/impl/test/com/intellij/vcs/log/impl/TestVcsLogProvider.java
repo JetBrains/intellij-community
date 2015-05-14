@@ -48,7 +48,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     }
   };
   private static final String SAMPLE_SUBJECT = "Sample subject";
-  private static final VcsUser STUB_USER = new VcsUserImpl("John Smith", "John.Smith@mail.com");
+  public static final VcsUser DEFAULT_USER = new VcsUserImpl("John Smith", "John.Smith@mail.com");
 
   @NotNull private final VirtualFile myRoot;
   @NotNull private final List<TimedVcsCommit> myCommits;
@@ -62,10 +62,11 @@ public class TestVcsLogProvider implements VcsLogProvider {
     new Function<TimedVcsCommit, VcsCommitMetadata>() {
       @Override
       public VcsCommitMetadata fun(TimedVcsCommit commit) {
-        return new VcsCommitMetadataImpl(commit.getId(), commit.getParents(), commit.getTimestamp(), myRoot,
-                                                               SAMPLE_SUBJECT, STUB_USER, SAMPLE_SUBJECT, STUB_USER, commit.getTimestamp());
+        return new VcsCommitMetadataImpl(commit.getId(), commit.getParents(), commit.getTimestamp(), myRoot, SAMPLE_SUBJECT, DEFAULT_USER,
+                                         SAMPLE_SUBJECT, DEFAULT_USER, commit.getTimestamp());
       }
     };
+  private Function<VcsLogFilterCollection, List<TimedVcsCommit>> myFilteredCommitsProvider;
 
   public TestVcsLogProvider(@NotNull VirtualFile root) {
     myRoot = root;
@@ -146,18 +147,23 @@ public class TestVcsLogProvider implements VcsLogProvider {
     throw new UnsupportedOperationException();
   }
 
+  public void setFilteredCommitsProvider(@NotNull Function<VcsLogFilterCollection, List<TimedVcsCommit>> provider) {
+    myFilteredCommitsProvider = provider;
+  }
+
   @NotNull
   @Override
   public List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root,
                                                        @NotNull VcsLogFilterCollection filterCollection,
                                                        int maxCount) throws VcsException {
-    throw new UnsupportedOperationException();
+    if (myFilteredCommitsProvider == null) throw new UnsupportedOperationException();
+    return myFilteredCommitsProvider.fun(filterCollection);
   }
 
   @Nullable
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
-    return STUB_USER;
+    return DEFAULT_USER;
   }
 
   @NotNull

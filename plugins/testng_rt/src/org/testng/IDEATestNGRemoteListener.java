@@ -63,8 +63,19 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       invocationCount = myInvocationCount;
       myMap.put(result, invocationCount);
     }
-    onTestStart(getTestHierarchy(result), testMethodName, parameters.length > 0 ? "[" + getParamsString(parameters) + "]" : null, invocationCount);
+    final String paramString = parameters.length > 0 || invocationCount > 0 
+                               ? "[" + getParamsSpace(invocationCount, parameters) + getParamsString(parameters) + "]" 
+                               : null;
+    onTestStart(getTestHierarchy(result), testMethodName,
+                paramString, invocationCount);
     myInvocationCount++;
+  }
+
+  public static String getParamsSpace(Integer invocationCount, Object[] parameters) {
+    if (invocationCount > 0) {
+      return invocationCount + (parameters.length > 0 ? " " : "");
+    }
+    return "";
   }
 
   public synchronized void onTestSuccess(ITestResult result) {
@@ -79,7 +90,13 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getTestMethodNameWithParams(result)) + "\']");
   }
 
-  public synchronized void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
+  public synchronized void onTestFailedButWithinSuccessPercentage(ITestResult result) {
+    final Throwable throwable = result.getThrowable();
+    if (throwable != null) {
+      throwable.printStackTrace();
+    }
+    onTestSuccess(result);
+  }
 
   public synchronized void onStart(ITestContext context) {}
 
@@ -175,7 +192,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     catch (Throwable e) {
       notification = null;
     }
-    ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs);
+    ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
     onTestFinished(methodName);
   }
@@ -197,11 +214,16 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
                           "\' locationHint=\'java:test://" + escapeName(className + "." + methodName +  ( invocationCount >= 0 ? "[" + invocationCount + "]" : "")) + "\']");
   }
 
-  private static String getTestMethodNameWithParams(ITestResult result) {
+  private synchronized String getTestMethodNameWithParams(ITestResult result) {
     String methodName = getTestMethodName(result);
     final Object[] parameters = result.getParameters();
-    if (parameters.length > 0) {
-      methodName += "[" + getParamsString(parameters) + "]";
+    Integer invocationCount = myMap.get(result);
+    if (parameters.length > 0 || invocationCount != null && invocationCount > 0) {
+      methodName += "[";
+      if (invocationCount != null) {
+        methodName +=  getParamsSpace(invocationCount, parameters);
+      }
+      methodName += getParamsString(parameters) + "]";
     }
     return methodName;
   }

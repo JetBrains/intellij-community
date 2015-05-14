@@ -204,7 +204,7 @@ public class PluginGroups {
   }
 
   protected static void addVimPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("IdeaVIM", "Editor:Emulates Vim editor:" + IDEA_VIM_PLUGIN_ID);
+    featuredPlugins.put("IdeaVim", "Editor:Emulates Vim editor:" + IDEA_VIM_PLUGIN_ID);
   }
 
   protected static void addLuaPlugin(Map<String, String> featuredPlugins) {

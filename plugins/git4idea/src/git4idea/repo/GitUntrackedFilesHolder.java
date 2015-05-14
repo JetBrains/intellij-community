@@ -282,7 +282,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   @Nullable
   private static VirtualFile getAffectedFile(@NotNull VFileEvent event) {
-    if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
+    if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || isRename(event)) {
       return event.getFile();
     } else if (event instanceof VFileCopyEvent) {
       VFileCopyEvent copyEvent = (VFileCopyEvent) event;
@@ -291,6 +291,9 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     return null;
   }
 
+  private static boolean isRename(@NotNull VFileEvent event) {
+    return event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME);
+  }
 
   private boolean notIgnored(@Nullable VirtualFile file) {
     return file != null && belongsToThisRepository(file) && !myChangeListManager.isIgnoredFile(file);
