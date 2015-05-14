@@ -15,14 +15,14 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class ExpandedItemListCellRendererWrapper implements ListCellRenderer, ExpandedSubComponentProvider {
+public class ExpandedItemListCellRendererWrapper implements ListCellRenderer {
   @NotNull private final ListCellRenderer myWrappee;
   @NotNull private final ExpandableItemsHandler<Integer> myHandler;
 
@@ -34,28 +34,24 @@ public class ExpandedItemListCellRendererWrapper implements ListCellRenderer, Ex
   @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     Component result = myWrappee.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    if (myHandler.getExpandedItems().contains(index)) {
-      result = new ExpandedItemRendererComponentWrapper(result);
+    if (!myHandler.getExpandedItems().contains(index)) return result;
+    Rectangle bounds = result.getBounds();
+    ExpandedItemRendererComponentWrapper wrapper = new ExpandedItemRendererComponentWrapper(result);
+    if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {
+      JComponent res = ObjectUtils.tryCast(result, JComponent.class);
+      if (res != null && UIUtil.getClientProperty(res, ExpandableItemsHandler.USE_RENDERER_BOUNDS) == Boolean.TRUE) {
+        Insets insets = wrapper.getInsets();
+        bounds.translate(-insets.left, -insets.top);
+        bounds.grow(insets.left + insets.right, insets.top + insets.bottom);
+        wrapper.setBounds(bounds);
+        UIUtil.putClientProperty(wrapper, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+      }
     }
-    return result;
+    return wrapper;
   }
 
   @NotNull
   public ListCellRenderer getWrappee() {
     return myWrappee;
-  }
-
-  @Nullable
-  @Override
-  public Pair<Component, Rectangle> getExpandedSubComponent(Component comp) {
-    if (myWrappee instanceof ExpandedSubComponentProvider) {
-      Pair<Component, Rectangle> res = ((ExpandedSubComponentProvider)myWrappee).getExpandedSubComponent(comp);
-      if (res != null && res.getFirst() != comp) {
-        Component wrapped = new ExpandedItemRendererComponentWrapper(res.getFirst());
-        return Pair.create(wrapped, res.getSecond());
-      }
-      return res;
-    }
-    return Pair.create(comp, null);
   }
 }

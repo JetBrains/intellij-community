@@ -17,9 +17,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -95,16 +93,10 @@ public class SidePanel extends JPanel {
     myList.setCellRenderer(new GroupedItemsListRenderer(descriptor) {
       JPanel myExtraPanel;
       SidePanelCountLabel myCountLabel;
+      CellRendererPane myValidationParent = new CellRendererPane();
       {
         mySeparatorComponent.setCaptionCentered(false);
-      }
-
-      @Nullable
-      @Override
-      public Pair<Component, Rectangle> getExpandedSubComponent(Component comp) {
-        if (myCountLabel.isVisible() && !StringUtil.isEmpty(myCountLabel.getText()))
-          return AbstractExpandableItemsHandler.getExpandedSubComponent(comp, myExtraPanel);
-        return AbstractExpandableItemsHandler.getExpandedSubComponentPreferred(comp, myComponent);
+        myList.add(myValidationParent);
       }
 
       @Override
@@ -140,6 +132,14 @@ public class SidePanel extends JPanel {
             myCountLabel.setSelected(isSelected);
             myCountLabel.setText(String.valueOf(errorPane.getErrorsCount()));
           }
+        }
+        if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {
+          Rectangle bounds = list.getCellBounds(index, index);
+          bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
+          AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);
+          myExtraPanel.setSize((int)myExtraPanel.getPreferredSize().getWidth(), myExtraPanel.getHeight());
+          UIUtil.putClientProperty(myExtraPanel, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+          return myExtraPanel;
         }
         return component;
       }

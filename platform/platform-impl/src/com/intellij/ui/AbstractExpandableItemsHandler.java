@@ -23,6 +23,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,20 +56,14 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
 
-  public static Pair<Component, Rectangle> getExpandedSubComponent(Component comp, @NotNull Component child) {
-    if (UIUtil.isAncestor(comp, child)) {
-      return Pair.create(child, SwingUtilities.convertRectangle(child, new Rectangle(child.getSize()), comp));
-    }
-    return Pair.create(comp, null);
+  public static void setRelativeBounds(@NotNull Component parent, @NotNull Rectangle bounds,
+                                       @NotNull Component child, @NotNull Container validationParent) {
+    validationParent.add(parent);
+    parent.setBounds(bounds);
+    parent.validate();
+    child.setLocation(SwingUtilities.convertPoint(child, 0, 0, parent));
+    validationParent.remove(parent);
   }
-
-  public static Pair<Component, Rectangle> getExpandedSubComponentPreferred(Component comp, @NotNull Component child) {
-    if (UIUtil.isAncestor(comp, child)) {
-      return Pair.create(child, SwingUtilities.convertRectangle(child, new Rectangle(child.getPreferredSize()), comp));
-    }
-    return Pair.create(comp, null);
-  }
-
 
   protected AbstractExpandableItemsHandler(@NotNull final ComponentType component) {
     myComponent = component;
@@ -380,37 +375,19 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   @Nullable
   private Point createToolTipImage(@NotNull KeyType key) {
+    UIUtil.putClientProperty(myComponent, EXPANDED_RENDERER, true);
     Pair<Component, Rectangle> rendererAndBounds = getCellRendererAndBounds(key);
-    ExpandedSubComponentProvider subComponentProvider = getExpandedSubComponentProvider();
-    if (subComponentProvider != null && rendererAndBounds != null) {
-      Component comp = rendererAndBounds.getFirst();
-      myRendererPane.add(comp);
-      try {
-        comp.setBounds(rendererAndBounds.getSecond());
-        comp.validate();
-        Pair<Component, Rectangle> subComponent = subComponentProvider.getExpandedSubComponent(comp);
-        if (subComponent == null) {
-          rendererAndBounds = null;
-        }
-        else if(subComponent.getSecond() == null) {
-          rendererAndBounds = Pair.create(subComponent.getFirst(), rendererAndBounds.getSecond());
-        }
-        else {
-          Point offset = rendererAndBounds.getSecond().getLocation();
-          subComponent.getSecond().translate((int)offset.getX(), (int)offset.getY());
-          rendererAndBounds = subComponent;
-        }
-      }
-      finally {
-        myRendererPane.remove(comp);
-      }
-    }
+    UIUtil.putClientProperty(myComponent, EXPANDED_RENDERER, null);
     if (rendererAndBounds == null) return null;
 
-    Component renderer = rendererAndBounds.first;
-    if (!(renderer instanceof JComponent)) return null;
+    JComponent renderer = ObjectUtils.tryCast(rendererAndBounds.first, JComponent.class);
+    if (renderer == null) return null;
+    if (renderer.getClientProperty(DISABLE_EXPANDABLE_HANDLER) != null) return null;
 
-    if (((JComponent)renderer).getClientProperty(DISABLE_EXPANDABLE_HANDLER) != null) return null;
+    if (UIUtil.getClientProperty((JComponent)rendererAndBounds.getFirst(), USE_RENDERER_BOUNDS) == Boolean.TRUE) {
+      rendererAndBounds.getSecond().translate(renderer.getX(), renderer.getY());
+      rendererAndBounds.getSecond().setSize(renderer.getSize());
+    }
 
     myKeyItemBounds = rendererAndBounds.second;
 
@@ -487,11 +464,6 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected Rectangle getVisibleRect(KeyType key) {
     return myComponent.getVisibleRect();
-  }
-
-  @Nullable
-  protected ExpandedSubComponentProvider getExpandedSubComponentProvider() {
-    return null;
   }
 
   @Nullable

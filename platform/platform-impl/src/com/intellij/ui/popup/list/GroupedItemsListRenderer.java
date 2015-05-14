@@ -16,19 +16,16 @@
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ErrorLabel;
-import com.intellij.ui.ExpandedSubComponentProvider;
 import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.components.panels.OpaquePanel;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class GroupedItemsListRenderer extends GroupedElementsRenderer.List implements ListCellRenderer, ExpandedSubComponentProvider {
+public class GroupedItemsListRenderer extends GroupedElementsRenderer.List implements ListCellRenderer {
   protected ListItemDescriptor myDescriptor;
 
   protected JLabel myNextStepLabel;
@@ -56,11 +53,6 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
     return result;
   }
 
-  @Nullable
-  @Override
-  public Pair<Component, Rectangle> getExpandedSubComponent(Component comp) {
-    return Pair.create(comp, null);
-  }
 
   @Override
   protected JComponent createItemComponent() {
