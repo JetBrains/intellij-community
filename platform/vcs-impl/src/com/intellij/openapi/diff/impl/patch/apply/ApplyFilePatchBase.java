@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     if (myPatch.isNewFile()) {
       return new FilePathImpl(file, myPatch.getBeforeFileName(), false);
     }
-    return new FilePathImpl(file);
+    return VcsUtil.getFilePath(file);
   }
 
   public Result apply(final VirtualFile fileToPatch,

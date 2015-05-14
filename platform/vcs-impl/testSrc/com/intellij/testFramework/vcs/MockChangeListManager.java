@@ -17,13 +17,13 @@ package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.continuation.ContinuationPause;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -168,7 +168,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public Change getChange(@NotNull VirtualFile file) {
-    return getChange(new FilePathImpl(file));
+    return getChange(VcsUtil.getFilePath(file));
   }
 
   @Override
@@ -202,7 +202,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @NotNull
   @Override
   public Collection<Change> getChangesIn(VirtualFile dir) {
-    return getChangesIn(new FilePathImpl(dir));
+    return getChangesIn(VcsUtil.getFilePath(dir));
   }
 
   @NotNull

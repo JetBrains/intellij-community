@@ -1158,7 +1158,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   @NotNull
   public Collection<Change> getChangesIn(VirtualFile dir) {
-    return getChangesIn(new FilePathImpl(dir));
+    return getChangesIn(VcsUtil.getFilePath(dir));
   }
 
   @NotNull

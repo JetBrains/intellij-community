@@ -6,7 +6,6 @@ import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineNumberListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -14,6 +13,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +64,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
 
     final FileType currentFileType = myAnnotation.getFile().getFileType();
     FilePath filePath =
-      (revision instanceof VcsFileRevisionEx ? ((VcsFileRevisionEx)revision).getPath() : new FilePathImpl(myAnnotation.getFile()));
+      (revision instanceof VcsFileRevisionEx ? ((VcsFileRevisionEx)revision).getPath() : VcsUtil.getFilePath(myAnnotation.getFile()));
     return new VcsVirtualFile(filePath.getPath(), revision, VcsFileSystem.getInstance()) {
       @NotNull
       @Override

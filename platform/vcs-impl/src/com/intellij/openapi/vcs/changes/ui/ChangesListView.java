@@ -42,6 +42,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -403,7 +404,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
           final VcsCurrentRevisionProxy before =
             VcsCurrentRevisionProxy.create(file, myProject, vcs.getKeyInstanceMethod());
           if (before != null) {
-            ContentRevision afterRevision = new CurrentContentRevision(new FilePathImpl(file));
+            ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
             changes.add(new Change(before, afterRevision, FileStatus.HIJACKED));
           }
         }

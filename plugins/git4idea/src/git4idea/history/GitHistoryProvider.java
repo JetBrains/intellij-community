@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -204,7 +205,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx, VcsCacheableHis
     if (virtualFile == null) {
       return path;
     }
-    return new FilePathImpl(virtualFile);
+    return VcsUtil.getFilePath(virtualFile);
   }
 
   public boolean supportsHistoryForDirectories() {

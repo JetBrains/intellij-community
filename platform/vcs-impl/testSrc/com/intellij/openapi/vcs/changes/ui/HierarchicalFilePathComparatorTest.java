@@ -17,8 +17,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -97,7 +97,7 @@ public class HierarchicalFilePathComparatorTest {
 
   @NotNull
   private static FilePath filePath(@NotNull String path) throws Exception {
-    return new FilePathImpl(new File(path), StringUtil.endsWithChar(path, '/'));
+    return VcsUtil.getFilePath(new File(path), StringUtil.endsWithChar(path, '/'));
   }
 
 }

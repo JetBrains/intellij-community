@@ -184,7 +184,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     for (int i = 0; i < size; i++) {
       basicData.put(i,  gitFileAnnotation.getLineRevisionNumber(i));
     }
-    return new VcsAnnotation(new FilePathImpl(gitFileAnnotation.getFile()), basicData, null);
+    return new VcsAnnotation(VcsUtil.getFilePath(gitFileAnnotation.getFile()), basicData, null);
   }
 
   @Override

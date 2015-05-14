@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,9 +181,9 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     public FilePath getFile() {
       final VirtualFile vf = myPointer.getFile();
       if (vf != null) {
-        return new FilePathImpl(vf);
+        return VcsUtil.getFilePath(vf);
       }
-      return new FilePathImpl(new File(myPointer.getPresentableUrl()), false);
+      return VcsUtil.getFilePath(new File(myPointer.getPresentableUrl()), false);
     }
 
     @NotNull

@@ -21,13 +21,13 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,14 +170,14 @@ public class VcsContextWrapper implements VcsContext {
 
     VirtualFile[] selectedFiles = getSelectedFiles();
     for (VirtualFile selectedFile : selectedFiles) {
-      FilePathImpl filePath = new FilePathImpl(selectedFile);
+      FilePath filePath = VcsUtil.getFilePath(selectedFile);
       result.add(filePath);
     }
 
     File[] selectedIOFiles = getSelectedIOFiles();
     if (selectedIOFiles != null){
       for (File selectedFile : selectedIOFiles) {
-        FilePathImpl filePath = FilePathImpl.create(selectedFile);
+        FilePath filePath = VcsUtil.getFilePath(selectedFile);
         if (filePath != null) {
           result.add(filePath);
         }

@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Processor;
 import com.intellij.util.StringLenComparator;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -187,7 +188,7 @@ public class VcsRootIterator {
 
     private boolean process(VirtualFile current) {
       if (myPathProcessor != null) {
-        return myPathProcessor.process(new FilePathImpl(current));
+        return myPathProcessor.process(VcsUtil.getFilePath(current));
       }
       else if (myFileProcessor != null) {
         return myFileProcessor.process(current);

@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.*;
 
@@ -67,7 +68,7 @@ public class RootsCalculator {
     final Map<VirtualFile, RepositoryLocation> result = new HashMap<VirtualFile, RepositoryLocation>();
     for (Iterator<VirtualFile> iterator = roots.iterator(); iterator.hasNext();) {
       final VirtualFile vf = iterator.next();
-      final RepositoryLocation location = myLocationCache.getLocation(myVcs, new FilePathImpl(vf), false);
+      final RepositoryLocation location = myLocationCache.getLocation(myVcs, VcsUtil.getFilePath(vf), false);
       if (location != null) {
         result.put(vf, location);
       }

@@ -16,10 +16,10 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -51,7 +51,7 @@ public class SvnScopeZipper implements Runnable {
         final MyDirNonRecursive me = createOrGet(file);
         if (vFile != null && vFile.isValid()) {
           for (VirtualFile child : vFile.getChildren()) {
-            me.add(new FilePathImpl(child));
+            me.add(VcsUtil.getFilePath(child));
           }
         }
       }

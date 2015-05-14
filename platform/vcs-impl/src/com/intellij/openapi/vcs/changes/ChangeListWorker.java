@@ -785,7 +785,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     @Deprecated
     @Override
     public FileStatus getStatus(File file) {
-      return myWorker.getStatus(new FilePathImpl(file, file.isDirectory()));
+      return myWorker.getStatus(VcsUtil.getFilePath(file, file.isDirectory()));
     }
 
     @Override

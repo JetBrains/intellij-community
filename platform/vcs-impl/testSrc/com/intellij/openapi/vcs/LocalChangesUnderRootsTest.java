@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.vcs.MockChangeListManager;
+import com.intellij.vcsUtil.VcsUtil;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -114,7 +115,7 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
 
   private Change createChangeForPath(String path) {
     VirtualFile file = VfsTestUtil.createFile(myBaseDir, path);
-    FilePath filePath = new FilePathImpl(file);
+    FilePath filePath = VcsUtil.getFilePath(file);
     ContentRevision beforeRevision = new MockContentRevision(filePath, new VcsRevisionNumber.Int(1));
     ContentRevision afterRevision = new MockContentRevision(filePath, new VcsRevisionNumber.Int(2));
     return new Change(beforeRevision, afterRevision);

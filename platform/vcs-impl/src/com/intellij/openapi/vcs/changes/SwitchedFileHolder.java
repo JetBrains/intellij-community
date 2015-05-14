@@ -17,11 +17,11 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -49,7 +49,7 @@ public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String
   protected boolean isFileDirty(final VcsDirtyScope scope, final VirtualFile file) {
     if (scope == null) return true;
     if (fileDropped(file)) return true;
-    return scope.belongsTo(new FilePathImpl(file));
+    return scope.belongsTo(VcsUtil.getFilePath(file));
   }
 
   public Map<VirtualFile, String> getFilesMapCopy() {

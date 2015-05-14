@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.vcsUtil.VcsUtil;
 
 /**
  * @author yole
@@ -69,7 +70,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
     final VirtualFile[] files = ModuleRootManager.getInstance(getUserObject()).getContentRoots();
     final FilePath[] result = new FilePath[files.length];
     for(int i=0; i<files.length; i++) {
-      result [i] = new FilePathImpl(files [i]);
+      result [i] = VcsUtil.getFilePath(files[i]);
     }
     return result;
   }
