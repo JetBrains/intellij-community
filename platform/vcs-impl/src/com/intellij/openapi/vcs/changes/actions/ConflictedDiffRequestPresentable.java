@@ -24,7 +24,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -59,9 +58,8 @@ public class ConflictedDiffRequestPresentable implements DiffRequestPresentable 
   public MyResult step(DiffChainContext context) {
     if (myChange.getAfterRevision() == null) return createErrorResult();
     FileType type = myChange.getVirtualFile() != null ? myChange.getVirtualFile().getFileType() : null;
-    FilePathImpl filePath = new FilePathImpl(myFile);
-    if (filePath.getFileType().isBinary()) {
-      final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, filePath, context);
+    if (myFile.getFileType().isBinary()) {
+      final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, myFile.getName(), context);
       if (! nowItIsText) {
         return createErrorResult();
       }
