@@ -28,5 +28,5 @@ public interface VcsLogHighlighterFactory {
   String getId();
 
   @NotNull
-  String getDescription();
+  String getTitle();
 }

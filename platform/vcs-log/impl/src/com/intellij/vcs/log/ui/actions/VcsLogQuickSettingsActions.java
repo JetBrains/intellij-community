@@ -130,7 +130,7 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
       private final VcsLogHighlighterFactory myFactory;
 
       private EnableHighlighterAction(VcsLogHighlighterFactory factory) {
-        super(factory.getDescription());
+        super(factory.getTitle());
         myFactory = factory;
       }
 

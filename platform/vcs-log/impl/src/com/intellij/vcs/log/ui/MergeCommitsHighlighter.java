@@ -65,7 +65,7 @@ public class MergeCommitsHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public String getDescription() {
+    public String getTitle() {
       return "Merge Commits";
     }
   }

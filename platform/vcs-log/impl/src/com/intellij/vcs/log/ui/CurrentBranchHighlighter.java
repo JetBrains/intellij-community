@@ -71,7 +71,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
     @NotNull
     @Override
-    public String getDescription() {
+    public String getTitle() {
       return "Current Branch";
     }
   }
