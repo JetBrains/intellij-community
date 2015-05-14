@@ -34,6 +34,7 @@ import com.intellij.util.graph.GraphAlgorithms;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
 
@@ -73,7 +74,7 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     Graph<ModuleSourceSet> graph = ModuleCompilerUtil.createModuleSourceDependenciesGraph(myContext.getModulesConfigurator());
     Collection<Chunk<ModuleSourceSet>> allSourceSetCycles = extractCycles(
       GraphAlgorithms.getInstance().computeStronglyConnectedComponents(graph));
-    List<Chunk<ModuleSourceSet>> sourceSetCycles = filterDuplicates(allSourceSetCycles);
+    List<Chunk<ModuleSourceSet>> sourceSetCycles = removeDummyNodes(filterDuplicates(allSourceSetCycles));
 
     List<String> cycles = new ArrayList<String>();
 
@@ -109,6 +110,25 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
                                                                               .warning("module-circular-dependency"),
                                                                             Collections.<ConfigurationErrorQuickFix>emptyList()));
     }
+  }
+
+  private List<Chunk<ModuleSourceSet>> removeDummyNodes(List<Chunk<ModuleSourceSet>> chunks) {
+    List<Chunk<ModuleSourceSet>> result = new ArrayList<Chunk<ModuleSourceSet>>(chunks.size());
+    for (Chunk<ModuleSourceSet> chunk : chunks) {
+      Set<ModuleSourceSet> nodes = new LinkedHashSet<ModuleSourceSet>();
+      for (ModuleSourceSet sourceSet : chunk.getNodes()) {
+        if (!isDummy(sourceSet)) {
+          nodes.add(sourceSet);
+        }
+      }
+      result.add(new Chunk<ModuleSourceSet>(nodes));
+    }
+    return result;
+  }
+
+  private boolean isDummy(ModuleSourceSet set) {
+    JavaSourceRootType type = set.getType() == ModuleSourceSet.Type.PRODUCTION ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
+    return myContext.getModulesConfigurator().getRootModel(set.getModule()).getSourceRoots(type).isEmpty();
   }
 
   private boolean containsModuleWithInheritedSdk() {
