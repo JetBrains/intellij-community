@@ -49,7 +49,7 @@ public class MethodEvaluator implements Evaluator {
   private final boolean myMustBeVararg;
 
   // see IDEA-139945, corresponding jdk bug was fixed in 8u45
-  private static boolean ourUseDefaultInvoker = !SystemInfo.isJavaVersionAtLeast("1.8.0_45");
+  private static boolean ourUseDefaultInvoker = !SystemInfo.isJavaVersionAtLeast("1.8.0_40");
 
   public MethodEvaluator(Evaluator objectEvaluator,
                          JVMName className,
