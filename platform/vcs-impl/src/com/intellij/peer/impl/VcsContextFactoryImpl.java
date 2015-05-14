@@ -54,10 +54,9 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   public FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector) {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
     if (virtualFile != null) {
-      // detector information (loaded here lazily) is not needed - we have real file
-      return FilePathImpl.create(file);
+      return createFilePathOn(virtualFile);
     }
-    return FilePathImpl.create(file, detector.fun(file).booleanValue());
+    return createFilePathOn(file, detector.fun(file).booleanValue());
   }
 
   public FilePath createFilePathOn(final File file, final boolean isDirectory) {

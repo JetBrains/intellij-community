@@ -74,7 +74,10 @@ public interface VcsContextFactory {
    * @param file the file for which the FilePath should be created.
    * @param detector - called to get to know whether the file is directory, if local file is not found
    * @return the FilePath instance.
+   *
+   * @deprecated to remove in IDEA 16. Check the virtual file right away and pass to the right constructor.
    */
+  @Deprecated
   FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector);
 
   /**
