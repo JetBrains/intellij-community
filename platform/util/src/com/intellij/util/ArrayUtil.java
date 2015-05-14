@@ -414,6 +414,7 @@ public class ArrayUtil extends ArrayUtilRt {
     return result;
   }
 
+  @NotNull
   @Contract(pure=true)
   public static <T> T[] append(@NotNull final T[] src, final T element, @NotNull ArrayFactory<T> factory) {
     int length = src.length;
