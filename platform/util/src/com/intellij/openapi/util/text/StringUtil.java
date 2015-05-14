@@ -2086,6 +2086,15 @@ public class StringUtil extends StringUtilRt {
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
+  @NonNls private static final String[] MN_QUOTED = {"&&", "__"};
+  @NonNls private static final String[] MN_CHARS = {"&", "_"};
+
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static String escapeMnemonics(@Nullable String text) {
+    if (text == null) return null;
+    return replace(text, MN_CHARS, MN_QUOTED);
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String htmlEmphasize(@NotNull String text) {
