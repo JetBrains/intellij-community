@@ -18,7 +18,11 @@ package com.jetbrains.python.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
@@ -63,7 +67,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     final PyClass superClass = superClasses[0];
     final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, true);
     if (superInit == null) return;
-    boolean addComma = true;
+    final boolean addComma;
     if (klass.isNewStyleClass()) {
       addComma = false;
       if (LanguageLevel.forElement(klass).isPy3K()) {
@@ -74,14 +78,28 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       }
     }
     else {
+      addComma = true;
       superCall.append(superClass.getName());
       superCall.append(".__init__(self");
     }
     final StringBuilder newFunction = new StringBuilder("def __init__(self");
 
-    buildParameterList(problemFunction, superInit, superCall, newFunction, addComma);
+    final Couple<List<String>> couple = buildNewFunctionParamsAndSuperInitCallArgs(problemFunction, superInit);
 
+    final List<String> newParameters = couple.getFirst();
+    if (!newParameters.isEmpty()) {
+      newFunction.append(", ");
+    }
+    StringUtil.join(newParameters, ", ", newFunction);
+    newFunction.append("):\n\t");
+
+    final List<String> superCallArguments = couple.getSecond();
+    if (addComma && !superCallArguments.isEmpty()) {
+      superCall.append(", ");
+    }
+    StringUtil.join(superCallArguments, ", ", superCall);
     superCall.append(")");
+
     final PyStatementList statementList = problemFunction.getStatementList();
     PyExpression docstring = null;
     final PyStatement[] statements = statementList.getStatements();
@@ -92,7 +110,6 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       }
     }
 
-    newFunction.append("):\n\t");
     if (docstring != null) {
       newFunction.append(docstring.getText()).append("\n\t");
     }
@@ -110,94 +127,216 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     problemFunction.replace(generator.createFromText(LanguageLevel.forElement(problemFunction), PyFunction.class, newFunction.toString()));
   }
 
-  private static void buildParameterList(@NotNull PyFunction problemFunction,
-                                         @NotNull PyFunction superInit,
-                                         @NotNull StringBuilder superCall,
-                                         @NotNull StringBuilder newFunction,
-                                         boolean addComma) {
-    final PyParameter[] parameters = problemFunction.getParameterList().getParameters();
-    final List<String> problemParams = new ArrayList<String>();
-    final List<String> functionParams = new ArrayList<String>();
-    String starName = null;
-    String doubleStarName = null;
-    for (int i = 1; i != parameters.length; i++) {
-      final PyParameter p = parameters[i];
-      functionParams.add(p.getName());
-      if (p.getText().startsWith("**")) {
-        doubleStarName = p.getText();
-        continue;
+  @NotNull
+  private static Couple<List<String>> buildNewFunctionParamsAndSuperInitCallArgs(@NotNull PyFunction origInit,
+                                                                                 @NotNull PyFunction superInit) {
+    final List<String> newFunctionParams = new ArrayList<String>();
+    final List<String> superCallArgs = new ArrayList<String>();
+
+    final ParametersInfo origInfo = new ParametersInfo(origInit.getParameterList());
+    final ParametersInfo superInfo = new ParametersInfo(superInit.getParameterList());
+
+    // Required parameters (not-keyword)
+    for (PyParameter param : origInfo.getRequiredParameters()) {
+      newFunctionParams.add(param.getText());
+    }
+    for (PyParameter param : superInfo.getRequiredParameters()) {
+      if (!origInfo.containsRequiredParam(param.getName())) {
+        newFunctionParams.add(param.getText());
       }
-      if (p.getText().startsWith("*")) {
-        starName = p.getText();
-        continue;
-      }
-      if (p.getDefaultValue() != null) {
-        problemParams.add(p.getText());
-        continue;
-      }
-      newFunction.append(",").append(p.getText());
+      superCallArgs.add(param.getName());
     }
 
-    addParametersFromSuper(superInit, superCall, newFunction, problemParams, functionParams, starName, doubleStarName, addComma);
+    // Optional parameters (not-keyword)
+    for (PyParameter param : origInfo.getOptionalParameters()) {
+      newFunctionParams.add(param.getText());
+    }
+
+    // Positional vararg
+    PyParameter starredParam = null;
+    if (origInfo.getPositionalContainerParameter() != null) {
+      starredParam = origInfo.getPositionalContainerParameter();
+    }
+    else if (superInfo.getPositionalContainerParameter() != null) {
+      starredParam = superInfo.getPositionalContainerParameter();
+    }
+    else if (origInfo.getSingleStarParameter() != null) {
+      starredParam = origInfo.getSingleStarParameter();
+    }
+    else if (superInfo.getSingleStarParameter() != null) {
+      starredParam = superInfo.getSingleStarParameter();
+    }
+    if (starredParam != null) {
+      newFunctionParams.add(starredParam.getText());
+      if (superInfo.getPositionalContainerParameter() != null) {
+        superCallArgs.add("*" + starredParam.getName());
+      }
+    }
+
+    // Required keyword-only parameters
+    for (PyParameter param : origInfo.getRequiredKeywordOnlyParameters()) {
+      newFunctionParams.add(param.getText());
+    }
+    for (PyParameter param : superInfo.getRequiredKeywordOnlyParameters()) {
+      if (!origInfo.containsRequiredKeywordOnlyParameter(param.getName())) {
+        newFunctionParams.add(param.getText());
+      }
+      superCallArgs.add(param.getName() + "=" + param.getName());
+    }
+
+    // Optional keyword-only parameters
+    for (PyParameter param : origInfo.getOptionalKeywordOnlyParameters()) {
+      newFunctionParams.add(param.getText());
+    }
+
+    // Keyword vararg
+    PyParameter doubleStarredParam = null;
+    if (origInfo.getKeywordContainerParameter() != null) {
+      doubleStarredParam = origInfo.getKeywordContainerParameter();
+    }
+    else if (superInfo.getKeywordContainerParameter() != null) {
+      doubleStarredParam = superInfo.getKeywordContainerParameter();
+    }
+    if (doubleStarredParam != null) {
+      newFunctionParams.add(doubleStarredParam.getText());
+      if (superInfo.getKeywordContainerParameter() != null) {
+        superCallArgs.add("**" + doubleStarredParam.getName());
+      }
+    }
+    return Couple.of(newFunctionParams, superCallArgs);
   }
 
-  private static void addParametersFromSuper(@NotNull PyFunction superInit,
-                                             @NotNull StringBuilder superCall,
-                                             @NotNull StringBuilder newFunction,
-                                             @NotNull List<String> problemParams,
-                                             @NotNull List<String> functionParams,
-                                             @Nullable String starName,
-                                             @Nullable String doubleStarName,
-                                             boolean addComma) {
-    final PyParameterList paramList = superInit.getParameterList();
-    final PyParameter[] parameters = paramList.getParameters();
-    boolean addDouble = false;
-    boolean addStar = false;
-    for (int i = 1; i != parameters.length; i++) {
-      final PyParameter p = parameters[i];
-      if (p.getDefaultValue() != null) continue;
-      final String param = p.getName();
-      final String paramText = p.getText();
-      if (paramText.startsWith("**")) {
-        addDouble = true;
-        if (doubleStarName == null) {
-          doubleStarName = p.getText();
+  private static class ParametersInfo {
+
+    private final PyParameter mySelfParam;
+    /**
+     * Parameters without default value that come before first "*..." parameter.
+     */
+    private final List<PyParameter> myRequiredParams = new ArrayList<PyParameter>();
+    /**
+     * Parameters with default value that come before first "*..." parameter.
+     */
+    private final List<PyParameter> myOptionalParams = new ArrayList<PyParameter>();
+    /**
+     * Parameter of form "*args" (positional vararg), not the same as single "*".
+     */
+    private final PyParameter myPositionalContainerParam;
+    /**
+     * Parameter "*", that is used to delimit normal and keyword-only parameters.
+     */
+    private final PyParameter mySingleStarParam;
+    /**
+     * Parameters without default value that come after first "*..." parameter.
+     */
+    private final List<PyParameter> myRequiredKwOnlyParams = new ArrayList<PyParameter>();
+    /**
+     * Parameters with default value that come after first "*..." parameter.
+     */
+    private final List<PyParameter> myOptionalKwOnlyParams = new ArrayList<PyParameter>();
+    /**
+     * Parameter of form "**kwargs" (keyword vararg).
+     */
+    private final PyParameter myKeywordContainerParam;
+
+    public ParametersInfo(@NotNull PyParameterList parameterList) {
+      PyParameter positionalContainer = null;
+      PyParameter singleStarParam = null;
+      PyParameter keywordContainer = null;
+      PyParameter selfParam = null;
+
+      for (PyParameter param : parameterList.getParameters()) {
+        if (param.isSelf()) {
+          selfParam = param;
         }
-        continue;
-      }
-      if (paramText.startsWith("*")) {
-        addStar = true;
-        if (starName == null) {
-          starName = p.getText();
+        else if (param.getText().equals("*")) {
+          singleStarParam = param;
         }
-        continue;
+        else if (param.getText().startsWith("**")) {
+          keywordContainer = param;
+        }
+        else if (param.getText().startsWith("*")) {
+          positionalContainer = param;
+        }
+        else if (positionalContainer == null && singleStarParam == null) {
+          if (param.hasDefaultValue()) {
+            myOptionalParams.add(param);
+          }
+          else {
+            myRequiredParams.add(param);
+          }
+        }
+        else {
+          if (param.hasDefaultValue()) {
+            myOptionalKwOnlyParams.add(param);
+          }
+          else {
+            myRequiredKwOnlyParams.add(param);
+          }
+        }
       }
-      if (addComma) {
-        superCall.append(",");
-      }
-      superCall.append(param);
-      if (!functionParams.contains(param)) {
-        newFunction.append(",").append(param);
-      }
-      addComma = true;
+
+      mySelfParam = selfParam;
+      myPositionalContainerParam = positionalContainer;
+      mySingleStarParam = singleStarParam;
+      myKeywordContainerParam = keywordContainer;
     }
-    for (String p : problemParams) {
-      newFunction.append(",").append(p);
+
+    public boolean containsRequiredParam(@Nullable final String name) {
+      return ContainerUtil.exists(myRequiredParams, new Condition<PyParameter>() {
+        @Override
+        public boolean value(PyParameter parameter) {
+          return name != null && name.equals(parameter.getName());
+        }
+      });
     }
-    if (starName != null) {
-      newFunction.append(",").append(starName);
-      if (addStar) {
-        if (addComma) superCall.append(",");
-        superCall.append(starName);
-        addComma = true;
-      }
+
+    public boolean containsRequiredKeywordOnlyParameter(@Nullable final String name) {
+      return ContainerUtil.exists(myRequiredKwOnlyParams, new Condition<PyParameter>() {
+        @Override
+        public boolean value(PyParameter parameter) {
+          return name != null && name.equals(parameter.getName());
+        }
+      });
     }
-    if (doubleStarName != null) {
-      newFunction.append(",").append(doubleStarName);
-      if (addDouble) {
-        if (addComma) superCall.append(",");
-        superCall.append(doubleStarName);
-      }
+
+    @Nullable
+    public PyParameter getSelfParameter() {
+      return mySelfParam;
+    }
+
+    @NotNull
+    public List<PyParameter> getRequiredParameters() {
+      return myRequiredParams;
+    }
+
+    @NotNull
+    public List<PyParameter> getOptionalParameters() {
+      return myOptionalParams;
+    }
+
+    @Nullable
+    public PyParameter getPositionalContainerParameter() {
+      return myPositionalContainerParam;
+    }
+
+    @Nullable
+    public PyParameter getSingleStarParameter() {
+      return mySingleStarParam;
+    }
+
+    @NotNull
+    public List<PyParameter> getRequiredKeywordOnlyParameters() {
+      return myRequiredKwOnlyParams;
+    }
+
+    @NotNull
+    public List<PyParameter> getOptionalKeywordOnlyParameters() {
+      return myOptionalKwOnlyParams;
+    }
+
+    @Nullable
+    public PyParameter getKeywordContainerParameter() {
+      return myKeywordContainerParam;
     }
   }
 }

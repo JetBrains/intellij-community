@@ -360,6 +360,49 @@ public class PyQuickFixTest extends PyTestCase {
                      PyBundle.message("QFIX.add.super"), true, true);
   }
 
+
+  // PY-15867
+  public void testAddCallSuperKeywordOnlyParamInSuperInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      public void run() {
+        doInspectionTest("AddCallSuperKeywordOnlyParamInSuperInit.py", PyMissingConstructorInspection.class,
+                         PyBundle.message("QFIX.add.super"), true, true);
+      }
+    });
+  }
+
+  // PY-15867
+  public void testAddCallSuperKeywordOnlyParamInInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      public void run() {
+        doInspectionTest("AddCallSuperKeywordOnlyParamInInit.py", PyMissingConstructorInspection.class,
+                         PyBundle.message("QFIX.add.super"), true, true);
+      }
+    });
+  }
+
+  // PY-15867
+  public void testAddCallSuperSingleStarParamInSuperInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      public void run() {
+        doInspectionTest("AddCallSuperSingleStarParamInSuperInit.py", PyMissingConstructorInspection.class,
+                         PyBundle.message("QFIX.add.super"), true, true);
+      }
+    });
+  }
+
+  // PY-15867
+  public void testAddCallSuperSingleStarParamInSuperInitAndVarargInInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest("AddCallSuperSingleStarParamInSuperInitAndVarargInInit.py", PyMissingConstructorInspection.class,
+                         PyBundle.message("QFIX.add.super"), true, true);
+      }
+    });
+
+  }
+
   //PY-491, PY-13297
   public void testAddEncoding() {
     doInspectionTest("AddEncoding.py", PyMandatoryEncodingInspection.class,
