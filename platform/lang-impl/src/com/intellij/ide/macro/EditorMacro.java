@@ -20,8 +20,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -48,13 +46,9 @@ public abstract class EditorMacro extends Macro {
 
   @Override
   public final String expand(DataContext dataContext) throws ExecutionCancelledException {
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) return null;
-    if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
-      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      if (editor != null){
-        return expand(editor);
-      }
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor != null){
+      return expand(editor);
     }
     return null;
   }
