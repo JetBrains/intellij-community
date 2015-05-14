@@ -91,7 +91,11 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       newFunction.append(", ");
     }
     StringUtil.join(newParameters, ", ", newFunction);
-    newFunction.append("):\n\t");
+    newFunction.append(")");
+    if (problemFunction.getAnnotation() != null) {
+      newFunction.append(problemFunction.getAnnotation().getText());
+    }
+    newFunction.append(":\n\t");
 
     final List<String> superCallArguments = couple.getSecond();
     if (addComma && !superCallArguments.isEmpty()) {
