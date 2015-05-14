@@ -91,26 +91,7 @@ public class DiffTaskQueue implements Disposable {
       if (myDisposed) return;
       abort();
 
-      Function<ProgressIndicator, Runnable> function = new Function<ProgressIndicator, Runnable>() {
-        @Override
-        @CalledInBackground
-        public Runnable fun(final ProgressIndicator indicator) {
-          final Runnable callback = backgroundTask.fun(indicator);
-          return new Runnable() {
-            @Override
-            @CalledInAwt
-            public void run() {
-              synchronized (LOCK) {
-                if (myDisposed) return;
-                indicator.checkCanceled();
-              }
-              callback.run();
-            }
-          };
-        }
-      };
-
-      myProgressIndicator.set(BackgroundTaskUtil.executeAndTryWait(function, onSlowAction, waitMillis, forceEDT));
+      myProgressIndicator.set(BackgroundTaskUtil.executeAndTryWait(backgroundTask, onSlowAction, waitMillis, forceEDT));
     }
   }
 }
