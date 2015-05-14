@@ -166,7 +166,7 @@ public class VcsLogUiImpl implements VcsLogUi, Disposable {
   }
 
   @Override
-  public void enableHighlighter(@NotNull String id, boolean enabled) {
+  public void setHighlighterEnabled(@NotNull String id, boolean enabled) {
     myUiProperties.enableHighlighter(id, enabled);
     repaintUI();
   }

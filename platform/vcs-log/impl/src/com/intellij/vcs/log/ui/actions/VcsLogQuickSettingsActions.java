@@ -141,7 +141,7 @@ public class VcsLogQuickSettingsActions extends DumbAwareAction {
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        myUi.enableHighlighter(myFactory.getId(), state);
+        myUi.setHighlighterEnabled(myFactory.getId(), state);
       }
     }
   }

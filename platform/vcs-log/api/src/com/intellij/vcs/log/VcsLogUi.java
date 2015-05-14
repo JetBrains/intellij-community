@@ -46,5 +46,5 @@ public interface VcsLogUi {
 
   boolean isHighlighterEnabled(@NotNull String id);
 
-  void enableHighlighter(@NotNull String id, boolean enabled);
+  void setHighlighterEnabled(@NotNull String id, boolean enabled);
 }
