@@ -1527,6 +1527,7 @@
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.GraphicsObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.BinaryRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.TimestampRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.FileObjectRenderer"/>
 
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>

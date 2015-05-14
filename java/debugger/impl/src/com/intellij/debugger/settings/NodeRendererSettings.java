@@ -361,7 +361,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return renderer;
   }
 
-  private ExpressionChildrenRenderer createExpressionChildrenRenderer(@NonNls String expressionText, @NonNls String childrenExpandableText) {
+  public static ExpressionChildrenRenderer createExpressionChildrenRenderer(@NonNls String expressionText,
+                                                                             @NonNls String childrenExpandableText) {
     final ExpressionChildrenRenderer childrenRenderer = new ExpressionChildrenRenderer();
     childrenRenderer.setChildrenExpression(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, expressionText, "", StdFileTypes.JAVA));
     if (childrenExpandableText != null) {
@@ -370,7 +371,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return childrenRenderer;
   }
 
-  private EnumerationChildrenRenderer createEnumerationChildrenRenderer(@NonNls String[][] expressions) {
+  private static EnumerationChildrenRenderer createEnumerationChildrenRenderer(@NonNls String[][] expressions) {
     final EnumerationChildrenRenderer childrenRenderer = new EnumerationChildrenRenderer();
     if (expressions != null && expressions.length > 0) {
       final ArrayList<Pair<String, TextWithImports>> childrenList = new ArrayList<Pair<String, TextWithImports>>(expressions.length);
