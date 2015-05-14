@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.SystemInfo;
 import com.sun.istack.internal.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
   private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it"};
 
   public static boolean isSupportedKeyboardLayout(@NotNull Component component) {
+    if (SystemInfo.isMac) return false;
     String keyboardLayoutLanguage = getLanguageForComponent(component);
     for (String language : supportedNonEnglishLanguages) {
       if (language.equals(keyboardLayoutLanguage)) {
