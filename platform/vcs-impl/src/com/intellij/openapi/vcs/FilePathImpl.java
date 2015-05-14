@@ -280,10 +280,6 @@ public class FilePathImpl implements FilePath {
     return myVirtualFile != null ? myVirtualFile.getFileType() : FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName());
   }
 
-  public static FilePathImpl create(VirtualFile file) {
-    return create(VfsUtilCore.virtualToIoFile(file), file.isDirectory());
-  }
-
   public static FilePathImpl create(File selectedFile) {
     return create(selectedFile, false);
   }
