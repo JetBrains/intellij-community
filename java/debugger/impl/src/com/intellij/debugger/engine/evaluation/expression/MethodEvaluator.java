@@ -20,6 +20,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.Patches;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -30,7 +31,6 @@ import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.rt.debugger.DefaultMethodInvoker;
 import com.sun.jdi.*;
 
@@ -47,9 +47,6 @@ public class MethodEvaluator implements Evaluator {
   private final Evaluator myObjectEvaluator;
   private final boolean myCheckDefaultInterfaceMethod;
   private final boolean myMustBeVararg;
-
-  // see IDEA-139945, corresponding jdk bug was fixed in 8u45
-  private static boolean ourUseDefaultInvoker = !SystemInfo.isJavaVersionAtLeast("1.8.0_40");
 
   public MethodEvaluator(Evaluator objectEvaluator,
                          JVMName className,
@@ -184,7 +181,7 @@ public class MethodEvaluator implements Evaluator {
         return debugProcess.invokeInstanceMethod(context, objRef, jdiMethod, args, ObjectReference.INVOKE_NONVIRTUAL);
       }
       // fix for default methods in interfaces, see IDEA-124066
-      if (ourUseDefaultInvoker && myCheckDefaultInterfaceMethod && jdiMethod.declaringType() instanceof InterfaceType) {
+      if (Patches.JDK_BUG_ID_8042123 && myCheckDefaultInterfaceMethod && jdiMethod.declaringType() instanceof InterfaceType) {
         try {
           return invokeDefaultMethod(debugProcess, context, objRef, myMethodName);
         } catch (EvaluateException e) {
