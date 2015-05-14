@@ -400,7 +400,17 @@ public class PyQuickFixTest extends PyTestCase {
                          PyBundle.message("QFIX.add.super"), true, true);
       }
     });
+  }
 
+  // PY-15867
+  public void testAddCallSuperTypeAnnotationsPreserved() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
+      @Override
+      public void run() {
+        doInspectionTest("AddCallSuperTypeAnnotationsPreserved.py", PyMissingConstructorInspection.class,
+                         PyBundle.message("QFIX.add.super"), true, true);
+      }
+    });
   }
 
   //PY-491, PY-13297
