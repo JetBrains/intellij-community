@@ -89,7 +89,7 @@ public class BinaryRequestHandlerTest {
   }
 
   class MyBinaryRequestHandler : BinaryRequestHandler() {
-    class object {
+    companion object {
       val ID = UUID.fromString("E5068DD6-1DB7-437C-A3FC-3CA53B6E1AC9")
     }
 
