@@ -22,6 +22,8 @@ import com.sun.istack.internal.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.im.InputContext;
+import java.util.Locale;
 
 /**
  * @author Denis Fokin
@@ -46,12 +48,22 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
     return false;
   }
 
+  @Nullable
   public static String getLanguageForComponent(@NotNull Component component) {
-    return component.getInputContext().getLocale().getLanguage();
+    final Locale locale = getLocaleForComponent(component);
+    return locale == null ? null : locale.getLanguage();
   }
 
+  @Nullable
+  protected static Locale getLocaleForComponent(@NotNull Component component) {
+    final InputContext context = component.getInputContext();
+    return context == null ? null : context.getLocale();
+  }
+
+  @Nullable
   public static String getDisplayLanguageNameForComponent(@NotNull Component component) {
-    return component.getInputContext().getLocale().getDisplayLanguage();
+    final Locale locale = getLocaleForComponent(component);
+    return locale == null ? null : locale.getDisplayLanguage();
   }
 
   public static final class OptionSet {
