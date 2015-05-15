@@ -259,6 +259,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
     myInvalidDiffChanges.clear();
 
+    myFoldingModel.destroy();
+
     myContentPanel.repaintDividers();
     myStatusPanel.update();
   }
