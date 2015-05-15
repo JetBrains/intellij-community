@@ -61,7 +61,7 @@ private void unpackJdk(File osDir, String majorVersion) {
   else if (jdkFile.name.endsWith(".tar")) {
     projectBuilder.info("Extracting $jdkFile to $destDir")
     ant.mkdir(dir: destDir)
-    //'tar' command is used instead of Ant task to ensure that executable flag and symlink will be preserved
+    //'tar' and 'mv' commands are used instead of Ant tasks to ensure that executable flag and symlink will be preserved
     ant.exec(executable: "tar", dir: jdkFile.getParent()) {
       arg(value: "-xf")
       arg(value: jdkFile.name)
@@ -69,8 +69,11 @@ private void unpackJdk(File osDir, String majorVersion) {
       arg(value: destDir)
     }
     if (SystemInfo.isMac && !jdkFile.name.contains("apple")) {
-      ant.move(todir: destDir) {
-        fileset(dir: "$destDir/jre/jdk/Contents")
+      new File(destDir, "jre/jdk/Contents").listFiles().each { file ->
+        ant.exec(executable: "mv", dir: destDir) {
+          arg(value: file.absolutePath)
+          arg(value: destDir)
+        }
       }
     }
   }
