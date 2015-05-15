@@ -17,7 +17,9 @@ package com.intellij.diff.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -31,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class BackgroundTaskUtil {
+  private static final Logger LOG = Logger.getInstance(BackgroundTaskUtil.class);
   private static final Runnable TOO_SLOW_OPERATION = new EmptyRunnable();
 
   /*
@@ -75,8 +78,15 @@ public class BackgroundTaskUtil {
     final AtomicReference<Runnable> resultRef = new AtomicReference<Runnable>();
 
     if (forceEDT) {
-      Runnable callback = backgroundTask.fun(indicator);
-      finish(callback, indicator);
+      try {
+        Runnable callback = backgroundTask.fun(indicator);
+        finish(callback, indicator);
+      }
+      catch (ProcessCanceledException ignore) {
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
     }
     else {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
