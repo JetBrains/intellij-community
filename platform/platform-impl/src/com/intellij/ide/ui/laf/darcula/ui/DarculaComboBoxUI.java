@@ -133,7 +133,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
 
   @Override
   protected Insets getInsets() {
-    return JBUI.insets(4, 7, 4, 5).asUIResource();
+    return JBUI.insets(3, 7, 3, 5).asUIResource();
   }
 
   protected Dimension getDisplaySize() {
@@ -224,7 +224,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   protected Rectangle rectangleForCurrentValue() {
     final Rectangle r = super.rectangleForCurrentValue();
     r.x-= JBUI.scale(2);
-    r.y-= isTableCellEditor(myComboBox) ? 0 : JBUI.scale(1);
     return r;
   }
 
@@ -336,7 +335,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     final Graphics2D g = (Graphics2D)g2;
     final Rectangle arrowButtonBounds = arrowButton.getBounds();
     final int xxx = arrowButtonBounds.x - JBUI.scale(5);
-    final int H = height - JBUI.scale(4);
+    final int H = height - JBUI.scale(2);
     final int W = width - JBUI.scale(2);
 
     final GraphicsConfig config = new GraphicsConfig(g);
@@ -362,24 +361,24 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     final Color borderColor = getBorderColor();//ColorUtil.shift(UIUtil.getBorderColor(), 4);
     g.setColor(getArrowButtonFillColor(borderColor));
     int off = hasFocus ? 1 : 0;
-    g.drawLine(xxx + JBUI.scale(5), y + JBUI.scale(1) + off, xxx + JBUI.scale(5), height - JBUI.scale(3));
+    g.drawLine(xxx + JBUI.scale(5), y + JBUI.scale(1) + off, xxx + JBUI.scale(5), height - JBUI.scale(1));
 
     Rectangle r = rectangleForCurrentValue();
     paintCurrentValueBackground(g, r, hasFocus);
     paintCurrentValue(g, r, false);
 
     if (hasFocus) {
-      DarculaUIUtil.paintFocusRing(g, JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(5));
+      DarculaUIUtil.paintFocusRing(g, JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4));
     }
     else {
       g.setColor(borderColor);
-      g.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(4), R, R);
+      g.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
       if (!UIUtil.isUnderDarcula() && comboBox.isEnabled()) {
         g.setColor(getArrowButtonFillColor(getBorderColor()));
         final Shape clip = g.getClip();
         final int offX = xxx + JBUI.scale(5);
         g.setClip(offX, y, width - offX, height);
-        g.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(4), R, R);
+        g.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
         g.setClip(clip);
       }
     }
