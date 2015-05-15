@@ -41,8 +41,8 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final Project project = (Project)infos[2];
-    final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(project);
+    final PsiElement context = (PsiElement)infos[1];
+    final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(context.getProject());
     final List<PsiType> maskedTypes = (List<PsiType>)infos[0];
     final List<InspectionGadgetsFix> fixes = new ArrayList<InspectionGadgetsFix>();
     for (PsiType thrown : maskedTypes) {
@@ -54,7 +54,6 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
         fixes.add(new AddCatchSectionFix(pointerManager.createSmartTypePointer(thrown), typeText));
       }
     }
-    final PsiElement context = (PsiElement)infos[1];
     final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
     if (fix != null) {
       fixes.add(fix);

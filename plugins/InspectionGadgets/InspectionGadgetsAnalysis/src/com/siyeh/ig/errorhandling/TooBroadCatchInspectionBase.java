@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -84,50 +84,48 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       ExceptionUtils.calculateExceptionsThrown(statement.getResourceList(), thrownTypes);
       final Set<PsiType> caughtTypes = new HashSet<PsiType>(thrownTypes.size());
       final PsiCatchSection[] catchSections = statement.getCatchSections();
+      boolean runtimeExceptionSeen = false;
       for (final PsiCatchSection catchSection : catchSections) {
         final PsiParameter parameter = catchSection.getParameter();
         if (parameter == null) {
           continue;
         }
-        final PsiType caughtType = parameter.getType();
-        if (caughtType instanceof PsiDisjunctionType) {
-          final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)caughtType;
-          final List<PsiType> types = disjunctionType.getDisjunctions();
-          for (PsiType type : types) {
-            check(thrownTypes, caughtTypes, parameter, type, statement.getProject());
+        final PsiTypeElement typeElement = parameter.getTypeElement();
+        if (typeElement == null) {
+          continue;
+        }
+        final PsiTypeElement[] children = PsiTreeUtil.getChildrenOfType(typeElement, PsiTypeElement.class);
+        if (children != null) {
+          for (PsiTypeElement child : children) {
+            runtimeExceptionSeen = check(thrownTypes, child, runtimeExceptionSeen, caughtTypes);
           }
         }
         else {
-          if (thrownTypes.isEmpty()) {
-            if (CommonClassNames.JAVA_LANG_EXCEPTION.equals(caughtType.getCanonicalText())) {
-              final PsiTypeElement typeElement = parameter.getTypeElement();
-              if (typeElement == null) {
-                continue;
-              }
-              final PsiClassType runtimeExceptionType = TypeUtils.getType(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, parameter);
-              registerError(typeElement, Collections.singletonList(runtimeExceptionType), typeElement, statement.getProject());
-            }
-          }
-          else {
-            check(thrownTypes, caughtTypes, parameter, caughtType, statement.getProject());
-          }
+          runtimeExceptionSeen = check(thrownTypes, typeElement, runtimeExceptionSeen, caughtTypes);
         }
       }
     }
 
-    private void check(Set<PsiType> thrownTypes, Set<PsiType> caughtTypes, PsiParameter parameter, PsiType caughtType, Project project) {
-      final List<PsiType> maskedExceptions = findMaskedExceptions(thrownTypes, caughtTypes, caughtType);
+    private boolean check(Set<PsiType> thrownTypes, PsiTypeElement caughtTypeElement, boolean runtimeExceptionSeen, Set<PsiType> caughtTypes) {
+      final PsiType caughtType = caughtTypeElement.getType();
+      if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(caughtType.getCanonicalText())) {
+        runtimeExceptionSeen = true;
+      }
+      else if (thrownTypes.isEmpty() && CommonClassNames.JAVA_LANG_EXCEPTION.equals(caughtType.getCanonicalText())) {
+        if (!runtimeExceptionSeen) {
+          final PsiClassType runtimeExceptionType = TypeUtils.getType(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, caughtTypeElement);
+          registerError(caughtTypeElement, Collections.singletonList(runtimeExceptionType), caughtTypeElement);
+        }
+      }
+      final List<PsiType> maskedExceptions = findMaskedExceptions(thrownTypes, caughtType, caughtTypes);
       if (maskedExceptions.isEmpty()) {
-        return;
+        return runtimeExceptionSeen;
       }
-      final PsiTypeElement typeElement = parameter.getTypeElement();
-      if (typeElement == null) {
-        return;
-      }
-      registerError(typeElement, maskedExceptions, typeElement, project);
+      registerError(caughtTypeElement, maskedExceptions, caughtTypeElement);
+      return runtimeExceptionSeen;
     }
 
-    private List<PsiType> findMaskedExceptions(Set<PsiType> thrownTypes, Set<PsiType> caughtTypes, PsiType caughtType) {
+    private List<PsiType> findMaskedExceptions(Set<PsiType> thrownTypes, PsiType caughtType, Set<PsiType> caughtTypes) {
       if (thrownTypes.contains(caughtType)) {
         if (ignoreThrown) {
           return Collections.emptyList();

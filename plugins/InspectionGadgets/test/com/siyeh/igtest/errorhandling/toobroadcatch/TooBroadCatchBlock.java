@@ -95,5 +95,23 @@ public class TooBroadCatchBlock{
       };
       throw new IOException();
     } catch (IOException e) {}
+    try {
+      System.out.println();
+    } catch (<warning descr="'catch' of 'Exception' is too broad, masking exception 'RuntimeException'">Exception</warning> e) {
+
+    }
+    try {
+      System.out.println();
+    } catch (RuntimeException e) {
+
+    } catch (Exception e) {
+
+    }
+    try {
+      System.out.println();
+      throw new NumberFormatException();
+    } catch (<warning descr="'catch' of 'IllegalArgumentException' is too broad, masking exception 'NumberFormatException'">IllegalArgumentException</warning> | NullPointerException e) {
+
+    }
   }
 }
