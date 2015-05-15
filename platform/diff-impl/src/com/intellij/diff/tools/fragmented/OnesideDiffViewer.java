@@ -149,7 +149,6 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @CalledInAwt
   protected void onInit() {
     super.onInit();
-    processContextHints();
     installTypingSupport();
     myPanel.setLoadingContent(); // We need loading panel only for initial rediff()
   }
@@ -157,21 +156,24 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @Override
   @CalledInAwt
   protected void onDispose() {
-    updateContextHints();
-    EditorFactory.getInstance().releaseEditor(myEditor);
     super.onDispose();
+    EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
+  @Override
   @CalledInAwt
   protected void processContextHints() {
+    super.processContextHints();
     Side side = DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.MASTER_SIDE);
     if (side != null && side.select(myActualContent1, myActualContent2) != null) myMasterSide = side;
 
     myInitialScrollHelper.processContext(myRequest);
   }
 
+  @Override
   @CalledInAwt
   protected void updateContextHints() {
+    super.updateContextHints();
     myInitialScrollHelper.updateContext(myRequest);
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
   }

@@ -161,16 +161,18 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
   }
 
   @Override
+  @CalledInAwt
   protected void updateContextHints() {
+    super.updateContextHints();
     if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
     myInitialScrollHelper.updateContext(myRequest);
-    super.updateContextHints();
   }
 
   //

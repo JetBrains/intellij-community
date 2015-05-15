@@ -115,20 +115,15 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
   @Override
   @CalledInAwt
-  protected void onInit() {
-    super.onInit();
-    processContextHints();
-  }
-
-  @Override
-  @CalledInAwt
   protected void onDispose() {
-    updateContextHints();
     super.onDispose();
     destroyEditors();
   }
 
+  @Override
+  @CalledInAwt
   protected void processContextHints() {
+    super.processContextHints();
     if (myEditor1 == null) {
       myCurrentSide = Side.RIGHT;
     }
@@ -141,7 +136,10 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
     }
   }
 
+  @Override
+  @CalledInAwt
   protected void updateContextHints() {
+    super.updateContextHints();
     if (myEditor1 != null && myEditor2 != null) {
       myContext.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, myCurrentSide);
     }

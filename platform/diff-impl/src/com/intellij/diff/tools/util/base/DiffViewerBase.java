@@ -58,6 +58,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @NotNull
   public final FrameDiffTool.ToolbarComponents init() {
+    processContextHints();
     onInit();
 
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
@@ -81,12 +82,22 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
         myDisposed = true;
 
         abortRediff();
+        updateContextHints();
+
         onDispose();
       }
     };
 
     if (!ApplicationManager.getApplication().isDispatchThread()) LOG.warn(new Throwable("dispose() not from EDT"));
     UIUtil.invokeLaterIfNeeded(doDispose);
+  }
+
+  @CalledInAwt
+  protected void processContextHints() {
+  }
+
+  @CalledInAwt
+  protected void updateContextHints() {
   }
 
   @CalledInAwt

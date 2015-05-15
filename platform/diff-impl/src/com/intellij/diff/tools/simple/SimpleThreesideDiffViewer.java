@@ -138,12 +138,14 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
   }
 
   @Override
+  @CalledInAwt
   protected void updateContextHints() {
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
