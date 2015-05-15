@@ -8,7 +8,7 @@ import java.util.ResourceBundle
 import kotlin.platform.platformStatic
 
 class IcsBundle {
-  class object {
+  companion object {
     private var ourBundle: Reference<ResourceBundle>? = null
 
     val BUNDLE: String = "messages.IcsBundle"

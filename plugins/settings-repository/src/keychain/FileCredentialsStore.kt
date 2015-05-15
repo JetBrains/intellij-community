@@ -1,10 +1,8 @@
-package org.jetbrains.settingsRepository
+package org.jetbrains.keychain
 
 import com.intellij.openapi.util.PasswordUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.IOUtil
-import org.eclipse.jgit.transport.URIish
-
 import java.io.*
 
 class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
@@ -46,12 +44,12 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
     return credentials
   }
 
-  override fun reset(uri: URIish) {
+  override fun reset(host: String) {
     if (credentials != null) {
       dataLoaded = true
       storeFile.delete()
 
-      credentials = Credentials(credentials!!.username, null)
+      credentials = Credentials(credentials!!.id, null)
     }
   }
 
@@ -66,8 +64,8 @@ class FileCredentialsStore(private val storeFile: File) : CredentialsStore {
       FileUtil.createParentDirs(storeFile)
       val out = DataOutputStream(FileOutputStream(storeFile).buffered())
       try {
-        IOUtil.writeString(PasswordUtil.encodePassword(credentials.username), out)
-        IOUtil.writeString(PasswordUtil.encodePassword(credentials.password), out)
+        IOUtil.writeString(PasswordUtil.encodePassword(credentials.id), out)
+        IOUtil.writeString(PasswordUtil.encodePassword(credentials.token), out)
       }
       finally {
         out.close()

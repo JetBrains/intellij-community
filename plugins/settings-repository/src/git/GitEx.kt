@@ -1,17 +1,16 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.util.text.StringUtil
-import org.eclipse.jgit.dircache.*
+import org.eclipse.jgit.api.CommitCommand
+import org.eclipse.jgit.api.ResetCommand
+import org.eclipse.jgit.dircache.DirCacheCheckout
+import org.eclipse.jgit.dircache.DirCacheEntry
 import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.treewalk.FileTreeIterator
-
-import java.io.File
-import java.io.IOException
-import org.eclipse.jgit.api.ResetCommand
 import org.jetbrains.settingsRepository.LOG
-import org.eclipse.jgit.api.CommitCommand
-import org.eclipse.jgit.revwalk.RevCommit
+import java.io.File
 
 fun Repository.disableAutoCrLf(): Repository {
   val config = getConfig()
@@ -55,7 +54,6 @@ fun Config.getRemoteBranchFullName(): String {
   return name!!
 }
 
-throws(javaClass<IOException>())
 fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER) {
   // our local branch named 'master' in any case
   val localBranchName = Constants.MASTER

@@ -38,7 +38,7 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
       return BEFORE_CHECKIN_DIALOG_HANDLER
     }
 
-    class object {
+    companion object {
       private val BEFORE_CHECKIN_DIALOG_HANDLER = object : BeforeCheckinDialogHandler() {
         override fun beforeCommitDialogShown(project: Project, changes: List<Change>, executors: Iterable<CommitExecutor>, showVcsCommit: Boolean): Boolean {
           val collectConsumer = ProjectChangeCollectConsumer(project)

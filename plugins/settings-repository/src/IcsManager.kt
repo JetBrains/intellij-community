@@ -29,6 +29,10 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.UIUtil
 import gnu.trove.THashSet
+import org.jetbrains.keychain.CredentialsStore
+import org.jetbrains.keychain.FileCredentialsStore
+import org.jetbrains.keychain.OsXCredentialsStore
+import org.jetbrains.keychain.isOSXCredentialsStoreSupported
 import org.jetbrains.settingsRepository.git.GitRepositoryManager
 import org.jetbrains.settingsRepository.git.GitRepositoryService
 import java.io.File
@@ -61,7 +65,7 @@ public class IcsManager : ApplicationLoadListener {
     override fun compute(): CredentialsStore {
       if (isOSXCredentialsStoreSupported && SystemProperties.getBooleanProperty("ics.use.osx.keychain", true)) {
         try {
-          return OsXCredentialsStore()
+          return OsXCredentialsStore("IntelliJ Platform Settings Repository")
         }
         catch (e: Throwable) {
           LOG.error(e)
@@ -324,7 +328,7 @@ public class IcsManager : ApplicationLoadListener {
     }
 
     var future = autoSyncFuture
-    if (future != null && !future!!.isDone()) {
+    if (future != null && !future.isDone()) {
       return
     }
 

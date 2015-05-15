@@ -17,7 +17,7 @@ import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
 class IcsSettingsEditor(project: Project?) : DialogWrapper(project, true) {
-  {
+  init {
     setTitle(IcsBundle.message("settings.panel.title"))
     init()
   }
@@ -32,7 +32,7 @@ class IcsSettingsEditor(project: Project?) : DialogWrapper(project, true) {
     val tabs = tabbedPane.getTabs() as JBTabsImpl
     tabs.setSizeBySelected(true)
 
-    var actions = array(getOKAction(), getCancelAction())
+    var actions = arrayOf(getOKAction(), getCancelAction())
     if (SystemInfo.isMac) {
       actions = ArrayUtil.reverseArray(actions)
     }

@@ -1,13 +1,12 @@
-package org.jetbrains.settingsRepository
+package org.jetbrains.keychain
 
-import org.eclipse.jgit.transport.URIish
 import com.intellij.openapi.util.PasswordUtil
 import gnu.trove.THashMap
-import com.intellij.openapi.util.SystemInfo
 
-class OsXCredentialsStore : CredentialsStore {
-  class object {
-    val SERVICE_NAME = "IntelliJ Platform Settings Repository".toByteArray()
+class OsXCredentialsStore(serviceName: String) : CredentialsStore {
+  private val serviceName = serviceName.toByteArray()
+
+  companion object {
     val SSH = "SSH".toByteArray()
   }
 
@@ -24,11 +23,7 @@ class OsXCredentialsStore : CredentialsStore {
       return credentials
     }
 
-    val data = OSXKeychainLibrary.findGenericPassword(getServiceName(sshKeyFile), accountName)
-    if (data == null) {
-      return null
-    }
-
+    val data = OSXKeychainLibrary.findGenericPassword(getServiceName(sshKeyFile), accountName) ?: return null
     if (sshKeyFile == null) {
       val separatorIndex = data.indexOf('@')
       if (separatorIndex > 0) {
@@ -44,11 +39,11 @@ class OsXCredentialsStore : CredentialsStore {
       credentials = Credentials(sshKeyFile, data)
     }
 
-    accountToCredentials[accountName] = credentials!!
+    accountToCredentials[accountName] = credentials
     return credentials
   }
 
-  private fun getServiceName(sshKeyFile: String?) = if (sshKeyFile == null) SERVICE_NAME else SSH
+  private fun getServiceName(sshKeyFile: String?) = if (sshKeyFile == null) serviceName else SSH
 
   /**
    * Note - in case of SSH, our added password will not be used until ssh-agent will not be restarted (simply execute "killall ssh-agent").
@@ -61,14 +56,13 @@ class OsXCredentialsStore : CredentialsStore {
       return
     }
 
-    val data = if (sshKeyFile == null) "${PasswordUtil.encodePassword(credentials.username)}@${PasswordUtil.encodePassword(credentials.password)}" else credentials.password!!
+    val data = if (sshKeyFile == null) "${PasswordUtil.encodePassword(credentials.id)}@${PasswordUtil.encodePassword(credentials.token)}" else credentials.token!!
     OSXKeychainLibrary.saveGenericPassword(getServiceName(sshKeyFile), accountName, data)
   }
 
-  override fun reset(uri: URIish) {
-    val host = uri.getHost()!!
+  override fun reset(host: String) {
     if (accountToCredentials.remove(host) != null) {
-      OSXKeychainLibrary.deleteGenericPassword(SERVICE_NAME, host)
+      OSXKeychainLibrary.deleteGenericPassword(serviceName, host)
     }
   }
 }

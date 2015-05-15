@@ -10,8 +10,8 @@ import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.CoreMatchers.nullValue
 import org.hamcrest.text.IsEmptyString.isEmptyString
-import org.jetbrains.settingsRepository.CredentialsStore
-import org.jetbrains.settingsRepository.FileCredentialsStore
+import org.jetbrains.keychain.CredentialsStore
+import org.jetbrains.keychain.FileCredentialsStore
 import org.jetbrains.settingsRepository.git.JGitCredentialsProvider
 import org.junit.After
 import org.junit.Assert.assertThat

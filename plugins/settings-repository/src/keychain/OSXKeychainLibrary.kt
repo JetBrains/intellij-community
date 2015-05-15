@@ -1,9 +1,9 @@
-package org.jetbrains.settingsRepository
+package org.jetbrains.keychain
 
-import java.nio.CharBuffer
-import java.nio.ByteBuffer
-import com.sun.jna.Pointer
 import com.intellij.openapi.util.SystemInfo
+import com.sun.jna.Pointer
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
 
 val isOSXCredentialsStoreSupported: Boolean
   get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
@@ -11,7 +11,7 @@ val isOSXCredentialsStoreSupported: Boolean
 // http://developer.apple.com/mac/library/DOCUMENTATION/Security/Reference/keychainservices/Reference/reference.html
 // It is very, very important to use CFRelease/SecKeychainItemFreeContent You must do it, otherwise you can get "An invalid record was encountered."
 public trait OSXKeychainLibrary : com.sun.jna.Library {
-  class object {
+  companion object {
     private val LIBRARY = com.sun.jna.Native.loadLibrary("Security", javaClass<OSXKeychainLibrary>()) as OSXKeychainLibrary
 
     fun saveGenericPassword(serviceName: ByteArray, accountName: String, password: CharArray) {
@@ -39,11 +39,8 @@ public trait OSXKeychainLibrary : com.sun.jna.Library {
       val accountNameBytes = accountName.toByteArray()
       val passwordSize = IntArray(1);
       val passwordData = array<Pointer?>(null);
-      checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, passwordSize, passwordData))
-      val pointer = passwordData[0]
-      if (pointer == null) {
-        return null
-      }
+      checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size(), accountNameBytes, passwordSize, passwordData))
+      val pointer = passwordData[0] ?: return null
 
       val result = String(pointer.getByteArray(0, passwordSize[0]))
       LIBRARY.SecKeychainItemFreeContent(null, pointer)
@@ -52,11 +49,11 @@ public trait OSXKeychainLibrary : com.sun.jna.Library {
 
     private fun saveGenericPassword(serviceName: ByteArray, accountName: String, password: ByteArray, passwordSize: Int) {
       val accountNameBytes = accountName.toByteArray()
-      val itemRef = array<Pointer?>(null)
-      checkForError("find (for save)", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, null, null, itemRef))
+      val itemRef = arrayOf<Pointer?>(null)
+      checkForError("find (for save)", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size(), serviceName, accountNameBytes.size(), accountNameBytes, null, null, itemRef))
       val pointer = itemRef[0]
       if (pointer == null) {
-        checkForError("save (new)", LIBRARY.SecKeychainAddGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, passwordSize, password))
+        checkForError("save (new)", LIBRARY.SecKeychainAddGenericPassword(null, serviceName.size(), serviceName, accountNameBytes.size(), accountNameBytes, passwordSize, password))
       }
       else {
         checkForError("save (update)", LIBRARY.SecKeychainItemModifyContent(pointer, null, passwordSize, password))
@@ -65,7 +62,7 @@ public trait OSXKeychainLibrary : com.sun.jna.Library {
     }
 
     fun deleteGenericPassword(serviceName: ByteArray, accountName: String) {
-      val itemRef = array<Pointer?>(null)
+      val itemRef = arrayOf<Pointer?>(null)
       val accountNameBytes = accountName.toByteArray()
       checkForError("find (for delete)", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes.size, accountNameBytes, null, null, itemRef))
       val pointer = itemRef[0]

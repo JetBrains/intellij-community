@@ -1,31 +1,29 @@
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
 import org.eclipse.jgit.errors.TransportException
-import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.lib.BranchTrackingStatus
+import org.eclipse.jgit.lib.ConfigConstants
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.*
-
+import org.jetbrains.jgit.dirCache.AddLoadedFile
+import org.jetbrains.jgit.dirCache.deletePath
+import org.jetbrains.jgit.dirCache.edit
+import org.jetbrains.keychain.CredentialsStore
+import org.jetbrains.settingsRepository.*
+import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.File
 import java.io.IOException
-import com.intellij.openapi.util.ShutDownTracker
-import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.settingsRepository.RepositoryService
-import org.jetbrains.settingsRepository.CredentialsStore
-import org.jetbrains.settingsRepository.BaseRepositoryManager
-import org.jetbrains.settingsRepository.LOG
-import org.jetbrains.jgit.dirCache.edit
-import org.jetbrains.jgit.dirCache.AddLoadedFile
-import org.eclipse.jgit.revwalk.RevCommit
-import org.jetbrains.jgit.dirCache.deletePath
-import org.jetbrains.settingsRepository.AuthenticationException
 import kotlin.properties.Delegates
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import org.jetbrains.settingsRepository.RepositoryManager.Updater
-import org.jetbrains.settingsRepository.UpdateResult
 
 class GitRepositoryService : RepositoryService {
   override fun isValidRepository(file: File): Boolean {
@@ -53,7 +51,7 @@ class GitRepositoryManager(private val credentialsStore: NotNullLazyValue<Creden
     JGitCredentialsProvider(credentialsStore, repository)
   };
 
-  {
+  init {
     $repository = FileRepositoryBuilder().setWorkTree(dir).build()
 
     if (ApplicationManager.getApplication()?.isUnitTestMode() != true) {

@@ -1,20 +1,20 @@
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.util.ui.UIUtil
+import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.URIish
-import org.eclipse.jgit.lib.Repository
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
-import com.intellij.util.ui.UIUtil
-import org.jetbrains.settingsRepository.Credentials
-import org.jetbrains.settingsRepository.nullize
-import org.jetbrains.settingsRepository.isOSXCredentialsStoreSupported
-import org.jetbrains.settingsRepository.isFulfilled
-import org.jetbrains.settingsRepository.showAuthenticationForm
-import org.jetbrains.settingsRepository.CredentialsStore
+import org.jetbrains.keychain.Credentials
+import org.jetbrains.keychain.CredentialsStore
+import org.jetbrains.keychain.isFulfilled
+import org.jetbrains.keychain.isOSXCredentialsStoreSupported
 import org.jetbrains.settingsRepository.LOG
+import org.jetbrains.settingsRepository.nullize
+import org.jetbrains.settingsRepository.showAuthenticationForm
 
 class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<CredentialsStore>, private val repository: Repository) : CredentialsProvider() {
   private var credentialsFromGit: Credentials? = null
@@ -101,10 +101,10 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
 
         if (userFromUri != null) {
           // username is in url - read password only if it is for the same user
-          if (userFromUri != credentials?.username) {
+          if (userFromUri != credentials?.id) {
             credentials = Credentials(userFromUri, passwordFromUri)
           }
-          else if (passwordFromUri != null && passwordFromUri != credentials?.password) {
+          else if (passwordFromUri != null && passwordFromUri != credentials?.token) {
             credentials = Credentials(userFromUri, passwordFromUri)
           }
         }
@@ -119,13 +119,13 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
       credentialsStore.getValue().save(uri.getHost(), credentials!!, sshKeyFile)
     }
 
-    userNameItem?.setValue(credentials?.username)
+    userNameItem?.setValue(credentials?.id)
     if (passwordItem != null) {
       if (passwordItem is CredentialItem.Password) {
-        passwordItem.setValue(credentials?.password?.toCharArray())
+        passwordItem.setValue(credentials?.token?.toCharArray())
       }
       else {
-        (passwordItem as CredentialItem.StringType).setValue(credentials?.password)
+        (passwordItem as CredentialItem.StringType).setValue(credentials?.token)
       }
     }
 
@@ -134,7 +134,7 @@ class JGitCredentialsProvider(private val credentialsStore: NotNullLazyValue<Cre
 
   override fun reset(uri: URIish) {
     credentialsFromGit = null
-    credentialsStore.getValue().reset(uri)
+    credentialsStore.getValue().reset(uri.getHost()!!)
   }
 }
 

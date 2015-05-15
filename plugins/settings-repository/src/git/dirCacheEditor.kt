@@ -13,7 +13,6 @@ import org.jetbrains.settingsRepository.byteBufferToBytes
 import org.jetbrains.settingsRepository.removeFileAndParentDirectoryIfEmpty
 import java.io.File
 import java.io.FileInputStream
-import java.io.IOException
 import java.text.MessageFormat
 import java.util.Collections
 import java.util.Comparator
@@ -34,7 +33,6 @@ private val EDIT_CMP = object : Comparator<PathEdit> {
 public class DirCacheEditor(edits: List<PathEdit>, private val repository: Repository, dirCache: DirCache, estimatedNumberOfEntries: Int) : BaseDirCacheEditor(dirCache, estimatedNumberOfEntries) {
   private val edits = edits.sortBy(EDIT_CMP)
 
-  throws(javaClass<IOException>())
   override fun commit(): Boolean {
     if (edits.isEmpty()) {
       // No changes? Don't rewrite the index.

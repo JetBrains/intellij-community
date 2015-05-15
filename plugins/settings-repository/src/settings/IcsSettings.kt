@@ -14,7 +14,7 @@ private val settingsFile = File(getPluginSystemDir(), "config.json")
 private val DEFAULT_COMMIT_DELAY = 10 * Time.MINUTE
 
 class MyPrettyPrinter : DefaultPrettyPrinter() {
-  {
+  init {
     _arrayIndenter = DefaultPrettyPrinter.NopIndenter.instance
   }
 

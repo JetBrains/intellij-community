@@ -12,14 +12,12 @@ import org.junit.Assert.assertThat
 import org.junit.rules.TestName
 import org.junit.runner.Description
 import java.io.File
-import java.io.IOException
 import java.util.Arrays
 import java.util.Comparator
 
 class GitTestWatcher : TestName() {
   var repository: Repository? = null
 
-  throws(javaClass<IOException>())
   public fun getRepository(baseDir: File): Repository {
     if (repository == null) {
       repository = createRepository(File(baseDir, "upstream"))
