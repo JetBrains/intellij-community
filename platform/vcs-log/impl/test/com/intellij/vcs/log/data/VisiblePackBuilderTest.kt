@@ -15,37 +15,26 @@
  */
 package com.intellij.vcs.log.data
 
-import org.junit.Test
 import com.intellij.mock.MockVirtualFile
-import com.intellij.vcs.log.impl.TestVcsLogProvider
-import com.intellij.vcs.log.impl.TestVcsLogProvider.*
-import com.intellij.vcs.log.VcsLogHashMap
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.Disposable
-import com.intellij.vcs.log.graph.PermanentGraph
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.impl.HashImpl
-import java.util.HashMap
-import com.intellij.vcs.log.graph.GraphCommit
-import java.util.ArrayList
-import com.intellij.vcs.log.graph.GraphCommitImpl
-import com.intellij.vcs.log.VcsRef
-import java.util.HashSet
-import com.intellij.vcs.log.impl.VcsRefImpl
-import com.intellij.vcs.log.VcsLogFilterCollection
-import kotlin.test.assertEquals
-import com.intellij.vcs.log.VcsLogUserFilter
-import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
-import com.intellij.vcs.log.VcsUser
-import com.intellij.vcs.log.impl.VcsUserImpl
-import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
-import kotlin.test.assertTrue
-import com.intellij.vcs.log.graph.VisibleGraph
-import com.intellij.vcs.log.VcsLogBranchFilter
-import com.intellij.vcs.log.TimedVcsCommit
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Function
-import com.intellij.vcs.log.impl.TimedVcsCommitImpl
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.graph.GraphCommit
+import com.intellij.vcs.log.graph.GraphCommitImpl
+import com.intellij.vcs.log.graph.PermanentGraph
+import com.intellij.vcs.log.graph.VisibleGraph
+import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.TestVcsLogProvider.BRANCH_TYPE
+import com.intellij.vcs.log.impl.TestVcsLogProvider.DEFAULT_USER
+import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl
+import com.intellij.vcs.log.ui.tables.GraphTableModel
+import org.junit.Test
+import java.util.ArrayList
+import java.util.HashMap
+import java.util.HashSet
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class VisiblePackBuilderTest {
 
@@ -159,7 +148,17 @@ class VisiblePackBuilderTest {
             it.value.user, it.value.subject, it.value.user, 1L)
         Pair(it.key.getId(), metadata)
       }.toMap()
-      val builder = VisiblePackBuilder(providers, hashMap, detailsCache, CommitDetailsGetter(hashMap, providers, TRIVIAL_DISPOSABLE))
+
+      val commitDetailsGetter = object : DataGetter<VcsFullCommitDetails> {
+        override fun getCommitData(row: Int, tableModel: GraphTableModel): VcsFullCommitDetails? {
+          return null;
+        }
+
+        override fun getCommitDataIfAvailable(hash: Int): VcsFullCommitDetails? {
+          return null;
+        }
+      }
+      val builder = VisiblePackBuilder(providers, hashMap, detailsCache, commitDetailsGetter)
 
       return builder.build(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
@@ -236,12 +235,6 @@ class VisiblePackBuilderTest {
     override fun getHash(commitIndex: Int) = reverseMap.get(commitIndex)!!
 
     override fun findHashByString(string: String) = throw UnsupportedOperationException()
-  }
-
-  object TRIVIAL_DISPOSABLE : Disposable {
-    override fun dispose() {
-      throw UnsupportedOperationException()
-    }
   }
 }
 

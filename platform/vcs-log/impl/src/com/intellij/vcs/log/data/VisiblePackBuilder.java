@@ -42,13 +42,13 @@ class VisiblePackBuilder {
 
   @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
-  @NotNull private final CommitDetailsGetter myCommitDetailsGetter;
+  @NotNull private final DataGetter<VcsFullCommitDetails> myCommitDetailsGetter;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
 
   VisiblePackBuilder(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                      @NotNull VcsLogHashMap hashMap,
                      @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
-                     @NotNull CommitDetailsGetter detailsGetter) {
+                     @NotNull DataGetter<VcsFullCommitDetails> detailsGetter) {
     myHashMap = hashMap;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myCommitDetailsGetter = detailsGetter;
