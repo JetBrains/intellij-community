@@ -114,21 +114,18 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @Override
+  @CalledInAwt
   protected void onInit() {
     super.onInit();
     processContextHints();
   }
 
   @Override
+  @CalledInAwt
   protected void onDispose() {
     updateContextHints();
     super.onDispose();
-  }
-
-  @Override
-  protected void onDisposeAwt() {
     destroyEditors();
-    super.onDisposeAwt();
   }
 
   protected void processContextHints() {

@@ -55,6 +55,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,12 +119,14 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   }
 
   @Override
+  @CalledInAwt
   protected void onInit() {
     super.onInit();
     processContextHints();
   }
 
   @Override
+  @CalledInAwt
   public void onDispose() {
     updateContextHints();
     destroyEditorListeners();

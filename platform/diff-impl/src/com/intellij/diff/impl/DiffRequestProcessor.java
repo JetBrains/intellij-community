@@ -968,6 +968,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   private interface ViewerState {
     void init();
 
+    @CalledInAwt
     void destroy();
 
     @Nullable
@@ -1008,6 +1009,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1058,6 +1060,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1130,6 +1133,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void destroy() {
       Disposer.dispose(myViewer);
       Disposer.dispose(myWrapperViewer);

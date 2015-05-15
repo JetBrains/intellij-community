@@ -92,6 +92,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter());
@@ -99,10 +100,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
-  protected void onDisposeAwt() {
+  @CalledInAwt
+  protected void onDispose() {
     myModifierProvider.destroy();
     destroyChangedBlocks();
-    super.onDisposeAwt();
+    super.onDispose();
   }
 
   @NotNull

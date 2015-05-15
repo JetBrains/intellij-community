@@ -146,6 +146,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   @Override
+  @CalledInAwt
   protected void onInit() {
     super.onInit();
     processContextHints();
@@ -154,6 +155,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   }
 
   @Override
+  @CalledInAwt
   protected void onDispose() {
     updateContextHints();
     EditorFactory.getInstance().releaseEditor(myEditor);

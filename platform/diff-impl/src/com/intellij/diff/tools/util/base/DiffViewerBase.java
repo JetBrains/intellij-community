@@ -37,7 +37,6 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
@@ -47,7 +46,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @NotNull protected final ContentDiffRequest myRequest;
 
   @NotNull private final DiffTaskQueue myTaskExecutor = new DiffTaskQueue();
-  @NotNull private final AtomicBoolean myDisposed = new AtomicBoolean(false);
+  private volatile boolean myDisposed;
 
   public DiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     myProject = context.getProject();
@@ -69,22 +68,27 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   @Override
+  @CalledInAwt
   public final void dispose() {
-    if (!myDisposed.compareAndSet(false, true)) return;
+    if (myDisposed) return;
 
-    onDispose();
-
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    Runnable doDispose = new Runnable() {
       @Override
       public void run() {
-        onDisposeAwt();
+        if (myDisposed) return;
+        myDisposed = true;
+
+        onDispose();
       }
-    });
+    };
+
+    if (!ApplicationManager.getApplication().isDispatchThread()) LOG.warn(new Throwable("dispose() not from EDT"));
+    UIUtil.invokeLaterIfNeeded(doDispose);
   }
 
   @CalledInAwt
   public final void scheduleRediff() {
-    if (myDisposed.get()) return;
+    if (isDisposed()) return;
 
     myTaskExecutor.abortAndSchedule(new Runnable() {
       @Override
@@ -106,7 +110,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @CalledInAwt
   public final void rediff(boolean trySync) {
-    if (myDisposed.get()) return;
+    if (isDisposed()) return;
 
     onBeforeRediff();
 
@@ -148,7 +152,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   public boolean isDisposed() {
-    return myDisposed.get();
+    return myDisposed;
   }
 
   //
@@ -191,12 +195,9 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @NotNull
   protected abstract Runnable performRediff(@NotNull ProgressIndicator indicator);
 
+  @CalledInAwt
   protected void onDispose() {
     Disposer.dispose(myTaskExecutor);
-  }
-
-  @CalledInAwt
-  protected void onDisposeAwt() {
   }
 
   @Nullable
