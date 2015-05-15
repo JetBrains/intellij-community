@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,11 +33,11 @@ import org.jetbrains.annotations.NotNull;
  * Handles extra blank lines at the end of the file if corresponding whitespace elements belong to formatted range/element.
  * These trailing whitespaces are replaced by line feeds if either:
  * <ul>
- * <li>Option {@link PyCodeStyleSettings#BLANKS_LINES_AT_FILE_END} has positive value. In this case that number of line feeds will be
- * inserted at the end of file.</li>
+ * <li>Option {@link PyCodeStyleSettings#BLANK_LINE_AT_FILE_END} is enabled.</li>
  * <li>Setting {@link EditorSettingsExternalizable#isEnsureNewLineAtEOF()} is enabled. Otherwise extra new line added on the next
  * "Save" action will be removed after reformatting.</li>
  * </ul>
+ * <em>and</em> file is not empty.
  * If none of these conditions holds, blank lines are removed completely.
  *
  * @author Mikhail Golubev
@@ -56,6 +55,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
   public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     final PsiFile psiFile = source.getContainingFile();
     if (isApplicableTo(psiFile)) {
+      applyPendingChangesToPsi(source);
       final TextRange whitespaceRange = findTrailingWhitespacesRange(psiFile);
       if (source.getTextRange().intersects(whitespaceRange)) {
         replaceOrDeleteTrailingWhitespaces(psiFile, whitespaceRange);
@@ -69,6 +69,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     if (!isApplicableTo(source)) {
       return rangeToReformat;
     }
+    applyPendingChangesToPsi(source);
     final TextRange oldWhitespaceRange = findTrailingWhitespacesRange(source);
     if (rangeToReformat.intersects(oldWhitespaceRange)) {
       final TextRange newWhitespaceRange = replaceOrDeleteTrailingWhitespaces(source, oldWhitespaceRange);
@@ -92,6 +93,14 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     return rangeToReformat;
   }
 
+  private static void applyPendingChangesToPsi(@NotNull PsiElement source) {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(source.getContainingFile().getProject());
+    final Document document = documentManager.getDocument(source.getContainingFile());
+    if (document != null) {
+      documentManager.doPostponedOperationsAndUnblockDocument(document);
+    }
+  }
+
   @NotNull
   private static TextRange findTrailingWhitespacesRange(@NotNull PsiFile file) {
     final CharSequence contents = file.getViewProvider().getContents();
@@ -113,14 +122,12 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = documentManager.getDocument(pyFile);
     if (document != null) {
-      int numLineFeeds = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).BLANKS_LINES_AT_FILE_END;
-      if (numLineFeeds <= 0 && EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF()) {
-        numLineFeeds = 1;
-      }
-      documentManager.doPostponedOperationsAndUnblockDocument(document);
+      final PyCodeStyleSettings customSettings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class);
+      final boolean addLineFeed = customSettings.BLANK_LINE_AT_FILE_END || EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF();
       try {
-        final String text = StringUtil.repeat("\n", numLineFeeds);
-        if (numLineFeeds > 0 && whitespaceRange.getStartOffset() != 0) {
+        final String text = addLineFeed ? "\n" : "";
+        // Do not add extra blank line in empty file
+        if (!text.isEmpty() && whitespaceRange.getStartOffset() != 0) {
           if (!whitespaceRange.isEmpty()) {
             document.replaceString(whitespaceRange.getStartOffset(), whitespaceRange.getEndOffset(), text);
           }

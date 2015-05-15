@@ -26,13 +26,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class ShortcutTextField extends JTextField {
   private KeyStroke myKeyStroke;
 
   public ShortcutTextField() {
-    enableEvents(KeyEvent.KEY_EVENT_MASK);
+    enableEvents(AWTEvent.KEY_EVENT_MASK);
     setFocusTraversalKeysEnabled(false);
   }
 

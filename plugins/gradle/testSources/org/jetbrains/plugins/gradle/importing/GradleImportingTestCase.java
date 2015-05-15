@@ -82,20 +82,24 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @org.junit.runners.Parameterized.Parameter(0)
   public String gradleVersion;
   private GradleProjectSettings myProjectSettings;
+  private String myJdkHome;
 
   @Override
   public void setUp() throws Exception {
+    myJdkHome = IdeaTestUtil.requireRealJdkHome();
     super.setUp();
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
-    final String jdkHome = IdeaTestUtil.requireRealJdkHome();
-    assertNull("JDK " + GRADLE_JDK_NAME + " already exists", ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME));
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(jdkHome));
+        Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
+        if (oldJdk != null) {
+          ProjectJdkTable.getInstance().removeJdk(oldJdk);
+        }
+        VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
         Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, GRADLE_JDK_NAME);
-        assertNotNull("Cannot create JDK for " + jdkHome, jdk);
-        SdkConfigurationUtil.addSdk(jdk);
+        assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
+        ProjectJdkTable.getInstance().addJdk(jdk);
       }
     }.execute();
     myProjectSettings = new GradleProjectSettings();
@@ -126,11 +130,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
 
   @Override
   protected void collectAllowedRoots(List<String> roots) throws IOException {
-    final String javaHome = System.getenv("JAVA_HOME");
-    if (javaHome != null) {
-      roots.add(javaHome);
-    }
-
+    roots.add(myJdkHome);
     roots.add(PathManager.getOptionsPath());
   }
 

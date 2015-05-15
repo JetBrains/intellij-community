@@ -410,7 +410,8 @@ public class IdeEventQueue extends EventQueue {
   //private static boolean altGrIsPressed = false;
 
   private static AWTEvent fixNonEnglishKeyboardLayouts(AWTEvent e) {
-    if (!KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled()) return e;
+    KeyboardSettingsExternalizable externalizable = KeyboardSettingsExternalizable.getInstance();
+    if (externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
 
     if (e instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)e;

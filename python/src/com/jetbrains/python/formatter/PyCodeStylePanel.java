@@ -20,23 +20,57 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.jetbrains.python.highlighting.PyHighlighter;
+import com.intellij.ui.components.JBCheckBox;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.formatter.PyCodeStyleSettings.DictAlignment;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author yole
  */
 public class PyCodeStylePanel extends CodeStyleAbstractPanel {
+
   private JPanel myPanel;
+  private JBCheckBox myAddTrailingBlankLineCheckbox;
+  private ComboBox myDictAlignmentCombo;
+  private JPanel myPreviewPanel;
 
   protected PyCodeStylePanel(CodeStyleSettings settings) {
-    super(settings);
+    super(PythonLanguage.getInstance(), null, settings);
+    addPanelToWatch(myPanel);
+    installPreviewPanel(myPreviewPanel);
+
+    for (DictAlignment alignment : DictAlignment.values()) {
+      //noinspection unchecked
+      myDictAlignmentCombo.addItem(alignment);
+    }
+
+    myDictAlignmentCombo.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          somethingChanged();
+        }
+      }
+    });
+
+    myAddTrailingBlankLineCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        somethingChanged();
+      }
+    });
   }
 
   @Override
@@ -49,10 +83,6 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
     return 80;
   }
 
-  @Override
-  protected void prepareForReformat(PsiFile psiFile) {
-  }
-
   @NotNull
   @Override
   protected FileType getFileType() {
@@ -61,24 +91,54 @@ public class PyCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected String getPreviewText() {
-    return "";
+    return PREVIEW;
   }
 
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
+    for (DictAlignment alignment : DictAlignment.values()) {
+      if (getCustomSettings(settings).DICT_ALIGNMENT == alignment.asInt()) {
+        myDictAlignmentCombo.setSelectedItem(alignment);
+        break;
+      }
+    }
+    myAddTrailingBlankLineCheckbox.setSelected(getCustomSettings(settings).BLANK_LINE_AT_FILE_END);
   }
 
   @Override
   public void apply(CodeStyleSettings settings) {
+    final PyCodeStyleSettings customSettings = getCustomSettings(settings);
+    customSettings.DICT_ALIGNMENT = getDictAlignmentAsInt();
+    customSettings.BLANK_LINE_AT_FILE_END = ensureTrailingBlankLine();
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    return false;
+    final PyCodeStyleSettings customSettings = getCustomSettings(settings);
+    return customSettings.DICT_ALIGNMENT != getDictAlignmentAsInt() ||
+           customSettings.BLANK_LINE_AT_FILE_END != ensureTrailingBlankLine();
   }
 
   @Override
   public JComponent getPanel() {
     return myPanel;
   }
+
+  @NotNull
+  private static PyCodeStyleSettings getCustomSettings(@NotNull CodeStyleSettings settings) {
+    return settings.getCustomSettings(PyCodeStyleSettings.class);
+  }
+
+  private int getDictAlignmentAsInt() {
+    return ((DictAlignment)myDictAlignmentCombo.getSelectedItem()).asInt();
+  }
+
+  private boolean ensureTrailingBlankLine() {
+    return myAddTrailingBlankLineCheckbox.isSelected();
+  }
+
+  public static final String PREVIEW = "{\n" +
+                                       "    \"green\": 42,\n" +
+                                       "    \"eggs and ham\": -0.0e0\n" +
+                                       "}";
 }

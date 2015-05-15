@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx, MutableInterval {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
-  protected final DocumentEx myDocument;
-  protected RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
+  private final DocumentEx myDocument;
+  RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
   private final long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
@@ -89,7 +89,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return intervalEnd() + (node == null ? 0 : node.computeDeltaUpToRoot());
   }
 
-  public void invalidate(@NotNull final Object reason) {
+  void invalidate(@NotNull final Object reason) {
     setValid(false);
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
 
@@ -97,7 +97,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       node.processAliveKeys(new Processor<RangeMarkerEx>() {
         @Override
         public boolean process(RangeMarkerEx markerEx) {
-          myNode.getTree().reportInvalidation(markerEx, reason);
+          myNode.getTree().beforeRemove(markerEx, reason);
           return true;
         }
       });
