@@ -40,10 +40,10 @@ public class DarculaEditorTextFieldBorder implements Border {
     final EditorTextField textField = UIUtil.getParentOfType(EditorTextField.class, c);
     if (textField == null) return;
 
-    final int x1 = x + 3;
-    final int y1 = y + 3;
-    final int width1 = width - 8;
-    final int height1 = height - 6;
+    final int x1 = x + 1;
+    final int y1 = y + 1;
+    final int width1 = width - 2;
+    final int height1 = height - 2;
 
     if (c.isOpaque()) {
       g.setColor(UIUtil.getPanelBackground());
@@ -58,7 +58,7 @@ public class DarculaEditorTextFieldBorder implements Border {
     }
 
     if (textField.isEnabled() && textField.isVisible() && textField.getFocusTarget().hasFocus()) {
-      DarculaUIUtil.paintFocusRing(g, x1, y1, width1, height1);
+      DarculaUIUtil.paintFocusRing(g, x1+1, y1+1, width1-2, height1-2);
     } else {
       g.setColor(new JBColor(Gray._150, Gray._100));
       g.drawRect(x1, y1, width1, height1);
@@ -70,7 +70,7 @@ public class DarculaEditorTextFieldBorder implements Border {
     if (isComboBoxEditor(c) /*|| isCellEditor(c)*/) {
       return new InsetsUIResource(2,3,2,3);
     }
-    return new InsetsUIResource(6, 7, 6, 7);
+    return new InsetsUIResource(4, 7, 4, 7);
   }
 
   @Override
