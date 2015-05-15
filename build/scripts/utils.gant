@@ -700,7 +700,7 @@ private Map readIdeaProperties(Map args) {
   ideaPropertiesFile.close();
 
   def defaultProperties = ["CVS_PASSFILE": "~/.cvspass",
-                           "JVMVersion": "1.6*",
+                           "JVMVersion": "1.6+",
                            "com.apple.mrj.application.live-resize": "false",
                            "idea.paths.selector": args.system_selector,
                            "idea.executable": args.executable,
