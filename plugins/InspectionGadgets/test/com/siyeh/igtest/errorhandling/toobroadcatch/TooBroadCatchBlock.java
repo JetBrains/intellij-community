@@ -61,6 +61,9 @@ public class TooBroadCatchBlock{
     try {
       try (java.io.FileInputStream in = new java.io.FileInputStream("asdf")) {}
     } catch (<warning descr="'catch' of 'IOException' is too broad, masking exception 'FileNotFoundException'">IOException</warning> e) {}
+    try (java.io.InputStream in = new java.io.FileInputStream("")) {
+
+    } catch (<warning descr="'catch' of 'Exception' is too broad, masking exceptions 'IOException' and 'FileNotFoundException'">Exception</warning> e) {}
   }
 
   boolean m() {

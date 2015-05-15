@@ -81,6 +81,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
         return;
       }
       final Set<PsiType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
+      ExceptionUtils.calculateExceptionsThrown(statement.getResourceList(), thrownTypes);
       final Set<PsiType> caughtTypes = new HashSet<PsiType>(thrownTypes.size());
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       for (final PsiCatchSection catchSection : catchSections) {
