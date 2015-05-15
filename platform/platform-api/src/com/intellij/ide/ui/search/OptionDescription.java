@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,27 +24,31 @@ import org.jetbrains.annotations.Nullable;
  * Date: 17-Mar-2006
  */
 public class OptionDescription implements Comparable{
-  private String myOption;
+  private final String myOption;
   private final String myHit;
-  private String myPath;
-  private String myConfigurableId;
-
-  public OptionDescription(final String option, final String hit, final String path) {
-    myOption = option;
-    myHit = hit;
-    myPath = path;
-  }
+  private final String myPath;
+  private final String myConfigurableId;
+  private final String myGroupName;
 
   public OptionDescription(String hit) {
-    myHit = hit;
+    this(null, hit, null);
+  }
+
+  public OptionDescription(final String option, final String hit, final String path) {
+    this(option, null, hit, path);
   }
 
 
   public OptionDescription(final String option, final String configurableId, final String hit, final String path) {
+    this(option, configurableId, hit, path, null);
+  }
+
+  public OptionDescription(final String option, final String configurableId, final String hit, final String path, String groupName) {
     myOption = option;
     myHit = hit;
     myPath = path;
     myConfigurableId = configurableId;
+    myGroupName = groupName;
   }
 
   public String getOption() {
@@ -64,6 +68,10 @@ public class OptionDescription implements Comparable{
 
   public String getConfigurableId() {
     return myConfigurableId;
+  }
+
+  public String getGroupName() {
+    return myGroupName;
   }
 
   public String toString() {
