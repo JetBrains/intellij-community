@@ -147,10 +147,6 @@ public class FilePathImpl implements FilePath {
     }
   }
 
-  public void setIsDirectory(boolean isDirectory) {
-    myIsDirectory = isDirectory;
-  }
-
   @Override
   public boolean isDirectory() {
     if (myVirtualFile == null) {
