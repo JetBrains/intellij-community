@@ -59,7 +59,7 @@ class ScopedClassHierarchy {
 
       PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       PsiClass psiClass = resolveResult.getElement();
-      if (psiClass == null || JavaClassSupersImpl.isJavaLangObject(psiClass) || mySupersWithSubstitutors.containsKey(psiClass)) continue;
+      if (psiClass == null || InheritanceImplUtil.hasObjectQualifiedName(psiClass) || mySupersWithSubstitutors.containsKey(psiClass)) continue;
   
       mySupersWithSubstitutors.put(psiClass, resolveResult);
 

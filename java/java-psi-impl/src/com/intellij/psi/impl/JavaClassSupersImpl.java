@@ -36,7 +36,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
                                                  @NotNull PsiClass derivedClass,
                                                  @NotNull GlobalSearchScope scope,
                                                  @NotNull PsiSubstitutor derivedSubstitutor) {
-    if (isJavaLangObject(superClass)) return PsiSubstitutor.EMPTY;
+    if (InheritanceImplUtil.hasObjectQualifiedName(superClass)) return PsiSubstitutor.EMPTY;
 
     return derivedClass instanceof PsiTypeParameter
            ? processTypeParameter((PsiTypeParameter)derivedClass, scope, superClass, ContainerUtil.<PsiTypeParameter>newTroveSet(), derivedSubstitutor)
@@ -53,10 +53,6 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) return createRawSubstitutor(superClass);
 
     return composeSubstitutors(derivedSubstitutor, substitutor);
-  }
-
-  static boolean isJavaLangObject(PsiClass psiClass) {
-    return CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName());
   }
 
   @NotNull
