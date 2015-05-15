@@ -219,6 +219,20 @@ public class ExceptionUtils {
     }
   }
 
+  public static Set<PsiType> getExceptionTypesHandled(PsiTryStatement statement) {
+    final Set<PsiType> out = new HashSet<PsiType>(5);
+    for (PsiParameter parameter : statement.getCatchBlockParameters()) {
+      final PsiType type = parameter.getType();
+      if (type instanceof PsiDisjunctionType) {
+        final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
+        out.addAll(disjunctionType.getDisjunctions());
+      } else {
+        out.add(type);
+      }
+    }
+    return out;
+  }
+
   private static class ExceptionsThrownVisitor extends JavaRecursiveElementVisitor {
 
     private final Set<PsiType> m_exceptionsThrown;
@@ -271,23 +285,16 @@ public class ExceptionUtils {
       }
     }
 
-    private static boolean isExceptionHandled(Iterable<PsiType> exceptionsHandled, PsiType thrownType) {
+    private static boolean isExceptionHandled(Set<PsiType> exceptionsHandled, PsiType thrownType) {
+      if (exceptionsHandled.contains(thrownType)) {
+        return true;
+      }
       for (PsiType exceptionHandled : exceptionsHandled) {
         if (exceptionHandled.isAssignableFrom(thrownType)) {
           return true;
         }
       }
       return false;
-    }
-
-    private static Set<PsiType> getExceptionTypesHandled(@NotNull PsiTryStatement statement) {
-      final Set<PsiType> out = new HashSet<PsiType>(5);
-      final PsiParameter[] parameters = statement.getCatchBlockParameters();
-      for (PsiParameter parameter : parameters) {
-        final PsiType type = parameter.getType();
-        out.add(type);
-      }
-      return out;
     }
   }
 }

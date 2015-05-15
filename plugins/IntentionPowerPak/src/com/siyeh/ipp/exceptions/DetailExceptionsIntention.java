@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -34,7 +34,7 @@ public class DetailExceptionsIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     PsiElement parent = token.getParent();
     if (parent instanceof PsiCatchSection) {
@@ -49,7 +49,7 @@ public class DetailExceptionsIntention extends Intention {
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
       newTryStatement.append(resourceList.getText());
-      ExceptionUtils.calculateExceptionsThrownForResourceList(resourceList, exceptionsThrown);
+      ExceptionUtils.calculateExceptionsThrown(resourceList, exceptionsThrown);
     }
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
@@ -57,7 +57,7 @@ public class DetailExceptionsIntention extends Intention {
     }
     final String tryBlockText = tryBlock.getText();
     newTryStatement.append(tryBlockText);
-    ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock, exceptionsThrown);
+    ExceptionUtils.calculateExceptionsThrown(tryBlock, exceptionsThrown);
     final Comparator<PsiType> comparator = new HierarchicalTypeComparator();
     final List<PsiType> exceptionsAlreadyEmitted = new ArrayList<PsiType>();
     final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
