@@ -31,13 +31,12 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaButtonPainter implements Border, UIResource {
-  private static final int myOffset = 4;
+  private static final int myOffset = 1;
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     final Graphics2D g2d = (Graphics2D)g;
-    final Insets ins = getBorderInsets(c);
-    final int yOff = (ins.top + ins.bottom) / 4;
+    final int yOff = 1;
     final boolean square = DarculaButtonUI.isSquare(c);
     int offset = JBUI.scale(square ? 1 : getOffset());
     int w = c.getWidth();
@@ -48,7 +47,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       if (DarculaButtonUI.isHelpButton((JComponent)c)) {
           DarculaUIUtil.paintFocusOval(g2d, (w - diam) / 2, (h - diam) / 2, diam, diam);
       } else {
-        DarculaUIUtil.paintFocusRing(g2d, offset, yOff, width - 2 * offset, height - 2 * yOff);
+        DarculaUIUtil.paintFocusRing(g2d, offset + 1, yOff + 1, width - 2 * offset - 2, height - 2 * yOff - 2);
       }
     } else {
       final GraphicsConfig config = new GraphicsConfig(g);
@@ -75,7 +74,7 @@ public class DarculaButtonPainter implements Border, UIResource {
     if (DarculaButtonUI.isSquare(c)) {
       return JBUI.insets(2, 0, 2, 0).asUIResource();
     }
-    return JBUI.insets(8, 16, 8, 14).asUIResource();
+    return JBUI.insets(5, 13, 5, 11).asUIResource();
   }
 
   protected int getOffset() {

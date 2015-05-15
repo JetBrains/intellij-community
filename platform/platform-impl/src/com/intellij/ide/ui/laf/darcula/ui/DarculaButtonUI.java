@@ -61,8 +61,7 @@ public class DarculaButtonUI extends BasicButtonUI {
       final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       final boolean square = isSquare(c);
       if (c.isEnabled() && border != null) {
-        final Insets ins = border.getBorderInsets(c);
-        final int yOff = (ins.top + ins.bottom) / 4;
+        final int yOff = 1;
         if (!square) {
           if (c instanceof JButton && ((JButton)c).isDefaultButton()) {
             ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()));
@@ -72,7 +71,7 @@ public class DarculaButtonUI extends BasicButtonUI {
           }
         }
         int rad = JBUI.scale(square ? 3 : 5);
-        g.fillRoundRect(JBUI.scale(square ? 2 : 4), yOff, w - 2 * JBUI.scale(4), h - 2 * yOff, rad, rad);
+        g.fillRoundRect(JBUI.scale(2), yOff, w - 2 * JBUI.scale(square ? 4 : 1), h - 2 * yOff, rad, rad);
       }
       config.restore();
       super.paint(g, c);
