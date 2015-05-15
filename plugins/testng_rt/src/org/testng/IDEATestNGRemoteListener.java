@@ -22,7 +22,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   private final List<String> myCurrentSuites = new ArrayList<String>();
   private String myMethodName;
   private int myInvocationCount = 0;
-  private final Map<ITestResult, Integer> myMap = Collections.synchronizedMap(new HashMap<ITestResult, Integer>());
+  private final Map<ITestResult, String> myParamsMap = Collections.synchronizedMap(new HashMap<ITestResult, String>());
 
   public IDEATestNGRemoteListener() {
     myPrintStream = System.out;
@@ -58,16 +58,11 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       myInvocationCount = 0;
       myMethodName = testMethodName;
     }
-    Integer invocationCount = myMap.get(result);
-    if (invocationCount == null) {
-      invocationCount = myInvocationCount;
-      myMap.put(result, invocationCount);
-    }
-    final String paramString = parameters.length > 0 || invocationCount > 0 
-                               ? "[" + getParamsSpace(invocationCount, parameters) + getParamsString(parameters) + "]" 
+    final String paramString = parameters.length > 0 || myInvocationCount > 0 
+                               ? "[" + getParamsSpace(myInvocationCount, parameters) + getParamsString(parameters) + "]" 
                                : null;
-    onTestStart(getTestHierarchy(result), testMethodName,
-                paramString, invocationCount);
+    myParamsMap.put(result, paramString);
+    onTestStart(getTestHierarchy(result), testMethodName, paramString, myInvocationCount);
     myInvocationCount++;
   }
 
@@ -216,14 +211,9 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   private synchronized String getTestMethodNameWithParams(ITestResult result) {
     String methodName = getTestMethodName(result);
-    final Object[] parameters = result.getParameters();
-    Integer invocationCount = myMap.get(result);
-    if (parameters.length > 0 || invocationCount != null && invocationCount > 0) {
-      methodName += "[";
-      if (invocationCount != null) {
-        methodName +=  getParamsSpace(invocationCount, parameters);
-      }
-      methodName += getParamsString(parameters) + "]";
+    String paramString = myParamsMap.get(result);
+    if (paramString != null) {
+      methodName += paramString;
     }
     return methodName;
   }
