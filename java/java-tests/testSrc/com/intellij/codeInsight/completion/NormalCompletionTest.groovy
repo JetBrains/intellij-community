@@ -676,6 +676,8 @@ public class ListUtils {
 
   public void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
   public void testNothingAfterTypeParameterQualifier() { doAntiTest(); }
+  public void testExcludeVariableBeingDeclared() { doAntiTest(); }
+  public void testExcludeVariableBeingDeclared2() { doAntiTest(); }
 
   public void testSpacesAroundEq() throws Throwable { doTest('='); }
 

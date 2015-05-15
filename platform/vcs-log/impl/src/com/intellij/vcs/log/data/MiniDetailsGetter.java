@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class MiniDetailsGetter extends DataGetter<VcsShortCommitDetails> {
+public class MiniDetailsGetter extends AbstractDataGetter<VcsShortCommitDetails> {
 
   @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
 

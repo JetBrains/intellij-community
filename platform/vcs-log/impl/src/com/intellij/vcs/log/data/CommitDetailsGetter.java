@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * The CommitDetailsGetter is responsible for getting {@link VcsFullCommitDetails complete commit details} from the cache or from the VCS.
  */
-public class CommitDetailsGetter extends DataGetter<VcsFullCommitDetails> {
+public class CommitDetailsGetter extends AbstractDataGetter<VcsFullCommitDetails> {
 
   CommitDetailsGetter(@NotNull VcsLogHashMap hashMap,
                       @NotNull Map<VirtualFile, VcsLogProvider> logProviders,

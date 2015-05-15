@@ -24,7 +24,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
@@ -196,8 +195,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   @NotNull
   protected ToggleBooleanProperty createIncludeNonStartedInRerun() {
     String text = ExecutionBundle.message("junit.runing.info.include.non.started.in.rerun.failed.action.name");
-    Icon icon = AllIcons.RunConfigurations.IncludeNonStartedTests_Rerun;
-    return new ToggleBooleanProperty(text, null, icon, this, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
+    return new ToggleBooleanProperty(text, null, null, this, INCLUDE_NON_STARTED_IN_RERUN_FAILED);
   }
 
   @JdkConstants.TreeSelectionMode
