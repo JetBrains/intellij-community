@@ -17,6 +17,8 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -54,10 +57,24 @@ public class IElementType {
   public static final short FIRST_TOKEN_INDEX = 1;
   private static final short MAX_INDEXED_TYPES = 15000;
 
-  private static final List<IElementType> ourRegistry = ContainerUtil.createConcurrentList();
+  private static short size; // guarded by lock
+  private static volatile IElementType[] ourRegistry; // writes are guarded by lock
+  private static final Object lock = new String("registry lock");
+
   static {
+    IElementType[] init = new IElementType[137];
     // have to start from one for some obscure compatibility reasons
-    ourRegistry.add(new IElementType("NULL", Language.ANY));
+    init[0] = new IElementType("NULL", Language.ANY, false);
+    push(init);
+  }
+
+  static IElementType[] push(@NotNull IElementType[] types) {
+    synchronized (lock) {
+      IElementType[] oldRegistry = ourRegistry;
+      ourRegistry = types;
+      size = (short)ContainerUtil.skipNulls(Arrays.asList(ourRegistry)).size();
+      return oldRegistry;
+    }
   }
 
   private final short myIndex;
@@ -74,13 +91,26 @@ public class IElementType {
     this(debugName, language, true);
   }
 
+  private static final ArrayFactory<IElementType> FACTORY = new ArrayFactory<IElementType>() {
+    @NotNull
+    @Override
+    public IElementType[] create(int count) {
+      return new IElementType[count];
+    }
+  };
+
   protected IElementType(@NotNull @NonNls String debugName, @Nullable Language language, boolean register) {
     myDebugName = debugName;
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
-      LOG.assertTrue(ourRegistry.size()+1 < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
-      ourRegistry.add(this);
-      myIndex = (short)ourRegistry.indexOf(this);
+      synchronized (lock) {
+        myIndex = size++;
+        LOG.assertTrue(myIndex < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
+        IElementType[] newRegistry =
+          myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, FACTORY) : ourRegistry;
+        newRegistry[myIndex] = this;
+        ourRegistry = newRegistry;
+      }
     }
     else {
       myIndex = -1;
@@ -144,7 +174,8 @@ public class IElementType {
    * @throws IndexOutOfBoundsException if the index is out of registered elements' range.
    */
   public static IElementType find(short idx) {
-    return ourRegistry.get(idx);
+    // volatile read; array always grows, never shrinks, never overwritten
+    return ourRegistry[idx];
   }
 
   /**
@@ -158,7 +189,9 @@ public class IElementType {
 
   @TestOnly
   static short getAllocatedTypesCount() {
-    return (short)ourRegistry.size();
+    synchronized (lock) {
+      return size;
+    }
   }
 
   /**
@@ -171,10 +204,16 @@ public class IElementType {
   public static IElementType[] enumerate(@NotNull Predicate p) {
     List<IElementType> matches = new ArrayList<IElementType>();
     for (IElementType value : ourRegistry) {
-      if (p.matches(value)) {
+      if (value != null && p.matches(value)) {
         matches.add(value);
       }
     }
     return matches.toArray(new IElementType[matches.size()]);
+  }
+
+  public short getRegisteredIndex() {
+    short myElementTypeIndex = getIndex();
+    assert myElementTypeIndex > 0 : "Element type must be registered: " + this;
+    return myElementTypeIndex;
   }
 }

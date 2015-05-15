@@ -227,13 +227,12 @@ public class ContainerUtilTest extends TestCase {
     }
   }
 
-  public void testCOWListPerformanceIsAdequateForRegisteringAllIElementTypesReasonablyQuick() {
-    PlatformTestUtil.startPerformanceTest("COWList add", 1000, new ThrowableRunnable() {
+  public void testCOWListPerformanceAdd() {
+    PlatformTestUtil.startPerformanceTest("COWList add", 2000, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
         List<Object> my = ContainerUtil.createLockFreeCopyOnWriteList();
         long start = System.currentTimeMillis();
-        // see IElementType.ourRegistry
         for (int i = 0; i < 15000; i++) {
           my.add(i);
           assertEquals(i, my.indexOf(i));
