@@ -27,17 +27,26 @@ target(default: "Unpack JDKs") {
 
 def unpackJdks() {
   def osDirName = SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux"
-  def osDir = new File("$home/build/jdk/$osDirName")
+  String basePath
+  if (new File(home).getName().equals("community")) {
+    basePath = new File(home).getParent()
+  }
+  else {
+    basePath = home
+  }
+
+  def jdkDir = new File(basePath, "build/jdk")
+  def osDir = new File(jdkDir, osDirName)
   if (!osDir.isDirectory()) {
     projectBuilder.info("Cannot unpack JDK: $osDir not found")
     return
   }
 
-  unpackJdk(osDir, "1.6")
-  unpackJdk(osDir, "1.8")
+  unpackJdk(osDir, jdkDir, "1.6")
+  unpackJdk(osDir, jdkDir, "1.8")
 }
 
-private void unpackJdk(File osDir, String majorVersion) {
+private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
   def jdkFiles = osDir.listFiles().findAll { it.name.startsWith("jdk$majorVersion") }
   if (SystemInfo.isWindows) {
     def arch = SystemInfo.is64Bit ? "x64" : "x32"
@@ -53,7 +62,7 @@ private void unpackJdk(File osDir, String majorVersion) {
   }
 
   File jdkFile = jdkFiles.first()
-  def destDir = new File("$home/build/jdk/$majorVersion")
+  def destDir = new File(jdkDir, majorVersion)
   FileUtil.delete(destDir)
   if (jdkFile.name.endsWith(".zip")) {
     ant.unzip(src: jdkFile, dest: destDir)
