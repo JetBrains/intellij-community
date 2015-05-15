@@ -638,4 +638,13 @@ public class ExpressionUtils {
     }
     return (PsiVariable)target;
   }
+
+  public static boolean isConcatenation(PsiElement element) {
+    if (!(element instanceof PsiPolyadicExpression)) {
+      return false;
+    }
+    final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
+    final PsiType type = expression.getType();
+    return type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
+  }
 }
