@@ -85,4 +85,15 @@ public class TooBroadCatchBlock{
       return false;
     }
   }
+
+  void m3() {
+    try {
+      new Object() {
+        void f() throws FileNotFoundException {
+          throw new FileNotFoundException();
+        }
+      };
+      throw new IOException();
+    } catch (IOException e) {}
+  }
 }

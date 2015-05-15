@@ -242,17 +242,15 @@ public class ExceptionUtils {
     }
 
     @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiMethod method = expression.resolveMethod();
-      collectExceptionsThrown(method, m_exceptionsThrown);
-    }
+    public void visitClass(PsiClass aClass) {}
 
     @Override
-    public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      super.visitNewExpression(expression);
-      final PsiMethod method = expression.resolveMethod();
-      collectExceptionsThrown(method, m_exceptionsThrown);
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
+    @Override
+    public void visitCallExpression(PsiCallExpression callExpression) {
+      super.visitCallExpression(callExpression);
+      collectExceptionsThrown(callExpression.resolveMethod(), m_exceptionsThrown);
     }
 
     @Override
