@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -48,8 +49,8 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    final List<PsiClass> typesMasked = (List<PsiClass>)infos[0];
-    String typesMaskedString = typesMasked.get(0).getName();
+    final List<PsiType> typesMasked = (List<PsiType>)infos[0];
+    String typesMaskedString = typesMasked.get(0).getPresentableText();
     if (typesMasked.size() == 1) {
       return InspectionGadgetsBundle.message("too.broad.catch.problem.descriptor", typesMaskedString);
     }
@@ -58,9 +59,9 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       final int lastTypeIndex = typesMasked.size() - 1;
       for (int i = 1; i < lastTypeIndex; i++) {
         typesMaskedString += ", ";
-        typesMaskedString += typesMasked.get(i).getName();
+        typesMaskedString += typesMasked.get(i).getPresentableText();
       }
-      final String lastTypeString = typesMasked.get(lastTypeIndex).getName();
+      final String lastTypeString = typesMasked.get(lastTypeIndex).getPresentableText();
       return InspectionGadgetsBundle.message("too.broad.catch.problem.descriptor1", typesMaskedString, lastTypeString);
     }
   }
@@ -79,7 +80,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       if (tryBlock == null) {
         return;
       }
-      final Set<PsiClassType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
+      final Set<PsiType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
       final Set<PsiType> caughtTypes = new HashSet<PsiType>(thrownTypes.size());
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       for (final PsiCatchSection catchSection : catchSections) {
@@ -92,7 +93,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
           final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)caughtType;
           final List<PsiType> types = disjunctionType.getDisjunctions();
           for (PsiType type : types) {
-            check(thrownTypes, caughtTypes, parameter, type);
+            check(thrownTypes, caughtTypes, parameter, type, statement.getProject());
           }
         }
         else {
@@ -102,19 +103,19 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
               if (typeElement == null) {
                 continue;
               }
-              final PsiClass runtimeExceptionClass = ClassUtils.findClass(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, parameter);
-              registerError(typeElement, Collections.singletonList(runtimeExceptionClass), typeElement);
+              final PsiClassType runtimeExceptionType = TypeUtils.getType(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, parameter);
+              registerError(typeElement, Collections.singletonList(runtimeExceptionType), typeElement, statement.getProject());
             }
           }
           else {
-            check(thrownTypes, caughtTypes, parameter, caughtType);
+            check(thrownTypes, caughtTypes, parameter, caughtType, statement.getProject());
           }
         }
       }
     }
 
-    private void check(Set<PsiClassType> thrownTypes, Set<PsiType> caughtTypes, PsiParameter parameter, PsiType caughtType) {
-      final List<PsiClass> maskedExceptions = findMaskedExceptions(thrownTypes, caughtTypes, caughtType);
+    private void check(Set<PsiType> thrownTypes, Set<PsiType> caughtTypes, PsiParameter parameter, PsiType caughtType, Project project) {
+      final List<PsiType> maskedExceptions = findMaskedExceptions(thrownTypes, caughtTypes, caughtType);
       if (maskedExceptions.isEmpty()) {
         return;
       }
@@ -122,10 +123,10 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       if (typeElement == null) {
         return;
       }
-      registerError(typeElement, maskedExceptions, typeElement);
+      registerError(typeElement, maskedExceptions, typeElement, project);
     }
 
-    private List<PsiClass> findMaskedExceptions(Set<PsiClassType> thrownTypes, Set<PsiType> caughtTypes, PsiType caughtType) {
+    private List<PsiType> findMaskedExceptions(Set<PsiType> thrownTypes, Set<PsiType> caughtTypes, PsiType caughtType) {
       if (thrownTypes.contains(caughtType)) {
         if (ignoreThrown) {
           return Collections.emptyList();
@@ -138,14 +139,11 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
           return Collections.emptyList();
         }
       }
-      final List<PsiClass> maskedTypes = new ArrayList();
-      for (PsiClassType typeThrown : thrownTypes) {
+      final List<PsiType> maskedTypes = new ArrayList<PsiType>();
+      for (PsiType typeThrown : thrownTypes) {
         if (!caughtTypes.contains(typeThrown) && caughtType.isAssignableFrom(typeThrown)) {
           caughtTypes.add(typeThrown);
-          final PsiClass aClass = typeThrown.resolve();
-          if (aClass != null) {
-            maskedTypes.add(aClass);
-          }
+          maskedTypes.add(typeThrown);
         }
       }
       return maskedTypes;
