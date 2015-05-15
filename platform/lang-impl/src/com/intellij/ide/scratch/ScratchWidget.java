@@ -17,6 +17,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.PerFileMappings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -57,18 +58,7 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
         Editor editor = getEditor();
         final VirtualFile file = getSelectedFile();
         if (project == null || editor == null || file == null) return false;
-        final PerFileMappings<Language> fileService = ScratchFileService.getInstance().getScratchesMapping();
-
-        ListPopup popup = NewScratchFileAction.buildLanguageSelectionPopup(project, "Change Language", fileService.getMapping(file), new Consumer<Language>() {
-          @Override
-          public void consume(Language language) {
-            fileService.setMapping(file, language);
-            update();
-          }
-        });
-        Dimension dimension = popup.getContent().getPreferredSize();
-        Point at = new Point(0, -dimension.height);
-        popup.show(new RelativePoint(myPanel, at));
+        showPopup(project, file);
 
         return true;
       }
@@ -86,6 +76,21 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
     });
   }
 
+  private void showPopup(Project project, final VirtualFile file) {
+    final PerFileMappings<Language> fileService = ScratchFileService.getInstance().getScratchesMapping();
+    ListPopup popup = NewScratchFileAction
+      .buildLanguageSelectionPopup(project, "Change Language", fileService.getMapping(file), new Consumer<Language>() {
+        @Override
+        public void consume(Language language) {
+          fileService.setMapping(file, language);
+          update();
+        }
+      });
+    Dimension dimension = popup.getContent().getPreferredSize();
+    Point at = new Point(0, -dimension.height);
+    popup.show(new RelativePoint(myPanel, at));
+  }
+
   @NotNull
   @Override
   public String ID() {
@@ -101,7 +106,7 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
   private void update() {
     Project project = getProject();
     if (project == null) return;
-    VirtualFile file = getSelectedFile();
+    final VirtualFile file = getSelectedFile();
     ScratchFileService fileService = ScratchFileService.getInstance();
     if (file != null && fileService.getRootType(file) instanceof ScratchRootType) {
       Language lang = fileService.getScratchesMapping().getMapping(file);
@@ -112,6 +117,17 @@ class ScratchWidget extends EditorBasedWidget implements CustomStatusBarWidget.M
       myPanel.setBorder(WidgetBorder.WIDE);
       myPanel.setIcon(getDefaultIcon(lang));
       myPanel.setVisible(true);
+      if (Boolean.TRUE.equals(file.getUserData(NewScratchFileAction.IS_NEW_SCRATCH))) {
+        file.putUserData(NewScratchFileAction.IS_NEW_SCRATCH, null);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (myPanel.isVisible()) {
+              showPopup(getProject(), file);
+            }
+          }
+        });
+      }
     }
     else {
       myPanel.setBorder(null);
