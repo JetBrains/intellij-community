@@ -59,19 +59,18 @@ private void unpackJdk(File osDir, String majorVersion) {
     ant.unzip(src: jdkFile, dest: destDir)
   }
   else if (jdkFile.name.endsWith(".tar")) {
-    def appleJdk = jdkFile.name.contains("apple")
-    ant.untar(src: jdkFile, dest: destDir) {
-      if (SystemInfo.isMac && !appleJdk) {
-        patternset() {
-          include(name: "jre/jdk/Contents/")
-        }
-        cutdirsmapper(dirs: "3")
-      }
+    projectBuilder.info("Extracting $jdkFile to $destDir")
+    ant.mkdir(dir: destDir)
+    //'tar' command is used instead of Ant task to ensure that executable flag and symlink will be preserved
+    ant.exec(executable: "tar", dir: jdkFile.getParent()) {
+      arg(value: "-xf")
+      arg(value: jdkFile.name)
+      arg(value: "--directory")
+      arg(value: destDir)
     }
-    def jreBin = appleJdk ? "Home/bin" : SystemInfo.isMac ? "Home/jre/bin" : "jre/bin"
-    ant.chmod(perm: "755") {
-      fileset(dir: "$destDir/$jreBin") {
-        include(name: "*")
+    if (SystemInfo.isMac && !jdkFile.name.contains("apple")) {
+      ant.move(todir: destDir) {
+        fileset(dir: "$destDir/jre/jdk/Contents")
       }
     }
   }
