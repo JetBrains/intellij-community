@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -46,6 +47,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @NotNull protected final ContentDiffRequest myRequest;
 
   @NotNull private final DiffTaskQueue myTaskExecutor = new DiffTaskQueue();
+  @NotNull private final Alarm myTaskAlarm = new Alarm();
   private volatile boolean myDisposed;
 
   public DiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
@@ -78,6 +80,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
         if (myDisposed) return;
         myDisposed = true;
 
+        abortRediff();
         onDispose();
       }
     };
@@ -90,7 +93,8 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   public final void scheduleRediff() {
     if (isDisposed()) return;
 
-    myTaskExecutor.abortAndSchedule(new Runnable() {
+    abortRediff();
+    myTaskAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
         rediff();
@@ -101,6 +105,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @CalledInAwt
   public final void abortRediff() {
     myTaskExecutor.abort();
+    myTaskAlarm.cancelAllRequests();
   }
 
   @CalledInAwt
@@ -197,7 +202,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @CalledInAwt
   protected void onDispose() {
-    Disposer.dispose(myTaskExecutor);
+    Disposer.dispose(myTaskAlarm);
   }
 
   @Nullable

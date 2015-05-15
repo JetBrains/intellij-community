@@ -15,64 +15,19 @@
  */
 package com.intellij.diff.util;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Alarm;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-public class DiffTaskQueue implements Disposable {
-  @NotNull private final Object LOCK = new Object();
-  @NotNull private final Alarm myAlarm = new Alarm();
-
-  private boolean myDisposed;
-  @NotNull private final AtomicReference<ProgressIndicator> myProgressIndicator = new AtomicReference<ProgressIndicator>();
-
-  @CalledInAny
-  public void dispose() {
-    // if EDT is awaiting for background progress in executeAndTryWait - it holds LOCK.
-    // so we want to try cancel indicator before getting the lock.
-    cancelProgress();
-    synchronized (LOCK) {
-      if (myDisposed) return;
-      myDisposed = true;
-      cancelProgress();
-      Disposer.dispose(myAlarm);
-    }
-  }
+public class DiffTaskQueue {
+  @Nullable private ProgressIndicator myProgressIndicator;
 
   @CalledInAwt
   public void abort() {
-    synchronized (LOCK) {
-      cancelProgress();
-      myAlarm.cancelAllRequests();
-    }
-  }
-
-  private void cancelProgress() {
-    ProgressIndicator indicator = myProgressIndicator.getAndSet(null);
-    if (indicator != null) indicator.cancel();
-  }
-
-  @CalledInAwt
-  public void abortAndSchedule(@NotNull final Runnable task, int millis) {
-    synchronized (LOCK) {
-      if (myDisposed) return;
-      abort();
-
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          synchronized (LOCK) {
-            if (myDisposed) return;
-          }
-          task.run();
-        }
-      }, millis);
-    }
+    if (myProgressIndicator != null) myProgressIndicator.cancel();
+    myProgressIndicator = null;
   }
 
   @CalledInAwt
@@ -87,11 +42,7 @@ public class DiffTaskQueue implements Disposable {
                                 @Nullable final Runnable onSlowAction,
                                 final int waitMillis,
                                 final boolean forceEDT) {
-    synchronized (LOCK) {
-      if (myDisposed) return;
-      abort();
-
-      myProgressIndicator.set(BackgroundTaskUtil.executeAndTryWait(backgroundTask, onSlowAction, waitMillis, forceEDT));
-    }
+    abort();
+    myProgressIndicator = BackgroundTaskUtil.executeAndTryWait(backgroundTask, onSlowAction, waitMillis, forceEDT);
   }
 }

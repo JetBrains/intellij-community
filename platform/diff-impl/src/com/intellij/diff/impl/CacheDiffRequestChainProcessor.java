@@ -138,7 +138,7 @@ public abstract class CacheDiffRequestChainProcessor extends DiffRequestProcesso
   @CalledInAwt
   protected void onDispose() {
     super.onDispose();
-    Disposer.dispose(myQueue);
+    myQueue.abort();
     myRequestCache.clear();
   }
 
