@@ -169,12 +169,15 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
 
   @Nullable 
   private PsiAnnotation findNullabilityAnnotationWithDefault(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean nullable) {
-    PsiAnnotation annotation = findPlainNullabilityAnnotation(owner, checkBases, nullable);
+    PsiAnnotation annotation = findPlainNullabilityAnnotation(owner, checkBases);
     if (annotation != null) {
+      String qName = annotation.getQualifiedName();
+      if (qName == null) return null;
+
+      List<String> contradictory = nullable ? getNotNulls() : getNullables();
+      if (contradictory.contains(qName)) return null;
+
       return annotation;
-    }
-    if (findPlainNullabilityAnnotation(owner, checkBases, !nullable) != null) {
-      return null;
     }
 
     PsiType type = getOwnerType(owner);
@@ -192,8 +195,9 @@ public abstract class NullableNotNullManager implements PersistentStateComponent
     return findNullabilityDefaultInHierarchy(owner, nullable);
   }
 
-  private PsiAnnotation findPlainNullabilityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean nullable) {
-    Set<String> qNames = ContainerUtil.newHashSet(nullable ? getNullables() : getNotNulls());
+  private PsiAnnotation findPlainNullabilityAnnotation(@NotNull PsiModifierListOwner owner, boolean checkBases) {
+    Set<String> qNames = ContainerUtil.newHashSet(getNullables());
+    qNames.addAll(getNotNulls());
     return checkBases && owner instanceof PsiMethod
            ? AnnotationUtil.findAnnotationInHierarchy(owner, qNames)
            : AnnotationUtil.findAnnotation(owner, qNames);

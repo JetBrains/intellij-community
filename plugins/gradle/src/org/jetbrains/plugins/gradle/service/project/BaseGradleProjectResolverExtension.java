@@ -63,6 +63,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
+import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -375,7 +376,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @Override
   public Set<Class> getExtraProjectModelClasses() {
     Set<Class> result = ContainerUtil.<Class>set(GradleBuild.class, ExternalProject.class, ModuleExtendedModel.class);
-    if (!resolverCtx.isPreviewMode()) {
+    if (!ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID) || !resolverCtx.isPreviewMode()) {
       result.add(BuildScriptClasspathModel.class);
     }
     return result;
@@ -500,6 +501,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(EmptyModuleType.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ProjectImportAction.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(Init.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(org.slf4j.Logger.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
     for (String entry : additionalEntries) {
       classPath.add(entry);
     }
