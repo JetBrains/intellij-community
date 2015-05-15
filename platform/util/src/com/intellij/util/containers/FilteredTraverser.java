@@ -102,7 +102,7 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
   @Override
   public JBIterable<T> children(@NotNull T node) {
     if (!myMeta.expandFilter.value(node) && !Conditions.oneOf(myMeta.roots).value(node)) {
-      return JBIterable.from(Collections.<T>emptyList());
+      return JBIterable.empty();
     }
     return JBIterable.from(childrenImpl(node)).filter(Conditions.not(myMeta.excludeFilter));
   }

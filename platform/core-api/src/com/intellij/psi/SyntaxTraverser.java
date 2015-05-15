@@ -67,7 +67,7 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
   @Nullable
   public T getRawDeepestLast() {
     for (T result = getRoot(), last; result != null; result = last) {
-      JBIterable<T> children = JBIterable.from(children(result));
+      JBIterable<T> children = children(result);
       if (children.isEmpty()) return result;
       //noinspection AssignmentToForLoopParameter
       last = children.last();
