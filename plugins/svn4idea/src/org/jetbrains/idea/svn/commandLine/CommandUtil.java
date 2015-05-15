@@ -57,6 +57,11 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull String path, @Nullable SVNRevision pegRevision) {
+    parameters.add(format(path, pegRevision));
+  }
+
+  @NotNull
+  public static String format(@NotNull String path, @Nullable SVNRevision pegRevision) {
     StringBuilder builder = new StringBuilder(path);
 
     boolean hasAtSymbol = path.contains("@");
@@ -73,7 +78,7 @@ public class CommandUtil {
       builder.append(format(pegRevision));
     }
 
-    parameters.add(builder.toString());
+    return builder.toString();
   }
 
   public static void put(@NotNull List<String> parameters, @NotNull SvnTarget target) {
