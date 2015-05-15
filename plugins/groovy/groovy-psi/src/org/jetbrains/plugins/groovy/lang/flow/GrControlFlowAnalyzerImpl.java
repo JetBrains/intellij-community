@@ -50,6 +50,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -874,13 +876,19 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   @Override
   public void visitClosure(GrClosableBlock closure) {
     startElement(closure);
+    processClosure(false, closure);
+    finishElement(closure);
+  }
+
+  private void processClosure(boolean definitelyExecutes, GrClosableBlock closure) {
     push(factory.createValue(closure));
-    pushUnknown();
-    addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(closure), false, null));
+    if (!definitelyExecutes) {
+      pushUnknown();
+      addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(closure), false, null));
+    }
     for (GrStatement statement : closure.getStatements()) {
       statement.accept(this);
     }
-    finishElement(closure);
   }
 
   @Override
@@ -911,6 +919,27 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     push(dfaValue, literal);
 
     finishElement(literal);
+  }
+
+  @Override
+  public void visitGStringExpression(GrString gstring) {
+    startElement(gstring);
+
+    for (GrStringInjection injection : gstring.getInjections()) {
+      final GrClosableBlock closableBlock = injection.getClosableBlock();
+      if (closableBlock != null) {
+        processClosure(true, closableBlock);
+        pop();
+      }
+      final GrExpression expression = injection.getExpression();
+      if (expression != null) {
+        expression.accept(this);
+        pop();
+      }
+    }
+    push(factory.createLiteralValue(gstring), gstring);
+    
+    finishElement(gstring);
   }
 
   @Override

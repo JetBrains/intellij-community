@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -237,7 +238,7 @@ public class ControlFlowBuilderUtil {
       }
     }
 
-    else if (parent instanceof GrClosableBlock) {
+    else if (parent instanceof GrClosableBlock && !(parent.getParent() instanceof GrStringInjection)) {
       return st == ArrayUtil.getLastElement(((GrClosableBlock)parent).getStatements());
     }
 

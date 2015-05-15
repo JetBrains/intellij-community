@@ -88,4 +88,6 @@ def range4(@Nullable a) {
 }
 '''
   }
+
+  void "test strings"() { doTest() }
 }

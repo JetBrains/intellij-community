@@ -23,11 +23,18 @@ abstract class GrConstantConditionsTestBase extends GrHighlightingTestBase {
 
   InspectionProfileEntry[] customInspections
 
+  String basePath = super.basePath + 'constantConditions/'
+
+  void doTest() {
+    myFixture.enableInspections(customInspections)
+    def name = getName().split()[1..-1].collect { it[0].toUpperCase() + it[1..-1] }.join('')
+    myFixture.testHighlighting(true, false, true, getTestName(name, true) + ".groovy");
+  }
+
   GrConstantConditionsTestBase() {
     def inspection = new GrConstantConditionsInspection()
     inspection.UNKNOWN_MEMBERS_ARE_NULLABLE = false
     customInspections = [inspection]
   }
-  
 }
 
