@@ -44,3 +44,13 @@ public class ThrowableInstanceNeverThrown {
 
     void methodCall(IOException e){}
 }
+
+interface I {
+    Exception get();
+}
+
+class L {
+    {
+        I i = () -> new RuntimeException();
+    }
+}

@@ -85,7 +85,8 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
       }
       final PsiElement parent = getParent(expression.getParent());
       if (parent instanceof PsiThrowStatement ||
-          parent instanceof PsiReturnStatement) {
+          parent instanceof PsiReturnStatement ||
+          parent instanceof PsiLambdaExpression) {
         return;
       }
       if (PsiTreeUtil.getParentOfType(parent, PsiCallExpression.class) != null) {
@@ -93,7 +94,7 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
       }
       final PsiElement typedParent = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class, PsiVariable.class);
       final PsiElement variable = ThrowableResultOfMethodCallIgnoredInspection.getVariable(typedParent, expression);
-      if (variable == null) {
+      if (typedParent != null && variable == null) {
         return;
       }
       if (variable instanceof PsiLocalVariable) {
