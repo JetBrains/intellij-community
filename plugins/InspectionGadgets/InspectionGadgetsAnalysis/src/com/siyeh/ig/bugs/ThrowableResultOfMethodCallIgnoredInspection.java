@@ -63,10 +63,7 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
       while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
         parent = parent.getParent();
       }
-      if (parent instanceof PsiReturnStatement ||
-          parent instanceof PsiThrowStatement ||
-          parent instanceof PsiExpressionList ||
-          parent instanceof PsiLambdaExpression) {
+      if (canBeThrown(parent)) {
         return;
       }
       if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_THROWABLE)) {
@@ -102,14 +99,19 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
           while (usageParent instanceof PsiParenthesizedExpression) {
             usageParent = usageParent.getParent();
           }
-          if (usageParent instanceof PsiThrowStatement ||
-              usageParent instanceof PsiReturnStatement ||
-              usageParent instanceof PsiExpressionList) {
+          if (canBeThrown(usageParent)) {
             return;
           }
         }
       }
       registerMethodCallError(expression);
+    }
+
+    private static boolean canBeThrown(PsiElement parent) {
+      return parent instanceof PsiReturnStatement ||
+             parent instanceof PsiThrowStatement ||
+             parent instanceof PsiExpressionList ||
+             parent instanceof PsiLambdaExpression;
     }
   }
 

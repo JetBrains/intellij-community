@@ -52,5 +52,8 @@ interface I {
 class L {
     {
         I i = () -> new RuntimeException();
+
+        final RuntimeException exception = new RuntimeException();
+        I i2 = () -> exception;
     }
 }
