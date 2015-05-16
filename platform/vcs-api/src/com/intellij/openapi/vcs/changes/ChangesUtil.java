@@ -161,15 +161,13 @@ public class ChangesUtil {
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
-        VirtualFile file = afterRevision.getFile().getVirtualFile();
+        FilePath filePath = afterRevision.getFile();
+        VirtualFile file = filePath.getVirtualFile();
+        if (file == null || !file.isValid()) {
+          file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
+        }
         if (file != null && file.isValid()) {
           files.add(file);
-        } else {
-          afterRevision.getFile().hardRefresh();
-          file = afterRevision.getFile().getVirtualFile();
-          if (file != null && file.isValid()) {
-            files.add(file);
-          }
         }
       }
     }

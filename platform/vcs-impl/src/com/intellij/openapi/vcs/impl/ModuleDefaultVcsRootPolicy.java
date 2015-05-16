@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -141,7 +142,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
         final Module[] modules = myModuleManager.getModules();
         final StorageScheme storageScheme = ((ProjectEx) myProject).getStateStore().getStorageScheme();
         if (StorageScheme.DIRECTORY_BASED.equals(storageScheme)) {
-          final FilePathImpl fp = new FilePathImpl(myBaseDir, Project.DIRECTORY_STORE_FOLDER, true);
+          FilePath fp = VcsUtil.getFilePath(myBaseDir, Project.DIRECTORY_STORE_FOLDER, true);
           final AbstractVcs vcs = vcsGuess.getVcsForDirty(fp);
           if (vcs != null) {
             builder.addDirtyDirRecursively(new FilePathUnderVcs(fp, vcs));

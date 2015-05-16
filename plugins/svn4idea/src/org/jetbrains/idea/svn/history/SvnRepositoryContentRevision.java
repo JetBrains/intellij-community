@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +66,9 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
   @Nullable
   public String getContent() throws VcsException {
     try {
-      myFilePath.hardRefresh();
+      if (myFilePath.getVirtualFile() == null) {
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(myFilePath.getPath());
+      }
       return ContentRevisionCache.getOrLoadAsString(myVcs.getProject(), myFilePath, getRevisionNumber(), myVcs.getKeyInstanceMethod(),
                                                     ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
                                                     new Throwable2Computable<byte[], VcsException, IOException>() {

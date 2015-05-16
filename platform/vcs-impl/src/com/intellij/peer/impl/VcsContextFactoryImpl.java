@@ -45,11 +45,12 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOn(@NotNull final VirtualFile virtualFile) {
-    return new FilePathImpl(virtualFile);
+    return new FilePathImpl(virtualFile.getPath(), virtualFile.isDirectory());
   }
 
   public FilePath createFilePathOn(final File file) {
-    return FilePathImpl.create(file);
+    VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
+    return vf != null ? createFilePathOn(vf) : new FilePathImpl(file.getPath(), file.isDirectory());
   }
 
   public FilePath createFilePathOn(final File file, final NotNullFunction<File, Boolean> detector) {
@@ -61,7 +62,7 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOn(final File file, final boolean isDirectory) {
-    return FilePathImpl.create(file, isDirectory);
+    return new FilePathImpl(file.getPath(), isDirectory);
   }
 
   @NotNull
@@ -70,14 +71,27 @@ public class VcsContextFactoryImpl implements VcsContextFactory {
   }
 
   public FilePath createFilePathOnDeleted(final File file, final boolean isDirectory) {
-    return FilePathImpl.createForDeletedFile(file, isDirectory);
+    return createFilePathOn(file, isDirectory);
   }
 
-  public FilePath createFilePathOn(final VirtualFile parent, final String name) {
-    return new FilePathImpl(parent, name, false);
+  @NotNull
+  public FilePath createFilePathOn(@NotNull final VirtualFile parent, @NotNull final String name) {
+    return createFilePath(parent, name, false);
+  }
+
+  @NotNull
+  @Override
+  public FilePath createFilePath(@NotNull VirtualFile parent, @NotNull String fileName, boolean isDirectory) {
+    return new FilePathImpl(parent.getPath() + "/" + fileName, isDirectory);
   }
 
   public LocalChangeList createLocalChangeList(Project project, @NotNull final String name) {
     return LocalChangeListImpl.createEmptyChangeListImpl(project, name);
+  }
+
+  @NotNull
+  @Override
+  public FilePath createFilePath(@NotNull String path, boolean isDirectory) {
+    return new FilePathImpl(path, isDirectory);
   }
 }

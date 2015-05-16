@@ -300,7 +300,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
       public void onFile(final String filePath, final String groupId) {
-        result.add(FilePathImpl.create(new File(filePath)));
+        result.add(VcsUtil.getFilePath(new File(filePath)));
       }
     });
     ContainerUtil.addIfNotNull(result, myMergeTarget);
@@ -316,7 +316,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     } else {
       UpdateFilesHelper.iterateFileGroupFiles(myAccumulatedFiles.getUpdatedFiles(), new UpdateFilesHelper.Callback() {
         public void onFile(final String filePath, final String groupId) {
-          dirtyScope.addFile(FilePathImpl.create(new File(filePath)));
+          dirtyScope.addFile(VcsUtil.getFilePath(new File(filePath)));
         }
       });
     }

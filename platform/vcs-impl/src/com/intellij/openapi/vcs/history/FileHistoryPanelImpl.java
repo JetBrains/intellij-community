@@ -943,7 +943,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
             public void run() {
               vp.refresh(false, true, new Runnable() {
                 public void run() {
-                  myFilePath.refresh();
                   action.finish();
                 }
               });

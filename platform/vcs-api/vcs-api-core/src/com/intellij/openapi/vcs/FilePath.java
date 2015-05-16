@@ -73,7 +73,7 @@ public interface FilePath {
    * @return the character set of the file
    */
   @NotNull
-  Charset getCharset(Project project);
+  Charset getCharset(@Nullable Project project);
 
   /**
    * @return the type of the file
@@ -81,8 +81,17 @@ public interface FilePath {
   @NotNull
   FileType getFileType();
 
+  /**
+   * @deprecated to remove in IDEA 16.
+   * Use {@code com.intellij.openapi.vfs.VfsUtil#findFileByPath} or {@code com.intellij.openapi.vfs.LocalFileSystem#findFileByPath} instead.
+   */
+  @Deprecated
   void refresh();
 
+  /**
+   * @deprecated to remove in IDEA 16. Use {@code com.intellij.openapi.vfs.LocalFileSystem#refreshAndFindFileByPath} instead.
+   */
+  @Deprecated
   void hardRefresh();
 
   @NotNull

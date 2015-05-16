@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
@@ -171,7 +170,7 @@ public class GitContentRevision implements ContentRevision {
     FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(absolutePath, false) : VcsUtil.getFilePath(absolutePath, false);
     if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsFilePathUtil.caseDiffers(file.getPath(), absolutePath)) {
       // as for deleted file
-      file = FilePathImpl.createForDeletedFile(new File(absolutePath), false);
+      file = VcsUtil.getFilePath(absolutePath, false);
     }
     return file;
   }

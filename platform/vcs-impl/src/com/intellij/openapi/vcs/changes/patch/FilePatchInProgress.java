@@ -24,10 +24,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
@@ -164,8 +162,7 @@ public class FilePatchInProgress implements Strippable {
     if (myNewContentRevision == null) {
       myConflicts = null;
       if (FilePatchStatus.ADDED.equals(myStatus)) {
-        final FilePath newFilePath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myIoCurrentBase.getAbsolutePath(),
-                                                                                                      false);
+        final FilePath newFilePath = VcsUtil.getFilePathOnNonLocal(myIoCurrentBase.getAbsolutePath(), false);
         final String content = myPatch.getNewFileText();
         myNewContentRevision = new SimpleContentRevision(content, newFilePath, myPatch.getAfterVersionId());
       } else {
