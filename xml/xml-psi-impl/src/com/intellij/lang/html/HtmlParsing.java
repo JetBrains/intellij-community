@@ -352,11 +352,15 @@ public class HtmlParsing {
   private boolean childTerminatesParentInStack(final String childName) {
     boolean isCell = TD_TAG.equals(childName) || TH_TAG.equals(childName);
     boolean isRow = TR_TAG.equals(childName);
+    boolean isStructure = isStructure(childName);
 
     for (int i = myTagNamesStack.size() - 1; i >= 0; i--) {
       String parentName = myTagNamesStack.get(i);
-      if (isCell && (TR_TAG.equals(parentName) || isTableBlock(parentName)) ||
-          isRow && isTableBlock(parentName)) {
+      final boolean isParentTable = TABLE_TAG.equals(parentName);
+      final boolean isParentStructure = isStructure(parentName);
+      if (isCell && (TR_TAG.equals(parentName) || isParentStructure || isParentTable) ||
+          isRow && (isParentStructure || isParentTable) ||
+          isStructure && isParentTable) {
         return false;
       }
 
@@ -371,8 +375,8 @@ public class HtmlParsing {
     return false;
   }
 
-  private static boolean isTableBlock(String parentName) {
-    return TABLE_TAG.equals(parentName) || "tbody".equals(parentName) || "thead".equals(parentName) || "tfoot".equals(parentName);
+  private static boolean isStructure(String childName) {
+    return "thead".equals(childName) || "tbody".equals(childName) || "tfoot".equals(childName);
   }
 
   @NotNull
