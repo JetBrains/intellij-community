@@ -256,7 +256,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if ((access & Opcodes.ACC_ABSTRACT) != 0) {
       flags |= ModifierFlags.ABSTRACT_MASK;
     }
-    else if (isInterface) {
+    else if (isInterface && (access & Opcodes.ACC_STATIC) == 0) {
       flags |= ModifierFlags.DEFENDER_MASK;
     }
     if ((access & Opcodes.ACC_STRICT) != 0) {
