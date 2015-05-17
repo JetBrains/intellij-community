@@ -308,7 +308,7 @@ public class PsiSuperMethodImplUtil {
               if (superClass.isInterface() ||
                   CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
                 if (superMethod.hasModifierProperty(PsiModifier.STATIC) ||
-                    superMethod.hasModifierProperty(PsiModifier.DEFAULT) && hierarchicalMethodSignature.getMethod().hasModifierProperty(PsiModifier.STATIC)) {
+                    superMethod.hasModifierProperty(PsiModifier.DEFAULT) && hierarchicalMethodSignature.getMethod().hasModifierProperty(PsiModifier.STATIC) && !InheritanceUtil.isInheritorOrSelf(containingClass, superClass, true)) {
                   return false;
                 }
 
