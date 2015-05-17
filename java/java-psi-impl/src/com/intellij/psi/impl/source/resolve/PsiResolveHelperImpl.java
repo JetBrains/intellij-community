@@ -25,7 +25,6 @@ import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +59,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       processor = new MethodResolverProcessor(anonymous, argumentList, place, place.getContainingFile());
       aClass = anonymous.getBaseClassType().resolve();
       if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
-      substitutor = substitutor.putAll(TypeConversionUtil.getSuperClassSubstitutor(aClass, anonymous, substitutor));
     }
     else {
       processor = new MethodResolverProcessor(aClass, argumentList, place, place.getContainingFile());
