@@ -1269,6 +1269,12 @@ class XInternalError {}
     assert LookupElementPresentation.renderElement(items[0]).tailText == ' (java.lang)'
   }
 
+  public void testDuplicateInnerClass() {
+    configure()
+    def items = myFixture.lookupElements.findAll { it.lookupString == 'Inner' }
+    assert items.size() == 1
+  }
+
   public void testSameSignature() {
     configure()
     myFixture.assertPreferredCompletionItems(0, 's', 's, file', 's, file, a')
