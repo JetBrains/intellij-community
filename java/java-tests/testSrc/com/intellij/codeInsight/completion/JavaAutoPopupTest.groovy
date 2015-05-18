@@ -1599,7 +1599,7 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     myFixture.type('a')
     joinAutopopup()
-    myFixture.type('\na')
+    myFixture.type('\nf')
     joinCompletion()
     assert lookup
   }

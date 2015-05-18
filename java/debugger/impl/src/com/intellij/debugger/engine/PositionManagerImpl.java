@@ -530,8 +530,19 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
                 return null;
               }
               final int line = Math.min(finalRangeBegin + 1, finalRangeEnd);
-              final SourcePosition candidatePosition = positionLine == line? position : SourcePosition.createFromLine(position.getFile(), line);
-              return classToFind.equals(JVMNameUtil.getClassAt(candidatePosition)) ? fromClass : null;
+              Set<PsiClass> lineClasses = getLineClasses(position.getFile(), line);
+              if (lineClasses.size() > 1) {
+                // if there's more than one class on the line - try to match by name
+                for (PsiClass aClass : lineClasses) {
+                  if (classToFind.equals(aClass)) {
+                    return fromClass;
+                  }
+                }
+              }
+              else if (!lineClasses.isEmpty()){
+                return classToFind.equals(lineClasses.iterator().next())? fromClass : null;
+              }
+              return null;
             }
           });
         }

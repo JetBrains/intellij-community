@@ -48,7 +48,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRowEditor;
@@ -689,7 +688,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
   protected abstract class ParametersListTable extends JBListTable {
     public ParametersListTable() {
-      super(myParametersTable);
+      super(myParametersTable, ChangeSignatureDialogBase.this.getDisposable());
     }
 
     @Override
