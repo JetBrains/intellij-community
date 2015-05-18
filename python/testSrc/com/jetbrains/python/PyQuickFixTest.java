@@ -364,6 +364,11 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
   }
 
+  // PY-15927
+  public void testAddCallSuperConflictingTupleParam() {
+    doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
+  }
+
   // PY-491, PY-13297
   public void testAddEncoding() {
     doInspectionTest(PyMandatoryEncodingInspection.class, PyBundle.message("QFIX.add.encoding"), true, true);
