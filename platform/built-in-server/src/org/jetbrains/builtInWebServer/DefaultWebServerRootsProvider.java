@@ -260,7 +260,7 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
       @Override
       public boolean process(Library library) {
         for (VirtualFile root : library.getFiles(javaDocRootType)) {
-          if (VfsUtilCore.isAncestor(root, file, true)) {
+          if (VfsUtilCore.isAncestor(root, file, false)) {
             result.set(new PathInfo(file, root, null, true));
             return false;
           }
