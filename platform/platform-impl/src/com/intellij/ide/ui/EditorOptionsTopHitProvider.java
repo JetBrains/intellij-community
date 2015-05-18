@@ -17,6 +17,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +39,31 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
                                   ? "checkbox.enable.ctrl.mousewheel.changes.font.size.macos"
                                   : "checkbox.enable.ctrl.mousewheel.changes.font.size"), "IS_WHEEL_FONTCHANGE_ENABLED"),
     editor("Mouse: " + messageApp("checkbox.enable.drag.n.drop.functionality.in.editor"), "IS_DND_ENABLED"),
+    new EditorOptionDescription(null, messageApp("checkbox.use.soft.wraps.at.editor.action.text"), "preferences.editor") {
+      @Override
+      public boolean isOptionEnabled() {
+        return EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR);
+      }
+
+      @Override
+      public void setOptionState(boolean enabled) {
+        EditorSettingsExternalizable.getInstance().setUseSoftWraps(enabled, SoftWrapAppliancePlaces.MAIN_EDITOR);
+        fireUpdated();
+      }
+    },
+    new EditorOptionDescription(null, messageApp("checkbox.use.soft.wraps.at.console.action.text"), "preferences.editor") {
+      @Override
+      public boolean isOptionEnabled() {
+        return EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE);
+      }
+
+      @Override
+      public void setOptionState(boolean enabled) {
+        EditorSettingsExternalizable.getInstance().setUseSoftWraps(enabled, SoftWrapAppliancePlaces.CONSOLE);
+        fireUpdated();
+      }
+    },
+    editor(messageApp("checkbox.use.custom.soft.wraps.indent.action.text"), "USE_CUSTOM_SOFT_WRAP_INDENT"),
     new EditorOptionDescription(null, messageApp("checkbox.show.softwraps.only.for.caret.line.action.text"), "preferences.editor") {
       @Override
       public boolean isOptionEnabled() {
