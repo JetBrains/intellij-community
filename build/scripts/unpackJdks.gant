@@ -49,7 +49,7 @@ def unpackJdks() {
 private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
   def jdkFiles = osDir.listFiles().findAll { it.name.startsWith("jdk$majorVersion") }
   if (SystemInfo.isWindows) {
-    def arch = SystemInfo.is64Bit ? "x64" : "x32"
+    def arch = "x64"
     jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.zip") }
   }
   if (jdkFiles.empty) {
