@@ -18,7 +18,6 @@ package com.jetbrains.python.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,8 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * For:
@@ -145,7 +143,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       newFunctionParams.add(param.getText());
     }
     for (PyParameter param : superInfo.getRequiredParameters()) {
-      if (!origInfo.containsRequiredParam(param.getName())) {
+      if (!origInfo.getAllParameterNames().contains(param.getName())) {
         newFunctionParams.add(param.getText());
       }
       superCallArgs.add(param.getName());
@@ -182,7 +180,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       newFunctionParams.add(param.getText());
     }
     for (PyParameter param : superInfo.getRequiredKeywordOnlyParameters()) {
-      if (!origInfo.containsRequiredKeywordOnlyParameter(param.getName())) {
+      if (!origInfo.getAllParameterNames().contains(param.getName())) {
         newFunctionParams.add(param.getText());
       }
       superCallArgs.add(param.getName() + "=" + param.getName());
@@ -242,6 +240,8 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
      */
     private final PyParameter myKeywordContainerParam;
 
+    private final Set<String> myAllParameterNames = new LinkedHashSet<String>();
+
     public ParametersInfo(@NotNull PyParameterList parameterList) {
       PyParameter positionalContainer = null;
       PyParameter singleStarParam = null;
@@ -249,6 +249,8 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       PyParameter selfParam = null;
 
       for (PyParameter param : parameterList.getParameters()) {
+        myAllParameterNames.addAll(collectParameterNames(param));
+
         if (param.isSelf()) {
           selfParam = param;
         }
@@ -285,24 +287,6 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       myKeywordContainerParam = keywordContainer;
     }
 
-    public boolean containsRequiredParam(@Nullable final String name) {
-      return ContainerUtil.exists(myRequiredParams, new Condition<PyParameter>() {
-        @Override
-        public boolean value(PyParameter parameter) {
-          return name != null && name.equals(parameter.getName());
-        }
-      });
-    }
-
-    public boolean containsRequiredKeywordOnlyParameter(@Nullable final String name) {
-      return ContainerUtil.exists(myRequiredKwOnlyParams, new Condition<PyParameter>() {
-        @Override
-        public boolean value(PyParameter parameter) {
-          return name != null && name.equals(parameter.getName());
-        }
-      });
-    }
-
     @Nullable
     public PyParameter getSelfParameter() {
       return mySelfParam;
@@ -310,12 +294,12 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
 
     @NotNull
     public List<PyParameter> getRequiredParameters() {
-      return myRequiredParams;
+      return Collections.unmodifiableList(myRequiredParams);
     }
 
     @NotNull
     public List<PyParameter> getOptionalParameters() {
-      return myOptionalParams;
+      return Collections.unmodifiableList(myOptionalParams);
     }
 
     @Nullable
@@ -330,17 +314,42 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
 
     @NotNull
     public List<PyParameter> getRequiredKeywordOnlyParameters() {
-      return myRequiredKwOnlyParams;
+      return Collections.unmodifiableList(myRequiredKwOnlyParams);
     }
 
     @NotNull
     public List<PyParameter> getOptionalKeywordOnlyParameters() {
-      return myOptionalKwOnlyParams;
+      return Collections.unmodifiableList(myOptionalKwOnlyParams);
     }
 
     @Nullable
     public PyParameter getKeywordContainerParameter() {
       return myKeywordContainerParam;
+    }
+
+    @NotNull
+    public Set<String> getAllParameterNames() {
+      return Collections.unmodifiableSet(myAllParameterNames);
+    }
+  }
+
+  @NotNull
+  private static Set<String> collectParameterNames(@NotNull PyParameter param) {
+    final LinkedHashSet<String> result = new LinkedHashSet<String>();
+    collectParameterNames(param, result);
+    return Collections.unmodifiableSet(result);
+  }
+
+
+  private static void collectParameterNames(@NotNull PyParameter param, @NotNull Collection<String> acc) {
+    final PyTupleParameter tupleParam = param.getAsTuple();
+    if (tupleParam != null) {
+      for (PyParameter subParam : tupleParam.getContents()) {
+        collectParameterNames(subParam, acc);
+      }
+    }
+    else {
+      ContainerUtil.addIfNotNull(acc, param.getName());
     }
   }
 }
