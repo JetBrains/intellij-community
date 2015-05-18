@@ -27,5 +27,10 @@ public interface DocumentationManagerProtocol {
    * @see DocumentationManagerUtil
    */
   @NonNls String PSI_ELEMENT_PROTOCOL = "psi_element://";
+
+  /**
+   * @deprecated Link with such prefix will open documentation for current element in browser, regardless of full link content. Http links
+   * are now opened directly. To be removed in IDEA 16.
+   */
   @NonNls String DOC_ELEMENT_PROTOCOL = "doc_element://";
 }

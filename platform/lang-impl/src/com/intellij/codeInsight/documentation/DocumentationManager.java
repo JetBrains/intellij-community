@@ -921,6 +921,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           (new DocumentationCollector() {
             @Override
             public String getDocumentation() throws Exception {
+              //noinspection deprecation
               if (url.startsWith(DocumentationManagerProtocol.DOC_ELEMENT_PROTOCOL)) {
                 final List<String> urls = ApplicationManager.getApplication().runReadAction(
                   new NullableComputable<List<String>>() {
