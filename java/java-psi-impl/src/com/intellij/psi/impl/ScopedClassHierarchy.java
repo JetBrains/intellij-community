@@ -18,14 +18,19 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -48,27 +53,36 @@ class ScopedClassHierarchy {
   private final Map<PsiClass, PsiClassType.ClassResolveResult> mySupersWithSubstitutors = ContainerUtil.newTroveMap(CLASS_HASHING_STRATEGY);
 
   private ScopedClassHierarchy(PsiClass psiClass, GlobalSearchScope resolveScope) {
-    PsiClassType type = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, PsiSubstitutor.EMPTY);
-    visitTypes(resolveScope, PsiSubstitutor.EMPTY, type);
+    visitType(resolveScope, JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, PsiSubstitutor.EMPTY));
   }
 
-  private void visitTypes(GlobalSearchScope resolveScope, PsiSubstitutor substitutor, PsiType... types) {
-    for (PsiType type : types) {
-      type = PsiClassImplUtil.correctType(substitutor.substitute(type), resolveScope);
-      if (!(type instanceof PsiClassType)) continue;
-
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-      PsiClass psiClass = resolveResult.getElement();
-      if (psiClass == null || InheritanceImplUtil.hasObjectQualifiedName(psiClass) || mySupersWithSubstitutors.containsKey(psiClass)) continue;
-  
-      mySupersWithSubstitutors.put(psiClass, resolveResult);
-
-      if (psiClass instanceof PsiAnonymousClass) {
-        visitTypes(resolveScope, resolveResult.getSubstitutor(), ((PsiAnonymousClass)psiClass).getBaseClassType());
-      }
-      visitTypes(resolveScope, resolveResult.getSubstitutor(), psiClass.getExtendsListTypes());
-      visitTypes(resolveScope, resolveResult.getSubstitutor(), psiClass.getImplementsListTypes());
+  private void visitType(GlobalSearchScope resolveScope, @NotNull PsiClassType type) {
+    PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
+    PsiClass psiClass = resolveResult.getElement();
+    if (psiClass == null || InheritanceImplUtil.hasObjectQualifiedName(psiClass) || mySupersWithSubstitutors.containsKey(psiClass)) {
+      return;
     }
+
+    mySupersWithSubstitutors.put(psiClass, resolveResult);
+
+    for (PsiType superType : getSuperTypes(psiClass)) {
+      superType = type.isRaw() && superType instanceof PsiClassType ? ((PsiClassType)superType).rawType() : resolveResult.getSubstitutor().substitute(superType);
+      superType = PsiClassImplUtil.correctType(superType, resolveScope);
+      if (superType instanceof PsiClassType) {
+        visitType(resolveScope, (PsiClassType)superType);
+      }
+    }
+  }
+
+  @NotNull
+  private static List<PsiType> getSuperTypes(PsiClass psiClass) {
+    List<PsiType> superTypes = ContainerUtil.newArrayList();
+    if (psiClass instanceof PsiAnonymousClass) {
+      ContainerUtil.addIfNotNull(superTypes, ((PsiAnonymousClass)psiClass).getBaseClassType());
+    }
+    Collections.addAll(superTypes, psiClass.getExtendsListTypes());
+    Collections.addAll(superTypes, psiClass.getImplementsListTypes());
+    return superTypes;
   }
 
   @NotNull
