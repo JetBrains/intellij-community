@@ -127,7 +127,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
-    // both PsiJavaFile and PsiCodeFragment
+    // both PsiJavaFile and PsiCodeFragment must match
     return file instanceof PsiImportHolder && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
   }
 
@@ -1126,7 +1126,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (owner instanceof PsiClass) {
           final PsiClass outerClass = (PsiClass)owner;
           if (!InheritanceUtil.hasEnclosingInstanceInScope(outerClass, ref, false, false)) {
-            myHolder.add(HighlightClassUtil.reportIllegalEnclosingUsage(ref, aClass, (PsiClass)owner, ref));
+            myHolder.add(HighlightClassUtil.reportIllegalEnclosingUsage(ref, null, (PsiClass)owner, ref));
           }
         }
       }
@@ -1552,7 +1552,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (thenExpression != null && elseExpression != null) {
         final PsiType conditionalType = expression.getType();
         if (conditionalType != null) {
-          final PsiExpression[] sides = new PsiExpression[] {thenExpression, elseExpression};
+          final PsiExpression[] sides = {thenExpression, elseExpression};
           for (PsiExpression side : sides) {
             final PsiType sideType = side.getType();
             if (sideType != null && !TypeConversionUtil.isAssignable(conditionalType, sideType)) {
