@@ -92,6 +92,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter());
@@ -99,10 +100,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
-  protected void onDisposeAwt() {
+  @CalledInAwt
+  protected void onDispose() {
     myModifierProvider.destroy();
     destroyChangedBlocks();
-    super.onDisposeAwt();
+    super.onDispose();
   }
 
   @NotNull
@@ -159,16 +161,18 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
   }
 
   @Override
+  @CalledInAwt
   protected void updateContextHints() {
+    super.updateContextHints();
     if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
     myInitialScrollHelper.updateContext(myRequest);
-    super.updateContextHints();
   }
 
   //

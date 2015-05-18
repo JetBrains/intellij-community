@@ -64,7 +64,6 @@ public abstract class DiffWindowBase {
         }
       })
       .build();
-    myProcessor.init();
     myWrapper.setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
     Disposer.register(myWrapper, myProcessor);
 

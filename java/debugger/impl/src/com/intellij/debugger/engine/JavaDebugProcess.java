@@ -321,8 +321,9 @@ public class JavaDebugProcess extends XDebugProcess {
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
-    settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);
-    settings.addAction(new WatchLastMethodReturnValueAction(), Constraints.FIRST);
+    Constraints beforeSort = new Constraints(Anchor.BEFORE, "XDebugger.ToggleSortValues");
+    settings.addAction(new WatchLastMethodReturnValueAction(), beforeSort);
+    settings.addAction(new AutoVarsSwitchAction(), beforeSort);
   }
 
   private static class AutoVarsSwitchAction extends ToggleAction {
