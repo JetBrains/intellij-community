@@ -16,10 +16,10 @@
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.projectRoots.LanguageTestDataChecker;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -30,7 +30,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -67,7 +66,8 @@ public class CheckinHandlerUtil {
 
     for (VirtualFile file : selectedFiles) {
       if (file.isValid()) {
-        if (isUnderProjectFileDir(projectFileDir, file) || !isFileUnderSourceRoot(project, file)) {
+        if (isUnderProjectFileDir(projectFileDir, file) || !isFileUnderSourceRoot(project, file)
+            || isLanguageTestData(project, file)) {
           continue;
         }
         PsiFile psiFile = psiManager.findFile(file);
@@ -83,12 +83,17 @@ public class CheckinHandlerUtil {
 
   private static boolean isFileUnderSourceRoot(@NotNull Project project, @NotNull VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    if (StdFileTypes.JAVA == file.getFileType()) {
-      return index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) && !index.isInLibrarySource(file);
+    return index.isInContent(file) && !index.isInLibrarySource(file);
+  }
+
+  private static boolean isLanguageTestData(@NotNull Project project, @NotNull VirtualFile file) {
+    for (LanguageTestDataChecker checker : LanguageTestDataChecker.EP_NAME.getExtensions()) {
+      if (checker.getFileType() == file.getFileType()
+          && checker.isTestData(project, file)) {
+        return true;
+      }
     }
-    else {
-      return index.isInContent(file) && !index.isInLibrarySource(file) ;
-    }
+    return false;
   }
 
   static void disableWhenDumb(@NotNull Project project, @NotNull JCheckBox checkBox, @NotNull String tooltip) {
