@@ -76,7 +76,7 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
         newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
           @Override
           public String fun(PsiParameter psiParameter) {
-            return parameter.getType().getCanonicalText();
+            return psiParameter.getType().getCanonicalText();
           }
         }, ","));
         newText.append(")*/");
