@@ -24,6 +24,7 @@ import com.jetbrains.python.inspections.PyMissingConstructorInspection;
 import com.jetbrains.python.inspections.PyStatementEffectInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class Py3QuickFixTest extends PyTestCase {
@@ -32,39 +33,42 @@ public class Py3QuickFixTest extends PyTestCase {
     return PyTestCase.ourPy3Descriptor;
   }
 
+  // PY-13685
   public void testReplacePrintEnd() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, new Runnable() {
       @Override
       public void run() {
-        doInspectionTest("ReplacePrintEnd.py", PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
-      }});
+        doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
+      }
+    });
   }
 
+  // PY-13685
   public void testReplacePrintComment() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, new Runnable() {
       @Override
       public void run() {
-        doInspectionTest("ReplacePrintComment.py", PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true,
-                         true);
-      }});
+        doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
+      }
+    });
   }
 
+  // PY-13685
   public void testReplaceExecComment() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, new Runnable() {
       @Override
       public void run() {
-        doInspectionTest("ReplaceExecComment.py", PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true,
-                         true);
-      }});
+        doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
+      }
+    });
   }
 
+  // PY-11561
   public void testAddCallSuperAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
       @Override
       public void run() {
-        doInspectionTest("AddCallSuperAnnotations.py",
-                         PyMissingConstructorInspection.class,
-                         PyBundle.message("QFIX.add.super"), true, true);
+        doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
       }
     });
   }
@@ -75,9 +79,16 @@ public class Py3QuickFixTest extends PyTestCase {
     return PythonTestUtil.getTestDataPath() + "/inspections/";
   }
 
-  protected void doInspectionTest(@TestDataFile @NonNls String testFileName,
-                                  final Class inspectionClass,
-                                  @NonNls String quickFixName,
+  private void doInspectionTest(@NotNull Class inspectionClass,
+                                @NotNull String quickFixName,
+                                boolean applyFix,
+                                boolean available) {
+    doInspectionTest(getTestName(false) + ".py", inspectionClass, quickFixName, applyFix, available);
+  }
+
+  protected void doInspectionTest(@TestDataFile @NonNls @NotNull String testFileName,
+                                  @NotNull Class inspectionClass,
+                                  @NonNls @NotNull String quickFixName,
                                   boolean applyFix,
                                   boolean available) {
     doInspectionTest(new String[]{testFileName}, inspectionClass, quickFixName, applyFix, available);
@@ -93,9 +104,9 @@ public class Py3QuickFixTest extends PyTestCase {
    * @param available       true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
-  protected void doInspectionTest(@NonNls String[] testFiles,
-                                  final Class inspectionClass,
-                                  @NonNls String quickFixName,
+  protected void doInspectionTest(@NonNls @NotNull String[] testFiles,
+                                  @NotNull Class inspectionClass,
+                                  @NonNls @NotNull String quickFixName,
                                   boolean applyFix,
                                   boolean available) {
     myFixture.enableInspections(inspectionClass);
