@@ -63,16 +63,6 @@ public class Py3QuickFixTest extends PyTestCase {
     });
   }
 
-  // PY-11561
-  public void testAddCallSuperAnnotations() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true);
-      }
-    });
-  }
-
   // PY-15867
   public void testAddCallSuperKeywordOnlyParamInSuperInit() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
@@ -110,7 +100,7 @@ public class Py3QuickFixTest extends PyTestCase {
     });
   }
 
-  // PY-15867
+  // PY-11561
   public void testAddCallSuperTypeAnnotationsPreserved() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
       @Override
