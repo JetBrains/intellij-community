@@ -18,13 +18,13 @@ package org.jetbrains.idea.svn.rollback;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.EmptyChangelistBuilder;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +74,7 @@ public class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelist
   }
 
   private void toFromTo(VirtualFile file) {
-    final FilePathImpl path = new FilePathImpl(file);
+    FilePath path = VcsUtil.getFilePath(file);
     final ThroughRenameInfo info = findToFile(path, null);
     if (info != null) {
       myFromTo.put(path.getIOFile(), info);

@@ -5,7 +5,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import javax.swing.*;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -240,21 +239,6 @@ public class Runner {
   }
 
   private static void install(final String jarFile, final String destFolder) throws Exception {
-    // todo[r.sh] to delete in IDEA 14 (after a full circle of platform updates)
-    if (System.getProperty("swing.defaultlaf") == null) {
-      SwingUtilities.invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-          }
-          catch (Exception ignore) {
-            printStackTrace(ignore);
-          }
-        }
-      });
-    }
-
     new SwingUpdaterUI(new SwingUpdaterUI.InstallOperation() {
                          public boolean execute(UpdaterUI ui) throws OperationCancelledException {
                            logger.info("installing patch to the " + destFolder);

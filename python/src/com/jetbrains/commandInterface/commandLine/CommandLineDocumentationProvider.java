@@ -24,11 +24,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.command.Help;
 import com.jetbrains.commandInterface.command.Option;
-import com.jetbrains.commandInterface.commandLine.psi.*;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineArgument;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineCommand;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineOption;
+import com.jetbrains.commandInterface.commandLine.psi.CommandLineVisitor;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,6 +49,7 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
     if (help == null) {
       return null;
     }
+
     final String helpText = help.getHelpString();
     // For some reason we can't return empty sting (leads to "fetching doc" string)
     return (StringUtil.isEmptyOrSpaces(helpText) ? null : helpText);
@@ -68,18 +73,22 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
   public PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
                                                   @NotNull final PsiFile file,
                                                   @Nullable final PsiElement contextElement) {
-    final CommandLineElement commandLineElement = PsiTreeUtil.getParentOfType(contextElement, CommandLineElement.class);
-    if (commandLineElement != null) {
-      return commandLineElement;
+
+    // First we try to find required parent for context element. Then, for element to the left of caret to support case "command<caret>"
+    for (final PsiElement element : Arrays.asList(contextElement, file.findElementAt(editor.getCaretModel().getOffset() - 1))) {
+      final CommandLineElement commandLineElement = PsiTreeUtil.getParentOfType(element, CommandLineElement.class);
+      if (commandLineElement != null) {
+        return commandLineElement;
+      }
     }
-    return PyUtil.as(file, CommandLineFile.class);
+    return null;
   }
 
   /**
    * Searches for help text for certain element
+   *
    * @param element element to search help for
    * @return help or
-   *
    */
   @Nullable
   private static Help findHelp(@NotNull final PsiElement element) {

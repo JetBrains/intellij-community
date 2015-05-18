@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,12 +116,6 @@ public class FileChooserDescriptor implements Cloneable {
     return myChooseMultiple;
   }
 
-  /** @deprecated use {@link #isChooseMultiple()} (to be removed in IDEA 15) */
-  @SuppressWarnings("UnusedDeclaration")
-  public boolean getChooseMultiple() {
-    return isChooseMultiple();
-  }
-
   public String getTitle() {
     return myTitle;
   }
@@ -203,12 +197,6 @@ public class FileChooserDescriptor implements Cloneable {
   public FileChooserDescriptor withTreeRootVisible(boolean isTreeRootVisible) {
     myTreeRootVisible = isTreeRootVisible;
     return this;
-  }
-
-  /** @deprecated use {@link #withTreeRootVisible(boolean)} (to be removed in IDEA 15) */
-  @SuppressWarnings("UnusedDeclaration")
-  public FileChooserDescriptor setIsTreeRootVisible(boolean treeRootVisible) {
-    return withTreeRootVisible(treeRootVisible);
   }
 
   public boolean isShowHiddenFiles() {

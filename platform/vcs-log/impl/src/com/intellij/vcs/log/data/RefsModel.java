@@ -2,11 +2,11 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import gnu.trove.TIntObjectHashMap;
@@ -17,15 +17,15 @@ import java.util.*;
 public class RefsModel implements VcsLogRefs {
 
   @NotNull private final Map<VirtualFile, Set<VcsRef>> myRefs;
-  @NotNull private final NotNullFunction<Hash, Integer> myIndexGetter;
+  @NotNull private final VcsLogHashMap myHashMap;
 
   @NotNull private final Collection<VcsRef> myBranches;
   @NotNull private final MultiMap<Hash, VcsRef> myRefsToHashes;
   @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myRefsToIndices;
 
-  public RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot, @NotNull NotNullFunction<Hash, Integer> indexGetter) {
+  public RefsModel(@NotNull Map<VirtualFile, Set<VcsRef>> refsByRoot, @NotNull VcsLogHashMap hashMap) {
     myRefs = refsByRoot;
-    myIndexGetter = indexGetter;
+    myHashMap = hashMap;
 
     List<VcsRef> allRefs = ContainerUtil.concat(refsByRoot.values());
     myBranches = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
@@ -43,7 +43,7 @@ public class RefsModel implements VcsLogRefs {
   private TIntObjectHashMap<SmartList<VcsRef>> prepareRefsToIndicesMap(@NotNull Collection<VcsRef> refs) {
     TIntObjectHashMap<SmartList<VcsRef>> map = new TIntObjectHashMap<SmartList<VcsRef>>();
     for (VcsRef ref : refs) {
-      int index = myIndexGetter.fun(ref.getCommitHash());
+      int index = myHashMap.getCommitIndex(ref.getCommitHash());
       SmartList<VcsRef> list = map.get(index);
       if (list == null) map.put(index, list = new SmartList<VcsRef>());
       list.add(ref);

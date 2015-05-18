@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
+import com.intellij.rt.execution.junit.JUnitForkedStarter;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.util.Function;
@@ -139,12 +140,16 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
+  protected void configureClasspath(JavaParameters javaParameters) throws CantRunException {
+    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
+    super.configureClasspath(javaParameters);
+  }
+
+  @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
     JavaParameters javaParameters = super.createJavaParameters();
     javaParameters.setMainClass(JUnitConfiguration.JUNIT_START_CLASS);
     javaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
-
-    javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
 
     final StringBuilder buf = new StringBuilder();
     collectListeners(javaParameters, buf, IDEAJUnitListener.EP_NAME, "\n");
@@ -345,8 +350,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       for (final T element : elements) {
         final String name = nameFunction.fun(element);
         if (name == null) {
-          LOG.error("invalid element " + element);
-          return;
+          continue;
         }
 
         if (perModule != null && element instanceof PsiElement) {
@@ -475,5 +479,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   protected void passForkMode(String forkMode, File tempFile) throws ExecutionException {
     getJavaParameters().getProgramParametersList().add("@@@" + forkMode + ',' + tempFile.getAbsolutePath());
+    if (getForkSocket() != null) {
+      getJavaParameters().getProgramParametersList().add(JUnitForkedStarter.DEBUG_SOCKET + getForkSocket().getLocalPort());
+    }
   }
 }

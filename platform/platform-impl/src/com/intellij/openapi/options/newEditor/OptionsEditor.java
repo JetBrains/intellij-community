@@ -720,8 +720,8 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
       if (c != null) {
         if (scrollable) {
           JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
-          scroll.setViewport(new GradientViewport(c, 5, 5, 5, 5, false));
-          scroll.getVerticalScrollBar().setUnitIncrement(10);
+          scroll.setViewport(new GradientViewport(c, JBUI.insets(5), false));
+          scroll.getVerticalScrollBar().setUnitIncrement(JBUI.scale(10));
           add(scroll, BorderLayout.CENTER);
         }
         else {

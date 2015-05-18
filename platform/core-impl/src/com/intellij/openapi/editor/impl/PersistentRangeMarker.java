@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This class is an extension to range marker that tries to restore its range even in situations when target text referenced by it
@@ -43,6 +45,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   private void storeLinesAndCols(DocumentEvent e) {
     // document might have been changed already
     int startOffset = getStartOffset();
+    Document myDocument = getDocument();
     if (startOffset <= myDocument.getTextLength()) {
       myStartLine = myDocument.getLineNumber(startOffset);
       myStartColumn = startOffset - myDocument.getLineStartOffset(myStartLine);
@@ -96,7 +99,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   @Override
-  protected void changedUpdateImpl(DocumentEvent e) {
+  protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     DocumentEventImpl event = (DocumentEventImpl)e;
     final boolean shouldTranslateViaDiff = PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this);
     boolean wasTranslated = shouldTranslateViaDiff;

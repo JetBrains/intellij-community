@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,6 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +34,6 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.ipnb.IpnbConsole;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
@@ -54,8 +55,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
   private final Project myProject;
   private Map<String, IpnbConnection> myKernels = new HashMap<String, IpnbConnection>();
   private Map<String, IpnbCodePanel> myUpdateMap = new HashMap<String, IpnbCodePanel>();
-  private KillableColoredProcessHandler myProcessHandler;
-
   public IpnbConnectionManager(final Project project) {
     myProject = project;
   }
@@ -89,13 +88,14 @@ public final class IpnbConnectionManager implements ProjectComponent {
     if (StringUtil.isEmptyOrSpaces(url)) {
       url = IpnbSettings.DEFAULT_URL;
     }
-    url = showDialogUrl(url);
-    if (url == null) return;
-    IpnbSettings.getInstance(myProject).setURL(url);
 
     boolean connectionStarted = startConnection(codePanel, path, url, false);
     if (!connectionStarted) {
       final String finalUrl = url;
+      url = showDialogUrl(url);
+      if (url == null) return;
+      IpnbSettings.getInstance(myProject).setURL(url);
+
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
@@ -157,13 +157,22 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
         @Override
         public void onOutput(@NotNull IpnbConnection connection,
-                             @NotNull String parentMessageId,
-                             @NotNull List<IpnbOutputCell> outputs,
-                             @Nullable Integer execCount) {
+                             @NotNull String parentMessageId) {
+          if (!myUpdateMap.containsKey(parentMessageId)) return;
+          final IpnbCodePanel cell = myUpdateMap.get(parentMessageId);
+          cell.getCell().setPromptNumber(connection.getExecCount());
+          //noinspection unchecked
+          cell.updatePanel(null, (List<IpnbOutputCell>)connection.getOutput().clone());
+        }
+
+        @Override
+        public void onPayload(@Nullable String payload, @NotNull String parentMessageId) {
           if (!myUpdateMap.containsKey(parentMessageId)) return;
           final IpnbCodePanel cell = myUpdateMap.remove(parentMessageId);
-          cell.getCell().setPromptNumber(execCount);
-          cell.updatePanel(outputs);
+          if (payload != null) {
+            //noinspection unchecked
+            cell.updatePanel(payload, null);
+          }
         }
       };
 
@@ -193,12 +202,35 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (IOException e) {
       if (showNotification) {
-        showWarning(codePanel.getFileEditor(), "IPython Notebook connection refused", null);
         LOG.warn("IPython Notebook connection refused: " + e.getMessage());
       }
       return false;
     }
     return true;
+  }
+
+  public void interruptKernel(@NotNull final String filePath) {
+    if (!myKernels.containsKey(filePath)) return;
+    final IpnbConnection connection = myKernels.get(filePath);
+    try {
+      connection.interrupt();
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to interrupt kernel " + filePath);
+      LOG.warn(e.getMessage());
+    }
+  }
+
+  public void reloadKernel(@NotNull final String filePath) {
+    if (!myKernels.containsKey(filePath)) return;
+    final IpnbConnection connection = myKernels.get(filePath);
+    try {
+      connection.reload();
+    }
+    catch (IOException e) {
+      LOG.warn("Failed to reload kernel " + filePath);
+      LOG.warn(e.getMessage());
+    }
   }
 
   private static void showWarning(@NotNull final IpnbFileEditor fileEditor, @NotNull final String message,
@@ -253,18 +285,42 @@ public final class IpnbConnectionManager implements ProjectComponent {
       withEnvironment(env);
 
     try {
-      myProcessHandler = new KillableColoredProcessHandler(commandLine) {
+      final KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
+        @Override
+        protected void doDestroyProcess() {
+          super.doDestroyProcess();
+          UnixProcessManager.sendSigIntToProcessTree(getProcess());
+        }
+
         @Override
         public boolean isSilentlyDestroyOnClose() {
           return true;
         }
       };
-      myProcessHandler.setShouldDestroyProcessRecursively(true);
+      processHandler.setShouldDestroyProcessRecursively(true);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          new RunContentExecutor(myProject, myProcessHandler)
-            .withConsole(new IpnbConsole(myProject, myProcessHandler))
+          new RunContentExecutor(myProject, processHandler)
+            .withTitle("IPython Notebook")
+            .withStop(new Runnable() {
+              @Override
+              public void run() {
+                processHandler.destroyProcess();
+                UnixProcessManager.sendSigIntToProcessTree(processHandler.getProcess());
+              }
+            }, new Computable<Boolean>() {
+              @Override
+              public Boolean compute() {
+                return !processHandler.isProcessTerminated();
+              }
+            })
+            .withRerun(new Runnable() {
+              @Override
+              public void run() {
+                startIpythonServer(url, fileEditor);
+              }
+            })
             .run();
         }
       });
@@ -296,6 +352,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
 
   private void shutdownKernels() {
     for (IpnbConnection connection : myKernels.values()) {
+      if (!connection.isAlive()) continue;
       connection.shutdown();
       try {
         connection.close();
@@ -308,9 +365,6 @@ public final class IpnbConnectionManager implements ProjectComponent {
       }
     }
     myKernels.clear();
-    if (myProcessHandler != null && !myProcessHandler.isProcessTerminated()) {
-      myProcessHandler.killProcess();
-    }
   }
 
   @NotNull

@@ -16,7 +16,6 @@
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
@@ -30,8 +29,6 @@ import java.util.concurrent.atomic.AtomicLong;
 class FileLoader extends Loader {
   private final File myRootDir;
   private final String myRootDirAbsolutePath;
-  private static int misses;
-  private static int hits;
   private final boolean myCanHavePersistentIndex;
 
   FileLoader(URL url, int index, boolean canHavePersistentIndex) throws IOException {
@@ -89,26 +86,10 @@ class FileLoader extends Loader {
 
       file = new File(myRootDir, name.replace('/', File.separatorChar));
       if (!check || file.exists()) {     // check means we load or process resource so we check its existence via old way
-        if (check) {
-          ++misses;
-          if (misses % 1000 == 0 && ClasspathCache.doDebug) {
-            ClasspathCache.LOG.debug("[Sample of] missed resource " + name + " from " + myRootDir);
-          }
-        }
-
-        ++hits;
-        if (hits % 1000 == 0 && ClasspathCache.doDebug) {
-          ClasspathCache.LOG.debug("Exists file loader: misses:" + misses + ", hits:" + hits);
-        }
-
         return new MyResource(name, url, file, !check);
       }
     }
     catch (Exception exception) {
-      ++misses;
-      if (misses % 1000 == 0 && ClasspathCache.doDebug) {
-        ClasspathCache.LOG.debug("Missed " + name + " from " + myRootDir);
-      }
       if (!check && file != null && file.exists()) {
         try {   // we can not open the file if it is directory, Resource still can be created
           return new MyResource(name, url, file, false);
@@ -314,7 +295,6 @@ class FileLoader extends Loader {
     }
   }
 
-  @NonNls
   public String toString() {
     return "FileLoader [" + myRootDir + "]";
   }

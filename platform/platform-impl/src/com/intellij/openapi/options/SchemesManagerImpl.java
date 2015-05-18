@@ -504,20 +504,6 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     }
 
     List<Throwable> errors = null;
-    VirtualFile dir = getVirtualDir();
-    if (!hasSchemes) {
-      myFilesToDelete.clear();
-      if (dir != null && dir.exists()) {
-        try {
-          StorageUtil.deleteFile(this, dir);
-        }
-        catch (Throwable e) {
-          errors = new SmartList<Throwable>();
-          errors.add(e);
-        }
-      }
-      return;
-    }
 
     for (E scheme : schemesToSave) {
       try {
@@ -531,7 +517,41 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
       }
     }
 
+    VirtualFile dir = getVirtualDir();
     errors = deleteFiles(dir, errors);
+
+    if (!hasSchemes && dir != null) {
+      LOG.info("No schemes to save, directory " + dir.getName() + " will be removed");
+
+      AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+      try {
+        boolean remove = true;
+        for (VirtualFile file : dir.getChildren()) {
+          if (StringUtilRt.endsWithIgnoreCase(file.getNameSequence(), mySchemeExtension)) {
+            LOG.info("Directory " + dir.getName() + " cannot be removed - scheme " + file.getName() + " exists");
+            remove = false;
+            break;
+          }
+        }
+
+        if (remove) {
+          LOG.info("Remove schemes directory " + dir.getName());
+          try {
+            StorageUtil.deleteFile(this, dir);
+            myDir = null;
+          }
+          catch (Throwable e) {
+            if (errors == null) {
+              errors = new SmartList<Throwable>();
+            }
+            errors.add(e);
+          }
+        }
+      }
+      finally {
+        token.finish();
+      }
+    }
 
     CompoundRuntimeException.doThrow(errors);
   }

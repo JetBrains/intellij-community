@@ -16,7 +16,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import java.io.File
 
 class TestManager(val projectFixture: IdeaProjectTestFixture) : TestWatcher() {
-  class object {
+  companion object {
     val EXCLUDED_DIR_NAME = "excludedDir"
   }
 

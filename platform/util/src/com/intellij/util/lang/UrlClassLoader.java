@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakStringInterner;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
@@ -46,7 +45,7 @@ import java.util.List;
 public class UrlClassLoader extends ClassLoader {
   // Feature enabling flag for saving / restoring file system information for local class directories, see Builder#usePersistentClasspathIndexForLocalClassDirectories
   private static final boolean INDEX_PERSISTENCE_ENABLED = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
-  @NonNls static final String CLASS_EXTENSION = ".class";
+  static final String CLASS_EXTENSION = ".class";
   private static boolean ourParallel = false;
 
   static {
@@ -144,26 +143,6 @@ public class UrlClassLoader extends ClassLoader {
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories());
-  }
-
-  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent) {
-    this(build().urls(urls).parent(parent));
-  }
-
-  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
-  public UrlClassLoader(URL[] urls, @Nullable ClassLoader parent) {
-    this(build().urls(urls).parent(parent));
-  }
-
-  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache) {
-    this(build().urls(urls).parent(parent).allowLock(lockJars).useCache(useCache));
-  }
-
-  /** @deprecated use {@link #build()} (to remove in IDEA 15) */
-  public UrlClassLoader(List<URL> urls, @Nullable ClassLoader parent, boolean lockJars, boolean useCache, boolean allowUnescaped, boolean preload) {
-    this(build().urls(urls).parent(parent).allowLock(lockJars).useCache(useCache).allowUnescaped(allowUnescaped).preload(preload));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {

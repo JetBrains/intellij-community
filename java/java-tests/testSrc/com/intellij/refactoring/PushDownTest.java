@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -69,7 +69,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   private void doTest(final boolean failure) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
-    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on member name", targetElement instanceof PsiMember);
 
     final PsiMember psiMember = (PsiMember)targetElement;

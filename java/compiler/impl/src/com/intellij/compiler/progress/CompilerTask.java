@@ -39,7 +39,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -145,12 +144,6 @@ public class CompilerTask extends Task.Backgroundable {
   @Override
   public String getProcessId() {
     return "compilation";
-  }
-
-  @NotNull
-  @Override
-  public DumbModeAction getDumbModeAction() {
-    return DumbModeAction.WAIT;
   }
 
   @Override
@@ -271,6 +264,9 @@ public class CompilerTask extends Task.Backgroundable {
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+              if (myProject != null && myProject.isDisposed()) {
+                return;
+              }
               synchronized (myMessageViewLock) {
                 if (myErrorTreeView != null) {
                   myErrorTreeView.selectFirstMessage();
@@ -285,7 +281,10 @@ public class CompilerTask extends Task.Backgroundable {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            AppIcon appIcon = AppIcon.getInstance();
+            if (myProject != null && myProject.isDisposed()) {
+              return;
+            }
+            final AppIcon appIcon = AppIcon.getInstance();
             if (appIcon.hideProgress(myProject, APP_ICON_ID)) {
               if (myErrorCount > 0) {
                 appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
@@ -359,7 +358,7 @@ public class CompilerTask extends Task.Backgroundable {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (!myProject.isDisposed()) {
+          if (myProject != null && !myProject.isDisposed()) {
             openMessageView();
             doAddMessage(message);
           }

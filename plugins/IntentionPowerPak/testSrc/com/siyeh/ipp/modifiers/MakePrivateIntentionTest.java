@@ -26,6 +26,7 @@ public class MakePrivateIntentionTest extends IPPTestCase {
   public void testMyEnum() { assertIntentionNotAvailable(); }
   public void testMyClass() { assertIntentionNotAvailable(); }
   public void testMyInterface() { assertIntentionNotAvailable(); }
+  public void testEnumConstructor() { assertIntentionNotAvailable(); }
   public void testMethod() { doTest(); }
   public void testAnnotatedMember() { doTest(); }
 

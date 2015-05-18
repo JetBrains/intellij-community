@@ -15,8 +15,7 @@
  */
 package org.intellij.images.fileTypes;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,8 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public abstract class ImageFileTypeManager extends FileTypeFactory {
     public static ImageFileTypeManager getInstance() {
-        Application application = ApplicationManager.getApplication();
-        return application.getComponent(ImageFileTypeManager.class);
+        return ServiceManager.getService(ImageFileTypeManager.class);
     }
 
     /**

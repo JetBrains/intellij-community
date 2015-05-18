@@ -169,26 +169,6 @@ public class FileSystemUtil {
     return resolveSymLink(file.getAbsolutePath());
   }
 
-  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static int getPermissions(@NotNull String path) {
-    return -1;
-  }
-
-  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static int getPermissions(@NotNull File file) {
-    return -1;
-  }
-
-  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void setPermissions(@NotNull String path, int permissions) { }
-
-  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
-  public static void setPermissions(@NotNull File file, int permissions) { }
-
   /**
    * Gives the second file permissions of the first one if possible; returns true if succeed.
    * Will do nothing on Windows.

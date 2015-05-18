@@ -58,9 +58,14 @@ public abstract class JBListTable {
   private MyCellEditor myCellEditor;
   private int myLastFocusedEditorComponentIdx = -1;
 
-  public JBListTable(@NotNull final JTable t) {
+  public JBListTable(@NotNull JTable t) {
+    this(t, Disposer.get("ui"));
+  }
+
+  public JBListTable(@NotNull final JTable t, @NotNull Disposable parent) {
     myInternalTable = t;
     myOnRemoveDisposable = Disposer.newDisposable();
+    Disposer.register(parent, myOnRemoveDisposable);
     final JBListTableModel model = new JBListTableModel(t.getModel()) {
       @Override
       public JBTableRow getRow(int index) {

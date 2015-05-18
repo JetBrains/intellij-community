@@ -37,7 +37,7 @@ public class PlainTextSplitter extends BaseSplitter {
 
   @NonNls
   private static final
-  Pattern SPLIT_PATTERN = Pattern.compile("(\\s)");
+  Pattern SPLIT_PATTERN = Pattern.compile("(\\s|\b)");
 
   @NonNls
   private static final Pattern MAIL =
@@ -53,21 +53,11 @@ public class PlainTextSplitter extends BaseSplitter {
     if (text == null || StringUtil.isEmpty(text)) {
       return;
     }
-    String substring = range.substring(text);
-    if (Verifier.checkCharacterData(substring) != null) {
+
+    final String substring = StringUtil.replaceChar(StringUtil.replaceChar(range.substring(text), '\b', '\n'), '\f', '\n');
+    if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(substring).replaceAll("")) != null) {
       return;
     }
-    //for(int i = 0; i < text.length(); ++i) {
-    //  final char ch = text.charAt(i);
-    //  if (ch >= '\u3040' && ch <= '\u309f' || // Hiragana
-    //      ch >= '\u30A0' && ch <= '\u30ff' || // Katakana
-    //      ch >= '\u4E00' && ch <= '\u9FFF' || // CJK Unified ideographs
-    //      ch >= '\uF900' && ch <= '\uFAFF' || // CJK Compatibility Ideographs
-    //      ch >= '\uFF00' && ch <= '\uFFEF' //Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
-    //     ) {
-    //    return;
-    //  }
-    //}
 
     final TextSplitter ws = TextSplitter.getInstance();
     int from = range.getStartOffset();

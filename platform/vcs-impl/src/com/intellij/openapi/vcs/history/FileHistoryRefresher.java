@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Refreshes file history.
@@ -35,13 +36,21 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   public FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
                               final AnnotationProvider annotationProvider,
                               final FilePath path,
-                              final String repositoryPath,
                               final AbstractVcs vcs) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
     myVcs = vcs;
-    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs, this);
+    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, annotationProvider, path, vcs, this);
     myCanUseCache = true;
+  }
+
+  @NotNull
+  public static FileHistoryRefresherI findOrCreate(@NotNull VcsHistoryProvider vcsHistoryProvider,
+                                                   @NotNull AnnotationProvider annotationProvider,
+                                                   @NotNull FilePath path,
+                                                   @NotNull AbstractVcs vcs) {
+    FileHistoryRefresherI refresher = FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path);
+    return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, annotationProvider, path, vcs) : refresher;
   }
 
   /**
@@ -49,12 +58,12 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
    */
   @Override
   public void run(boolean isRefresh, boolean canUseLastRevision) {
+    myIsRefresh = isRefresh;
     mySessionPartner.beforeRefresh();
     final VcsHistoryProviderBackgroundableProxy proxy = new VcsHistoryProviderBackgroundableProxy(
       myVcs, myVcsHistoryProvider, myVcs.getDiffProvider());
     proxy.executeAppendableSession(myVcs.getKeyInstanceMethod(), myPath, mySessionPartner, null, myCanUseCache, canUseLastRevision);
     myCanUseCache = false;
-    myIsRefresh = isRefresh;
   }
 
   /**

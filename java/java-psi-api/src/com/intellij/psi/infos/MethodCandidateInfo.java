@@ -158,7 +158,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       CURRENT_CANDIDATE.set(map);
     }
     final CurrentCandidateProperties alreadyThere = map.put(getMarkerList(),
-                                                            new CurrentCandidateProperties(getElement(), substitutor, isVarargs(), true));
+                                                            new CurrentCandidateProperties(this, substitutor, isVarargs(), true));
     try {
       return computable.compute();
     }
@@ -287,7 +287,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     final PsiMethod method = getElement();
     final CurrentCandidateProperties alreadyThere = 
-      map.put(getMarkerList(), new CurrentCandidateProperties(method, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint));
+      map.put(getMarkerList(), new CurrentCandidateProperties(this, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint));
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
@@ -352,19 +352,23 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   public static class CurrentCandidateProperties {
-    private final PsiMethod myMethod;
+    private final MethodCandidateInfo myMethod;
     private PsiSubstitutor mySubstitutor;
     private boolean myVarargs;
     private boolean myApplicabilityCheck;
 
-    public CurrentCandidateProperties(PsiMethod method, PsiSubstitutor substitutor, boolean varargs, boolean applicabilityCheck) {
-      myMethod = method;
+    private CurrentCandidateProperties(MethodCandidateInfo info, PsiSubstitutor substitutor, boolean varargs, boolean applicabilityCheck) {
+      myMethod = info;
       mySubstitutor = substitutor;
       myVarargs = varargs;
       myApplicabilityCheck = applicabilityCheck;
     }
 
     public PsiMethod getMethod() {
+      return myMethod.getElement();
+    }
+
+    public MethodCandidateInfo getInfo() {
       return myMethod;
     }
 

@@ -16,7 +16,6 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -46,7 +45,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
@@ -150,16 +148,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myRunWhenSmartQueue.addLast(runnable);
       }
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  public void queueCacheUpdate(@NotNull Collection<CacheUpdater> updaters) {
-    scheduleCacheUpdate(new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters)), false);
-  }
-
-  @SuppressWarnings("deprecation")
-  public void queueCacheUpdateInDumbMode(@NotNull Collection<CacheUpdater> updaters) {
-    scheduleCacheUpdate(new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters)), true);
   }
 
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {

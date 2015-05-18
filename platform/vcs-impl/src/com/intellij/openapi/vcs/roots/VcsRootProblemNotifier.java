@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,10 +79,6 @@ public class VcsRootProblemNotifier {
   }
 
   public void rescanAndNotifyIfNeeded() {
-    if (!mySettings.SHOW_VCS_ERROR_NOTIFICATIONS) {
-      return;
-    }
-
     Collection<VcsRootError> errors = scan();
     if (errors.isEmpty()) {
       synchronized (NOTIFICATION_LOCK) {

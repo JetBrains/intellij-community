@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.Processor;
 import com.intellij.util.io.fs.IFile;
@@ -83,13 +81,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files);
 
   public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
-
-  /** @deprecated fake root considered harmful (to remove in IDEA 14) */
-  public final VirtualFile getRoot() {
-    VirtualFile[] roots = ManagingFS.getInstance().getLocalRoots();
-    assert roots.length > 0 : SystemInfo.OS_NAME;
-    return roots[0];
-  }
 
   public interface WatchRequest {
     @NotNull

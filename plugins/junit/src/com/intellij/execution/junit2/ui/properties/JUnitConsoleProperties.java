@@ -40,15 +40,25 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
   @NotNull
   @Override
   protected GlobalSearchScope initScope() {
-    final SourceScope sourceScope = myConfiguration.getPersistentData().getScope().getSourceScope(myConfiguration);
-    return sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(getProject());
+    final JUnitConfiguration.Data persistentData = myConfiguration.getPersistentData();
+    final String testObject = persistentData.TEST_OBJECT;
+    //ignore invisible setting
+    if (JUnitConfiguration.TEST_CATEGORY.equals(testObject) ||
+        JUnitConfiguration.TEST_PATTERN.equals(testObject) ||
+        JUnitConfiguration.TEST_PACKAGE.equals(testObject)) {
+      final SourceScope sourceScope = persistentData.getScope().getSourceScope(myConfiguration);
+      return sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(getProject());
+    }
+    else {
+      return super.initScope();
+    }
   }
 
   @Override
   protected void appendAdditionalActions(DefaultActionGroup actionGroup,
                                          ExecutionEnvironment environment, JComponent parent) {
     super.appendAdditionalActions(actionGroup, environment, parent);
-    actionGroup.addAction(createIncludeNonStartedInRerun()).setAsSecondary(true);
+    actionGroup.add(createIncludeNonStartedInRerun());
   }
 
   @Override

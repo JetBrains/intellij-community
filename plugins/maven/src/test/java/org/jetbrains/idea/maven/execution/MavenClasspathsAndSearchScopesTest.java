@@ -21,11 +21,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -34,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
@@ -156,6 +155,44 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                             getProjectPath() + "/m2/target/classes",
                             getProjectPath() + "/m3/target/classes",
                             getProjectPath() + "/m4/target/classes");
+  }
+
+  public void testDoNotIncludeTargetDirectoriesOfModuleDependenciesToLibraryClassesRoots() throws Exception {
+    VirtualFile m = createModulePom("m", "<groupId>test</groupId>" +
+                                          "<artifactId>m</artifactId>" +
+                                          "<version>1</version>" +
+                                          "<dependencies>" +
+                                          "  <dependency>" +
+                                          "    <groupId>test</groupId>" +
+                                          "    <artifactId>dep</artifactId>" +
+                                          "    <version>1</version>" +
+                                          "  </dependency>" +
+                                          "</dependencies>");
+
+    VirtualFile dep = createModulePom("dep", "<groupId>test</groupId>" +
+                                           "<artifactId>dep</artifactId>" +
+                                           "<version>1</version>" +
+                                           "<dependencies>" +
+                                           "  <dependency>" +
+                                           "    <groupId>junit</groupId>" +
+                                           "    <artifactId>junit</artifactId>" +
+                                           "    <version>4.0</version>" +
+                                           "  </dependency>" +
+                                           "</dependencies>");
+
+    importProjects(m, dep);
+    assertModules("m", "dep");
+
+    assertModuleModuleDeps("m", "dep");
+
+    setupJdkForModules("m", "dep");
+
+    createOutputDirectories();
+    Module module = getModule("m");
+    VirtualFile[] jdkRoots = ModuleRootManager.getInstance(module).getSdk().getRootProvider().getFiles(OrderRootType.CLASSES);
+    VirtualFile[] junitRoots = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName("Maven: junit:junit:4.0")
+      .getFiles(OrderRootType.CLASSES);
+    assertOrderedEquals(OrderEnumerator.orderEntries(module).getAllLibrariesAndSdkClassesRoots(), ArrayUtil.mergeArrays(jdkRoots, junitRoots));
   }
 
   public void testDoNotIncludeTestClassesWhenConfiguringModuleDependenciesForProductionCode() throws Exception {

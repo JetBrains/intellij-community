@@ -103,7 +103,12 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
   }
 
   public static <Dom, T extends Dom> Iterator<T> create(Iterator<Dom> iterator, Condition<? super Dom> condition) {
-    return new FilteringIterator<Dom, T>(iterator, condition);
+    if (condition == Condition.TRUE || condition == Conditions.TRUE) {
+      return (Iterator<T>)iterator;
+    }
+    else {
+      return new FilteringIterator<Dom, T>(iterator, condition);
+    }
   }
 
   public static <T> Condition<T> alwaysTrueCondition(Class<T> aClass) {

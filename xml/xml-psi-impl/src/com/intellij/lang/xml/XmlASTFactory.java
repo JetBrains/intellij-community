@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public class XmlASTFactory extends ASTFactory {
   }
 
   @Override
-  public LeafElement createLeaf(@NotNull final IElementType type, CharSequence text) {
+  public LeafElement createLeaf(@NotNull final IElementType type, @NotNull CharSequence text) {
     if (type instanceof IXmlLeafElementType) {
       if (type == XML_REAL_WHITE_SPACE) {
         return new PsiWhiteSpaceImpl(text);

@@ -15,8 +15,10 @@
  */
 package org.intellij.images.fileTypes.impl;
 
-import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeConsumer;
+import com.intellij.openapi.fileTypes.UserBinaryFileType;
+import com.intellij.openapi.fileTypes.UserFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
@@ -35,8 +37,7 @@ import java.util.Set;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements ApplicationComponent {
-  @NonNls private static final String NAME = "ImagesFileTypeManager";
+final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
 
   @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
   private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
@@ -49,9 +50,6 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
     imageFileType.setDescription(IMAGE_FILE_TYPE_DESCRIPTION);
   }
 
-  public ImageFileTypeManagerImpl() {
-  }
-
   public boolean isImage(VirtualFile file) {
     return file.getFileType() instanceof ImageFileType;
   }
@@ -60,16 +58,6 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager implements App
     return imageFileType;
   }
 
-  @NotNull
-  public String getComponentName() {
-    return NAME;
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
 
   public static final class ImageFileType extends UserBinaryFileType {
   }

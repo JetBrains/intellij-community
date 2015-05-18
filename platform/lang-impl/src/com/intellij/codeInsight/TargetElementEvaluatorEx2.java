@@ -20,11 +20,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * Advanced customization interface used in {@link TargetElementUtil} class to support specifics of various languages.
+ * The exact API is not documented and is subject to change.
+ * Please refer to {@link TargetElementUtil} for additional information.  
+ */
 public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluator {
   @Nullable 
   public PsiElement getNamedElement(@NotNull PsiElement element) {
@@ -70,8 +76,8 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
   }
 
   @NotNull
-  public Answer isAcceptableReferencedElement(@NotNull PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
-    return Answer.DEFAULT;
+  public ThreeState isAcceptableReferencedElement(@NotNull PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
+    return ThreeState.UNSURE;
   }
 
   public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
@@ -86,6 +92,4 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
   public SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
     return null;
   }
-  
-  public enum Answer { YES, NO, DEFAULT;}
 }

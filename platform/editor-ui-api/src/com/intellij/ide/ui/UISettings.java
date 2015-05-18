@@ -68,6 +68,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int RECENT_FILES_LIMIT = 50;
   public int CONSOLE_COMMAND_HISTORY_LIMIT = 300;
   public int EDITOR_TAB_LIMIT = 10;
+  public boolean REUSE_NOT_MODIFIED_TABS = false;
   public boolean ANIMATE_WINDOWS = true;
   @Deprecated //todo remove in IDEA 16
   public int ANIMATION_SPEED = 4000; // Pixels per second
@@ -95,6 +96,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean ACTIVATE_MRU_EDITOR_ON_CLOSE = false;
   public boolean ACTIVATE_RIGHT_EDITOR_ON_CLOSE = false;
   public boolean ANTIALIASING_IN_EDITOR = true;
+  public boolean USE_LCD_RENDERING_IN_EDITOR = true;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;
   public int ALPHA_MODE_DELAY = 1500;
@@ -280,9 +282,11 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
             g2d.addRenderingHints(map);
           }
         }
-        else {
-          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        }
+
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, uiSettings.USE_LCD_RENDERING_IN_EDITOR ?
+                                                                   RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB :
+                                                                   RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
         if (FORCE_USE_FRACTIONAL_METRICS) {
           g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         }

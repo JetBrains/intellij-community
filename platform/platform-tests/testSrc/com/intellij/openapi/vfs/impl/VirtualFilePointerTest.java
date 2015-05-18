@@ -30,10 +30,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformLangTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -50,7 +47,7 @@ import java.util.concurrent.Future;
 /**
  *  @author dsl
  */
-public class VirtualFilePointerTest extends PlatformLangTestCase {
+public class VirtualFilePointerTest extends PlatformTestCase {
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private int numberOfPointersBefore;
   private final Disposable disposable = Disposer.newDisposable();

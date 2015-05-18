@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
@@ -47,7 +45,6 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     return true;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public StubElement buildStubTree(@NotNull FileContent fileContent) {
     VirtualFile file = fileContent.getFile();
@@ -57,19 +54,6 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
       ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.find(file);
       if (decompiler instanceof Full) {
         return ((Full)decompiler).getStubBuilder().buildFileStub(fileContent);
-      }
-    }
-    catch (ClsFormatException e) {
-      LOG.debug(e);
-    }
-
-    try {
-      Project project = fileContent.getProject();
-      for (ClsStubBuilderFactory factory : Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME)) {
-        if (!factory.isInnerClass(file) && factory.canBeProcessed(file, content)) {
-          PsiFileStub stub = factory.buildFileStub(file, content, project);
-          if (stub != null) return stub;
-        }
       }
     }
     catch (ClsFormatException e) {
@@ -97,7 +81,6 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
     }
   };
 
-  @SuppressWarnings("deprecation")
   @Override
   public int getStubVersion() {
     int version = STUB_VERSION;
@@ -108,12 +91,6 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
       if (decompiler instanceof Full) {
         version = version * 31 + ((Full)decompiler).getStubBuilder().getStubVersion() + decompiler.getClass().getName().hashCode();
       }
-    }
-
-    List<ClsStubBuilderFactory> factories = ContainerUtil.newArrayList(Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME));
-    Collections.sort(factories, CLASS_NAME_COMPARATOR);
-    for (ClsStubBuilderFactory factory : factories) {
-      version = version * 31 + factory.getStubVersion() + factory.getClass().getName().hashCode();
     }
 
     return version;

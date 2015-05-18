@@ -143,7 +143,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
 
   @Override
   public JComponent getPreferredFocusableComponent() {
-    return myConsole.getPreferredFocusableComponent();
+    return myTestResultsPanel;
   }
 
   @Override

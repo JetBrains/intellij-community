@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,17 +49,6 @@ public class JavaClsStructureViewBuilderProvider implements StructureViewBuilder
         PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(language);
         if (factory != null) {
           return factory.getStructureViewBuilder(psiFile);
-        }
-      }
-    }
-
-    //noinspection deprecation
-    for (ContentBasedFileSubstitutor processor : Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME)) {
-      if (processor.isApplicable(project, file)) {
-        final Language language = processor.obtainLanguageForFile(file);
-        if (language != null) {
-          final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(language);
-          if (factory != null) return factory.getStructureViewBuilder(psiFile);
         }
       }
     }

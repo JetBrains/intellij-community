@@ -407,7 +407,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     List<String> filterParameters = ContainerUtil.newArrayList();
 
-    if (filterCollection.getBranchFilter() != null) {
+    if (filterCollection.getBranchFilter() != null && !filterCollection.getBranchFilter().getBranchNames().isEmpty()) {
       GitRepository repository = getRepository(root);
       assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
 

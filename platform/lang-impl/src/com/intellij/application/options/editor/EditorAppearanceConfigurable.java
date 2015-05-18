@@ -64,8 +64,15 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JCheckBox myShowCodeLensInEditorCheckBox;
   private JCheckBox myCbShowIconsInGutter;
   private JCheckBox myShowVerticalIndentGuidesCheckBox;
+  private JCheckBox myUseLCDRendering;
 
   public EditorAppearanceConfigurable() {
+    myAntialiasingInEditorCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myUseLCDRendering.setEnabled(myAntialiasingInEditorCheckBox.isSelected());
+      }
+    });
     myCbBlinkCaret.addActionListener(
     new ActionListener() {
       @Override
@@ -109,6 +116,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myTrailingWhitespacesCheckBox.setSelected(editorSettings.isTrailingWhitespacesShown());
     myShowVerticalIndentGuidesCheckBox.setSelected(editorSettings.isIndentGuidesShown());
     myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
+    myUseLCDRendering.setSelected(UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR);
     myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().SHOW_EDITOR_TOOLTIP);
     myCbShowIconsInGutter.setSelected(DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
 
@@ -147,6 +155,12 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
       uiSettings.ANTIALIASING_IN_EDITOR = myAntialiasingInEditorCheckBox.isSelected();
       uiSettingsModified = true;
     }
+
+    if (uiSettings.USE_LCD_RENDERING_IN_EDITOR != myUseLCDRendering.isSelected()) {
+      uiSettings.USE_LCD_RENDERING_IN_EDITOR = myUseLCDRendering.isSelected();
+      uiSettingsModified = true;
+    }
+
     if (uiSettings.SHOW_EDITOR_TOOLTIP != myShowCodeLensInEditorCheckBox.isSelected()) {
       uiSettings.SHOW_EDITOR_TOOLTIP = myShowCodeLensInEditorCheckBox.isSelected();
       uiSettingsModified = true;
@@ -181,6 +195,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     isModified |= isModified(myCbShowIconsInGutter, DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER);
     isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;
+    isModified |= myUseLCDRendering.isSelected() != UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR;
     isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().SHOW_EDITOR_TOOLTIP;
 
     return isModified;

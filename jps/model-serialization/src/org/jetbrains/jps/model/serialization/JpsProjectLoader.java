@@ -224,22 +224,36 @@ public class JpsProjectLoader extends JpsLoaderBase {
     Runnable timingLog = TimingLog.startActivity("loading modules");
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
-    final Element modules = componentRoot.getChild("modules");
-    List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
 
-    List<Future<Pair<File, Element>>> futureModuleFiles = new ArrayList<Future<Pair<File, Element>>>();
-    for (Element moduleElement : JDOMUtil.getChildren(modules, "module")) {
+    List<File> moduleFiles = new ArrayList<File>();
+    for (Element moduleElement : JDOMUtil.getChildren(componentRoot.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
       final File file = new File(path);
-      if (!file.exists()) {
-        LOG.info("Module '" + FileUtil.getNameWithoutExtension(file) + "' is skipped: " + file.getAbsolutePath() + " doesn't exist");
-        continue;
+      if (file.exists()) {
+        moduleFiles.add(file);
       }
+      else {
+        LOG.info("Module '" + FileUtil.getNameWithoutExtension(file) + "' is skipped: " + file.getAbsolutePath() + " doesn't exist");
+      }
+    }
 
-      futureModuleFiles.add(ourThreadPool.submit(new Callable<Pair<File, Element>>() {
+    List<JpsModule> modules = loadModules(moduleFiles, projectSdkType, myPathVariables);
+    for (JpsModule module : modules) {
+      myProject.addModule(module);
+    }
+    timingLog.run();
+  }
+
+  @NotNull
+  public static List<JpsModule> loadModules(@NotNull List<File> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
+                                            @NotNull final Map<String, String> pathVariables) {
+    List<JpsModule> modules = new ArrayList<JpsModule>();
+    List<Future<Pair<File, Element>>> futureModuleFilesContents = new ArrayList<Future<Pair<File, Element>>>();
+    for (final File file : moduleFiles) {
+      futureModuleFilesContents.add(ourThreadPool.submit(new Callable<Pair<File, Element>>() {
         @Override
         public Pair<File, Element> call() throws Exception {
-          final JpsMacroExpander expander = createModuleMacroExpander(myPathVariables, file);
+          final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
           final Element moduleRoot = loadRootElement(file, expander);
           return Pair.create(file, moduleRoot);
         }
@@ -248,37 +262,39 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
     try {
       final List<String> classpathDirs = new ArrayList<String>();
-      for (Future<Pair<File, Element>> moduleFile : futureModuleFiles) {
+      for (Future<Pair<File, Element>> moduleFile : futureModuleFilesContents) {
         final String classpathDir = moduleFile.get().getSecond().getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
         if (classpathDir != null) {
           classpathDirs.add(classpathDir);
         }
       }
 
-      for (final Future<Pair<File, Element>> futureModuleFile : futureModuleFiles) {
+      List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
+      for (final Future<Pair<File, Element>> futureModuleFile : futureModuleFilesContents) {
         final Pair<File, Element> moduleFile = futureModuleFile.get();
         futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
           @Override
           public JpsModule call() throws Exception {
-            return loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType);
+            return loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables);
           }
         }));
       }
       for (Future<JpsModule> future : futures) {
         JpsModule module = future.get();
         if (module != null) {
-          myProject.addModule(module);
+          modules.add(module);
         }
       }
+      return modules;
     }
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-    timingLog.run();
   }
 
   @Nullable
-  private JpsModule loadModule(@NotNull File file, @NotNull Element moduleRoot, List<String> paths, @Nullable JpsSdkType<?> projectSdkType) {
+  private static JpsModule loadModule(@NotNull File file, @NotNull Element moduleRoot, List<String> paths,
+                                      @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables) {
     String name = FileUtil.getNameWithoutExtension(file);
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
@@ -301,7 +317,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         JpsModuleClasspathSerializer classpathSerializer = extension.getClasspathSerializer();
         if (classpathSerializer != null && classpathSerializer.getClasspathId().equals(classpath)) {
           String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
-          final JpsMacroExpander expander = createModuleMacroExpander(myPathVariables, file);
+          final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
           classpathSerializer.loadClasspath(module, classpathDir, baseModulePath, expander, paths, projectSdkType);
         }
       }

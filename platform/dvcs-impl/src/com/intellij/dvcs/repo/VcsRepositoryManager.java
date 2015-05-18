@@ -85,7 +85,17 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
   }
 
   @Nullable
+  public Repository getRepositoryForRootQuick(@Nullable VirtualFile root) {
+    return getRepositoryForRoot(root, false);
+  }
+
+  @Nullable
   public Repository getRepositoryForRoot(@Nullable VirtualFile root) {
+    return getRepositoryForRoot(root, true);
+  }
+
+  @Nullable
+  private Repository getRepositoryForRoot(@Nullable VirtualFile root, boolean updateIfNeeded) {
     if (root == null) return null;
     Repository result;
     try {
@@ -99,9 +109,9 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
     finally {
       REPO_LOCK.readLock().unlock();
     }
-    // if we didn't find appropriate repository, request update mappings and try again
+    // if we didn't find appropriate repository, request update mappings if needed and try again
     // may be this should not be called  from several places (for example: branch widget updating from edt).
-    if (result == null && ArrayUtil.contains(root, myVcsManager.getAllVersionedRoots())) {
+    if (updateIfNeeded && result == null && ArrayUtil.contains(root, myVcsManager.getAllVersionedRoots())) {
       checkAndUpdateRepositoriesCollection(root);
       try {
         REPO_LOCK.readLock().lock();

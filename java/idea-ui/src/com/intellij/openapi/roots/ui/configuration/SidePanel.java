@@ -16,10 +16,8 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -27,12 +25,11 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -41,9 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import static javax.swing.SwingConstants.CENTER;
-import static javax.swing.SwingConstants.LEFT;
 
 public class SidePanel extends JPanel {
 
@@ -87,21 +81,22 @@ public class SidePanel extends JPanel {
 
       @Override
       public boolean hasSeparatorAboveOf(final Object value) {
-        final int index = myPlaces.indexOf(value);
-        return myIndex2Separator.get(index) != null;
+        return getSeparatorAbove((Place)value) != null;
       }
 
       @Override
       public String getCaptionAboveOf(final Object value) {
-        return myIndex2Separator.get(myPlaces.indexOf(value));
+        return getSeparatorAbove((Place)value);
       }
     };
 
     myList.setCellRenderer(new GroupedItemsListRenderer(descriptor) {
       JPanel myExtraPanel;
-      CountLabel myCountLabel;
+      SidePanelCountLabel myCountLabel;
+      CellRendererPane myValidationParent = new CellRendererPane();
       {
         mySeparatorComponent.setCaptionCentered(false);
+        myList.add(myValidationParent);
       }
 
       @Override
@@ -111,44 +106,7 @@ public class SidePanel extends JPanel {
 
       @Override
       protected SeparatorWithText createSeparator() {
-        return new SeparatorWithText() {
-          @Override
-          protected void paintComponent(Graphics g) {
-            if (Registry.is("ide.new.project.settings")) {
-              final JBColor separatorColor = new JBColor(POPUP_SEPARATOR_FOREGROUND, Gray._80);
-              g.setColor(separatorColor);
-              if ("--".equals(getCaption())) {
-                final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-                final int h = getHeight() / 2;
-                g.drawLine(30, h, getWidth() - 30, h);
-                ((Graphics2D)g).setPaint(new GradientPaint(5, h, ColorUtil.toAlpha(separatorColor, 0), 30, h, separatorColor));
-                g.drawLine(5, h, 30, h);
-                ((Graphics2D)g).setPaint(
-                  new GradientPaint(getWidth() - 5, h, ColorUtil.toAlpha(separatorColor, 0), getWidth() - 30, h, separatorColor));
-                g.drawLine(getWidth() - 5, h, getWidth() - 30, h);
-                config.restore();
-                return;
-              }
-              Rectangle viewR = new Rectangle(0, getVgap(), getWidth() - 1, getHeight() - getVgap() - 1);
-              Rectangle iconR = new Rectangle();
-              Rectangle textR = new Rectangle();
-              String s = SwingUtilities
-                .layoutCompoundLabel(g.getFontMetrics(), getCaption(), null, CENTER,
-                                     LEFT,
-                                     CENTER,
-                                     LEFT,
-                                     viewR, iconR, textR, 0);
-              GraphicsUtil.setupAAPainting(g);
-              g.setColor(new JBColor(Gray._255.withAlpha(80), Gray._0.withAlpha(80)));
-              g.drawString(s, textR.x + 10, textR.y + 1 + g.getFontMetrics().getAscent());
-              g.setColor(new JBColor(new Color(0x5F6D7B), Gray._120));
-              g.drawString(s, textR.x + 10, textR.y + g.getFontMetrics().getAscent());
-            }
-            else {
-              super.paintComponent(g);
-            }
-          }
-        };
+        return new SidePanelSeparator();
       }
 
       @Override
@@ -165,6 +123,7 @@ public class SidePanel extends JPanel {
 
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        layout();
         myCountLabel.setText("");
         final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if ("Problems".equals(descriptor.getTextFor(value))) {
@@ -174,13 +133,21 @@ public class SidePanel extends JPanel {
             myCountLabel.setText(String.valueOf(errorPane.getErrorsCount()));
           }
         }
+        if (UIUtil.getClientProperty(list, ExpandableItemsHandler.EXPANDED_RENDERER) == Boolean.TRUE) {
+          Rectangle bounds = list.getCellBounds(index, index);
+          bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
+          AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);
+          myExtraPanel.setSize((int)myExtraPanel.getPreferredSize().getWidth(), myExtraPanel.getHeight());
+          UIUtil.putClientProperty(myExtraPanel, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+          return myExtraPanel;
+        }
         return component;
       }
 
       @Override
       protected JComponent createItemComponent() {
         myExtraPanel = new NonOpaquePanel(new BorderLayout());
-        myCountLabel = new CountLabel();
+        myCountLabel = new SidePanelCountLabel();
         final JComponent component = super.createItemComponent();
 
         if (Registry.is("ide.new.project.settings")) {
@@ -224,8 +191,25 @@ public class SidePanel extends JPanel {
     repaint();
   }
 
+  public void clear() {
+    myModel.clear();
+    myPlaces.clear();
+    myPlace2Presentation.clear();
+    myIndex2Separator.clear();
+  }
+
+  public void updatePlace(Place place) {
+    int index = myPlaces.indexOf(place);
+    myModel.set(index, place);
+  }
+
   public void addSeparator(String text) {
     myIndex2Separator.put(myPlaces.size(), text);
+  }
+
+  @Nullable
+  public String getSeparatorAbove(final Place place) {
+    return myIndex2Separator.get(myPlaces.indexOf(place));
   }
 
   public Collection<Place> getPlaces() {
@@ -236,50 +220,4 @@ public class SidePanel extends JPanel {
     myList.setSelectedValue(place, true);
   }
 
-  private static class CountLabel extends JLabel {
-    private boolean mySelected;
-
-    public CountLabel() {
-      super();
-      setBorder(new Border() {
-        @Override
-        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-        }
-
-        @Override
-        public Insets getBorderInsets(Component c) {
-          return StringUtil.isEmpty(getText()) ? new Insets(0,0,0,0) : new Insets(2, 6, 2, 6 + 6);
-        }
-
-        @Override
-        public boolean isBorderOpaque() {
-          return false;
-        }
-      });
-      setFont(UIUtil.getListFont().deriveFont(Font.BOLD));
-    }
-
-    public boolean isSelected() {
-      return mySelected;
-    }
-
-    public void setSelected(boolean selected) {
-      mySelected = selected;
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      g.setColor(isSelected() ? UIUtil.getListSelectionBackground() : UIUtil.SIDE_PANEL_BACKGROUND);
-      g.fillRect(0, 0, getWidth(), getHeight());
-      if (StringUtil.isEmpty(getText())) return;
-      final JBColor deepBlue = new JBColor(new Color(0x97A4B2), new Color(92, 98, 113));
-      g.setColor(isSelected() ? Gray._255.withAlpha(UIUtil.isUnderDarcula() ? 100 : 220) : deepBlue);
-      final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      g.fillRoundRect(0, 3, getWidth() - 6 -1, getHeight()-6 , (getHeight() - 6), (getHeight() - 6));
-      config.restore();
-      setForeground(isSelected() ? deepBlue.darker() : UIUtil.getListForeground(true));
-
-      super.paintComponent(g);
-    }
-  }
 }

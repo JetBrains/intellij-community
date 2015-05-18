@@ -17,10 +17,10 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -57,7 +57,7 @@ abstract class AbstractIgnoredFilesHolder implements FileHolder, IgnoredFilesHol
   protected boolean isFileDirty(final VcsDirtyScope scope, final VirtualFile file) {
     if (! file.isValid()) return true;
     final AbstractVcs vcsArr[] = new AbstractVcs[1];
-    if (scope.belongsTo(new FilePathImpl(file), new Consumer<AbstractVcs>() {
+    if (scope.belongsTo(VcsUtil.getFilePath(file), new Consumer<AbstractVcs>() {
       @Override
       public void consume(AbstractVcs vcs) {
         vcsArr[0] = vcs;

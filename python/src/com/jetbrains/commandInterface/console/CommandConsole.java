@@ -18,6 +18,7 @@ package com.jetbrains.commandInterface.console;
 import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.jetbrains.commandInterface.command.Command;
@@ -140,6 +142,8 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
     console.switchToCommandMode();
     console.getComponent(); // For some reason console does not have component until this method is called which leads to some errros.
     console.getConsoleEditor().getSettings().setAdditionalLinesCount(2); // to prevent PY-15583
+    Disposer.register(module.getProject(), console); // To dispose console when project disposes
+    console.addMessageFilter(new UrlFilter());
     return console;
   }
 

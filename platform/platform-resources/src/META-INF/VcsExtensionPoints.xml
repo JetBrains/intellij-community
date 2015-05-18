@@ -59,8 +59,6 @@
     <extensionPoint name="vcschangedetails" interface="com.intellij.openapi.vcs.changes.VcsChangeDetailsProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="vcs.taskHandler" interface="com.intellij.openapi.vcs.VcsTaskHandler" area="IDEA_PROJECT"/>
-    
-    <extensionPoint name="vcs.rootFinder" interface="com.intellij.openapi.vcs.VcsRootFinder" area="IDEA_PROJECT"/>
 
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider"/>

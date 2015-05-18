@@ -94,7 +94,7 @@ class LineFragmentSplitter {
     if (last1 > end1 || last2 > end2) return;
 
     WordBlock block = createBlock(last1, last2, end1, end2);
-    if (DiffIterableUtil.isEmpty(block.offsets)) return;
+    if (block.offsets.isEmpty()) return;
 
     WordBlock lastBlock = ContainerUtil.getLastItem(myResult);
 

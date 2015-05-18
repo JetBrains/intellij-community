@@ -60,7 +60,7 @@ public abstract class PyMultiFileResolveTestCase extends PyResolveTestCase {
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
   }
 
-  private PsiFile prepareFile() {
+  protected PsiFile prepareFile() {
     prepareTestDirectory();
     VirtualFile sourceFile = null;
     for (String ext : new String[]{".py", ".pyx"}) {

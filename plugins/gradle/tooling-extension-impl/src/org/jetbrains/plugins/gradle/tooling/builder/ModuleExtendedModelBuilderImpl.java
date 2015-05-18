@@ -23,6 +23,7 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.bundling.Jar;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
@@ -65,7 +66,17 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     final String moduleVersion = project.getVersion().toString();
     final File buildDir = project.getBuildDir();
 
-    final ModuleExtendedModelImpl moduleVersionModel = new ModuleExtendedModelImpl(moduleName, moduleGroup, moduleVersion, buildDir);
+    String javaSourceCompatibility = null;
+    for (Task task : project.getTasks()) {
+      if (task instanceof JavaCompile) {
+        JavaCompile javaCompile = (JavaCompile)task;
+        javaSourceCompatibility = javaCompile.getSourceCompatibility();
+        if(task.getName().equals("compileJava")) break;
+      }
+    }
+
+    final ModuleExtendedModelImpl moduleVersionModel =
+      new ModuleExtendedModelImpl(moduleName, moduleGroup, moduleVersion, buildDir, javaSourceCompatibility);
 
     final List<File> artifacts = new ArrayList<File>();
     for (Task task : project.getTasks()) {

@@ -1,19 +1,13 @@
-from socket import SHUT_WR
-import sys
-import time
 import traceback
 
-from profiler_protocol_pb2 import ProfilerRequest
-
-
-__author__ = 'traff'
+from _prof_imports import TSerialization
+from _prof_imports import TJSONProtocol
+from _prof_imports import ProfilerRequest
+from _prof_imports import IS_PY3K
 
 from prof_util import ProfDaemonThread
 
 import struct
-
-from pydev_imports import _queue
-import pydevd_vm_type
 
 
 def send_message(sock, message):
@@ -21,7 +15,7 @@ def send_message(sock, message):
         to a socket, prepended by its length packed in 4
         bytes (big endian).
     """
-    s = message.SerializeToString()
+    s = TSerialization.serialize(message, TJSONProtocol.TJSONProtocolFactory())
     packed_len = struct.pack('>L', len(s))
     sock.sendall(packed_len + s)
 
@@ -35,7 +29,8 @@ def get_message(sock, msgtype):
     msg_buf = socket_read_n(sock, msg_len)
 
     msg = msgtype()
-    msg.ParseFromString(msg_buf)
+    TSerialization.deserialize(msg, msg_buf, TJSONProtocol.TJSONProtocolFactory())
+
     return msg
 
 
@@ -44,7 +39,11 @@ def socket_read_n(sock, n):
         Raise RuntimeError if the connection closed before
         n bytes were read.
     """
-    buf = ''
+    if IS_PY3K:
+        buf = bytearray()
+    else:
+        buf = ''
+
     while n > 0:
         data = sock.recv(n)
         if data == '':
@@ -54,56 +53,13 @@ def socket_read_n(sock, n):
     return buf
 
 
-class ProfWriter(ProfDaemonThread):
+class ProfWriter(object):
     """ writer thread writes out the commands in an infinite loop """
     def __init__(self, sock):
-        ProfDaemonThread.__init__(self)
         self.sock = sock
-        self.setName("profiler.Writer")
-        self.messageQueue = _queue.Queue()
-        if pydevd_vm_type.GetVmType() == 'python':
-            self.timeout = 0
-        else:
-            self.timeout = 0.1
 
     def addCommand(self, message):
-        """ message is NetCommand """
-        if not self.killReceived: #we don't take new data after everybody die
-            self.messageQueue.put(message)
-
-    def OnRun(self):
-        """ just loop and write responses """
-
-        get_has_timeout = sys.hexversion >= 0x02030000 # 2.3 onwards have it.
-        try:
-            while True:
-                try:
-                    try:
-                        if get_has_timeout:
-                            message = self.messageQueue.get(1, 0.1)
-                        else:
-                            time.sleep(.01)
-                            message = self.messageQueue.get(0)
-                    except _queue.Empty:
-                        if self.killReceived:
-                            try:
-                                self.sock.shutdown(SHUT_WR)
-                                self.sock.close()
-                            except:
-                                pass
-
-                            return #break if queue is empty and killReceived
-                        else:
-                            continue
-                except:
-                    return
-
-                send_message(self.sock, message)
-
-                time.sleep(self.timeout)
-        except Exception:
-            traceback.print_exc()
-
+        send_message(self.sock, message)
 
 class ProfReader(ProfDaemonThread):
     """ reader thread reads and dispatches commands in an infinite loop """

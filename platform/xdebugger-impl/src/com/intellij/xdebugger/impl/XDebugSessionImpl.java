@@ -287,6 +287,10 @@ public class XDebugSessionImpl implements XDebugSession {
     return mySessionTab;
   }
 
+  public void reset() {
+    breakpointsInitialized = false;
+  }
+
   @Override
   public void initBreakpoints() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -298,10 +302,14 @@ public class XDebugSessionImpl implements XDebugSession {
     disableSlaveBreakpoints(dependentBreakpointManager);
     processAllBreakpoints(true, false);
 
-    myBreakpointListener = new MyBreakpointListener();
-    breakpointManager.addBreakpointListener(myBreakpointListener);
-    myDependentBreakpointListener = new MyDependentBreakpointListener();
-    dependentBreakpointManager.addListener(myDependentBreakpointListener);
+    if (myBreakpointListener == null) {
+      myBreakpointListener = new MyBreakpointListener();
+      breakpointManager.addBreakpointListener(myBreakpointListener);
+    }
+    if (myDependentBreakpointListener == null) {
+      myDependentBreakpointListener = new MyDependentBreakpointListener();
+      dependentBreakpointManager.addListener(myDependentBreakpointListener);
+    }
   }
 
   @Override
@@ -543,7 +551,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebugProcess.resume();
   }
 
-  private void doResume() {
+  public void doResume() {
     if (!myPaused.getAndSet(false)) return;
 
     myDispatcher.getMulticaster().beforeSessionResume();

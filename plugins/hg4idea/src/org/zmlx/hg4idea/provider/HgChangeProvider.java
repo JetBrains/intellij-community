@@ -111,7 +111,7 @@ public class HgChangeProvider implements ChangeProvider {
     VirtualFile virtualSubrepoFile = VfsUtil.findFileByIoFile(file, false);
     HgRepository subrepo = HgUtil.getRepositoryForFile(myProject, virtualSubrepoFile);
     if (subrepo != null && !info.getHash().asString().equals(subrepo.getCurrentRevision())) {
-      return new HgChange(new HgFile(hgRepo.getRoot(), new FilePathImpl(virtualSubrepoFile)), HgFileStatusEnum.MODIFIED);
+      return new HgChange(new HgFile(hgRepo.getRoot(), VcsUtil.getFilePath(virtualSubrepoFile)), HgFileStatusEnum.MODIFIED);
     }
     return null;
   }

@@ -479,6 +479,17 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public static void assertOrderedEquals(@NotNull int[] actual, @NotNull int[] expected) {
+    if (actual.length != expected.length) {
+      fail("Expected size: "+expected.length+"; actual: "+actual.length+"\nexpected: "+Arrays.toString(expected)+"\nactual  : "+Arrays.toString(actual));
+    }
+    for (int i = 0; i < actual.length; i++) {
+      int a = actual[i];
+      int e = expected[i];
+      assertEquals("not equals at index: "+i, e, a);
+    }
+  }
+
   public static <T> void assertOrderedEquals(final String errorMsg, @NotNull Iterable<T> actual, @NotNull T... expected) {
     Assert.assertNotNull(actual);
     Assert.assertNotNull(expected);

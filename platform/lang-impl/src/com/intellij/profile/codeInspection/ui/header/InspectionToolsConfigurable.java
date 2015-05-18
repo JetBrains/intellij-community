@@ -81,7 +81,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   public static final String DISPLAY_NAME = "Inspections";
   private static final String HEADER_TITLE = "Profile:";
 
-  private static final Logger LOG = Logger.getInstance("#" + InspectionToolsConfigurable.class.getName());
+  private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
   protected final InspectionProfileManager myProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private final CardLayout myLayout = new CardLayout();
@@ -111,7 +111,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     myProfiles = new ProfilesConfigurableComboBox(new ListCellRendererWrapper<Profile>() {
       @Override
       public void customize(final JList list, final Profile value, final int index, final boolean selected, final boolean hasFocus) {
-        final SingleInspectionProfilePanel singleInspectionProfilePanel = myPanels.get(value);
+        final SingleInspectionProfilePanel singleInspectionProfilePanel = getProfilePanel(value);
+        LOG.assertTrue(singleInspectionProfilePanel != null,
+                       String.format("No panel for profile (name = %s, manager class = %s, is modified = %s) found",
+                                     value.getName(),
+                                     value.getProfileManager().getClass(),
+                                     ((InspectionProfileImpl) value).isChanged()));
         final boolean isShared = singleInspectionProfilePanel.isProfileShared();
         setIcon(isShared ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
         setText(singleInspectionProfilePanel.getCurrentProfileName());
@@ -664,6 +669,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   @Override
   public JComponent getPreferredFocusedComponent() {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
-    return getProfilePanel(inspectionProfile).getPreferredFocusedComponent();
+    SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
+    return panel == null ? null : panel.getPreferredFocusedComponent();
   }
 }

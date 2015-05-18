@@ -347,6 +347,7 @@ public class PyNames {
     .putAll(BuiltinMethods)
     .put("__nonzero__", _only_self_descr)
     .put("__div__", _self_other_descr)
+    .put(NEXT, _only_self_descr)
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
@@ -355,6 +356,7 @@ public class PyNames {
     .put("__bytes__", _only_self_descr)
     .put("__format__", new BuiltinDescription("(self, format_spec)"))
     .put("__round__", new BuiltinDescription("(self, n=None)"))
+    .put(DUNDER_NEXT, _only_self_descr)
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> PY35_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()

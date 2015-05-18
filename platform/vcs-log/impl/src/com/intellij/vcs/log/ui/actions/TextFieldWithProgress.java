@@ -15,26 +15,19 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
+import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public abstract class TextFieldWithProgress extends JPanel {
   @NotNull private final TextFieldWithAutoCompletion<String> myTextField;
@@ -58,7 +51,10 @@ public abstract class TextFieldWithProgress extends JPanel {
         protected EditorEx createEditor() {
           // spell check is not needed
           EditorEx editor = super.createEditor();
-          SpellCheckingEditorCustomization.getInstance(false).customize(editor);
+          EditorCustomization customization = SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+          if (customization != null) {
+            customization.customize(editor);
+          }
           return editor;
         }
 

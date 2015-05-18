@@ -54,6 +54,7 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     editor("Virtual Space: " + messageApp("checkbox.allow.placement.of.caret.inside.tabs"), "IS_CARET_INSIDE_TABS"),
     editor("Virtual Space: " + messageApp("checkbox.show.virtual.space.at.file.bottom"), "ADDITIONAL_PAGE_AT_BOTTOM"),
     editorUI("Appearance: " + messageIde("checkbox.use.antialiased.font.in.editor"), "ANTIALIASING_IN_EDITOR"),
+    editorUI("Appearance: " + messageIde("checkbox.use.lcd.rendered.font.in.editor"), "USE_LCD_RENDERING_IN_EDITOR"),
     editorApp("Appearance: Caret blinking", "IS_CARET_BLINKING"),
     editorApp("Appearance: " + messageApp("checkbox.use.block.caret"), "IS_BLOCK_CURSOR"),
     editorApp("Appearance: Show right margin", "IS_RIGHT_MARGIN_SHOWN"),

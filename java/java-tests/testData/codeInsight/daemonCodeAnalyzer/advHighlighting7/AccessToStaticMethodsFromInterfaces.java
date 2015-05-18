@@ -8,7 +8,7 @@ class Test {
 
   {
     <error descr="Static interface method invocations are not supported at this language level">I.foo();</error>
-    <error descr="Static interface method invocations are not supported at this language level">IImpl.foo();</error>
-    <error descr="Static interface method invocations are not supported at this language level">I2.foo();</error>
+    IImpl.<error descr="Static interface method invocations are not supported at this language level">foo</error>();
+    I2.<error descr="Static interface method invocations are not supported at this language level">foo</error>();
   }
 }

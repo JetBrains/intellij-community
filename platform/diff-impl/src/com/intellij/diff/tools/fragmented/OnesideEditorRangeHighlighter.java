@@ -103,6 +103,11 @@ public class OnesideEditorRangeHighlighter {
     });
   }
 
+  public static void erase(@Nullable Project project, @NotNull Document document) {
+    MarkupModel model = DocumentMarkupModel.forDocument(document, project, true);
+    model.removeAllHighlighters();
+  }
+
   public void apply(@Nullable Project project, @NotNull Document document) {
     MarkupModel model = DocumentMarkupModel.forDocument(document, project, true);
 

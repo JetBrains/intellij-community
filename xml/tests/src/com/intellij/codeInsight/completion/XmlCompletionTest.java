@@ -729,5 +729,27 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.completeBasic();
     assertTrue(myFixture.getLookupElementStrings().size() > 3); // all standard schemas actually
   }
+
+  public void testRootTagCompletion() throws Exception {
+    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
+    try {
+      myFixture.configureByText("foo.xml", "<schem<caret>");
+      myFixture.completeBasic();
+      myFixture.type('\n');
+      myFixture.checkResult("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\"<caret>");
+    }
+    finally {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old;
+    }
+  }
+
+  public void testPi() throws Exception {
+    myFixture.configureByText("foo.xml", "<<caret>");
+    myFixture.completeBasic();
+    myFixture.type('?');
+    myFixture.type('\n');
+    myFixture.checkResult("<?xml version=\"1.0\" encoding=\"<caret>\" ?>");
+  }
 }
 

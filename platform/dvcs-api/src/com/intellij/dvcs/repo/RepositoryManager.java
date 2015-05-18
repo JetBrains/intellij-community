@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * RepositoryManager initializes and stores {@link Repository repositories} for Git or Hgroots defined in the project.
+ * RepositoryManager initializes and stores {@link Repository repositories} for Git or HgRoots defined in the project.
  *
  * @author Kirill Likhodedov
  */

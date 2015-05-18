@@ -19,15 +19,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.util.List;
@@ -62,7 +61,7 @@ public class SvnEditCommitMessageFromFileHistoryAction extends AnAction {
         if (listener != null) {
           listener.consume(newMessage);
         }
-        ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache().editCached(new FilePathImpl(revisionVirtualFile), vcsKey,
+        ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache().editCached(VcsUtil.getFilePath(revisionVirtualFile), vcsKey,
           new Consumer<List<VcsFileRevision>>() {
             @Override
             public void consume(List<VcsFileRevision> revisions) {

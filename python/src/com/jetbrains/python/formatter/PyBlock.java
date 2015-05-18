@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -37,6 +38,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
+import static com.jetbrains.python.formatter.PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
 
 /**
  * @author yole
@@ -83,6 +87,7 @@ public class PyBlock implements ASTBlock {
   private final PyBlockContext myContext;
   private List<PyBlock> mySubBlocks = null;
   private Alignment myChildAlignment;
+  private final Alignment myDictAlignment;
   private final boolean myEmptySequence;
 
   public PyBlock(final PyBlock parent,
@@ -98,6 +103,8 @@ public class PyBlock implements ASTBlock {
     myWrap = wrap;
     myContext = context;
     myEmptySequence = isEmptySequence(node);
+
+    myDictAlignment = node.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION ? Alignment.createAlignment(true) : null;
   }
 
   @NotNull
@@ -147,7 +154,10 @@ public class PyBlock implements ASTBlock {
 
   private PyBlock buildSubBlock(ASTNode child) {
     final IElementType parentType = myNode.getElementType();
-    final IElementType grandparentType = myNode.getTreeParent() == null ? null : myNode.getTreeParent().getElementType();
+
+    final ASTNode grandParentNode = myNode.getTreeParent();
+    final IElementType grandparentType = grandParentNode == null ? null : grandParentNode.getElementType();
+
     final IElementType childType = child.getElementType();
     Wrap wrap = null;
     Indent childIndent = Indent.getNoneIndent();
@@ -216,6 +226,7 @@ public class PyBlock implements ASTBlock {
       }
     }
 
+    PyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(child.getPsi().getProject()).getCustomSettings(PyCodeStyleSettings.class);
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACKET || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
@@ -241,7 +252,7 @@ public class PyBlock implements ASTBlock {
     else if (parentType == PyElementTypes.FROM_IMPORT_STATEMENT) {
       if (myNode.findChildByType(PyTokenTypes.LPAR) != null) {
         if (childType == PyElementTypes.IMPORT_ELEMENT) {
-          if (myContext.getPySettings().ALIGN_MULTILINE_IMPORTS) {
+          if (settings.ALIGN_MULTILINE_IMPORTS) {
             childAlignment = getAlignmentForChildren();
           }
           else {
@@ -330,10 +341,25 @@ public class PyBlock implements ASTBlock {
         }
       }
     }
-
     if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2) && child.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
       // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();
+    }
+
+    if (settings.DICT_ALIGNMENT == DICT_ALIGNMENT_ON_VALUE) {
+      if (isDictLiteralPropertyValue(child) && !ourListElementTypes.contains(childType)) {
+        childAlignment = myParent.myDictAlignment;
+      }
+      else if (isDictLiteralPropertyValue(myNode) &&
+               ourListElementTypes.contains(parentType) &&
+               PyTokenTypes.OPEN_BRACES.contains(childType)) {
+        childAlignment = myParent.myParent.myDictAlignment;
+      }
+    }
+    else if (myContext.getPySettings().DICT_ALIGNMENT == DICT_ALIGNMENT_ON_COLON) {
+      if (isInsideDictLiteralKeyValue(child) && childType == PyTokenTypes.COLON) {
+        childAlignment = myParent.myDictAlignment;
+      }
     }
 
     ASTNode prev = child.getTreePrev();
@@ -348,6 +374,23 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  private static boolean isDictLiteralPropertyValue(@NotNull ASTNode node) {
+    return isInsideDictLiteralKeyValue(node) && node.getTreeParent().getPsi(PyKeyValueExpression.class).getValue() == node.getPsi();
+  }
+
+  private static boolean isInsideDictLiteralKeyValue(@NotNull ASTNode node) {
+    final ASTNode nodeParent = node.getTreeParent();
+    if (nodeParent == null) {
+      return false;
+    }
+    final ASTNode nodeGrandParent = nodeParent.getTreeParent();
+    if (nodeGrandParent == null) {
+      return false;
+    }
+    return nodeParent.getElementType() == PyElementTypes.KEY_VALUE_EXPRESSION &&
+           nodeGrandParent.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION;
   }
 
   private static boolean isEmptySequence(@NotNull ASTNode node) {
@@ -406,6 +449,10 @@ public class PyBlock implements ASTBlock {
         else if (firstItem instanceof PyKeywordArgument) {
           final PyExpression valueExpression = ((PyKeywordArgument)firstItem).getValueExpression();
           return valueExpression != null && hasHangingIndent(valueExpression);
+        }
+        else if (firstItem instanceof PyKeyValueExpression) {
+          final PyExpression value = ((PyKeyValueExpression)firstItem).getValue();
+          return value != null && hasHangingIndent(value);
         }
         return hasHangingIndent(firstItem);
       }

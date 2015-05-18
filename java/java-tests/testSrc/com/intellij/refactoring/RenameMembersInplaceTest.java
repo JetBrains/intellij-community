@@ -16,7 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -87,7 +87,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
   public void testNameSuggestion() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
-    final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.getInstance().getAllAccepted());
+    final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
     assertNotNull(element);
 
     final Set<String> result = new LinkedHashSet<String>();
@@ -113,7 +113,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
   private void doTestInplaceRename(final String newName) throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
-    final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.getInstance().getAllAccepted());
+    final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
     assertNotNull(element);
 
     CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, getEditor(), element);

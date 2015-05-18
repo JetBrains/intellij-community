@@ -125,18 +125,30 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
 
     List<String> roots = getPythonRoots();
 
-    if (roots.size() == 0) {
-      String msg = testName +
-                   ": environments are not defined. Skipping. \nSpecify either " +
-                   PYCHARM_PYTHON_ENVS +
-                   " or " +
-                   PYCHARM_PYTHON_VIRTUAL_ENVS +
-                   " environment variable.";
-      LOG.warn(msg);
-      System.out.println(msg);
-      return;
-    }
-
+    /**
+     * <p>
+     * {@link org.junit.AssumptionViolatedException} here means this test must be <strong>skipped</strong>.
+     * TeamCity supports this (if not you should create and issue about that).
+     * Idea does not support it for JUnit 3, while JUnit 4 must be supported.
+     * </p>
+     *<p>
+     * It this error brakes your test, please <strong>do not</strong> revert. Instead, do the following:
+     * <ol>
+     *   <li>Make sure {@link com.jetbrains.env.python} tests are <strong>excluded</strong> from your configuration (unless you are
+     *   PyCharm developer)</li>
+     *   <li>Check that your environment supports {@link AssumptionViolatedException}.
+     *   JUnit 4 was created about 10 years ago, so fixing environment is much better approach than hacky "return;" here.
+     *   </li>
+     * </ol>
+     *</p>
+     */
+    Assume.assumeFalse(testName +
+                       ": environments are not defined. Skipping. \nSpecify either " +
+                       PYCHARM_PYTHON_ENVS +
+                       " or " +
+                       PYCHARM_PYTHON_VIRTUAL_ENVS +
+                       " environment variable.",
+                       roots.isEmpty());
     doRunTests(testTask, testName, roots);
   }
 
@@ -179,7 +191,8 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
         for (File f : virtualenvs) {
           result.add(f.getAbsolutePath());
         }
-      } else {
+      }
+      else {
         LOG.error(root + " is not a directory of doesn't exist");
       }
     }

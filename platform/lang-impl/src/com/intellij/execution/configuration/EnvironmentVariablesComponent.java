@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,11 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EnvironmentUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.ChangeListener;
-import java.io.File;
 import java.util.Map;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> implements UserActivityProviderComponent {
@@ -111,23 +108,6 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
       envsElement.addContent(envElement);
     }
     element.addContent(envsElement);
-  }
-
-  /**
-   * To be removed in IDEA 15
-   * @deprecated use {@link com.intellij.util.EnvironmentUtil#inlineParentOccurrences(java.util.Map)} instead
-   */
-  @Deprecated
-  public static void inlineParentOccurrences(final Map<String, String> envs) {
-    EnvironmentUtil.inlineParentOccurrences(envs);
-  }
-
-  /**
-   * To be removed in IDEA 15
-   */
-  @Deprecated
-  public static boolean containsEnvKeySubstitution(final String envKey, final String val) {
-    return ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1;
   }
 
   @Override

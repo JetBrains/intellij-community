@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,9 +130,6 @@ public class SystemInfo extends SystemInfoRt {
   public static boolean hasXdgMime() {
     return ourHasXdgOpen.getValue();
   }
-
-  /** @deprecated useless (to remove in IDEA 14) */
-  public static final boolean isIntelMac = isMac && "i386".equals(OS_ARCH);
 
   public static final boolean isMacOSTiger = isMac && isOsVersionAtLeast("10.4");
   public static final boolean isMacOSLeopard = isMac && isOsVersionAtLeast("10.5");

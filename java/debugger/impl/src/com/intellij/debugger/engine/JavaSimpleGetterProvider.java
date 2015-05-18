@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,18 @@ package com.intellij.debugger.engine;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Nikolay.Tropin
  */
-public class JavaSimpleGetterProvider implements SimpleGetterProvider {
+public class JavaSimpleGetterProvider implements SimplePropertyGetterProvider {
   @Override
-  public boolean isSimpleGetter(PsiMethod method) {
+  public boolean isInsideSimpleGetter(@NotNull PsiElement element) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    if (method == null) return false;
+
     final PsiCodeBlock body = method.getBody();
     if(body == null){
       return false;

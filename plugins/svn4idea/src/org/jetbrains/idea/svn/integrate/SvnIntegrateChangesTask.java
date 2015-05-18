@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.update.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -65,7 +66,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private UpdateEventHandler myHandler;
   private IMerger myMerger;
   private ResolveWorker myResolveWorker;
-  private FilePathImpl myMergeTarget;
+  private FilePath myMergeTarget;
   private final String myTitle;
   private boolean myDryRun;
 
@@ -264,7 +265,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     if (mergeInfoHolder != null) {
       final Status svnStatus = SvnUtil.getStatus(myVcs, mergeInfoHolder);
       if (svnStatus != null && svnStatus.isProperty(StatusType.STATUS_MODIFIED)) {
-        myMergeTarget = FilePathImpl.create(mergeInfoHolder, mergeInfoHolder.isDirectory());
+        myMergeTarget = VcsUtil.getFilePath(mergeInfoHolder, mergeInfoHolder.isDirectory());
       }
     }
   }

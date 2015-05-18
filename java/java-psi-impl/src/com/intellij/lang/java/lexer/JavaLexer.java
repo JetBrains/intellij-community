@@ -72,7 +72,6 @@ public class JavaLexer extends LexerBase {
   @Override
   public final IElementType getTokenType() {
     if (myTokenType == null) _locateToken();
-
     return myTokenType;
   }
 
@@ -102,7 +101,7 @@ public class JavaLexer extends LexerBase {
 
     myBufferIndex = myTokenEndOffset;
 
-    final char c = myBufferArray != null ? myBufferArray[myBufferIndex]:myBuffer.charAt(myBufferIndex);
+    char c = myBufferArray != null ? myBufferArray[myBufferIndex] : myBuffer.charAt(myBufferIndex);
     switch (c) {
       case ' ':
       case '\t':
@@ -158,17 +157,18 @@ public class JavaLexer extends LexerBase {
     }
   }
 
-  private int getWhitespaces(int pos) {
-    if (pos >= myBufferEndOffset) return myBufferEndOffset;
-    final CharSequence lBuffer = myBuffer;
-    final char[] lBufferArray = myBufferArray;
+  private int getWhitespaces(int offset) {
+    if (offset >= myBufferEndOffset) {
+      return myBufferEndOffset;
+    }
 
-    char c = lBufferArray != null ? lBufferArray[pos]:lBuffer.charAt(pos);
+    int pos = offset;
+    char c = myBufferArray != null ? myBufferArray[pos] : myBuffer.charAt(pos);
 
     while (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f') {
       pos++;
       if (pos == myBufferEndOffset) return pos;
-      c = lBufferArray != null ? lBufferArray[pos]:lBuffer.charAt(pos);
+      c = myBufferArray != null ? myBufferArray[pos] : myBuffer.charAt(pos);
     }
 
     return pos;
@@ -187,29 +187,28 @@ public class JavaLexer extends LexerBase {
   }
 
   private int getClosingParenthesis(int offset, char c) {
-    int pos = offset;
-    final int lBufferEnd = myBufferEndOffset;
-    if (pos >= lBufferEnd) return lBufferEnd;
+    if (offset >= myBufferEndOffset) {
+      return myBufferEndOffset;
+    }
 
-    final CharSequence lBuffer = myBuffer;
-    final char[] lBufferArray = myBufferArray;
-    char cur = lBufferArray != null ? lBufferArray[pos]:lBuffer.charAt(pos);
+    int pos = offset;
+    char cur = myBufferArray != null ? myBufferArray[pos] : myBuffer.charAt(pos);
 
     while (true) {
       while (cur != c && cur != '\n' && cur != '\r' && cur != '\\') {
         pos++;
-        if (pos >= lBufferEnd) return lBufferEnd;
-        cur = lBufferArray != null ? lBufferArray[pos]:lBuffer.charAt(pos);
+        if (pos >= myBufferEndOffset) return myBufferEndOffset;
+        cur = myBufferArray != null ? myBufferArray[pos] : myBuffer.charAt(pos);
       }
 
       if (cur == '\\') {
         pos++;
-        if (pos >= lBufferEnd) return lBufferEnd;
-        cur = lBufferArray != null ? lBufferArray[pos]:lBuffer.charAt(pos);
+        if (pos >= myBufferEndOffset) return myBufferEndOffset;
+        cur = myBufferArray != null ? myBufferArray[pos] : myBuffer.charAt(pos);
         if (cur == '\n' || cur == '\r') continue;
         pos++;
-        if (pos >= lBufferEnd) return lBufferEnd;
-        cur = lBufferArray != null ? lBufferArray[pos]:lBuffer.charAt(pos);
+        if (pos >= myBufferEndOffset) return myBufferEndOffset;
+        cur = myBufferArray != null ? myBufferArray[pos] : myBuffer.charAt(pos);
       }
       else if (cur == c) {
         break;
@@ -226,14 +225,9 @@ public class JavaLexer extends LexerBase {
   private int getClosingComment(int offset) {
     int pos = offset;
 
-    final int lBufferEnd = myBufferEndOffset;
-    final CharSequence lBuffer = myBuffer;
-    final char[] lBufferArray = myBufferArray;
-
-    while (pos < lBufferEnd - 1) {
-      final char c = lBufferArray != null ? lBufferArray[pos]:lBuffer.charAt(pos);
-
-      if (c == '*' && (lBufferArray != null ? lBufferArray[pos + 1]:lBuffer.charAt(pos + 1)) == '/') {
+    while (pos < myBufferEndOffset - 1) {
+      char c = myBufferArray != null ? myBufferArray[pos] : myBuffer.charAt(pos);
+      if (c == '*' && (myBufferArray != null ? myBufferArray[pos + 1] : myBuffer.charAt(pos + 1)) == '/') {
         break;
       }
       pos++;
@@ -244,12 +238,9 @@ public class JavaLexer extends LexerBase {
 
   private int getLineTerminator(int offset) {
     int pos = offset;
-    final int lBufferEnd = myBufferEndOffset;
-    final CharSequence lBuffer = myBuffer;
-    final char[] lBufferArray = myBufferArray;
 
-    while (pos < lBufferEnd) {
-      final char c = lBufferArray != null ? lBufferArray[pos]:lBuffer.charAt(pos);
+    while (pos < myBufferEndOffset) {
+      char c = myBufferArray != null ? myBufferArray[pos] : myBuffer.charAt(pos);
       if (c == '\r' || c == '\n') break;
       pos++;
     }

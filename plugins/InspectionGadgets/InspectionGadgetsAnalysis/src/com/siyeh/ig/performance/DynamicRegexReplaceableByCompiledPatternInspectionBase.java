@@ -16,8 +16,10 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -124,7 +126,14 @@ public class DynamicRegexReplaceableByCompiledPatternInspectionBase extends Base
         return false;
       }
       final String className = containingClass.getQualifiedName();
-      return CommonClassNames.JAVA_LANG_STRING.equals(className);
+      if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
+        return false;
+      }
+      if (Extensions.getRootArea().hasExtensionPoint(AllowedApiFilterExtension.EP_NAME.getName())) {
+        //todo[nik] remove this condition when the extension point will be registered in java-analysis-impl module
+        return AllowedApiFilterExtension.isClassAllowed("java.util.regex.Pattern", expression);
+      }
+      return true;
     }
 
     private boolean isOptimizedPattern(String regex) {

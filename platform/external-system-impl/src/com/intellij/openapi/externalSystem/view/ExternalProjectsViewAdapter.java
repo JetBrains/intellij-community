@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.InputEvent;
 import java.util.List;
 
 /**
@@ -89,5 +90,15 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   @Override
   public ProjectSystemId getSystemId() {
     return delegate.getSystemId();
+  }
+
+  @Override
+  public void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
+    delegate.handleDoubleClickOrEnter(node, actionId, inputEvent);
+  }
+
+  @Override
+  public void addListener(@NotNull Listener listener) {
+    delegate.addListener(listener);
   }
 }

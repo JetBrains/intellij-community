@@ -58,14 +58,8 @@ public class PyAttachToProcessAction extends AnAction {
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     Module module = e.getData(LangDataKeys.MODULE);
 
-    Sdk sdk = PythonSdkType.findPythonSdk(module);
+    Sdk sdk = PythonSdkType.findLocalCPython(module);
 
-    if (sdk == null) {
-      for (Sdk s : PythonSdkType.getAllSdks()) {
-        sdk = s;
-        break;
-      }
-    }
     final SelectFromListDialog selectDialog =
       new SelectFromListDialog(project, pythonProcessesList(), new SelectFromListDialog.ToStringAspect() {
         public String getToStirng(Object obj) {

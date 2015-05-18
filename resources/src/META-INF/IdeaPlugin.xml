@@ -141,6 +141,9 @@
     <extensionPoint name="debugger.simpleGetterProvider"
                     interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
 
+    <extensionPoint name="debugger.simplePropertyGetterProvider"
+                    interface="com.intellij.debugger.engine.SimplePropertyGetterProvider"/>
+
     <extensionPoint name="debugger.syntheticProvider"
                     interface="com.intellij.debugger.engine.SyntheticTypeComponentProvider"/>
 
@@ -172,7 +175,6 @@
 
     <extensionPoint name="unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport"/>
 
-    <extensionPoint name="clsStubBuilderFactory" interface="com.intellij.psi.impl.compiled.ClsStubBuilderFactory"/>
     <extensionPoint name="javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider"/>
 
     <extensionPoint name="importFilter" interface="com.intellij.codeInsight.ImportFilter"/>
@@ -269,8 +271,6 @@
     <!-- deprecated API -->
     <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint name="psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy"/>
-    <!--suppress DeprecatedClassUsageInspection -->
-    <extensionPoint name="psi.clsDecompiledFileProvider" interface="com.intellij.psi.ClsFileDecompiledPsiFileProvider"/>
 
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
 
@@ -286,7 +286,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <lang.syntaxHighlighterFactory key="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
 
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
@@ -450,6 +450,9 @@
 
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl"/>
+
+    <applicationService serviceInterface="com.intellij.psi.util.JavaClassSupers"
+                        serviceImplementation="com.intellij.psi.impl.JavaClassSupersImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.JavaVersionService"
                         serviceImplementation="com.intellij.openapi.projectRoots.JavaVersionServiceImpl"/>
@@ -1130,9 +1133,6 @@
 
     <filetype.decompiler filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
     <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
-    <!--suppress DeprecatedClassUsageInspection -->
-    <applicationService serviceInterface="com.intellij.psi.impl.compiled.ClassFileDecompiler$PlatformDecompiler"
-                        serviceImplementation="com.intellij.psi.impl.compiled.DeprecatedClassFileDecompiler"/>
 
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.ReferenceListWeigher" id="referenceList"
              order="before samePsiMember"/>
@@ -1364,10 +1364,10 @@
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JavaIndexPatternBuilder"/>
     <indexPatternBuilder implementation="com.intellij.psi.impl.search.JspIndexPatternBuilder"/>
 
-    <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtilBase"
-                        serviceImplementation="com.intellij.codeInsight.TargetElementUtilBase"/>
-    <targetElementUtilExtender implementation="com.intellij.codeInsight.TargetElementUtil"/>
-    <targetElementEvaluator language="JAVA" implementationClass="com.intellij.codeInsight.TargetElementUtil"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
+                        serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
+    <targetElementUtilExtender implementation="com.intellij.codeInsight.JavaTargetElementEvaluator"/>
+    <targetElementEvaluator language="JAVA" implementationClass="com.intellij.codeInsight.JavaTargetElementEvaluator"/>
 
     <gotoClassContributor implementation="com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor"/>
@@ -1517,16 +1517,17 @@
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType"/>
     <debugger.jvmSmartStepIntoHandler implementation="com.intellij.debugger.actions.JavaSmartStepIntoHandler"/>
-    <debugger.simpleGetterProvider implementation="com.intellij.debugger.engine.JavaSimpleGetterProvider"/>
+    <debugger.simplePropertyGetterProvider implementation="com.intellij.debugger.engine.JavaSimpleGetterProvider"/>
     <debugger.syntheticProvider implementation="com.intellij.debugger.engine.DefaultSyntheticProvider"/>
     <debugger.sourcePositionProvider implementation="com.intellij.debugger.engine.DefaultSourcePositionProvider" order="last"/>
 
-    <debugger.nodeRenderer implementation="com.intellij.debugger.settings.ColorObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.settings.ImageObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.settings.IconObjectRenderer"/>
-    <debugger.nodeRenderer implementation="com.intellij.debugger.settings.GraphicsObjectRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ImageObjectRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.IconObjectRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.GraphicsObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.BinaryRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.TimestampRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.FileObjectRenderer"/>
 
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.deployment.debug.JavaDebuggerLauncher"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.deployment.debug.JavaDebuggerLauncherImpl"/>

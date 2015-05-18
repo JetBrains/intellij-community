@@ -85,14 +85,7 @@ class XsContentDFA extends XmlContentDFA {
   public XsContentDFA(@NotNull XSElementDeclaration decl, final XmlTag parentTag) {
     XSComplexTypeDecl definition = (XSComplexTypeDecl)decl.getTypeDefinition();
     myContentModel = definition.getContentModel(new CMBuilder(new CMNodeFactory()));
-    final XSGrammarBucket bucket = new XSGrammarBucket();
-    myHandler = new SubstitutionGroupHandler(new XSElementDeclHelper() {
-          @Override
-          public XSElementDecl getGlobalElementDecl(QName name) {
-            SchemaGrammar grammar = bucket.getGrammar(name.uri);
-            return grammar == null ? null : grammar.getGlobalElementDecl(name.localpart, name.prefix);
-          }
-        });
+    myHandler = new SubstitutionGroupHandler(new MyXSElementDeclHelper());
     myState = myContentModel.startContentModel();
     myElementDescriptors = ApplicationManager.getApplication().runReadAction(new Computable<XmlElementDescriptor[]>() {
 
@@ -147,13 +140,7 @@ class XsContentDFA extends XmlContentDFA {
     }
     Collections.reverse(ancestors);
     XSElementDeclaration declaration = null;
-    final XSGrammarBucket bucket = new XSGrammarBucket();
-    SubstitutionGroupHandler fSubGroupHandler = new SubstitutionGroupHandler(new XSElementDeclHelper() {
-              @Override
-              public XSElementDecl getGlobalElementDecl(QName name) {
-                return bucket.getGrammar(name.uri).getGlobalElementDecl(name.localpart, name.prefix);
-              }
-            });
+    SubstitutionGroupHandler fSubGroupHandler = new SubstitutionGroupHandler(new MyXSElementDeclHelper());
     CMBuilder cmBuilder = new CMBuilder(new CMNodeFactory());
     for (XmlTag ancestor : ancestors) {
       if (declaration == null) {
@@ -223,5 +210,15 @@ class XsContentDFA extends XmlContentDFA {
         return (XSGrammar)grammar;
       }
     }, new XSGrammar[0]));
+  }
+
+  private static class MyXSElementDeclHelper implements XSElementDeclHelper {
+    private final XSGrammarBucket myBucket = new XSGrammarBucket();
+
+    @Override
+    public XSElementDecl getGlobalElementDecl(QName name) {
+      SchemaGrammar grammar = myBucket.getGrammar(name.uri);
+      return grammar == null ? null : grammar.getGlobalElementDecl(name.localpart, name.prefix);
+    }
   }
 }

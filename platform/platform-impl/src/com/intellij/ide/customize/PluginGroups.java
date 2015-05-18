@@ -36,6 +36,8 @@ import java.util.*;
 public class PluginGroups {
   static final String CORE = "Core";
   private static final int MAX_DESCR_LENGTH = 55;
+  
+  public static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
 
   final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<String, Pair<Icon, List<String>>>();
   final Map<String, String> myFeaturedPlugins = new LinkedHashMap<String, String>();
@@ -202,7 +204,7 @@ public class PluginGroups {
   }
 
   protected static void addVimPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("IdeaVIM", "Editor:Vim emulation plug-in for IDEs based on the IntelliJ platform:IdeaVIM");
+    featuredPlugins.put("IdeaVim", "Editor:Emulates Vim editor:" + IDEA_VIM_PLUGIN_ID);
   }
 
   protected static void addLuaPlugin(Map<String, String> featuredPlugins) {

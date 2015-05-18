@@ -537,7 +537,45 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   // PY-11552
-  public void testDeleteTrailingBlankLines() {
+  public void testExtraBlankLinesBetweenMethodsAndAtTheEnd() {
+    getCommonSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesAtFileEnd() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesAtFunctionEnd() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesAtFunctionEndNoNewLine() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesWithBackslashesMixed() {
+    doTest();
+  }
+
+  // PY-11552
+  public void testTrailingBlankLinesInEmptyFile() {
+    doTest();
+  }
+
+  // PY-14962
+  public void testAlignDictLiteralOnValue() {
+    getCustomSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_VALUE;
+    doTest();
+  }
+
+  // PY-14962
+  public void testAlignDictLiteralOnColon() {
+    getCustomSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
     doTest();
   }
 
@@ -555,6 +593,16 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testHangingIndentInParameterDefaultValue() {
+    doTest();
+  }
+
+  // PY-15171
+  public void testHangingIndentInKeyValuePair() {
+    doTest();
+  }
+
+  public void testDoNotDestroyAlignment_OnPostponedFormatting() throws Exception {
+    getCustomSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
     doTest();
   }
 

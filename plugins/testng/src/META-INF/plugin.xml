@@ -55,7 +55,7 @@
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
         </intentionAction>
         <testFramework implementation="com.theoryinpractice.testng.TestNGFramework"/>
-      <standardResourceProvider implementation="com.theoryinpractice.testng.TestNGPlugin"/>
+      <standardResource url="http://testng.org/testng-1.0.dtd" path="resources/standardSchemas/testng-1.0.dtd"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
       <forcedElementWeigher implementation="com.theoryinpractice.testng.TestNGForcedElementWeigher"/>
       <gotoRelatedProvider implementation="com.theoryinpractice.testng.TestNGRelatedFilesProvider"/>

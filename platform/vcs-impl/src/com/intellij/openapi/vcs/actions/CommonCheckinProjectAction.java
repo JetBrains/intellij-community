@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
       if (vcs.getCheckinEnvironment() != null) {
         VirtualFile[] roots = vcsManager.getRootsUnderVcs(vcs);
         for (VirtualFile root : roots) {
-          virtualFiles.add(new FilePathImpl(root));
+          virtualFiles.add(VcsUtil.getFilePath(root));
         }
       }
     }

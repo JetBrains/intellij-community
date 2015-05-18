@@ -4,6 +4,8 @@ remote-servers-git
 github
 IntelliLang
 IntelliLang-python
-learn-python
+interactive-learning
+interactive-learning-python
 course-creator
+course-creator-python
 hg4idea

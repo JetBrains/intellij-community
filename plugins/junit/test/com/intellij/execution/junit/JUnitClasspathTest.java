@@ -99,11 +99,11 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
       file = preparePathsForComparison(FileUtil.loadFile(workingDirsFile), mod1, mod2);
       assertEquals("p\n" +
                    "MODULE_1\n" +
-                   "IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
+                   "SERVICE_MESSAGES;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T1\n" +
                    "MODULE_2\n" +
-                   "IDEA_HOME/lib/serviceMessages.jar;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
+                   "SERVICE_MESSAGES;IDEA_HOME/lib/junit-4.12.jar;IDEA_HOME/java/mockJDK-1.8/jre/lib/rt.jar\n" +
                    "1\n" +
                    "p.T2\n", file);
     }
@@ -152,11 +152,11 @@ public class JUnitClasspathTest extends JavaCodeInsightFixtureTestCase {
     fileContent = FileUtil.toSystemIndependentName(fileContent);
     fileContent = replace(fileContent, ModuleRootManager.getInstance(mod1).getContentRoots()[0].getPath(), "MODULE_1");
     fileContent = replace(fileContent, ModuleRootManager.getInstance(mod2).getContentRoots()[0].getPath(), "MODULE_2");
+    fileContent = replace(fileContent, PathUtil.getJarPathForClass(ServiceMessageTypes.class), "SERVICE_MESSAGES");
     fileContent = fileContent.replaceAll(FileUtil.toSystemIndependentName(PathUtil.getJarPathForClass(JUnitStarter.class)) + File.pathSeparator, "");
     fileContent = fileContent.replaceAll(FileUtil.toSystemIndependentName(JavaSdkUtil.getIdeaRtJarPath()) + File.pathSeparator, "");
     fileContent = replace(fileContent, PathManager.getHomePath() + "/community", "IDEA_HOME");
     fileContent = replace(fileContent, PathManager.getHomePath(), "IDEA_HOME");
-    fileContent = replace(fileContent, StringUtil.getPackageName(PathUtil.getJarPathForClass(ServiceMessageTypes.class), File.separatorChar), "APP_HOME");
     fileContent = fileContent.replaceAll(File.pathSeparator, ";");
     return StringUtil.convertLineSeparators(fileContent);
   }

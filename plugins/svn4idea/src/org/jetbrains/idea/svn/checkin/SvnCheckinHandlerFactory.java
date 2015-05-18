@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -111,7 +112,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
               }
             }
             if (take) {
-              paths.add(new FilePathImpl(root));
+              paths.add(VcsUtil.getFilePath(root));
             }
           }
           if (paths.isEmpty()) return;

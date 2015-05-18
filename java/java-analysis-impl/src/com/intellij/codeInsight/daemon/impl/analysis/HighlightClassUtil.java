@@ -758,7 +758,7 @@ public class HighlightClassUtil {
           if (!PsiUtil.isInnerClass(base)) return;
 
           if (resolve == resolved && baseClass != null && (!PsiTreeUtil.isAncestor(baseClass, extendRef, true) || aClass.hasModifierProperty(PsiModifier.STATIC)) &&
-              !InheritanceUtil.hasEnclosingInstanceInScope(baseClass, extendRef, !aClass.hasModifierProperty(PsiModifier.STATIC), true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
+              !InheritanceUtil.hasEnclosingInstanceInScope(baseClass, extendRef, !aClass.hasModifierProperty(PsiModifier.STATIC), true) && !qualifiedNewCalledInConstructors(aClass)) {
             String description = JavaErrorMessages.message("no.enclosing.instance.in.scope", HighlightUtil.formatClass(baseClass));
             infos[0] = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(extendRef).descriptionAndTooltip(description).create();
           }
@@ -769,7 +769,10 @@ public class HighlightClassUtil {
     return infos[0];
   }
 
-  private static boolean qualifiedNewCalledInConstructors(final PsiClass aClass, final PsiClass baseClass) {
+  /**
+   * 15.9 Class Instance Creation Expressions | 15.9.2 Determining Enclosing Instances
+   */
+  private static boolean qualifiedNewCalledInConstructors(final PsiClass aClass) {
     PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) return false;
     for (PsiMethod constructor : constructors) {
@@ -785,11 +788,11 @@ public class HighlightClassUtil {
       if (PsiKeyword.THIS.equals(methodCallExpression.getMethodExpression().getReferenceName())) continue;
       PsiReferenceExpression referenceExpression = methodCallExpression.getMethodExpression();
       PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(referenceExpression.getQualifierExpression());
-      if (!(qualifierExpression instanceof PsiReferenceExpression) && !(qualifierExpression instanceof PsiCallExpression)) return false;
-      PsiType type = qualifierExpression.getType();
-      if (!(type instanceof PsiClassType)) return false;
-      PsiClass resolved = ((PsiClassType)type).resolve();
-      if (resolved != baseClass) return false;
+      //If the class instance creation expression is qualified, then the immediately
+      //enclosing instance of i is the object that is the value of the Primary expression or the ExpressionName,
+      //otherwise aClass needs to be a member of a class enclosing the class in which the class instance creation expression appears
+      //already excluded by InheritanceUtil.hasEnclosingInstanceInScope
+      if (qualifierExpression == null) return false;
     }
     return true;
   }

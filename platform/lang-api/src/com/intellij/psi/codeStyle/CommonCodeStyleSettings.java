@@ -812,6 +812,7 @@ public class CommonCodeStyleSettings {
   public int THROWS_KEYWORD_WRAP = DO_NOT_WRAP;
 
   public int METHOD_CALL_CHAIN_WRAP = DO_NOT_WRAP;
+  public boolean WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
 
   public boolean PARENTHESES_EXPRESSION_LPAREN_WRAP = false;
   public boolean PARENTHESES_EXPRESSION_RPAREN_WRAP = false;

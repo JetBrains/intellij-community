@@ -101,8 +101,13 @@ public class ExtractLightMethodObjectHandler {
     }
 
     final TextRange range = originalContext.getTextRange();
-    final PsiElement originalAnchor =
-      CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
+    PsiElement originalAnchor = CodeInsightUtil.findElementInRange(copy, range.getStartOffset(), range.getEndOffset(), originalContext.getClass());
+    if (originalAnchor == null) {
+      final PsiElement elementAt = copy.findElementAt(range.getStartOffset());
+      if (elementAt != null && elementAt.getClass() == originalContext.getClass()) {
+        originalAnchor = PsiTreeUtil.skipSiblingsForward(elementAt, PsiWhiteSpace.class);
+      }
+    }
 
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(originalAnchor, PsiClass.class);
     if (containingClass == null) {

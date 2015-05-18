@@ -47,6 +47,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 public class JavaSpacePropertyProcessor extends JavaElementVisitor {
@@ -1225,9 +1226,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     int length = expressions.length;
     assert length > 1;
 
-    int startOffset = expressions[length - 2].getTextRange().getEndOffset();
-    int endOffset = expressions[length - 1].getTextRange().getStartOffset();
-    createParenthSpace(true, space, new TextRange(startOffset, endOffset));
+    List<TextRange> ranges = ContainerUtil.newArrayList();
+    for (int i = 0; i < length - 1; i++) {
+      int startOffset = expressions[i].getTextRange().getEndOffset();
+      int endOffset = expressions[i + 1].getTextRange().getStartOffset();
+      ranges.add(new TextRange(startOffset, endOffset));
+    }
+
+    int spaces = space ? 1 : 0;
+    myResult = Spacing.createDependentLFSpacing(spaces, spaces, ranges, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   @Override

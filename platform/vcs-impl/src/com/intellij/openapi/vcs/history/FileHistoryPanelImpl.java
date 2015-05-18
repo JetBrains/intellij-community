@@ -108,8 +108,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private final VcsHistoryProvider myProvider;
   private final AnnotationProvider myAnnotationProvider;
   private VcsHistorySession myHistorySession;
-  private final FilePath myFilePath;
-  private final FileHistoryRefresherI myRefresherI;
+  @NotNull private final FilePath myFilePath;
+  @NotNull private final FileHistoryRefresherI myRefresherI;
   private VcsFileRevision myBottomRevisionForShowDiff;
   private final DualView myDualView;
 
@@ -346,9 +346,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   }
 
   public FileHistoryPanelImpl(AbstractVcs vcs,
-                              FilePath filePath, VcsHistorySession session,
+                              @NotNull FilePath filePath,
+                              VcsHistorySession session,
                               VcsHistoryProvider provider,
-                              ContentManager contentManager, final FileHistoryRefresherI refresherI, final boolean isStaticEmbedded) {
+                              ContentManager contentManager,
+                              @NotNull FileHistoryRefresherI refresherI,
+                              final boolean isStaticEmbedded) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history", ! isStaticEmbedded);
     myProject = vcs.getProject();
     myIsStaticAndEmbedded = false;
@@ -1498,6 +1501,16 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     public Object valueOf(TreeNodeOnVcsRevision o) {
       return myBaseColumn.valueOf(o.myRevision);
     }
+  }
+
+  @NotNull
+  public FileHistoryRefresherI getRefresher() {
+    return myRefresherI;
+  }
+
+  @NotNull
+  public FilePath getFilePath() {
+    return myFilePath;
   }
 
   public VirtualFile getVirtualFile() {

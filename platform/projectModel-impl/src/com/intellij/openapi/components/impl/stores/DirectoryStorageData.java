@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,9 @@ import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +80,12 @@ public class DirectoryStorageData extends StorageDataBase {
       }
 
       try {
-        Element element = JDOMUtil.loadDocument(file.contentsToByteArray()).getRootElement();
+        if (file.getLength() == 0) {
+          LOG.warn("Ignore empty file " + file.getPath());
+          continue;
+        }
+
+        Element element = JDOMUtil.load(file.getInputStream());
         String name = StorageData.getComponentNameIfValid(element);
         if (name == null) {
           continue;
@@ -106,11 +109,8 @@ public class DirectoryStorageData extends StorageDataBase {
         }
         setState(name, file.getName(), state);
       }
-      catch (IOException e) {
-        LOG.info("Unable to load state", e);
-      }
-      catch (JDOMException e) {
-        LOG.info("Unable to load state", e);
+      catch (Throwable e) {
+        LOG.warn("Unable to load state", e);
       }
     }
   }

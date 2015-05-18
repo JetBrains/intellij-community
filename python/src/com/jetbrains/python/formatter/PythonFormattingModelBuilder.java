@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
     return TokenSet.create(IElementType.enumerate(new IElementType.Predicate() {
       @Override
-      public boolean matches(IElementType type) {
+      public boolean matches(@NotNull IElementType type) {
         return type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage);
       }
     }));

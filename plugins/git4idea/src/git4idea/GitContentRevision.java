@@ -135,7 +135,7 @@ public class GitContentRevision implements ContentRevision {
                                                boolean isDeleted, final boolean canBeDeleted, boolean unescapePath) throws VcsException {
     final FilePath file;
     if (project.isDisposed()) {
-      file = new FilePathImpl(new File(makeAbsolutePath(vcsRoot, path, unescapePath)), false);
+      file = VcsUtil.getFilePath(new File(makeAbsolutePath(vcsRoot, path, unescapePath)), false);
     } else {
       file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
     }
@@ -158,7 +158,7 @@ public class GitContentRevision implements ContentRevision {
     if (revisionNumber == null) {
       File file = new File(makeAbsolutePath(vcsRoot, path, unescapePath));
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      filePath = virtualFile == null ? new FilePathImpl(file, false) : new FilePathImpl(virtualFile);
+      filePath = virtualFile == null ? VcsUtil.getFilePath(file, false) : VcsUtil.getFilePath(virtualFile);
     } else {
       filePath = createPath(vcsRoot, path, false, false, unescapePath);
     }
@@ -188,7 +188,7 @@ public class GitContentRevision implements ContentRevision {
 
   public static ContentRevision createRevision(@NotNull final VirtualFile file, @Nullable final VcsRevisionNumber revisionNumber,
                                                @NotNull final Project project, @Nullable final Charset charset) {
-    final FilePathImpl filePath = new FilePathImpl(file);
+    final FilePath filePath = VcsUtil.getFilePath(file);
     return createRevision(filePath, revisionNumber, project, charset);
   }
 

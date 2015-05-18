@@ -1,5 +1,5 @@
-  /*
- * Copyright 2000-2013 JetBrains s.r.o.
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 26-Dec-2007
- */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -31,21 +25,22 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-  public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl");
-  @Deprecated
-  @NonNls private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
-  @Deprecated
-  @NonNls private static final String JDK_15_ATTR = "jdk-15";
+/**
+ * @author anna
+ * @since 26-Dec-2007
+ */
+public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExtension {
+  private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
+  private static final String JDK_15_ATTR = "jdk-15";
   private static final String LANGUAGE_LEVEL = "languageLevel";
   private static final String DEFAULT_ATTRIBUTE = "default";
 
-  private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_6;
   private final Project myProject;
+  private LanguageLevel myLanguageLevel = LanguageLevel.JDK_1_6;
+  private LanguageLevel myCurrentLevel;
 
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
@@ -119,11 +114,6 @@ import org.jetbrains.annotations.Nullable;
     }
   }
 
-  @Override
-  public void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload) {
-    LOG.warn("Calling deprecated LanguageLevelProjectExtensionImpl.reloadProjectOnLanguageLevelChange, while project reloading is not needed on language level changes");
-  }
-
   private void projectSdkChanged(@Nullable Sdk sdk) {
     if (isDefault() && sdk != null) {
       JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
@@ -133,17 +123,15 @@ import org.jetbrains.annotations.Nullable;
     }
   }
 
-    private LanguageLevel myCurrentLevel;
+  public void setCurrentLevel(LanguageLevel level) {
+    myCurrentLevel = level;
+  }
 
-    public void setCurrentLevel(LanguageLevel level) {
-      myCurrentLevel = level;
-    }
+  public LanguageLevel getCurrentLevel() {
+    return myCurrentLevel;
+  }
 
-    public LanguageLevel getCurrentLevel() {
-      return myCurrentLevel;
-    }
-
-    public static class MyProjectExtension extends ProjectExtension {
+  public static class MyProjectExtension extends ProjectExtension {
     private final LanguageLevelProjectExtensionImpl myInstance;
 
     public MyProjectExtension(final Project project) {
@@ -165,4 +153,4 @@ import org.jetbrains.annotations.Nullable;
       myInstance.projectSdkChanged(sdk);
     }
   }
-  }
+}

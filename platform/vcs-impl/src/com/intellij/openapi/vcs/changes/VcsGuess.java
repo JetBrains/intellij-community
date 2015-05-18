@@ -70,7 +70,7 @@ public class VcsGuess {
     });
   }
 
-  private static boolean isFileInBaseDir(@NotNull  FilePath filePath, @NotNull VirtualFile baseDir) {
+  private static boolean isFileInBaseDir(@NotNull  FilePath filePath, @Nullable VirtualFile baseDir) {
     VirtualFile parent = filePath.getVirtualFileParent();
     return !filePath.isDirectory() && parent != null && parent.equals(baseDir);
   }

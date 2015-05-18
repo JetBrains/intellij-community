@@ -27,11 +27,13 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +129,7 @@ class FormatProcessor {
    * region' and value is dependent spacing object.
    * <p/>
    * Every time we detect that formatter changes 'has line feeds' status of such dependent region, we
-   * {@link DependantSpacingImpl#setDependentRegionChanged() mark} the dependent spacing as changed and schedule one more
+   * {@link DependantSpacingImpl#setDependentRegionLinefeedStatusChanged() mark} the dependent spacing as changed and schedule one more
    * formatting iteration.
    */
   private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
@@ -499,11 +501,13 @@ class FormatProcessor {
       onCurrentLineChanged();
     }
 
-    if (shouldSaveDependency(spaceProperty, whiteSpace)) {
-      saveDependency(spaceProperty);
+
+    final List<TextRange> ranges = getDependentRegionRangesAfterCurrentWhiteSpace(spaceProperty, whiteSpace);
+    if (!ranges.isEmpty()) {
+      registerUnresolvedDependentSpacingRanges(spaceProperty, ranges);
     }
 
-    if (!whiteSpace.isIsReadOnly() && shouldReformatBecauseOfBackwardDependency(whiteSpace.getTextRange())) {
+    if (!whiteSpace.isIsReadOnly() && shouldReformatPreviouslyLocatedDependentSpacing(whiteSpace)) {
       myAlignAgain.add(whiteSpace);
     }
     else if (!myAlignAgain.isEmpty()) {
@@ -513,43 +517,55 @@ class FormatProcessor {
     myCurrentBlock = myCurrentBlock.getNextBlock();
   }
 
-  private boolean shouldReformatBecauseOfBackwardDependency(TextRange changed) {
+  private boolean shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace space) {
+    final TextRange changed = space.getTextRange();
     final SortedMap<TextRange, DependantSpacingImpl> sortedHeadMap = myPreviousDependencies.tailMap(changed);
 
-    boolean result = false;
     for (final Map.Entry<TextRange, DependantSpacingImpl> entry : sortedHeadMap.entrySet()) {
       final TextRange textRange = entry.getKey();
 
       if (textRange.contains(changed)) {
-        final DependantSpacingImpl dependentSpacing = entry.getValue();
-        final boolean containedLineFeeds = dependentSpacing.getMinLineFeeds() > 0;
+        final DependantSpacingImpl spacing = entry.getValue();
+        if (spacing.isDependentRegionLinefeedStatusChanged()) {
+          continue;
+        }
+
+        final boolean containedLineFeeds = spacing.getMinLineFeeds() > 0;
         final boolean containsLineFeeds = containsLineFeeds(textRange);
 
         if (containedLineFeeds != containsLineFeeds) {
-          dependentSpacing.setDependentRegionChanged();
-          result = true;
+          spacing.setDependentRegionLinefeedStatusChanged();
+          return true;
         }
       }
     }
-    return result;
+
+    return false;
   }
 
-  private void saveDependency(final SpacingImpl spaceProperty) {
+  private void registerUnresolvedDependentSpacingRanges(final SpacingImpl spaceProperty, List<TextRange> unprocessedRanges) {
     final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
-    final TextRange dependency = dependantSpaceProperty.getDependency();
-    if (dependantSpaceProperty.isDependentRegionChanged()) {
-      return;
+    if (dependantSpaceProperty.isDependentRegionLinefeedStatusChanged()) return;
+
+    for (TextRange range: unprocessedRanges) {
+      myPreviousDependencies.put(range, dependantSpaceProperty);
     }
-    myPreviousDependencies.put(dependency, dependantSpaceProperty);
   }
 
-  private static boolean shouldSaveDependency(final SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
-    if (!(spaceProperty instanceof DependantSpacingImpl)) return false;
+  private static List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
+                                                                                final WhiteSpace whiteSpace)
+  {
+    if (!(spaceProperty instanceof DependantSpacingImpl)) return ContainerUtil.emptyList();
 
-    if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return false;
+    if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return ContainerUtil.emptyList();
 
-    final TextRange dependency = ((DependantSpacingImpl)spaceProperty).getDependency();
-    return whiteSpace.getStartOffset() < dependency.getEndOffset();
+    DependantSpacingImpl spacing = (DependantSpacingImpl)spaceProperty;
+    return ContainerUtil.filter(spacing.getDependentRegionRanges(), new Condition<TextRange>() {
+      @Override
+      public boolean value(TextRange dependencyRange) {
+        return whiteSpace.getStartOffset() < dependencyRange.getEndOffset();
+      }
+    });
   }
 
   /**

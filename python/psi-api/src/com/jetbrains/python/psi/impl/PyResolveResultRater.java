@@ -17,10 +17,14 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 public interface PyResolveResultRater {
   ExtensionPointName<PyResolveResultRater> EP_NAME = ExtensionPointName.create("Pythonid.resolveResultRater");
 
-  int getRate(@NotNull final PsiElement target);
+  int getImportElementRate(@NotNull final PsiElement target);
+
+  int getMemberRate(PsiElement member, PyType type, TypeEvalContext context);
 }

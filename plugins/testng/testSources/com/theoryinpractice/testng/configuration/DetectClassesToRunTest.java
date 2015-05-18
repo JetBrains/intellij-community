@@ -96,6 +96,22 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     doTestMethodConfiguration(aClass, aClass.getMethods());
   }
 
+  @Test
+  public void testDependsOnGroupDontIncludeForeignClass() throws Exception {
+    final PsiClass aClass =
+      myFixture.addClass("package a; public class ATest {" +
+                         "  @org.testng.annotations.Test(groups = { \"g1\" })\n" +
+                         "  public void testTwo(){}\n " +
+                         "  @org.testng.annotations.Test(dependsOnGroups = {\"g1\" })\n" +
+                         "  public void testOne(){}\n" +
+                         "}");
+    myFixture.addClass("package a; public class ForeignTest {" +
+                       "  @org.testng.annotations.Test(groups = { \"g1\" })\n" +
+                       "  public void testForth(){}\n " +
+                       "}");
+    doTestClassConfiguration(aClass);
+  }
+
   private void doTestMethodConfiguration(PsiClass aClass, PsiMethod... expectedMethods) throws CantRunException {
     final TestNGConfiguration configuration =
       new TestNGConfiguration("testOne", getProject(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
@@ -112,6 +128,22 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
     assertContainsElements(classes.keySet(), aClass);
     final Map<PsiMethod, List<String>> methods = classes.get(aClass);
     assertContainsElements(methods.keySet(), expectedMethods);
+  }
+  
+  private void doTestClassConfiguration(PsiClass aClass) throws CantRunException {
+    final TestNGConfiguration configuration =
+      new TestNGConfiguration("TestA", getProject(), TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
+    final TestData data = configuration.getPersistantData();
+    data.TEST_OBJECT = TestType.CLASS.getType();
+    data.setScope(TestSearchScope.SINGLE_MODULE);
+    configuration.setModule(data.setMainClass(aClass));
+
+    final TestNGTestObject testObject = TestNGTestObject.fromConfig(configuration);
+    assertNotNull(testObject);
+    final LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>> classes = new LinkedHashMap<PsiClass, Map<PsiMethod, List<String>>>();
+    testObject.fillTestObjects(classes);
+    assertContainsElements(classes.keySet(), aClass);
+    assertEquals(1, classes.size());
   }
 
   private void doTestPackageConfiguration(PsiClass... containingClasses) throws CantRunException {

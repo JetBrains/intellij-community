@@ -15,55 +15,29 @@
  */
 package com.intellij.junit4;
 
+import com.intellij.rt.execution.testFrameworks.AbstractExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
 
-class ExpectedPatterns {
-  static final Pattern EXPECTED_IS_GOT = compilePattern("\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n");
-  static final Pattern EXPECTED_IS_BUT_WAS = compilePattern("\nExpected: is \"(.*)\"\n\\s*but: was \"(.*)\"");
-  static final Pattern EXPECTED_GOT = compilePattern("\nExpected: (.*)\n\\s*got: (.*)");
-  static final Pattern EXPECTED_SAME_WAS_NOT = compilePattern(".*?\\s*expected same:<(.*)> was not:<(.*)>");
-  static final Pattern EXPECTED_BUT_WAS_COLUMN = compilePattern(".*?\\s*expected:<(.*?)> but was:<(.*?)>");
-  static final Pattern EXPECTED_BUT_WAS_IN_QUOTES = compilePattern("\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"");
-  static final Pattern EXPECTED_BUT_WAS = compilePattern("\\s*Expected: (.*)\\s*but: was (.*)");
+class ExpectedPatterns extends AbstractExpectedPatterns {
+  private static final List PATTERNS = new ArrayList();
 
-  private static Pattern compilePattern(String regex) {
-    return Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+  private static final String[] PATTERN_STRINGS = new String[]{
+    "\nExpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
+    "\nExpected: is \"(.*)\"\n\\s*but: was \"(.*)\"",
+    "\nExpected: (.*)\n\\s*got: (.*)",
+    ".*?\\s*expected same:<(.*)> was not:<(.*)>",
+    ".*?\\s*expected:<(.*?)> but was:<(.*?)>",
+    "\nExpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
+    "\\s*Expected: (.*)\\s*but: was (.*)"};
+
+  static {
+    registerPatterns(PATTERN_STRINGS, PATTERNS);
   }
 
-  static ComparisonFailureData createExceptionNotification(String message) {
-    ComparisonFailureData notification = createExceptionNotification(message, EXPECTED_IS_GOT);
-    if (notification == null) {
-      notification = createExceptionNotification(message, EXPECTED_IS_BUT_WAS);
-    }
-    if (notification == null) {
-      notification = createExceptionNotification(message, EXPECTED_GOT);
-    }
-    if (notification == null) {
-      notification = createExceptionNotification(message, EXPECTED_SAME_WAS_NOT);
-    }
-    if (notification == null) {
-      notification = createExceptionNotification(message, EXPECTED_BUT_WAS_COLUMN);
-    }
-    if (notification == null) {
-      notification = createExceptionNotification(message, EXPECTED_BUT_WAS_IN_QUOTES);
-    }
-    if (notification == null) {
-      notification = createExceptionNotification(message, EXPECTED_BUT_WAS);
-    }
-    if (notification != null) {
-      return notification;
-    }
-    return null;
-  }
-
-  private static ComparisonFailureData createExceptionNotification(String message, Pattern pattern) {
-    final Matcher matcher = ((Pattern)pattern).matcher(message);
-    if (matcher.matches()) {
-      return new ComparisonFailureData(matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
-    }
-    return null;
+  public static ComparisonFailureData createExceptionNotification(String message) {
+    return createExceptionNotification(message, PATTERNS);
   }
 }

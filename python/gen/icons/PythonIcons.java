@@ -44,6 +44,7 @@ public class PythonIcons {
     
     public static class Debug {
       public static final Icon CommandLine = load("/icons/com/jetbrains/python/debug/commandLine.png"); // 16x16
+      public static final Icon StepIntoMyCode = load("/icons/com/jetbrains/python/debug/StepIntoMyCode.png"); // 16x16
 
     }
     public static final Icon Dotnet = load("/icons/com/jetbrains/python/dotnet.png"); // 16x16

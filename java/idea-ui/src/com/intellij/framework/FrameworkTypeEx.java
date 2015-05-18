@@ -71,7 +71,8 @@ public abstract class FrameworkTypeEx extends FrameworkType {
       return FrameworkRole.UNKNOWN;
     }
     else {
-      return new FrameworkRole[]{parentGroup.getRole()};
+      FrameworkRole role = parentGroup.getRole();
+      return null == role ? FrameworkRole.UNKNOWN : new FrameworkRole[]{role};
     }
   }
 }

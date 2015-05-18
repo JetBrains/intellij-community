@@ -109,4 +109,8 @@ public class ReplaceMethodReferenceWithLambdaIntentionTest extends IPPTestCase {
   public void testNameConflicts() throws Exception {
     doTest();
   }
+
+  public void testIntroduceVariableForSideEffectQualifier() throws Exception {
+    doTest();
+  }
 }

@@ -161,10 +161,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       return createAnnotationFilter(position);
     }
 
-    if (psiElement().afterLeaf("=").inside(PsiVariable.class).accepts(position)) {
-      return new OrFilter(
-        new ClassFilter(PsiVariable.class, false),
-        new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class)));
+    PsiVariable var = PsiTreeUtil.getParentOfType(position, PsiVariable.class, false, PsiClass.class);
+    if (var != null && PsiTreeUtil.isAncestor(var.getInitializer(), position, false)) {
+      return new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class));
     }
 
     if (SWITCH_LABEL.accepts(position)) {

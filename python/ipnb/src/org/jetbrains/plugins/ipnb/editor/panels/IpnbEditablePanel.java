@@ -21,6 +21,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   protected JTextArea myEditablePanel;
   public final static String EDITABLE_PANEL = "Editable panel";
   public final static String VIEW_PANEL = "View panel";
+  protected boolean isRunning = false;
 
   public IpnbEditablePanel(@NotNull K cell) {
     super(cell);
@@ -80,7 +81,12 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
     c.weightx = 0;
     c.anchor = GridBagConstraints.NORTHWEST;
-    final JComponent promptComponent = IpnbEditorUtil.createPromptComponent(promptNumber, promptType);
+    Integer number = promptNumber;
+    if (isRunning) {
+      number = -1;
+    }
+
+    final JComponent promptComponent = IpnbEditorUtil.createPromptComponent(number, promptType);
     c.insets = new Insets(2,2,2,5);
     parent.add(promptComponent, c);
 

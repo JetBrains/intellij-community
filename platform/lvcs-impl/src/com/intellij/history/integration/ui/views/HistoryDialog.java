@@ -50,6 +50,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
@@ -494,8 +495,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
     final DialogBuilder b = new DialogBuilder(myProject);
+    JComponent createPatchPanel = p.getPanel();
+    b.setPreferredFocusComponent(IdeFocusTraversalPolicy.getPreferredFocusedComponent(createPatchPanel));
     b.setTitle(message("create.patch.dialog.title"));
-    b.setCenterPanel(p.getPanel());
+    b.setCenterPanel(createPatchPanel);
     p.installOkEnabledListener(new Consumer<Boolean>() {
       public void consume(final Boolean aBoolean) {
         b.setOkActionEnabled(aBoolean);

@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -81,7 +81,7 @@ public class GroovyInlineMethodUtil {
     }
 
     if (invokedOnReference) {
-      PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
+      PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
       if (reference == null) return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
 
       PsiElement element = reference.getElement();

@@ -73,6 +73,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @NotNull private final List<SimpleThreesideDiffChange> myInvalidDiffChanges = new ArrayList<SimpleThreesideDiffChange>();
 
   @NotNull private final MyFoldingModel myFoldingModel;
+  @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
 
   public SimpleThreesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
@@ -85,6 +86,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter(Side.LEFT), Side.LEFT);
@@ -93,9 +95,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
-  protected void onDisposeAwt() {
+  @CalledInAwt
+  protected void onDispose() {
     destroyChangedBlocks();
-    super.onDisposeAwt();
+    super.onDispose();
   }
 
   @NotNull
@@ -107,7 +110,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     //group.add(new MyHighlightPolicySettingAction()); // TODO
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new ToggleAutoScrollAction());
-    group.add(new ReadOnlyLockAction());
+    group.add(new EditorReadOnlyLockAction());
     group.add(myEditorSettingsAction);
 
     group.add(Separator.getInstance());
@@ -135,9 +138,18 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
+  protected void processContextHints() {
+    super.processContextHints();
+    myInitialScrollHelper.processContext(myRequest);
+  }
+
+  @Override
+  @CalledInAwt
   protected void updateContextHints() {
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+    myInitialScrollHelper.updateContext(myRequest);
   }
 
   //
@@ -148,6 +160,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   protected void onSlowRediff() {
     super.onSlowRediff();
     myStatusPanel.setBusy(true);
+    myInitialScrollHelper.onSlowRediff();
   }
 
   @Override
@@ -162,38 +175,30 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       documents[1] = ((DocumentContent)contents.get(1)).getDocument();
       documents[2] = ((DocumentContent)contents.get(2)).getDocument();
 
-      DocumentData data = ApplicationManager.getApplication().runReadAction(new Computable<DocumentData>() {
+      CharSequence[] sequences = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence[]>() {
         @Override
-        public DocumentData compute() {
+        public CharSequence[] compute() {
           CharSequence[] sequences = new CharSequence[3];
           sequences[0] = documents[0].getImmutableCharSequence();
           sequences[1] = documents[1].getImmutableCharSequence();
           sequences[2] = documents[2].getImmutableCharSequence();
-
-          long[] stamps = new long[3];
-          stamps[0] = documents[0].getModificationStamp();
-          stamps[1] = documents[1].getModificationStamp();
-          stamps[2] = documents[2].getModificationStamp();
-
-          return new DocumentData(stamps, sequences);
+          return sequences;
         }
       });
 
-      // TODO: cache results
-      CharSequence[] sequences = data.getSequences();
       ComparisonPolicy comparisonPolicy = getIgnorePolicy().getComparisonPolicy();
       FairDiffIterable fragments1 = ByLine.compareTwoStepFair(sequences[1], sequences[0], comparisonPolicy, indicator);
       FairDiffIterable fragments2 = ByLine.compareTwoStepFair(sequences[1], sequences[2], comparisonPolicy, indicator);
       List<MergeLineFragment> mergeFragments = MergeUtil.buildFair(fragments1, fragments2, indicator);
 
-      return apply(mergeFragments, data.getStamps(), comparisonPolicy);
+      return apply(mergeFragments, comparisonPolicy);
     }
     catch (DiffTooBigException ignore) {
       return new Runnable() {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addTooBigContentNotification();
+          myPanel.addNotification(DiffNotifications.DIFF_TOO_BIG);
         }
       };
     }
@@ -202,7 +207,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addOperationCanceledNotification();
+          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
         }
       };
     }
@@ -212,7 +217,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         @Override
         public void run() {
           clearDiffPresentation();
-          myPanel.addDiffErrorNotification();
+          myPanel.addNotification(DiffNotifications.ERROR);
         }
       };
     }
@@ -220,15 +225,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
   @NotNull
   private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
-                         @NotNull final long[] stamps,
                          @NotNull final ComparisonPolicy comparisonPolicy) {
     return new Runnable() {
       @Override
       public void run() {
-        if (myEditors.get(0).getDocument().getModificationStamp() != stamps[0]) return;
-        if (myEditors.get(1).getDocument().getModificationStamp() != stamps[1]) return;
-        if (myEditors.get(2).getDocument().getModificationStamp() != stamps[2]) return;
-
         myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
@@ -238,7 +238,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
         myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
 
-        scrollOnRediff();
+        myInitialScrollHelper.onRediff();
 
         myContentPanel.repaintDividers();
         myStatusPanel.update();
@@ -262,6 +262,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       change.destroyHighlighter();
     }
     myInvalidDiffChanges.clear();
+
+    myFoldingModel.destroy();
 
     myContentPanel.repaintDividers();
     myStatusPanel.update();
@@ -324,7 +326,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @CalledInAwt
-  @Override
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     if (myDiffChanges.isEmpty()) return false;
 
@@ -591,7 +592,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
-      Graphics2D gg = getDividerGraphics(g, divider);
+      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, myEditors.get(0).getComponent());
 
       gg.setColor(DiffDrawUtil.getDividerColor(myEditors.get(0)));
       gg.fill(gg.getClipBounds());
@@ -630,29 +631,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
   }
 
-  private static class DocumentData {
-    @NotNull private final long[] myStamps;
-    @NotNull private final CharSequence[] mySequences;
-
-    public DocumentData(@NotNull long[] stamps, @NotNull CharSequence[] sequences) {
-      assert stamps.length == 3;
-      assert sequences.length == 3;
-
-      myStamps = stamps;
-      mySequences = sequences;
-    }
-
-    @NotNull
-    public long[] getStamps() {
-      return myStamps;
-    }
-
-    @NotNull
-    public CharSequence[] getSequences() {
-      return mySequences;
-    }
-  }
-
   private static class MyFoldingModel extends FoldingModelSupport {
     private final MyPaintable myPaintable1 = new MyPaintable(0, 1);
     private final MyPaintable myPaintable2 = new MyPaintable(1, 2);
@@ -687,6 +665,21 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     public void paintOnScrollbar(@NotNull Graphics2D gg, int width) {
       myPaintable2.paintOnScrollbar(gg, width);
+    }
+  }
+
+  private class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
+    @Override
+    protected boolean doScrollToChange() {
+      if (myScrollToChange == null) return false;
+      SimpleThreesideDiffViewer.this.doScrollToChange(myScrollToChange);
+      return true;
+    }
+
+    @Override
+    protected boolean doScrollToFirstChange() {
+      SimpleThreesideDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
+      return true;
     }
   }
 }

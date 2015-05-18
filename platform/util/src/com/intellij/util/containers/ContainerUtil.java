@@ -178,13 +178,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return ContainerUtilRt.newArrayList(iterable);
   }
 
-  /** @deprecated Use {@link #newArrayListWithCapacity(int)} (to remove in IDEA 15) */
-  @SuppressWarnings("deprecation")
-  @Contract(pure=true)
-  public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
-    return ContainerUtilRt.newArrayListWithCapacity(size);
-  }
-
   @NotNull
   @Contract(pure=true)
   public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
@@ -2108,7 +2101,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> singleton(final T o, @NotNull final TObjectHashingStrategy<T> strategy) {
-    return new SingletonSet<T>(o, strategy);
+    return strategy == TObjectHashingStrategy.CANONICAL ? new SingletonSet<T>(o) : SingletonSet.<T>withCustomStrategy(o, strategy);
   }
 
   /**

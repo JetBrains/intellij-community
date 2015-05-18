@@ -91,6 +91,16 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     currentSession.stepInto();
   }
 
+  protected void stepIntoMyCode() {
+    XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
+
+    Assert.assertTrue(currentSession.isSuspended());
+    Assert.assertEquals(0, myPausedSemaphore.availablePermits());
+
+    PyDebugProcess debugProcess = (PyDebugProcess)currentSession.getDebugProcess();
+    debugProcess.startStepIntoMyCode();
+  }
+
   protected void smartStepInto(String funcName) {
     XDebugSession currentSession = XDebuggerManager.getInstance(getProject()).getCurrentSession();
 

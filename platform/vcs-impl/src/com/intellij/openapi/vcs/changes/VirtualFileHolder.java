@@ -20,8 +20,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 
 import java.util.*;
 
@@ -80,7 +80,7 @@ public class VirtualFileHolder implements FileHolder {
               final VirtualFile file = iterator.next();
               if (fileDropped(file)) {
                 iterator.remove();
-                scope.addDirtyFile(new FilePathImpl(file));
+                scope.addDirtyFile(VcsUtil.getFilePath(file));
                 if (file.isDirectory()) ++ result;
               }
             }
@@ -91,9 +91,9 @@ public class VirtualFileHolder implements FileHolder {
             final VirtualFile file = iterator.next();
             final boolean fileDropped = fileDropped(file);
             if (fileDropped) {
-              scope.addDirtyFile(new FilePathImpl(file));
+              scope.addDirtyFile(VcsUtil.getFilePath(file));
             }
-            if (fileDropped || scope.belongsTo(new FilePathImpl(file))) {
+            if (fileDropped || scope.belongsTo(VcsUtil.getFilePath(file))) {
               iterator.remove();
               if (file.isDirectory()) ++ result;
             }

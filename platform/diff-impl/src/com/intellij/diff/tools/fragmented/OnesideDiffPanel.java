@@ -106,8 +106,7 @@ public class OnesideDiffPanel extends DiffPanelBase {
   // Misc
   //
 
-  @Nullable
-  public JComponent getPreferredFocusedComponent() {
-    return myCurrentCard == GOOD_CONTENT ? myEditor.getContentComponent() : null;
+  public boolean isGoodContent() {
+    return myCurrentCard == GOOD_CONTENT;
   }
 }

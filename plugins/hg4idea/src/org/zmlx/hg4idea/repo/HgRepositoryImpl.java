@@ -20,11 +20,13 @@ import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,15 +36,7 @@ import org.zmlx.hg4idea.command.HgBranchesCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-
-
-/**
- * @author Nadya Zabrodina
- */
+import java.util.*;
 
 public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
@@ -90,7 +84,6 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   public VirtualFile getHgDir() {
     return myHgDir;
   }
-
 
   @NotNull
   @Override
@@ -186,6 +179,30 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return myInfo.getSubrepos();
   }
 
+  @NotNull
+  @Override
+  public List<HgNameWithHashInfo> getMQAppliedPatches() {
+    return myInfo.getMQApplied();
+  }
+
+  @NotNull
+  @Override
+  public List<String> getAllPatchNames() {
+    return myInfo.getMqPatchNames();
+  }
+
+  @NotNull
+  @Override
+  public List<String> getUnappliedPatchNames() {
+    final List<String> appliedPatches = HgUtil.getNamesWithoutHashes(getMQAppliedPatches());
+    return ContainerUtil.filter(getAllPatchNames(), new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return !appliedPatches.contains(s);
+      }
+    });
+  }
+
   @Override
   public boolean isFresh() {
     return myIsFresh;
@@ -216,7 +233,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @NotNull
   @Override
   public String toLogString() {
-    return String.format("HgRepository " + getRoot() + " : " + myInfo);
+    return "HgRepository " + getRoot() + " : " + myInfo;
   }
 
   @NotNull
@@ -227,7 +244,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
       new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readCurrentTipRevision(), myReader.readState(),
                      myReader.readBranches(),
                      myReader.readBookmarks(), myReader.readCurrentBookmark(), myReader.readTags(), myReader.readLocalTags(),
-                     myReader.readSubrepos());
+                     myReader.readSubrepos(), myReader.readMQAppliedPatches(), myReader.readMqPatchNames());
   }
 
   public void updateConfig() {

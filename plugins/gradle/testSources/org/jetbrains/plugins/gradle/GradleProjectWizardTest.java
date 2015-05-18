@@ -69,12 +69,12 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
     VirtualFile buildScript = VfsUtilCore.findRelativeFile("build.gradle", root);
     assertNotNull(buildScript);
-    assertEquals("apply plugin: 'java'\n" +
+    assertEquals("group '" + projectName + "'\n" +
+                 "version '1.0-SNAPSHOT'\n" +
+                 "\n" +
+                 "apply plugin: 'java'\n" +
                  "\n" +
                  "sourceCompatibility = 1.5\n" +
-                 "\n" +
-                 "group '" + projectName + "'\n" +
-                 "version '1.0-SNAPSHOT'\n" +
                  "\n" +
                  "repositories {\n" +
                  "    mavenCentral()\n" +
@@ -82,7 +82,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "\n" +
                  "dependencies {\n" +
                  "    testCompile group: 'junit', name: 'junit', version: '4.11'\n" +
-                 "}",
+                 "}\n",
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildScript)));
   }
 

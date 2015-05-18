@@ -153,7 +153,7 @@ public class CreatePatchConfigurationPanel {
     myFileNameField = new TextFieldWithBrowseButton();
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
     myEncoding = new JComboBox();
-    myIncludeBaseRevisionTextCheckBox = new JCheckBox(VcsBundle.message("create.patch.base.revision"));
+    myIncludeBaseRevisionTextCheckBox = new JCheckBox(VcsBundle.message("create.patch.base.revision", 0));
     myErrorLabel = new JLabel();
 
     myMainPanel = FormBuilder.createFormBuilder()
@@ -183,8 +183,8 @@ public class CreatePatchConfigurationPanel {
         public void run() {
           if (mySelectFilesToAddTextsToPatchPanel != null) {
             myIncludedChanges = mySelectFilesToAddTextsToPatchPanel.getIncludedChanges();
-            myHideableTitledPanel.setTitle("&Selected: " + (myIncludedChanges.size() == myChanges.size() ?
-                                                           "All" : (myIncludedChanges.size() + " of " + myChanges.size())));
+            myHideableTitledPanel.setTitle("Included &Files: " + (myIncludedChanges.size() == myChanges.size() ?
+                                                                  "All" : (myIncludedChanges.size() + " of " + myChanges.size())));
           }
         }
       };
@@ -267,9 +267,15 @@ public class CreatePatchConfigurationPanel {
     return myErrorLabel.getText() == null ? "" : myErrorLabel.getText();
   }
 
-  public void setChanges(Collection<Change> changes) {
+  public void setChanges(@NotNull Collection<Change> changes) {
     myChanges = new ArrayList<Change>(changes);
     myIncludedChanges = new ArrayList<Change>(myChanges);
     myIncludedChanges.removeAll(SelectFilesToAddTextsToPatchPanel.getBig(myChanges));
+    updateIncludeBaseRevisionText();
+  }
+
+  private void updateIncludeBaseRevisionText() {
+    myIncludeBaseRevisionTextCheckBox
+      .setText(VcsBundle.message("create.patch.base.revision", myIncludedChanges != null ? myIncludedChanges.size() : 0));
   }
 }

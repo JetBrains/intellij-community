@@ -89,8 +89,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     if (result == null) {
       int lineStart = myDocument.getLineStartOffset(line);
       int lineEnd = myDocument.getLineEndOffset(line);
-      result = new LineLayout(myView, lineStart, lineEnd, myView.getFontRenderContext(), 
-                              line == 0 ? myView.getPrefixTextWidthInPixels() : 0);
+      result = new LineLayout(myView, lineStart, lineEnd, myView.getFontRenderContext());
       myLines.set(line, result);
     }
     return result;

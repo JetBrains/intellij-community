@@ -21,15 +21,23 @@ import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SdkResolveScopeProvider;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -44,6 +52,15 @@ public class LibraryScopeCache {
   private final ConcurrentMap<List<Module>, GlobalSearchScope> myLibraryScopes =
     ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = ContainerUtil.newConcurrentMap();
+  private final Map<List<OrderEntry>, GlobalSearchScope>
+    myLibraryResolveScopeCache = new ConcurrentFactoryMap<List<OrderEntry>, GlobalSearchScope>() {
+    @Nullable
+    @Override
+    protected GlobalSearchScope create(List<OrderEntry> key) {
+      return calcLibraryScope(key);
+    }
+  };
+
 
   public LibraryScopeCache(Project project) {
     myProject = project;
@@ -52,12 +69,13 @@ public class LibraryScopeCache {
   public void clear() {
     myLibraryScopes.clear();
     mySdkScopes.clear();
+    myLibraryResolveScopeCache.clear();
   }
 
   public GlobalSearchScope getLibrariesOnlyScope() {
     return getScopeForLibraryUsedIn(Collections.<Module>emptyList());
   }
-  
+
   public GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn) {
     GlobalSearchScope scope = myLibraryScopes.get(modulesLibraryIsUsedIn);
     if (scope != null) {
@@ -68,6 +86,53 @@ public class LibraryScopeCache {
                                  : new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn);
     return ConcurrencyUtil.cacheOrGet(myLibraryScopes, modulesLibraryIsUsedIn, newScope);
   }
+
+  /**
+   * Resolve references in SDK/libraries in context of all modules which contain it, but prefer classes from the same library
+   * @param orderEntries the order entries that reference a particular SDK/library
+   * @return a cached resolve scope
+   */
+  public GlobalSearchScope getLibraryScope(List<OrderEntry> orderEntries) {
+    return myLibraryResolveScopeCache.get(orderEntries);
+  }
+
+  private GlobalSearchScope calcLibraryScope(List<OrderEntry> orderEntries) {
+    List<Module> modulesLibraryUsedIn = new ArrayList<Module>();
+
+    LibraryOrderEntry lib = null;
+    for (OrderEntry entry : orderEntries) {
+      if (entry instanceof JdkOrderEntry) {
+        return getScopeForSdk((JdkOrderEntry)entry);
+      }
+
+      if (entry instanceof LibraryOrderEntry) {
+        lib = (LibraryOrderEntry)entry;
+        modulesLibraryUsedIn.add(entry.getOwnerModule());
+      }
+      else if (entry instanceof ModuleOrderEntry) {
+        modulesLibraryUsedIn.add(entry.getOwnerModule());
+      }
+    }
+
+    GlobalSearchScope allCandidates = getScopeForLibraryUsedIn(modulesLibraryUsedIn);
+    if (lib != null) {
+      final LibraryRuntimeClasspathScope preferred = new LibraryRuntimeClasspathScope(myProject, lib);
+      // prefer current library
+      return new DelegatingGlobalSearchScope(allCandidates, preferred) {
+        @Override
+        public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+          boolean c1 = preferred.contains(file1);
+          boolean c2 = preferred.contains(file2);
+          if (c1 && !c2) return 1;
+          if (c2 && !c1) return -1;
+
+          return super.compare(file1, file2);
+        }
+      };
+    }
+    return allCandidates;
+  }
+
 
   public GlobalSearchScope getScopeForSdk(final JdkOrderEntry jdkOrderEntry) {
     final String jdkName = jdkOrderEntry.getJdkName();

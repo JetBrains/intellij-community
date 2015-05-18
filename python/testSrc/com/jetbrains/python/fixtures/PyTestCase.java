@@ -30,31 +30,32 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -94,6 +95,24 @@ public abstract class PyTestCase extends UsefulTestCase {
     return null;
   }
 
+  /**
+   * Reformats currently configured file.
+   */
+  protected final void reformatFile() {
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      @Override
+      public void run() {
+        doPerformFormatting();
+      }
+    });
+  }
+
+  private void doPerformFormatting() throws IncorrectOperationException {
+    final PsiFile file = myFixture.getFile();
+    final TextRange myTextRange = file.getTextRange();
+    CodeStyleManager.getInstance(myFixture.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -102,10 +121,18 @@ public abstract class PyTestCase extends UsefulTestCase {
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    new LightTempDirTestFixtureImpl(true));
+                                                                                    createTempDirFixture());
     myFixture.setUp();
 
     myFixture.setTestDataPath(getTestDataPath());
+  }
+
+  /**
+   * @return fixture to be used as temporary dir.
+   */
+  @NotNull
+  protected TempDirTestFixture createTempDirFixture() {
+    return new LightTempDirTestFixtureImpl(true); // "tmp://" dir by default
   }
 
   protected String getTestDataPath() {

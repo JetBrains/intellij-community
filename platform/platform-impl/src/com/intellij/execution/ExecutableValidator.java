@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public abstract class ExecutableValidator {
     }
     else {
       result.append(
-        String.format("<b>%s:</b> <code>%s</code><br/>%s", myNotificationErrorTitle, executable, description));
+        String.format("<b>%s:</b> <b>%s</b><br/>%s", myNotificationErrorTitle, executable, description));
     }
     if (appendFixIt) {
       result.append(" <a href=''>Fix it.</a>");

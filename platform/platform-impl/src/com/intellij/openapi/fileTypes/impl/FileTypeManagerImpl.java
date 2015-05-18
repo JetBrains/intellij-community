@@ -91,7 +91,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;.tox;_svn;rcs;vssver.scc;vssver2.scc;";
 
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
-  private final Collection<FileType> myDefaultTypes = new THashSet<FileType>();
+  private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
 
   private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<FileType>();
@@ -1007,7 +1007,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     List<FileType> notExternalizableFileTypes = new ArrayList<FileType>();
     for (FileType type : mySchemesManager.getAllSchemes()) {
-      if (!(type instanceof AbstractFileType)) {
+      if (!(type instanceof AbstractFileType) || myDefaultTypes.contains(type)) {
         notExternalizableFileTypes.add(type);
       }
     }
@@ -1323,6 +1323,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (typeName != null && !typeName.equals(fileType.getName())) {
       Trinity<String, String, Boolean> trinity = myUnresolvedRemovedMappings.get(matcher);
       myRemovedMappings.put(matcher, Pair.create(fileType, trinity != null && trinity.third));
+      myUnresolvedMappings.remove(matcher);
     }
   }
 

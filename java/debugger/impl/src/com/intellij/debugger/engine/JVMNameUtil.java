@@ -20,14 +20,17 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -209,7 +212,20 @@ public class JVMNameUtil {
 
     public String getName(DebugProcessImpl process) throws EvaluateException {
       List<ReferenceType> allClasses = process.getPositionManager().getAllClasses(mySourcePosition);
-      if(!allClasses.isEmpty()) {
+      // If there are more than one available, try to match by name
+      if (allClasses.size() > 1) {
+        String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          public String compute() {
+            return getClassVMName(getClassAt(mySourcePosition));
+          }
+        });
+        for (ReferenceType aClass : allClasses) {
+          if (Comparing.equal(aClass.name(), name)) {
+            return name;
+          }
+        }
+      }
+      if (!allClasses.isEmpty()) {
         return allClasses.get(0).name();
       }
 
@@ -458,4 +474,12 @@ public class JVMNameUtil {
     return psiClass;
   }
 
+  @Nullable
+  public static String getClassVMName(PsiClass containingClass) {
+    if (containingClass instanceof PsiAnonymousClass) {
+      return getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class)) +
+             JavaAnonymousClassesHelper.getName((PsiAnonymousClass)containingClass);
+    }
+    return ClassUtil.getJVMClassName(containingClass);
+  }
 }

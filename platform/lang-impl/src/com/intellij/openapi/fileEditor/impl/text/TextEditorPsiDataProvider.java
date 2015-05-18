@@ -16,7 +16,7 @@
 
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.injected.editor.EditorWindow;
@@ -189,7 +189,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (psiFile == null) return null;
 
     try {
-      TargetElementUtilBase util = TargetElementUtilBase.getInstance();
+      TargetElementUtil util = TargetElementUtil.getInstance();
       return util.findTargetElement(editor, util.getReferenceSearchFlags(), caret.getOffset());
     }
     catch (IndexNotReadyException e) {

@@ -1,7 +1,6 @@
 package com.siyeh.igtest.bugs.throwable_result_of_method_call_ignored;
 
 
-
 public class ThrowableResultOfMethodCallIgnored {
     public static void test() {
         try {
@@ -37,5 +36,19 @@ class ResWrap {
             //rememberResult(result.payload);
         }
         return result;
+    }
+}
+
+interface I {
+   Exception get();
+}
+
+class LambdaReturn {
+    {
+        I i = () -> createException("foo"); 
+    }
+
+    private RuntimeException createException(String message) {
+        return new RuntimeException(message);
     }
 }

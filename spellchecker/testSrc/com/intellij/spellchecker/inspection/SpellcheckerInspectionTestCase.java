@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,9 @@ package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 public abstract class SpellcheckerInspectionTestCase extends LightPlatformCodeInsightFixtureTestCase {
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected SpellcheckerInspectionTestCase() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
-
   @Override
   protected boolean isCommunity() {
     return true;

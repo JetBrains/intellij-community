@@ -18,6 +18,7 @@ package com.jetbrains.commandInterface.console;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.process.ConsoleHighlighter;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.EditorImpl.CaretRectangle;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
@@ -153,6 +155,12 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
     final FontMetrics consoleFontMetrics = consoleEditor.getFontMetrics(consoleFontType);
     final Font consoleFont = consoleFontMetrics.getFont();
 
+    // Copy rendering hints
+    final Graphics2D sourceGraphics2 = PyUtil.as(consoleEditor.getComponent().getGraphics(), Graphics2D.class);
+    if (sourceGraphics2 != null && g instanceof Graphics2D) {
+      ((Graphics2D)g).setRenderingHints(sourceGraphics2.getRenderingHints());
+    }
+
     final boolean argumentRequired = nextArg.first;
     final String argumentText = nextArg.second.getHelp().getHelpString();
 
@@ -236,5 +244,27 @@ final class ArgumentHintLayer extends JPanel implements Listener, Runnable { // 
     final MessageBusConnection connection = console.getProject().getMessageBus().connect();
     connection.subscribe(PsiModificationTracker.TOPIC, argumentHintLayer);
     console.addLayerToPane(argumentHintLayer);
+    Disposer.register(console, new Disconnector(connection)); // Registered to disconnect on disposal
+  }
+
+  /**
+   * Disconnects connect on {@link #dispose()}
+   */
+  private static final class Disconnector implements Disposable {
+    @NotNull
+    private final MessageBusConnection myConnection;
+
+
+    /**
+     * @param connection connection to disconnect on {@link #dispose()}
+     */
+    private Disconnector(@NotNull final MessageBusConnection connection) {
+      myConnection = connection;
+    }
+
+    @Override
+    public void dispose() {
+      myConnection.disconnect();
+    }
   }
 }

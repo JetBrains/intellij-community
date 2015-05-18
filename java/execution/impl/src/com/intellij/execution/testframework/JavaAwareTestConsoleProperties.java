@@ -24,14 +24,23 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.Executor;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.openapi.diff.LineTokenizer;
+import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeSelectionModel;
 import java.util.Collection;
+import java.util.Iterator;
 
 public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters> extends SMTRunnerConsoleProperties {
   public JavaAwareTestConsoleProperties(final String testFrameworkName, RunConfiguration configuration, Executor executor) {
@@ -58,6 +67,33 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   @Override
   public boolean fixEmptySuite() {
     return ResetConfigurationModuleAdapter.tryWithAnotherModule(getConfiguration(), isDebug());
+  }
+
+  @Nullable
+  @Override
+  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+    //navigate to the first stack trace
+    final String[] stackTrace = new LineTokenizer(stacktrace).execute();
+    final PsiLocation<?> psiLocation = location.toPsiLocation();
+    final PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
+    if (containingClass == null) return null;
+    final String qualifiedName = containingClass.getQualifiedName();
+    if (qualifiedName == null) return null;
+    String containingMethod = null;
+    for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
+      final PsiMethod psiMethod = iterator.next().getPsiElement();
+      if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod.getName();
+    }
+    if (containingMethod == null) return null;
+    StackTraceLine lastLine = null;
+    for (String aStackTrace : stackTrace) {
+      final StackTraceLine line = new StackTraceLine(containingClass.getProject(), aStackTrace);
+      if (containingMethod.equals(line.getMethodName()) && qualifiedName.equals(line.getClassName())) {
+        lastLine = line;
+        break;
+      }
+    }
+    return lastLine != null ? lastLine.getOpenFileDescriptor(containingClass.getContainingFile().getVirtualFile()) : null;
   }
 
   @Nullable

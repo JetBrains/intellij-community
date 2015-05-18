@@ -488,9 +488,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     return result;
   }
 
-  @Nullable
-  private FilePath unshelveBinaryFile(final ShelvedBinaryFile file, @NotNull final VirtualFile patchTarget) throws IOException {
-    final Ref<FilePath> result = new Ref<FilePath>();
+  private void unshelveBinaryFile(final ShelvedBinaryFile file, @NotNull final VirtualFile patchTarget) throws IOException {
     final Ref<IOException> ex = new Ref<IOException>();
     final Ref<VirtualFile> patchedFileRef = new Ref<VirtualFile>();
     final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
@@ -499,7 +497,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       @Override
       public void run() {
         try {
-          result.set(new FilePathImpl(patchTarget));
           if (shelvedFile == null) {
             patchTarget.delete(this);
           }
@@ -516,7 +513,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     if (!ex.isNull()) {
       throw ex.get();
     }
-    return result.get();
   }
 
   private static boolean needUnshelve(final FilePatch patch, final List<ShelvedChange> changes) {

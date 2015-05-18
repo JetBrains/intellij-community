@@ -24,7 +24,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -55,17 +54,12 @@ public class XmlTagNamesIndex extends XmlIndex<Void> {
       @Override
       @NotNull
       public Map<String, Void> map(@NotNull final FileContent inputData) {
-        final Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
-        if (tags != null && !tags.isEmpty()) {
-          final HashMap<String, Void> map = new HashMap<String, Void>(tags.size());
-          for (String tag : tags) {
-            map.put(tag, null);
-          }
-          return map;
+        Collection<String> tags = XsdTagNameBuilder.computeTagNames(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
+        Map<String, Void> map = new HashMap<String, Void>(tags.size());
+        for (String tag : tags) {
+          map.put(tag, null);
         }
-        else {
-          return Collections.emptyMap();
-        }
+        return map;
       }
     };
   }

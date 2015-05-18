@@ -321,24 +321,17 @@ public class JavaDebugProcess extends XDebugProcess {
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
-    settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);
-    settings.addAction(new WatchLastMethodReturnValueAction(), Constraints.FIRST);
+    Constraints beforeSort = new Constraints(Anchor.BEFORE, "XDebugger.ToggleSortValues");
+    settings.addAction(new WatchLastMethodReturnValueAction(), beforeSort);
+    settings.addAction(new AutoVarsSwitchAction(), beforeSort);
   }
 
   private static class AutoVarsSwitchAction extends ToggleAction {
     private volatile boolean myAutoModeEnabled;
 
     public AutoVarsSwitchAction() {
-      super("", "", AllIcons.Debugger.AutoVariablesMode);
+      super(DebuggerBundle.message("action.auto.variables.mode"), DebuggerBundle.message("action.auto.variables.mode.description"), null);
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
-    }
-
-    @Override
-    public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      final boolean autoModeEnabled = Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
-      presentation.setText(autoModeEnabled ? "All-Variables Mode" : "Auto-Variables Mode");
     }
 
     @Override
@@ -356,15 +349,13 @@ public class JavaDebugProcess extends XDebugProcess {
 
   private static class WatchLastMethodReturnValueAction extends ToggleAction {
     private volatile boolean myWatchesReturnValues;
-    private final String myTextEnable;
+    private final String myText;
     private final String myTextUnavailable;
-    private final String myMyTextDisable;
 
     public WatchLastMethodReturnValueAction() {
       super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
       myWatchesReturnValues = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
-      myTextEnable = DebuggerBundle.message("action.watches.method.return.value.enable");
-      myMyTextDisable = DebuggerBundle.message("action.watches.method.return.value.disable");
+      myText = DebuggerBundle.message("action.watches.method.return.value.enable");
       myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
     }
 
@@ -372,12 +363,10 @@ public class JavaDebugProcess extends XDebugProcess {
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final boolean watchValues = Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
       DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
-      final String actionText = watchValues ? myMyTextDisable : myTextEnable;
       if (process == null || process.canGetMethodReturnValue()) {
         presentation.setEnabled(true);
-        presentation.setText(actionText);
+        presentation.setText(myText);
       }
       else {
         presentation.setEnabled(false);

@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -207,7 +206,7 @@ public class SvnRecursiveStatusWalker {
     final Processor<File> checkDirProcessor = new Processor<File>() {
       @Override
       public boolean process(File file) {
-        final FilePathImpl path = new FilePathImpl(file, true);
+        final FilePath path = VcsUtil.getFilePath(file, true);
         path.hardRefresh();
         VirtualFile vf = path.getVirtualFile();
         if (vf != null && isIgnoredIdeaLevel(vf)) {
@@ -341,7 +340,7 @@ public class SvnRecursiveStatusWalker {
       if (vFile != null && status.is(StatusType.STATUS_UNVERSIONED)) {
         if (vFile.isDirectory()) {
           if (!FileUtil.filesEqual(myCurrentItem.getPath().getIOFile(), ioFile)) {
-            myQueue.add(createItem(new FilePathImpl(vFile), Depth.INFINITY, true));
+            myQueue.add(createItem(VcsUtil.getFilePath(vFile), Depth.INFINITY, true));
           }
         }
         else {

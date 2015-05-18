@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 
 import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -29,7 +32,13 @@ import java.util.List;
  * @since 6.04.2011
  */
 public class JUnitForkedStarter {
-  private JUnitForkedStarter() {
+
+  public static final String DEBUG_SOCKET = "-debugSocket";
+
+  private int myDebugPort = -1;
+  private Socket myDebugSocket;
+
+  JUnitForkedStarter() {
   }
 
   public static void main(String[] args) throws Exception {
@@ -68,7 +77,7 @@ public class JUnitForkedStarter {
     }
   }
 
-  static int startForkedVMs(String workingDirsPath,
+  int startForkedVMs(String workingDirsPath,
                             String[] args,
                             boolean isJUnit4,
                             List listeners,
@@ -76,6 +85,17 @@ public class JUnitForkedStarter {
                             Object err,
                             String forkMode,
                             String path) throws Exception {
+    for (int i = 0; i < args.length; i++) {
+      String arg = args[i];
+      if (arg.startsWith(DEBUG_SOCKET)) {
+        final List list = new ArrayList(Arrays.asList(args));
+        list.remove(arg);
+        args = (String[])list.toArray(new String[list.size()]);
+        myDebugPort = Integer.parseInt(arg.substring(DEBUG_SOCKET.length()));
+        break;
+      }
+    }
+
     final List parameters = new ArrayList();
     final BufferedReader bufferedReader = new BufferedReader(new FileReader(path));
     final String dynamicClasspath = bufferedReader.readLine();
@@ -156,6 +176,7 @@ public class JUnitForkedStarter {
       }
     }
 
+    if (myDebugSocket != null) myDebugSocket.close();
     time = System.currentTimeMillis() - time;
     if (!JUnitStarter.SM_RUNNER) new TimeSender(testRunner.getRegistry()).printHeader(time);
     return result;
@@ -176,7 +197,7 @@ public class JUnitForkedStarter {
     return null;
   }
   
-  private static int processChildren(boolean isJUnit4,
+  private int processChildren(boolean isJUnit4,
                                      List listeners,
                                      Object out,
                                      Object err,
@@ -204,7 +225,14 @@ public class JUnitForkedStarter {
     return result;
   }
 
-  private static int runChild(boolean isJUnit4,
+  private Socket getDebugSocket() throws IOException {
+    if (myDebugSocket == null) {
+      myDebugSocket = new Socket("127.0.0.1", myDebugPort);
+    }
+    return myDebugSocket;
+  }
+
+  private int runChild(boolean isJUnit4,
                               List listeners,
                               Object out,
                               Object err,
@@ -214,6 +242,32 @@ public class JUnitForkedStarter {
                               String startIndex,
                               String classpath,
                               String dynamicClasspath) throws IOException, InterruptedException {
+    parameters = new ArrayList(parameters);
+
+    int debugAddress = -1;
+    if (myDebugPort > -1) {
+      debugAddress = findAvailableSocketPort();
+      boolean found = false;
+      for (int i = 0; i < parameters.size(); i++) {
+        String parameter = (String)parameters.get(i);
+        final String debuggerParam = "transport=dt_socket";
+        final int indexOf = parameter.indexOf(debuggerParam);
+        if (indexOf >= 0) {
+          if (debugAddress > -1) {
+            parameter = parameter.substring(0, indexOf) + "transport=dt_socket,server=n,suspend=y,address=" + debugAddress;
+            parameters.set(i, parameter);
+            found = true;
+          }
+          else {
+            parameters.remove(parameter);
+          }
+          break;
+        }
+      }
+      if (!found) {
+        parameters.add("-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + debugAddress);
+      }
+    }
     //noinspection SSBasedInspection
     final File tempFile = File.createTempFile("fork", "test");
     tempFile.deleteOnExit();
@@ -263,11 +317,42 @@ public class JUnitForkedStarter {
     builder.add(listeners);
     builder.setWorkingDir(workingDir);
 
+    if (debugAddress > -1) {
+      Socket socket = getDebugSocket();
+      DataOutputStream stream = new DataOutputStream(socket.getOutputStream());
+      stream.writeInt(debugAddress);
+      int read = socket.getInputStream().read();
+    }
+
     final Process exec = builder.createProcess();
     final int result = exec.waitFor();
     ForkedVMWrapper.readWrapped(testOutputPath,
                                 JUnitStarter.SM_RUNNER ? ((PrintStream)out) : ((SegmentedOutputStream)out).getPrintStream(),
                                 JUnitStarter.SM_RUNNER ? ((PrintStream)err) : ((SegmentedOutputStream)err).getPrintStream());
     return result;
+  }
+
+  // copied from NetUtils
+  private static int findAvailableSocketPort() throws IOException {
+    final ServerSocket serverSocket = new ServerSocket(0);
+    try {
+      int port = serverSocket.getLocalPort();
+      // workaround for linux : calling close() immediately after opening socket
+      // may result that socket is not closed
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
+      synchronized (serverSocket) {
+        try {
+          //noinspection WaitNotInLoop
+          serverSocket.wait(1);
+        }
+        catch (InterruptedException e) {
+          System.err.println(e);
+        }
+      }
+      return port;
+    }
+    finally {
+      serverSocket.close();
+    }
   }
 }

@@ -23,13 +23,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class SetEditorSettingsAction extends ActionGroup implements DumbAware {
+public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final TextDiffSettingsHolder.TextDiffSettings myTextSettings;
   @NotNull private final List<? extends Editor> myEditors;
 
@@ -101,13 +102,16 @@ public abstract class SetEditorSettingsAction extends ActionGroup implements Dum
         }
       },
       new EditorSettingToggleAction("EditorToggleUseSoftWraps") {
+        private boolean myForcedSoftWrap;
+
         @Override
         public boolean isSelected() {
-          return myTextSettings.isUseSoftWraps();
+          return myForcedSoftWrap || myTextSettings.isUseSoftWraps();
         }
 
         @Override
         public void setSelected(boolean state) {
+          myForcedSoftWrap = false;
           myTextSettings.setUseSoftWraps(state);
         }
 
@@ -117,15 +121,21 @@ public abstract class SetEditorSettingsAction extends ActionGroup implements Dum
             editor.getSettings().setUseSoftWraps(value);
           }
         }
+
+        @Override
+        public void applyDefaults(@NotNull List<? extends Editor> editors) {
+          for (Editor editor : editors) {
+            if (editor != null && editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS) != null) myForcedSoftWrap = true;
+          }
+          super.applyDefaults(editors);
+        }
       },
     };
   }
 
   public void applyDefaults() {
-    for (Editor editor : myEditors) {
-      for (EditorSettingToggleAction action : myActions) {
-        action.apply(editor, action.isSelected());
-      }
+    for (EditorSettingToggleAction action : myActions) {
+      action.applyDefaults(myEditors);
     }
   }
 
@@ -147,8 +157,9 @@ public abstract class SetEditorSettingsAction extends ActionGroup implements Dum
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
+      setSelected(state);
       for (Editor editor : myEditors) {
-        setSelected(state);
+        if (editor == null) continue;
         apply(editor, state);
       }
     }
@@ -158,5 +169,12 @@ public abstract class SetEditorSettingsAction extends ActionGroup implements Dum
     public abstract void setSelected(boolean value);
 
     public abstract void apply(@NotNull Editor editor, boolean value);
+
+    public void applyDefaults(@NotNull List<? extends Editor> editors) {
+      for (Editor editor : editors) {
+        if (editor == null) continue;
+        apply(editor, isSelected());
+      }
+    }
   }
 }

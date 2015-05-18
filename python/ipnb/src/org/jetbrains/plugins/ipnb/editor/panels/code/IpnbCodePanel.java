@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -9,6 +10,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
@@ -116,8 +118,8 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   public void runCell() {
     super.runCell();
     updateCellSource();
-    myCell.setPromptNumber(-1);
-    updatePanel(myCell.getCellOutputs());
+    isRunning = true;
+    updatePanel(null, null);
     final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(myProject);
     connectionManager.executeCell(this);
     setEditing(false);
@@ -135,10 +137,20 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     myCell.setSource(StringUtil.splitByLinesKeepSeparators(text));
   }
 
-  public void updatePanel(@NotNull final List<IpnbOutputCell> outputContent) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+  public void updatePanel(@Nullable final String replacementContent, @Nullable final List<IpnbOutputCell> outputContent) {
+    final Application application = ApplicationManager.getApplication();
+    application.invokeLater(new Runnable() {
       @Override
       public void run() {
+        if (replacementContent != null) {
+          myCell.setSource(StringUtil.splitByLinesKeepSeparators(replacementContent));
+          application.runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              myCodeSourcePanel.getEditor().getDocument().setText(replacementContent);
+            }
+          });
+        }
         myCell.removeCellOutputs();
         myViewPanel.removeAll();
 
@@ -146,10 +158,12 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         panel.setBackground(IpnbEditorUtil.getBackground());
         addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel);
         myViewPanel.add(panel);
-
-        for (IpnbOutputCell output : outputContent) {
-          myCell.addCellOutput(output);
-          addOutputPanel(myViewPanel, output, true);
+        isRunning = false;
+        if (outputContent != null) {
+          for (IpnbOutputCell output : outputContent) {
+            myCell.addCellOutput(output);
+            addOutputPanel(myViewPanel, output, true);
+          }
         }
 
         final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();

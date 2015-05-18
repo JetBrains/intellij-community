@@ -528,7 +528,15 @@ public class HighlightMethodUtil {
       elementToHighlight = referenceToMethod.getReferenceNameElement();
     }
     else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
-      description = HighlightUtil.buildProblemWithStaticDescription(element);
+      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(referenceToMethod);
+      final String staticInterfaceMethodMessage = 
+        element instanceof PsiMethod 
+        ? LambdaUtil.getInvalidQualifier4StaticInterfaceMethodMessage((PsiMethod)element, referenceToMethod, 
+                                                                      resolveResult.getCurrentFileResolveScope(), languageLevel) 
+        : null;
+      description = staticInterfaceMethodMessage != null 
+                    ? staticInterfaceMethodMessage 
+                    : HighlightUtil.buildProblemWithStaticDescription(element);
       elementToHighlight = referenceToMethod.getReferenceNameElement();
     }
     else {

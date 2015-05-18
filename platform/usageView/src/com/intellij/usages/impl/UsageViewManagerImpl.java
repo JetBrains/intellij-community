@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
-import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
@@ -130,12 +129,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
       public void run(@NotNull final ProgressIndicator indicator) {
         new SearchForUsagesRunnable(UsageViewManagerImpl.this, UsageViewManagerImpl.this.myProject, usageViewRef, presentation, searchFor, searcherFactory,
                                     processPresentation, searchScopeToWarnOfFallingOutOf, listener).run();
-      }
-
-      @NotNull
-      @Override
-      public DumbModeAction getDumbModeAction() {
-        return DumbModeAction.CANCEL;
       }
 
       @Override

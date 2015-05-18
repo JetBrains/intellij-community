@@ -93,7 +93,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private DiffRequest myActiveRequest;
 
-  @NotNull private ViewerState myState;
+  @Nullable private ViewerState myState;
 
   public DiffRequestProcessor(@Nullable Project project) {
     this(project, new UserDataHolderBase());
@@ -106,13 +106,13 @@ public abstract class DiffRequestProcessor implements Disposable {
   public DiffRequestProcessor(@Nullable Project project, @NotNull UserDataHolder context) {
     myProject = project;
 
-    myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
-    myToolOrder = new LinkedList<DiffTool>();
-
     myContext = new MyDiffContext(context);
     myActiveRequest = NoDiffRequest.INSTANCE;
 
     mySettings = DiffSettingsHolder.getInstance().getSettings(myContext.getUserData(DiffUserDataKeysEx.PLACE));
+
+    myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
+    myToolOrder = new LinkedList<DiffTool>(getToolOrderFromSettings(myAvailableTools));
 
     // UI
 
@@ -139,6 +139,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     if (bottomPanel != null) myMainPanel.add(bottomPanel, BorderLayout.SOUTH);
     if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
 
+    myState = new EmptyState();
+    myContentPanel.setContent(DiffUtil.createMessagePanel(NoDiffRequest.INSTANCE.getMessage()));
 
     myOpenInEditorAction = new OpenInEditorAction(new Runnable() {
       @Override
@@ -146,14 +148,6 @@ public abstract class DiffRequestProcessor implements Disposable {
         onAfterNavigate();
       }
     });
-  }
-
-  public void init() {
-    myToolOrder.addAll(getToolOrderFromSettings(myAvailableTools));
-
-    myActiveRequest.onAssigned(true);
-    myState = new ErrorState((MessageDiffRequest)myActiveRequest);
-    myState.init();
   }
 
   //
@@ -299,6 +293,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected void onAfterNavigate() {
   }
 
+  @CalledInAwt
   protected void onDispose() {
   }
 
@@ -965,8 +960,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   //
 
   private interface ViewerState {
+    @CalledInAwt
     void init();
 
+    @CalledInAwt
     void destroy();
 
     @Nullable
@@ -977,6 +974,34 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @NotNull
     DiffTool getActiveTool();
+  }
+
+  private static class EmptyState implements ViewerState {
+    @Override
+    public void init() {
+    }
+
+    @Override
+    public void destroy() {
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public DiffTool getActiveTool() {
+      return ErrorDiffTool.INSTANCE;
+    }
   }
 
   private class ErrorState implements ViewerState {
@@ -997,6 +1022,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
 
@@ -1007,6 +1033,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1040,6 +1067,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
@@ -1057,6 +1085,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1096,6 +1125,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void init() {
       myContentPanel.setContent(myWrapperViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
@@ -1129,6 +1159,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
+    @CalledInAwt
     public void destroy() {
       Disposer.dispose(myViewer);
       Disposer.dispose(myWrapperViewer);

@@ -42,13 +42,13 @@ class VisiblePackBuilder {
 
   @NotNull private final VcsLogHashMap myHashMap;
   @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
-  @NotNull private final CommitDetailsGetter myCommitDetailsGetter;
+  @NotNull private final DataGetter<VcsFullCommitDetails> myCommitDetailsGetter;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
 
   VisiblePackBuilder(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                      @NotNull VcsLogHashMap hashMap,
                      @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
-                     @NotNull CommitDetailsGetter detailsGetter) {
+                     @NotNull DataGetter<VcsFullCommitDetails> detailsGetter) {
     myHashMap = hashMap;
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myCommitDetailsGetter = detailsGetter;
@@ -145,13 +145,13 @@ class VisiblePackBuilder {
 
   private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull VcsLogBranchFilter filter) {
     final Collection<String> branchNames = new HashSet<String>(filter.getBranchNames());
+    final Collection<String> excludedBranches = new HashSet<String>(filter.getExcludedBranchNames());
+    final boolean filterByAcceptance = !filter.getBranchNames().isEmpty();
     return new HashSet<Integer>(ContainerUtil.mapNotNull(refs.getBranches(), new Function<VcsRef, Integer>() {
       @Override
-      public Integer fun(VcsRef ref) {
-        if (branchNames.contains(ref.getName())) {
-          return myHashMap.getCommitIndex(ref.getCommitHash());
-        }
-        return null;
+      public Integer fun(@NotNull VcsRef ref) {
+        boolean acceptRef = filterByAcceptance ? branchNames.contains(ref.getName()) : !excludedBranches.contains(ref.getName());
+        return acceptRef ? myHashMap.getCommitIndex(ref.getCommitHash()) : null;
       }
     }));
   }

@@ -32,6 +32,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -148,7 +149,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         VirtualFile vFile = filePath.getVirtualFile();
         if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
           for(VirtualFile child: vFile.getChildren()) {
-            result.add(new FilePathImpl(child));
+            result.add(VcsUtil.getFilePath(child));
           }
         }
       }
@@ -368,7 +369,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         }
       } else if (!dirtyFiles.isEmpty()) {
         VirtualFile parent = newcomer.getVirtualFileParent();
-        if (parent != null && dirtyFiles.contains(new FilePathImpl(parent))) {
+        if (parent != null && dirtyFiles.contains(VcsUtil.getFilePath(parent))) {
           return;
         }
         dirtyFiles.add(newcomer);
@@ -400,7 +401,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
           final VirtualFile vFile = file.getVirtualFile();
           if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
             for (VirtualFile child : vFile.getChildren()) {
-              iterator.process(new FilePathImpl(child));
+              iterator.process(VcsUtil.getFilePath(child));
             }
           }
         }
@@ -486,10 +487,10 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       FilePath parent;
       VirtualFile vParent = path.getVirtualFileParent();
       if (vParent != null && vParent.isValid()) {
-        parent = new FilePathImpl(vParent);
+        parent = VcsUtil.getFilePath(vParent);
       }
       else {
-        parent = FilePathImpl.create(path.getIOFile().getParentFile());
+        parent = VcsUtil.getFilePath(path.getIOFile().getParentFile(), true);
       }
       return isInDirtyFiles(path) || isInDirtyFiles(parent);
     }

@@ -51,7 +51,7 @@ public class VfsDependentEnum<T> {
   private boolean myTriedToLoadFile;
 
   public VfsDependentEnum(String fileName, KeyDescriptor<T> descriptor, int version) {
-    myFile = new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + ".dat");
+    myFile = new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + FSRecords.VFS_FILES_EXTENSION);
     myKeyDescriptor = descriptor;
     myVersion = version;
   }

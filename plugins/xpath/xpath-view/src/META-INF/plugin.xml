@@ -73,10 +73,10 @@
     <lang.braceMatcher language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathPairedBraceMatcher" />
     <lang.findUsagesProvider language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathFindUsagesProvider" />
     <lang.namesValidator language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathNamesValidator" />
-    <lang.syntaxHighlighterFactory key="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathSyntaxHighlighterFactory" />
+    <lang.syntaxHighlighterFactory language="XPath" implementationClass="org.intellij.lang.xpath.XPathLanguage$XPathSyntaxHighlighterFactory" />
 
     <lang.parserDefinition language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2ParserDefinition" />
-    <lang.syntaxHighlighterFactory key="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPathSyntaxHighlighterFactory" />
+    <lang.syntaxHighlighterFactory language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPathSyntaxHighlighterFactory" />
     <lang.commenter language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPath2Commenter" />
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />

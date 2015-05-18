@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -153,7 +152,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       myRawText = text;
       myTextAttributes = textAttributes;
       mySelected = selected;
-      recalculatePreferredSize();
+      myPreferredSize = null;
     }
 
     @Override
@@ -167,6 +166,27 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     public Dimension getPreferredSize() {
+      if (myPreferredSize == null) {
+        int maxLineLength = 0;
+        int linesCount = 0;
+
+        for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd(); lt.advance()) {
+          maxLineLength = Math.max(maxLineLength, lt.getLength());
+          linesCount++;
+        }
+
+        FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
+        int preferredHeight = myEditor.getLineHeight() * Math.max(1, linesCount);
+        int preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
+
+        Insets insets = getInsets();
+        if (insets != null) {
+          preferredHeight += insets.top + insets.bottom;
+          preferredWidth += insets.left + insets.right;
+        }
+
+        myPreferredSize = new Dimension(preferredWidth, preferredHeight);
+      }
       return myPreferredSize;
     }
 
@@ -176,51 +196,42 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     protected void paintChildren(Graphics g) {
-      updateText();
+      updateText(g.getClipBounds());
       super.paintChildren(g);
     }
 
     @Override
     public void dispose() {
+      myEditor.getComponent().removeNotify();
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
 
-    private void recalculatePreferredSize() {
-      int maxLineLength = 0;
-      int linesCount = 0;
-
-      for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd(); lt.advance()) {
-        maxLineLength = Math.max(maxLineLength, lt.getLength());
-        linesCount++;
-      }
-
-      FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
-      int preferredHeight = myEditor.getLineHeight() * Math.max(1, linesCount);
-      int preferredWidth = fontMetrics.charWidth('m') * maxLineLength;
-
-      Insets insets = getInsets();
-      if (insets != null) {
-        preferredHeight += insets.top + insets.bottom;
-        preferredWidth += insets.left + insets.right;
-      }
-
-      myPreferredSize = new Dimension(preferredWidth, preferredHeight);
-    }
-
-    private void updateText() {
+    private void updateText(Rectangle clip) {
       FontMetrics fontMetrics = ((EditorImpl)myEditor).getFontMetrics(myTextAttributes != null ? myTextAttributes.getFontType() : Font.PLAIN);
       Insets insets = getInsets();
       int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
 
       myDocumentTextBuilder.setLength(0);
-      float visibleLinesCountFractional = getHeight() / (float)myEditor.getLineHeight();
-      if (visibleLinesCountFractional < 1.1f) {
+
+      boolean singleLineMode = getHeight() / (float)myEditor.getLineHeight() < 1.1f;
+      if (singleLineMode) {
         appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true);
       }
       else {
-        int linesToAppend = (int)Math.floor(visibleLinesCountFractional + 0.5);
-        for (LineTokenizer lt = new LineTokenizer(myRawText); !lt.atEnd() && linesToAppend > 0; lt.advance(), linesToAppend--) {
-          appendAbbreviated(myDocumentTextBuilder, myRawText, lt.getOffset(), lt.getOffset() + lt.getLength(), fontMetrics, maxLineWidth, false);
+        int lineHeight = myEditor.getLineHeight();
+        int firstVisibleLine = clip.y / lineHeight;
+        float visibleLinesCountFractional = clip.height / (float)lineHeight;
+        int linesToAppend = 1 + (int)visibleLinesCountFractional;
+
+        LineTokenizer lt = new LineTokenizer(myRawText);
+        for (int line = 0; !lt.atEnd() && line < firstVisibleLine; lt.advance(), line++) {
+          myDocumentTextBuilder.append('\n');
+        }
+
+        for (int line = 0; !lt.atEnd() && line < linesToAppend; lt.advance(), line++) {
+          int start = lt.getOffset();
+          int end = start + lt.getLength();
+          appendAbbreviated(myDocumentTextBuilder, myRawText, start, end, fontMetrics, maxLineWidth, false);
           if (lt.getLineSeparatorLength() > 0) {
             myDocumentTextBuilder.append('\n');
           }
@@ -292,7 +303,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @NotNull
     private static EditorEx createEditor(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
-      fileType = ObjectUtils.notNull(fileType, FileTypes.PLAIN_TEXT);
       EditorTextField field = new EditorTextField(new MyDocument(), project, fileType, false, false);
       field.setSupplementary(true);
       field.setFontInheritedFromLAF(inheritFontFromLaF);

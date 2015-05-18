@@ -537,9 +537,9 @@
     </group>
 
     <group id="WelcomeScreen.Documentation">
-      <action id="WelcomeScreen.ReadHelp" class="com.intellij.ide.actions.HelpTopicsAction"/>
-      <action id="WelcomeScreen.ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
-      <action id="WelcomeScreen.JetBrainsTV" class="com.intellij.ide.actions.JetBrainsTvAction"/>
+      <reference ref="HelpTopics"/>
+      <reference ref="ShowTips"/>
+      <reference ref="Help.JetBrainsTV"/>
       <reference ref="Help.KeymapReference"/>
     </group>
 
@@ -560,6 +560,7 @@
       <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.CreateNewProjectGroupAction" text="New Project Group"/>
       <action id="WelcomeScreen.EditGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.EditProjectGroupAction" text="Edit..."/>
       <group id="WelcomeScreen.MoveToGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.MoveProjectToGroupActionGroup" text="Move To Group" popup="true"/>
+      <action id="WelcomeScreen.ChangeProjectIcon" class="com.intellij.openapi.wm.impl.welcomeScreen.ChangeProjectIconAction" text="Change Icon" />
       <separator/>
       <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction" text="Remove Selected from Welcome Screen"/>
     </group>
@@ -616,6 +617,7 @@
 
     <group id="MaintenanceGroup">
       <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
+      <action id="SwitchBootJdk" class="com.intellij.openapi.util.SwitchBootJdkAction"/>
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
     </group>
 

@@ -67,6 +67,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
@@ -188,8 +189,16 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     updateUI();
   }
 
+  private static Pattern ourAnonymousPattern = Pattern.compile(".*\\$\\d*$");
+  private static boolean isAnonymousClass(ReferenceType classType) {
+    if (classType instanceof ClassType) {
+      return ourAnonymousPattern.matcher(classType.name()).matches();
+    }
+    return false;
+  }
+
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
-    return true;
+    return !(loc.method().isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
-import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -35,16 +33,4 @@ public abstract class CheckinHandlersManager {
    * @return the list of registered factories
    */
   public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs<?>[] allActiveVcss);
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use EP {@link #getRegisteredCheckinHandlerFactories(AbstractVcs[])} (to remove in IDEA 14) */
-  public abstract List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull final List<AbstractVcs> keys);
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME} (to remove in IDEA 14) */
-  public abstract void registerCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
-
-  @SuppressWarnings("UnusedDeclaration")
-  /** @deprecated use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME} (to remove in IDEA 14) */
-  public abstract void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
 }

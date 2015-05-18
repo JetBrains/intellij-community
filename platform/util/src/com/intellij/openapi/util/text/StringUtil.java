@@ -940,27 +940,6 @@ public class StringUtil extends StringUtilRt {
     return true;
   }
 
-  /**
-   * @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14).
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Contract(pure = true)
-  public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
-    return startsWithConcatenation(string, firstPrefix, secondPrefix);
-  }
-
-  /**
-   * @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 14).
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Contract(pure = true)
-  public static boolean startsWithConcatenationOf(@NotNull String string,
-                                                  @NotNull String firstPrefix,
-                                                  @NotNull String secondPrefix,
-                                                  @NotNull String thirdPrefix) {
-    return startsWithConcatenation(string, firstPrefix, secondPrefix, thirdPrefix);
-  }
-
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static String trim(@Nullable String s) {
     return s == null ? null : s.trim();
@@ -2107,6 +2086,15 @@ public class StringUtil extends StringUtilRt {
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
+  @NonNls private static final String[] MN_QUOTED = {"&&", "__"};
+  @NonNls private static final String[] MN_CHARS = {"&", "_"};
+
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static String escapeMnemonics(@Nullable String text) {
+    if (text == null) return null;
+    return replace(text, MN_CHARS, MN_QUOTED);
+  }
+
   @NotNull
   @Contract(pure = true)
   public static String htmlEmphasize(@NotNull String text) {
@@ -3235,5 +3223,11 @@ public class StringUtil extends StringUtilRt {
       check();
       return delegate.subSequence(i, i1);
     }
+  }
+
+  /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
+  @SuppressWarnings("unused")
+  public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
+    return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }
 }

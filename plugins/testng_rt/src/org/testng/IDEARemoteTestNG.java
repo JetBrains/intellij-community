@@ -23,7 +23,7 @@ import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -52,22 +52,23 @@ public class IDEARemoteTestNG extends TestNG {
         int testCount= 0;
 
         for (XmlSuite suite : suites) {
-          System.out.println("##teamcity[suiteTreeStarted name=\'" + suite.getName() + "\' locationHint=\'java:suite://" + suite.getName() + "\']");
           final List<XmlTest> tests = suite.getTests();
           for (XmlTest test : tests) {
-            for (XmlClass aClass : test.getXmlClasses()) {
-              System.out.println("##teamcity[suiteTreeStarted name=\'" + aClass.getName() + "\' locationHint=\'java:suite://" + aClass.getName() +  "\']");
+            try {
               if (myParam != null) {
-                for (XmlInclude include : aClass.getIncludedMethods()) {
-                  aClass.setIncludedMethods(Arrays.asList(new XmlInclude(include.getName(), Arrays.asList(Integer.parseInt(myParam)), 0)));
+                for (XmlClass aClass : test.getXmlClasses()) {
+                  for (XmlInclude include : aClass.getIncludedMethods()) {
+                    final XmlInclude xmlInclude = new XmlInclude(include.getName(), Collections.singletonList(Integer.parseInt(myParam)), 0);
+                    aClass.setIncludedMethods(Collections.singletonList(xmlInclude));
+                  }
                 }
               }
-
-              System.out.println("##teamcity[suiteTreeEnded name=\'" + aClass.getName() + "\']");
+            }
+            catch (NumberFormatException e) {
+              System.err.println("Invocation number: expected integer but found: " + myParam);
             }
             testCount += test.getClasses().size();
           }
-          System.out.println("##teamcity[suiteTreeEnded name=\'" + suite.getName() + "\']");
         }
 
         final HashMap<String, String> map = new HashMap<String, String>();
@@ -76,6 +77,7 @@ public class IDEARemoteTestNG extends TestNG {
         addListener((ISuiteListener) new IDEATestNGRemoteListener());
         addListener((ITestListener)  new IDEATestNGRemoteListener());
         super.run();
+        System.exit(0);
       }
       else {
         System.err.println("Nothing found to run");

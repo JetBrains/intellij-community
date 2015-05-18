@@ -89,8 +89,9 @@ public abstract class VirtualFileSystem {
    * This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
    * corresponding to it.<p>
    * <p/>
-   * This method should be only called within write-action.
-   * See {@link Application#runWriteAction}.
+   * If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action. The reason is that
+   * then the method call won't return until proper VFS events are fired, which happens on Swing thread and in write action. So invoking
+   * this method in a read action would result in a deadlock.
    *
    * @param path the path
    * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
@@ -113,12 +114,6 @@ public abstract class VirtualFileSystem {
    * @param listener the listener
    */
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);
-
-  /** @deprecated. Current implementation blindly calls plain refresh against the file passed (to be removed in IDEA 15) */
-  @SuppressWarnings("unused")
-  public void forceRefreshFile(boolean asynchronous, @NotNull VirtualFile file) {
-    file.refresh(asynchronous, false);
-  }
 
   /**
    * Implementation of deleting files in this file system

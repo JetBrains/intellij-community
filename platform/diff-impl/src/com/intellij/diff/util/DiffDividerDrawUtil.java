@@ -30,6 +30,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DiffDividerDrawUtil {
+
+  /*
+   * Clip given graphics of divider component such that result graphics is aligned with base component by 'y' coordinate.
+   */
+  @NotNull
+  public static Graphics2D getDividerGraphics(@NotNull Graphics g, @NotNull Component divider, @NotNull Component base) {
+    int width = divider.getWidth();
+    int editorHeight = base.getHeight();
+    int dividerOffset = divider.getLocationOnScreen().y;
+    int editorOffset = base.getLocationOnScreen().y;
+    return (Graphics2D)g.create(0, editorOffset - dividerOffset, width, editorHeight);
+  }
+
   public static void paintSeparators(@NotNull Graphics2D gg,
                                      int width,
                                      @NotNull Editor editor1,

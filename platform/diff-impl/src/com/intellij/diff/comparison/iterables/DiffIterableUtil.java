@@ -181,10 +181,6 @@ public class DiffIterableUtil {
     };
   }
 
-  public static boolean isEmpty(@NotNull Range range) {
-    return range.start1 == range.end1 && range.start2 == range.end2;
-  }
-
   //
   // Verification
   //

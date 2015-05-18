@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -117,7 +119,8 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
         return;
       }
       final PsiExpression argument = arguments[0];
-      if (!isConcatenation(argument)) {
+      if (!ExpressionUtils.isConcatenation(ParenthesesUtils.stripParentheses(argument)) ||
+          PsiUtil.isConstantExpression(argument)) {
         return;
       }
       final PsiMethod method = expression.resolveMethod();
@@ -144,24 +147,6 @@ public class StringConcatenationInsideStringBufferAppendInspection extends BaseI
         return;
       }
       registerMethodCallError(expression, containingClass);
-    }
-
-    private static boolean isConcatenation(PsiExpression expression) {
-      if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-        return isConcatenation(parenthesizedExpression.getExpression());
-      }
-      if (!(expression instanceof PsiPolyadicExpression)) {
-        return false;
-      }
-      if (PsiUtil.isConstantExpression(expression)) {
-        return false;
-      }
-      final PsiType type = expression.getType();
-      if (type == null) {
-        return false;
-      }
-      return type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
     }
   }
 }

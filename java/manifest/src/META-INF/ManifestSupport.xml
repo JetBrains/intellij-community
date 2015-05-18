@@ -5,7 +5,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="org.jetbrains.lang.manifest.ManifestFileTypeFactory"/>
     <lang.parserDefinition language="Manifest" implementationClass="org.jetbrains.lang.manifest.parser.ManifestParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.ManifestSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.ManifestSyntaxHighlighterFactory"/>
     <annotator language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.HeaderAnnotator"/>
     <lang.elementManipulator forClass="org.jetbrains.lang.manifest.psi.HeaderValuePart"
                              implementationClass="org.jetbrains.lang.manifest.psi.impl.HeaderValuePartManipulator"/>
@@ -17,6 +17,6 @@
     <localInspection language="Manifest" displayName="Missing Final New Line" groupName="Manifest"
                      enabledByDefault="true" level="ERROR" implementationClass="org.jetbrains.lang.manifest.highlighting.MissingFinalNewlineInspection"/>
     <localInspection language="Manifest" displayName="Unknown or Misspelled Header Name" groupName="Manifest"
-                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection"/>
+                     enabledByDefault="true" level="WEAK WARNING" implementationClass="org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection"/>
   </extensions>
 </idea-plugin>

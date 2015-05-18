@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
@@ -157,8 +157,8 @@ public class PyFindUsagesTest extends PyTestCase {
     myFixture.copyDirectoryToProject("findUsages/" + testName, "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     myFixture.configureFromTempProjectFile(filename);
-    final int flags = TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED;
-    final PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), flags);
+    final int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
+    final PsiElement element = TargetElementUtil.findTargetElement(myFixture.getEditor(), flags);
     assertNotNull(element);
     return myFixture.findUsages(element);
   }

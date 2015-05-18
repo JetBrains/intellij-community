@@ -116,12 +116,19 @@ public class PathManager {
 
   private static boolean isIdeaHome(final File root) {
     return new File(root, FileUtil.toSystemDependentName("bin/idea.properties")).exists() ||
+           new File(root, FileUtil.toSystemDependentName("bin/" + getOSSpecificBinSubdir() + "/idea.properties")).exists() ||
            new File(root, FileUtil.toSystemDependentName("community/bin/idea.properties")).exists();
   }
 
   @NotNull
   public static String getBinPath() {
     return getHomePath() + File.separator + BIN_FOLDER;
+  }
+
+  private static String getOSSpecificBinSubdir() {
+    if (SystemInfo.isWindows) return "win";
+    if (SystemInfo.isMac) return "mac";
+    return "linux";
   }
 
   @NotNull
@@ -317,6 +324,7 @@ public class PathManager {
       getUserPropertiesPath(),
       getUserHome() + "/idea.properties",
       getHomePath() + "/bin/idea.properties",
+      getHomePath() + "/bin/" + getOSSpecificBinSubdir() + "/idea.properties",
       getHomePath() + "/community/bin/idea.properties"};
 
     for (String path : propFiles) {
@@ -512,41 +520,5 @@ public class PathManager {
       }
     }
     return false;
-  }
-
-  // outdated stuff
-
-  /** @deprecated use {@link #getPluginsPath()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration") public static final String PLUGINS_DIRECTORY = PLUGINS_FOLDER;
-
-  /** @deprecated use {@link #getPreInstalledPluginsPath()} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration", "MethodNamesDifferingOnlyByCase", "SpellCheckingInspection"})
-  public static String getPreinstalledPluginsPath() {
-    return getPreInstalledPluginsPath();
-  }
-
-  /** @deprecated use {@link #getConfigPath()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String getConfigPath(boolean createIfNotExists) {
-    ensureConfigFolderExists();
-    return ourConfigPath;
-  }
-
-  /** @deprecated use {@link #ensureConfigFolderExists()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean ensureConfigFolderExists(boolean createIfNotExists) {
-    return checkAndCreate(getConfigPath(), createIfNotExists);
-  }
-
-  /** @deprecated use {@link #getOptionsPath()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static String getOptionsPathWithoutDialog() {
-    return getOptionsPath();
-  }
-
-  /** @deprecated use {@link #getOptionsFile(String)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static File getDefaultOptionsFile() {
-    return new File(getOptionsPath(), DEFAULT_OPTIONS_FILE_NAME + ".xml");
   }
 }

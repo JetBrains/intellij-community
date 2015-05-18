@@ -241,32 +241,50 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Color defaultBackgroundColor = myEditor.getBackgroundColor();
     Color defaultForegroundColor = myEditor.getColorsScheme().getDefaultForeground();
     int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset() + (isFoldingOutlineShown() ? 1 : 0);
-    IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true);
-    while (!state.atEnd()) {
-      VisualPosition visualStart = myEditor.offsetToVisualPosition(state.getStartOffset());
-      VisualPosition visualEnd   = myEditor.offsetToVisualPosition(state.getEndOffset());
-      for (int line = visualStart.getLine(); line <= visualEnd.getLine(); line++) {
-        if (line == visualStart.getLine()) {
-          if (visualStart.getColumn() == 0) {
-            drawEditorLineBackgroundRect(g, state, line, defaultBackgroundColor, defaultForegroundColor, startX, myEditor.visibleLineToY(line));
-          }
-        }
-        else if (line != visualEnd.getLine() || visualEnd.getColumn() != 0) {
-          drawEditorLineBackgroundRect(g, state, line, defaultBackgroundColor, defaultForegroundColor, startX, myEditor.visibleLineToY(line));
+    if (myEditor.myUseNewRendering) {
+      com.intellij.openapi.editor.impl.view.IterationState state = 
+        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true, true, false);
+      while (!state.atEnd()) {
+        drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
+                                     defaultBackgroundColor, defaultForegroundColor, startX);
+        state.advance();
+      }
+    }
+    else {
+      IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true);
+      while (!state.atEnd()) {
+        drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
+                                     defaultBackgroundColor, defaultForegroundColor, startX);
+        state.advance();
+      }
+    }
+  }
+  
+  private void drawEditorBackgroundForRange(Graphics g, int startOffset, int endOffset, TextAttributes attributes,
+                                            Color defaultBackgroundColor, Color defaultForegroundColor, int startX) {
+    VisualPosition visualStart = myEditor.offsetToVisualPosition(startOffset);
+    VisualPosition visualEnd   = myEditor.offsetToVisualPosition(endOffset);
+    for (int line = visualStart.getLine(); line <= visualEnd.getLine(); line++) {
+      if (line == visualStart.getLine()) {
+        if (visualStart.getColumn() == 0) {
+          drawEditorLineBackgroundRect(g, attributes, line, defaultBackgroundColor, defaultForegroundColor, startX,
+                                       myEditor.visibleLineToY(line));
         }
       }
-      state.advance();
+      else if (line != visualEnd.getLine() || visualEnd.getColumn() != 0) {
+        drawEditorLineBackgroundRect(g, attributes, line, defaultBackgroundColor, defaultForegroundColor, startX,
+                                     myEditor.visibleLineToY(line));
+      }
     }
   }
 
   private void drawEditorLineBackgroundRect(Graphics g,
-                                            IterationState state,
+                                            TextAttributes attributes,
                                             int visualLine,
                                             Color defaultBackgroundColor,
                                             Color defaultForegroundColor,
                                             int startX,
                                             int startY) {
-    TextAttributes attributes = state.getMergedAttributes();
     Color color = myEditor.getBackgroundColor(attributes);
     if (!Comparing.equal(color, defaultBackgroundColor)) {
       Color fgColor = attributes.getForegroundColor();

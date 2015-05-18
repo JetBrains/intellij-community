@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -67,6 +68,7 @@ public class InferLambdaParameterTypeIntention extends Intention {
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       final PsiType psiType = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult).substitute(parameter.getType());
+      if (!PsiTypesUtil.isDenotableType(psiType)) return null;
       if (psiType != null) {
         buf.append(useFQN ? psiType.getCanonicalText() : psiType.getPresentableText()).append(" ").append(lambdaParameters[i].getName());
       }

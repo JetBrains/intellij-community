@@ -1,5 +1,8 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -80,6 +83,8 @@ public class ExistingTemplatesComponent {
       patternTree.expandPath(new TreePath(new Object[]{root, nodeToExpand}));
     }
 
+    TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
+    final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     panel = ToolbarDecorator.createDecorator(patternTree)
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
@@ -117,9 +122,12 @@ public class ExistingTemplatesComponent {
           }
           return false;
         }
-      }).createPanel();
+      })
+      .addExtraAction(AnActionButton.fromAction(actionManager.createExpandAllAction(treeExpander, patternTree)))
+      .addExtraAction(AnActionButton.fromAction(actionManager.createCollapseAllAction(treeExpander, patternTree)))
+      .createPanel();
 
-      new JPanel(new BorderLayout());
+    new JPanel(new BorderLayout());
 
     configureSelectTemplateAction(patternTree);
 
@@ -223,6 +231,7 @@ public class ExistingTemplatesComponent {
     public ExistingTemplatesListCellRenderer(ListSpeedSearch speedSearch) {
       mySpeedSearch = speedSearch;
     }
+
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean focus) {
       if (!(value instanceof Configuration)) {
@@ -238,7 +247,8 @@ public class ExistingTemplatesComponent {
       final long created = configuration.getCreated();
       if (created > 0) {
         final String createdString = DateFormatUtil.formatPrettyDateTime(created);
-        append(" (" + createdString + ')', selected ? new SimpleTextAttributes(Font.PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append(" (" + createdString + ')',
+               selected ? new SimpleTextAttributes(Font.PLAIN, foreground) : SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
   }

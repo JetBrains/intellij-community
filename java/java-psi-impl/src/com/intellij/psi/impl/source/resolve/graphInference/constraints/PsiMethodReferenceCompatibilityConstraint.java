@@ -88,7 +88,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         final PsiType qualifierType = PsiMethodReferenceUtil.getQualifierType(myExpression);
         final PsiClass qualifierClass = PsiUtil.resolveClassInType(qualifierType);
         if (qualifierClass != null) {
-          session.initBounds(myExpression, qualifierClass.getTypeParameters());
           final PsiType pType = signature.getParameterTypes()[0];
           constraints.add(new StrictSubtypingConstraint(session.substituteWithInferenceVariables(qualifierType), pType));
         }

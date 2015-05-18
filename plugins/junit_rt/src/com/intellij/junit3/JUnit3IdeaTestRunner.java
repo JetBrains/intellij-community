@@ -39,7 +39,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
     myListeners = listeners;
     mySendTree = sendTree && !(myTestsListener instanceof SMTestListener);
-    if (sendTree) {
+    if (mySendTree) {
       setPrinter(new TimeSender(myRegistry));
     }
     else {

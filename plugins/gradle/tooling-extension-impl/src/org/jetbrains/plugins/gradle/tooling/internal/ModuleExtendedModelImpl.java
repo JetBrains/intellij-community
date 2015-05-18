@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.tooling.internal;
 
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExtIdeaCompilerOutput;
 import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
@@ -36,16 +37,18 @@ public class ModuleExtendedModelImpl implements ModuleExtendedModel {
   private final String myGroup;
   private final String myVersion;
   private final File myBuildDir;
+  private final String myJavaSourceCompatibility;
   private List<File> myArtifacts;
   private Set<ExtIdeaContentRoot> myContentRoots;
   private ExtIdeaCompilerOutput myCompilerOutput;
   private Map<String, Set<File>> myArtifactsByConfiguration;
 
-  public ModuleExtendedModelImpl(String name, String group, String version, File buildDir) {
+  public ModuleExtendedModelImpl(String name, String group, String version, File buildDir, String javaSourceCompatibility) {
     myName = name;
     myGroup = group;
     myVersion = version;
     myBuildDir = buildDir;
+    myJavaSourceCompatibility = javaSourceCompatibility;
     myArtifacts = Collections.emptyList();
     myContentRoots = Collections.emptySet();
   }
@@ -104,5 +107,11 @@ public class ModuleExtendedModelImpl implements ModuleExtendedModel {
   @Override
   public Map<String, Set<File>> getArtifactsByConfiguration() {
     return myArtifactsByConfiguration == null ? Collections.<String, Set<File>>emptyMap() : myArtifactsByConfiguration;
+  }
+
+  @Nullable
+  @Override
+  public String getJavaSourceCompatibility() {
+    return myJavaSourceCompatibility;
   }
 }

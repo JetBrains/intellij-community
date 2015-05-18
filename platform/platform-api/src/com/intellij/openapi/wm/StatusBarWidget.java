@@ -17,15 +17,13 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.ui.Gray;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
@@ -84,24 +82,8 @@ public interface StatusBarWidget extends Disposable {
     String getMaxValue();
   }
 
-  class WidgetBorder implements Border {
-    public static final WidgetBorder INSTANCE = new WidgetBorder();
-    private static final Color SEPARATOR_COLOR = UIUtil.getPanelBackground().darker();
-
-    public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      if (UIUtil.isUnderDarcula()) return;
-      final Graphics2D g2 = (Graphics2D)g.create();
-      g2.setColor(UIUtil.isUnderIntelliJLaF() ? Gray._200 : SEPARATOR_COLOR);
-      g2.drawLine(x, y, x, y + height);
-      g2.dispose();
-    }
-
-    public Insets getBorderInsets(Component c) {
-      return new Insets(0, 4, 0, 2);
-    }
-
-    public boolean isBorderOpaque() {
-      return false;
-    }
+  abstract class WidgetBorder implements Border {
+    public static final Border INSTANCE = IdeBorderFactory.createEmptyBorder(0, 2, 0, 2);
+    public static final Border WIDE = IdeBorderFactory.createEmptyBorder(0, 4, 0, 4);
   }
 }

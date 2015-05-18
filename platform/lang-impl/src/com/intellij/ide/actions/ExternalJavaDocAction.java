@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -35,11 +35,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ExternalJavaDocAction extends AnAction {
 
@@ -90,8 +92,8 @@ public class ExternalJavaDocAction extends AnAction {
     }
   }
 
-  public static void showExternalJavadoc(List<String> urls, Component component) {
-    final HashSet<String> set = new HashSet<String>(urls);
+  public static void showExternalJavadoc(@NotNull List<String> urls, Component component) {
+    Set<String> set = new THashSet<String>(urls);
     if (set.size() > 1) {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose external documentation root", ArrayUtil.toStringArray(set)) {
         @Override
@@ -147,7 +149,7 @@ public class ExternalJavaDocAction extends AnAction {
   private static PsiElement getElement(DataContext dataContext, Editor editor) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null && editor != null) {
-      PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
+      PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
       if (reference != null) {
         element = reference.getElement();
       }

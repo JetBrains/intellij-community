@@ -1,9 +1,10 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="IDEA" type="Application" factoryName="Application" singleton="true">
     <log_file path="$PROJECT_DIR$/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="idea.log" />
+    <log_file path="$PROJECT_DIR$/system/log/build-log/build.log" checked="true" skipped="true" show_all="false" alias="build.log" />
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
-    <option name="VM_PARAMETERS" value=" -ea -Xbootclasspath/p:../out/classes/production/boot  -Xmx192m -Didea.is.internal=true -XX:MaxPermSize=150m " />
+    <option name="VM_PARAMETERS" value="-Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=150m -XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea -Xbootclasspath/p:../out/classes/production/boot -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true -Dapple.laf.useScreenMenuBar=true -Dsun.awt.disablegrab=true -Didea.is.internal=true -Didea.debug.mode=true -Didea.config.path=../config -Didea.system.path=../system" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
@@ -12,17 +13,18 @@
     <option name="ENV_VARIABLES" />
     <option name="PASS_PARENT_ENVS" value="true" />
     <module name="community-main" />
-    <envs />
+    <envs>
+      <env name="IDEA_RUNNERW" value="win/runnerw.exe" />
+    </envs>
     <RunnerSettings RunnerId="Debug">
       <option name="DEBUG_PORT" value="60786" />
       <option name="TRANSPORT" value="0" />
       <option name="LOCAL" value="true" />
     </RunnerSettings>
-    <RunnerSettings RunnerId="Profile ">
-      <option name="myExternalizedOptions" />
-    </RunnerSettings>
+    <RunnerSettings RunnerId="Profile " />
     <RunnerSettings RunnerId="Run" />
     <ConfigurationWrapper RunnerId="Debug" />
+    <ConfigurationWrapper RunnerId="Profile " />
     <ConfigurationWrapper RunnerId="Run" />
     <method />
   </configuration>

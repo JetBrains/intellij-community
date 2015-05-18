@@ -54,10 +54,4 @@ public abstract class ApplicationInfo {
   public static boolean contextHelpAvailable() {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();
   }
-
-  /** @deprecated use {@link #getBuild()} instead (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public String getBuildNumber() {
-    return getBuild().asString();
-  }
 }

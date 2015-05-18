@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +29,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
-import com.siyeh.ig.telemetry.InspectionGadgetsTelemetry;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +45,6 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.BaseInspection");
 
   private String m_shortName = null;
-  private long timestamp = -1L;
 
   @Override
   @NotNull
@@ -185,30 +182,6 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     for (int i = 1; i < strings.length; i++) {
       out.append(',');
       out.append(strings[i].get(index));
-    }
-  }
-
-  @Override
-  public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {
-    super.inspectionStarted(session, isOnTheFly);
-    if (InspectionGadgetsTelemetry.isEnabled()) {
-      timestamp = System.currentTimeMillis();
-    }
-  }
-
-  @Override
-  public void inspectionFinished(@NotNull LocalInspectionToolSession session,
-                                 @NotNull ProblemsHolder problemsHolder) {
-    super.inspectionFinished(session, problemsHolder);
-    if (InspectionGadgetsTelemetry.isEnabled()) {
-      if (timestamp < 0L) {
-        LOG.warn("finish reported without corresponding start");
-        return;
-      }
-      final long end = System.currentTimeMillis();
-      final String displayName = getDisplayName();
-      InspectionGadgetsTelemetry.getInstance().reportRun(displayName, end - timestamp);
-      timestamp = -1L;
     }
   }
 

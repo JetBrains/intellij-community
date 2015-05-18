@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,18 +105,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     this(viewProvider, false);
   }
 
-  /** @deprecated use {@link #ClsFileImpl(FileViewProvider)} (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public ClsFileImpl(@NotNull PsiManager manager, @NotNull FileViewProvider viewProvider) {
-    this(viewProvider, false);
-  }
-
   private ClsFileImpl(@NotNull FileViewProvider viewProvider, boolean forDecompiling) {
-    //noinspection ConstantConditions
     super(null);
     myViewProvider = viewProvider;
     myIsForDecompiling = forDecompiling;
-    //noinspection ResultOfMethodCallIgnored
     JavaElementType.CLASS.getIndex();  // initialize Java stubs
   }
 
@@ -473,7 +465,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       if (LOG.isDebugEnabled()) {
         LOG.debug("No stub for class file in index: " + getVirtualFile().getPresentableUrl());
       }
-      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
+      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted_class_files", true));
     }
 
     synchronized (myStubLock) {
@@ -546,12 +538,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
 
   // default decompiler implementation
 
-  /** @deprecated use {@link #decompile(VirtualFile)} (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public static String decompile(@NotNull PsiManager manager, @NotNull VirtualFile file) {
-    return decompile(file).toString();
-  }
-
   @NotNull
   public static CharSequence decompile(@NotNull VirtualFile file) {
     PsiManager manager = PsiManager.getInstance(DefaultProjectFactory.getInstance().getDefaultProject());
@@ -573,11 +559,15 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     try {
-      PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl("do.not.know.yet", true);
+      ClassReader reader = new ClassReader(bytes);
+      String internalName = reader.getClassName();
       String className = file.getNameWithoutExtension();
+      String fqn = StubBuildingVisitor.getFqn(internalName, className);
+      String packageName = getPackageName(fqn, className);
+      PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl(packageName, true);
       StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, className);
       try {
-        new ClassReader(bytes).accept(visitor, ClassReader.SKIP_FRAMES);
+        reader.accept(visitor, ClassReader.SKIP_FRAMES);
       }
       catch (OutOfOrderInnerClassException e) {
         return null;
@@ -586,7 +576,6 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       PsiClassStub<?> result = visitor.getResult();
       if (result == null) return null;
 
-      stub.setPackageName(getPackageName(result));
       return stub;
     }
     catch (Exception e) {
@@ -614,9 +603,13 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
   };
 
-  private static String getPackageName(@NotNull PsiClassStub<?> result) {
-    String fqn = result.getQualifiedName();
-    String shortName = result.getName();
+  private static String getPackageName(String fqn, String shortName) {
     return fqn == null || Comparing.equal(shortName, fqn) ? "" : fqn.substring(0, fqn.lastIndexOf('.'));
+  }
+
+  /** @deprecated use {@link #ClsFileImpl(FileViewProvider)} (to remove in IDEA 15) */
+  @SuppressWarnings("unused")
+  public ClsFileImpl(@NotNull PsiManager manager, @NotNull FileViewProvider viewProvider) {
+    this(viewProvider);
   }
 }

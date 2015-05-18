@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiClass;
@@ -67,8 +67,8 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
 
   public void testIdWithRefs() throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml");
-    PsiElement element = TargetElementUtilBase
-      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtil
+      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
     new RenameProcessor(getProject(), element, "lb1", true, true).run();
     checkResultByFile(getTestName(true) + "_after.fxml");
@@ -80,8 +80,8 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
 
   private void doTest(final String newName, boolean inline) throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
-    PsiElement element = TargetElementUtilBase
-      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtil
+      .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
     if (inline) {
       CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, getEditor(), element);

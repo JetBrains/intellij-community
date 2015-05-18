@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -26,9 +27,9 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -41,6 +42,8 @@ import java.awt.image.BufferedImage;
  * Also contains a cache of several font-related quantities (line height, space width, etc).
  */
 public class EditorView implements Disposable {
+  private static Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
+
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
   private final FontRenderContext myFontRenderContext;
@@ -50,6 +53,7 @@ public class EditorView implements Disposable {
   private final TextLayoutCache myTextLayoutCache;
   private final TabFragment myTabFragment;
     
+  private String myPrefixText;
   private LineLayout myPrefixLayout;
   private TextAttributes myPrefixAttributes;
   
@@ -87,6 +91,10 @@ public class EditorView implements Disposable {
     return mySizeManager;
   }
   
+  EditorPainter getPainter() {
+    return myPainter;
+  }
+  
   TabFragment getTabFragment() {
     return myTabFragment;
   }
@@ -113,18 +121,18 @@ public class EditorView implements Disposable {
   }
 
   @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos) {
-    return myMapper.logicalToVisualPosition(pos);
+  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean leanTowardsLargerLogicalColumns) {
+    return myMapper.logicalToVisualPosition(pos, leanTowardsLargerLogicalColumns);
   }
 
   @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
-    return myMapper.visualToLogicalPosition(pos);
+  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos, boolean leanTowardsLargerVisualColumns) {
+    return myMapper.visualToLogicalPosition(pos, leanTowardsLargerVisualColumns);
   }
 
   @NotNull
-  public VisualPosition offsetToVisualPosition(int offset) {
-    return myMapper.offsetToVisualPosition(offset);
+  public VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets) {
+    return myMapper.offsetToVisualPosition(offset, leanTowardsLargerOffsets);
   }
 
   public int offsetToVisualLine(int offset) {
@@ -137,8 +145,8 @@ public class EditorView implements Disposable {
   }
 
   @NotNull
-  public Point visualPositionToXY(@NotNull VisualPosition pos, boolean leanTowardsLargerColumns) {
-    return myMapper.visualPositionToXY(pos, leanTowardsLargerColumns);
+  public Point visualPositionToXY(@NotNull VisualPosition pos) {
+    return myMapper.visualPositionToXY(pos);
   }
 
   @NotNull
@@ -147,15 +155,15 @@ public class EditorView implements Disposable {
   }
 
   public void setPrefix(String prefixText, TextAttributes attributes) {
+    myPrefixText = prefixText;
     myPrefixLayout = prefixText == null || prefixText.isEmpty() ? null :
-                     new LineLayout(this, prefixText, attributes.getFontType(), myFontRenderContext, 0);
+                     new LineLayout(this, prefixText, attributes.getFontType(), myFontRenderContext);
     myPrefixAttributes = attributes;
-    mySizeManager.invalidateCachedWidth();
-    invalidateLines(0, 0);
+    mySizeManager.invalidateRange(0, 0);
   }
 
   public float getPrefixTextWidthInPixels() {
-    return myPrefixLayout == null ? 0 : myPrefixLayout.getMaxX();
+    return myPrefixLayout == null ? 0 : myPrefixLayout.getWidth();
   }
 
   LineLayout getPrefixLayout() {
@@ -174,19 +182,21 @@ public class EditorView implements Disposable {
     return mySizeManager.getPreferredSize();
   }
 
-  int getLineWidth(int line) {
-    return (int)getLineLayout(line).getMaxX();
-  }
-
   public int getMaxWidthInRange(int startOffset, int endOffset) {
-    return getMaxWidthInLineRange(offsetToLogicalPosition(startOffset).line, offsetToLogicalPosition(endOffset).line);
+    return getMaxWidthInLineRange(offsetToVisualLine(startOffset), offsetToVisualLine(endOffset));
   }
   
-  int getMaxWidthInLineRange(int startLine, int endLine) {
+  int getMaxWidthInLineRange(int startVisualLine, int endVisualLine) {
     int maxWidth = 0;
-    int lineCount = myDocument.getLineCount();
-    for (int line = startLine; line <= endLine && line < lineCount; line++) {
-      maxWidth = Math.max(maxWidth, getLineWidth(line));
+    for (int i = startVisualLine; i <= endVisualLine; i++) {
+      int logicalLine = visualToLogicalPosition(new VisualPosition(i, 0), false).line;
+      if (logicalLine >= myDocument.getLineCount()) break;
+      int startOffset = myDocument.getLineStartOffset(logicalLine);
+      float x = 0;
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(this, startOffset)) {
+        x = fragment.getEndX();
+      }
+      maxWidth = Math.max(maxWidth, (int) x);
     }
     return maxWidth;
   }
@@ -198,33 +208,29 @@ public class EditorView implements Disposable {
     myCharHeight = -1;
     myTabSize = -1;
     reset();
+    setPrefix(myPrefixText, myPrefixAttributes); // recreate prefix layout
+    invalidateFoldRegionLayouts();
   }
   
-  public void invalidateLines(int startLine, int endLine) {
-    int lineCount = myDocument.getLineCount();
-    if (startLine > endLine || startLine >= lineCount || endLine < 0) {
+  public void invalidateRange(int startOffset, int endOffset) {
+    int textLength = myDocument.getTextLength();
+    if (startOffset > endOffset || startOffset >= textLength || endOffset < 0) {
       return;
     }
-    startLine = Math.max(0, startLine);
-    endLine = Math.min(lineCount - 1, endLine);
+    int startLine = myDocument.getLineNumber(Math.max(0, startOffset));
+    int endLine = myDocument.getLineNumber(Math.min(textLength, endOffset));
     myTextLayoutCache.invalidateLines(startLine, endLine, endLine);
+    mySizeManager.invalidateRange(startOffset, endOffset);
   }
 
   public void reset() {
-    mySizeManager.invalidateCachedWidth();
+    mySizeManager.reset();
     myTextLayoutCache.resetToDocumentSize();
   }
 
   @NotNull
   LineLayout getLineLayout(int line) {
-    LineLayout lineLayout = myTextLayoutCache.getLineLayout(line);
-    mySizeManager.validateCurrentWidth(lineLayout);
-    return lineLayout;
-  }
-  
-  @Nullable
-  LineLayout getCachedLineLayout(int line) {
-    return myTextLayoutCache.getCachedLineLayout(line);
+    return myTextLayoutCache.getLineLayout(line);
   }
 
   int getPlainSpaceWidth() {
@@ -287,6 +293,24 @@ public class EditorView implements Disposable {
     }
     finally {
       g.dispose();
+    }
+  }
+
+  LineLayout getFoldRegionLayout(FoldRegion foldRegion) {
+    LineLayout layout = foldRegion.getUserData(FOLD_REGION_TEXT_LAYOUT);
+    if (layout == null) {
+      TextAttributes placeholderAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
+      layout = new LineLayout(this, foldRegion.getPlaceholderText(), 
+                              placeholderAttributes == null ? Font.PLAIN : placeholderAttributes.getFontType(), 
+                              myFontRenderContext);
+      foldRegion.putUserData(FOLD_REGION_TEXT_LAYOUT, layout);
+    }
+    return layout;
+  }
+
+  void invalidateFoldRegionLayouts() {
+    for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
+      region.putUserData(FOLD_REGION_TEXT_LAYOUT, null);
     }
   }
 }

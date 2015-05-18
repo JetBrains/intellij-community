@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
@@ -127,21 +128,21 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   @Override
   @NotNull
   public Document createDocument(@NotNull CharSequence text) {
-    DocumentImpl document = new DocumentImpl(text);
+    DocumentEx document = new DocumentImpl(text);
     myEditorEventMulticaster.registerDocument(document);
     return document;
   }
 
   @NotNull
   public Document createDocument(boolean allowUpdatesWithoutWriteAction) {
-    DocumentImpl document = new DocumentImpl("", allowUpdatesWithoutWriteAction);
+    DocumentEx document = new DocumentImpl("", allowUpdatesWithoutWriteAction);
     myEditorEventMulticaster.registerDocument(document);
     return document;
   }
 
   @NotNull
   public Document createDocument(@NotNull CharSequence text, boolean acceptsSlashR, boolean allowUpdatesWithoutWriteAction) {
-    DocumentImpl document = new DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction);
+    DocumentEx document = new DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction);
     myEditorEventMulticaster.registerDocument(document);
     return document;
   }

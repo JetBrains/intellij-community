@@ -25,6 +25,7 @@ import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -188,6 +189,13 @@ public class DiffUtil {
     editor.reinitSettings();
   }
 
+  public static boolean isMirrored(@NotNull Editor editor) {
+    if (editor instanceof EditorEx) {
+      return ((EditorEx)editor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT;
+    }
+    return false;
+  }
+
   //
   // Scrolling
   //
@@ -238,61 +246,6 @@ public class DiffUtil {
   @NotNull
   public static LogicalPosition getCaretPosition(@Nullable Editor editor) {
     return editor != null ? editor.getCaretModel().getLogicalPosition() : new LogicalPosition(0, 0);
-  }
-
-  @NotNull
-  public static Point[] getScrollingPositions(@NotNull List<? extends Editor> editors) {
-    Point[] carets = new Point[editors.size()];
-    for (int i = 0; i < editors.size(); i++) {
-      carets[i] = getScrollingPosition(editors.get(i));
-    }
-    return carets;
-  }
-
-  @NotNull
-  public static LogicalPosition[] getCaretPositions(@NotNull List<? extends Editor> editors) {
-    LogicalPosition[] carets = new LogicalPosition[editors.size()];
-    for (int i = 0; i < editors.size(); i++) {
-      carets[i] = getCaretPosition(editors.get(i));
-    }
-    return carets;
-  }
-
-  public static boolean wasScrolled(@NotNull List<? extends Editor> editors) {
-    for (Editor editor : editors) {
-      if (editor == null) continue;
-      if (editor.getCaretModel().getOffset() != 0) return true;
-      if (editor.getScrollingModel().getVerticalScrollOffset() != 0) return true;
-      if (editor.getScrollingModel().getHorizontalScrollOffset() != 0) return true;
-    }
-    return false;
-  }
-
-  public static class EditorsVisiblePositions {
-    public static final Key<EditorsVisiblePositions> KEY = Key.create("Diff.EditorsVisiblePositions");
-
-    @NotNull public final LogicalPosition[] myCaretPosition;
-    @NotNull public final Point[] myPoints;
-
-    public EditorsVisiblePositions(@NotNull LogicalPosition caretPosition, @NotNull Point points) {
-      myCaretPosition = new LogicalPosition[]{caretPosition};
-      myPoints = new Point[]{points};
-    }
-
-    public EditorsVisiblePositions(@NotNull LogicalPosition[] caretPosition, @NotNull Point[] points) {
-      myCaretPosition = caretPosition;
-      myPoints = points;
-    }
-
-    public boolean isSame(@Nullable LogicalPosition... caretPosition) {
-      // TODO: allow small fluctuations ?
-      if (caretPosition == null) return true;
-      if (myCaretPosition.length != caretPosition.length) return false;
-      for (int i = 0; i < caretPosition.length; i++) {
-        if (!caretPosition[i].equals(myCaretPosition[i])) return false;
-      }
-      return true;
-    }
   }
 
   //
@@ -700,7 +653,7 @@ public class DiffUtil {
   @NotNull
   public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2) {
     TextRange otherRange = getLinesRange(document, line1, line2);
-    return document.getCharsSequence().subSequence(otherRange.getStartOffset(), otherRange.getEndOffset());
+    return document.getImmutableCharSequence().subSequence(otherRange.getStartOffset(), otherRange.getEndOffset());
   }
 
   @NotNull
@@ -907,6 +860,28 @@ public class DiffUtil {
   //
   // DataProvider
   //
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@NotNull ContentDiffRequest request, @NotNull Side currentSide) {
+    List<DiffContent> contents = request.getContents();
+    DiffContent content1 = currentSide.select(contents);
+    DiffContent content2 = currentSide.other().select(contents);
+
+    if (content1 instanceof FileContent) return ((FileContent)content1).getFile();
+    if (content2 instanceof FileContent) return ((FileContent)content2).getFile();
+    return null;
+  }
+
+  @Nullable
+  public static VirtualFile getVirtualFile(@NotNull ContentDiffRequest request, @NotNull ThreeSide currentSide) {
+    List<DiffContent> contents = request.getContents();
+    DiffContent content1 = currentSide.select(contents);
+    DiffContent content2 = ThreeSide.BASE.select(contents);
+
+    if (content1 instanceof FileContent) return ((FileContent)content1).getFile();
+    if (content2 instanceof FileContent) return ((FileContent)content2).getFile();
+    return null;
+  }
 
   @Nullable
   public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NonNls String dataId) {

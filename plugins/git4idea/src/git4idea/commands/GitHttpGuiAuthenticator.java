@@ -85,7 +85,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     if (myWasCancelled) { // already pressed cancel in askUsername
       return "";
     }
-    url = adjustUrl(url);
+    url = notNullizeUrl(url);
     Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(url);
     if (authData != null && authData.second.getPassword() != null) {
       String password = authData.second.getPassword();
@@ -95,8 +95,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     String prompt = "Enter the password for " + url;
-    myPasswordKey = url;
-    String password = PasswordSafePromptDialog.askPassword(myProject, myTitle, prompt, PASS_REQUESTER, url, false, null);
+    myPasswordKey = adjustHttpUrlForSettings(url);
+    String password = PasswordSafePromptDialog.askPassword(myProject, myTitle, prompt, PASS_REQUESTER, myPasswordKey, false, null);
     if (password == null) {
       myWasCancelled = true;
       return "";
@@ -112,7 +112,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Override
   @NotNull
   public String askUsername(@NotNull String url) {
-    url = adjustUrl(url);
+    url = notNullizeUrl(url);
     Pair<GitHttpAuthDataProvider, AuthData> authData = findBestAuthData(url);
     String login = null;
     String password = null;
@@ -182,7 +182,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Override
   public void forgetPassword() {
     if (myDataProvider != null) {
-      myDataProvider.forgetPassword(adjustUrl(myUrl));
+      myDataProvider.forgetPassword(adjustHttpUrlForSettings(notNullizeUrl(myUrl)));
     }
   }
 
@@ -192,13 +192,13 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   }
 
   @NotNull
-  private String adjustUrl(@Nullable String url) {
+  private String notNullizeUrl(@Nullable String url) {
     if (StringUtil.isEmptyOrSpaces(url)) {
       // if Git doesn't specify the URL in the username/password query, we use the url from the Git command
       // We only take the host, to avoid entering the same password for different repositories on the same host.
-      return adjustHttpUrl(getHost(myUrlsFromCommand));
+      return getHost(myUrlsFromCommand);
     }
-    return adjustHttpUrl(url);
+    return url;
   }
 
   @NotNull
@@ -221,7 +221,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
    * If the url scheme is HTTPS, store it as HTTP in the database, not to make user enter and remember same credentials twice.
    */
   @NotNull
-  private static String adjustHttpUrl(@NotNull String url) {
+  private static String adjustHttpUrlForSettings(@NotNull String url) {
     String prefix = "https";
     if (url.startsWith(prefix)) {
       return "http" + url.substring(prefix.length());
@@ -232,6 +232,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   // return the first that knows username + password; otherwise return the first that knows just the username
   @Nullable
   private Pair<GitHttpAuthDataProvider, AuthData> findBestAuthData(@NotNull String url) {
+    url = adjustHttpUrlForSettings(url);
     Pair<GitHttpAuthDataProvider, AuthData> candidate = null;
     for (GitHttpAuthDataProvider provider : getProviders()) {
       AuthData data = provider.getAuthData(url);

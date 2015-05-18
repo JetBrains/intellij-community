@@ -54,7 +54,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
       if (testProxy instanceof SMTestProxy.SMRootTestProxy) {
         SMTestProxy.SMRootTestProxy rootTestProxy = (SMTestProxy.SMRootTestProxy) testProxy;
-        if (rootTestProxy.isLeaf()) {
+        if (node.isLeaf()) {
           TestsPresentationUtil.formatRootNodeWithoutChildren(rootTestProxy, this);
         } else {
           TestsPresentationUtil.formatRootNodeWithChildren(rootTestProxy, this);

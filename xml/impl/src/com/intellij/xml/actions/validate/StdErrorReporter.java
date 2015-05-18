@@ -147,7 +147,7 @@ public class StdErrorReporter extends ErrorReporter {
           new Runnable() {
             @Override
             public void run() {
-              final VirtualFile file = myHandler.getFile(ex.getPublicId(), ex.getSystemId());
+              final VirtualFile file = myHandler.getProblemFile(ex);
               myErrorsView.addMessage(
                   problemType == ValidateXmlActionHandler.ProblemType.WARNING ? MessageCategory.WARNING : MessageCategory.ERROR,
                   new String[]{ex.getLocalizedMessage()},

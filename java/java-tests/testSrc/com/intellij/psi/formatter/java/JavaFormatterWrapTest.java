@@ -541,4 +541,82 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
                  "        \"cccccccccccccccccccccccccccccccccc\");");
 
   }
+
+  public void test_WrapIfLong_On_Second_Parameter_ActivatesPlaceNewLineAfterParenthesis() {
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\n" +
+                 "        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");");
+  }
+
+  public void test_LParen_OnNextLine_IfWrapped() {
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\n" +
+                 "        \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccc\");");
+
+
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = false;
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccc\");");
+
+  }
+
+  public void test_RParen_OnNextLine_IfWrapped() {
+    getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccc\"" +
+                 "\n);");
+
+
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = false;
+    doMethodTest("fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\", \"cccccccccccccc\");",
+                 "fuun(\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n" +
+                 "        \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n" +
+                 "        \"cccccccccccccc\");");
+
+  }
+
+  public void test_ChainedCalls_FirstOnNewLine() {
+    getSettings().METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
+    getSettings().WRAP_FIRST_METHOD_IN_CALL_CHAIN = true;
+
+    doMethodTest(
+      "obj.call().call().call().call();",
+      "obj\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call();"
+    );
+
+    doMethodTest(
+      "call().call().call().call();",
+      "call()\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call();"
+    );
+
+    doMethodTest(
+      "nestedCall(call().call().call().call());",
+      "nestedCall(call()\n" +
+      "        .call()\n" +
+      "        .call()\n" +
+      "        .call());"
+    );
+  }
 }

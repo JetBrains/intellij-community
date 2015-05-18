@@ -17,9 +17,9 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -37,7 +37,7 @@ public class VcsHandleTypeFactory implements HandleTypeFactory {
     if (! myProject.isInitialized()) return null;
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
     if (vcs != null) {
-      boolean fileExistsInVcs = vcs.fileExistsInVcs(new FilePathImpl(file));
+      boolean fileExistsInVcs = vcs.fileExistsInVcs(VcsUtil.getFilePath(file));
       if (fileExistsInVcs && vcs.getEditFileProvider() != null) {
         return new VcsHandleType(vcs);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -48,8 +49,8 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    final List<PsiClass> typesMasked = (List<PsiClass>)infos[0];
-    String typesMaskedString = typesMasked.get(0).getName();
+    final List<PsiType> typesMasked = (List<PsiType>)infos[0];
+    String typesMaskedString = typesMasked.get(0).getPresentableText();
     if (typesMasked.size() == 1) {
       return InspectionGadgetsBundle.message("too.broad.catch.problem.descriptor", typesMaskedString);
     }
@@ -58,9 +59,9 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       final int lastTypeIndex = typesMasked.size() - 1;
       for (int i = 1; i < lastTypeIndex; i++) {
         typesMaskedString += ", ";
-        typesMaskedString += typesMasked.get(i).getName();
+        typesMaskedString += typesMasked.get(i).getPresentableText();
       }
-      final String lastTypeString = typesMasked.get(lastTypeIndex).getName();
+      final String lastTypeString = typesMasked.get(lastTypeIndex).getPresentableText();
       return InspectionGadgetsBundle.message("too.broad.catch.problem.descriptor1", typesMaskedString, lastTypeString);
     }
   }
@@ -79,53 +80,52 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       if (tryBlock == null) {
         return;
       }
-      final Set<PsiClassType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
+      final Set<PsiType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
+      ExceptionUtils.calculateExceptionsThrown(statement.getResourceList(), thrownTypes);
       final Set<PsiType> caughtTypes = new HashSet<PsiType>(thrownTypes.size());
       final PsiCatchSection[] catchSections = statement.getCatchSections();
+      boolean runtimeExceptionSeen = false;
       for (final PsiCatchSection catchSection : catchSections) {
         final PsiParameter parameter = catchSection.getParameter();
         if (parameter == null) {
           continue;
         }
-        final PsiType caughtType = parameter.getType();
-        if (caughtType instanceof PsiDisjunctionType) {
-          final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)caughtType;
-          final List<PsiType> types = disjunctionType.getDisjunctions();
-          for (PsiType type : types) {
-            check(thrownTypes, caughtTypes, parameter, type);
+        final PsiTypeElement typeElement = parameter.getTypeElement();
+        if (typeElement == null) {
+          continue;
+        }
+        final PsiTypeElement[] children = PsiTreeUtil.getChildrenOfType(typeElement, PsiTypeElement.class);
+        if (children != null) {
+          for (PsiTypeElement child : children) {
+            runtimeExceptionSeen = check(thrownTypes, child, runtimeExceptionSeen, caughtTypes);
           }
         }
         else {
-          if (thrownTypes.isEmpty()) {
-            if (CommonClassNames.JAVA_LANG_EXCEPTION.equals(caughtType.getCanonicalText())) {
-              final PsiTypeElement typeElement = parameter.getTypeElement();
-              if (typeElement == null) {
-                continue;
-              }
-              final PsiClass runtimeExceptionClass = ClassUtils.findClass(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, parameter);
-              registerError(typeElement, Collections.singletonList(runtimeExceptionClass), typeElement);
-            }
-          }
-          else {
-            check(thrownTypes, caughtTypes, parameter, caughtType);
-          }
+          runtimeExceptionSeen = check(thrownTypes, typeElement, runtimeExceptionSeen, caughtTypes);
         }
       }
     }
 
-    private void check(Set<PsiClassType> thrownTypes, Set<PsiType> caughtTypes, PsiParameter parameter, PsiType caughtType) {
-      final List<PsiClass> maskedExceptions = findMaskedExceptions(thrownTypes, caughtTypes, caughtType);
+    private boolean check(Set<PsiType> thrownTypes, PsiTypeElement caughtTypeElement, boolean runtimeExceptionSeen, Set<PsiType> caughtTypes) {
+      final PsiType caughtType = caughtTypeElement.getType();
+      if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(caughtType.getCanonicalText())) {
+        runtimeExceptionSeen = true;
+      }
+      else if (thrownTypes.isEmpty() && CommonClassNames.JAVA_LANG_EXCEPTION.equals(caughtType.getCanonicalText())) {
+        if (!runtimeExceptionSeen) {
+          final PsiClassType runtimeExceptionType = TypeUtils.getType(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, caughtTypeElement);
+          registerError(caughtTypeElement, Collections.singletonList(runtimeExceptionType), caughtTypeElement);
+        }
+      }
+      final List<PsiType> maskedExceptions = findMaskedExceptions(thrownTypes, caughtType, caughtTypes);
       if (maskedExceptions.isEmpty()) {
-        return;
+        return runtimeExceptionSeen;
       }
-      final PsiTypeElement typeElement = parameter.getTypeElement();
-      if (typeElement == null) {
-        return;
-      }
-      registerError(typeElement, maskedExceptions, typeElement);
+      registerError(caughtTypeElement, maskedExceptions, caughtTypeElement);
+      return runtimeExceptionSeen;
     }
 
-    private List<PsiClass> findMaskedExceptions(Set<PsiClassType> thrownTypes, Set<PsiType> caughtTypes, PsiType caughtType) {
+    private List<PsiType> findMaskedExceptions(Set<PsiType> thrownTypes, PsiType caughtType, Set<PsiType> caughtTypes) {
       if (thrownTypes.contains(caughtType)) {
         if (ignoreThrown) {
           return Collections.emptyList();
@@ -138,14 +138,11 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
           return Collections.emptyList();
         }
       }
-      final List<PsiClass> maskedTypes = new ArrayList();
-      for (PsiClassType typeThrown : thrownTypes) {
+      final List<PsiType> maskedTypes = new ArrayList<PsiType>();
+      for (PsiType typeThrown : thrownTypes) {
         if (!caughtTypes.contains(typeThrown) && caughtType.isAssignableFrom(typeThrown)) {
           caughtTypes.add(typeThrown);
-          final PsiClass aClass = typeThrown.resolve();
-          if (aClass != null) {
-            maskedTypes.add(aClass);
-          }
+          maskedTypes.add(typeThrown);
         }
       }
       return maskedTypes;

@@ -17,10 +17,10 @@ package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -230,7 +230,7 @@ public class PathMerger {
 
     @Override
     public FilePath getResult() {
-      return new FilePathImpl(myIoDelegate.getResult(), myIsDirectory);
+      return VcsUtil.getFilePath(myIoDelegate.getResult(), myIsDirectory);
     }
 
     @Override

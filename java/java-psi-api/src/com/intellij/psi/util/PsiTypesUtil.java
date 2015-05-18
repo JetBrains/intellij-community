@@ -244,4 +244,11 @@ public class PsiTypesUtil {
     }
     return Comparing.equal(leftType, rightType);
   }
+
+  public static boolean isDenotableType(PsiType type) {
+    if (type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) {
+      return false;
+    }
+    return true;
+  }
 }
