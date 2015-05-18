@@ -81,10 +81,11 @@ class Profiler(object):
 
         self.start_profiling()
 
-        pydev_imports.execfile(file, globals, globals)  # execute the script
-
-        self.stop_profiling()
-        self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path, remote_run), remote_run)
+        try:
+            pydev_imports.execfile(file, globals, globals)  # execute the script
+        finally:
+            self.stop_profiling()
+            self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path, remote_run), remote_run)
 
     def start_profiling(self):
         self.profiling_backend.enable()
