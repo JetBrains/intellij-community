@@ -164,7 +164,7 @@ public class ClassesProcessor {
 
               StructClass scl = supernode.classStruct;
               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
-              for (int i = 0; i < inner.getStringEntries().size(); i++) {
+              for (int i = 0; inner != null && i < inner.getStringEntries().size(); i++) {
                 String nestedClass = inner.getStringEntries().get(i)[0];
                 if (!setNestedClasses.contains(nestedClass)) {
                   continue;
