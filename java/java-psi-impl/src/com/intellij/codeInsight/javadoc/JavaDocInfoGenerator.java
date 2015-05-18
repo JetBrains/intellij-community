@@ -1264,9 +1264,6 @@ public class JavaDocInfoGenerator {
         else if (tagName.equals(VALUE_TAG)) {
           generateValueValue(tag, buffer, element);
         }
-        else {
-          buffer.append(element.getText());
-        }
       }
       else {
         buffer.append(StringUtil.replaceUnicodeEscapeSequences(element.getText()));

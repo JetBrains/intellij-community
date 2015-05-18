@@ -794,10 +794,13 @@
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">
-      <action id="Debugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction"/>
       <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
-      <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
-      <action id="XDebugger.AutoTooltipOnSelection" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowOnSelectionAction"/>
+      <separator/>
+      <reference ref="XDebugger.ToggleSortValues"/>
+      <!--<action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>-->
+      <!--<action id="XDebugger.AutoTooltipOnSelection" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowOnSelectionAction"/>-->
+      <separator/>
+      <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction" />
     </group>
 
     <group id="RunnerLayoutActions">

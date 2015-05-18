@@ -111,29 +111,24 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @Override
-  protected void onInit() {
-    super.onInit();
-    processContextHints();
-  }
-
-  @Override
+  @CalledInAwt
   protected void onDispose() {
-    updateContextHints();
     super.onDispose();
+    destroyEditors();
   }
 
   @Override
-  protected void onDisposeAwt() {
-    destroyEditors();
-    super.onDisposeAwt();
-  }
-
+  @CalledInAwt
   protected void processContextHints() {
+    super.processContextHints();
     ThreeSide side = myContext.getUserData(DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE);
     if (side != null) myCurrentSide = side;
   }
 
+  @Override
+  @CalledInAwt
   protected void updateContextHints() {
+    super.updateContextHints();
     myContext.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_THREESIDE, myCurrentSide);
   }
 

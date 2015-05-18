@@ -52,8 +52,9 @@ def walkModules(modulesAndPattern, dirname, names):
       if name.endswith(".py") and prog.match(name):
         modules.append(loadSource(os.path.join(dirname, name)))
 
+
 # For default pattern see https://docs.python.org/2/library/unittest.html#test-discovery
-def loadModulesFromFolderRec(folder, pattern = "test*.py"):
+def loadModulesFromFolderRec(folder, pattern="test*.py"):
   modules = []
   if PYTHON_VERSION_MAJOR == 3:
     # fnmatch converts glob to regexp
@@ -105,7 +106,7 @@ if __name__ == "__main__":
     a = arg.split("::")
     if len(a) == 1:
       # From module or folder
-      a_splitted = a[0].split("_args_separator_") # ";" can't be used with bash, so we use "_args_separator_"
+      a_splitted = a[0].split("_args_separator_")  # ";" can't be used with bash, so we use "_args_separator_"
       if len(a_splitted) != 1:
         # means we have pattern to match against
         if a_splitted[0].endswith(os.path.sep):

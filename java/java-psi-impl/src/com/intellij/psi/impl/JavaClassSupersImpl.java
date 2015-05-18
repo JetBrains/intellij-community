@@ -52,7 +52,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
     if (substitutor == null) return null;
     if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) return createRawSubstitutor(superClass);
 
-    return composeSubstitutors(derivedSubstitutor, substitutor);
+    return composeSubstitutors(derivedSubstitutor, substitutor, superClass);
   }
 
   @NotNull
@@ -61,10 +61,14 @@ public class JavaClassSupersImpl extends JavaClassSupers {
   }
 
   @NotNull
-  private static PsiSubstitutor composeSubstitutors(PsiSubstitutor outer, PsiSubstitutor inner) {
+  private static PsiSubstitutor composeSubstitutors(PsiSubstitutor outer, PsiSubstitutor inner, PsiClass onClass) {
     PsiSubstitutor answer = PsiSubstitutor.EMPTY;
-    for (Map.Entry<PsiTypeParameter, PsiType> entry : inner.getSubstitutionMap().entrySet()) {
-      answer = answer.put(entry.getKey(), outer.substitute(entry.getValue()));
+    Map<PsiTypeParameter, PsiType> outerMap = outer.getSubstitutionMap();
+    Map<PsiTypeParameter, PsiType> innerMap = inner.getSubstitutionMap();
+    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(onClass)) {
+      if (outerMap.containsKey(parameter) || innerMap.containsKey(parameter)) {
+        answer = answer.put(parameter, outer.substitute(inner.substitute(parameter)));
+      }
     }
     return answer;
   }
@@ -97,7 +101,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       else {
         answer = getSuperSubstitutorWithCaching(superClass, psiClass, scope, result.getSubstitutor());
         if (answer != null) {
-          return composeSubstitutors(derivedSubstitutor, answer);
+          return composeSubstitutors(derivedSubstitutor, answer, superClass);
         }
       }
     }

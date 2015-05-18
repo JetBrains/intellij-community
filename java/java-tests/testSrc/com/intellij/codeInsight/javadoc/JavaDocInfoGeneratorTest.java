@@ -159,6 +159,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertNotNull(docInfo);
     assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
   }
+  
+  public void testNoSpaceAfterTagName() throws Exception {
+    verifyJavaDoc(getTestClass());
+  }
 
   private static String exampleHtmlFileText(String name) throws IOException {
     final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/" + name + ".html");

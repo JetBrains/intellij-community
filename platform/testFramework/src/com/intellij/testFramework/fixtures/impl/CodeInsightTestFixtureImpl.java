@@ -1040,9 +1040,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public LookupElement[] complete(@NotNull final CompletionType type, final int invocationCount) {
     assertInitialized();
     myEmptyLookup = false;
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    return UIUtil.invokeAndWaitIfNeeded(new Computable<LookupElement[]>() {
       @Override
-      public void run() {
+      public LookupElement[] compute() {
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
           @Override
           public void run() {
@@ -1059,10 +1059,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
           }
         }, null, null);
+        return getLookupElements();
       }
     });
-
-    return getLookupElements();
   }
 
   @Nullable

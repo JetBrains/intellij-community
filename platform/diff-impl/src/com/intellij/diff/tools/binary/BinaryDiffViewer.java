@@ -55,6 +55,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,20 +119,17 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
   }
 
   @Override
-  protected void onInit() {
-    super.onInit();
-    processContextHints();
-  }
-
-  @Override
+  @CalledInAwt
   public void onDispose() {
-    updateContextHints();
     destroyEditorListeners();
     destroyEditors();
     super.onDispose();
   }
 
-  private void processContextHints() {
+  @Override
+  @CalledInAwt
+  protected void processContextHints() {
+    super.processContextHints();
     if (myEditor1 == null) {
       myCurrentSide = Side.RIGHT;
     }
@@ -144,7 +142,10 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     }
   }
 
-  private void updateContextHints() {
+  @Override
+  @CalledInAwt
+  protected void updateContextHints() {
+    super.updateContextHints();
     if (myEditor1 != null && myEditor2 != null) {
       myContext.putUserData(DiffUserDataKeys.PREFERRED_FOCUS_SIDE, myCurrentSide);
     }

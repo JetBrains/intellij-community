@@ -31,7 +31,7 @@
   <control name="cite" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="code" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false"/>
   <control name="col" type="HtmlGenericControl" startTag="required" endTag="forbidden" emptyAllowed="true"/>
-  <control name="colGroup" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="colGroup"/>
+  <control name="colGroup" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="colGroup,thead,tbody,tfoot"/>
   
   <control name="DD" type="HtmlGenericControl" startTag="required" endTag="optional" emptyAllowed="false" autoClosedBy="dt, dd"/>
   <control name="del" type="HtmlGenericControl" startTag="required" endTag="required" emptyAllowed="false">

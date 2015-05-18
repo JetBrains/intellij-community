@@ -22,6 +22,8 @@ import com.sun.istack.internal.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.im.InputContext;
+import java.util.Locale;
 
 /**
  * @author Denis Fokin
@@ -33,7 +35,7 @@ import java.awt.*;
 )
 public class KeyboardSettingsExternalizable implements PersistentStateComponent<KeyboardSettingsExternalizable.OptionSet> {
 
-  private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it"};
+  private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it", "uk"};
 
   public static boolean isSupportedKeyboardLayout(@NotNull Component component) {
     if (SystemInfo.isMac) return false;
@@ -46,12 +48,22 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
     return false;
   }
 
+  @Nullable
   public static String getLanguageForComponent(@NotNull Component component) {
-    return component.getInputContext().getLocale().getLanguage();
+    final Locale locale = getLocaleForComponent(component);
+    return locale == null ? null : locale.getLanguage();
   }
 
+  @Nullable
+  protected static Locale getLocaleForComponent(@NotNull Component component) {
+    final InputContext context = component.getInputContext();
+    return context == null ? null : context.getLocale();
+  }
+
+  @Nullable
   public static String getDisplayLanguageNameForComponent(@NotNull Component component) {
-    return component.getInputContext().getLocale().getDisplayLanguage();
+    final Locale locale = getLocaleForComponent(component);
+    return locale == null ? null : locale.getDisplayLanguage();
   }
 
   public static final class OptionSet {
@@ -78,6 +90,10 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
   @Override
   public void loadState(OptionSet state) {
     myOptions = state;
+  }
+
+  public boolean isUkrainianKeyboard (Component c) {
+    return c!=null && "uk".equals(c.getInputContext().getLocale().getLanguage());
   }
 
   public boolean isNonEnglishKeyboardSupportEnabled () {

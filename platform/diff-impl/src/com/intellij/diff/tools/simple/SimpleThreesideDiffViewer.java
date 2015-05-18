@@ -86,6 +86,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter(Side.LEFT), Side.LEFT);
@@ -94,9 +95,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
-  protected void onDisposeAwt() {
+  @CalledInAwt
+  protected void onDispose() {
     destroyChangedBlocks();
-    super.onDisposeAwt();
+    super.onDispose();
   }
 
   @NotNull
@@ -136,12 +138,14 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
   }
 
   @Override
+  @CalledInAwt
   protected void updateContextHints() {
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
@@ -258,6 +262,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       change.destroyHighlighter();
     }
     myInvalidDiffChanges.clear();
+
+    myFoldingModel.destroy();
 
     myContentPanel.repaintDividers();
     myStatusPanel.update();

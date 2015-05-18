@@ -267,16 +267,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     final AnAction[] commonSettings = myUi.getOptions().getSettingsActionsList();
     DefaultActionGroup settings = new DefaultActionGroup(ActionsBundle.message("group.XDebugger.settings.text"), true);
     settings.getTemplatePresentation().setIcon(myUi.getOptions().getSettingsActions().getTemplatePresentation().getIcon());
-    if (commonSettings.length > 0) {
-      for (AnAction each : commonSettings) {
-        settings.add(each);
-      }
-      settings.addSeparator();
-    }
-    if (!session.getDebugProcess().isValuesCustomSorted()) {
-      settings.add(new ToggleSortValuesAction(commonSettings.length == 0));
-    }
-
+    settings.addAll(commonSettings);
     leftToolbar.add(settings);
 
     leftToolbar.addSeparator();
@@ -316,7 +307,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (!myShowIcon) {
         e.getPresentation().setIcon(null);
