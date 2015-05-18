@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -705,32 +705,34 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      if (myElement != null) {
-        final PsiElement element = myElement.getElement();
-        final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-        final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-        boolean processed = false;
-        if (provider instanceof CompositeDocumentationProvider) {
-          for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
-            if (p instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)p).handleExternal(element, originalElement)) {
-              processed = true;
-              break;
-            }
-          }
-        }
+      if (myElement == null) {
+        return;
+      }
 
-        if (!processed) {
-          final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
-          final List<String> urls;
-          if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl)) {
-            urls = Collections.singletonList(myEffectiveExternalUrl);
-          } else {
-            urls = provider.getUrlFor(element, originalElement);
-            assert urls != null : provider;
-            assert !urls.isEmpty() : provider;
+      final PsiElement element = myElement.getElement();
+      final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
+      final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
+      boolean processed = false;
+      if (provider instanceof CompositeDocumentationProvider) {
+        for (DocumentationProvider p : ((CompositeDocumentationProvider)provider).getAllProviders()) {
+          if (p instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)p).handleExternal(element, originalElement)) {
+            processed = true;
+            break;
           }
-          ExternalJavaDocAction.showExternalJavadoc(urls, component);
         }
+      }
+
+      if (!processed) {
+        List<String> urls;
+        if (!StringUtil.isEmptyOrSpaces(myEffectiveExternalUrl)) {
+          urls = Collections.singletonList(myEffectiveExternalUrl);
+        }
+        else {
+          urls = provider.getUrlFor(element, originalElement);
+          assert urls != null : provider;
+          assert !urls.isEmpty() : provider;
+        }
+        ExternalJavaDocAction.showExternalJavadoc(urls, PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()));
       }
     }
 

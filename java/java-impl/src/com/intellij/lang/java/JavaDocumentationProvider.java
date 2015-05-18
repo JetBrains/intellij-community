@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -689,7 +689,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Nullable
-  public static List<String> findUrlForClass(PsiClass aClass) {
+  public static List<String> findUrlForClass(@NotNull PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName == null) return null;
 
@@ -701,11 +701,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     String packageName = ((PsiJavaFile)file).getPackageName();
     String relPath;
-    if (packageName.length() > 0) {
-      relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
+    if (packageName.isEmpty()) {
+      relPath = qName + HTML_EXTENSION;
     }
     else {
-      relPath = qName + HTML_EXTENSION;
+      relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
     }
 
     return findUrlForVirtualFile(file.getProject(), virtualFile, relPath);
@@ -733,11 +733,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       }
     }
 
-    final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
-    for (OrderEntry orderEntry : orderEntries) {
-      final String[] files = JavadocOrderRootType.getUrls(orderEntry);
-      final List<String> httpRoot = PlatformDocumentationUtil.getHttpRoots(files, relPath);
-      if (httpRoot != null) return httpRoot;
+    for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
+      List<String> httpRoot = PlatformDocumentationUtil.getHttpRoots(JavadocOrderRootType.getUrls(orderEntry), relPath);
+      if (httpRoot != null) {
+        return httpRoot;
+      }
     }
     return null;
   }
