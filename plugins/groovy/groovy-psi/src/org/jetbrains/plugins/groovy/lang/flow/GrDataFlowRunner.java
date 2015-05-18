@@ -45,7 +45,7 @@ public class GrDataFlowRunner<V extends GrInstructionVisitor<V>> extends Abstrac
   @NotNull
   @Override
   protected DfaMemoryState createMemoryState() {
-    return new DfaMemoryStateImpl(myValueFactory);
+    return new GrDfaMemoryState(myValueFactory);
   }
 
   @NotNull

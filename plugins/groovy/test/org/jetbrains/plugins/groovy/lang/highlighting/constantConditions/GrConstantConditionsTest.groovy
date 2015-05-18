@@ -296,4 +296,6 @@ def passingNotNullToNotAnnotated(@NotNull a) {
 }
 '''
   }
+
+  void "test constant value conditions"() { doTest() }
 }

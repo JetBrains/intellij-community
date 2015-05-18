@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
+import org.jetbrains.plugins.groovy.lang.flow.GrDfaMemoryState;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.*;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaConstValueFactory;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
@@ -41,7 +42,6 @@ import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.forceNotNull;
 import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.handleConstantComparison;
-import static com.intellij.codeInspection.dataFlow.value.DfaRelation.EQ;
 import static com.intellij.codeInspection.dataFlow.value.DfaRelation.UNDEFINED;
 import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_RANGE;
@@ -166,7 +166,8 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     return notNullable;
   }
 
-  protected void report(boolean ok, boolean ephemeral, GrNullabilityProblem problem, PsiElement anchor) {}
+  protected void report(boolean ok, boolean ephemeral, GrNullabilityProblem problem, PsiElement anchor) {
+  }
 
   @Override
   public DfaInstructionState<V>[] visitBinop(BinopInstruction<V> instruction, DfaMemoryState memState) {
@@ -260,34 +261,26 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
   }
 
   @Override
-  public DfaInstructionState<V>[] visitCoerceToBoolean(GrCoerceToBooleanInstruction<V> instruction, DfaMemoryState state) {
+  public DfaInstructionState<V>[] visitCoerceToBoolean(GrCoerceToBooleanInstruction<V> instruction, DfaMemoryState memoryState) {
+    final GrDfaMemoryState state = (GrDfaMemoryState)memoryState;
     final DfaValue value = state.pop();
     final GrDfaConstValueFactory constFactory = myFactory.getConstFactory();
-    if (value == constFactory.getFalse() || value == constFactory.getTrue()) {
+    if (value == constFactory.getFalse() || value == constFactory.getTrue() || value == DfaUnknownValue.getInstance()) {
       state.push(value);
       return nextInstruction(instruction, state);
     }
-    if (value instanceof DfaVariableValue) {
-      final DfaRelationValue.Factory relationFactory = myFactory.getRelationFactory();
+    final GrDfaMemoryState trueState = state.createCopy();
+    final GrDfaMemoryState falseState = state.createCopy();
 
-      final DfaValue coercedToTrue = relationFactory.createRelation(value, constFactory.getCoercedToTrue(), EQ, false);
-      final DfaValue coercedToFalse = coercedToTrue.createNegated();
-
-      final DfaMemoryState trueState = state.createCopy();
-      final DfaMemoryState falseState = state.createCopy();
-
-      final List<DfaMemoryState> states = ContainerUtil.newArrayList();
-      if (trueState.applyCondition(coercedToTrue)) {
-        trueState.push(constFactory.getTrue());
-        states.add(trueState);
-      }
-      if (falseState.applyCondition(coercedToFalse)) {
-        falseState.push(constFactory.getFalse());
-        states.add(falseState);
-      }
-      return nextInstructionStates(instruction, states);
+    final List<DfaMemoryState> states = ContainerUtil.newArrayList();
+    if (trueState.coerceTo(true, value)) {
+      trueState.push(constFactory.getTrue());
+      states.add(trueState);
     }
-    state.push(DfaUnknownValue.getInstance());
-    return nextInstruction(instruction, state);
+    if (falseState.coerceTo(false, value)) {
+      falseState.push(constFactory.getFalse());
+      states.add(falseState);
+    }
+    return nextInstructionStates(instruction, states);
   }
 }

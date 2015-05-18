@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.flow.GrControlFlowAnalyzerImpl;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -39,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class DumpNewGroovyControlFlow extends AnAction implements DumbAware {
@@ -91,9 +93,14 @@ public class DumpNewGroovyControlFlow extends AnAction implements DumbAware {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void passInner(GroovyPsiElement owner) {
-    GrControlFlowAnalyzerImpl analyzer = new GrControlFlowAnalyzerImpl(new GrDfaValueFactory(owner.getProject(), false), owner);
-    ControlFlow flow = analyzer.buildControlFlow();
-    System.out.println(owner.getText());
-    System.out.println(flow);
+    final Collection<GrControlFlowOwner> owners = PsiTreeUtil.findChildrenOfType(owner, GrControlFlowOwner.class);
+    if (!owners.isEmpty()) {
+      GrControlFlowAnalyzerImpl analyzer = new GrControlFlowAnalyzerImpl(
+        new GrDfaValueFactory(owner.getProject(), false), owners.iterator().next()
+      );
+      ControlFlow flow = analyzer.buildControlFlow();
+      System.out.println(owner.getText());
+      System.out.println(flow);
+    }
   }
 }
