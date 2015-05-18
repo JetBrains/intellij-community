@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.DiffContent;
@@ -53,7 +52,7 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
     Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getVcsDocument());
 
     DiffContent vcsContent = createDiffContent(myLineStatusTracker.getVcsDocument(),
-                                               myLineStatusTracker.getVcsRange(range),
+                                               myLineStatusTracker.getVcsTextRange(range),
                                                null);
     DiffContent currentContent = createDiffContent(myLineStatusTracker.getDocument(),
                                                    myLineStatusTracker.getCurrentTextRange(range),

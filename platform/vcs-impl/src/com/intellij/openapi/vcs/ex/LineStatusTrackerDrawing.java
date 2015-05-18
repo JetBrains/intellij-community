@@ -291,7 +291,7 @@ public class LineStatusTrackerDrawing {
           }, Registry.intValue("diff.status.tracker.byword.delay"));
           if (diff == null) throw new DiffTooBigException();
 
-          int vcsStartShift = tracker.getVcsRange(range).getStartOffset();
+          int vcsStartShift = tracker.getVcsTextRange(range).getStartOffset();
           int currentStartShift = tracker.getCurrentTextRange(range).getStartOffset();
           for (DiffFragment fragment : diff) {
             int vcsStart = vcsStartShift + fragment.getStartOffset1();

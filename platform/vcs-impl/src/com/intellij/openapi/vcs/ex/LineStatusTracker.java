@@ -252,7 +252,7 @@ public class LineStatusTracker {
   }
 
   @NotNull
-  Project getProject() {
+  public Project getProject() {
     return myProject;
   }
 
@@ -274,7 +274,7 @@ public class LineStatusTracker {
   @NotNull
   public List<Range> getRanges() {
     synchronized (myLock) {
-      return myRanges;
+      return Collections.unmodifiableList(myRanges);
     }
   }
 
@@ -679,7 +679,7 @@ public class LineStatusTracker {
   }
 
   @Nullable
-  Range getNextRange(final Range range) {
+  public Range getNextRange(Range range) {
     synchronized (myLock) {
       final int index = myRanges.indexOf(range);
       if (index == myRanges.size() - 1) return null;
@@ -688,7 +688,7 @@ public class LineStatusTracker {
   }
 
   @Nullable
-  Range getPrevRange(final Range range) {
+  public Range getPrevRange(Range range) {
     synchronized (myLock) {
       final int index = myRanges.indexOf(range);
       if (index <= 0) return null;
@@ -697,7 +697,7 @@ public class LineStatusTracker {
   }
 
   @Nullable
-  public Range getNextRange(final int line) {
+  public Range getNextRange(int line) {
     synchronized (myLock) {
       for (Range range : myRanges) {
         if (line < range.getLine2() && !range.isSelectedByLine(line)) {
@@ -709,7 +709,7 @@ public class LineStatusTracker {
   }
 
   @Nullable
-  public Range getPrevRange(final int line) {
+  public Range getPrevRange(int line) {
     synchronized (myLock) {
       for (int i = myRanges.size() - 1; i >= 0; i--) {
         Range range = myRanges.get(i);
@@ -722,7 +722,7 @@ public class LineStatusTracker {
   }
 
   @Nullable
-  public Range getRangeForLine(final int line) {
+  public Range getRangeForLine(int line) {
     synchronized (myLock) {
       for (final Range range : myRanges) {
         if (range.isSelectedByLine(line)) return range;
@@ -832,6 +832,7 @@ public class LineStatusTracker {
     }
   }
 
+  @NotNull
   public CharSequence getCurrentContent(@NotNull Range range) {
     synchronized (myLock) {
       TextRange textRange = getCurrentTextRange(range);
@@ -841,9 +842,10 @@ public class LineStatusTracker {
     }
   }
 
+  @NotNull
   public CharSequence getVcsContent(@NotNull Range range) {
     synchronized (myLock) {
-      TextRange textRange = getVcsRange(range);
+      TextRange textRange = getVcsTextRange(range);
       final int startOffset = textRange.getStartOffset();
       final int endOffset = textRange.getEndOffset();
       return myVcsDocument.getImmutableCharSequence().subSequence(startOffset, endOffset);
@@ -851,7 +853,7 @@ public class LineStatusTracker {
   }
 
   @NotNull
-  TextRange getCurrentTextRange(@NotNull Range range) {
+  public TextRange getCurrentTextRange(@NotNull Range range) {
     myApplication.assertReadAccessAllowed();
 
     synchronized (myLock) {
@@ -864,7 +866,7 @@ public class LineStatusTracker {
   }
 
   @NotNull
-  TextRange getVcsRange(@NotNull Range range) {
+  public TextRange getVcsTextRange(@NotNull Range range) {
     synchronized (myLock) {
       if (!range.isValid()) {
         LOG.warn("Vcs TextRange of invalid range");
@@ -874,11 +876,11 @@ public class LineStatusTracker {
     }
   }
 
-  public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile, @NotNull final Document doc, final Project project,
+  public static LineStatusTracker createOn(@NotNull VirtualFile virtualFile, @NotNull final Document document, final Project project,
                                            @NotNull Mode mode) {
     final Document vcsDocument = new DocumentImpl("", true);
     vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-    return new LineStatusTracker(doc, vcsDocument, project, virtualFile, mode);
+    return new LineStatusTracker(document, vcsDocument, project, virtualFile, mode);
   }
 
   public static class RevisionPack {
@@ -919,7 +921,7 @@ public class LineStatusTracker {
     }
   }
 
-  public static class CanNotCalculateDiffPanel extends EditorNotificationPanel {
+  private static class CanNotCalculateDiffPanel extends EditorNotificationPanel {
     public CanNotCalculateDiffPanel() {
       myLabel.setText("Can not highlight changed lines. File is too big and there are too many changes.");
     }
