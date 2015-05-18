@@ -45,7 +45,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testLocals3() throws Exception {
-    doSelectTest("TestSource3.java", "TestResult3.java");
+    doTest("TestSource3.java", "TestResult3.java");
   }
 
   public void testLocals4() throws Exception {
@@ -53,7 +53,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testLocals5() throws Exception {
-    doSelectTest("TestSource5.java", "TestResult5.java");
+    doTest("TestSource5.java", "TestResult5.java");
   }
 
   public void testLocals6() throws Exception {

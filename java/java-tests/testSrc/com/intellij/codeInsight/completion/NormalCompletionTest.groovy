@@ -389,7 +389,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
    checkResult()
   }
 
-  public void testFieldType() throws Throwable { doTest('\n'); }
+  public void testFieldType() { doTest(); }
 
   public void testPackageInAnnoParam() throws Throwable {
     doTest();
@@ -903,7 +903,7 @@ public class ListUtils {
     checkResult();
   }
 
-  public void testSecondAnonymousClassParameter() throws Throwable { doTest('\n'); }
+  public void testSecondAnonymousClassParameter() { doTest(); }
 
   public void testSpaceAfterReturn() throws Throwable {
     configure()
