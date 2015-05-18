@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -30,7 +31,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class PlatformDocumentationUtil {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.documentation.PlatformDocumentationUtil");
 
   private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<([^/^\\w^!])");
@@ -38,19 +38,23 @@ public class PlatformDocumentationUtil {
   private static final @NonNls String LT_ENTITY = "&lt;";
 
   @Nullable
-  public static List<String> getHttpRoots(final String[] roots, String relPath) {
-    final ArrayList<String> result = new ArrayList<String>();
+  public static List<String> getHttpRoots(@NotNull String[] roots, String relPath) {
+    List<String> result = new SmartList<String>();
     for (String root : roots) {
-      final VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(root);
+      VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(root);
       if (virtualFile != null) {
         if (virtualFile.getFileSystem() instanceof HttpFileSystem) {
           String url = virtualFile.getUrl();
-          if (!url.endsWith("/")) url += "/";
+          if (!url.endsWith("/")) {
+            url += "/";
+          }
           result.add(url + relPath);
         }
         else {
           VirtualFile file = virtualFile.findFileByRelativePath(relPath);
-          if (file != null) result.add(file.getUrl());
+          if (file != null) {
+            result.add(file.getUrl());
+          }
         }
       }
     }
