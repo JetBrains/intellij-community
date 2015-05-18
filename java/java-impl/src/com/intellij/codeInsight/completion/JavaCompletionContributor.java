@@ -241,6 +241,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     addKeywords(parameters, result);
 
+    addExpressionVariants(parameters, position, result);
+
     Set<String> usedWords = addReferenceVariants(parameters, result, inheritors);
 
     if (psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
@@ -262,6 +264,16 @@ public class JavaCompletionContributor extends CompletionContributor {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
     result.stopHere();
+  }
+
+  private void addExpressionVariants(@NotNull CompletionParameters parameters, PsiElement position, CompletionResultSet result) {
+    if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
+        !JavaCompletionData.AFTER_DOT.accepts(position)) {
+      JavaCompletionData.addExpectedTypeMembers(parameters, result);
+      if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
+        new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
+      }
+    }
   }
 
   public static boolean isInJavaContext(PsiElement position) {
@@ -382,17 +394,26 @@ public class JavaCompletionContributor extends CompletionContributor {
     return usedWords;
   }
 
-  private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
+  private static void addKeywords(CompletionParameters parameters, final CompletionResultSet result) {
+    Consumer<LookupElement> noMiddleMatches = new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement element) {
+        if (element.getLookupString().startsWith(result.getPrefixMatcher().getPrefix())) {
+          result.addElement(element);
+        }
+      }
+    };
+
     PsiElement position = parameters.getPosition();
     final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
     final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
     final JavaCompletionData completionData = getCompletionData(PsiUtil.getLanguageLevel(position));
     completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
     completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
-    completionData.fillCompletions(parameters, result);
+    completionData.fillCompletions(parameters, noMiddleMatches);
 
     for (final LookupElement item : lookupSet) {
-      result.addElement(item);
+      noMiddleMatches.consume(item);
     }
   }
 

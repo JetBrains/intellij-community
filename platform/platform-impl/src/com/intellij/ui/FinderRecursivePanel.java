@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -533,7 +533,13 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     });
   }
 
-  public static <T> void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull List<T> newItems) {
+  static <T> void mergeListItems(@NotNull CollectionListModel<T> listModel, @NotNull List<T> newItems) {
+    boolean isEmptyList = listModel.getSize() == 0;
+    if (isEmptyList) {
+      listModel.add(newItems);
+      return;
+    }
+
     // remove items
     for (int i = listModel.getSize() - 1; i >= 0; i--) {
       if (!newItems.contains(listModel.getElementAt(i))) {
@@ -574,7 +580,8 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
         final FinderRecursivePanel childPanel = (FinderRecursivePanel)myChild;
         if (withUpdatePanel) {
           childPanel.init();
-        } else {
+        }
+        else {
           childPanel.initWithoutUpdatePanel();
         }
       }

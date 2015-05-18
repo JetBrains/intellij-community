@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ipp.trivialif.MergeIfAndIntention;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     PsiFile file = element.getContainingFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = documentManager.getDocument(file);
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    if (document == null || !FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiElement[] elements = {anchorStatement};
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorStatement, PsiWhiteSpace.class);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
@@ -71,6 +72,11 @@ public class SurroundWithIfFix implements LocalQuickFix {
       document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),newText);
 
       editor.getCaretModel().moveToOffset(textRange.getEndOffset() + newText.length());
+      
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+      new MergeIfAndIntention().invoke(project, editor, file);
+
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
     catch (IncorrectOperationException e) {
