@@ -1103,21 +1103,18 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     protected boolean doScrollToChange() {
       if (myScrollToChange == null) return false;
-      SimpleDiffViewer.this.doScrollToChange(myScrollToChange);
-      return true;
+      return SimpleDiffViewer.this.doScrollToChange(myScrollToChange);
     }
 
     @Override
     protected boolean doScrollToFirstChange() {
-      SimpleDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
-      return true;
+      return SimpleDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
     }
 
     @Override
     protected boolean doScrollToContext() {
       if (myNavigationContext == null) return false;
-      SimpleDiffViewer.this.doScrollToContext(myNavigationContext);
-      return true;
+      return SimpleDiffViewer.this.doScrollToContext(myNavigationContext);
     }
   }
 }

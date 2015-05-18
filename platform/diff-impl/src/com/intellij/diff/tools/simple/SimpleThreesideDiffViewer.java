@@ -672,14 +672,12 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     @Override
     protected boolean doScrollToChange() {
       if (myScrollToChange == null) return false;
-      SimpleThreesideDiffViewer.this.doScrollToChange(myScrollToChange);
-      return true;
+      return SimpleThreesideDiffViewer.this.doScrollToChange(myScrollToChange);
     }
 
     @Override
     protected boolean doScrollToFirstChange() {
-      SimpleThreesideDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
-      return true;
+      return SimpleThreesideDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
     }
   }
 }
