@@ -67,11 +67,13 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     editorCode("Appearance: " + messageApp("checkbox.show.small.icons.in.gutter"), "SHOW_SMALL_ICONS_IN_GUTTER"),
     option("Appearance: " + messageApp("checkbox.show.code.folding.outline"), "IS_FOLDING_OUTLINE_SHOWN", "editor.preferences.folding"),
     editorTabs("Tabs: " + messageApp("checkbox.editor.tabs.in.single.row"), "SCROLL_TAB_LAYOUT_IN_EDITOR"),
+    editorTabs("Tabs: " + messageApp("checkbox.editor.scroll.if.need"), "HIDE_TABS_IF_NEED"),
     editorTabs("Tabs: " + messageApp("checkbox.hide.file.extension.in.editor.tabs"), "HIDE_KNOWN_EXTENSION_IN_TABS"),
     editorTabs("Tabs: Show directory in editor tabs for non-unique filenames", "SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES"),
     editorTabs("Tabs: " + messageApp("checkbox.editor.tabs.show.close.button"), "SHOW_CLOSE_BUTTON"),
     editorTabs("Tabs: " + messageApp("checkbox.mark.modified.tabs.with.asterisk"), "MARK_MODIFIED_TABS_WITH_ASTERISK"),
     editorTabs("Tabs: " + messageApp("checkbox.show.tabs.tooltips"), "SHOW_TABS_TOOLTIPS"),
+    editorTabs("Tabs: " + messageApp("checkbox.smart.tab.reuse"), "REUSE_NOT_MODIFIED_TABS"),
     editorTabs("Tabs: " + messageApp("radio.close.non.modified.files.first"), "CLOSE_NON_MODIFIED_FILES_FIRST")
   );
 
