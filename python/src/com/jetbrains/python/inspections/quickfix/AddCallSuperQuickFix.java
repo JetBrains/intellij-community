@@ -143,10 +143,28 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
       newFunctionParams.add(param.getText());
     }
     for (PyParameter param : superInfo.getRequiredParameters()) {
-      if (!origInfo.getAllParameterNames().contains(param.getName())) {
-        newFunctionParams.add(param.getText());
+      // Special case as if base class has constructor __init__((a, b), c) and
+      // subclass has constructor __init__(a, (b, c))
+      final PyTupleParameter tupleParam = param.getAsTuple();
+      if (tupleParam != null) {
+        final List<String> uniqueNames = collectParameterNames(tupleParam);
+        final boolean hasDuplicates = uniqueNames.removeAll(origInfo.getAllParameterNames());
+        if (hasDuplicates) {
+          newFunctionParams.addAll(uniqueNames);
+        }
+        else {
+          newFunctionParams.add(param.getText());
+        }
+        // Retain original structure of tuple parameter.
+        // Note that tuple parameters cannot have annotations or nested default values, so it's syntactically safe
+        superCallArgs.add(param.getText());
       }
-      superCallArgs.add(param.getName());
+      else {
+        if (!origInfo.getAllParameterNames().contains(param.getName())) {
+          newFunctionParams.add(param.getText());
+        }
+        superCallArgs.add(param.getName());
+      }
     }
 
     // Optional parameters (not-keyword)
@@ -334,10 +352,10 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  private static Set<String> collectParameterNames(@NotNull PyParameter param) {
-    final LinkedHashSet<String> result = new LinkedHashSet<String>();
+  private static List<String> collectParameterNames(@NotNull PyParameter param) {
+    final List<String> result = new ArrayList<String>();
     collectParameterNames(param, result);
-    return Collections.unmodifiableSet(result);
+    return result;
   }
 
 
