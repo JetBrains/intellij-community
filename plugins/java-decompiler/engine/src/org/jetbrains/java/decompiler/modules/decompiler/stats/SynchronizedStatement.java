@@ -15,6 +15,8 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -84,9 +86,18 @@ public class SynchronizedStatement extends Statement {
     buf.append(ExprProcessor.jmpWrapper(body, indent + 1, true, tracer));
 
     buf.appendIndent(indent).append("}").appendLineSeparator();
+    mapMonitorExitInstr(tracer);
     tracer.incrementCurrentSourceLine();
 
     return buf;
+  }
+
+  private void mapMonitorExitInstr(BytecodeMappingTracer tracer) {
+    BasicBlock block = body.getBasichead().getBlock();
+    if (!block.getSeq().isEmpty() && block.getLastInstruction().opcode == CodeConstants.opc_monitorexit) {
+      Integer offset = block.getOldOffset(block.size() - 1);
+      if (offset > -1) tracer.addMapping(offset);
+    }
   }
 
   public void initExprents() {
