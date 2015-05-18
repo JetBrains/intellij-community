@@ -115,22 +115,28 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
       if (!method.hasModifierProperty(PsiModifier.ABSTRACT) && !containingClass.isInterface()) {
         return;
       }
+      boolean overrideDefault = false;
+      boolean accept = false;
       final PsiMethod[] superMethods = method.findSuperMethods();
       for (final PsiMethod superMethod : superMethods) {
+        overrideDefault |= superMethod.hasModifierProperty(PsiModifier.DEFAULT);
         if (!isAbstract(superMethod)) {
           continue;
         }
-        if (!methodsHaveSameReturnTypes(method, superMethod) || !haveSameExceptionSignatures(method, superMethod)) {
-          continue;
+        if (overrideDefault) {
+          return;
         }
+        accept |= methodsHaveSameReturnTypes(method, superMethod) && haveSameExceptionSignatures(method, superMethod);
+
         if (ignoreJavaDoc && !haveSameJavaDoc(method, superMethod)) {
           return;
         }
         if (ignoreAnnotations && !methodsHaveSameAnnotations(method, superMethod)) {
           return;
         }
+      }
+      if (accept && !overrideDefault) {
         registerMethodError(method);
-        return;
       }
     }
 
