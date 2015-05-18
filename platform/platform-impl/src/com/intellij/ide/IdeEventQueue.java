@@ -416,20 +416,8 @@ public class IdeEventQueue extends EventQueue {
     if (e instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)e;
 
-      // Alt,keyChar=Undefined keyChar,modifiers=Ctrl+Alt,extModifiers=Ctrl+Alt+Button5,keyLocation=KEY_LOCATION_RIGHT
-
-      //if (ke.getKeyCode() == KeyEvent.VK_ALT && ke.getID() == KeyEvent.KEY_PRESSED) {
-      //
-      //    if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT) {
-      //      if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK))
-      //      {
-      //        altGrIsPressed = true;
-      //      }
-      //    }
-      //
-      //} else {
-      //      altGrIsPressed = false;
-      //}
+      // Try to get it from editor
+      Component sourceComponent = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
       if (ke.getID() == KeyEvent.KEY_PRESSED) {
         switch (ke.getKeyCode()) {
@@ -459,8 +447,15 @@ public class IdeEventQueue extends EventQueue {
         }
       }
 
-
-
+      if (!leftAltIsPressed && KeyboardSettingsExternalizable.getInstance().isUkrainianKeyboard(sourceComponent) ) {
+        if ('ґ' == ke.getKeyChar() || ke.getKeyCode() == KeyEvent.VK_U) {
+          ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), 0,
+                            KeyEvent.VK_UNDEFINED, 'ґ', ke.getKeyLocation());
+          ke.setKeyCode(KeyEvent.VK_U);
+          ke.setKeyChar('ґ');
+          return ke;
+        }
+      }
 
       Integer keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
       if (keyCodeFromChar != null) {
@@ -469,15 +464,12 @@ public class IdeEventQueue extends EventQueue {
           ke.setKeyCode(keyCodeFromChar);
         }
 
-        // Try to get it from editor
-        Component sourceComponent = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-
         //for (int i = 0; sourceComponent == null && i < WindowManagerEx.getInstanceEx().getAllProjectFrames().length; i++) {
         //  sourceComponent = WindowManagerEx.getInstanceEx().getAllProjectFrames()[i].getComponent();
         //}
 
         if (sourceComponent != null) {
-          if (sourceComponent.getInputContext().getLocale().getLanguage().equals("de")) {
+          if (KeyboardSettingsExternalizable.isSupportedKeyboardLayout(sourceComponent)) {
             if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != 0 /*&& ke.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT*/) {
               // On German keyboard layout on Windows  we are getting on key press
               // ctrl + alt instead of AltGr
