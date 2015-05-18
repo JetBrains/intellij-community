@@ -34,7 +34,7 @@ import java.util.List;
 
 public class SimpleThreesideDiffChange {
   @NotNull private final MergeLineFragment myFragment;
-  @NotNull private final List<EditorEx> myEditors;
+  @NotNull private final List<? extends EditorEx> myEditors;
 
   @NotNull private ConflictType myType;
 
@@ -44,7 +44,7 @@ public class SimpleThreesideDiffChange {
   private int[] myLineEndShifts = new int[3];
 
   public SimpleThreesideDiffChange(@NotNull MergeLineFragment fragment,
-                                   @NotNull List<EditorEx> editors,
+                                   @NotNull List<? extends EditorEx> editors,
                                    @NotNull ComparisonPolicy policy) {
     myFragment = fragment;
     myEditors = editors;
@@ -154,7 +154,7 @@ public class SimpleThreesideDiffChange {
 
   @NotNull
   private static ConflictType calcType(@NotNull MergeLineFragment fragment,
-                                       @NotNull List<EditorEx> editors,
+                                       @NotNull List<? extends EditorEx> editors,
                                        @NotNull ComparisonPolicy policy) {
     boolean isLeftEmpty = isIntervalEmpty(fragment, ThreeSide.LEFT);
     boolean isBaseEmpty = isIntervalEmpty(fragment, ThreeSide.BASE);
@@ -192,7 +192,7 @@ public class SimpleThreesideDiffChange {
   }
 
   private static boolean compareLeftAndRight(@NotNull MergeLineFragment fragment,
-                                             @NotNull List<EditorEx> editors,
+                                             @NotNull List<? extends EditorEx> editors,
                                              @NotNull ComparisonPolicy policy) {
     CharSequence content1 = getRangeContent(fragment, editors, ThreeSide.LEFT);
     CharSequence content2 = getRangeContent(fragment, editors, ThreeSide.RIGHT);
@@ -209,7 +209,7 @@ public class SimpleThreesideDiffChange {
   }
 
   private static boolean compareWithBase(@NotNull MergeLineFragment fragment,
-                                         @NotNull List<EditorEx> editors,
+                                         @NotNull List<? extends EditorEx> editors,
                                          @NotNull ThreeSide side) {
     CharSequence content1 = getRangeContent(fragment, editors, ThreeSide.BASE);
     CharSequence content2 = getRangeContent(fragment, editors, side);
@@ -219,7 +219,7 @@ public class SimpleThreesideDiffChange {
 
   @Nullable
   private static CharSequence getRangeContent(@NotNull MergeLineFragment fragment,
-                                              @NotNull List<EditorEx> editors,
+                                              @NotNull List<? extends EditorEx> editors,
                                               @NotNull ThreeSide side) {
     DocumentEx document = side.select(editors).getDocument();
     int line1 = fragment.getStartLine(side);

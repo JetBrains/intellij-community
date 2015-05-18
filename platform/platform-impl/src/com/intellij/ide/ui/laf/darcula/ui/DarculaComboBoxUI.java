@@ -224,7 +224,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   protected Rectangle rectangleForCurrentValue() {
     final Rectangle r = super.rectangleForCurrentValue();
     r.x-= JBUI.scale(2);
-    r.y-= isTableCellEditor(myComboBox) ? 0 : 0;//JBUI.scale(1);
     return r;
   }
 
@@ -336,7 +335,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     final Graphics2D g = (Graphics2D)g2;
     final Rectangle arrowButtonBounds = arrowButton.getBounds();
     final int xxx = arrowButtonBounds.x - JBUI.scale(5);
-    final int H = height - JBUI.scale(4);
+    final int H = height - JBUI.scale(2);
     final int W = width - JBUI.scale(2);
 
     final GraphicsConfig config = new GraphicsConfig(g);
@@ -369,7 +368,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     paintCurrentValue(g, r, false);
 
     if (hasFocus) {
-      DarculaUIUtil.paintFocusRing(g, JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(5));
+      DarculaUIUtil.paintFocusRing(g, JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4));
     }
     else {
       g.setColor(borderColor);
