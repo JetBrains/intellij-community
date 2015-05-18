@@ -50,11 +50,14 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -712,7 +715,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Nullable
-  public static List<String> findUrlForVirtualFile(final Project project, final VirtualFile virtualFile, final String relPath) {
+  public static List<String> findUrlForVirtualFile(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull String relPath) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = fileIndex.getModuleForFile(virtualFile);
     if (module == null) {
@@ -734,6 +737,20 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
 
     for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
+      for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
+        if (root.getFileSystem() == JarFileSystem.getInstance()) {
+          VirtualFile file = root.findFileByRelativePath(relPath);
+          List<Url> urls = file == null ? null : BuiltInWebBrowserUrlProvider.getUrls(file, project, null);
+          if (!ContainerUtil.isEmpty(urls)) {
+            List<String> result = new SmartList<String>();
+            for (Url url : urls) {
+              result.add(url.toExternalForm());
+            }
+            return result;
+          }
+        }
+      }
+
       List<String> httpRoot = PlatformDocumentationUtil.getHttpRoots(JavadocOrderRootType.getUrls(orderEntry), relPath);
       if (httpRoot != null) {
         return httpRoot;

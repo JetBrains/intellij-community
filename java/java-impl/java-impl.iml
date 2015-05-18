@@ -56,6 +56,7 @@
     <orderEntry type="module" module-name="java-structure-view" exported="" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="library" name="nekohtml" level="project" />
+    <orderEntry type="module" module-name="built-in-server" />
   </component>
   <component name="copyright">
     <Base>
@@ -63,4 +64,3 @@
     </Base>
   </component>
 </module>
-
