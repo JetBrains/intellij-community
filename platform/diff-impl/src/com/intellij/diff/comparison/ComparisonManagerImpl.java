@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +84,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
         continue;
       }
 
-      if (tooBigChunksCount >= 3) { // Do not try to build fine blocks after few fails)
+      if (tooBigChunksCount >= FilesTooBigForDiffException.MAX_BAD_LINES) { // Do not try to build fine blocks after few fails)
         fineFragments.add(new LineFragmentImpl(fragment, null));
         continue;
       }
