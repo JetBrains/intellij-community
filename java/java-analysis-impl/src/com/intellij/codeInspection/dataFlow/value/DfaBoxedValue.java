@@ -25,15 +25,17 @@ import java.util.Map;
 
 public class DfaBoxedValue extends DfaValue {
   private final DfaValue myWrappedValue;
+  private final DfaValueFactory myFactory;
 
   private DfaBoxedValue(DfaValue valueToWrap, DfaValueFactory factory) {
     super(factory);
+    myFactory = factory;
     myWrappedValue = valueToWrap;
   }
 
   @NonNls
   public String toString() {
-    return "Boxed "+myWrappedValue.toString();
+    return "Boxed " + myWrappedValue.toString();
   }
 
   public DfaValue getWrappedValue() {
@@ -83,6 +85,11 @@ public class DfaBoxedValue extends DfaValue {
       }
       return DfaUnknownValue.getInstance();
     }
+  }
 
+  @Override
+  public DfaValue createNegated() {
+    DfaValue negated = myWrappedValue.createNegated();
+    return negated == DfaUnknownValue.getInstance() ? negated : myFactory.getBoxedFactory().createBoxed(negated);
   }
 }

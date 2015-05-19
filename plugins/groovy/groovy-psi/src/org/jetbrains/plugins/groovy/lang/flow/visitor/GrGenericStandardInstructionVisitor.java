@@ -274,11 +274,15 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
 
     final List<DfaMemoryState> states = ContainerUtil.newArrayList();
     if (trueState.coerceTo(true, value)) {
-      trueState.push(constFactory.getTrue());
+      final DfaValue boxed = myFactory.getBoxedFactory().createBoxed(constFactory.getTrue());
+      assert boxed != null;
+      trueState.push(boxed);
       states.add(trueState);
     }
     if (falseState.coerceTo(false, value)) {
-      falseState.push(constFactory.getFalse());
+      final DfaValue boxed = myFactory.getBoxedFactory().createBoxed(constFactory.getFalse());
+      assert boxed != null;
+      falseState.push(boxed);
       states.add(falseState);
     }
     return nextInstructionStates(instruction, states);

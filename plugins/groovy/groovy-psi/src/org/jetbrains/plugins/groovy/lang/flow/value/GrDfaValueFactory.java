@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.flow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -149,15 +148,12 @@ public class GrDfaValueFactory extends DfaValueFactory {
     return createTypeValue(type, DfaPsiUtil.getElementNullability(type, var));
   }
 
-  public DfaValue createValue(Object value) {
-    return new DfaConstValue(value, this, null);
-  }
-
   public DfaValue createLiteralValue(GrLiteral literal) {
     if (literal instanceof GrString || literal.getValue() instanceof String) {
       return createTypeValue(literal.getType(), Nullness.NOT_NULL); // Non-null string literal.
     }
-    return getConstFactory().create(literal);
+    final DfaValue constValue = getConstFactory().create(literal);
+    return !(literal.getType() instanceof PsiPrimitiveType) ? getBoxedFactory().createBoxed(constValue) : constValue;
   }
 
   @NotNull

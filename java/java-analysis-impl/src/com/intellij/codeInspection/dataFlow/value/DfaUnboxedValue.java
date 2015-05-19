@@ -19,11 +19,11 @@ import org.jetbrains.annotations.NonNls;
 
 public class DfaUnboxedValue extends DfaValue {
   private final DfaVariableValue myVariable;
-  private final DfaBoxedValue.Factory myFactory;
+  private final DfaValueFactory myFactory;
 
   DfaUnboxedValue(DfaVariableValue valueToWrap, DfaValueFactory factory) {
     super(factory);
-    myFactory = factory.getBoxedFactory();
+    myFactory = factory;
     myVariable = valueToWrap;
   }
 
@@ -43,6 +43,6 @@ public class DfaUnboxedValue extends DfaValue {
 
   @Override
   public DfaValue createNegated() {
-    return myFactory.createUnboxed(myVariable.createNegated());
+    return myFactory.getBoxedFactory().createUnboxed(myVariable.createNegated());
   }
 }

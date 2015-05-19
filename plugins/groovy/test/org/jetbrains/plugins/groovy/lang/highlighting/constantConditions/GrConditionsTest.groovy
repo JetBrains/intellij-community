@@ -69,26 +69,7 @@ def ifNotNullUnknown(a) {
 '''
   }
 
-  void "test unknown value coercion"() {
-    testHighlighting '''
-def unknownConditions(a) {
-    if (a) {
-        a.toString()
-        if (<warning descr="Condition 'a' is always true">a</warning>) {}
-        if (<warning descr="Condition '!a' is always false">!a</warning>) {}
-        if (<warning descr="Condition 'a == null' is always false">a == null</warning>) {}
-        if (<warning descr="Condition 'a != null' is always true">a != null</warning>) {}
-        if (a == "a") {}
-    } else {
-        if (<warning descr="Condition 'a' is always false">a</warning>) {}
-        if (<warning descr="Condition '!a' is always true">!a</warning>) {}
-        if (a == null) {}
-        if (a != null) {}
-        if (a == "a") {}
-    }
-}
-'''
-  }
+  void "test unknown value coercion"() { doTest() }
 
   void "test asBoolean() override"() {
     testHighlighting '''
