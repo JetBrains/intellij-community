@@ -36,7 +36,7 @@ public abstract class DataManager {
 
   /**
    * @return {@link DataContext} constructed by the current focused component
-   * @deprecated use either {@link #getDataContext(java.awt.Component)} or {@link #getDataContextFromFocus()}
+   * @deprecated use either {@link #getDataContext(Component)} or {@link #getDataContextFromFocus()}
    */
   @NotNull
   public abstract DataContext getDataContext();
@@ -53,7 +53,7 @@ public abstract class DataManager {
    * and the point specified by <code>x</code> and <code>y</code> coordinate inside the
    * component.
    *
-   * @exception java.lang.IllegalArgumentException if point <code>(x, y)</code> is not inside
+   * @exception IllegalArgumentException if point <code>(x, y)</code> is not inside
    * component's bounds
    */
   public abstract DataContext getDataContext(@NotNull Component component, int x, int y);
@@ -68,7 +68,7 @@ public abstract class DataManager {
   /**
    * @param dataContext find by key if instance of {@link com.intellij.openapi.util.UserDataHolder}
    * @param dataKey key to find value by
-   * @return value stored by {@link #saveInDataContext(com.intellij.openapi.actionSystem.DataContext, com.intellij.openapi.util.Key, Object)}
+   * @return value stored by {@link #saveInDataContext(DataContext, Key, Object)}
    */
   @Nullable
   public abstract <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey);
