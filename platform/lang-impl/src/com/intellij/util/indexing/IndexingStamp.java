@@ -61,7 +61,7 @@ public class IndexingStamp {
   private static final long UNINDEXED_STAMP = -1L; // we don't store trivial "absent" state
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
-  private static final int VERSION = 13;
+  private static final int VERSION = 14;
   private static final ConcurrentMap<ID<?, ?>, Long> ourIndexIdToCreationStamp = ContainerUtil.newConcurrentMap();
   static final int INVALID_FILE_ID = 0;
   private static volatile long ourLastStamp; // ensure any file index stamp increases
@@ -89,8 +89,9 @@ public class IndexingStamp {
     });
     assert os != null;
     try {
-      os.writeInt(version);
-      os.writeInt(VERSION);
+      DataInputOutputUtil.writeINT(os, version);
+      DataInputOutputUtil.writeINT(os, VERSION);
+      DataInputOutputUtil.writeTIME(os, FSRecords.getCreationTimestamp());
     }
     finally {
       ourIndexIdToCreationStamp.clear();
@@ -106,9 +107,14 @@ public class IndexingStamp {
       ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
       final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
       try {
-        final int savedIndexVersion = in.readInt();
-        final int commonVersion = in.readInt();
-        return savedIndexVersion != currentIndexVersion || commonVersion != VERSION;
+        final int savedIndexVersion = DataInputOutputUtil.readINT(in);
+        final int commonVersion = DataInputOutputUtil.readINT(in);
+        final long vfsCreationStamp = DataInputOutputUtil.readTIME(in);
+        return savedIndexVersion != currentIndexVersion ||
+               commonVersion != VERSION ||
+               vfsCreationStamp != FSRecords.getCreationTimestamp()
+          ;
+
       }
       finally {
         in.close();
@@ -160,7 +166,7 @@ public class IndexingStamp {
   }
 
   /**
-   * The class is meant to be accessed from synchronized block only 
+   * The class is meant to be accessed from synchronized block only
    */
   private static class Timestamps {
     private static final FileAttribute PERSISTENCE = new FileAttribute("__index_stamps__", 2, false);
