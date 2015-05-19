@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 package com.intellij.psi.resolve
+
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -215,6 +217,24 @@ class Testcase {
 }
 """).virtualFile)
     myFixture.checkHighlighting()
+  }
+
+  public void "test update method hierarchy on class file change"() {
+    myFixture.testDataPath = PathManagerEx.getTestDataPath() + "/libResolve/methodHierarchy"
+    myFixture.copyDirectoryToProject("", "lib")
+    PsiTestUtil.addLibrary(myModule, "lib", myFixture.tempDirFixture.getFile("").path, "lib");
+
+    def message = JavaPsiFacade.getInstance(project).findClass('com.google.protobuf.AbstractMessageLite',
+                                                               GlobalSearchScope.allScope(project))
+    assert message
+    def method = message.findMethodsByName("toByteArray", false)[0]
+    assert method
+    assert method.hierarchicalMethodSignature.superSignatures.size() == 1
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      message.interfaces[0].containingFile.virtualFile.delete(this)
+    }
+    assert method.hierarchicalMethodSignature.superSignatures.size() == 0
   }
 
 }
