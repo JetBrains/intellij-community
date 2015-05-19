@@ -80,13 +80,6 @@ public class GppReferenceContributor extends PsiReferenceContributor {
           final List<ResolveResult> applicable = addMethodCandidates(classType, value);
 
           final String memberName = getValue();
-          if ("super".equals(memberName) && GppTypeConverter.hasTypedContext(myElement)) {
-            final LiteralConstructorReference reference = (LiteralConstructorReference)map.getReference();
-            if (reference != null && reference.getConstructedClassType() != null) {
-              return reference.multiResolve(incompleteCode);
-            }
-          }
-
           if (value == null || applicable.isEmpty()) {
             final PsiMethod setter = PropertyUtil.findPropertySetter(psiClass, memberName, false, true);
             if (setter != null) {
