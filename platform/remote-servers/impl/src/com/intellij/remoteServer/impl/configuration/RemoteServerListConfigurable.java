@@ -66,20 +66,18 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   public void reset() {
     myRoot.removeAllChildren();
-    List<RemoteServer<?>> servers = getServers();
-    for (RemoteServer<?> server : servers) {
+    for (RemoteServer<?> server : getServers()) {
       addServerNode(server, false);
     }
     super.reset();
   }
 
-  private List<RemoteServer<?>> getServers() {
+  private List<? extends RemoteServer<?>> getServers() {
     if (myServerType == null) {
       return myServersManager.getServers();
     }
     else {
-      //code won't compile without this ugly cast (at least in jdk 1.6)
-      return (List<RemoteServer<?>>)((List)myServersManager.getServers(myServerType));
+      return myServersManager.getServers(myServerType);
     }
   }
 
