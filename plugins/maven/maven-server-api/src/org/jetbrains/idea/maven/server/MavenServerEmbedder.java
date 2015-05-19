@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.List;
 
 public interface MavenServerEmbedder extends Remote {
+  String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
+
   void customize(@Nullable MavenWorkspaceMap workspaceMap,
                  boolean failOnUnresolvedDependency,
                  @NotNull MavenServerConsole console,
