@@ -119,10 +119,41 @@ public class HgCommandExecutor {
   private HgCommandResult executeInCurrentThreadAndLog(@Nullable final VirtualFile repo,
                                                        @NotNull final String operation,
                                                        @Nullable final List<String> arguments) {
-    //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread()); disabled for release
-    if (myProject == null || myProject.isDisposed() || myVcs == null) {
+    if (myProject == null || myProject.isDisposed() || myVcs == null) return null;
+
+    ShellCommand shellCommand = createShellCommandWithArgs(repo, operation, arguments);
+    try {
+      long startTime = System.currentTimeMillis();
+      LOG.debug(String.format("hg %s started", operation));
+      HgCommandResult result = shellCommand.execute(myShowOutput, shouldProcessAsBinary(operation));
+      LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
+      logResult(result);
+      return result;
+    }
+    catch (ShellCommandException e) {
+      processError(e);
       return null;
     }
+    catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
+      LOG.info(e.getMessage(), e);
+      return null;
+    }
+  }
+
+  public static boolean shouldProcessAsBinary(@NotNull String command) {
+    return StringUtil.equalsIgnoreCase("cat", command);
+  }
+
+  private void processError(@NotNull ShellCommandException e) {
+    if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+      // if the problem was not with invalid executable - show error.
+      showError(e);
+      LOG.info(e.getMessage(), e);
+    }
+  }
+
+  @NotNull
+  private ShellCommand createShellCommandWithArgs(@Nullable VirtualFile repo, @NotNull String operation, @Nullable List<String> arguments) {
 
     logCommand(operation, arguments);
 
@@ -147,28 +178,8 @@ public class HgCommandExecutor {
       cmdLine.add(HgEncodingUtil.getNameFor(myCharset));
     }
 
-    try {
-      String workingDir = repo != null ? repo.getPath() : null;
-      ShellCommand shellCommand = new ShellCommand(cmdLine, workingDir, myCharset);
-      long startTime = System.currentTimeMillis();
-      LOG.debug(String.format("hg %s started", operation));
-      HgCommandResult result = shellCommand.execute(myShowOutput);
-      LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
-      logResult(result);
-      return result;
-    }
-    catch (ShellCommandException e) {
-      if (myVcs.getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
-        // if the problem was not with invalid executable - show error.
-        showError(e);
-        LOG.info(e.getMessage(), e);
-      }
-      return null;
-    }
-    catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
-      LOG.info(e.getMessage(), e);
-      return null;
-    }
+    String workingDir = repo != null ? repo.getPath() : null;
+    return new ShellCommand(cmdLine, workingDir, myCharset);
   }
 
   // logging to the Version Control console (without extensions and configs)
@@ -200,7 +211,7 @@ public class HgCommandExecutor {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  protected void logResult(@NotNull HgCommandResult result) {
+  private void logResult(@NotNull HgCommandResult result) {
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     // log output if needed
@@ -236,21 +247,10 @@ public class HgCommandExecutor {
 
   protected void showError(Exception e) {
     final HgVcs vcs = HgVcs.getInstance(myProject);
-    if (vcs == null) {
-      return;
-    }
-
-    StringBuilder message = new StringBuilder();
-    message.append(HgVcsMessages.message("hg4idea.command.executable.error",
-                                         vcs.getGlobalSettings().getHgExecutable()))
-      .append("\n")
-      .append("Original Error:\n")
-      .append(e.getMessage());
-
-    VcsImplUtil.showErrorMessage(
-      myProject,
-      message.toString(),
-      HgVcsMessages.message("hg4idea.error")
-    );
+    if (vcs == null) return;
+    String message = HgVcsMessages.message("hg4idea.command.executable.error", vcs.getGlobalSettings().getHgExecutable()) +
+                     "\nOriginal Error:\n" +
+                     e.getMessage();
+    VcsImplUtil.showErrorMessage(myProject, message, HgVcsMessages.message("hg4idea.error"));
   }
 }

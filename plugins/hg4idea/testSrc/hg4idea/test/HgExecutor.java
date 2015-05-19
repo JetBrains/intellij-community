@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
 
@@ -70,7 +71,7 @@ public class HgExecutor {
     debug("hg " + command);
     HgCommandResult result;
     try {
-      result = new ShellCommand(split, pwd(), null).execute(false);
+      result = new ShellCommand(split, pwd(), null).execute(false, HgCommandExecutor.shouldProcessAsBinary(command));
     }
     catch (Exception e) {
       throw new RuntimeException(e);

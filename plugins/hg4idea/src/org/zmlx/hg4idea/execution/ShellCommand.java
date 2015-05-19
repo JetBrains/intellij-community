@@ -14,7 +14,10 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CapturingProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -50,11 +53,12 @@ public final class ShellCommand {
   }
 
   @NotNull
-  public HgCommandResult execute(final boolean showTextOnIndicator) throws ShellCommandException, InterruptedException {
+  public HgCommandResult execute(final boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException, InterruptedException {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
       final Process process = myCommandLine.createProcess();
-      OSProcessHandler processHandler = new OSProcessHandler(process, myCommandLine.toString(), myCommandLine.getCharset());
+      HgCommandProcessHandler processHandler =
+        new HgCommandProcessHandler(process, myCommandLine.toString(), myCommandLine.getCharset(), isBinary);
       CapturingProcessAdapter outputAdapter = new CapturingProcessAdapter() {
 
         @Override
@@ -84,7 +88,7 @@ public final class ShellCommand {
         }
       }
       ProcessOutput output = outputAdapter.getOutput();
-      return new HgCommandResult(output);
+      return new HgCommandResult(output, processHandler.getBinaryOutput());
     }
     catch (ExecutionException e) {
       throw new ShellCommandException(e);

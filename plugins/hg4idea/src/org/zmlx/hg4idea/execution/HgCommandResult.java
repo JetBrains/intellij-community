@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.execution;
 import com.intellij.execution.process.ProcessOutput;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 public final class HgCommandResult {
@@ -22,33 +23,39 @@ public final class HgCommandResult {
   //should be deleted and use ProcessOutput without wrapper
 
   public static final HgCommandResult CANCELLED = new HgCommandResult(new ProcessOutput(1));
-  @NotNull ProcessOutput myOutput;
+  @NotNull private final ProcessOutput myProcessOutput;
+  @NotNull private final ByteArrayOutputStream myByteArrayOutputStream;
 
   public HgCommandResult(@NotNull ProcessOutput processOutput) {
-    myOutput = processOutput;
+    this(processOutput, new ByteArrayOutputStream(0));
+  }
+
+  public HgCommandResult(@NotNull ProcessOutput processOutput, @NotNull ByteArrayOutputStream byteOutputStream) {
+    myProcessOutput = processOutput;
+    myByteArrayOutputStream = byteOutputStream;
   }
 
   @NotNull
   public List<String> getOutputLines() {
-    return myOutput.getStdoutLines();
+    return myProcessOutput.getStdoutLines();
   }
 
   @NotNull
   public List<String> getErrorLines() {
-    return myOutput.getStderrLines();
+    return myProcessOutput.getStderrLines();
   }
 
   @NotNull
   public String getRawOutput() {
-    return myOutput.getStdout();
+    return myProcessOutput.getStdout();
   }
 
   @NotNull
   public String getRawError() {
-    return myOutput.getStderr();
+    return myProcessOutput.getStderr();
   }
 
   public int getExitValue() {
-    return myOutput.getExitCode();
+    return myProcessOutput.getExitCode();
   }
 }

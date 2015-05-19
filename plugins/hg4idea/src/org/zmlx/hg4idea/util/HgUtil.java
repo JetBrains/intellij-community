@@ -608,7 +608,7 @@ public abstract class HgUtil {
     cmdArgs.add("version");
     cmdArgs.add("-q");
     ShellCommand shellCommand = new ShellCommand(cmdArgs, null, CharsetToolkit.getDefaultSystemCharset());
-    return shellCommand.execute(false);
+    return shellCommand.execute(false, false);
   }
 
   public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
