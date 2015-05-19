@@ -96,6 +96,7 @@ public class EditorOptionsPanel {
   private JCheckBox    myCbUseSoftWrapsAtConsole;
   private JCheckBox    myCbUseCustomSoftWrapIndent;
   private JTextField   myCustomSoftWrapIndent;
+  private JLabel       myCustomSoftWrapIndentLabel;
   private JCheckBox    myCbShowSoftWrapsOnlyOnCaretLine;
   private JCheckBox    myPreselectCheckBox;
   private JBCheckBox   myCbShowQuickDocOnMouseMove;
@@ -580,6 +581,7 @@ public class EditorOptionsPanel {
     boolean softWrapsEnabled = myCbUseSoftWrapsAtEditor.isSelected() || myCbUseSoftWrapsAtConsole.isSelected();
     myCbUseCustomSoftWrapIndent.setEnabled(softWrapsEnabled);
     myCustomSoftWrapIndent.setEnabled(myCbUseCustomSoftWrapIndent.isEnabled() && myCbUseCustomSoftWrapIndent.isSelected());
+    myCustomSoftWrapIndentLabel.setEnabled(myCustomSoftWrapIndent.isEnabled());
     myCbShowSoftWrapsOnlyOnCaretLine.setEnabled(softWrapsEnabled);
   }
 
