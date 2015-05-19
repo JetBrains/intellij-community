@@ -200,8 +200,8 @@ public final class ModuleCompilerUtil {
         Module[] modules = provider.getModules();
         List<ModuleSourceSet> result = new ArrayList<ModuleSourceSet>(modules.length * 2);
         for (Module module : modules) {
-          addSourceSet(result, module, ModuleSourceSet.Type.PRODUCTION, provider);
-          addSourceSet(result, module, ModuleSourceSet.Type.TEST, provider);
+          result.add(new ModuleSourceSet(module, ModuleSourceSet.Type.PRODUCTION));
+          result.add(new ModuleSourceSet(module, ModuleSourceSet.Type.TEST));
         }
         return result;
       }
@@ -217,19 +217,15 @@ public final class ModuleCompilerUtil {
         enumerator.forEachModule(new Processor<Module>() {
           @Override
           public boolean process(Module module) {
-            addSourceSet(deps, module, n.getType(), provider);
+            deps.add(new ModuleSourceSet(module, n.getType()));
             return true;
           }
         });
         if (n.getType() == ModuleSourceSet.Type.TEST) {
-          addSourceSet(deps, n.getModule(), ModuleSourceSet.Type.PRODUCTION, provider);
+          deps.add(new ModuleSourceSet(n.getModule(), ModuleSourceSet.Type.PRODUCTION));
         }
         return deps.iterator();
       }
     }));
-  }
-
-  private static void addSourceSet(List<ModuleSourceSet> result, Module module, ModuleSourceSet.Type type, RootModelProvider provider) {
-    result.add(new ModuleSourceSet(module, type));
   }
 }
