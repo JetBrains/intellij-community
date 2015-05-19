@@ -46,7 +46,6 @@ class HgCommandProcessHandler extends OSProcessHandler {
     return myBinary ? new MyBinaryOutputReader(myProcess.getInputStream(), sleepingPolicy) : super.createOutputDataReader(sleepingPolicy);
   }
 
-  @SuppressWarnings("unused")
   @NotNull
   public ByteArrayOutputStream getBinaryOutput() {
     return myBinaryOutput;

@@ -55,6 +55,11 @@ public final class HgCommandResult {
     return myProcessOutput.getStderr();
   }
 
+  @NotNull
+  public byte[] getBytesOutput() {
+    return myByteArrayOutputStream.toByteArray();
+  }
+
   public int getExitValue() {
     return myProcessOutput.getExitCode();
   }

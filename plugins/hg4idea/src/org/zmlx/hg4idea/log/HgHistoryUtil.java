@@ -217,7 +217,7 @@ public class HgHistoryUtil {
     }
 
     List<String> errors = result.getErrorLines();
-    if (errors != null && !errors.isEmpty()) {
+    if (!errors.isEmpty()) {
       if (result.getExitValue() != 0) {
         if (silent) {
           LOG.debug(errors.toString());
@@ -323,14 +323,15 @@ public class HgHistoryUtil {
                                     FileStatus aStatus) {
 
     HgContentRevision beforeRevision =
-      fileBefore == null ? null : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
+      fileBefore == null ? null : HgContentRevision.create(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
     if (revisionAfter == null && fileBefore != null) {
       ContentRevision currentRevision =
         CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileBefore)).toFilePath());
       return new Change(beforeRevision, currentRevision, aStatus);
     }
-    HgContentRevision afterRevision =
-      fileAfter == null ? null : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
+    HgContentRevision afterRevision = fileAfter == null ? null :
+                                      HgContentRevision
+                                        .create(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
     return new Change(beforeRevision, afterRevision, aStatus);
   }
 
