@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIfStatement;
 import com.intellij.psi.PsiStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -73,13 +73,8 @@ public class IfStatementWithTooManyBranchesInspection
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
       super.visitIfStatement(statement);
-      final PsiElement parent = statement.getParent();
-      if (parent instanceof PsiIfStatement) {
-        final PsiIfStatement parentStatement = (PsiIfStatement)parent;
-        final PsiStatement elseBranch = parentStatement.getElseBranch();
-        if (statement.equals(elseBranch)) {
-          return;
-        }
+      if (ControlFlowUtils.isElseIf(statement)) {
+        return;
       }
       final int branchCount = calculateBranchCount(statement);
       if (branchCount <= m_limit) {
