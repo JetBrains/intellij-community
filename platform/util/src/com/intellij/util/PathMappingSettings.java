@@ -34,7 +34,6 @@ import java.util.List;
  * @author traff
  */
 public class PathMappingSettings implements Cloneable {
-  public final static Key<PathMappingSettings> KEY = Key.create("KEY");
 
   @NotNull
   private List<PathMapping> myPathMappings;

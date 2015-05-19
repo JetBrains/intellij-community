@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.command.Help;
@@ -41,10 +42,18 @@ public final class CommandLineDocumentationProvider extends DocumentationProvide
   @Nullable
   @Override
   public String generateDoc(final PsiElement element, @Nullable final PsiElement originalElement) {
-    final Help help = findHelp(element);
+    Help help = findHelp(element);
+    if (help == null && originalElement instanceof PsiWhiteSpace) {
+      // We need to show doc for command even if cursor is right after it
+      final PsiElement elementToTheLeft = originalElement.getPrevSibling();
+      if (elementToTheLeft != null) {
+        help = findHelp(elementToTheLeft);
+      }
+    }
     if (help == null) {
       return null;
     }
+
     final String helpText = help.getHelpString();
     // For some reason we can't return empty sting (leads to "fetching doc" string)
     return (StringUtil.isEmptyOrSpaces(helpText) ? null : helpText);

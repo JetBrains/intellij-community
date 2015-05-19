@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
-import com.intellij.ui.TreeCopyProvider;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -89,7 +88,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
     new TreeSpeedSearch(this, new NodeToTextConvertor());
     SmartExpander.installOn(this);
-    myCopyProvider = new TreeCopyProvider(this);
+    myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
     new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).installOn(this);
 
     myNodeRenderer = new ChangesBrowserNodeRenderer(project, false, true);

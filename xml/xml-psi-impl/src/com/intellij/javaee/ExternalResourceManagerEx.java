@@ -24,6 +24,11 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ExternalResourceManagerEx extends ExternalResourceManager {
   @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
 
+  public enum XMLSchemaVersion {
+    XMLSchema_1_0,
+    XMLSchema_1_1
+  }
+
   public static ExternalResourceManagerEx getInstanceEx() {
     return (ExternalResourceManagerEx)getInstance();
   }
@@ -66,6 +71,10 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
   public abstract String getDefaultHtmlDoctype(@NotNull Project project);
 
   public abstract void setDefaultHtmlDoctype(@NotNull String defaultHtmlDoctype, @NotNull Project project);
+
+  public abstract XMLSchemaVersion getXmlSchemaVersion(@NotNull Project project);
+
+  public abstract void setXmlSchemaVersion(XMLSchemaVersion version, @NotNull Project project);
 
   public abstract String getCatalogPropertiesFile();
 
