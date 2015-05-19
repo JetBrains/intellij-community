@@ -24,12 +24,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -115,12 +113,6 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     }
     else if (parent instanceof GrVariable) {
       type = ((GrVariable)parent).getDeclaredType();
-    }
-    else if (parent instanceof GrArgumentList && GppTypeConverter.hasTypedContext(parent)) {
-      for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {
-        expected = filterOutTrashTypes(expected);
-        if (expected != null) return (PsiClassType)expected;
-      }
     }
     else if (parent instanceof GrNamedArgument) {  //possible default constructor named arg
       for (PsiType expected : GroovyExpectedTypesProvider.getDefaultExpectedTypes(expression)) {

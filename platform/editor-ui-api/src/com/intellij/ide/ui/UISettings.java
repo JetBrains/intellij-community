@@ -266,11 +266,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     UISettings uiSettings = getInstance();
 
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+
     if (!isRemoteDesktopConnected() && UIUtil.isRetina()) {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    }
-    else {
-      if (uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR) {
+    } else {
         Toolkit tk = Toolkit.getDefaultToolkit();
         //noinspection HardCodedStringLiteral
         Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
@@ -283,17 +282,18 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
           }
         }
 
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, uiSettings.USE_LCD_RENDERING_IN_EDITOR ?
-                                                                   RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB :
-                                                                   RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
         if (FORCE_USE_FRACTIONAL_METRICS) {
           g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         }
-      }
-      else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-      }
+
+    }
+
+    if (uiSettings != null && uiSettings.ANTIALIASING_IN_EDITOR) {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, uiSettings.USE_LCD_RENDERING_IN_EDITOR ?
+                                                                 RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB :
+                                                                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    } else {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
   }
 

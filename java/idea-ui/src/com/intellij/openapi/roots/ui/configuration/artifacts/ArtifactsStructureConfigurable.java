@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -294,6 +295,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   public void apply() throws ConfigurationException {
     myPackagingEditorContext.saveEditorSettings();
+    checkForEmptyAndDuplicatedNames("Artifact", CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
     super.apply();
 
     myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();

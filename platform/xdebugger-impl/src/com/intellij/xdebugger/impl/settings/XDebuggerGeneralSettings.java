@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ public class XDebuggerGeneralSettings {
 
   private boolean hideDebuggerOnProcessTermination;
   private boolean myShowDebuggerOnBreakpoint = true;
+  private boolean myScrollToCenter = false;
 
   @Tag("evaluation-dialog-mode")
   public EvaluationMode getEvaluationDialogMode() {
@@ -61,5 +62,14 @@ public class XDebuggerGeneralSettings {
 
   public void setShowDebuggerOnBreakpoint(boolean showDebuggerOnBreakpoint) {
     this.myShowDebuggerOnBreakpoint = showDebuggerOnBreakpoint;
+  }
+
+  @Tag("scroll-to-center")
+  public boolean isScrollToCenter() {
+    return myScrollToCenter;
+  }
+
+  public void setScrollToCenter(boolean scrollToCenter) {
+    myScrollToCenter = scrollToCenter;
   }
 }

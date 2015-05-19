@@ -95,7 +95,7 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
                     " /DIPR=\"${associateIpr}\"" +
                     " /DOUT_FILE=\"${outFileName}\"" +
                     " /DOUT_DIR=\"$paths.artifacts\"" +
-                    " $box/nsiconf/idea.nsi")
+                    " \"${box}/nsiconf/idea.nsi\"")
 
   projectBuilder.stage("Signing binaries")
   executeExternalAnt(["dirName": "${paths.artifacts}", "fileName": "${outFileName}.exe"], "$home/build/signBuild.xml")

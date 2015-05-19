@@ -29,10 +29,15 @@ class ProjectFilesCondition implements Condition<VirtualFile> {
 
   public ProjectFilesCondition(FileBasedIndexImpl.ProjectIndexableFilesFilter indexableFilesFilter,
                                GlobalSearchScope filter,
-                               VirtualFile restrictedTo) {
+                               VirtualFile restrictedTo,
+                               boolean includeFilesFromOtherProjects
+                               ) {
     myRestrictedTo = restrictedTo;
     myFilter = filter;
     myIndexableFilesFilter = indexableFilesFilter;
+    if (!includeFilesFromOtherProjects) {
+      myFilesFromOtherProjects = MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT;
+    }
   }
 
   @Override

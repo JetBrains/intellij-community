@@ -650,10 +650,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
+    // track "x" property state only inside "if (getX() != null) ..."
+    if (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls() && (!isNull(dfaRight) || !isNegated)) {
+      return true;
+    }
+    
     if (dfaLeft == dfaRight) {
-      if (dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls()) {
-        return true;
-      }
       return !isNegated;
     }
 

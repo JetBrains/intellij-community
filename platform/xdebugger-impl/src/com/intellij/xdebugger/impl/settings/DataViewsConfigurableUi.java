@@ -58,7 +58,7 @@ public class DataViewsConfigurableUi {
            sortAlphabeticallyCheckBox.isSelected() != settings.isSortValues() ||
            enableAutoExpressionsCheckBox.isSelected() != settings.isAutoExpressions() ||
            myShowValuesInlineCheckBox.isSelected() != Registry.is(IDE_DEBUGGER_INLINE_KEY) ||
-           myShowValuesInlineCheckBox.isSelected() != Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY) ||
+           myShowValueTooltipCheckBox.isSelected() != Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY) ||
            myShowValueTooltipOnCheckBox.isSelected() != Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_ON_SELECTION_KEY);
   }
 

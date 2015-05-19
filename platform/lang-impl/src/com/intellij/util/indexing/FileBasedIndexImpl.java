@@ -2206,6 +2206,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     private final VirtualFileUpdateTask myForceUpdateTask = new VirtualFileUpdateTask();
+    private final AtomicInteger myForceUpdateRequests = new AtomicInteger();
 
     private void forceUpdate(@Nullable Project project, @Nullable final GlobalSearchScope filter, @Nullable final VirtualFile restrictedTo) {
       myChangedFilesCollector.tryToEnsureAllInvalidateTasksCompleted();
@@ -2213,9 +2214,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       Collection<VirtualFile> allFilesToUpdate = getAllFilesToUpdate();
 
       if (!allFilesToUpdate.isEmpty()) {
+        boolean includeFilesFromOtherProjects = (myForceUpdateRequests.incrementAndGet() & 0x3F) == 0;
         List<VirtualFile> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(
           allFilesToUpdate,
-          new ProjectFilesCondition(projectIndexableFiles(project), filter, restrictedTo)
+          new ProjectFilesCondition(projectIndexableFiles(project), filter, restrictedTo,
+                                    includeFilesFromOtherProjects)
         );
 
         if (!virtualFilesToBeUpdatedForProject.isEmpty()) {

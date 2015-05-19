@@ -69,7 +69,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -308,7 +307,7 @@ public class BreakpointManager {
     return null;
   }
 
-  private HashMap<String, Element> myOriginalBreakpointsNodes = new HashMap<String, Element>();
+  private final Map<String, Element> myOriginalBreakpointsNodes = new LinkedHashMap<String, Element>();
 
   public void readExternal(@NotNull final Element parentNode) {
     myOriginalBreakpointsNodes.clear();
@@ -527,10 +526,8 @@ public class BreakpointManager {
       if (group.getAttribute(CONVERTED_PARAM) == null) {
         group.setAttribute(CONVERTED_PARAM, "true");
       }
-      group.detach();
+      parentNode.addContent(group.clone());
     }
-
-    parentNode.addContent(myOriginalBreakpointsNodes.values());
   }
 
   @NotNull

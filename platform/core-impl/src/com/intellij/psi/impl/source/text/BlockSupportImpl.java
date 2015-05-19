@@ -213,7 +213,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   @NotNull
-  public static PsiFileImpl getFileCopy(PsiFileImpl originalFile, FileViewProvider providerCopy) {
+  public static PsiFileImpl getFileCopy(@NotNull PsiFileImpl originalFile, @NotNull FileViewProvider providerCopy) {
     FileViewProvider viewProvider = originalFile.getViewProvider();
     Language language = originalFile.getLanguage();
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PropertyUtil;
@@ -41,18 +42,21 @@ public class DfaExpressionFactory {
 
   private static Condition<String> parseFalseGetters() {
     try {
-      final Pattern pattern = Pattern.compile(Registry.stringValue("ide.dfa.getters.with.side.effects"));
-      return new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          return pattern.matcher(s).matches();
-        }
-      };
+      String regex = Registry.stringValue("ide.dfa.getters.with.side.effects").trim();
+      if (!StringUtil.isEmpty(regex)) {
+        final Pattern pattern = Pattern.compile(regex);
+        return new Condition<String>() {
+          @Override
+          public boolean value(String s) {
+            return pattern.matcher(s).matches();
+          }
+        };
+      }
     }
     catch (Exception e) {
       LOG.error(e);
-      return Conditions.alwaysFalse();
     }
+    return Conditions.alwaysFalse();
   }
 
   private final DfaValueFactory myFactory;
@@ -152,10 +156,11 @@ public class DfaExpressionFactory {
       return (PsiVariable)target;
     }
     if (target instanceof PsiMethod) {
-      if (PropertyUtil.isSimplePropertyGetter((PsiMethod)target)) {
-        String qName = PsiUtil.getMemberQualifiedName((PsiMethod)target);
+      PsiMethod method = (PsiMethod)target;
+      if (PropertyUtil.isSimplePropertyGetter(method) && !(method.getReturnType() instanceof PsiPrimitiveType)) {
+        String qName = PsiUtil.getMemberQualifiedName(method);
         if (qName == null || !FALSE_GETTERS.value(qName)) {
-          return (PsiMethod)target;
+          return method;
         }
       }
     }

@@ -192,9 +192,9 @@ public class VfsImplUtil {
   }
 
   @NotNull
-  public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
-                                                        @NotNull String localPath,
-                                                        @NotNull Function<String, T> producer) {
+  private static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
+                                                         @NotNull String localPath,
+                                                         @NotNull Function<String, T> producer) {
     checkSubscription();
 
     ArchiveHandler handler;
@@ -299,14 +299,15 @@ public class VfsImplUtil {
     private Set<NewVirtualFile> myRootsToRefresh;
 
     @Nullable
-    public static InvalidationState invalidate(@Nullable InvalidationState state, final String path) {
+    static InvalidationState invalidate(@Nullable InvalidationState state, final String path) {
       Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
       if (handlerPair != null) {
+        handlerPair.second.dispose();
         forEachDirectoryComponent(path, new Consumer<String>() {
           @Override
           public void consume(String containingDirectoryPath) {
             Set<String> handlers = ourDominatorsMap.get(containingDirectoryPath);
-            if (handlers != null && handlers.remove(path) && handlers.size() == 0) {
+            if (handlers != null && handlers.remove(path) && handlers.isEmpty()) {
               ourDominatorsMap.remove(containingDirectoryPath);
             }
           }
@@ -327,7 +328,7 @@ public class VfsImplUtil {
       }
     }
 
-    public void scheduleRefresh() {
+    void scheduleRefresh() {
       if (myRootsToRefresh != null) {
         for (NewVirtualFile root : myRootsToRefresh) {
           root.markDirtyRecursively();

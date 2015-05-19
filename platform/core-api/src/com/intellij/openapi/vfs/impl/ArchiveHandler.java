@@ -92,6 +92,10 @@ public abstract class ArchiveHandler {
     return ArrayUtil.toStringArray(names);
   }
 
+  public void dispose() {
+    myEntries.clear();
+  }
+
   @Nullable
   protected EntryInfo getEntryInfo(@NotNull String relativePath) {
     return getEntriesMap().get(relativePath);

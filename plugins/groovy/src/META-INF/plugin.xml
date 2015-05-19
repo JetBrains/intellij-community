@@ -283,7 +283,6 @@
                          displayName="Gant"/>
 
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
-    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gpp.GppLibraryPresentationProvider" order="first"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.gant.GantLibraryPresentationProvider" order="last"/>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.gant.GantSettings"
@@ -1106,7 +1105,6 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrEqualsBetweenInconvertibleTypesInspection"/>
 
-    <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
 
     <scratch.rootType implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRootType"/>

@@ -37,7 +37,8 @@ public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReferenc
     if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
       if (method.isConstructor()) {
-        GroovyConstructorUsagesSearcher.processConstructorUsages(method, queryParameters.getEffectiveSearchScope(), consumer, queryParameters.getOptimizer(), true, false);
+        GroovyConstructorUsagesSearcher.processConstructorUsages(method, queryParameters.getEffectiveSearchScope(), consumer, queryParameters.getOptimizer(),
+                                                                 false);
       }
     }
   }

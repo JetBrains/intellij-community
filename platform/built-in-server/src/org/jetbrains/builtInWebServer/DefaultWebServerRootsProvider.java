@@ -255,20 +255,23 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
       return null;
     }
 
-    final Ref<PathInfo> result = Ref.create();
-    Processor<Library> processor = new Processor<Library>() {
+    class LibraryProcessor implements Processor<Library> {
+      PathInfo result;
+      String moduleName;
+
       @Override
       public boolean process(Library library) {
         for (VirtualFile root : library.getFiles(javaDocRootType)) {
           if (VfsUtilCore.isAncestor(root, file, false)) {
-            result.set(new PathInfo(file, root, null, true));
+            result = new PathInfo(file, root, moduleName, true);
             return false;
           }
         }
         return true;
       }
-    };
+    }
 
+    LibraryProcessor processor = new LibraryProcessor();
     AccessToken token = ReadAction.start();
     try {
       ModuleManager moduleManager = ModuleManager.getInstance(project);
@@ -277,15 +280,17 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
           continue;
         }
 
+        processor.moduleName = module.getName();
         ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(processor);
-        if (!result.isNull()) {
-          return result.get();
+        if (processor.result != null) {
+          return processor.result;
         }
       }
 
+      processor.moduleName = null;
       for (Library library : LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
         if (!processor.process(library)) {
-          return result.get();
+          return processor.result;
         }
       }
     }
