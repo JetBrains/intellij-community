@@ -51,8 +51,7 @@ public abstract class BaseRepositoryManager protected() : RepositoryManager {
         }
         return null
       }
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      return if (file.length() == 0L) FileInputStream(file) else null
+      return FileInputStream(file)
     }
   }
 
@@ -122,8 +121,8 @@ fun removeFileAndParentDirectoryIfEmpty(file: File, root: File, isFile: Boolean 
     // remove empty directories
     var parent: File? = file.getParentFile()
     //noinspection FileEqualsUsage
-    while (parent != null && parent != root && parent!!.delete()) {
-      parent = parent!!.getParentFile()
+    while (parent != null && parent != root && parent.delete()) {
+      parent = parent.getParentFile()
     }
   }
 }
