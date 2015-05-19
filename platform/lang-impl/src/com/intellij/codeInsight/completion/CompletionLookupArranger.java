@@ -288,7 +288,13 @@ public class CompletionLookupArranger extends LookupArranger {
     final List<Iterable<LookupElement>> byClassifier = ContainerUtil.newArrayList();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
       ProcessingContext context = createContext(false);
-      byClassifier.add(myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context));
+      List<LookupElement> validElements = ContainerUtil.filter(inputBySorter.get(sorter), new Condition<LookupElement>() {
+        @Override
+        public boolean value(LookupElement element) {
+          return element.isValid();
+        }
+      });
+      byClassifier.add(myClassifiers.get(sorter).classify(validElements, context));
     }
     //noinspection unchecked
     return ContainerUtil.concat(byClassifier.toArray(new Iterable[byClassifier.size()]));
