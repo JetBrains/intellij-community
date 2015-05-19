@@ -407,8 +407,7 @@ public class UIUtil {
   //}
 
   public static boolean isRetina() {
-    return true;
-    /*if (GraphicsEnvironment.isHeadless()) return false;
+    if (GraphicsEnvironment.isHeadless()) return false;
 
     //Temporary workaround for HiDPI on Windows/Linux
     if ("true".equalsIgnoreCase(System.getProperty("is.hidpi"))) {
@@ -448,7 +447,7 @@ public class UIUtil {
 
         return ourRetina.get();
       }
-    }*/
+    }
   }
 
   public static boolean hasLeakingAppleListeners() {
@@ -709,7 +708,7 @@ public class UIUtil {
 
   private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<Class, Ref<Method>>();
   public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
-    // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint 
+    // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint
     ButtonUI ui = cb.getUI();
     String text = cb.getText();
 
@@ -1832,7 +1831,7 @@ public class UIUtil {
                                           @NotNull Graphics g,
                                           boolean useRetinaCondition,
                                           Consumer<Graphics2D> paintRoutine) {
-    if (!useRetinaCondition || Registry.is("ide.mac.retina.disableDrawingFix")) {
+    if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.retina.disableDrawingFix")) {
       paintRoutine.consume((Graphics2D)g);
     }
     else {
