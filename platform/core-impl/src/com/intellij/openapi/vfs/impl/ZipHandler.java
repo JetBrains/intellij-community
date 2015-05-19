@@ -119,7 +119,9 @@ public class ZipHandler extends ArchiveHandler {
     return getFile();
   }
 
-  public void dispose() { // todo it would be nice to dispose ZipHandler
+  @Override
+  public void dispose() {
+    super.dispose();
     ourZipFileFileAccessorCache.remove(this);
   }
 

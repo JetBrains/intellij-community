@@ -302,6 +302,7 @@ public class VfsImplUtil {
     static InvalidationState invalidate(@Nullable InvalidationState state, final String path) {
       Pair<ArchiveFileSystem, ArchiveHandler> handlerPair = ourHandlers.remove(path);
       if (handlerPair != null) {
+        handlerPair.second.dispose();
         forEachDirectoryComponent(path, new Consumer<String>() {
           @Override
           public void consume(String containingDirectoryPath) {
