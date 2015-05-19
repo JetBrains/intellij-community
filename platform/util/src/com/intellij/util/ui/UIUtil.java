@@ -407,7 +407,8 @@ public class UIUtil {
   //}
 
   public static boolean isRetina() {
-    if (GraphicsEnvironment.isHeadless()) return false;
+    return true;
+    /*if (GraphicsEnvironment.isHeadless()) return false;
 
     //Temporary workaround for HiDPI on Windows/Linux
     if ("true".equalsIgnoreCase(System.getProperty("is.hidpi"))) {
@@ -447,7 +448,7 @@ public class UIUtil {
 
         return ourRetina.get();
       }
-    }
+    }*/
   }
 
   public static boolean hasLeakingAppleListeners() {
@@ -1831,7 +1832,7 @@ public class UIUtil {
                                           @NotNull Graphics g,
                                           boolean useRetinaCondition,
                                           Consumer<Graphics2D> paintRoutine) {
-    if (!useRetinaCondition || !isRetina() || Registry.is("ide.mac.retina.disableDrawingFix")) {
+    if (!useRetinaCondition || Registry.is("ide.mac.retina.disableDrawingFix")) {
       paintRoutine.consume((Graphics2D)g);
     }
     else {
