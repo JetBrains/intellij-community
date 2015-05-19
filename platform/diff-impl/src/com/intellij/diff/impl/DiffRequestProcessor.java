@@ -93,7 +93,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private DiffRequest myActiveRequest;
 
-  @Nullable private ViewerState myState;
+  @NotNull private ViewerState myState;
 
   public DiffRequestProcessor(@Nullable Project project) {
     this(project, new UserDataHolderBase());
