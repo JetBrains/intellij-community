@@ -179,7 +179,7 @@ public class CompletionLookupArranger extends LookupArranger {
     LookupImpl lookupImpl = (LookupImpl)lookup;
     List<LookupElement> listModel = isAlphaSorted() ?
                                     sortByPresentation(items, lookupImpl) :
-                                    fillModelByRelevance(lookupImpl, items, itemsBySorter, relevantSelection);
+                                    fillModelByRelevance(lookupImpl, ContainerUtil.newIdentityTroveSet(items), itemsBySorter, relevantSelection);
 
     int toSelect = getItemToSelect(lookupImpl, listModel, onExplicitAction, relevantSelection);
     LOG.assertTrue(toSelect >= 0);
@@ -197,7 +197,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private List<LookupElement> fillModelByRelevance(LookupImpl lookup,
-                                                   List<LookupElement> items,
+                                                   Set<LookupElement> items,
                                                    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter,
                                                    @Nullable LookupElement relevantSelection) {
     Iterator<LookupElement> byRelevance = sortByRelevance(inputBySorter).iterator();
@@ -235,10 +235,10 @@ public class CompletionLookupArranger extends LookupArranger {
     });
   }
 
-  private static void ensureItemAdded(List<LookupElement> items,
+  private static void ensureItemAdded(Set<LookupElement> items,
                                       LinkedHashSet<LookupElement> model,
                                       Iterator<LookupElement> byRelevance, @Nullable final LookupElement item) {
-    if (item != null && ContainerUtil.indexOfIdentity(items, item) >= 0 && !model.contains(item)) {
+    if (item != null && items.contains(item) && !model.contains(item)) {
       addSomeItems(model, byRelevance, new Condition<LookupElement>() {
         @Override
         public boolean value(LookupElement lastAdded) {
@@ -255,7 +255,7 @@ public class CompletionLookupArranger extends LookupArranger {
     }
   }
 
-  private void addFrozenItems(List<LookupElement> items, LinkedHashSet<LookupElement> model) {
+  private void addFrozenItems(Set<LookupElement> items, LinkedHashSet<LookupElement> model) {
     myFrozenItems.retainAll(items);
     model.addAll(myFrozenItems);
   }
@@ -265,10 +265,10 @@ public class CompletionLookupArranger extends LookupArranger {
     ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(false))));
   }
 
-  private static void addCurrentlySelectedItemToTop(Lookup lookup, List<LookupElement> items, LinkedHashSet<LookupElement> model) {
+  private static void addCurrentlySelectedItemToTop(Lookup lookup, Set<LookupElement> items, LinkedHashSet<LookupElement> model) {
     if (!lookup.isSelectionTouched()) {
       LookupElement lastSelection = lookup.getCurrentItem();
-      if (ContainerUtil.indexOfIdentity(items, lastSelection) >= 0) {
+      if (items.contains(lastSelection)) {
         model.add(lastSelection);
       }
     }
@@ -288,13 +288,7 @@ public class CompletionLookupArranger extends LookupArranger {
     final List<Iterable<LookupElement>> byClassifier = ContainerUtil.newArrayList();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
       ProcessingContext context = createContext(false);
-      List<LookupElement> validElements = ContainerUtil.filter(inputBySorter.get(sorter), new Condition<LookupElement>() {
-        @Override
-        public boolean value(LookupElement element) {
-          return element.isValid();
-        }
-      });
-      byClassifier.add(myClassifiers.get(sorter).classify(validElements, context));
+      byClassifier.add(myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context));
     }
     //noinspection unchecked
     return ContainerUtil.concat(byClassifier.toArray(new Iterable[byClassifier.size()]));
