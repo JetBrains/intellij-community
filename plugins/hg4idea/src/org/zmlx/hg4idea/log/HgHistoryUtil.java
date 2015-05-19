@@ -26,6 +26,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -322,6 +324,11 @@ public class HgHistoryUtil {
 
     HgContentRevision beforeRevision =
       fileBefore == null ? null : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
+    if (revisionAfter == null && fileBefore != null) {
+      ContentRevision currentRevision =
+        CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileBefore)).toFilePath());
+      return new Change(beforeRevision, currentRevision, aStatus);
+    }
     HgContentRevision afterRevision =
       fileAfter == null ? null : new HgContentRevision(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
     return new Change(beforeRevision, afterRevision, aStatus);
