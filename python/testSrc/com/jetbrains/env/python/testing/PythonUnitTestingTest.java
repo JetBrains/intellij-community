@@ -32,6 +32,21 @@ public class PythonUnitTestingTest extends PyEnvTestCase{
     });
   }
 
+  /**
+   * Ensures pattern is supported
+   */
+  public void testUTRunnerByPattern() {
+    runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "_args_separator_*pattern.py") {
+
+      @Override
+      public void after() {
+        assertEquals(4, allTestsCount());
+        assertEquals(2, passedTestsCount());
+        assertEquals(2, failedTestsCount());
+      }
+    });
+  }
+
   public void testClass() {
     runPythonTest(new PyUnitTestTask("/testRunner/env/unit", "test_file.py::GoodTest") {
 

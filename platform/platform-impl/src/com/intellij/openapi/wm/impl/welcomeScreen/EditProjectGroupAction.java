@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.ide.ProjectGroup;
 import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
@@ -25,6 +26,7 @@ import com.intellij.ui.ListScrollingUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -81,5 +83,12 @@ public class EditProjectGroupAction extends RecentProjectsWelcomeScreenActionBas
          }
       }
     }
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final List<AnAction> selected = getSelectedElements(e);
+    boolean enabled = !selected.isEmpty() && selected.get(0) instanceof ProjectGroupActionGroup;
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 }

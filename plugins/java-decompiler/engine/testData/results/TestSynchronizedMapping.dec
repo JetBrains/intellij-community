@@ -3,33 +3,37 @@ package pkg;
 public class TestSynchronizedMapping {
    public int test(int var1) {
       synchronized(this) {// 8
-         return var1++;// 9
-      }
+         ++var1;// 9
+      }// 10
+
+      return var1++;// 11
    }
 
    public void test2(String var1) {
-      System.out.println(var1);// 14
-   }// 15
+      System.out.println(var1);// 15
+   }// 16
 }
 
 class 'pkg/TestSynchronizedMapping' {
    method 'test (I)I' {
       3      4
-      5      5
-      a      5
+      4      5
+      8      6
+      12      8
+      15      8
    }
 
    method 'test2 (Ljava/lang/String;)V' {
-      0      10
-      4      10
-      7      11
+      0      12
+      4      12
+      7      13
    }
 }
 
 Lines mapping:
 8 <-> 5
 9 <-> 6
-14 <-> 11
-15 <-> 12
-Not mapped:
-10
+10 <-> 7
+11 <-> 9
+15 <-> 13
+16 <-> 14

@@ -80,13 +80,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @Override
   public int getStartOffset() {
     RangeMarkerTree.RMNode node = myNode;
-    return intervalStart() + (node == null ? 0 : node.computeDeltaUpToRoot());
+    return node == null ? -1 : node.intervalStart() + node.computeDeltaUpToRoot();
   }
 
   @Override
   public int getEndOffset() {
     RangeMarkerTree.RMNode node = myNode;
-    return intervalEnd() + (node == null ? 0 : node.computeDeltaUpToRoot());
+    return node == null ? -1 : node.intervalEnd() + node.computeDeltaUpToRoot();
   }
 
   void invalidate(@NotNull final Object reason) {
@@ -141,7 +141,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Override
-  public final void documentChanged(DocumentEvent e) {
+  public final void documentChanged(@NotNull DocumentEvent e) {
     int oldStart = intervalStart();
     int oldEnd = intervalEnd();
     int docLength = myDocument.getTextLength();
@@ -166,7 +166,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
   }
 
-  protected void changedUpdateImpl(DocumentEvent e) {
+  protected void changedUpdateImpl(@NotNull DocumentEvent e) {
     if (!isValid()) return;
 
     // Process if one point.
@@ -214,7 +214,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     invalidate(e);
   }
 
-  private void processIfOnePoint(DocumentEvent e) {
+  private void processIfOnePoint(@NotNull DocumentEvent e) {
     int offset = e.getOffset();
     int oldLength = e.getOldLength();
     int oldEnd = offset + oldLength;
@@ -236,17 +236,24 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @NonNls
   public String toString() {
-    return "RangeMarker" + (isGreedyToLeft() ? "[" : "(") + (isValid() ? "valid" : "invalid") + "," + getStartOffset() + "," + getEndOffset() + (
-      isGreedyToRight() ? "]" : ")") + " " + getId();
+    return "RangeMarker" + (isGreedyToLeft() ? "[" : "(")
+           + (isValid() ? "" : "invalid:") + getStartOffset() + "," + getEndOffset()
+           + (isGreedyToRight() ? "]" : ")") + " " + getId();
   }
 
   @Override
   public int setIntervalStart(int start) {
+    if (start < 0) {
+      LOG.error("Negative start: " + start);
+    }
     return myNode.setIntervalStart(start);
   }
 
   @Override
   public int setIntervalEnd(int end) {
+    if (end < 0) {
+      LOG.error("Negative end: "+end);
+    }
     return myNode.setIntervalEnd(end);
   }
 

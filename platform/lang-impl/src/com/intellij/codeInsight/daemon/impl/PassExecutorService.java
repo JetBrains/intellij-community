@@ -109,7 +109,7 @@ public class PassExecutorService implements Disposable {
     mySubmittedPasses.clear();
   }
 
-  public void submitPasses(@NotNull Map<FileEditor, HighlightingPass[]> passesMap, @NotNull DaemonProgressIndicator updateProgress) {
+  void submitPasses(@NotNull Map<FileEditor, HighlightingPass[]> passesMap, @NotNull DaemonProgressIndicator updateProgress) {
     if (isDisposed()) return;
 
     // null keys are ok

@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.util.Function;
@@ -161,7 +160,7 @@ public abstract class CacheChangeProcessor extends DiffRequestProcessor {
   @CalledInAwt
   protected void onDispose() {
     super.onDispose();
-    Disposer.dispose(myQueue);
+    myQueue.abort();
     myRequestCache.clear();
   }
 

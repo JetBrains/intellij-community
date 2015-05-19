@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
-import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -225,17 +224,12 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
         }
       }
 
-      if (!GppTypeConverter.hasTypedContext(method)) {
-        LOG.assertTrue(method.isValid(), "invalid method");
-
-        final GrOpenBlock block = method.getBlock();
-        if (block != null) {
-          LOG.assertTrue(block.isValid(), "invalid code block");
-          PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
-          if (inferred != null) {
-            if (nominal == null || nominal.isAssignableFrom(inferred)) {
-              return inferred;
-            }
+      final GrOpenBlock block = method.getBlock();
+      if (block != null) {
+        PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
+        if (inferred != null) {
+          if (nominal == null || nominal.isAssignableFrom(inferred)) {
+            return inferred;
           }
         }
       }

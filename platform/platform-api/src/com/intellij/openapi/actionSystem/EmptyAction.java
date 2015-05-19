@@ -85,38 +85,94 @@ public final class EmptyAction extends AnAction {
   }
 
   public static AnAction wrap(final AnAction action) {
-    return action instanceof ActionGroup ? new ActionGroup() {
-      {
-        setPopup(((ActionGroup)action).isPopup());
-        copyFrom(action);
-        setShortcutSet(new CustomShortcutSet());
-      }
+    final boolean isDumbAware = action.isDumbAware();
+    final boolean isEnabledInModalContext = action.isEnabledInModalContext();
+    final boolean inInjectedContext = action.isInInjectedContext();
+    final boolean isTransparentUpdate = action.isTransparentUpdate();
+    if (action instanceof ActionGroup) {
+      final ActionGroup group = ((ActionGroup)action);
+      final boolean isHideIfNoVisibleChildren = group.hideIfNoVisibleChildren();
+      final boolean isDisableIfNoVisibleChildren = group.disableIfNoVisibleChildren();
+      return new ActionGroup() {
+        {
+          setPopup(group.isPopup());
+          copyFrom(group);
+          setShortcutSet(new CustomShortcutSet());
+          setEnabledInModalContext(isEnabledInModalContext);
+          setInjectedContext(inInjectedContext);
+        }
 
-      @Override
-      public void update(final AnActionEvent e) {
-        action.update(e);
-      }
+        @Override
+        public void update(final AnActionEvent e) {
+          group.update(e);
+        }
 
-      @NotNull
-      @Override
-      public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-        return ((ActionGroup)action).getChildren(e);
-      }
-    } : new AnAction() {
-      {
-        copyFrom(action);
-        setShortcutSet(new CustomShortcutSet());
-      }
+        @NotNull
+        @Override
+        public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+          return group.getChildren(e);
+        }
 
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        action.actionPerformed(e);
-      }
+        @Override
+        public boolean canBePerformed(DataContext context) {
+          return group.canBePerformed(context);
+        }
 
-      @Override
-      public void update(final AnActionEvent e) {
-        action.update(e);
-      }
-    };
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          group.actionPerformed(e);
+        }
+
+        @Override
+        public boolean isDumbAware() {
+          return isDumbAware;
+        }
+
+        @Override
+        public boolean isTransparentUpdate() {
+          return isTransparentUpdate;
+        }
+
+        @Override
+        public boolean hideIfNoVisibleChildren() {
+          return isHideIfNoVisibleChildren;
+        }
+
+        @Override
+        public boolean disableIfNoVisibleChildren() {
+          return isDisableIfNoVisibleChildren;
+        }
+      };
+    }
+    else {
+      return new AnAction() {
+        {
+          copyFrom(action);
+          setShortcutSet(new CustomShortcutSet());
+          setEnabledInModalContext(isEnabledInModalContext);
+          setInjectedContext(inInjectedContext);
+        }
+
+        @Override
+        public void actionPerformed(final AnActionEvent e) {
+          action.actionPerformed(e);
+        }
+
+        @Override
+        public void update(final AnActionEvent e) {
+          action.update(e);
+        }
+
+        @Override
+        public boolean isDumbAware() {
+          return isDumbAware;
+        }
+
+        @Override
+        public boolean isTransparentUpdate() {
+          return isTransparentUpdate;
+        }
+      };
+    }
   }
 }

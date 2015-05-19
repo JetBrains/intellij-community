@@ -62,6 +62,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.CalledInAwt;
 
 import java.util.Map;
 
@@ -208,6 +209,7 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
     }
   }
 
+  @CalledInAwt
   public void updateSettings() {
     synchronized (myLock) {
       LineStatusTracker.Mode mode = getMode();

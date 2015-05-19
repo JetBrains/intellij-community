@@ -72,7 +72,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   private static final Key<Map<ModuleChunk, GroovycContinuation>> CONTINUATIONS = Key.create("CONTINUATIONS");
   private static final Key<Boolean> FILES_MARKED_DIRTY_FOR_NEXT_ROUND = Key.create("SRC_MARKED_DIRTY");
   private static final String GROOVY_EXTENSION = "groovy";
-  private static final String GPP_EXTENSION = "gpp";
   private final boolean myForStubs;
   private final String myBuilderName;
 
@@ -508,12 +507,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   public static boolean isGroovyFile(String path) {
-    return path.endsWith("." + GROOVY_EXTENSION) || path.endsWith("." + GPP_EXTENSION);
+    return path.endsWith("." + GROOVY_EXTENSION);
   }
 
   @Override
   public List<String> getCompilableFileExtensions() {
-    return Arrays.asList(GROOVY_EXTENSION, GPP_EXTENSION);
+    return Collections.singletonList(GROOVY_EXTENSION);
   }
 
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<ModuleBuildTarget, String> finalOutputs) throws IOException {

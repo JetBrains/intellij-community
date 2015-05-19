@@ -136,33 +136,29 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   @Override
   public void apply() throws ConfigurationException {
-    final Set<MyNode> roots = new HashSet<MyNode>();
-    roots.add(myRoot);
-    checkApply(roots, ProjectBundle.message("rename.message.prefix.scope"), ProjectBundle.message("rename.scope.title"));
+    checkForEmptyAndDuplicatedNames(ProjectBundle.message("rename.message.prefix.scope"),
+                                    ProjectBundle.message("rename.scope.title"), ScopeConfigurable.class);
+    checkForPredefinedNames();
     super.apply();
     processScopes();
 
     loadStateOrder();
   }
 
-  @Override
-  protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
-    super.checkApply(rootNodes, prefix, title);
+  private void checkForPredefinedNames() throws ConfigurationException {
     final Set<String> predefinedScopes = new HashSet<String>();
     for (CustomScopesProvider scopesProvider : myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER)) {
       for (NamedScope namedScope : scopesProvider.getCustomScopes()) {
         predefinedScopes.add(namedScope.getName());
       }
     }
-    for (MyNode rootNode : rootNodes) {
-      for (int i = 0; i < rootNode.getChildCount(); i++) {
-        final MyNode node = (MyNode)rootNode.getChildAt(i);
-        final NamedConfigurable scopeConfigurable = node.getConfigurable();
-        final String name = scopeConfigurable.getDisplayName();
-        if (predefinedScopes.contains(name)) {
-          selectNodeInTree(node);
-          throw new ConfigurationException("Scope name equals to predefined one", ProjectBundle.message("rename.scope.title"));
-        }
+    for (int i = 0; i < myRoot.getChildCount(); i++) {
+      final MyNode node = (MyNode)myRoot.getChildAt(i);
+      final NamedConfigurable scopeConfigurable = node.getConfigurable();
+      final String name = scopeConfigurable.getDisplayName();
+      if (predefinedScopes.contains(name)) {
+        selectNodeInTree(node);
+        throw new ConfigurationException("Scope name equals to predefined one", ProjectBundle.message("rename.scope.title"));
       }
     }
   }

@@ -71,6 +71,8 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
       text = getExpressionText(evaluator, CommonDataKeys.PROJECT.getData(dataContext), editor);
     }
 
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+
     if (text == null) {
       XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
       if (value != null) {
@@ -81,7 +83,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
             AppUIUtil.invokeOnEdt(new Runnable() {
               @Override
               public void run() {
-                showDialog(session, dataContext, editorsProvider, stackFrame, evaluator, evalMode, text);
+                showDialog(session, file, editorsProvider, stackFrame, evaluator, evalMode, text);
               }
             });
           }
@@ -90,11 +92,11 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
       }
     }
 
-    showDialog(session, dataContext, editorsProvider, stackFrame, evaluator, mode, text);
+    showDialog(session, file, editorsProvider, stackFrame, evaluator, mode, text);
   }
 
   private static void showDialog(@NotNull XDebugSession session,
-                                 DataContext dataContext,
+                                 VirtualFile file,
                                  XDebuggerEditorsProvider editorsProvider,
                                  XStackFrame stackFrame, XDebuggerEvaluator evaluator, EvaluationMode mode, String text) {
     Language language = null;
@@ -104,11 +106,8 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
         language = XDebuggerEditorBase.getFileTypeLanguage(position.getFile().getFileType());
       }
     }
-    if (language == null) {
-      VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-      if (file != null) {
-        language = XDebuggerEditorBase.getFileTypeLanguage(file.getFileType());
-      }
+    if (language == null && file != null) {
+      language = XDebuggerEditorBase.getFileTypeLanguage(file.getFileType());
     }
     XExpression expression = new XExpressionImpl(StringUtil.notNullize(text), language, null, mode);
     new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression, stackFrame == null ? null : stackFrame.getSourcePosition()).show();

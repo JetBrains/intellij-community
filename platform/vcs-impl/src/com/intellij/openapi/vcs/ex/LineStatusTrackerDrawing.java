@@ -18,6 +18,14 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.diff.comparison.ByWord;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.util.BackgroundTaskUtil;
+import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffColors;
@@ -32,8 +40,11 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction;
 import com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,6 +52,7 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +61,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
@@ -256,7 +269,7 @@ public class LineStatusTrackerDrawing {
 
     component.add(toolbarPanel, BorderLayout.NORTH);
 
-
+    final List<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
     if (range.getType() != Range.INSERTED) {
       final DocumentEx doc = (DocumentEx)tracker.getVcsDocument();
       final EditorEx uEditor = (EditorEx)EditorFactory.getInstance().createViewer(doc, tracker.getProject());
@@ -264,6 +277,36 @@ public class LineStatusTrackerDrawing {
       final EditorHighlighter highlighter =
         EditorHighlighterFactory.getInstance().createEditorHighlighter(tracker.getProject(), getFileName(tracker.getDocument()));
       uEditor.setHighlighter(highlighter);
+
+      try {
+        if (range.getType() == Range.MODIFIED) {
+          final CharSequence vcsContent = tracker.getVcsContent(range);
+          final CharSequence currentContent = tracker.getCurrentContent(range);
+
+          List<DiffFragment> diff = BackgroundTaskUtil.tryComputeFast(new Function<ProgressIndicator, List<DiffFragment>>() {
+            @Override
+            public List<DiffFragment> fun(ProgressIndicator indicator) {
+              return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
+            }
+          }, Registry.intValue("diff.status.tracker.byword.delay"));
+          if (diff == null) throw new DiffTooBigException();
+
+          int vcsStartShift = tracker.getVcsTextRange(range).getStartOffset();
+          int currentStartShift = tracker.getCurrentTextRange(range).getStartOffset();
+          for (DiffFragment fragment : diff) {
+            int vcsStart = vcsStartShift + fragment.getStartOffset1();
+            int vcsEnd = vcsStartShift + fragment.getEndOffset1();
+            int currentStart = currentStartShift + fragment.getStartOffset2();
+            int currentEnd = currentStartShift + fragment.getEndOffset2();
+            TextDiffType type = DiffUtil.getDiffType(fragment);
+
+            DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
+            highlighters.add(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
+          }
+        }
+      }
+      catch (DiffTooBigException ignore) {
+      }
 
       final EditorFragmentComponent editorFragmentComponent =
         EditorFragmentComponent.createEditorFragmentComponent(uEditor, range.getVcsLine1(), range.getVcsLine2(), false, false);
@@ -284,6 +327,9 @@ public class LineStatusTrackerDrawing {
         actionList.remove(copyRange);
         actionList.remove(localShowPrevAction);
         actionList.remove(localShowNextAction);
+        for (RangeHighlighter highlighter : highlighters) {
+          highlighter.dispose();
+        }
       }
     };
     hint.addHintListener(closeListener);

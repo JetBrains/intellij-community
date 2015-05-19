@@ -82,10 +82,11 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     mySyncScrollable2 = new MySyncScrollable(Side.RIGHT);
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
     myStatusPanel = new MyStatusPanel();
-    myFoldingModel = new MyFoldingModel(myEditors.toArray(new EditorEx[3]), this);
+    myFoldingModel = new MyFoldingModel(getEditors().toArray(new EditorEx[3]), this);
   }
 
   @Override
+  @CalledInAwt
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter(Side.LEFT), Side.LEFT);
@@ -94,9 +95,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
-  protected void onDisposeAwt() {
+  @CalledInAwt
+  protected void onDispose() {
     destroyChangedBlocks();
-    super.onDisposeAwt();
+    super.onDispose();
   }
 
   @NotNull
@@ -136,12 +138,14 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   }
 
   @Override
+  @CalledInAwt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
   }
 
   @Override
+  @CalledInAwt
   protected void updateContextHints() {
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
@@ -229,7 +233,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         clearDiffPresentation();
 
         for (MergeLineFragment fragment : fragments) {
-          myDiffChanges.add(new SimpleThreesideDiffChange(fragment, myEditors, comparisonPolicy));
+          myDiffChanges.add(new SimpleThreesideDiffChange(fragment, getEditors(), comparisonPolicy));
         }
 
         myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
@@ -259,6 +263,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     }
     myInvalidDiffChanges.clear();
 
+    myFoldingModel.destroy();
+
     myContentPanel.repaintDividers();
     myStatusPanel.update();
   }
@@ -274,13 +280,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
     if (myDiffChanges.isEmpty()) return;
 
     ThreeSide side;
-    if (e.getDocument() == myEditors.get(0).getDocument()) {
+    if (e.getDocument() == getEditor(0).getDocument()) {
       side = ThreeSide.LEFT;
     }
-    else if (e.getDocument() == myEditors.get(1).getDocument()) {
+    else if (e.getDocument() == getEditor(1).getDocument()) {
       side = ThreeSide.BASE;
     }
-    else if (e.getDocument() == myEditors.get(2).getDocument()) {
+    else if (e.getDocument() == getEditor(2).getDocument()) {
       side = ThreeSide.RIGHT;
     }
     else {
@@ -390,7 +396,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   @Nullable
   @CalledInAwt
   private SimpleThreesideDiffChange getSelectedChange(@NotNull ThreeSide side) {
-    EditorEx editor = side.select(myEditors);
+    EditorEx editor = side.select(getEditors());
 
     int caretLine = editor.getCaretModel().getLogicalPosition().line;
 
@@ -548,7 +554,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         if (!helper.process(diffChange.getStartLine(left), diffChange.getStartLine(right))) return;
         if (!helper.process(diffChange.getEndLine(left), diffChange.getEndLine(right))) return;
       }
-      helper.process(left.select(myEditors).getDocument().getLineCount(), right.select(myEditors).getDocument().getLineCount());
+      helper.process(left.select(getEditors()).getDocument().getLineCount(), right.select(getEditors()).getDocument().getLineCount());
     }
   }
 
@@ -568,7 +574,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
         if (!diffChange.getType().isChange(mySide)) continue;
         if (!handler.process(diffChange.getStartLine(left), diffChange.getEndLine(left),
                              diffChange.getStartLine(right), diffChange.getEndLine(right),
-                             diffChange.getDiffType().getColor(myEditors.get(0)))) {
+                             diffChange.getDiffType().getColor(getEditor(0)))) {
           return;
         }
       }
@@ -586,13 +592,13 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     @Override
     public void paint(@NotNull Graphics g, @NotNull JComponent divider) {
-      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, myEditors.get(0).getComponent());
+      Graphics2D gg = DiffDividerDrawUtil.getDividerGraphics(g, divider, getEditor(0).getComponent());
 
-      gg.setColor(DiffDrawUtil.getDividerColor(myEditors.get(0)));
+      gg.setColor(DiffDrawUtil.getDividerColor(getEditor(0)));
       gg.fill(gg.getClipBounds());
 
-      Editor editor1 = mySide.select(myEditors.get(0), myEditors.get(1));
-      Editor editor2 = mySide.select(myEditors.get(1), myEditors.get(2));
+      Editor editor1 = mySide.select(getEditor(0), getEditor(1));
+      Editor editor2 = mySide.select(getEditor(1), getEditor(2));
 
       //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
       DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
@@ -608,8 +614,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
     @Override
     public void call(Graphics g) {
-      EditorEx editor1 = myEditors.get(1);
-      EditorEx editor2 = myEditors.get(2);
+      EditorEx editor1 = getEditor(1);
+      EditorEx editor2 = getEditor(2);
 
       int width = editor1.getScrollPane().getVerticalScrollBar().getWidth();
       DiffDividerDrawUtil.paintPolygonsOnScrollbar((Graphics2D)g, width, editor1, editor2, myPaintable);

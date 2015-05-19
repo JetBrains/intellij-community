@@ -708,7 +708,7 @@ public class UIUtil {
 
   private static final Map<Class, Ref<Method>> ourDefaultIconMethodsCache = new ConcurrentHashMap<Class, Ref<Method>>();
   public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
-    // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint 
+    // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint
     ButtonUI ui = cb.getUI();
     String text = cb.getText();
 

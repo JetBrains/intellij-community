@@ -656,6 +656,12 @@ public class DiffUtil {
     return document.getImmutableCharSequence().subSequence(otherRange.getStartOffset(), otherRange.getEndOffset());
   }
 
+  /**
+   * Return affected range, without non-internal newlines
+   * <p/>
+   * we consider '\n' not as a part of line, but a separator between lines
+   * ex: if last line is not empty, the last symbol will not be '\n'
+   */
   @NotNull
   public static TextRange getLinesRange(@NotNull Document document, int line1, int line2) {
     if (line1 == line2) {

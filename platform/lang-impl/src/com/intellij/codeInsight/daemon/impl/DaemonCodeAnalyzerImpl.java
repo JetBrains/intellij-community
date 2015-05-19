@@ -248,7 +248,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
       Collections.sort(passes, new Comparator<TextEditorHighlightingPass>() {
         @Override
-        public int compare(TextEditorHighlightingPass o1, TextEditorHighlightingPass o2) {
+        public int compare(@NotNull TextEditorHighlightingPass o1, @NotNull TextEditorHighlightingPass o2) {
           if (o1 instanceof GeneralHighlightingPass) return -1;
           if (o2 instanceof GeneralHighlightingPass) return 1;
           return 0;
@@ -371,9 +371,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @TestOnly
   public void cleanupAfterTest() {
-    if (!myProject.isOpen()) return;
-    setUpdateByTimerEnabled(false);
-    waitForTermination();
+    if (myProject.isOpen()) {
+      prepareForTest();
+    }
   }
 
   void waitForTermination() {

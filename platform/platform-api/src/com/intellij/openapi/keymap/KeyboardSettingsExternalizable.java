@@ -35,7 +35,7 @@ import java.util.Locale;
 )
 public class KeyboardSettingsExternalizable implements PersistentStateComponent<KeyboardSettingsExternalizable.OptionSet> {
 
-  private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it"};
+  private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it", "uk"};
 
   public static boolean isSupportedKeyboardLayout(@NotNull Component component) {
     if (SystemInfo.isMac) return false;
@@ -90,6 +90,10 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
   @Override
   public void loadState(OptionSet state) {
     myOptions = state;
+  }
+
+  public boolean isUkrainianKeyboard (Component c) {
+    return c!=null && "uk".equals(c.getInputContext().getLocale().getLanguage());
   }
 
   public boolean isNonEnglishKeyboardSupportEnabled () {
