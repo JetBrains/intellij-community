@@ -2,7 +2,7 @@ package com.siyeh.igtest.abstraction.instanceof_chain;
 
 public class InstanceofChain {
     void arg(Object o) {
-        if (o instanceof String || o instanceof String || o instanceof String) {
+        <warning descr="Chain of 'instanceof' checks indicates abstraction failure">if</warning> (o instanceof String || o instanceof String || o instanceof String) {
 
         } else if (o  instanceof  Integer) {
 
@@ -12,7 +12,7 @@ public class InstanceofChain {
     }
 
     void m(boolean b, Object o) {
-        if (o instanceof String) {
+        <warning descr="Chain of 'instanceof' checks indicates abstraction failure">if</warning> (o instanceof String) {
 
         } else if (o instanceof Boolean) {
 
@@ -20,7 +20,7 @@ public class InstanceofChain {
     }
 
     void n(Object o) {
-        if (o instanceof Integer) {}
+        <warning descr="Chain of 'instanceof' checks indicates abstraction failure">if</warning> (o instanceof Integer) {}
         if (o instanceof Byte) {}
         if (o instanceof Long) {}
     }
