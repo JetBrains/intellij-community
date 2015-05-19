@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.InferredAnnotationsManager;
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
@@ -60,6 +61,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JavaDocInfoGenerator {
@@ -67,6 +69,8 @@ public class JavaDocInfoGenerator {
 
   @NonNls private static final Pattern ourNotDot      = Pattern.compile("[^.]");
   @NonNls private static final Pattern ourWhitespaces = Pattern.compile("[ \\n\\r\\t]+");
+  @NonNls private static final Pattern ourRelativeHtmlLinks = Pattern.compile("<A.*?HREF=\"([^\":]*)\"",
+                                                                              Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   @NonNls private static final String THROWS_KEYWORD = "throws";
   @NonNls private static final String BR_TAG         = "<br>";
@@ -211,11 +215,14 @@ public class JavaDocInfoGenerator {
   }
 
   @Nullable
-  private static String fixupDoc(@NotNull final StringBuilder buffer) {
+  private String fixupDoc(@NotNull final StringBuilder buffer) {
     String text = buffer.toString();
     if (text.isEmpty()) {
       return null;
     }
+    
+    text = convertHtmlLinks(text);
+    
     if (LOG.isDebugEnabled()) {
       LOG.debug("Generated JavaDoc:");
       LOG.debug(text);
@@ -225,6 +232,63 @@ public class JavaDocInfoGenerator {
     return StringUtil.replace(text, "/>", ">");
   }
 
+  private String convertHtmlLinks(String text) {
+    if (myElement == null) return text; // we are resolving links in a context, without context, don't change links
+    StringBuilder result = new StringBuilder();
+    int prev = 0;
+    Matcher matcher = ourRelativeHtmlLinks.matcher(text);
+    while (matcher.find()) {
+      int groupStart = matcher.start(1);
+      int groupEnd = matcher.end(1);
+      result.append(text, prev, groupStart);
+      result.append(convertReference(text.substring(groupStart, groupEnd)));
+      prev = groupEnd;
+    }
+    if (result.length() == 0) return text; // don't copy text over, if there are no matches
+    result.append(text, prev, text.length());
+    return result.toString();
+  }
+
+  protected String convertReference(@NonNls String href) {
+    final String originalReference = href;
+    
+    int hashPosition = href.indexOf('#');
+    if (hashPosition >= 0) {
+      href = href.substring(0, hashPosition);
+    }
+    if (!href.toLowerCase().endsWith(".htm") && !href.toLowerCase().endsWith(".html")) {
+      return originalReference;
+    }
+    href = href.substring(0, href.lastIndexOf('.'));
+
+    String packageName = null;
+    if (myElement instanceof PsiPackage) {
+      packageName = ((PsiPackage)myElement).getQualifiedName();
+    }
+    else {
+      PsiFile file = myElement.getContainingFile();
+      if (file instanceof PsiClassOwner) {
+        packageName = ((PsiClassOwner)file).getPackageName();
+      }
+    }
+    if (packageName == null) return originalReference;
+    
+    while (href.startsWith("../")) {
+      if (packageName.isEmpty()) return originalReference;
+      int dotPos = packageName.lastIndexOf('.');
+      packageName = dotPos < 0 ? "" : packageName.substring(0, dotPos);
+      href = href.substring(3);
+    }
+    
+    href = href.replace('/', '.');
+    
+    String qualifiedName = packageName.isEmpty() ? href : packageName + "." + href;
+    PsiClass target = JavaPsiFacade.getInstance(myProject).findClass(qualifiedName, myElement.getResolveScope());
+    if (target == null) return originalReference;
+    
+    return DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + JavaDocUtil.getReferenceText(myProject, target);
+  }
+  
   public boolean generateDocInfoCore (final StringBuilder buffer, final boolean generatePrologueAndEpilogue) {
     if (myElement instanceof PsiClass) {
       generateClassJavaDoc(buffer, (PsiClass)myElement, generatePrologueAndEpilogue);

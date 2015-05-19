@@ -21,6 +21,7 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -233,6 +234,25 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertNotNull(innerClass);
     PsiParameter parameter = innerClass.getMethods()[0].getParameterList().getParameters()[0];
     verifyJavaDoc(parameter);
+  }
+  
+  public void testHtmlLink() throws Exception {
+    PsiTestUtil.createTestProjectStructure(myProject, myModule, 
+                                           getTestDataPath() + "/codeInsight/javadocIG/htmlLinkProject", myFilesToDelete);
+    verifyJavadocFor("htmlLink");
+    verifyJavadocFor("pack.htmlLinkDeep");
+  }
+
+  private void verifyJavadocFor(String className) throws IOException {
+    PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
+    assertNotNull(psiClass);
+    String doc = new JavaDocInfoGenerator(myProject, psiClass).generateDocInfo(null);
+    assertNotNull(doc);
+    PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
+    PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");
+    assertNotNull(htmlFile);
+    assertEquals(StringUtil.convertLineSeparators(new String(htmlFile.getVirtualFile().contentsToByteArray()).trim()), 
+                 replaceEnvironmentDependentContent(doc));
   }
 
   @Override
