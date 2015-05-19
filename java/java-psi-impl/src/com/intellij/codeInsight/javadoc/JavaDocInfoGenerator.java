@@ -252,9 +252,16 @@ public class JavaDocInfoGenerator {
   protected String convertReference(@NonNls String href) {
     final String originalReference = href;
     
+    String fragment = null;
     int hashPosition = href.indexOf('#');
     if (hashPosition >= 0) {
+      fragment = href.substring(hashPosition + 1);
       href = href.substring(0, hashPosition);
+    }
+    if (href.isEmpty()) {
+      PsiElement containingClass = myElement instanceof PsiMember ? ((PsiMember)myElement).getContainingClass() : null;
+      PsiElement rootElement = containingClass == null ? myElement : containingClass;
+      return createLinkWithRef(rootElement, fragment);
     }
     if (!href.toLowerCase().endsWith(".htm") && !href.toLowerCase().endsWith(".html")) {
       return originalReference;
@@ -286,7 +293,12 @@ public class JavaDocInfoGenerator {
     PsiClass target = JavaPsiFacade.getInstance(myProject).findClass(qualifiedName, myElement.getResolveScope());
     if (target == null) return originalReference;
     
-    return DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + JavaDocUtil.getReferenceText(myProject, target);
+    return createLinkWithRef(target, fragment);
+  }
+
+  private String createLinkWithRef(PsiElement psiElement, String ref) {
+    return DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + JavaDocUtil.getReferenceText(myProject, psiElement) +
+           (ref == null ? "" : DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR + ref);
   }
   
   public boolean generateDocInfoCore (final StringBuilder buffer, final boolean generatePrologueAndEpilogue) {

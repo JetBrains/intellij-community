@@ -254,6 +254,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     assertEquals(StringUtil.convertLineSeparators(new String(htmlFile.getVirtualFile().contentsToByteArray()).trim()), 
                  replaceEnvironmentDependentContent(doc));
   }
+  
+  public void testHtmlLinkWithRef() throws Exception {
+    verifyJavaDoc(getTestClass());
+  }
 
   @Override
   protected String getTestDataPath() {

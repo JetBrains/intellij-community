@@ -641,6 +641,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return new DefaultDocumentationCollector(element, originalElement);
   }
 
+  private DocumentationCollector getDefaultCollector(@NotNull final PsiElement element, @Nullable final PsiElement originalElement, String ref) {
+    return new DefaultDocumentationCollector(element, originalElement, ref);
+  }
+
   @Nullable
   public JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
@@ -748,7 +752,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               component.setText(component.getText(), element, true, clearHistory);
             }
             else {
-              component.setData(element, documentationText, clearHistory, provider.getEffectiveExternalUrl());
+              component.setData(element, documentationText, clearHistory, provider.getEffectiveExternalUrl(), provider.getRef());
             }
 
             final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
@@ -854,7 +858,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
     else if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
-      final String refText = url.substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length());
+      String refText = url.substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length());
+      int separatorPos = refText.lastIndexOf(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR);
+      String ref = null;
+      if (separatorPos >= 0) {
+        ref = refText.substring(separatorPos + DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR.length());
+        refText = refText.substring(0, separatorPos);
+      }
       DocumentationProvider provider = getProviderFromElement(psiElement);
       PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
       if (targetElement == null) {
@@ -877,7 +887,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
       if (targetElement != null) {
-        fetchDocInfo(getDefaultCollector(targetElement, null), component);
+        fetchDocInfo(getDefaultCollector(targetElement, null, ref), component);
       }
     }
     else {
@@ -904,6 +914,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               @Override
               public String getEffectiveExternalUrl() {
                 return url;
+              }
+
+              @Nullable
+              @Override
+              public String getRef() {
+                return null;
               }
             }, component);
             processed = true;
@@ -957,6 +973,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
             @Override
             public String getEffectiveExternalUrl() {
               return url;
+            }
+
+            @Nullable
+            @Override
+            public String getRef() {
+              return null;
             }
           }, component);
       }
@@ -1049,18 +1071,26 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     PsiElement getElement();
     @Nullable
     String getEffectiveExternalUrl();
+    @Nullable
+    String getRef();
   }
 
   private class DefaultDocumentationCollector implements DocumentationCollector {
 
     private final PsiElement myElement;
     private final PsiElement myOriginalElement;
+    private final String myRef;
 
     private String myEffectiveUrl;
 
     private DefaultDocumentationCollector(PsiElement element, PsiElement originalElement) {
+      this(element, originalElement, null);
+    }
+
+    private DefaultDocumentationCollector(PsiElement element, PsiElement originalElement, String ref) {
       myElement = element;
       myOriginalElement = originalElement;
+      myRef = ref;
     }
 
     @Override
@@ -1121,6 +1151,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @Override
     public String getEffectiveExternalUrl() {
       return myEffectiveUrl;
+    }
+
+    @Nullable
+    @Override
+    public String getRef() {
+      return myRef;
     }
   }
 }
