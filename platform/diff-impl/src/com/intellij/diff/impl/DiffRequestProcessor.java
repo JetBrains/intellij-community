@@ -24,8 +24,8 @@ import com.intellij.diff.actions.impl.*;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
+import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
-import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.util.DiffDataKeys;
@@ -107,7 +107,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myProject = project;
 
     myContext = new MyDiffContext(context);
-    myActiveRequest = NoDiffRequest.INSTANCE;
+    myActiveRequest = new LoadingDiffRequest();
 
     mySettings = DiffSettingsHolder.getInstance().getSettings(myContext.getUserData(DiffUserDataKeysEx.PLACE));
 
@@ -140,7 +140,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     if (bottomPanel instanceof Disposable) Disposer.register(this, (Disposable)bottomPanel);
 
     myState = new EmptyState();
-    myContentPanel.setContent(DiffUtil.createMessagePanel(NoDiffRequest.INSTANCE.getMessage()));
+    myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
 
     myOpenInEditorAction = new OpenInEditorAction(new Runnable() {
       @Override
