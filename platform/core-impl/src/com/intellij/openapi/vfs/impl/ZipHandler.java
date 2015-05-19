@@ -24,6 +24,7 @@ import com.intellij.util.io.FileAccessorCache;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,13 +63,16 @@ public class ZipHandler extends ArchiveHandler {
     }
 
     @Override
-    protected void disposeAccessor(ZipFile fileAccessor) {
+    protected void disposeAccessor(final ZipFile fileAccessor) {
       // todo: ZipFile isn't disposable for Java6, replace the code below with 'disposeCloseable(fileAccessor);'
       long started = System.nanoTime();
       try {
-        fileAccessor.close();
-      } catch (IOException ex) {
-        throw new RuntimeException(ex);
+        disposeCloseable(new Closeable() {
+          @Override
+          public void close() throws IOException {
+            fileAccessor.close();
+          }
+        });
       } finally {
         myCloseTime.addAndGet(System.nanoTime() - started);
       }
@@ -115,7 +119,7 @@ public class ZipHandler extends ArchiveHandler {
     return getFile();
   }
 
-  public void dispose() { // todo it would be nice t dispose ZipHandler's
+  public void dispose() { // todo it would be nice to dispose ZipHandler
     ourZipFileFileAccessorCache.remove(this);
   }
 
