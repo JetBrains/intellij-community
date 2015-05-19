@@ -16,10 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.editor.VisualPosition;
 
 /**
  * @author Dennis.Ushakov
