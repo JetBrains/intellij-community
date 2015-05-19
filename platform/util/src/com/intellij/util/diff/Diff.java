@@ -90,6 +90,7 @@ public class Diff {
         patienceIntLCS.failOnSmallSizeReduction();
         patienceIntLCS.execute();
         changes = patienceIntLCS.getChanges();
+        LOG.info("Successful fallback to patience diff");
       }
     }
 
