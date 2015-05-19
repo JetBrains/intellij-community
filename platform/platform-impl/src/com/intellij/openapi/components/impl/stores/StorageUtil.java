@@ -158,6 +158,7 @@ public class StorageUtil {
                               @NotNull final VirtualFile file,
                               @NotNull final BufferExposingByteArrayOutputStream content,
                               @Nullable final LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+    LOG.debug("Save " + file.getPresentableUrl());
     AccessToken token = WriteAction.start();
     try {
       OutputStream out = file.getOutputStream(requestor);
