@@ -524,6 +524,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public void setData(PsiElement _element, String text, final boolean clearHistory, String effectiveExternalUrl) {
+    setData(_element, text, clearHistory, effectiveExternalUrl, null);
+  }
+  
+  public void setData(PsiElement _element, String text, final boolean clearHistory, String effectiveExternalUrl, String ref) {
     myEffectiveExternalUrl = effectiveExternalUrl;
     if (myElement != null) {
       myBackStack.push(saveContext());
@@ -540,16 +544,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myIsEmpty = false;
     updateControlState();
-    setDataInternal(element, text, new Rectangle(0, 0));
+    setDataInternal(element, text, new Rectangle(0, 0), ref);
 
     if (clearHistory) clearHistory();
   }
 
-  private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect) {
-    setDataInternal(element, text, viewRect, false);
+  private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, String ref) {
+    setDataInternal(element, text, viewRect, ref, false);
   }
 
-  private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, boolean skip) {
+  private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, final String ref, boolean skip) {
     setElement(element);
 
     myEditorPane.setText(text);
@@ -568,7 +572,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        myEditorPane.scrollRectToVisible(viewRect);
+        myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
+        if (ref != null) {
+          myEditorPane.scrollToReference(ref);
+        }
       }
     });
   }
@@ -618,7 +625,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void restoreContext(Context context) {
-    setDataInternal(context.element, context.text, context.viewRect);
+    setDataInternal(context.element, context.text, context.viewRect, null);
     if (myNavigateCallback != null) {
       final PsiElement element = context.element.getElement();
       if (element != null) {

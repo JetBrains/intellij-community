@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,13 +31,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -49,14 +48,23 @@ public class LibraryScopeCache {
   }
 
   private final Project myProject;
-  private final ConcurrentMap<List<Module>, GlobalSearchScope> myLibraryScopes =
-    ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Module[], GlobalSearchScope> myLibraryScopes = ContainerUtil.newConcurrentMap(
+    new TObjectHashingStrategy<Module[]>() {
+      @Override
+      public int computeHashCode(Module[] object) {
+        return Arrays.hashCode(object);
+      }
+
+      @Override
+      public boolean equals(Module[] o1, Module[] o2) {
+        return Arrays.equals(o1, o2);
+      }
+    });
   private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = ContainerUtil.newConcurrentMap();
-  private final Map<List<OrderEntry>, GlobalSearchScope>
-    myLibraryResolveScopeCache = new ConcurrentFactoryMap<List<OrderEntry>, GlobalSearchScope>() {
+  private final Map<List<OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache = new ConcurrentFactoryMap<List<OrderEntry>, GlobalSearchScope>() {
     @Nullable
     @Override
-    protected GlobalSearchScope create(List<OrderEntry> key) {
+    protected GlobalSearchScope create(@NotNull List<OrderEntry> key) {
       return calcLibraryScope(key);
     }
   };
@@ -72,19 +80,29 @@ public class LibraryScopeCache {
     myLibraryResolveScopeCache.clear();
   }
 
+  @NotNull
   public GlobalSearchScope getLibrariesOnlyScope() {
     return getScopeForLibraryUsedIn(Collections.<Module>emptyList());
   }
 
-  public GlobalSearchScope getScopeForLibraryUsedIn(List<Module> modulesLibraryIsUsedIn) {
-    GlobalSearchScope scope = myLibraryScopes.get(modulesLibraryIsUsedIn);
+  @NotNull
+  public GlobalSearchScope getScopeForLibraryUsedIn(@NotNull List<Module> modulesLibraryIsUsedIn) {
+    Set<Module> set = new THashSet<Module>(modulesLibraryIsUsedIn);
+    Module[] uniques = set.toArray(new Module[set.size()]);
+    Arrays.sort(uniques, new Comparator<Module>() {
+      @Override
+      public int compare(Module o1, Module o2) {
+        return o1.getName().compareTo(o2.getName());
+      }
+    });
+    GlobalSearchScope scope = myLibraryScopes.get(uniques);
     if (scope != null) {
       return scope;
     }
-    GlobalSearchScope newScope = modulesLibraryIsUsedIn.isEmpty()
+    GlobalSearchScope newScope = uniques.length == 0
                                  ? new LibrariesOnlyScope(GlobalSearchScope.allScope(myProject))
                                  : new LibraryRuntimeClasspathScope(myProject, modulesLibraryIsUsedIn);
-    return ConcurrencyUtil.cacheOrGet(myLibraryScopes, modulesLibraryIsUsedIn, newScope);
+    return ConcurrencyUtil.cacheOrGet(myLibraryScopes, uniques, newScope);
   }
 
   /**
@@ -92,11 +110,13 @@ public class LibraryScopeCache {
    * @param orderEntries the order entries that reference a particular SDK/library
    * @return a cached resolve scope
    */
-  public GlobalSearchScope getLibraryScope(List<OrderEntry> orderEntries) {
+  @NotNull
+  public GlobalSearchScope getLibraryScope(@NotNull List<OrderEntry> orderEntries) {
     return myLibraryResolveScopeCache.get(orderEntries);
   }
 
-  private GlobalSearchScope calcLibraryScope(List<OrderEntry> orderEntries) {
+  @NotNull
+  private GlobalSearchScope calcLibraryScope(@NotNull List<OrderEntry> orderEntries) {
     List<Module> modulesLibraryUsedIn = new ArrayList<Module>();
 
     LibraryOrderEntry lib = null;
@@ -134,7 +154,8 @@ public class LibraryScopeCache {
   }
 
 
-  public GlobalSearchScope getScopeForSdk(final JdkOrderEntry jdkOrderEntry) {
+  @NotNull
+  public GlobalSearchScope getScopeForSdk(@NotNull JdkOrderEntry jdkOrderEntry) {
     final String jdkName = jdkOrderEntry.getJdkName();
     if (jdkName == null) return GlobalSearchScope.allScope(myProject);
     GlobalSearchScope scope = mySdkScopes.get(jdkName);
@@ -157,23 +178,27 @@ public class LibraryScopeCache {
   private static class LibrariesOnlyScope extends GlobalSearchScope {
     private final GlobalSearchScope myOriginal;
 
-    private LibrariesOnlyScope(final GlobalSearchScope original) {
+    private LibrariesOnlyScope(@NotNull GlobalSearchScope original) {
       super(original.getProject());
       myOriginal = original;
     }
 
+    @Override
     public boolean contains(@NotNull VirtualFile file) {
       return myOriginal.contains(file);
     }
 
+    @Override
     public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
       return myOriginal.compare(file1, file2);
     }
 
+    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
 
+    @Override
     public boolean isSearchInLibraries() {
       return true;
     }

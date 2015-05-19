@@ -77,7 +77,6 @@ import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.geb.*;
 import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
 import org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor;
-import org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -238,7 +237,6 @@ public class GroovyCoreEnvironment {
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME,
                                                         ImplicitUsageProvider.class);
-      appEnvironment.addExtension(ImplicitUsageProvider.EP_NAME, new GppImplicitUsageProvider());
       appEnvironment.addExtension(ImplicitUsageProvider.EP_NAME, new GrImplicitUsageProvider());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), FileTypeRegistry.FileTypeDetector.EP_NAME,

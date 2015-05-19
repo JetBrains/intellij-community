@@ -797,11 +797,11 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
 
   @NotNull
   public IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    if (firingBeforeRemove) {
-      throw new IncorrectOperationException("Must not add rangemarker from within beforeRemoved listener");
-    }
     try {
       l.writeLock().lock();
+      if (firingBeforeRemove) {
+        throw new IncorrectOperationException("Must not add rangemarker from within beforeRemoved listener");
+      }
       checkMax(true);
       processReferenceQueue();
       modCount++;
@@ -1335,6 +1335,8 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
   }
 
   private boolean firingBeforeRemove; // accessed under l.writeLock() only
+
+  // must be called under l.writeLock()
   void beforeRemove(@NotNull T markerEx, @NonNls @NotNull Object reason) {
     if (firingBeforeRemove) {
       throw new IllegalStateException();

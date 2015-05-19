@@ -38,5 +38,6 @@
     <orderEntry type="module" module-name="groovy-psi" exported="" />
     <orderEntry type="module" module-name="external-system-api" />
     <orderEntry type="module" module-name="RegExpSupport" />
+    <orderEntry type="module" module-name="external-system-impl" scope="TEST" />
   </component>
 </module>

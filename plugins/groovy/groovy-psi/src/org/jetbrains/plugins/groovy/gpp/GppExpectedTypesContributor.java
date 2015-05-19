@@ -56,13 +56,6 @@ public class GppExpectedTypesContributor extends GroovyExpectedTypesContributor 
         return addExpectedConstructorParameters(list, list.getInitializers(), expression);
       }
     }
-    if (parent instanceof GrNamedArgument) {
-      final PsiElement map = parent.getParent();
-      if (map instanceof GrListOrMap && "super".equals(((GrNamedArgument)parent).getLabelName())) {
-        //todo expected property types
-        return addExpectedConstructorParameters((GrListOrMap)map, new GrExpression[]{expression}, expression);
-      }
-    }
     return Collections.emptyList();
   }
 
