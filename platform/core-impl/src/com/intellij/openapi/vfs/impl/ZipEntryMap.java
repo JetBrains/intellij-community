@@ -27,10 +27,9 @@ import java.util.*;
 /**
  * Map of relativePath => ArchiveHandler.EntryInfo optimised for memory:
  * - it does not store keys (may be recovered from the ArchiveHandler.EntryInfo)
+ * - does not support removal
  */
 class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
-  private static final ArchiveHandler.EntryInfo REMOVED = new ArchiveHandler.EntryInfo(null, "", false, 0, 0);
-
   private ArchiveHandler.EntryInfo[] entries;
   private int size;
 
@@ -64,7 +63,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
 
   @Override
   public ArchiveHandler.EntryInfo put(String relativePath, ArchiveHandler.EntryInfo value) {
-    if (size >= 0.8 * entries.length) {
+    if (size >= 0.65 * entries.length) {
       rehash();
     }
 
@@ -84,7 +83,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     int i = index;
     while (true) {
       entry = entries[i];
-      if (entry == null || entry == REMOVED || isTheOne(entry, relativePath)) {
+      if (entry == null || isTheOne(entry, relativePath)) {
         entries[i] = value;
         break;
       }
@@ -92,14 +91,14 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
         i = 0;
       }
     }
-    return entry == REMOVED ? null : entry;
+    return entry;
   }
 
-  private static boolean isTheOne(@NotNull ArchiveHandler.EntryInfo entry, @NotNull String relativePath) {
+  private static boolean isTheOne(@NotNull ArchiveHandler.EntryInfo entry, @NotNull CharSequence relativePath) {
     int endIndex = relativePath.length();
     for (ArchiveHandler.EntryInfo e = entry; e != null; e = e.parent) {
       CharSequence shortName = e.shortName;
-      if (!CharArrayUtil.regionMatches(relativePath,endIndex-shortName.length(), relativePath.length(), shortName)) {
+      if (!CharArrayUtil.regionMatches(relativePath, endIndex - shortName.length(), relativePath.length(), shortName)) {
         return false;
       }
 
@@ -132,20 +131,25 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
 
   @NotNull
   private static String getRelativePath(@NotNull ArchiveHandler.EntryInfo entry) {
-    if (entry.parent == null) {
-      return entry.shortName.toString();
+    StringBuilder result = new StringBuilder(entry.shortName.length() + 10);
+    for (ArchiveHandler.EntryInfo e = entry; e != null; e = e.parent) {
+      if (result.length() != 0 && e.shortName.length() != 0) {
+        result.append('/');
+      }
+      appendReversed(result, e.shortName);
     }
-    String parentPath = getRelativePath(entry.parent);
-    return (parentPath.isEmpty() ? "" : parentPath + "/") + entry.shortName;
+    return result.reverse().toString();
+  }
+
+  private static void appendReversed(@NotNull StringBuilder builder, @NotNull CharSequence sequence) {
+    for (int i=sequence.length()-1; i>=0 ;i--) {
+      builder.append(sequence.charAt(i));
+    }
   }
 
   @Override
   public ArchiveHandler.EntryInfo remove(@NotNull Object key) {
-    ArchiveHandler.EntryInfo old = put((String)key, REMOVED);
-    if (old != null) {
-      size--;
-    }
-    return old;
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -202,18 +206,13 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
 
     @Override
     public final boolean remove(Object o) {
-      if (o instanceof Map.Entry) {
-        Map.Entry<?, ?> e = (Map.Entry<?, ?>)o;
-        Object key = e.getKey();
-        return contains(o) && ZipEntryMap.this.remove(key) != null;
-      }
-      return false;
+      throw new UnsupportedOperationException();
     }
   }
 
   @NotNull
   @Override
   public Collection<ArchiveHandler.EntryInfo> values() {
-    return ContainerUtil.mapNotNull(entries, Function.ID);
+    return ContainerUtil.filter(Condition.NOT_NULL, entries);
   }
 }
