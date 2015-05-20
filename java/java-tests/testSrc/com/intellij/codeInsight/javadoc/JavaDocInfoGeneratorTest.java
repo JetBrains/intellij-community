@@ -258,6 +258,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testHtmlLinkWithRef() throws Exception {
     verifyJavaDoc(getTestClass());
   }
+  
+  public void testMultipleSpacesInLiteral() throws Exception {
+    verifyJavaDoc(getTestClass());
+  }
 
   @Override
   protected String getTestDataPath() {
