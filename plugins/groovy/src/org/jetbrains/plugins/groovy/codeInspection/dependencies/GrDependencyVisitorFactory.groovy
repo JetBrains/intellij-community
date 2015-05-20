@@ -21,6 +21,8 @@ import com.intellij.packageDependencies.DependencyVisitorFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiReference
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
@@ -30,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
 
+@CompileStatic
 class GrDependencyVisitorFactory extends DependencyVisitorFactory {
   @NotNull
   @Override
@@ -46,6 +49,7 @@ class GrDependencyVisitorFactory extends DependencyVisitorFactory {
     }
   }
 
+  @CompileStatic
   private static class MyVisitor extends GroovyRecursiveElementVisitor {
     private final DependenciesBuilder.DependencyProcessor myProcessor
     private final DependencyVisitorFactory.VisitorOptions myOptions
@@ -61,10 +65,10 @@ class GrDependencyVisitorFactory extends DependencyVisitorFactory {
 
       super.visitElement(element)
 
-      element.references.each {
-        PsiElement resolved = it.resolve();
+      element.references.each { PsiReference ref ->
+        PsiElement resolved = ref.resolve();
         if (resolved != null) {
-          myProcessor.process(it.element, resolved);
+          myProcessor.process(ref.element, resolved);
         }
       }
     }
