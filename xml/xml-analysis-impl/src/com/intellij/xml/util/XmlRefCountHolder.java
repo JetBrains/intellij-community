@@ -160,7 +160,7 @@ public class XmlRefCountHolder {
     return myUsedNamespaces.contains(ns);
   }
 
-  private static class IdGatheringRecursiveVisitor extends XmlRecursiveElementVisitor {
+  private static class IdGatheringRecursiveVisitor extends XmlRecursiveElementWalkingVisitor {
     private final XmlRefCountHolder myHolder;
 
     private IdGatheringRecursiveVisitor(@NotNull XmlRefCountHolder holder) {
