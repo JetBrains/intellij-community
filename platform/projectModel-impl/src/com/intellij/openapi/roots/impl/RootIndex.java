@@ -54,13 +54,8 @@ public class RootIndex {
   };
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
 
-  private final MultiMap<String, VirtualFile> myPackagePrefixRoots = new MultiMap<String, VirtualFile>() {
-    @NotNull
-    @Override
-    protected Collection<VirtualFile> createCollection() {
-      return ContainerUtil.newLinkedHashSet();
-    }
-  };
+  private final MultiMap<String, VirtualFile> myRootsByPackagePrefix = MultiMap.create();
+  private final Map<VirtualFile, String> myPackagePrefixByRoot = ContainerUtil.newHashMap();
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
@@ -90,7 +85,8 @@ public class RootIndex {
                                          ? calcDirectoryInfo(root, hierarchy, info)
                                          : new Pair<DirectoryInfo, String>(NonProjectDirectoryInfo.IGNORED, null);
       cacheInfos(root, root, pair.first);
-      myPackagePrefixRoots.putValue(pair.second, root);
+      myRootsByPackagePrefix.putValue(pair.second, root);
+      myPackagePrefixByRoot.put(root, pair.second);
     }
   }
 
@@ -247,7 +243,7 @@ public class RootIndex {
 
 
   public void checkConsistency() {
-    for (VirtualFile file : myPackagePrefixRoots.values()) {
+    for (VirtualFile file : myRootsByPackagePrefix.values()) {
       assert file.exists() : file.getPath() + " does not exist";
     }
   }
@@ -344,7 +340,7 @@ public class RootIndex {
         }
       }
 
-      for (VirtualFile file : myPackagePrefixRoots.get(packageName)) {
+      for (VirtualFile file : myRootsByPackagePrefix.get(packageName)) {
         if (file.isDirectory()) {
           result.add(file);
         }
@@ -376,10 +372,8 @@ public class RootIndex {
         return null;
       }
 
-      for (final Map.Entry<String, Collection<VirtualFile>> entry : myPackagePrefixRoots.entrySet()) {
-        if (entry.getValue().contains(dir)) {
-          return entry.getKey();
-        }
+      if (myPackagePrefixByRoot.containsKey(dir)) {
+        return myPackagePrefixByRoot.get(dir);
       }
 
       final VirtualFile parent = dir.getParent();
@@ -392,7 +386,7 @@ public class RootIndex {
   }
 
   @Nullable
-  protected static String getPackageNameForSubdir(String parentPackageName, @NotNull String subdirName) {
+  protected static String getPackageNameForSubdir(@Nullable String parentPackageName, @NotNull String subdirName) {
     if (parentPackageName == null) return null;
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
   }
