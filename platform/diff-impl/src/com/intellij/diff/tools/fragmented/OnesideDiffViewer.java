@@ -715,7 +715,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
 
     // no need to mark myStateIsOutOfDate - it will be made by DocumentListener
     // TODO: we can apply change manually, without marking state out-of-date. But we'll have to schedule rediff anyway.
-    rediff();
+    scheduleRediff();
   }
 
   //

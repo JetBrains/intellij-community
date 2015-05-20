@@ -289,6 +289,9 @@ public class OnesideDiffChange {
                 myViewer.applyChange(OnesideDiffChange.this, sourceSide);
               }
             });
+            // applyChange() will schedule rediff, but we want to try to do it in sync
+            // and we can't do it inside write action
+            myViewer.rediff();
           }
         };
       }
