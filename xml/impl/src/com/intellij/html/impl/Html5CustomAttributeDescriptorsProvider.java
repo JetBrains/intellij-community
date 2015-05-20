@@ -16,15 +16,22 @@
 package com.intellij.html.impl;
 
 import com.intellij.html.index.Html5CustomAttributesIndex;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlAttributeDescriptorsProvider;
 import com.intellij.xml.impl.schema.AnyXmlAttributeDescriptor;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,19 +50,31 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
     for (XmlAttribute attribute : tag.getAttributes()) {
       currentAttrs.add(attribute.getName());
     }
-    final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(tag.getProject());
-    final Collection<String> keys = FileBasedIndex.getInstance().getAllKeys(Html5CustomAttributesIndex.INDEX_ID, tag.getProject());
-    for (String key : keys) {
-      final boolean canProcessKey = !FileBasedIndex.getInstance().processValues(Html5CustomAttributesIndex.INDEX_ID, key,
-                                                                                null, new FileBasedIndex.ValueProcessor<Void>() {
-          @Override
-          public boolean process(VirtualFile file, Void value) {
-            return false;
-          }
-        }, scope);
-      if (!canProcessKey) continue;
+    final Project project = tag.getProject();
+    final Collection<String> keys = CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Collection<String>>() {
+        @Nullable
+        @Override
+        public Result<Collection<String>> compute() {
+          final Collection<String> keys = FileBasedIndex.getInstance().getAllKeys(Html5CustomAttributesIndex.INDEX_ID, project);
+          final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+          return Result.<Collection<String>>create(ContainerUtil.filter(keys, new Condition<String>() {
+            @Override
+            public boolean value(String key) {
+              return !FileBasedIndex.getInstance().processValues(Html5CustomAttributesIndex.INDEX_ID, key,
+                                                                 null, new FileBasedIndex.ValueProcessor<Void>() {
+                  @Override
+                  public boolean process(VirtualFile file, Void value) {
+                    return false;
+                  }
+                }, scope);
+            }
+          }), PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      });
+    if (keys.isEmpty()) return XmlAttributeDescriptor.EMPTY;
 
+    final List<XmlAttributeDescriptor> result = new ArrayList<XmlAttributeDescriptor>();
+    for (String key : keys) {
       boolean add = true;
       for (String attr : currentAttrs) {
         if (attr.startsWith(key)) {
