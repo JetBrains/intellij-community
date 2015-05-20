@@ -227,7 +227,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             LOG.info(e);
           }
         }
-        scheduleIndexRebuild();
+        scheduleIndexRebuild("File type change");
       }
     });
 
@@ -1248,7 +1248,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           try {
             doClearIndex(indexId);
             if (!cleanupOnly) {
-              scheduleIndexRebuild();
+              scheduleIndexRebuild("checkRebuild");
             }
           }
           catch (StorageException e) {
@@ -1286,7 +1286,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private static void scheduleIndexRebuild() {
+  private static void scheduleIndexRebuild(String reason) {
+    LOG.info("scheduleIndexRebuild, reason: " + reason);
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, false));
     }

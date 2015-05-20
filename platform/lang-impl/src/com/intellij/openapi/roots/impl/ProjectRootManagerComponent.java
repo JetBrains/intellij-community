@@ -285,6 +285,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     if (!myStartupActivityPerformed) return;
 
     if (myDoLogCachesUpdate) LOG.info(new Throwable("sync roots"));
+    else LOG.info("project roots have changed");
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
