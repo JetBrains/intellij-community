@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -51,6 +52,11 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    if (!SystemInfo.isMac) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
     e.getPresentation().setText("Switch Boot JDK");
   }
 
