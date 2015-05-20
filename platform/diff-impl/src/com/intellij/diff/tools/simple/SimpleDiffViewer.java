@@ -250,32 +250,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return apply(new CompareData(lineFragments, isEqualContents, data.getStamp1(), data.getStamp2()));
     }
     catch (DiffTooBigException ignore) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.DIFF_TOO_BIG);
-        }
-      };
+      return applyNotification(DiffNotifications.DIFF_TOO_BIG);
     }
     catch (ProcessCanceledException ignore) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
-        }
-      };
+      return applyNotification(DiffNotifications.OPERATION_CANCELED);
     }
     catch (Throwable e) {
       LOG.error(e);
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.ERROR);
-        }
-      };
+      return applyNotification(DiffNotifications.ERROR);
     }
   }
 
@@ -307,6 +289,17 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
         myContentPanel.repaintDivider();
         myStatusPanel.update();
+      }
+    };
+  }
+
+  @NotNull
+  private Runnable applyNotification(@Nullable final JComponent notification) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        clearDiffPresentation();
+        if (notification != null) myPanel.addNotification(notification);
       }
     };
   }

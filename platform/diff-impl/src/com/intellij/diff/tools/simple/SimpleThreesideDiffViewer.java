@@ -194,32 +194,14 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
       return apply(mergeFragments, comparisonPolicy);
     }
     catch (DiffTooBigException ignore) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.DIFF_TOO_BIG);
-        }
-      };
+      return applyNotification(DiffNotifications.DIFF_TOO_BIG);
     }
     catch (ProcessCanceledException ignore) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
-        }
-      };
+      return applyNotification(DiffNotifications.OPERATION_CANCELED);
     }
     catch (Throwable e) {
       LOG.error(e);
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.ERROR);
-        }
-      };
+      return applyNotification(DiffNotifications.ERROR);
     }
   }
 
@@ -242,6 +224,17 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
         myContentPanel.repaintDividers();
         myStatusPanel.update();
+      }
+    };
+  }
+
+  @NotNull
+  private Runnable applyNotification(@Nullable final JComponent notification) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        clearDiffPresentation();
+        if (notification != null) myPanel.addNotification(notification);
       }
     };
   }
