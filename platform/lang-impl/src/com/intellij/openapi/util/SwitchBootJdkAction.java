@@ -197,7 +197,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      return new JBLabel("Specify Boot JDK path");
+      return new JBLabel("Select Boot JDK");
     }
 
     @Nullable
