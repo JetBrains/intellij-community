@@ -26,11 +26,9 @@ import java.util.regex.Pattern;
  * User : catherine
  */
 public final class PyTestTracebackParser extends TraceBackParser {
-  @NotNull
-  private static final Pattern MATCHING_PATTERN = Pattern.compile("([^\"]+):(\\d+)");
 
   public PyTestTracebackParser() {
-    super(MATCHING_PATTERN);
+    super(Pattern.compile("([^\"]+):(\\d+)"));
   }
 
   @NotNull
