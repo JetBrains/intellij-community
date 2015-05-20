@@ -323,15 +323,17 @@ public class HgHistoryUtil {
                                     FileStatus aStatus) {
 
     HgContentRevision beforeRevision =
-      fileBefore == null ? null : HgContentRevision.create(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
+      fileBefore == null || aStatus == FileStatus.ADDED ? null
+                                                        : HgContentRevision
+        .create(project, new HgFile(root, new File(root.getPath(), fileBefore)), revisionBefore);
     if (revisionAfter == null && fileBefore != null) {
       ContentRevision currentRevision =
         CurrentContentRevision.create(new HgFile(root, new File(root.getPath(), fileBefore)).toFilePath());
       return new Change(beforeRevision, currentRevision, aStatus);
     }
-    HgContentRevision afterRevision = fileAfter == null ? null :
-                                      HgContentRevision
-                                        .create(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
+    HgContentRevision afterRevision =
+      fileAfter == null || aStatus == FileStatus.DELETED ? null :
+      HgContentRevision.create(project, new HgFile(root, new File(root.getPath(), fileAfter)), revisionAfter);
     return new Change(beforeRevision, afterRevision, aStatus);
   }
 
