@@ -79,11 +79,16 @@ public class CodeFormatterFacade {
   private final CodeStyleSettings mySettings;
   private final FormatterTagHandler myTagHandler;
   private final int myRightMargin;
+  private boolean myReformatContext;
 
   public CodeFormatterFacade(CodeStyleSettings settings, @Nullable Language language) {
     mySettings = settings;
     myTagHandler = new FormatterTagHandler(settings);
     myRightMargin = mySettings.getRightMargin(language);
+  }
+
+  public void setReformatContext(boolean value) {
+    myReformatContext = value;
   }
 
   public ASTNode processElement(ASTNode element) {
@@ -240,7 +245,7 @@ public class CodeFormatterFacade {
           CommonCodeStyleSettings.IndentOptions indentOptions =
             mySettings.getIndentOptionsByFile(file, textRanges.size() == 1 ? textRanges.get(0).getTextRange() : null);
 
-          formatter.format(model, mySettings, indentOptions, ranges);
+          formatter.format(model, mySettings, indentOptions, ranges, myReformatContext);
           for (FormatTextRanges.FormatTextRange range : textRanges) {
             TextRange textRange = range.getTextRange();
             wrapLongLinesIfNecessary(file, document, textRange.getStartOffset(), textRange.getEndOffset());

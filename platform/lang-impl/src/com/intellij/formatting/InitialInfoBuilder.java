@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
@@ -65,6 +67,9 @@ class InitialInfoBuilder {
   private boolean                          myReadOnlyMode;
 
   private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
+
+  private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
+  private boolean myCollectAlignmentsInsideFormattingRange = false;
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              @Nullable final FormatTextRanges affectedRanges,
@@ -163,15 +168,16 @@ class InitialInfoBuilder {
     }
 
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
+
     boolean isReadOnly = isReadOnly(rootBlock, rootBlockIsRightBlock);
+    if (myCollectAlignmentsInsideFormattingRange && !isReadOnly && rootBlock.getAlignment() != null) {
+      myAlignmentsInsideRangeToModify.add(rootBlock.getAlignment());
+    }
 
     ReadOnlyBlockInformationProvider previousProvider = myReadOnlyBlockInformationProvider;
     try {
       if (rootBlock instanceof ReadOnlyBlockInformationProvider) {
         myReadOnlyBlockInformationProvider = (ReadOnlyBlockInformationProvider)rootBlock;
-      }
-      if (isReadOnly) {
-        return processSimpleBlock(rootBlock, parent, true, index, parentBlock);
       }
 
       final List<Block> subBlocks = rootBlock.getSubBlocks();
@@ -430,6 +436,14 @@ class InitialInfoBuilder {
     modifiedStackTrace[0] = ste;
     langThrowable.setStackTrace(modifiedStackTrace);
     return langThrowable;
+  }
+
+  public Set<Alignment> getAlignmentsInsideRangeToModify() {
+    return myAlignmentsInsideRangeToModify;
+  }
+
+  public void setCollectAlignmentsInsideFormattingRange(boolean value) {
+    myCollectAlignmentsInsideFormattingRange = value;
   }
 
   /**
