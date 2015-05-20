@@ -1321,19 +1321,9 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     private boolean doScrollToChange(@NotNull ScrollToPolicy scrollToChangePolicy) {
       if (myChangedBlockData == null) return false;
       List<OnesideDiffChange> changes = myChangedBlockData.getDiffChanges();
-      if (changes.isEmpty()) return false;
 
-      OnesideDiffChange targetChange;
-      switch (scrollToChangePolicy) {
-        case FIRST_CHANGE:
-          targetChange = changes.get(0);
-          break;
-        case LAST_CHANGE:
-          targetChange = changes.get(changes.size() - 1);
-          break;
-        default:
-          throw new IllegalArgumentException(scrollToChangePolicy.name());
-      }
+      OnesideDiffChange targetChange = scrollToChangePolicy.select(changes);
+      if (targetChange == null) return false;
 
       DiffUtil.scrollEditor(myEditor, targetChange.getLine1(), false);
       return true;

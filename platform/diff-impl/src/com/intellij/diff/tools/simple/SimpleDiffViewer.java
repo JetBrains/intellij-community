@@ -393,23 +393,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @CalledInAwt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
-    if (myDiffChanges.isEmpty()) return false;
     if (getEditor1() == null || getEditor2() == null) return true;
 
-    SimpleDiffChange targetChange;
-    switch (scrollToPolicy) {
-      case FIRST_CHANGE:
-        targetChange = myDiffChanges.get(0);
-        break;
-      case LAST_CHANGE:
-        targetChange = myDiffChanges.get(myDiffChanges.size() - 1);
-        break;
-      default:
-        throw new IllegalArgumentException(scrollToPolicy.name());
-    }
+    SimpleDiffChange targetChange = scrollToPolicy.select(myDiffChanges);
+    if (targetChange == null) return false;
 
     doScrollToChange(targetChange, false);
-
     return true;
   }
 

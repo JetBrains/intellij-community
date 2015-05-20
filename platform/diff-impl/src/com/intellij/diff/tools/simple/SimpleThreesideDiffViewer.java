@@ -320,22 +320,10 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
   @CalledInAwt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
-    if (myDiffChanges.isEmpty()) return false;
-
-    SimpleThreesideDiffChange targetChange;
-    switch (scrollToPolicy) {
-      case FIRST_CHANGE:
-        targetChange = myDiffChanges.get(0);
-        break;
-      case LAST_CHANGE:
-        targetChange = myDiffChanges.get(myDiffChanges.size() - 1);
-        break;
-      default:
-        throw new IllegalArgumentException(scrollToPolicy.name());
-    }
+    SimpleThreesideDiffChange targetChange = scrollToPolicy.select(myDiffChanges);
+    if (targetChange == null) return false;
 
     doScrollToChange(targetChange, false);
-
     return true;
   }
 
