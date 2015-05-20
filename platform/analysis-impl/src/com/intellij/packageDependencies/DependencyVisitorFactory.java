@@ -34,6 +34,13 @@ public abstract class DependencyVisitorFactory {
       }
     };
 
+    public static final VisitorOptions INCLUDE_IMPORTS = new VisitorOptions() {
+      @Override
+      public boolean skipImports() {
+        return false;
+      }
+    };
+
     public static VisitorOptions fromSettings(@NotNull Project project) {
       final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
       return new VisitorOptions() {
