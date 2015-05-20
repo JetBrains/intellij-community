@@ -20,45 +20,25 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.util.JavaClassSupers;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
 import java.util.Set;
 
 public class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.InheritanceImplUtil");
 
   public static boolean isInheritor(@NotNull final PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
-    if (baseClass instanceof PsiAnonymousClass) return false;
+    if (baseClass instanceof PsiAnonymousClass || baseClass.getManager().areElementsEquivalent(baseClass, candidateClass)) return false;
     if (!checkDeep) {
       return isInheritor(candidateClass.getManager(), candidateClass, baseClass, false, null);
     }
 
-    if (hasObjectQualifiedName(candidateClass)) return false;
-    if (hasObjectQualifiedName(baseClass)) return true;
-    Map<PsiClass, Boolean> map = CachedValuesManager.
-      getCachedValue(candidateClass, new CachedValueProvider<Map<PsiClass, Boolean>>() {
-        @Nullable
-        @Override
-        public Result<Map<PsiClass, Boolean>> compute() {
-          final Map<PsiClass, Boolean> map = ContainerUtil.createConcurrentWeakMap();
-          return Result.create(map, candidateClass, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        }
-      });
-
-    Boolean computed = map.get(baseClass);
-    if (computed == null) {
-      computed = isInheritor(candidateClass.getManager(), candidateClass, baseClass, true, null);
-      map.put(baseClass, computed);
-    }
-    return computed;
+    GlobalSearchScope scope = candidateClass.getResolveScope();
+    return JavaClassSupers.getInstance().getSuperClassSubstitutor(baseClass, candidateClass, scope, PsiSubstitutor.EMPTY) != null;
   }
 
   public static boolean hasObjectQualifiedName(@NotNull PsiClass candidateClass) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,14 @@ public class FloatingPointEqualityInspection extends BaseInspection {
         final Float aFloat = (Float)value;
         final float v = aFloat.floatValue();
         return Float.isInfinite(v) || v == 0.0f;
+      }
+      else if (value instanceof Integer) {
+        final Integer integer = (Integer)value;
+        return integer.intValue() == 0;
+      }
+      else if (value instanceof Long) {
+        final Long aLong = (Long)value;
+        return aLong.longValue() == 0;
       }
       return false;
     }

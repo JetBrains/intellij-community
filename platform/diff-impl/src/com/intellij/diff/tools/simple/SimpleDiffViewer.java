@@ -203,7 +203,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
           public CompareData compute() {
             List<LineFragment> fragments = Collections.<LineFragment>singletonList(new LineFragmentImpl(0, 0, 0, getLineCount(document),
                                                                                                         0, 0, 0, document.getTextLength()));
-            return new CompareData(fragments, false, 0, document.getModificationStamp());
+            return new CompareData(fragments, false);
           }
         });
 
@@ -219,7 +219,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
           public CompareData compute() {
             List<LineFragment> fragments = Collections.<LineFragment>singletonList(new LineFragmentImpl(0, getLineCount(document), 0, 0,
                                                                                                         0, document.getTextLength(), 0, 0));
-            return new CompareData(fragments, false, document.getModificationStamp(), 0);
+            return new CompareData(fragments, false);
           }
         });
 
@@ -247,35 +247,17 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       boolean isEqualContents = (lineFragments == null || lineFragments.isEmpty()) &&
                                 StringUtil.equals(document1.getCharsSequence(), document2.getCharsSequence());
 
-      return apply(new CompareData(lineFragments, isEqualContents, data.getStamp1(), data.getStamp2()));
+      return apply(new CompareData(lineFragments, isEqualContents));
     }
     catch (DiffTooBigException ignore) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.DIFF_TOO_BIG);
-        }
-      };
+      return applyNotification(DiffNotifications.DIFF_TOO_BIG);
     }
     catch (ProcessCanceledException ignore) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
-        }
-      };
+      return applyNotification(DiffNotifications.OPERATION_CANCELED);
     }
     catch (Throwable e) {
       LOG.error(e);
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.ERROR);
-        }
-      };
+      return applyNotification(DiffNotifications.ERROR);
     }
   }
 
@@ -284,9 +266,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return new Runnable() {
       @Override
       public void run() {
-        if (getEditor1() != null && getEditor1().getDocument().getModificationStamp() != data.getStamp1()) return;
-        if (getEditor2() != null && getEditor2().getDocument().getModificationStamp() != data.getStamp2()) return;
-
         if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
@@ -307,6 +286,17 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
         myContentPanel.repaintDivider();
         myStatusPanel.update();
+      }
+    };
+  }
+
+  @NotNull
+  private Runnable applyNotification(@Nullable final JComponent notification) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        clearDiffPresentation();
+        if (notification != null) myPanel.addNotification(notification);
       }
     };
   }
@@ -355,14 +345,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     if (myDiffChanges.isEmpty()) return;
     if (getEditor1() == null || getEditor2() == null) return;
 
-    Side side;
-    if (e.getDocument() == getEditor1().getDocument()) {
-      side = Side.LEFT;
-    }
-    else if (e.getDocument() == getEditor2().getDocument()) {
-      side = Side.RIGHT;
-    }
-    else {
+    Side side = null;
+    if (e.getDocument() == getEditor(Side.LEFT).getDocument()) side = Side.LEFT;
+    if (e.getDocument() == getEditor(Side.RIGHT).getDocument()) side = Side.RIGHT;
+    if (side == null) {
       LOG.warn("Unknown document changed");
       return;
     }
@@ -400,23 +386,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @CalledInAwt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
-    if (myDiffChanges.isEmpty()) return false;
     if (getEditor1() == null || getEditor2() == null) return true;
 
-    SimpleDiffChange targetChange;
-    switch (scrollToPolicy) {
-      case FIRST_CHANGE:
-        targetChange = myDiffChanges.get(0);
-        break;
-      case LAST_CHANGE:
-        targetChange = myDiffChanges.get(myDiffChanges.size() - 1);
-        break;
-      default:
-        throw new IllegalArgumentException(scrollToPolicy.name());
-    }
+    SimpleDiffChange targetChange = scrollToPolicy.select(myDiffChanges);
+    if (targetChange == null) return false;
 
     doScrollToChange(targetChange, false);
-
     return true;
   }
 
@@ -492,7 +467,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   @CalledInAwt
   private List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
-    EditorEx editor = side.select(getEditor1(), getEditor2());
+    EditorEx editor = getEditor(side);
     if (editor == null) return Collections.emptyList();
 
     final BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -512,7 +487,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @Nullable
   @CalledInAwt
   private SimpleDiffChange getSelectedChange(@NotNull Side side) {
-    EditorEx editor = side.select(getEditor1(), getEditor2());
+    EditorEx editor = getEditor(side);
     if (editor == null) return null;
 
     int caretLine = editor.getCaretModel().getLogicalPosition().line;
@@ -672,7 +647,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     protected boolean isSomeChangeSelected(@NotNull Side side) {
       if (myDiffChanges.isEmpty()) return false;
 
-      Editor editor = side.select(getEditor1(), getEditor2());
+      Editor editor = getEditor(side);
       if (editor == null) return false;
 
       List<Caret> carets = editor.getCaretModel().getAllCarets();
@@ -807,7 +782,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     private AllLinesIterator(@NotNull Side side) {
       mySide = side;
 
-      Editor editor = mySide.select(getEditor1(), getEditor2());
+      Editor editor = getEditor(mySide);
       assert editor != null;
       myDocument = editor.getDocument();
     }
@@ -858,7 +833,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       int line1 = change.getStartLine(mySide);
       int line2 = change.getEndLine(mySide);
 
-      Editor editor = mySide.select(getEditor1(), getEditor2());
+      Editor editor = getEditor(mySide);
       assert editor != null;
       Document document = editor.getDocument();
 
@@ -957,14 +932,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private static class CompareData {
     @Nullable private final List<LineFragment> myFragments;
     private final boolean myEqualContent;
-    private final long myStamp1;
-    private final long myStamp2;
 
-    public CompareData(@Nullable List<LineFragment> fragments, boolean equalContent, long stamp1, long stamp2) {
+    public CompareData(@Nullable List<LineFragment> fragments, boolean equalContent) {
       myFragments = fragments;
       myEqualContent = equalContent;
-      myStamp1 = stamp1;
-      myStamp2 = stamp2;
     }
 
     @Nullable
@@ -974,14 +945,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public boolean isEqualContent() {
       return myEqualContent;
-    }
-
-    public long getStamp1() {
-      return myStamp1;
-    }
-
-    public long getStamp2() {
-      return myStamp2;
     }
   }
 
@@ -1103,21 +1066,18 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     protected boolean doScrollToChange() {
       if (myScrollToChange == null) return false;
-      SimpleDiffViewer.this.doScrollToChange(myScrollToChange);
-      return true;
+      return SimpleDiffViewer.this.doScrollToChange(myScrollToChange);
     }
 
     @Override
     protected boolean doScrollToFirstChange() {
-      SimpleDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
-      return true;
+      return SimpleDiffViewer.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
     }
 
     @Override
     protected boolean doScrollToContext() {
       if (myNavigationContext == null) return false;
-      SimpleDiffViewer.this.doScrollToContext(myNavigationContext);
-      return true;
+      return SimpleDiffViewer.this.doScrollToContext(myNavigationContext);
     }
   }
 }

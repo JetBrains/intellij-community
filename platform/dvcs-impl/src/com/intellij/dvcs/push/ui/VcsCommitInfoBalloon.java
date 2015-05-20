@@ -89,6 +89,7 @@ public class VcsCommitInfoBalloon {
 
   private void createNewCommitInfoBalloon() {
     myBalloon = myPopupBuilder.createPopup();
+    myBalloon.setSize(myEditorPane.getPreferredSize());
   }
 
   public void showCommitDetails() {

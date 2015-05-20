@@ -72,6 +72,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     assert getEditor1() != null && getEditor2() != null;
 
     for (EditorEx editor : getEditors()) {
+      if (editor == null) continue;
       EditorSettings settings = editor.getSettings();
 
       settings.setAdditionalLinesCount(0);

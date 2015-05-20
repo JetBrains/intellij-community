@@ -38,5 +38,12 @@ class Test {
       }
     };
   }
+
+  interface D extends J {
+    default void m() {
+      <error descr="No enclosing instance of type 'Test.D' is in scope">D</error>.super.toString();
+      J.super.toString();
+    }
+  }
 }
 

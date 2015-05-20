@@ -31,7 +31,9 @@ public class FloatingPointEquality
 
         boolean infinity = m_bar == Double.POSITIVE_INFINITY;
         boolean zero = m_barf == 0.0f;
-       
+        boolean zero2 = m_barf == 0;
+        boolean zero3 = m_barf == 0L;
+
     }
 
 

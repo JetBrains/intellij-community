@@ -1105,6 +1105,9 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrEqualsBetweenInconvertibleTypesInspection"/>
 
+    <packageDependencies.visitor language="Groovy"
+                                 implementationClass="org.jetbrains.plugins.groovy.codeInspection.dependencies.GrDependencyVisitorFactory"/>
+
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
 
     <scratch.rootType implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRootType"/>

@@ -21,8 +21,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.FileAccessorCache;
-import gnu.trove.THashMap;
+import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.File;
@@ -96,7 +97,7 @@ public class ZipHandler extends ArchiveHandler {
   @NotNull
   @Override
   protected Map<String, EntryInfo> createEntriesMap() throws IOException {
-    Map<String, EntryInfo> map = new THashMap<String, EntryInfo>();
+    Map<String, EntryInfo> map = new ZipEntryMap();
     map.put("", createRootEntry());
 
     FileAccessorCache.Handle<ZipFile> zipRef = ourZipFileFileAccessorCache.get(this);
@@ -126,7 +127,7 @@ public class ZipHandler extends ArchiveHandler {
   }
 
   @NotNull
-  private EntryInfo getOrCreate(ZipEntry entry, Map<String, EntryInfo> map, ZipFile zip) {
+  private EntryInfo getOrCreate(@NotNull ZipEntry entry, @NotNull Map<String, EntryInfo> map, @NotNull ZipFile zip) {
     boolean isDirectory = entry.isDirectory();
     String entryName = entry.getName();
     if (StringUtil.endsWithChar(entryName, '/')) {
@@ -142,13 +143,26 @@ public class ZipHandler extends ArchiveHandler {
     if (".".equals(path.second)) {
       return parentInfo;
     }
-    info = new EntryInfo(parentInfo, path.second, isDirectory, entry.getSize(), entry.getTime());
+    info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), entry.getTime(), entryName);
+    return info;
+  }
+
+  @NotNull
+  private static EntryInfo store(@NotNull Map<String, EntryInfo> map,
+                                 @Nullable EntryInfo parentInfo,
+                                 @NotNull CharSequence shortName,
+                                 boolean isDirectory,
+                                 long size,
+                                 long time,
+                                 @NotNull String entryName) {
+    CharSequence sequence = shortName instanceof ByteArrayCharSequence ? shortName : ByteArrayCharSequence.convertToBytesIfAsciiString(shortName);
+    EntryInfo info = new EntryInfo(parentInfo, sequence, isDirectory, size, time);
     map.put(entryName, info);
     return info;
   }
 
   @NotNull
-  private EntryInfo getOrCreate(String entryName, Map<String, EntryInfo> map, ZipFile zip) {
+  private EntryInfo getOrCreate(@NotNull String entryName, Map<String, EntryInfo> map, @NotNull ZipFile zip) {
     EntryInfo info = map.get(entryName);
 
     if (info == null) {
@@ -159,14 +173,12 @@ public class ZipHandler extends ArchiveHandler {
 
       Pair<String, String> path = splitPath(entryName);
       EntryInfo parentInfo = getOrCreate(path.first, map, zip);
-      info = new EntryInfo(parentInfo, path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP);
-      map.put(entryName, info);
+      info = store(map, parentInfo, path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, entryName);
     }
 
     if (!info.isDirectory) {
       Logger.getInstance(getClass()).info(zip.getName() + ": " + entryName + " should be a directory");
-      info = new EntryInfo(info.parent, info.shortName, true, info.length, info.timestamp);
-      map.put(entryName, info);
+      info = store(map, info.parent, info.shortName, true, info.length, info.timestamp, entryName);
     }
 
     return info;

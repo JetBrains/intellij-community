@@ -67,7 +67,7 @@ class TextPainter extends BasePainter {
   private final PrintSettings myPrintSettings;
   private final String myFullFileName;
   private final String myShortFileName;
-  private int myPageIndex;
+  private int myPageIndex = -1;
   private int myNumberOfPages = -1;
   private int mySegmentEnd;
   private final LineMarkerInfo[] myMethodSeparators;
@@ -178,6 +178,8 @@ class TextPainter extends BasePainter {
 
   @Override
   public int print(final Graphics g, final PageFormat pageFormat, final int pageIndex) throws PrinterException {
+    myPerformActualDrawing = false;
+
     if (myProgress.isCanceled()) {
       return NO_SUCH_PAGE;
     }
@@ -187,34 +189,46 @@ class TextPainter extends BasePainter {
     if (myNumberOfPages < 0) {
       myProgress.setText(CodeEditorBundle.message("print.file.calculating.number.of.pages.progress"));
       
-      myPerformActualDrawing = false;
-      
       if (!calculateNumberOfPages(g2d, pageFormat)) {
         return NO_SUCH_PAGE;
       }
     }
 
-    myPerformActualDrawing = true;
+    if (pageIndex >= myNumberOfPages) {
+      return NO_SUCH_PAGE;
+    }
 
-    return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-      @Override
-      public Integer compute() {
-        if (!isValidRange(myRangeToPrint)) {
+    isPrintingPass = !isPrintingPass;
+    if (!isPrintingPass) {
+      while(++myPageIndex < pageIndex) {
+        if (!printPageInReadAction(g2d, pageFormat, "print.skip.page.progress")) {
           return NO_SUCH_PAGE;
         }
-
-        isPrintingPass = !isPrintingPass;
-        if (!isPrintingPass) {
-          return PAGE_EXISTS;
+      }      
+      return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+        @Override
+        public Integer compute() {
+          return isValidRange(myRangeToPrint) ? PAGE_EXISTS : NO_SUCH_PAGE;
         }
-
-        myProgress.setText(CodeEditorBundle.message("print.file.page.progress", myShortFileName, (pageIndex + 1), myNumberOfPages));
-        myPageIndex = pageIndex;
-
-        RangeMarker newRange = printPage(g2d, pageFormat, myRangeToPrint);
-        setSegment(newRange);
-
-        return PAGE_EXISTS;
+      });
+    }
+    else {
+      myPerformActualDrawing = true;
+      printPageInReadAction(g2d, pageFormat, "print.file.page.progress");
+      return PAGE_EXISTS;
+    }
+  }
+  
+  private boolean printPageInReadAction(final Graphics2D g2d, final PageFormat pageFormat, final String progressMessageKey) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        if (!isValidRange(myRangeToPrint)) {
+          return false;
+        }
+        myProgress.setText(CodeEditorBundle.message(progressMessageKey, myShortFileName, (myPageIndex + 1), myNumberOfPages));
+        setSegment(printPage(g2d, pageFormat, myRangeToPrint));
+        return true;
       }
     });
   }

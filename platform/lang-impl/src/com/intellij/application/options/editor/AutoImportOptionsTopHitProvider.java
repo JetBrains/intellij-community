@@ -13,29 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.diff.impl;
+package com.intellij.application.options.editor;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
 
-import javax.swing.*;
-import java.awt.*;
-
-public class ModifiablePanel extends JPanel {
-  @Nullable private JComponent myContent;
-
-  public ModifiablePanel() {
-    super(new BorderLayout());
-  }
-
-  public void setContent(@Nullable JComponent content) {
-    myContent = content;
-    removeAll();
-    if (content != null) add(content, BorderLayout.CENTER);
-    invalidate();
-  }
-
-  @Nullable
-  public JComponent getContent() {
-    return myContent;
+/**
+ * @author Sergey.Malenkov
+ */
+public class AutoImportOptionsTopHitProvider extends EditorOptionsTopHitProviderBase {
+  @Override
+  protected Configurable getConfigurable(Project project) {
+    return new AutoImportOptionsConfigurable();
   }
 }

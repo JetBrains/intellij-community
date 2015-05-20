@@ -1,3 +1,4 @@
+<warning descr="Inspection suppression annotation '@SuppressWarnings({\\"ALL\\", \\"SuppressionAnnotation\\"})'">@SuppressWarnings({"ALL", "SuppressionAnnotation"})</warning>
 public class SuppressionAnnotation {
 
   <warning descr="Inspection suppression annotation '@SuppressWarnings(\\"PublicField\\")'">@SuppressWarnings("PublicField")</warning>

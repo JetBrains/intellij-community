@@ -89,7 +89,7 @@ public class VfsUtilPerformanceTest extends PlatformTestCase {
 
     final VirtualFile theChild = vDir.findChild("5111.txt");
     System.out.println("Start searching...");
-    PlatformTestUtil.startPerformanceTest("find child is slow", 450, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("find child is slow", 1000, new ThrowableRunnable() {
       @Override
       public void run() throws Throwable {
         for (int i = 0; i < 1000000; i++) {

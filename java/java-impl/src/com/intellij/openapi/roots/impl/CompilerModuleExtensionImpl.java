@@ -283,13 +283,11 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
       return true;
     }
 
-    if (!myInheritedCompilerOutput) {
-      if (!vptrEqual(myCompilerOutputPointer, mySource.myCompilerOutputPointer)) {
-        return true;
-      }
-      if (!vptrEqual(myCompilerOutputPathForTestsPointer, mySource.myCompilerOutputPathForTestsPointer)) {
-        return true;
-      }
+    if (!vptrEqual(myCompilerOutputPointer, mySource.myCompilerOutputPointer)) {
+      return true;
+    }
+    if (!vptrEqual(myCompilerOutputPathForTestsPointer, mySource.myCompilerOutputPathForTestsPointer)) {
+      return true;
     }
 
     return myExcludeOutput != mySource.myExcludeOutput;

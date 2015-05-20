@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisScope;
@@ -29,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * User: anna
- * Date: Jan 19, 2005
+ * @author anna
+ * @since Jan 19, 2005
  */
 public abstract class DependenciesBuilder {
   private final Project myProject;
@@ -128,12 +127,10 @@ public abstract class DependenciesBuilder {
     final Set<PsiFile> reachable = getDirectDependencies().get(from);
     if (reachable != null) {
       if (reachable.contains(to)) {
-        final ArrayList<PsiFile> path = new ArrayList<PsiFile>();
-        result.add(path);
+        result.add(new ArrayList<PsiFile>());
         return result;
       }
-      if (!processed.contains(from)) {
-        processed.add(from);
+      if (processed.add(from)) {
         for (PsiFile file : reachable) {
           if (!getScope().contains(file)) { //exclude paths through scope
             final List<List<PsiFile>> paths = findPaths(file, to, processed);
@@ -148,14 +145,6 @@ public abstract class DependenciesBuilder {
     return result;
   }
 
-
-
-  public static void analyzeFileDependencies(PsiFile file, DependencyProcessor processor) {
-    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    file.accept(DependenciesVisitorFactory.getInstance().createVisitor(processor));
-    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, null);
-  }
-
   public boolean isTransitive() {
     return myTransitive > 0;
   }
@@ -164,11 +153,23 @@ public abstract class DependenciesBuilder {
     return myTransitive;
   }
 
-  public interface DependencyProcessor {
-    void process(PsiElement place, PsiElement dependency);
-  }
   public String getRelativeToProjectPath(@NotNull VirtualFile virtualFile) {
     return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
   }
 
+  public static void analyzeFileDependencies(@NotNull PsiFile file, @NotNull DependencyProcessor processor) {
+    analyzeFileDependencies(file, processor, DependencyVisitorFactory.VisitorOptions.fromSettings(file.getProject()));
+  }
+
+  public static void analyzeFileDependencies(@NotNull PsiFile file,
+                                             @NotNull DependencyProcessor processor,
+                                             @NotNull DependencyVisitorFactory.VisitorOptions options) {
+    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
+    file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
+    file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, null);
+  }
+
+  public interface DependencyProcessor {
+    void process(PsiElement place, PsiElement dependency);
+  }
 }

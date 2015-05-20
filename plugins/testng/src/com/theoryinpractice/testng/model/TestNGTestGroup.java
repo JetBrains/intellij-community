@@ -17,8 +17,10 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -36,8 +38,10 @@ public class TestNGTestGroup extends TestNGTestObject {
     throws CantRunException {
     final TestData data = myConfig.getPersistantData();
     //for a group, we include all classes
+    final SourceScope sourceScope = data.getScope().getSourceScope(myConfig);
     final TestClassFilter classFilter =
-      new TestClassFilter(data.getScope().getSourceScope(myConfig).getGlobalSearchScope(), myConfig.getProject(), true, true);
+      new TestClassFilter(sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(myConfig.getProject()),
+                          myConfig.getProject(), true, true);
     PsiClass[] testClasses = TestNGUtil.getAllTestClasses(classFilter, false);
     if (testClasses != null) {
       for (PsiClass c : testClasses) {

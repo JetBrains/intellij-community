@@ -68,12 +68,22 @@ public class XVariablesView extends XVariablesViewBase {
   }
 
   @Override
-  protected void clear() {
-    XDebuggerTree tree = getTree();
+  public void dispose() {
+    clearInlineData(getTree());
+    super.dispose();
+  }
+
+  private static void clearInlineData(XDebuggerTree tree) {
     tree.getProject().putUserData(DEBUG_VARIABLES, null);
     tree.getProject().putUserData(DEBUG_VARIABLES_TIMESTAMPS, null);
-    tree.setSourcePosition(null);
     tree.updateEditor();
+  }
+
+  @Override
+  protected void clear() {
+    XDebuggerTree tree = getTree();
+    tree.setSourcePosition(null);
+    clearInlineData(tree);
 
     XDebuggerTreeNode node;
     XDebugSession session = getSession(getPanel());

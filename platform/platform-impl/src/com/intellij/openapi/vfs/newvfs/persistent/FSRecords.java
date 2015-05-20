@@ -1103,11 +1103,15 @@ public class FSRecords implements Forceable {
   }
 
   public static String getName(int id) {
+    return getNameSequence(id).toString();
+  }
+
+  public static CharSequence getNameSequence(int id) {
     try {
       r.lock();
       try {
         final int nameId = getRecordInt(id, NAME_OFFSET);
-        return nameId != 0 ? FileNameCache.getVFileName(nameId).toString() : "";
+        return nameId != 0 ? FileNameCache.getVFileName(nameId) : "";
       }
       finally {
         r.unlock();
