@@ -17,10 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.completion.NormalCompletionDfaTest;
 import com.intellij.codeInsight.completion.SmartTypeCompletionDfaTest;
-import com.intellij.codeInsight.daemon.quickFix.AddAssertStatementFixTest;
-import com.intellij.codeInsight.daemon.quickFix.ReplaceFromOfNullableFixTest;
-import com.intellij.codeInsight.daemon.quickFix.ReplaceWithOfNullableFixTest;
-import com.intellij.codeInsight.daemon.quickFix.SurroundWithIfFixTest;
+import com.intellij.codeInsight.daemon.quickFix.*;
 import com.intellij.slicer.SliceBackwardTest;
 import com.intellij.slicer.SliceTreeTest;
 import junit.framework.Test;
@@ -51,6 +48,7 @@ public class DataFlowInspectionTestSuite {
 
     suite.addTestSuite(AddAssertStatementFixTest.class);
     suite.addTestSuite(SurroundWithIfFixTest.class);
+    suite.addTestSuite(ReplaceWithTernaryOperatorTest.class);
     suite.addTestSuite(ReplaceWithOfNullableFixTest.class);
     suite.addTestSuite(ReplaceFromOfNullableFixTest.class);
     return suite;
