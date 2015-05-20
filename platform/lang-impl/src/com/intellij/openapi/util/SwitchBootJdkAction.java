@@ -49,11 +49,12 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   @NonNls private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.SwitchBootJdkAction");
   @NonNls private static final String productJdkConfigFileName = ApplicationNamesInfo.getInstance().getScriptName() + ".jdk";
   @NonNls private static final File productJdkConfigFile = new File(PathManager.getConfigPath(), productJdkConfigFileName);
+  @NonNls private static final File customJdkFile = new File(PathManager.getHomePath() + File.separator + "jre" + File.separator + "jdk");
 
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    if (!SystemInfo.isMac) {
+    if (!SystemInfo.isMac || !customJdkFile.exists()) {
       presentation.setEnabledAndVisible(false);
       return;
     }
@@ -224,7 +225,10 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       ArrayList<JdkBundleDescriptor> jdkPathsList = new ArrayList<JdkBundleDescriptor>();
       if (!SystemInfo.isMac) return jdkPathsList;
 
-      jdkPathsList.add(new JdkBundleDescriptor(new File(PathManager.getHomePath() + File.separator + "jre" + File.separator + "jdk" ), "JDK bundled with IDE"));
+
+      if (customJdkFile.exists()) {
+          jdkPathsList.add(new JdkBundleDescriptor(customJdkFile, "JDK bundled with IDE"));
+      }
 
       jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_6_LOCATION_ON_MAC_OS_X, "1.6.0"));
       jdkPathsList.addAll(jdkBundlesFromLocation(STANDARD_JDK_LOCATION_ON_MAC_OS_X, "jdk1.8.0_(\\d*).jdk"));
