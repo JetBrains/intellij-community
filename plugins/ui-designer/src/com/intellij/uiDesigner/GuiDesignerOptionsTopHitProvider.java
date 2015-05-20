@@ -15,19 +15,14 @@
  */
 package com.intellij.uiDesigner;
 
-import com.intellij.ide.ui.ConfigurableOptionsTopHitProvider;
+import com.intellij.application.options.editor.EditorOptionsTopHitProviderBase;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 
 /**
  * @author Sergey.Malenkov
  */
-public class GuiDesignerOptionsTopHitProvider extends ConfigurableOptionsTopHitProvider {
-  @Override
-  public String getId() {
-    return "editor";
-  }
-
+public class GuiDesignerOptionsTopHitProvider extends EditorOptionsTopHitProviderBase {
   @Override
   protected Configurable getConfigurable(Project project) {
     return new GuiDesignerConfigurable(project);

@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.editor;
 
-import com.intellij.ide.ui.ConfigurableOptionsTopHitProvider;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 
@@ -24,23 +23,13 @@ import javax.swing.*;
 /**
  * @author Sergey.Malenkov
  */
-public class CodeFoldingOptionsTopHitProvider extends ConfigurableOptionsTopHitProvider {
+public class CodeFoldingOptionsTopHitProvider extends EditorOptionsTopHitProviderBase.NoPrefix {
   private int myCount;
-
-  @Override
-  public String getId() {
-    return "editor";
-  }
 
   @Override
   protected Configurable getConfigurable(Project project) {
     myCount = 0;
     return new CodeFoldingConfigurable();
-  }
-
-  @Override
-  protected String getName(Configurable configurable) {
-    return null;
   }
 
   @Override

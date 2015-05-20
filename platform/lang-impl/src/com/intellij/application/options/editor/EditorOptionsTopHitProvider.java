@@ -15,26 +15,15 @@
  */
 package com.intellij.application.options.editor;
 
-import com.intellij.ide.ui.ConfigurableOptionsTopHitProvider;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 
 /**
  * @author Sergey.Malenkov
  */
-public class EditorOptionsTopHitProvider extends ConfigurableOptionsTopHitProvider {
-  @Override
-  public String getId() {
-    return "editor";
-  }
-
+public class EditorOptionsTopHitProvider extends EditorOptionsTopHitProviderBase.NoPrefix {
   @Override
   protected Configurable getConfigurable(Project project) {
     return new EditorOptions();
-  }
-
-  @Override
-  protected String getName(Configurable configurable) {
-    return null;
   }
 }
