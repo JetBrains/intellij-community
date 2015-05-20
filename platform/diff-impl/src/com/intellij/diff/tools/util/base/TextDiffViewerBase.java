@@ -78,12 +78,12 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     List<? extends EditorEx> editors = getEditors();
 
     for (EditorEx editor : editors) {
-      editor.addEditorMouseListener(myEditorPopupListener);
+      if (editor != null) editor.addEditorMouseListener(myEditorPopupListener);
     }
 
     if (editors.size() > 1) {
       for (EditorEx editor : editors) {
-        editor.addPropertyChangeListener(myFontSizeListener);
+        if (editor != null) editor.addPropertyChangeListener(myFontSizeListener);
       }
     }
   }
@@ -93,12 +93,12 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     List<? extends EditorEx> editors = getEditors();
 
     for (EditorEx editor : editors) {
-      editor.removeEditorMouseListener(myEditorPopupListener);
+      if (editor != null) editor.removeEditorMouseListener(myEditorPopupListener);
     }
 
     if (editors.size() > 1) {
       for (EditorEx editor : editors) {
-        editor.removePropertyChangeListener(myFontSizeListener);
+        if (editor != null) editor.removePropertyChangeListener(myFontSizeListener);
       }
     }
   }
@@ -183,7 +183,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
       int fontSize = ((Integer)evt.getNewValue()).intValue();
 
       for (EditorEx editor : getEditors()) {
-        if (evt.getSource() != editor) updateEditor(editor, fontSize);
+        if (editor != null && evt.getSource() != editor) updateEditor(editor, fontSize);
       }
     }
 
@@ -449,7 +449,7 @@ public abstract class TextDiffViewerBase extends ListenerDiffViewerBase {
     return ContainerUtil.filter(editors, new Condition<EditorEx>() {
       @Override
       public boolean value(EditorEx editor) {
-        return !editor.isViewer();
+        return editor != null && !editor.isViewer();
       }
     });
   }

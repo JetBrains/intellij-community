@@ -52,7 +52,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
@@ -218,16 +217,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @NotNull
   @Override
   protected List<? extends EditorEx> getEditors() {
-    if (getEditor1() != null && getEditor2() != null) {
-      return ContainerUtil.list(getEditor1(), getEditor2());
-    }
-    if (getEditor1() != null) {
-      return Collections.singletonList(getEditor1());
-    }
-    if (getEditor2() != null) {
-      return Collections.singletonList(getEditor2());
-    }
-    return Collections.emptyList();
+    return ContainerUtil.list(getEditor1(), getEditor2());
   }
 
   @NotNull
