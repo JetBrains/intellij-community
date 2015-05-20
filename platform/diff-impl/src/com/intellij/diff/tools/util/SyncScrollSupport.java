@@ -68,9 +68,9 @@ public class SyncScrollSupport {
       return myDuringSyncScroll;
     }
 
-    public boolean setDisabled(boolean value) {
+    public void setDisabled(boolean value) {
       if (myDisabled == value) LOG.warn(new Throwable("myDisabled == value: " + myDisabled + " - " + value));
-      return myDisabled = value;
+      myDisabled = value;
     }
 
     @NotNull
@@ -170,9 +170,9 @@ public class SyncScrollSupport {
       myHelper22 = create(editors.get(2), editors.get(1), myScrollable2, Side.RIGHT);
     }
 
-    public boolean setDisabled(boolean value) {
+    public void setDisabled(boolean value) {
       if (myDisabled == value) LOG.warn(new Throwable("myDisabled == value: " + myDisabled + " - " + value));
-      return myDisabled = value;
+      myDisabled = value;
     }
 
     public void visibleAreaChanged(VisibleAreaEvent e) {

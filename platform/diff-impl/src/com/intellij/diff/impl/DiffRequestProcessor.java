@@ -55,6 +55,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -87,9 +88,9 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private final JPanel myPanel;
   @NotNull private final MyPanel myMainPanel;
-  @NotNull private final ModifiablePanel myContentPanel;
-  @NotNull private final ModifiablePanel myToolbarPanel; // TODO: allow to call 'updateToolbar' from Viewer ?
-  @NotNull private final ModifiablePanel myToolbarStatusPanel;
+  @NotNull private final Wrapper myContentPanel;
+  @NotNull private final Wrapper myToolbarPanel; // TODO: allow to call 'updateToolbar' from Viewer ?
+  @NotNull private final Wrapper myToolbarStatusPanel;
 
   @NotNull private DiffRequest myActiveRequest;
 
@@ -118,9 +119,10 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myPanel = new JPanel(new BorderLayout());
     myMainPanel = new MyPanel();
-    myContentPanel = new ModifiablePanel();
-    myToolbarPanel = new ModifiablePanel();
-    myToolbarStatusPanel = new ModifiablePanel();
+    myContentPanel = new Wrapper();
+    myToolbarPanel = new Wrapper();
+    myToolbarPanel.setFocusable(true);
+    myToolbarStatusPanel = new Wrapper();
 
     myPanel.add(myMainPanel, BorderLayout.CENTER);
 
@@ -469,7 +471,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     JComponent component = myState.getPreferredFocusedComponent();
-    return component != null ? component : myToolbarPanel.getContent();
+    return component != null ? component : myToolbarPanel.getTargetComponent();
   }
 
   @Nullable
@@ -832,7 +834,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public Object getData(@NonNls String dataId) {
       Object data;
 
-      DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getContent());
+      DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent());
       if (contentProvider != null) {
         data = contentProvider.getData(dataId);
         if (data != null) return data;
@@ -1016,8 +1018,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       FrameDiffTool.ToolbarComponents init = myViewer.init();
       buildToolbar(init.toolbarActions);
-
-      myPanel.validate();
     }
 
     @Override
@@ -1060,16 +1060,12 @@ public abstract class DiffRequestProcessor implements Disposable {
       myContentPanel.setContent(myViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
 
-      myPanel.validate();
-
       FrameDiffTool.ToolbarComponents toolbarComponents = myViewer.init();
 
       buildToolbar(toolbarComponents.toolbarActions);
       buildActionPopup(toolbarComponents.popupActions);
 
       myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
-
-      myPanel.validate();
     }
 
     @Override
@@ -1118,8 +1114,6 @@ public abstract class DiffRequestProcessor implements Disposable {
       myContentPanel.setContent(myWrapperViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
 
-      myPanel.validate();
-
 
       FrameDiffTool.ToolbarComponents toolbarComponents1 = myViewer.init();
       FrameDiffTool.ToolbarComponents toolbarComponents2 = myWrapperViewer.init();
@@ -1142,8 +1136,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
 
       myToolbarStatusPanel.setContent(toolbarComponents1.statusPanel); // TODO: combine both panels ?
-
-      myPanel.validate();
     }
 
     @Override

@@ -85,14 +85,6 @@ public class FoldingModelSupport {
   // Init
   //
 
-  @Deprecated
-  protected void install(@Nullable final Iterator<int[]> changedLines,
-                         @NotNull final UserDataHolder context,
-                         final boolean defaultExpanded,
-                         final int range) {
-    install(changedLines, context, new Settings(range, defaultExpanded));
-  }
-
   /*
    * Iterator returns ranges of changed lines: start1, end1, start2, end2, ...
    */
@@ -496,11 +488,6 @@ public class FoldingModelSupport {
       }
       return null;
     }
-  }
-
-  @Deprecated
-  public void updateContext(@NotNull UserDataHolder context, boolean defaultState) {
-    updateContext(context, new Settings(0, defaultState));
   }
 
   public void updateContext(@NotNull UserDataHolder context, @NotNull final Settings settings) {

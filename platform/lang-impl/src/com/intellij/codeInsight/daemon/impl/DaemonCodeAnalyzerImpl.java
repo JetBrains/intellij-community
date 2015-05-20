@@ -143,7 +143,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     myInitialized = true;
     myDisposed = false;
-    myFileStatusMap.markAllFilesDirty();
+    myFileStatusMap.markAllFilesDirty("DCAI init");
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
@@ -477,7 +477,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @Override
   public void restart() {
-    myFileStatusMap.markAllFilesDirty();
+    myFileStatusMap.markAllFilesDirty("Global restart");
     stopProcess(true, "Global restart");
   }
 
@@ -485,8 +485,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public void restart(@NotNull PsiFile file) {
     Document document = myPsiDocumentManager.getCachedDocument(file);
     if (document == null) return;
-    myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), file.getTextLength());
-    stopProcess(true, "Psi file restart");
+    String reason = "Psi file restart: " + file.getName();
+    myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), file.getTextLength(), reason);
+    stopProcess(true, reason);
   }
 
   @NotNull
