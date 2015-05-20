@@ -94,6 +94,11 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
     return newInstance(myMeta.filter(filter));
   }
 
+  @NotNull
+  public <C> JBIterable<C> filter(@NotNull Class<C> type) {
+    return rawIterable().filter(type);
+  }
+
   public Self exclude(@NotNull Condition<? super T> filter) {
     return newInstance(myMeta.exclude(filter));
   }
