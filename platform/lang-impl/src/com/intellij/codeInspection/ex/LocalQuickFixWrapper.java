@@ -24,9 +24,12 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,15 +79,24 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
   @Nullable
   protected QuickFix getWorkingQuickFix(@NotNull QuickFix[] fixes) {
+    final QuickFix exactResult = getWorkingQuickFix(fixes, true);
+    return exactResult != null ? exactResult : getWorkingQuickFix(fixes, false);
+  }
+  
+  @Nullable
+  protected QuickFix getWorkingQuickFix(@NotNull QuickFix[] fixes, boolean exact) {
     for (QuickFix fix : fixes) {
-      if (!myFix.getClass().isInstance(fix)) continue;
-      if (myFix instanceof IntentionWrapper && fix instanceof IntentionWrapper &&
-          !((IntentionWrapper)myFix).getAction().getClass().isInstance(((IntentionWrapper)fix).getAction())) {
-        continue;
+      if (!checkFix(exact, myFix, fix)) continue;
+      if (myFix instanceof IntentionWrapper && fix instanceof IntentionWrapper) {
+        if (!checkFix(exact, ((IntentionWrapper)myFix).getAction(), fix)) continue;
       }
       return fix;
     }
     return null;
+  }
+
+  private static <T> boolean checkFix(boolean exact, T thisFix, T fix) {
+    return exact ? thisFix.getClass() == fix.getClass() : thisFix.getClass().isInstance(fix);
   }
 
   @Override

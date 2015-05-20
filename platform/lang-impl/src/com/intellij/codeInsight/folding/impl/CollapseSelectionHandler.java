@@ -78,6 +78,25 @@ public class CollapseSelectionHandler implements CodeInsightActionHandler {
             }
     );
   }
+  
+  public static boolean isEnabled(@NotNull Editor editor) {
+    if (editor.getSelectionModel().hasSelection()) {
+      int start = editor.getSelectionModel().getSelectionStart();
+      int end = editor.getSelectionModel().getSelectionEnd();
+      if (start + 1 >= end) {
+        return false;
+      }
+      if (start < end && editor.getDocument().getCharsSequence().charAt(end - 1) == '\n') end--;
+      FoldRegion region = FoldingUtil.findFoldRegion(editor, start, end);
+      if (region == null) {
+        return !((FoldingModelEx) editor.getFoldingModel()).intersectsRegion(start, end); 
+      } else {
+        return EditorFoldingInfo.get(editor).getPsiElement(region) == null;
+      }
+    } else {
+      return FoldingUtil.getFoldRegionsAtOffset(editor, editor.getCaretModel().getOffset()).length > 0;
+    }
+  }
 
   @Override
   public boolean startInWriteAction() {

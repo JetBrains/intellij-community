@@ -95,12 +95,11 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     ExternalProject externalProject = externalProjectDataService.findExternalProject(externalRootProject, rootModel.getModule());
     if (externalProject == null) return false;
 
-    if (includeProduction) {
-      addOutputModuleRoots(externalProject.getSourceSets().get("main"), ExternalSystemSourceType.RESOURCE, result);
-    }
-
     if (includeTests) {
       addOutputModuleRoots(externalProject.getSourceSets().get("test"), ExternalSystemSourceType.TEST_RESOURCE, result);
+    }
+    if (includeProduction) {
+      addOutputModuleRoots(externalProject.getSourceSets().get("main"), ExternalSystemSourceType.RESOURCE, result);
     }
 
     return true;

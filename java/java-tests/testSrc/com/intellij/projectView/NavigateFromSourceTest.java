@@ -115,7 +115,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
     pane.select(psiClass, psiClass.getContainingFile().getVirtualFile(), true);
 
-    assertEquals(9, tree.getSelectionCount());
+    assertEquals(8, tree.getSelectionCount());
   }
 
   private static void changeClassTextAndTryToNavigate(final String newClassString,

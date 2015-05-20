@@ -26,6 +26,7 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
 
   void setAlternativeJrePathEnabled(boolean enabled);
 
+  @Nullable
   String getAlternativeJrePath();
 
   void setAlternativeJrePath(String path);

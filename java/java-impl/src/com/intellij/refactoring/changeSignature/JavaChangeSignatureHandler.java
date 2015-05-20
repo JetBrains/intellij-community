@@ -15,18 +15,17 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureDialog;
@@ -88,8 +87,8 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
 
     final PsiClass containingClass = method.getContainingClass();
-    final PsiReferenceExpression refExpr = editor != null ? TargetElementUtil.findReferenceExpression(editor) : null;
-    final boolean allowDelegation = containingClass != null && !containingClass.isInterface();
+    final PsiReferenceExpression refExpr = editor != null ? JavaTargetElementEvaluator.findReferenceExpression(editor) : null;
+    final boolean allowDelegation = containingClass != null && (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(containingClass));
     final DialogWrapper dialog = new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr == null ? method : refExpr);
     dialog.show();
   }

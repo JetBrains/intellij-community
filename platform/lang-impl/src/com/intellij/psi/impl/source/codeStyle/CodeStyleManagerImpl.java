@@ -33,6 +33,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -237,6 +238,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
     if (editor instanceof EditorEx && isFullReformat) {
       ((EditorEx)editor).reinitSettings();
+      DetectedIndentOptionsNotificationProvider.updateIndentNotification(file, true);
     }
   }
 
@@ -314,6 +316,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   @Override
   public int adjustLineIndent(@NotNull final PsiFile file, final int offset) throws IncorrectOperationException {
+    DetectedIndentOptionsNotificationProvider.updateIndentNotification(file, false);
     return PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(new Computable<Integer>() {
       @Override
       public Integer compute() {

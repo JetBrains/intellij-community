@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,8 +68,8 @@ public class ArrangementStandardSettingsManager {
   @Nullable private final List<CompositeArrangementSettingsToken> myGroupingTokens;
   @Nullable private final List<CompositeArrangementSettingsToken> myMatchingTokens;
 
-  @NotNull private Collection<StdArrangementRuleAliasToken> myRuleAliases;
-  @NotNull private Set<ArrangementSettingsToken> myRuleAliasMutex;
+  @NotNull private final Collection<StdArrangementRuleAliasToken> myRuleAliases;
+  @NotNull private final Set<ArrangementSettingsToken> myRuleAliasMutex;
   @Nullable private CompositeArrangementSettingsToken myRuleAliasToken;
 
   public ArrangementStandardSettingsManager(@NotNull ArrangementStandardSettingsAware delegate,

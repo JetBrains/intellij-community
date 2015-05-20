@@ -68,9 +68,12 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testUnsupportedFeatures7() { doTest(false, false); }
   public void testEnumInitializers() { doTest(false, false); }
   public void testEnumSynthetics() { doTest(false, false); }
+  public void testEnumWithoutConstants() { doTest(false, false); }
+  public void testEnumInstanceFieldInitializer() { doTest(false, false); }
   public void testIDEA79251() { doTest(false, false); }
   public void testIDEA65473() { doTest(false, false); }
   public void testIDEA61415() { doTest(false, false); }
+  public void testGenericArrayCreationWithGenericTypeWithOneUnboundedWildcardOneNormalParams() { doTest(false, false); }
   public void testAgentPremain() {
     doTest(false, false); 
   }

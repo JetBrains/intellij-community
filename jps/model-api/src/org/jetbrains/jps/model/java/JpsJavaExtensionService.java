@@ -121,4 +121,7 @@ public abstract class JpsJavaExtensionService {
 
   @NotNull
   public abstract JavaSourceRootProperties createSourceRootProperties(@NotNull String packagePrefix);
+
+  @NotNull
+  public abstract JavaResourceRootProperties createResourceRootProperties(@NotNull String relativeOutputPath, boolean forGeneratedResource);
 }

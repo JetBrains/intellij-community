@@ -25,7 +25,6 @@ import org.jetbrains.org.objectweb.asm.Type;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -159,7 +158,6 @@ class TypeRepr {
 
   public static class ClassType implements AbstractType {
     public final int className;
-    public final AbstractType[] typeArgs;
 
     @Override
     public String getDescr(final DependencyContext context) {
@@ -173,23 +171,11 @@ class TypeRepr {
 
     ClassType(final int className) {
       this.className = className;
-      typeArgs = EMPTY_TYPE_ARRAY;
     }
 
-    ClassType(final DependencyContext context, final DataInput in) {
+    ClassType(final DataInput in) {
       try {
         className = DataInputOutputUtil.readINT(in);
-        final int size = DataInputOutputUtil.readINT(in);
-        if (size == 0) {
-          typeArgs = EMPTY_TYPE_ARRAY;
-        }
-        else {
-          typeArgs = new AbstractType[size];
-          final DataExternalizer<AbstractType> externalizer = externalizer(context);
-          for (int i = 0; i < size; i++) {
-            typeArgs[i] = externalizer.read(in);
-          }
-        }
       }
       catch (IOException e) {
         throw new BuildDataCorruptedException(e);
@@ -201,19 +187,16 @@ class TypeRepr {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      final ClassType classType = (ClassType)o;
+      ClassType type = (ClassType)o;
 
-      if (className != classType.className) return false;
-      if (!Arrays.equals(typeArgs, classType.typeArgs)) return false;
+      if (className != type.className) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = className;
-      result = 31 * result + (typeArgs != null ? Arrays.hashCode(typeArgs) : 0);
-      return result;
+      return className;
     }
 
     @Override
@@ -221,10 +204,6 @@ class TypeRepr {
       try {
         out.writeByte(CLASS_TYPE);
         DataInputOutputUtil.writeINT(out, className);
-        DataInputOutputUtil.writeINT(out, typeArgs.length);
-        for (AbstractType t : typeArgs) {
-          t.save(out);
-        }
       }
       catch (IOException e) {
         throw new BuildDataCorruptedException(e);
@@ -299,7 +278,7 @@ class TypeRepr {
               break loop;
 
             case CLASS_TYPE:
-              elementType = context.getType(new ClassType(context, in));
+              elementType = context.getType(new ClassType(in));
               break loop;
 
             case ARRAY_TYPE:

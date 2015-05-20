@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
@@ -39,6 +38,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +60,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       return StringUtil.naturalCompare(o1.getName(), o2.getName());
     }
   };
+
+  private static final int MAX_NAME_LENGTH = 100;
 
   private final String myName;
   @Nullable
@@ -136,52 +138,52 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   public void updateInlineDebuggerData() {
     try {
-      final XDebugSession session = XDebugView.getSession(getTree());
-      if (session != null) {
-        final XSourcePosition debuggerPosition = session.getCurrentPosition();
-        if (debuggerPosition != null) {
-          final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
-            @Override
-            public void computed(@NotNull VirtualFile file, @NotNull Document document, int line) {
-              final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-              final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
-              if (map == null || timestamps == null) {
-                return;
-              }
+      XDebugSession session = XDebugView.getSession(getTree());
+      final XSourcePosition debuggerPosition = session == null ? null : session.getCurrentPosition();
+      if (debuggerPosition == null) {
+        return;
+      }
 
-              Pair<VirtualFile, Integer> key = Pair.create(file, line);
-              Set<XValueNodeImpl> presentations = new LinkedHashSet<XValueNodeImpl>();
-              Set<XValueNodeImpl> old = map.put(key, presentations);
-              timestamps.put(file, document.getModificationStamp());
-              presentations.add(XValueNodeImpl.this);
-              if (old != null) {
-                presentations.addAll(old);
-              }
-              myTree.updateEditor();
-            }
-          };
+      final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
+        @Override
+        public void computed(@NotNull VirtualFile file, @NotNull Document document, int line) {
+          final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+          final TObjectLongHashMap<VirtualFile> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+          if (map == null || timestamps == null) {
+            return;
+          }
 
-          if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-            class ValueDeclaration implements XInlineSourcePosition {
-              @Override
-              public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
-                final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map =
-                  myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-                final Map<VirtualFile, Long> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
-                if (map == null || timestamps == null || sourcePosition == null) return;
-                VirtualFile file = sourcePosition.getFile();
-                if (!Comparing.equal(debuggerPosition.getFile(), sourcePosition.getFile())) return;
-                final Document doc = FileDocumentManager.getInstance().getDocument(file);
-                if (doc == null) return;
-                int line = sourcePosition.getLine();
-                callback.computed(file, doc, line);
-              }
-            }
-            class NearestValuePosition extends ValueDeclaration implements XNearestSourcePosition {}
-            getValueContainer().computeSourcePosition(new ValueDeclaration());
-            getValueContainer().computeSourcePosition(new NearestValuePosition());
+          Pair<VirtualFile, Integer> key = Pair.create(file, line);
+          Set<XValueNodeImpl> presentations = new LinkedHashSet<XValueNodeImpl>();
+          Set<XValueNodeImpl> old = map.put(key, presentations);
+          timestamps.put(file, document.getModificationStamp());
+          presentations.add(XValueNodeImpl.this);
+          if (old != null) {
+            presentations.addAll(old);
+          }
+          myTree.updateEditor();
+        }
+      };
+
+      if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
+        class ValueDeclaration implements XInlineSourcePosition {
+          @Override
+          public void setSourcePosition(@Nullable XSourcePosition sourcePosition) {
+            final Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>> map =
+              myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
+            final TObjectLongHashMap<VirtualFile> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
+            if (map == null || timestamps == null || sourcePosition == null) return;
+            VirtualFile file = sourcePosition.getFile();
+            if (!Comparing.equal(debuggerPosition.getFile(), sourcePosition.getFile())) return;
+            final Document doc = FileDocumentManager.getInstance().getDocument(file);
+            if (doc == null) return;
+            int line = sourcePosition.getLine();
+            callback.computed(file, doc, line);
           }
         }
+        class NearestValuePosition extends ValueDeclaration implements XNearestSourcePosition {}
+        getValueContainer().computeSourcePosition(new ValueDeclaration());
+        getValueContainer().computeSourcePosition(new NearestValuePosition());
       }
     }
     catch (Exception ignore) {
@@ -190,7 +192,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   @Override
   public void setFullValueEvaluator(@NotNull final XFullValueEvaluator fullValueEvaluator) {
-    AppUIUtil.invokeOnEdt(new Runnable() {
+    invokeNodeUpdate(new Runnable() {
       @Override
       public void run() {
         myFullValueEvaluator = fullValueEvaluator;
@@ -215,7 +217,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private void appendName() {
     if (!StringUtil.isEmpty(myName)) {
       SimpleTextAttributes attributes = myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES;
-      XValuePresentationUtil.renderValue(myName, myText, attributes, MAX_VALUE_LENGTH, null);
+      XValuePresentationUtil.renderValue(myName, myText, attributes, MAX_NAME_LENGTH, null);
     }
   }
 
@@ -256,6 +258,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   protected XDebuggerTreeNodeHyperlink getLink() {
     if (myFullValueEvaluator != null) {
       return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText()) {
+        @Override
+        public boolean alwaysOnScreen() {
+          return true;
+        }
+
         @Override
         public void onClick(MouseEvent event) {
           if (myFullValueEvaluator.isShowValuePopup()) {

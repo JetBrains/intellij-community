@@ -1,4 +1,4 @@
-// "Create Inner Class 'Foo'" "true"
+// "Create inner class 'Foo'" "true"
 public interface Test {
   void foo(Fo<caret>o f){}
 

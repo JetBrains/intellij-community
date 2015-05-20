@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.AppUIUtil;
@@ -24,6 +25,7 @@ import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
@@ -40,7 +42,7 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final XValueModifier myModifier;
   private final XValueNodeImpl myValueNode;
 
-  public SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {
+  private SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {
     super(node, "setValue");
     myValueNode = node;
     myModifier = myValueNode.getValueContainer().getModifier();
@@ -57,9 +59,36 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myEditorPanel.add(nameLabel, BorderLayout.WEST);
 
     myEditorPanel.add(myExpressionEditor.getComponent(), BorderLayout.CENTER);
-    final String value = myModifier != null ? myModifier.getInitialValueEditorText() : null;
-    myExpressionEditor.setExpression(XExpressionImpl.fromText(value));
+  }
+
+  public static void show(final XValueNodeImpl node, @NotNull final String nodeName) {
+    final SetValueInplaceEditor editor = new SetValueInplaceEditor(node, nodeName);
+
+    if (editor.myModifier != null) {
+      editor.myModifier.calculateInitialValueEditorText(new XValueModifier.XInitialValueCallback() {
+        @Override
+        public void setValue(final String initialValue) {
+          AppUIUtil.invokeOnEdt(new Runnable() {
+            @Override
+            public void run() {
+              if (editor.getTree().isShowing()) {
+                editor.show(initialValue);
+              }
+            }
+          });
+        }
+      });
+    }
+    else {
+      editor.show(null);
+    }
+  }
+
+  private void show(String initialValue) {
+    myExpressionEditor.setExpression(XExpressionImpl.fromText(initialValue));
     myExpressionEditor.selectAll();
+
+    show();
   }
 
   @Override
@@ -77,12 +106,14 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     myModifier.setValue(myExpressionEditor.getExpression().getExpression(), new XValueModifier.XModificationCallback() {
       @Override
       public void valueModified() {
-        AppUIUtil.invokeOnEdt(new Runnable() {
-          @Override
-          public void run() {
-            myTree.rebuildAndRestore(treeState);
-          }
-        });
+        if (isDetachedTree(myTree)) {
+          AppUIUtil.invokeOnEdt(new Runnable() {
+            @Override
+            public void run() {
+              myTree.rebuildAndRestore(treeState);
+            }
+          });
+        }
         XDebuggerUtilImpl.rebuildAllSessionsViews(getProject());
       }
 
@@ -103,6 +134,10 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
           }
         });
         XDebuggerUtilImpl.rebuildAllSessionsViews(getProject());
+      }
+
+      boolean isDetachedTree(XDebuggerTree tree) {
+        return XDebugSessionTab.TAB_KEY.getData(DataManager.getInstance().getDataContext(tree)) == null;
       }
     });
     super.doOKAction();

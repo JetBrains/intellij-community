@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package com.intellij.formatting;
  * is inserted before the block when formatting, if the block extends beyond the
  * right margin.
  *
- * @see com.intellij.formatting.Block#getWrap()
+ * @see Block#getWrap()
  */
 public abstract class Wrap {
   /**
@@ -30,22 +30,6 @@ public abstract class Wrap {
   public abstract void ignoreParentWraps();
 
   private static WrapFactory myFactory;
-
-  /** @deprecated use {@link WrapType#ALWAYS} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration"})
-  public static WrapType ALWAYS = WrapType.ALWAYS;
-
-  /** @deprecated use {@link WrapType#NORMAL} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration"})
-  public static WrapType NORMAL = WrapType.NORMAL;
-
-  /** @deprecated use {@link WrapType#NONE} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration"})
-  public static WrapType NONE = WrapType.NONE;
-
-  /** @deprecated use {@link WrapType#CHOP_DOWN_IF_LONG} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration"})
-  public static WrapType CHOP_DOWN_IF_LONG = WrapType.CHOP_DOWN_IF_LONG;
 
   static void setFactory(WrapFactory factory) {
     myFactory = factory;

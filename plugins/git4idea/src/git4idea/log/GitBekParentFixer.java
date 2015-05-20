@@ -24,7 +24,9 @@ import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 class GitBekParentFixer {
   @NotNull private static final String MAGIC_TEXT = "Merge remote";
@@ -133,6 +135,12 @@ class GitBekParentFixer {
       @Nullable
       @Override
       public VcsLogStructureFilter getStructureFilter() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public VcsLogRootFilter getRootFilter() {
         return null;
       }
 

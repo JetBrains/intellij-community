@@ -27,7 +27,7 @@ public class XmlInspectionSuppressor implements InspectionSuppressor{
 
   @NotNull
   @Override
-  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolShortName) {
-    return XmlSuppressableInspectionTool.getSuppressFixes(toolShortName);
+  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+    return XmlSuppressableInspectionTool.getSuppressFixes(toolId);
   }
 }

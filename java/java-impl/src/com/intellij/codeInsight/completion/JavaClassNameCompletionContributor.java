@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
@@ -36,10 +37,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiClass;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
@@ -50,6 +55,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
       psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
           psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
+  private static final ElementPattern<PsiElement> IN_EXTENDS_IMPLEMENTS =
+    psiElement().inside(psiElement(PsiReferenceList.class).withParent(psiClass()));
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet _result) {
@@ -86,6 +93,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
     final PsiElement insertedElement = parameters.getPosition();
 
     final ElementFilter filter =
+      IN_EXTENDS_IMPLEMENTS.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiClass.class)) :
       IN_TYPE_PARAMETER.accepts(insertedElement) ? new ExcludeDeclaredFilter(new ClassFilter(PsiTypeParameter.class)) :
       JavaCompletionContributor.ANNOTATION_NAME.accepts(insertedElement) ? new AnnotationTypeFilter() :
       TrueFilter.INSTANCE;
@@ -112,26 +120,57 @@ public class JavaClassNameCompletionContributor extends CompletionContributor {
 
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
     AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<PsiClass>() {
-        @Override
-        public void consume(PsiClass psiClass) {
-          if (filter.isAcceptable(psiClass, insertedElement)) {
-            if (!inJavaContext) {
-              consumer.consume(AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING));
-            } else {
-              for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew,
-                                                                                 JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER, new Condition<PsiClass>() {
+      @Override
+      public void consume(PsiClass psiClass) {
+        processClass(psiClass, null, "");
+      }
+
+      private void processClass(PsiClass psiClass, @Nullable Set<PsiClass> visited, String prefix) {
+        boolean isInnerClass = StringUtil.isNotEmpty(prefix);
+        if (isInnerClass && isProcessedIndependently(psiClass)) {
+          return;
+        }
+
+        if (filter.isAcceptable(psiClass, insertedElement)) {
+          if (!inJavaContext) {
+            JavaPsiClassReferenceElement element = AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING);
+            element.setLookupString(prefix + element.getLookupString());
+            consumer.consume(element);
+          } else {
+            for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew,
+                                                                               JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER, new Condition<PsiClass>() {
                 @Override
                 public boolean value(PsiClass psiClass) {
                   return filter.isAcceptable(psiClass, insertedElement) &&
                          AllClassesGetter.isAcceptableInContext(insertedElement, psiClass, filterByScope, pkgContext);
                 }
               })) {
-                consumer.consume(element);
+              element.setLookupString(prefix + element.getLookupString());
+              consumer.consume(element);
+            }
+          }
+        } else {
+          String name = psiClass.getName();
+          if (name != null) {
+            PsiClass[] innerClasses = psiClass.getInnerClasses();
+            if (innerClasses.length > 0) {
+              if (visited == null) visited = ContainerUtil.newHashSet();
+
+              for (PsiClass innerClass : innerClasses) {
+                if (visited.add(innerClass)) {
+                  processClass(innerClass, visited, prefix + name + ".");
+                }
               }
             }
           }
         }
-      });
+      }
+
+      private boolean isProcessedIndependently(PsiClass psiClass) {
+        String innerName = psiClass.getName();
+        return innerName != null && matcher.prefixMatches(innerName);
+      }
+    });
   }
 
   static LookupElement highlightIfNeeded(JavaPsiClassReferenceElement element, CompletionParameters parameters) {

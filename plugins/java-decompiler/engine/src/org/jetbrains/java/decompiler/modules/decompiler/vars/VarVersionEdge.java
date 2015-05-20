@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ public class VarVersionEdge { // FIXME: can be removed?
   public static final int EDGE_GENERAL = 0;
   public static final int EDGE_PHANTOM = 1;
 
-  public int type;
+  public final int type;
 
-  public VarVersionNode source;
+  public final VarVersionNode source;
 
-  public VarVersionNode dest;
+  public final VarVersionNode dest;
 
-  private int hashCode;
+  private final int hashCode;
 
   public VarVersionEdge(int type, VarVersionNode source, VarVersionNode dest) {
     this.type = type;

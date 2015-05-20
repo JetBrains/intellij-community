@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -104,9 +105,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   public void documentChanged(DocumentEvent event) {
     super.documentChanged(event);
-    // avoid documents piling up during batch processing
+    // optimisation: avoid documents piling up during batch processing
     if (FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
       if (myUnitTestMode) {
+        myStopTrackingDocuments = true;
         try {
           LOG.error("Too many uncommitted documents for " + myProject + ":\n" + myUncommittedDocuments);
         }
@@ -114,7 +116,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
           clearUncommittedDocuments();
         }
       }
-      commitAllDocuments();
+      // must not commit during document save
+      if (PomModelImpl.isAllowPsiModification()) {
+        commitAllDocuments();
+      }
     }
   }
 

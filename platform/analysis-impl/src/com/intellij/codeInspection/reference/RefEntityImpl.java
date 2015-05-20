@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@
  */
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.BitUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,20 +35,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class RefEntityImpl implements RefEntity {
-  private static final String NO_NAME = InspectionsBundle.message("inspection.reference.noname");
-  private RefEntityImpl myOwner;
-  protected List<RefEntity> myChildren;
+abstract class RefEntityImpl implements RefEntity {
+  private volatile RefEntityImpl myOwner;
+  protected List<RefEntity> myChildren;  // guarded by this
   private final String myName;
-  private Map<Key, Object> myUserMap;
-  protected int myFlags = 0;
+  private Map<Key, Object> myUserMap;    // guarded by this
+  protected long myFlags;
   protected final RefManagerImpl myManager;
 
-  protected RefEntityImpl(String name, @NotNull RefManager manager) {
+  RefEntityImpl(@NotNull String name, @NotNull RefManager manager) {
     myManager = (RefManagerImpl)manager;
-    myName = name != null ? name : NO_NAME;
-    myOwner = null;
-    myChildren = null;
+    myName = name;
   }
 
   @NotNull
@@ -64,7 +61,7 @@ public abstract class RefEntityImpl implements RefEntity {
   }
 
   @Override
-  public List<RefEntity> getChildren() {
+  public synchronized List<RefEntity> getChildren() {
     return myChildren;
   }
 
@@ -73,11 +70,11 @@ public abstract class RefEntityImpl implements RefEntity {
     return myOwner;
   }
 
-  protected void setOwner(RefEntityImpl owner) {
+  protected void setOwner(@Nullable final RefEntityImpl owner) {
     myOwner = owner;
   }
 
-  public void add(RefEntity child) {
+  public synchronized void add(@NotNull final RefEntity child) {
     if (myChildren == null) {
       myChildren = new ArrayList<RefEntity>(1);
     }
@@ -86,7 +83,7 @@ public abstract class RefEntityImpl implements RefEntity {
     ((RefEntityImpl)child).setOwner(this);
   }
 
-  protected void removeChild(RefEntity child) {
+  protected synchronized void removeChild(@NotNull final RefEntity child) {
     if (myChildren != null) {
       myChildren.remove(child);
       ((RefEntityImpl)child).setOwner(null);
@@ -137,17 +134,12 @@ public abstract class RefEntityImpl implements RefEntity {
     }
   }
 
-  public boolean checkFlag(int mask) {
-    return (myFlags & mask) != 0;
+  public boolean checkFlag(long mask) {
+    return BitUtil.isSet(myFlags, mask);
   }
 
-  public void setFlag(boolean b, int mask) {
-    if (b) {
-      myFlags |= mask;
-    }
-    else {
-      myFlags &= ~mask;
-    }
+  public void setFlag(final boolean value, final long mask) {
+    myFlags = BitUtil.set(myFlags, mask, value);
   }
 
   @Override

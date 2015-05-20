@@ -172,9 +172,9 @@ public class UpdaterTreeState {
 
     final Set<Object> originallySelected = myUi.getSelectedElements();
 
-    myUi._select(toSelect, new Runnable() {
+    myUi._select(toSelect, new TreeRunnable("UpdaterTreeState.restore") {
       @Override
-      public void run() {
+      public void perform() {
         processUnsuccessfulSelections(toSelect, new Function<Object, Object>() {
           @Override
           public Object fun(final Object o) {
@@ -185,12 +185,12 @@ public class UpdaterTreeState {
           }
         }, originallySelected);
 
-        processAjusted(adjusted, originallySelected).doWhenDone(new Runnable() {
+        processAjusted(adjusted, originallySelected).doWhenDone(new TreeRunnable("UpdaterTreeState.restore: on done") {
           @Override
-          public void run() {
-            myUi.expand(toExpand, new Runnable() {
+          public void perform() {
+            myUi.expand(toExpand, new TreeRunnable("UpdaterTreeState.restore: after on done") {
               @Override
-              public void run() {
+              public void perform() {
                 myUi.clearUpdaterState();
                 setProcessingNow(false);
               }
@@ -272,9 +272,9 @@ public class UpdaterTreeState {
     final Object[] newSelection = ArrayUtil.toObjectArray(toSelect);
 
     if (newSelection.length > 0) {
-      myUi._select(newSelection, new Runnable() {
+      myUi._select(newSelection, new TreeRunnable("UpdaterTreeState.processAjusted") {
         @Override
-        public void run() {
+        public void perform() {
           final Set<Object> hangByParent = new HashSet<Object> ();
           processUnsuccessfulSelections(newSelection, new Function<Object, Object>() {
             @Override
@@ -327,9 +327,9 @@ public class UpdaterTreeState {
       if (nextElement == null) {
         callback.setDone();
       } else {
-       myUi.select(nextElement, new Runnable() {
+       myUi.select(nextElement, new TreeRunnable("UpdaterTreeState.processNextHang") {
           @Override
-          public void run() {
+          public void perform() {
             processNextHang(nextElement, callback);
           }
         }, true);

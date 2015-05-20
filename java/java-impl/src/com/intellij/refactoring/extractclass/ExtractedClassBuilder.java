@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractclass;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -169,7 +170,7 @@ class ExtractedClassBuilder {
   }
 
   private String getterName() {//todo unique getterName: see also com.intellij.refactoring.extractclass.usageInfo.ReplaceStaticVariableAccess
-    return PropertyUtil.suggestGetterName("value", myEnumParameterType);
+    return GenerateMembersUtil.suggestGetterName("value", myEnumParameterType, myProject);
   }
 
   private boolean hasEnumConstants() {
@@ -286,12 +287,12 @@ class ExtractedClassBuilder {
       field.accept(new Mutator(out));
 
       if (myFieldsNeedingGetter != null && myFieldsNeedingGetter.contains(field)) {
-        out.append(PropertyUtil.generateGetterPrototype(field).getText());
+        out.append(GenerateMembersUtil.generateGetterPrototype(field).getText());
         out.append("\n");
       }
 
       if (myFieldsNeedingSetters != null && myFieldsNeedingSetters.contains(field)) {
-        out.append(PropertyUtil.generateSetterPrototype(field).getText());
+        out.append(GenerateMembersUtil.generateSetterPrototype(field).getText());
         out.append("\n");
       }
     }
@@ -433,7 +434,7 @@ class ExtractedClassBuilder {
               }
             }
             else {
-              out.append(backPointerName + '.' + PropertyUtil.suggestGetterName(field) + "()");
+              out.append(backPointerName + '.' + GenerateMembersUtil.suggestGetterName(field) + "()");
             }
           }
         }
@@ -476,16 +477,16 @@ class ExtractedClassBuilder {
     private void delegate(final PsiExpression rhs, final PsiField field, final PsiJavaToken sign, final IElementType tokenType,
                           final String fieldName) {
       if (tokenType.equals(JavaTokenType.EQ)) {
-        final String setterName = PropertyUtil.suggestSetterName(field);
+        final String setterName = GenerateMembersUtil.suggestSetterName(field);
         out.append(fieldName + '.' + setterName + '(');
         rhs.accept(this);
         out.append(')');
       }
       else {
         final String operator = sign.getText().substring(0, sign.getTextLength() - 1);
-        final String setterName = PropertyUtil.suggestSetterName(field);
+        final String setterName = GenerateMembersUtil.suggestSetterName(field);
         out.append(fieldName + '.' + setterName + '(');
-        final String getterName = PropertyUtil.suggestGetterName(field);
+        final String getterName = GenerateMembersUtil.suggestGetterName(field);
         out.append(fieldName + '.' + getterName + "()");
         out.append(operator);
         rhs.accept(this);
@@ -521,10 +522,10 @@ class ExtractedClassBuilder {
         assert field != null;
         if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           out.append(backPointerName +
-                     '.' + PropertyUtil.suggestSetterName(field) +
+                     '.' + GenerateMembersUtil.suggestSetterName(field) +
                      '(' +
                      backPointerName +
-                     '.' + PropertyUtil.suggestGetterName(field) +
+                     '.' + GenerateMembersUtil.suggestGetterName(field) +
                      "()" +
                      operator +
                      "1)");

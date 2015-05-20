@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ModalityHelper;
+import com.intellij.ui.MessageException;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
@@ -332,7 +333,7 @@ public class MacMessagesImpl extends MacMessages {
           method.invoke(theQueue, event);
         }
       }
-      catch (MacMessageException mme) {
+      catch (MessageException mme) {
         throw mme;
       }
       catch (Throwable e) {
@@ -428,7 +429,7 @@ public class MacMessagesImpl extends MacMessages {
 
     private ID getParamsAsID() {
       if (window == null) {
-        throw new MacMessageException("Window should be in the list.");
+        throw new MessageException("Window should be in the list.");
       }
       params.put(COMMON_DIALOG_PARAM_TYPE.nativeFocusedWindow, window);
 
@@ -598,7 +599,7 @@ public class MacMessagesImpl extends MacMessages {
         //}
         queuesFromDocumentRoot.remove(documentRoot);
         if (blockedDocumentRoots.remove(documentRoot) != null) {
-          throw new MacMessageException("Owner window has been removed");
+          throw new MessageException("Owner window has been removed");
         }
       }
     });
@@ -732,7 +733,7 @@ public class MacMessagesImpl extends MacMessages {
     if (SystemInfo.isAppleJvm && MacUtil.getWindowTitle(_window) == null) {
       // With Apple JDK we cannot find a window if it does not have a title
       // Let's show a dialog instead of the message.
-      throw new MacMessageException("MacMessage parent does not have a title.");
+      throw new MessageException("MacMessage parent does not have a title.");
     }
     while (_window != null && MacUtil.getWindowTitle(_window) == null) {
       _window = _window.getOwner();

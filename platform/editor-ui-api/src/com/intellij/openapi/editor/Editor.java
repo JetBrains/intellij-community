@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
@@ -68,7 +69,7 @@ public interface Editor extends UserDataHolder {
   /**
    * Returns the component for the content area of the editor (the area displaying the document text).
    * The component can be used, for example, for converting logical to screen coordinates.
-   * The instance is implementing {@link com.intellij.openapi.actionSystem.DataProvider}
+   * The instance is implementing {@link DataProvider}
    *
    * @return the component instance.
    */
@@ -82,7 +83,11 @@ public interface Editor extends UserDataHolder {
   /**
    * Returns the selection model for the editor, which can be used to select ranges of text in
    * the document and retrieve information about the selection.
+   * <p>
+   * To query or change selections for specific carets, {@link CaretModel} interface should be used.
    *
+   * @see #getCaretModel()
+   * 
    * @return the selection model instance.
    */
   @NotNull
@@ -118,8 +123,8 @@ public interface Editor extends UserDataHolder {
   ScrollingModel getScrollingModel();
 
   /**
-   * Returns the caret model for the document, which can be used to move the caret and
-   * retrieve information about the caret position.
+   * Returns the caret model for the document, which can be used to add and remove carets to the editor, as well as to query and update 
+   * carets' and corresponding selections' positions.
    *
    * @return the caret model instance.
    */
@@ -336,12 +341,12 @@ public interface Editor extends UserDataHolder {
   void setHeaderComponent(@Nullable JComponent header);
 
   /**
-   * @return <code>true</code> if this editor has active header component set up by {@link #setHeaderComponent(javax.swing.JComponent)}
+   * @return <code>true</code> if this editor has active header component set up by {@link #setHeaderComponent(JComponent)}
    */
   boolean hasHeaderComponent();
 
   /**
-   * @return a component set by {@link #setHeaderComponent(javax.swing.JComponent)} or <code>null</code> if no header currently installed.
+   * @return a component set by {@link #setHeaderComponent(JComponent)} or <code>null</code> if no header currently installed.
    */
   @Nullable
   JComponent getHeaderComponent();

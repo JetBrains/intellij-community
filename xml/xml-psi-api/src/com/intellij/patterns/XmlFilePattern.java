@@ -39,7 +39,7 @@ public class XmlFilePattern<Self extends XmlFilePattern<Self>> extends PsiFilePa
       @Override
       public boolean accepts(@NotNull final XmlFile xmlFile, final ProcessingContext context) {
         XmlDocument document = xmlFile.getDocument();
-        return document != null && rootTag.getCondition().accepts(document.getRootTag(), context);
+        return document != null && rootTag.accepts(document.getRootTag(), context);
       }
     });
   }

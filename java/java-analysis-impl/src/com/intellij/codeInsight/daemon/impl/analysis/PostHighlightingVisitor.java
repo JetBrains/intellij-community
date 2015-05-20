@@ -313,12 +313,14 @@ class PostHighlightingVisitor {
       return null;
     }
     if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+      final QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
       if (!myRefCountHolder.isReferenced(field) && !UnusedSymbolUtil.isImplicitUsage(myProject, field, progress)) {
         String message = JavaErrorMessages.message("private.field.is.not.used", identifier.getText());
 
         HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, identifier, message);
-        if (!field.hasInitializer()) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), QuickFixFactory.getInstance().createCreateConstructorParameterFromFieldFix(field));
+        if (!field.hasInitializer() && !field.hasModifierProperty(PsiModifier.FINAL)) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), 
+                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field));
         }
         return highlightInfo;
       }
@@ -337,14 +339,15 @@ class PostHighlightingVisitor {
         String message = JavaErrorMessages.message("private.field.is.not.assigned", identifier.getText());
         final HighlightInfo info = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
 
-        QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
-        QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), QuickFixFactory.getInstance().createCreateConstructorParameterFromFieldFix(
-          field));
+        QuickFixAction.registerQuickFixAction(info, quickFixFactory.createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
+        if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+          QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), 
+                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field));
+        }
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
           @Override
           public boolean process(final String annoName) {
-            QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance()
-              .createAddToDependencyInjectionAnnotationsFix(project, annoName, "fields"));
+            QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToDependencyInjectionAnnotationsFix(project, annoName, "fields"));
             return true;
           }
         });

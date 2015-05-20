@@ -22,7 +22,11 @@ import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgCommitCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.repo.HgRepositoryImpl;
+import org.zmlx.hg4idea.util.HgEncodingUtil;
 
+import java.nio.charset.Charset;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.cd;
@@ -37,7 +41,8 @@ public class HgEncodingTest extends HgPlatformTest {
   public void testCommitUtfMessage() throws HgCommandException, VcsException {
     cd(myRepository);
     echo("file.txt", "lalala");
-    HgCommitCommand commitCommand = new HgCommitCommand(myProject, myRepository, "сообщение");
+    HgRepository hgRepo = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
+    HgCommitCommand commitCommand = new HgCommitCommand(myProject, hgRepo, "сообщение");
     commitCommand.execute();
   }
 
@@ -46,14 +51,17 @@ public class HgEncodingTest extends HgPlatformTest {
     cd(myRepository);
     String fileName = "file.txt";
     echo(fileName, "lalala");
+    Charset charset = HgEncodingUtil.getDefaultCharset(myProject);
     String comment = "öäüß";
-    HgCommitCommand commitCommand = new HgCommitCommand(myProject, myRepository, comment);
+    HgRepository hgRepo = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
+    HgCommitCommand commitCommand = new HgCommitCommand(myProject, hgRepo, comment);
     commitCommand.execute();
     HgLogCommand logCommand = new HgLogCommand(myProject);
+    myRepository.refresh(false, true);
     VirtualFile file = myRepository.findChild(fileName);
     assert file != null;
     List<HgFileRevision> revisions = logCommand.execute(new HgFile(myProject, file), 1, false);
     HgFileRevision rev = revisions.get(0);
-    assertEquals(comment, rev.getCommitMessage());
+    assertEquals(new String(comment.getBytes(charset)), rev.getCommitMessage());
   }
 }

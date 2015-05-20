@@ -18,12 +18,15 @@ package com.jetbrains.python.refactoring.classes.membersManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -97,5 +100,28 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
     }
     MembersManager.moveAllMembers(myMembersToMove, myFrom, destinations.toArray(new PyClass[destinations.size()]));
     PyClassRefactoringUtil.optimizeImports(myFrom.getContainingFile()); // To remove unneeded imports
+  }
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getBeforeData() {
+    RefactoringEventData data = new RefactoringEventData();
+    data.addElement(myFrom);
+    data.addMembers(myMembersToMove.toArray(new PyMemberInfo[myMembersToMove.size()]), new Function<PyMemberInfo, PsiElement>() {
+      @Override
+      public PsiElement fun(PyMemberInfo info) {
+        return info.getMember();
+      }
+    });
+    return data;
+  }
+
+
+  @Nullable
+  @Override
+  protected RefactoringEventData getAfterData(UsageInfo[] usages) {
+    final RefactoringEventData data = new RefactoringEventData();
+    data.addElements(myTo);
+    return data;
   }
 }

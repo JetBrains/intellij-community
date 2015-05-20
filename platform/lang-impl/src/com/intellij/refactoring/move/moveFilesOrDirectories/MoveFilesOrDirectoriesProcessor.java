@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
@@ -166,7 +167,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
         else if (element instanceof PsiFile) {
           final PsiFile movedFile = (PsiFile)element;
-          FileReferenceContextUtil.encodeFileReferences(element);
+          if (mySearchForReferences) FileReferenceContextUtil.encodeFileReferences(element);
           MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, myNewParent, oldToNewMap);
 
           PsiFile moving = myNewParent.findFile(movedFile.getName());
@@ -185,10 +186,14 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       // fix references in moved files to outer files
       for (PsiFile movedFile : movedFiles) {
         MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
-        FileReferenceContextUtil.decodeFileReferences(movedFile);
+        if (mySearchForReferences) FileReferenceContextUtil.decodeFileReferences(movedFile);
       }
 
       retargetUsages(usages, oldToNewMap);
+
+      if (MoveFilesOrDirectoriesDialog.isOpenInEditor() && !movedFiles.isEmpty()) {
+        EditorHelper.openInEditor(movedFiles.get(0));
+      }
 
       // Perform CVS "add", "remove" commands on moved files.
 
@@ -238,10 +243,10 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return data;
   }
 
-  private static void processDirectoryFiles(List<PsiFile> movedFiles, Map<PsiElement, PsiElement> oldToNewMap, PsiElement psiElement) {
+  private void processDirectoryFiles(List<PsiFile> movedFiles, Map<PsiElement, PsiElement> oldToNewMap, PsiElement psiElement) {
     if (psiElement instanceof PsiFile) {
       final PsiFile movedFile = (PsiFile)psiElement;
-      FileReferenceContextUtil.encodeFileReferences(psiElement);
+      if (mySearchForReferences) FileReferenceContextUtil.encodeFileReferences(psiElement);
       MoveFileHandler.forElement(movedFile).prepareMovedFile(movedFile, movedFile.getParent(), oldToNewMap);
       movedFiles.add(movedFile);
     }

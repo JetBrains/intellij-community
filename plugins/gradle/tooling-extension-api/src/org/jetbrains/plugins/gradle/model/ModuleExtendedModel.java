@@ -16,10 +16,13 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.model.DomainObjectSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @deprecated Use {@link com.intellij.openapi.externalSystem.model.ExternalProject} model instead.
@@ -77,4 +80,19 @@ public interface ModuleExtendedModel extends Serializable {
    * @return the compiler output directories.
    */
   ExtIdeaCompilerOutput getCompilerOutput();
+
+  /**
+   * The artifacts per configuration.
+   *
+   * @return a mapping between the name of a configuration and the files associated with it.
+   */
+  Map<String, Set<File>> getArtifactsByConfiguration();
+
+  /**
+   * Java source compatibility for the module. It may be {@code null}.
+   *
+   * @return the Java source compatibility for the module, or {@code null} if none was found.
+   */
+  @Nullable
+  String getJavaSourceCompatibility();
 }

@@ -34,14 +34,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.io.HttpRequests;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.net.NetUtils;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -67,7 +67,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
   @NotNull
   @Override
   public Collection<AttachSourcesAction> getActions(List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
-    VirtualFile jar = getJarByPsiFile(psiFile);
+    final VirtualFile jar = getJarByPsiFile(psiFile);
     if (jar == null) return Collections.emptyList();
 
     final String jarName = jar.getNameWithoutExtension();
@@ -145,7 +145,7 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
             SourceSearcher[] searchers = {new MavenCentralSourceSearcher(), new SonatypeSourceSearcher()};
             for (SourceSearcher searcher : searchers) {
               try {
-                artifactUrl = searcher.findSourceJar(indicator, artifactId, version);
+                artifactUrl = searcher.findSourceJar(indicator, artifactId, version, jar);
               }
               catch (SourceSearchException e) {
                 LOG.warn(e);
@@ -167,21 +167,8 @@ public class InternetAttachSourceProvider implements AttachSourcesProvider {
             }
 
             try {
-              File tmpDownload = HttpRequests.request(artifactUrl).connect(new HttpRequests.RequestProcessor<File>() {
-                @Override
-                public File process(@NotNull HttpRequests.Request request) throws IOException {
-                  File tmpDownload = FileUtil.createTempFile(libSourceDir, "download.", ".tmp", false, false);
-                  OutputStream out = new BufferedOutputStream(new FileOutputStream(tmpDownload));
-                  try {
-                    NetUtils.copyStreamContent(indicator, request.getInputStream(), out, request.getConnection().getContentLength());
-                  }
-                  finally {
-                    out.close();
-                  }
-                  return tmpDownload;
-                }
-              });
-
+              File tmpDownload = FileUtil.createTempFile(libSourceDir, "download.", ".tmp", false, false);
+              HttpRequests.request(artifactUrl).saveToFile(tmpDownload, indicator);
               if (!sourceFile.exists() && !tmpDownload.renameTo(sourceFile)) {
                 LOG.warn("Failed to rename file " + tmpDownload + " to " + sourceFileName);
               }

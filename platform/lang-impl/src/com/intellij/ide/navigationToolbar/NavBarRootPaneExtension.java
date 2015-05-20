@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -146,7 +147,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         myRunPanel.setOpaque(false);
         myRunPanel.add(component, BorderLayout.CENTER);
 
-        myRunPanel.setBorder(BorderFactory.createEmptyBorder(0, needGap ? 5 : 1, 0, 0));
+        myRunPanel.setBorder(JBUI.Borders.empty(0, needGap ? 5 : 1, 0, 0));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
       }
     }
@@ -246,7 +247,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
         myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         myScrollPane.setHorizontalScrollBar(null);
-        myScrollPane.setBorder(new NavBarBorder(true, 0));
+        myScrollPane.setBorder(new NavBarBorder());
         myScrollPane.setOpaque(false);
         myScrollPane.getViewport().setOpaque(false);
         myScrollPane.setViewportBorder(null);

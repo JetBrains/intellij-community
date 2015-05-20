@@ -1,0 +1,80 @@
+public class TestInnerSignature<A, B, C> {
+   A a;
+   B b;
+   C c;
+
+   public TestInnerSignature(A var1, B var2, C var3) {
+      this.a = var1;// 23
+      this.b = var2;// 24
+      this.c = var3;// 25
+   }// 26
+
+   public static class InnerStatic<A, B, C> {
+      A a;
+      B b;
+      C c;
+
+      public InnerStatic(A var1, B var2, C var3) {
+         this.a = var1;// 46
+         this.b = var2;// 47
+         this.c = var3;// 48
+      }// 49
+   }
+
+   public class Inner {
+      A a;
+      B b;
+      C c;
+
+      public Inner(A var1, B var2, C var3) {
+         this.a = var2;// 34
+         this.b = var3;// 35
+         this.c = var4;// 36
+      }// 37
+   }
+}
+
+class 'TestInnerSignature' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+      6      6
+      b      7
+      10      8
+      13      9
+   }
+}
+
+class 'TestInnerSignature$InnerStatic' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+      6      17
+      b      18
+      10      19
+      13      20
+   }
+}
+
+class 'TestInnerSignature$Inner' {
+   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+      b      29
+      10      30
+      16      31
+      19      32
+   }
+}
+
+Lines mapping:
+23 <-> 7
+24 <-> 8
+25 <-> 9
+26 <-> 10
+34 <-> 30
+35 <-> 31
+36 <-> 32
+37 <-> 33
+46 <-> 18
+47 <-> 19
+48 <-> 20
+49 <-> 21
+Not mapped:
+22
+33
+45

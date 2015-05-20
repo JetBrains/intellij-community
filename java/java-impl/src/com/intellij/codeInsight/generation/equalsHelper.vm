@@ -1,0 +1,49 @@
+#set($classInstanceName = $helper.getUniqueLocalVarName($instanceBaseName, $fields, $settings))
+#set($paramName = $helper.getUniqueLocalVarName($baseParamName, $fields, $settings))
+#macro(addClassInstance)
+  #if ($settings.generateFinalLocals)
+  final ##
+  #end
+  #set($wildcards = "#generateWildcards()")
+  $classname$wildcards $classInstanceName = ($classname$wildcards)$paramName;
+#end
+##
+#macro(generateWildcards)
+  #if ($class.typeParams > 0)
+  <##
+    #set( $arr = [1..$class.typeParams] )
+    #foreach( $i in $arr )
+      #if ($i > 1)
+      , ##
+      #end
+      ?##
+    #end
+  >##
+  #end
+#end
+##
+#macro(addEqualsPrologue)
+if(this == $paramName) return true;
+  #addInstanceOfToText()
+  #if ($superHasEquals)
+    if(!super.equals($paramName)) return false;
+  #end
+#end
+##
+#macro(addInstanceOfToText)
+  #if ($checkParameterWithInstanceof)
+  if(!($paramName instanceof $classname)) return false;
+  #else
+  if($paramName == null || getClass() != ${paramName}.getClass()) return false;
+  #end
+#end
+#macro(addPrimitiveFieldComparisonCondition $field)
+  $field.accessor != ${classInstanceName}.$field.accessor ##
+#end
+#macro(addDoubleFieldComparisonCondition $field)
+  #if ($field.double)
+  Double.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0 ##
+  #else
+  Float.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0 ##
+  #end
+#end

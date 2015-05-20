@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -129,7 +130,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
       }
     }
     if (!oldPlugins.isEmpty()) {
-      final File tempFile = File.createTempFile("installed", "plugins");
+      File tempFile = FileUtil.createTempFile("installed", "plugins");
       tempFile.deleteOnExit();
       PluginManagerCore.savePluginsList(oldPlugins, false, tempFile);
       ZipUtil.addDirToZipRecursively(output, saveFile, tempFile, "/" + PluginManager.INSTALLED_TXT, null, writtenItemRelativePaths);
@@ -169,13 +170,8 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
           int storageIndex;
           Storage[] storages = stateAnnotation.storages();
-          if (storages.length == 1) {
+          if (storages.length == 1 || (storages.length > 1 && stateAnnotation.storageChooser() == StateStorageChooser.class)) {
             storageIndex = 0;
-          }
-          else if (storages.length > 1 &&
-                   (stateAnnotation.storageChooser() == LastStorageChooserForWrite.class ||
-                    stateAnnotation.storageChooser() == LastStorageChooserForWrite.ElementStateLastStorageChooserForWrite.class)) {
-            storageIndex = storages.length - 1;
           }
           else {
             return true;
@@ -251,12 +247,23 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     ClassLoader classLoader = pluginDescriptor == null ? null : pluginDescriptor.getPluginClassLoader();
     classLoader = classLoader == null ? aClass.getClassLoader() : classLoader;
     if (classLoader != null) {
-      ResourceBundle bundle = AbstractBundle.getResourceBundle(resourceBundleName, classLoader);
-      if (bundle != null) {
-        return CommonBundle.messageOrDefault(bundle, "exportable." + defaultName + ".presentable.name", defaultName);
+      String message = messageOrDefault(classLoader, resourceBundleName, defaultName);
+      if (message != defaultName) {
+        return message;
+      }
+
+      if (PlatformUtils.isRubyMine()) {
+        // ruby plugin in RubyMine has id "com.intellij", so, we cannot set "resource-bundle" in plugin.xml
+        return messageOrDefault(classLoader, "org.jetbrains.plugins.ruby.RBundle", defaultName);
       }
     }
     return defaultName;
+  }
+
+  @NotNull
+  private static String messageOrDefault(@NotNull ClassLoader classLoader, @NotNull String bundleName, @NotNull String defaultName) {
+    ResourceBundle bundle = AbstractBundle.getResourceBundle(bundleName, classLoader);
+    return bundle == null ? defaultName : CommonBundle.messageOrDefault(bundle, "exportable." + defaultName + ".presentable.name", defaultName);
   }
 
   public static final class ExportableComponentItem implements ExportableComponent {

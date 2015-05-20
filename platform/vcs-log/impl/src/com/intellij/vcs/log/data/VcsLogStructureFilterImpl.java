@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,49 +23,25 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogDetailsFilter;
-import com.intellij.vcs.log.VcsLogStructureFilter;
+import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
+  @NotNull private final Set<VirtualFile> myFiles;
 
-  @NotNull private final Collection<VirtualFile> myFiles;
-  @NotNull private final MultiMap<VirtualFile, VirtualFile> myFilesByRoots;
-
-  public VcsLogStructureFilterImpl(@NotNull Collection<VirtualFile> files, @NotNull Collection<VirtualFile> roots) {
+  public VcsLogStructureFilterImpl(@NotNull Set<VirtualFile> files) {
     myFiles = files;
-    myFilesByRoots = groupFilesByVcsRoots(files, roots);
   }
 
   @NotNull
-  private static MultiMap<VirtualFile, VirtualFile> groupFilesByVcsRoots(@NotNull Collection<VirtualFile> files,
-                                                                         @NotNull Collection<VirtualFile> roots) {
-    MultiMap<VirtualFile, VirtualFile> grouped = MultiMap.create();
-    for (VirtualFile file : files) {
-      VirtualFile root = findBestRoot(file, roots);
-      if (root != null) {
-        grouped.putValue(root, file);
-      }
-    }
-    return grouped;
-  }
-
-  @Nullable
-  private static VirtualFile findBestRoot(@NotNull VirtualFile file, @NotNull Collection<VirtualFile> roots) {
-    VirtualFile candidate = null;
-    for (VirtualFile root : roots) {
-      if (VfsUtilCore.isAncestor(root, file, false)) {
-        if (candidate == null || VfsUtilCore.isAncestor(candidate, root, true)) {
-          candidate = root;
-        }
-      }
-    }
-    return candidate;
+  @Override
+  public Collection<VirtualFile> getFiles() {
+    return myFiles;
   }
 
   @Override
@@ -96,11 +72,4 @@ public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStr
       }
     }) != null;
   }
-
-  @Override
-  @NotNull
-  public Collection<VirtualFile> getFiles(@NotNull VirtualFile root) {
-    return myFilesByRoots.get(root);
-  }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.ZipUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -58,89 +58,83 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
     ChooseComponentsToExportDialog.chooseSettingsFile(PathManager.getConfigPath(), component, IdeBundle.message("title.import.file.location"), IdeBundle.message("prompt.choose.import.file.path")).doWhenDone(new Consumer<String>() {
       @Override
       public void consume(String path) {
-        doImport(path);
+        File saveFile = new File(path);
+        try {
+          doImport(saveFile);
+        }
+        catch (ZipException e1) {
+          Messages.showErrorDialog(
+            IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.getMessage(), promptLocationMessage()),
+            IdeBundle.message("title.invalid.file"));
+        }
+        catch (IOException e1) {
+          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.getMessage()),
+                                   IdeBundle.message("title.error.reading.file"));
+        }
       }
     });
   }
 
-  private static void doImport(String path) {
-    final File saveFile = new File(path);
-    try {
-      if (!saveFile.exists()) {
-        Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)),
-                                 IdeBundle.message("title.file.not.found"));
-        return;
-      }
-
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-      final ZipEntry magicEntry = new ZipFile(saveFile).getEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER);
-      if (magicEntry == null) {
-        Messages.showErrorDialog(
-          IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
-          IdeBundle.message("title.invalid.file"));
-        return;
-      }
-
-      MultiMap<File, ExportableComponent> fileToComponents = ExportSettingsAction.getExportableComponentsMap(false, true);
-      List<ExportableComponent> components = getComponentsStored(saveFile, fileToComponents.values());
-      fileToComponents.values().retainAll(components);
-      final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(fileToComponents, false,
-                                                                                       IdeBundle.message("title.select.components.to.import"),
-                                                                                       IdeBundle.message("prompt.check.components.to.import"));
-      if (!dialog.showAndGet()) {
-        return;
-      }
-
-      final Set<ExportableComponent> chosenComponents = dialog.getExportableComponents();
-      Set<String> relativeNamesToExtract = new HashSet<String>();
-      for (final ExportableComponent chosenComponent : chosenComponents) {
-        final File[] exportFiles = chosenComponent.getExportFiles();
-        for (File exportFile : exportFiles) {
-          final File configPath = new File(PathManager.getConfigPath());
-          final String rPath = FileUtil.getRelativePath(configPath, exportFile);
-          assert rPath != null;
-          final String relativePath = FileUtil.toSystemIndependentName(rPath);
-          relativeNamesToExtract.add(relativePath);
-        }
-      }
-
-      relativeNamesToExtract.add(PluginManager.INSTALLED_TXT);
-
-      final File tempFile = new File(PathManager.getPluginTempPath() + "/" + saveFile.getName());
-      FileUtil.copy(saveFile, tempFile);
-      File outDir = new File(PathManager.getConfigPath());
-      final ImportSettingsFilenameFilter filenameFilter = new ImportSettingsFilenameFilter(relativeNamesToExtract);
-      StartupActionScriptManager.ActionCommand unzip = new StartupActionScriptManager.UnzipCommand(tempFile, outDir, filenameFilter);
-      StartupActionScriptManager.addActionCommand(unzip);
-      // remove temp file
-      StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(tempFile);
-      StartupActionScriptManager.addActionCommand(deleteTemp);
-
-      UpdateSettings.getInstance().forceCheckForUpdateAfterRestart();
-
-      String key = ApplicationManager.getApplication().isRestartCapable()
-                   ? "message.settings.imported.successfully.restart"
-                   : "message.settings.imported.successfully";
-      final int ret = Messages.showOkCancelDialog(IdeBundle.message(key,
-                                                                    ApplicationNamesInfo.getInstance().getProductName(),
-                                                                    ApplicationNamesInfo.getInstance().getFullProductName()),
-                                                  IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon());
-      if (ret == Messages.OK) {
-        ((ApplicationEx)ApplicationManager.getApplication()).restart(true);
-      }
+  private static void doImport(@NotNull File saveFile) throws IOException {
+    if (!saveFile.exists()) {
+      Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)),
+                               IdeBundle.message("title.file.not.found"));
+      return;
     }
-    catch (ZipException e1) {
+
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    final ZipEntry magicEntry = new ZipFile(saveFile).getEntry(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER);
+    if (magicEntry == null) {
       Messages.showErrorDialog(
-        IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.getMessage(), promptLocationMessage()),
+        IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
         IdeBundle.message("title.invalid.file"));
+      return;
     }
-    catch (IOException e1) {
-      Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.getMessage()),
-                               IdeBundle.message("title.error.reading.file"));
+
+    MultiMap<File, ExportableComponent> fileToComponents = ExportSettingsAction.getExportableComponentsMap(false, true);
+    List<ExportableComponent> components = getComponentsStored(saveFile, fileToComponents.values());
+    fileToComponents.values().retainAll(components);
+    final ChooseComponentsToExportDialog dialog = new ChooseComponentsToExportDialog(fileToComponents, false,
+                                                                                     IdeBundle.message("title.select.components.to.import"),
+                                                                                     IdeBundle.message("prompt.check.components.to.import"));
+    if (!dialog.showAndGet()) {
+      return;
+    }
+
+    final Set<ExportableComponent> chosenComponents = dialog.getExportableComponents();
+    Set<String> relativeNamesToExtract = new THashSet<String>();
+    for (ExportableComponent chosenComponent : chosenComponents) {
+      for (File exportFile : chosenComponent.getExportFiles()) {
+        String rPath = FileUtilRt.getRelativePath(new File(PathManager.getConfigPath()), exportFile);
+        assert rPath != null;
+        relativeNamesToExtract.add(FileUtil.toSystemIndependentName(rPath));
+      }
+    }
+
+    relativeNamesToExtract.add(PluginManager.INSTALLED_TXT);
+
+    final File tempFile = new File(PathManager.getPluginTempPath() + "/" + saveFile.getName());
+    FileUtil.copy(saveFile, tempFile);
+    File outDir = new File(PathManager.getConfigPath());
+    final ImportSettingsFilenameFilter filenameFilter = new ImportSettingsFilenameFilter(relativeNamesToExtract);
+    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.UnzipCommand(tempFile, outDir, filenameFilter));
+    // remove temp file
+    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(tempFile));
+
+    UpdateSettings.getInstance().forceCheckForUpdateAfterRestart();
+
+    String key = ApplicationManager.getApplication().isRestartCapable()
+                 ? "message.settings.imported.successfully.restart"
+                 : "message.settings.imported.successfully";
+    if (Messages.showOkCancelDialog(IdeBundle.message(key,
+                                                      ApplicationNamesInfo.getInstance().getProductName(),
+                                                      ApplicationNamesInfo.getInstance().getFullProductName()),
+                                    IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon()) == Messages.OK) {
+      ((ApplicationEx)ApplicationManager.getApplication()).restart(true);
     }
   }
 
-  private static String presentableFileName(final File file) {
+  private static String presentableFileName(@NotNull File file) {
     return "'" + FileUtil.toSystemDependentName(file.getPath()) + "'";
   }
 
@@ -149,19 +143,33 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static List<ExportableComponent> getComponentsStored(@NotNull File zipFile,
+  private static List<ExportableComponent> getComponentsStored(@NotNull File settings,
                                                                @NotNull Collection<? extends ExportableComponent> registeredComponents) throws IOException {
+    THashSet<String> zipEntries = new THashSet<String>();
+    ZipFile zip = new ZipFile(settings);
+    try {
+      Enumeration enumeration = zip.entries();
+      while (enumeration.hasMoreElements()) {
+        ZipEntry zipEntry = (ZipEntry)enumeration.nextElement();
+        zipEntries.add(zipEntry.getName());
+      }
+    }
+    finally {
+      zip.close();
+    }
+
     File configPath = new File(PathManager.getConfigPath());
     List<ExportableComponent> components = new ArrayList<ExportableComponent>();
+
     for (ExportableComponent component : registeredComponents) {
       for (File exportFile : component.getExportFiles()) {
-        String rPath = FileUtilRt.getRelativePath(configPath, exportFile);
-        assert rPath != null;
-        String relativePath = FileUtilRt.toSystemIndependentName(rPath);
-        if (exportFile.isDirectory()) {
+        String relativePath = FileUtilRt.getRelativePath(configPath, exportFile);
+        assert relativePath != null;
+        relativePath = FileUtilRt.toSystemIndependentName(relativePath);
+        if (exportFile.getName().indexOf('.') == -1 && !exportFile.isFile()) {
           relativePath += '/';
         }
-        if (ZipUtil.isZipContainsEntry(zipFile, relativePath)) {
+        if (zipEntries.contains(relativePath)) {
           components.add(component);
           break;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +38,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-
-// Author: dyoma
 
 public class FrameDiffTool implements DiffTool {
   public void show(DiffRequest request) {
@@ -152,7 +149,7 @@ public class FrameDiffTool implements DiffTool {
     builder.showModal(!hints.contains(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG));
   }
 
-  static boolean shouldOpenDialog(Collection hints) {
+  public static boolean shouldOpenDialog(Collection hints) {
     if (hints.contains(DiffTool.HINT_SHOW_MODAL_DIALOG)) return true;
     if (hints.contains(DiffTool.HINT_SHOW_NOT_MODAL_DIALOG)) return true;
     if (hints.contains(DiffTool.HINT_SHOW_FRAME)) return false;
@@ -161,27 +158,27 @@ public class FrameDiffTool implements DiffTool {
 
   // TODO remove check?
   private boolean checkNoDifferenceAndNotify(DiffPanel diffPanel, DiffRequest data, final Window window, final boolean showMessage) {
-    if (!diffPanel.hasDifferences() && !data.getHints().contains(HINT_ALLOW_NO_DIFFERENCES)) {
-      DiffManagerImpl manager = (DiffManagerImpl) DiffManager.getInstance();
-      if (!Comparing.equal(manager.getComparisonPolicy(), ComparisonPolicy.DEFAULT)) {
-        ComparisonPolicy oldPolicy = manager.getComparisonPolicy();
-        manager.setComparisonPolicy(ComparisonPolicy.DEFAULT);
-        Disposable parentDisposable = Disposer.newDisposable();
-        DiffPanel maybeDiffPanel = DiffManagerImpl.createDiffPanel(data, window, parentDisposable, this);
-        manager.setComparisonPolicy(oldPolicy);
-
-        boolean hasDiffs = maybeDiffPanel.hasDifferences();
-        Disposer.dispose(parentDisposable);
-
-        if (hasDiffs) return false;
-      }
-
-      if (! showMessage) {
-        return true;
-      }
-      return !askForceOpenDiff(data);
+    if (diffPanel.hasDifferences() || data.getHints().contains(HINT_ALLOW_NO_DIFFERENCES)) {
+      return false;
     }
-    return false;
+
+    DiffManagerImpl manager = (DiffManagerImpl)DiffManager.getInstance();
+    ComparisonPolicy oldPolicy = manager.getComparisonPolicy();
+    if (oldPolicy != ComparisonPolicy.DEFAULT) {
+      manager.setComparisonPolicy(ComparisonPolicy.DEFAULT);
+      Disposable parentDisposable = Disposer.newDisposable();
+      DiffPanel maybeDiffPanel = DiffManagerImpl.createDiffPanel(data, window, parentDisposable, this);
+      manager.setComparisonPolicy(oldPolicy);
+
+      boolean hasDiffs = maybeDiffPanel.hasDifferences();
+      Disposer.dispose(parentDisposable);
+
+      if (hasDiffs) {
+        return false;
+      }
+    }
+
+    return !showMessage || !askForceOpenDiff(data);
   }
 
   private static boolean askForceOpenDiff(DiffRequest data) {

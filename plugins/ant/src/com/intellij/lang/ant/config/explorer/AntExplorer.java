@@ -50,9 +50,11 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,8 +75,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
@@ -465,35 +466,59 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return myProject != null? myTreeExpander : null;
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      final TreePath[] paths = myTree.getSelectionPaths();
-      if (paths == null) {
-        return null;
-      }
-      final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-      for (final TreePath path : paths) {
-        for (DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-             node != null;
-             node = (DefaultMutableTreeNode)node.getParent()) {
-          final Object userObject = node.getUserObject();
-          if (!(userObject instanceof AntBuildFileNodeDescriptor)) {
-            continue;
+      final List<VirtualFile> virtualFiles = collectAntFiles(new Function<AntBuildFile, VirtualFile>() {
+        @Override
+        public VirtualFile fun(AntBuildFile buildFile) {
+          final VirtualFile virtualFile = buildFile.getVirtualFile();
+          if (virtualFile != null && virtualFile.isValid()) {
+            return virtualFile;
           }
-          final AntBuildFile buildFile = ((AntBuildFileNodeDescriptor)userObject).getBuildFile();
-          if (buildFile != null) {
-            final VirtualFile virtualFile = buildFile.getVirtualFile();
-            if (virtualFile != null && virtualFile.isValid()) {
-              result.add(virtualFile);
-            }
-          }
-          break;
+          return null;
         }
-      }
-      if (result.size() == 0) {
-        return null;
-      }
-      return VfsUtil.toVirtualFileArray(result);
+      });
+      return virtualFiles == null ? null : virtualFiles.toArray(new VirtualFile[virtualFiles.size()]);
     }
+    else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+      final List<PsiElement> elements = collectAntFiles(new Function<AntBuildFile, PsiElement>() {
+        @Override
+        public PsiElement fun(AntBuildFile buildFile) {
+          return buildFile.getAntFile();
+        }
+      });
+      return elements == null ? null : elements.toArray(new PsiElement[elements.size()]);
+    } 
     return super.getData(dataId);
+  }
+
+  private <T> List<T> collectAntFiles(final Function<AntBuildFile, T> function) {
+    final TreePath[] paths = myTree.getSelectionPaths();
+    if (paths == null) {
+      return null;
+    }
+    Set<AntBuildFile> antFiles = new LinkedHashSet<AntBuildFile>();
+    for (final TreePath path : paths) {
+      for (DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+           node != null;
+           node = (DefaultMutableTreeNode)node.getParent()) {
+        final Object userObject = node.getUserObject();
+        if (!(userObject instanceof AntBuildFileNodeDescriptor)) {
+          continue;
+        }
+        final AntBuildFile buildFile = ((AntBuildFileNodeDescriptor)userObject).getBuildFile();
+        if (buildFile != null) {
+          antFiles.add(buildFile);
+        }
+        break;
+      }
+    }
+    final List<T> result = new ArrayList<T>();
+    ContainerUtil.addAllNotNull(result, ContainerUtil.map(antFiles, new Function<AntBuildFile, T>() {
+      @Override
+      public T fun(AntBuildFile buildFile) {
+        return function.fun(buildFile);
+      }
+    }));
+    return result.isEmpty() ? null : result;
   }
 
   public static FileChooserDescriptor createXmlDescriptor() {

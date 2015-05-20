@@ -45,7 +45,7 @@ public class TracIntegrationTest extends TaskManagerTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myRepository = new TracRepository();
-    myRepository.setUrl("http://trackers-tests.labs.intellij.net:8012/trac-12-p-1/rpc");
+    myRepository.setUrl("http://trackers-tests.labs.intellij.net:8012/trac-12-p-1/login/rpc");
     myRepository.setPassword("buildtest");
     myRepository.setUsername("buildtest");
     myRepository.setUseHttpAuthentication(true);

@@ -69,7 +69,7 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   public boolean shouldRequestIncomingChangesForNotCheckedRepositories() {
     return true;
   }
-  
+
   /**
    * Returns true if force push is allowed now in the selected repository.
    * <p/>
@@ -85,4 +85,11 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
    */
   public abstract boolean isForcePushEnabled();
 
+  public abstract boolean isSilentForcePushAllowed(@NotNull Target target);
+
+  public abstract void saveSilentForcePushTarget(@NotNull Target target);
+
+  public boolean mayChangeTargetsSync() {
+    return false;
+  }
 }

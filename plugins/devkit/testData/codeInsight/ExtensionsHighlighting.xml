@@ -14,7 +14,7 @@
         <myPlugin.ext implementation="<error descr="'java.util.concurrent.TimeUnit' is not assignable to 'java.lang.Runnable'"><error descr="Enum is not allowed">java.util.concurrent.TimeUnit</error></error>"/>
         <myPlugin.ext implementation="<error descr="'java.lang.String' is not assignable to 'java.lang.Runnable'">java.lang.String</error>"/>
 
-        <<error descr="Deprecated EP">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl"/>
+        <<error descr="Deprecated EP 'com.intellij.myPlugin.deprecatedEP'">myPlugin.deprecatedEP</error> implementation="foo.MyDeprecatedEPImpl"/>
 
         <myPlugin.foo.bar/>
         <completion.contributor/>

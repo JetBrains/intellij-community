@@ -44,7 +44,7 @@ public class ResourceRootFilter {
 
   public int computeConfigurationHash() {
     int result = filterType.hashCode();
-    result = 31 * result + properties.hashCode();
+    result = 31 * result + getProperties().hashCode();
     return result;
   }
 

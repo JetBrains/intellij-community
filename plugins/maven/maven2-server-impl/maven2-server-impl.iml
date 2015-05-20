@@ -13,15 +13,6 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/classworlds-1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/plexus-utils-1.5.5.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -34,7 +25,8 @@
           <root url="jar://$MODULE_DIR$/lib/maven-dependency-tree-1.2.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/archetype-common-2.0-alpha-4-SNAPSHOT.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/mercury-artifact-1.0-alpha-6.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/maven-2.2.1-uber.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/maven2/lib/maven-2.2.1-uber.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/maven2/boot/classworlds-1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>

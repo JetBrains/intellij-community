@@ -17,9 +17,11 @@ package org.jetbrains.plugins.gradle.service.notification;
 
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
+import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +63,14 @@ public class GradleNotificationExtension implements ExternalSystemNotificationEx
       }
       else if (GotoSourceNotificationCallback.ID.equals(fix)) {
         notificationData.setListener(GotoSourceNotificationCallback.ID, new GotoSourceNotificationCallback(notificationData, project));
+      }
+      else if (OpenExternalSystemSettingsCallback.ID.equals(fix)) {
+        String linkedProjectPath = e instanceof LocationAwareExternalSystemException ?
+                                   ((LocationAwareExternalSystemException)e).getFilePath() : null;
+        notificationData.setListener(
+          OpenExternalSystemSettingsCallback.ID,
+          new OpenExternalSystemSettingsCallback(project, GradleConstants.SYSTEM_ID, linkedProjectPath)
+        );
       }
     }
   }

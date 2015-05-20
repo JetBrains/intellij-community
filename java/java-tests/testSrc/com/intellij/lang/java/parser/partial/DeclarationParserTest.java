@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,20 +24,20 @@ public class DeclarationParserTest extends JavaParsingTestCase {
     super("parser-partial/declarations");
   }
 
-  public void testEmptyBody0() { doParserTest("{ }", false, false); }
-  public void testEmptyBody1() { doParserTest("{ ", false, false); }
-  public void testEmptyBody2() { doParserTest("{ @Null }", false, false); }
+  public void testEmptyBody0() { doParserTest("{ }"); }
+  public void testEmptyBody1() { doParserTest("{ "); }
+  public void testEmptyBody2() { doParserTest("{ @Null }"); }
 
-  public void testNoType() { doParserTest("{ new X(); }", false, false); }
-  public void testExtraSemicolon() { doParserTest("{ class C { }; }", false, false); }
-  public void testParameterizedClass() { doParserTest("{ public class A <T extends java.util.List> { } }", false, false); }
-  public void testPines() { doParserTest("{ class A<T extends List<String>> extends List<List<Integer>> { } }", false, false); }
-  public void testIncompleteAnnotation() { doParserTest("{ public class Foo { public void testSomething(); @Null } }", false, false); }
-  public void testClassInit() { doParserTest("{ { /*comment*/ } }", false, false); }
-  public void testAnnoDeclaration() { doParserTest("{ public @interface Annotation {} }", false, false); }
+  public void testNoType() { doParserTest("{ new X(); }"); }
+  public void testExtraSemicolon() { doParserTest("{ class C { }; }"); }
+  public void testParameterizedClass() { doParserTest("{ public class A <T extends java.util.List> { } }"); }
+  public void testPines() { doParserTest("{ class A<T extends List<String>> extends List<List<Integer>> { } }"); }
+  public void testIncompleteAnnotation() { doParserTest("{ public class Foo { public void testSomething(); @Null } }"); }
+  public void testClassInit() { doParserTest("{ { /*comment*/ } }"); }
+  public void testAnnoDeclaration() { doParserTest("{ public @interface Annotation {} }"); }
   public void testEnumSmartTypeCompletion() { doParserTest("{ @Preliminary(A.B\n#) public class TimeTravel {}\n" +
                                                            "  @Preliminary(a=A.B\n#) public class TimeTravel {}\n" +
-                                                           "  @Preliminary(a=A.B\n#, b=c) public class TimeTravel {} }", false, false); }
+                                                           "  @Preliminary(a=A.B\n#, b=c) public class TimeTravel {} }"); }
   public void testTypeAnno() {
     doParserTest("{ class C<@D T extends @F Object> extends @F Object {\n" +
                  "  @F int @F[] method() throws @F Exception {\n" +
@@ -46,7 +46,7 @@ public class DeclarationParserTest extends JavaParsingTestCase {
                  "    c = (@F Object)c;\n" +
                  "    Class c = @TA String.class;\n" +
                  "    @F C.field++;\n" +
-                 "  }\n} }", false, false);
+                 "  }\n} }");
   }
 
   public void testEnumBody0() { doParserTest("{ ; }", false, true); }
@@ -60,50 +60,56 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testEnumWithoutConstants() { doParserTest("{ private A }", false, true); }
 
   public void testAnnoSimple() { doParserTest("{ int foo (); }", true, false); }
-  public void testAnnoDefault() { doParserTest("{ Class foo () default String.class; }", true, false); }
+  public void testAnnoDefault() { doParserTest("{ Class foo() default String.class; }", true, false); }
   public void testAnnoNested() { doParserTest("{ @interface Inner { String bar () default \"<unspecified>\"; } }", true, false); }
-  public void testAnnoInner() { doParserTest("{ @interface Inner { double bar () default 0.0; } }", false, false); }
+  public void testAnnoInner() { doParserTest("{ @interface Inner { double bar () default 0.0; } }"); }
   public void testAnnoOtherMembers() { doParserTest("{ int field;\n void m() {}\n class C {}\n interface I {} }", true, false); }
+  public void testAnnoLoop() { doParserTest("{ @@@ int i; }"); }
 
-  public void testFieldSimple() { doParserTest("{ int field = 0; }", false, false); }
-  public void testFieldMulti() { doParserTest("{ int field1 = 0, field2; }", false, false); }
-  public void testUnclosedBracket() { doParserTest("{ int field[ }", false, false); }
-  public void testMissingInitializer() { doParserTest("{ int field = }", false, false); }
-  public void testUnclosedComma() { doParserTest("{ int field, }", false, false); }
-  public void testUnclosedSemicolon() { doParserTest("{ int field }", false, false); }
-  public void testMissingInitializerExpression() { doParserTest("{ int field=; }", false, false); }
-  public void testMultiLineUnclosed() { doParserTest("{ int \n Object o; }", false, false); }
-  public void testUnclosedField1() { doParserTest("{ String f1\n\n @Anno String f2; }", false, false); }
-  public void testUnclosedField2() { doParserTest("{ String f1\n\n @Anno\n String f2; }", false, false); }
+  public void testFieldSimple() { doParserTest("{ int field = 0; }"); }
+  public void testFieldMulti() { doParserTest("{ int field1 = 0, field2; }"); }
+  public void testUnclosedBracket() { doParserTest("{ int field[ }"); }
+  public void testMissingInitializer() { doParserTest("{ int field = }"); }
+  public void testUnclosedComma() { doParserTest("{ int field, }"); }
+  public void testUnclosedSemicolon() { doParserTest("{ int field }"); }
+  public void testMissingInitializerExpression() { doParserTest("{ int field=; }"); }
+  public void testMultiLineUnclosed() { doParserTest("{ int \n Object o; }"); }
+  public void testUnclosedField1() { doParserTest("{ String f1\n\n @Anno String f2; }"); }
+  public void testUnclosedField2() { doParserTest("{ String f1\n\n @Anno\n String f2; }"); }
 
-  public void testMethodNormal0() { doParserTest("{ void f() {} }", false, false); }
-  public void testMethodNormal1() { doParserTest("{ void f(); }", false, false); }
-  public void testMethodNormal2() { doParserTest("{ default public void f() { } }", false, false); }
-  public void testSemicolons() { doParserTest("{ void f() {}; void g() {}; }", false, false); }
-  public void testUnclosed0() { doParserTest("{ void f() }", false, false); }
-  public void testExtension() { doParserTest("{ default int f() throws E { return 42; } }", false, false); }
-  public void testUnclosed1() { doParserTest("{ void f( }", false, false); }
-  public void testUnclosed2() { doParserTest("{ void f()\n void g(); }", false, false); }
-  public void testUnclosed3() { doParserTest("{ void f(int a }", false, false); }
-  public void testUnclosed4() { doParserTest("{ void f(int a,, }", false, false); }
-  public void testUnclosed5() { doParserTest("{ void f(int a,); }", false, false); }
+  public void testMethodNormal0() { doParserTest("{ void f() {} }"); }
+  public void testMethodNormal1() { doParserTest("{ void f(); }"); }
+  public void testMethodNormal2() { doParserTest("{ default public void f() { } }"); }
+  public void testSemicolons() { doParserTest("{ void f() {}; void g() {}; }"); }
+  public void testUnclosed0() { doParserTest("{ void f() }"); }
+  public void testExtension() { doParserTest("{ default int f() throws E { return 42; } }"); }
+  public void testUnclosed1() { doParserTest("{ void f( }"); }
+  public void testUnclosed2() { doParserTest("{ void f()\n void g(); }"); }
+  public void testUnclosed3() { doParserTest("{ void f(int a }"); }
+  public void testUnclosed4() { doParserTest("{ void f(int a,, }"); }
+  public void testUnclosed5() { doParserTest("{ void f(int a,); }"); }
   public void testUnclosed6() { doParserTest("{ void f() default ; }", true, false); }
   public void testUnclosed7() { doParserTest("{ void f() default {return 42;} }", true, false); }
-  public void testUnclosed8() { doParserTest("{ void f() default }", false, false); }
-  public void testConstructorBrackets() { doParserTest("{ A() [] { } }", false, false); }
-  public void testVarArgBrackets() { doParserTest("{ void foo(int... x[]); }", false, false); }
+  public void testUnclosed8() { doParserTest("{ void f() default }"); }
+  public void testConstructorBrackets() { doParserTest("{ A() [] { } }"); }
+  public void testVarArgBrackets() { doParserTest("{ void foo(int... x[]); }"); }
 
   public void testGenericMethod() { doParserTest("{ public static <E> test();\n" +
                                                  " <E> void test1();\n" +
-                                                 " <E1 extends Integer, E2 extends Runnable> String test2(); }", false, false); }
-  public void testGenericMethodErrors() { doParserTest("{ <Error sss /> test <error>(); }", false, false); }
-  public void testErrors() { doParserTest("{ public static <error descr=\"2\">protected int f1 = 0; }", false, false); }
-  public void testCompletionHack0() { doParserTest("{ <X IntelliJIdeaRulezz>\n String s = \"\"; }", false, false); }
-  public void testCompletionHack1() { doParserTest("{ <X\n String s = \"\"; }", false, false); }
+                                                 " <E1 extends Integer, E2 extends Runnable> String test2(); }"); }
+  public void testGenericMethodErrors() { doParserTest("{ <Error sss /> test <error>(); }"); }
+  public void testErrors() { doParserTest("{ public static <error descr=\"2\">protected int f1 = 0; }"); }
+  public void testCompletionHack0() { doParserTest("{ <X IntelliJIdeaRulezz>\n String s = \"\"; }"); }
+  public void testCompletionHack1() { doParserTest("{ <X\n String s = \"\"; }"); }
   public void testCompletionHack2() { doParserTest("{ String foo() def }", true, false); }
-  public void testWildcardParsing() { doParserTest("{ List<? extends B> x(Collection<? super B> x); }", false, false); }
-  public void testParameterAnnotation() { doParserTest("{ void foo (@Annotation(value=77) int param) {} }", false, false); }
-  public void testParameterizedMethod() { doParserTest("{ @Nullable <T> T bar() {} }", false, false); }
+  public void testWildcardParsing() { doParserTest("{ List<? extends B> x(Collection<? super B> x); }"); }
+  public void testParameterAnnotation() { doParserTest("{ void foo (@Annotation(value=77) int param) {} }"); }
+  public void testParameterizedMethod() { doParserTest("{ @Nullable <T> T bar() {} }"); }
+  public void testMethodNameOmitted() { doParserTest("{ void(); }"); }
+
+  private void doParserTest(String text) {
+    doParserTest(text, false, false);
+  }
 
   private void doParserTest(String text, boolean isAnnotation, boolean isEnum) {
     doParserTest(text, new MyTestParser(isAnnotation, isEnum));

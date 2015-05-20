@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,22 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EPathCommonUtil;
-import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.EclipseProjectFinder;
+import org.jetbrains.idea.eclipse.EclipseXml;
 
 import java.io.File;
 import java.util.List;
 import java.util.Set;
 
 public class EPathUtil {
-  static final Logger LOG = Logger.getInstance("#" + EPathUtil.class.getName());
+  static final Logger LOG = Logger.getInstance(EPathUtil.class);
 
   private EPathUtil() {
   }
@@ -55,7 +58,7 @@ public class EPathUtil {
     }
     else {
       final String relativeToModulePath = EPathCommonUtil.getRelativeToModulePath(path);
-      final int relativeIdx = ideaUrl.indexOf(relativeToModulePath);
+      final int relativeIdx = relativeToModulePath != null ? ideaUrl.indexOf(relativeToModulePath) : -1;
       if (relativeIdx != -1) {
         final String pathToProjectFile = VfsUtilCore.urlToPath(ideaUrl.substring(0, relativeIdx));
         if (Comparing.strEqual(EPathCommonUtil.getRelativeModuleName(path),
@@ -173,9 +176,8 @@ public class EPathUtil {
   }
 
   @Nullable
-  public static VirtualFile getContentRoot(final ModuleRootModel model) {
-   final VirtualFile[] contentRoots = model.getContentRoots();
-    for (VirtualFile virtualFile : contentRoots) {
+  public static VirtualFile getContentRoot(@NotNull ModuleRootModel model) {
+    for (VirtualFile virtualFile : model.getContentRoots()) {
       if (virtualFile.findChild(EclipseXml.PROJECT_FILE) != null) {
         return virtualFile;
       }
@@ -192,14 +194,15 @@ public class EPathUtil {
       if (file.getFileSystem() instanceof JarFileSystem) {
         final VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
         if (jarFile == null) {
-          LOG.assertTrue(false, "Url: \'" + url + "\'; file: " + file);
+          LOG.error("Url: \'" + url + "\'; file: " + file);
           return ProjectRootManagerImpl.extractLocalPath(url);
         }
         file = jarFile;
       }
       if (contentRoot != null && VfsUtilCore.isAncestor(contentRoot, file, false)) { //inside current project
         return VfsUtilCore.getRelativePath(file, contentRoot, '/');
-      } else {
+      }
+      else {
         final String path = collapse2eclipseRelative2OtherModule(project, file); //relative to other project
         if (path != null) {
           return path;

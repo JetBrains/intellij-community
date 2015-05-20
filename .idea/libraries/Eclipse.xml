@@ -4,8 +4,6 @@
       <root url="jar://$PROJECT_DIR$/lib/ecj-4.4.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/ecjsrc-4.4.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

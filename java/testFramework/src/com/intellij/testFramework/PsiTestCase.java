@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,22 +69,28 @@ public abstract class PsiTestCase extends ModuleTestCase {
     super.tearDown();
   }
 
-  protected PsiFile createDummyFile(String fileName, String text) throws IncorrectOperationException {
+  @NotNull
+  protected PsiFile createDummyFile(@NotNull String fileName, @NotNull String text) throws IncorrectOperationException {
     FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
     return PsiFileFactory.getInstance(myProject).createFileFromText(fileName, type, text);
   }
 
-  protected PsiFile createFile(@NonNls String fileName, String text) throws Exception {
+  @NotNull
+  protected PsiFile createFile(@NonNls @NotNull String fileName, @NotNull String text) throws Exception {
     return createFile(myModule, fileName, text);
   }
-  protected PsiFile createFile(Module module, String fileName, String text) throws Exception {
+
+  @NotNull
+  protected PsiFile createFile(@NotNull Module module, @NotNull String fileName, @NotNull String text) throws Exception {
     File dir = createTempDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
+    assert vDir != null : dir;
     return createFile(module, vDir, fileName, text);
   }
 
-  protected PsiFile createFile(final Module module, final VirtualFile vDir, final String fileName, final String text) throws IOException {
+  @NotNull
+  protected PsiFile createFile(@NotNull final Module module, @NotNull final VirtualFile vDir, @NotNull final String fileName, @NotNull final String text) throws IOException {
     return new WriteAction<PsiFile>() {
       @Override
       protected void run(Result<PsiFile> result) throws Throwable {

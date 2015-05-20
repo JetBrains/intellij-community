@@ -1,4 +1,4 @@
-// "Remove Qualifier" "true"
+// "Remove qualifier" "true"
 class E {
     class Outer {
     class S {

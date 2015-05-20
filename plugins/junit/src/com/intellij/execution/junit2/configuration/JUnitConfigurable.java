@@ -47,13 +47,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -105,11 +105,10 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   private JComboBox myTypeChooser;
   private JBLabel mySearchForTestsLabel;
   private JPanel myScopesPanel;
-  @NonNls private static final String NONE = "none";
-  @NonNls private static final String METHOD = "method";
-  @NonNls private static final String KLASS = "class";
-  private static final String[] FORK_MODE_ALL = {NONE, METHOD, KLASS};
-  private static final String[] FORK_MODE = {NONE, METHOD};
+  private JComboBox myRepeatCb;
+  private JTextField myRepeatCountField;
+  private static final String[] FORK_MODE_ALL = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD, JUnitConfiguration.FORK_KLASS};
+  private static final String[] FORK_MODE = {JUnitConfiguration.FORK_NONE, JUnitConfiguration.FORK_METHOD};
   private Project myProject;
   private JComponent anchor;
 
@@ -183,6 +182,15 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     myTestLocations[JUnitConfigurationModel.DIR] = myDir;
     myTestLocations[JUnitConfigurationModel.CATEGORY] = myCategory;
 
+    myRepeatCb.setModel(new DefaultComboBoxModel(RepeatCount.REPEAT_TYPES));
+    myRepeatCb.setSelectedItem(RepeatCount.ONCE);
+    myRepeatCb.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myRepeatCountField.setEnabled(RepeatCount.N.equals(myRepeatCb.getSelectedItem()));
+      }
+    });
+
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
     myPatternTextField = new TextFieldWithBrowseButton();
@@ -250,6 +258,13 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
 
     myCommonJavaParameters.applyTo(configuration);
     configuration.setForkMode((String)myForkCb.getSelectedItem());
+    configuration.setRepeatMode((String)myRepeatCb.getSelectedItem());
+    try {
+      configuration.setRepeatCount(Integer.parseInt(myRepeatCountField.getText()));
+    }
+    catch (NumberFormatException e) {
+      configuration.setRepeatCount(1);
+    }
   }
 
   public void resetEditorFrom(final JUnitConfiguration configuration) {
@@ -268,12 +283,16 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     }
     myAlternativeJREPanel.init(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     myForkCb.setSelectedItem(configuration.getForkMode());
+    final int count = configuration.getRepeatCount();
+    myRepeatCountField.setText(String.valueOf(count));
+    myRepeatCountField.setEnabled(count > 1);
+    myRepeatCb.setSelectedItem(configuration.getRepeatMode());
   }
 
   private void changePanel () {
     String selectedItem = (String)myForkCb.getSelectedItem();
     if (selectedItem == null) {
-      selectedItem = NONE;
+      selectedItem = JUnitConfiguration.FORK_NONE;
     }
     final Integer selectedType = (Integer)myTypeChooser.getSelectedItem();
     if (selectedType == JUnitConfigurationModel.ALL_IN_PACKAGE) {
@@ -309,7 +328,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE));
-      myForkCb.setSelectedItem(selectedItem != KLASS ? selectedItem : METHOD);
+      myForkCb.setSelectedItem(selectedItem != JUnitConfiguration.FORK_KLASS ? selectedItem : JUnitConfiguration.FORK_METHOD);
     }
     else if (selectedType == JUnitConfigurationModel.METHOD){
       myPackagePanel.setVisible(false);
@@ -320,7 +339,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       myCategory.setVisible(false);
       myMethod.setVisible(true);
       myForkCb.setEnabled(false);
-      myForkCb.setSelectedItem(NONE);
+      myForkCb.setSelectedItem(JUnitConfiguration.FORK_NONE);
     } else if (selectedType == JUnitConfigurationModel.CATEGORY) {
       myPackagePanel.setVisible(false);
       myScopesPanel.setVisible(true);
@@ -475,7 +494,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       getTestLocation(i).setEnabled(enabledFields.contains(i));
     /*if (newType == JUnitConfigurationModel.PATTERN) {
       myModule.setEnabled(false);
-    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE && newType != JUnitConfigurationModel.PATTERN) {
+    } else */if (newType != JUnitConfigurationModel.ALL_IN_PACKAGE &&
+                 newType != JUnitConfigurationModel.PATTERN &&
+                 newType != JUnitConfigurationModel.CATEGORY) {
       myModule.setEnabled(true);
     }
     else {
@@ -526,7 +547,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
 
   private void onScopeChanged() {
     final Integer selectedItem = (Integer)myTypeChooser.getSelectedItem();
-    final boolean allInPackageAllInProject = (selectedItem == JUnitConfigurationModel.ALL_IN_PACKAGE || selectedItem == JUnitConfigurationModel.PATTERN) && myWholeProjectScope.isSelected();
+    final boolean allInPackageAllInProject = (selectedItem == JUnitConfigurationModel.ALL_IN_PACKAGE ||
+                                              selectedItem == JUnitConfigurationModel.PATTERN ||
+                                              selectedItem == JUnitConfigurationModel.CATEGORY) && myWholeProjectScope.isSelected();
     myModule.setEnabled(!allInPackageAllInProject);
     if (allInPackageAllInProject) {
       myModule.getComponent().setSelectedItem(null);

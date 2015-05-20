@@ -20,7 +20,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -229,7 +228,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param e Carries information on the invocation place and data available
    */
-  public void update(@NotNull AnActionEvent e) {
+  public void update(AnActionEvent e) {
   }
 
   /**
@@ -268,7 +267,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param e Carries information on the invocation place
    */
-  public abstract void actionPerformed(@NotNull AnActionEvent e);
+  public abstract void actionPerformed(AnActionEvent e);
 
   protected void setShortcutSet(ShortcutSet shortcutSet) {
     myShortcutSet = shortcutSet;

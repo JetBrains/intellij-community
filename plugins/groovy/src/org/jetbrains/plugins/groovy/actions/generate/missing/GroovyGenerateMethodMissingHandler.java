@@ -66,7 +66,7 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
     throws IncorrectOperationException {
 
     final String templName = JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY;
-    final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
+    final FileTemplate template = FileTemplateManager.getInstance(aClass.getProject()).getCodeTemplate(templName);
 
     final GrMethod method = genMethod(aClass, template);
     return method != null
@@ -76,7 +76,7 @@ public class GroovyGenerateMethodMissingHandler extends GenerateMembersHandlerBa
 
   @Nullable
   private static GrMethod genMethod(PsiClass aClass, FileTemplate template) {
-    Properties properties = FileTemplateManager.getInstance().getDefaultProperties(aClass.getProject());
+    Properties properties = FileTemplateManager.getInstance(aClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, "java.lang.Object");
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, "null");
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, "");

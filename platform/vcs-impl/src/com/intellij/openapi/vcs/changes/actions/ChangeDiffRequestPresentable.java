@@ -224,7 +224,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     final FileType type = rev.getFile().getFileType();
     if (! type.isBinary()) return true;
     if (FileTypes.UNKNOWN.equals(type)) {
-      final boolean associatedToText = checkAssociate(myProject, rev.getFile(), context);
+      final boolean associatedToText = checkAssociate(myProject, rev.getFile().getName(), context);
     }
     return true;
   }
@@ -255,17 +255,17 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return false;
   }
 
-  public static boolean checkAssociate(final Project project, final FilePath file, DiffChainContext context) {
-    final String pattern = FileUtilRt.getExtension(file.getName()).toLowerCase();
+  public static boolean checkAssociate(final Project project, String fileName, DiffChainContext context) {
+    final String pattern = FileUtilRt.getExtension(fileName).toLowerCase();
     if (context.contains(pattern)) return false;
     int rc = Messages.showOkCancelDialog(project,
-                                 VcsBundle.message("diff.unknown.file.type.prompt", file.getName()),
+                                 VcsBundle.message("diff.unknown.file.type.prompt", fileName),
                                  VcsBundle.message("diff.unknown.file.type.title"),
                                    VcsBundle.message("diff.unknown.file.type.associate"),
                                    CommonBundle.getCancelButtonText(),
                                  Messages.getQuestionIcon());
     if (rc == Messages.OK) {
-      FileType fileType = FileTypeChooser.associateFileType(file.getName());
+      FileType fileType = FileTypeChooser.associateFileType(fileName);
       return fileType != null && !fileType.isBinary();
     } else {
       context.add(pattern);

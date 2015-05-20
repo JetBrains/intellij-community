@@ -32,12 +32,14 @@ import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutio
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,9 +48,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.lang.UrlClassLoader;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -361,6 +366,89 @@ public class ExternalSystemApiUtil {
     return result == null ? Collections.<DataNode<T>>emptyList() : result;
   }
 
+  public static void visit(@Nullable DataNode node, @NotNull Consumer<DataNode> consumer) {
+    if(node == null) return;
+
+    Stack<DataNode> toProcess = ContainerUtil.newStack(node);
+    while (!toProcess.isEmpty()) {
+      DataNode<?> node0 = toProcess.pop();
+      consumer.consume(node0);
+      for (DataNode<?> child : node0.getChildren()) {
+        toProcess.push(child);
+      }
+    }
+  }
+
+  @NotNull
+  public static <T> Collection<DataNode<T>> findAllRecursively(@Nullable final DataNode<?> node,
+                                                               @NotNull final Key<T> key) {
+    if (node == null) return Collections.emptyList();
+
+    final Collection<DataNode<?>> nodes = findAllRecursively(node.getChildren(), new BooleanFunction<DataNode<?>>() {
+      @Override
+      public boolean fun(DataNode<?> node) {
+        return node.getKey().equals(key);
+      }
+    });
+    //noinspection unchecked
+    return new SmartList(nodes);
+  }
+
+  @NotNull
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes) {
+    return findAllRecursively(nodes, null);
+  }
+
+  @NotNull
+  public static Collection<DataNode<?>> findAllRecursively(@Nullable DataNode<?> node,
+                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+    if (node == null) return Collections.emptyList();
+    return findAllRecursively(node.getChildren(), predicate);
+  }
+
+  @NotNull
+  public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<DataNode<?>> nodes,
+                                                           @Nullable BooleanFunction<DataNode<?>> predicate) {
+    SmartList<DataNode<?>> result = new SmartList<DataNode<?>>();
+    for (DataNode<?> node : nodes) {
+      if (predicate == null || predicate.fun(node)) {
+        result.add(node);
+      }
+    }
+    for (DataNode<?> node : nodes) {
+      result.addAll(findAllRecursively(node.getChildren(), predicate));
+    }
+    return result;
+  }
+
+  @Nullable
+  public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
+                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+    Queue<DataNode<?>> queue = new LinkedList<DataNode<?>>();
+    queue.add(parentNode);
+    return findInQueue(queue, predicate);
+  }
+
+  @Nullable
+  public static DataNode<?> findFirstRecursively(@NotNull Collection<DataNode<?>> nodes,
+                                                 @NotNull BooleanFunction<DataNode<?>> predicate) {
+    return findInQueue(new LinkedList<DataNode<?>>(nodes), predicate);
+  }
+
+  @Nullable
+  private static DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
+                                         @NotNull BooleanFunction<DataNode<?>> predicate) {
+    while (!queue.isEmpty()) {
+      DataNode node = (DataNode)queue.remove();
+      if (predicate.fun(node)) {
+        return node;
+      }
+      //noinspection unchecked
+      queue.addAll(node.getChildren());
+    }
+    return null;
+  }
+
   public static void executeProjectChangeAction(@NotNull final DisposeAwareProjectChange task) {
     executeProjectChangeAction(false, task);
   }
@@ -390,6 +478,23 @@ public class ExternalSystemApiUtil {
     else {
       UIUtil.invokeLaterIfNeeded(task);
     }
+  }
+
+  public static <T> T executeOnEdt(@NotNull Computable<T> task) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return task.compute();
+    }
+    else {
+      return UIUtil.invokeAndWaitIfNeeded(task);
+    }
+  }
+
+  public static <T> T executeOnEdtUnderWriteAction(@NotNull final Computable<T> task) {
+    return executeOnEdt(new Computable<T>() {
+      public T compute() {
+        return ApplicationManager.getApplication().runWriteAction(task);
+      }
+    });
   }
 
   /**
@@ -667,23 +772,50 @@ public class ExternalSystemApiUtil {
     return (T)loader.loadClass(clazz.getName()).newInstance();
   }
 
-  @Contract("_, null -> false")
+  @Contract(value = "_, null -> false", pure=true)
   public static boolean isExternalSystemAwareModule(@NotNull ProjectSystemId systemId, @Nullable Module module) {
     return module != null && !module.isDisposed() && systemId.getId().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
   }
 
-  @Contract("_, null -> false")
+  @Contract(value = "_, null -> false", pure=true)
   public static boolean isExternalSystemAwareModule(@NotNull String systemId, @Nullable Module module) {
     return module != null && !module.isDisposed() && systemId.equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
   }
 
   @Nullable
+  @Contract(pure=true)
   public static String getExternalProjectPath(@Nullable Module module) {
     return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY) : null;
   }
 
   @Nullable
+  @Contract(pure=true)
+  public static String getExternalRootProjectPath(@Nullable Module module) {
+    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY) : null;
+  }
+
+  @Nullable
+  @Contract(pure=true)
   public static String getExternalProjectId(@Nullable Module module) {
     return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_ID_KEY) : null;
+  }
+
+  @Nullable
+  @Contract(pure=true)
+  public static String getExternalProjectGroup(@Nullable Module module) {
+    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY) : null;
+  }
+
+  @Nullable
+  @Contract(pure=true)
+  public static String getExternalProjectVersion(@Nullable Module module) {
+    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY) : null;
+  }
+
+  public static void subscribe(@NotNull Project project,
+                               @NotNull ProjectSystemId systemId,
+                               @NotNull ExternalSystemSettingsListener listener) {
+    //noinspection unchecked
+    getSettings(project, systemId).subscribe(listener);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   private static class MyReference<T> extends WeakReference<T> {
     private final int index;
 
-    MyReference(int index, T referent, ReferenceQueue<? super T> queue) {
+    private MyReference(int index, T referent, ReferenceQueue<? super T> queue) {
       super(referent, queue);
       this.index = index;
     }
@@ -142,11 +142,11 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   }
   private class MyIterator implements Iterator<T> {
     private final int startModCount;
-    int curIndex;
-    T curElement;
+    private int curIndex;
+    private T curElement;
 
-    int nextIndex = -1;
-    T nextElement;
+    private int nextIndex = -1;
+    private T nextElement;
 
     private MyIterator() {
       startModCount = modCount;
@@ -222,6 +222,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
     }
   };
   private static <X> Function<MyReference<X>, X> deref() {
+    //noinspection unchecked
     return (Function)DEREF;
   }
   @NotNull
@@ -244,6 +245,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   }
 
   private static <T> Condition<MyReference<T>> notNull() {
+    //noinspection unchecked
     return (Condition)NOT_NULL;
   }
   private static final Condition<MyReference<Object>> NOT_NULL = new Condition<MyReference<Object>>() {
@@ -302,6 +304,6 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
   }
 
   private T throwNotRandomAccess() {
-    throw new IncorrectOperationException("UnsafeWeakList is not RandomAccess, use list.iterator()");
+    throw new IncorrectOperationException("UnsafeWeakList is not RandomAccess, use list.iterator() instead.");
   }
 }

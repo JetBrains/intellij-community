@@ -31,8 +31,6 @@ import javax.swing.*;
 public class RestFileType extends LanguageFileType {
   public static final RestFileType INSTANCE = new RestFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "rst";
-  @NonNls private static final String NAME = "ReST";
-  @NonNls private static final String DESCRIPTION = "reStructuredText files";
 
   private RestFileType() {
     super(RestLanguage.INSTANCE);
@@ -40,12 +38,12 @@ public class RestFileType extends LanguageFileType {
 
   @NotNull
   public String getName() {
-    return NAME;
+    return "ReST";
   }
 
   @NotNull
   public String getDescription() {
-    return DESCRIPTION;
+    return "reStructuredText files";
   }
 
   @NotNull

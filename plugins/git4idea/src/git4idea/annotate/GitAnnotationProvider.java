@@ -113,7 +113,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     GitSimpleHandler h = new GitSimpleHandler(myProject, GitUtil.getGitRoot(repositoryFilePath), GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.setCharset(file.getCharset());
-    h.addParameters("-p", "-l", "-t", "-w");
+    h.addParameters("--porcelain", "-l", "-t", "-w");
     if (revision == null) {
       h.addParameters("HEAD");
     }
@@ -184,7 +184,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     for (int i = 0; i < size; i++) {
       basicData.put(i,  gitFileAnnotation.getLineRevisionNumber(i));
     }
-    return new VcsAnnotation(new FilePathImpl(gitFileAnnotation.getFile()), basicData, null);
+    return new VcsAnnotation(VcsUtil.getFilePath(gitFileAnnotation.getFile()), basicData, null);
   }
 
   @Override

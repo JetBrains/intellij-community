@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -29,11 +30,13 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,32 +44,32 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jdom.Parent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author mike
- */
 public class StorageUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StorageUtil");
 
   private static final byte[] XML_PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>".getBytes(CharsetToolkit.UTF8_CHARSET);
 
-  @SuppressWarnings("SpellCheckingInspection")
   private static final Pair<byte[], String> NON_EXISTENT_FILE_DATA = Pair.create(null, SystemProperties.getLineSeparator());
 
   private StorageUtil() { }
@@ -86,7 +89,17 @@ public class StorageUtil {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        macros.removeAll(getMacrosFromExistingNotifications(project));
+        List<String> notified = null;
+        NotificationsManager manager = NotificationsManager.getNotificationsManager();
+        for (UnknownMacroNotification notification : manager.getNotificationsOfType(UnknownMacroNotification.class, project)) {
+          if (notified == null) {
+            notified = new SmartList<String>();
+          }
+          notified.addAll(notification.getMacros());
+        }
+        if (!ContainerUtil.isEmpty(notified)) {
+          macros.removeAll(notified);
+        }
 
         if (!macros.isEmpty()) {
           LOG.debug("Reporting unknown path macros " + macros + " in component " + componentName);
@@ -110,38 +123,45 @@ public class StorageUtil {
     });
   }
 
-  private static List<String> getMacrosFromExistingNotifications(Project project) {
-    List<String> notified = ContainerUtil.newArrayList();
-    NotificationsManager manager = NotificationsManager.getNotificationsManager();
-    for (final UnknownMacroNotification notification : manager.getNotificationsOfType(UnknownMacroNotification.class, project)) {
-      notified.addAll(notification.getMacros());
-    }
-    return notified;
-  }
-
-  public static boolean isEmpty(@Nullable Parent element) {
-    if (element == null) {
-      return true;
-    }
-    else if (element instanceof Element) {
-      return JDOMUtil.isEmpty((Element)element);
+  @NotNull
+  public static VirtualFile writeFile(@Nullable File file,
+                                      @NotNull Object requestor,
+                                      @Nullable VirtualFile virtualFile,
+                                      @NotNull BufferExposingByteArrayOutputStream content,
+                                      @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+    final VirtualFile result;
+    if (file != null && (virtualFile == null || !virtualFile.isValid())) {
+      result = getOrCreateVirtualFile(requestor, file);
     }
     else {
-      Document document = (Document)element;
-      return !document.hasRootElement() || JDOMUtil.isEmpty(document.getRootElement());
+      result = virtualFile;
+      assert result != null;
     }
+
+    boolean equals = isEqualContent(result, lineSeparatorIfPrependXmlProlog, content);
+    if (equals) {
+      LOG.warn("Content equals, but it must be handled not on this level — " + result.getName());
+    }
+    else {
+      if (ApplicationManager.getApplication().isUnitTestMode() && DEBUG_LOG != null) {
+        DEBUG_LOG = result.getPath() + ":\n" + content+"\nOld Content:\n"+ LoadTextUtil.loadText(result)+"\n---------";
+      }
+      doWrite(requestor, result, content, lineSeparatorIfPrependXmlProlog);
+    }
+    return result;
   }
 
-  @NotNull
-  public static VirtualFile writeFile(@Nullable File file, @NotNull Object requestor, @Nullable VirtualFile virtualFile, @NotNull BufferExposingByteArrayOutputStream content, @Nullable LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
-    // mark this action as modifying the file which daemon analyzer should ignore
-    AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
+  @TestOnly
+  public static String DEBUG_LOG = "";
+
+  private static void doWrite(@NotNull final Object requestor,
+                              @NotNull final VirtualFile file,
+                              @NotNull final BufferExposingByteArrayOutputStream content,
+                              @Nullable final LineSeparator lineSeparatorIfPrependXmlProlog) throws IOException {
+    LOG.debug("Save " + file.getPresentableUrl());
+    AccessToken token = WriteAction.start();
     try {
-      if (file != null && (virtualFile == null || !virtualFile.isValid())) {
-        virtualFile = getOrCreateVirtualFile(requestor, file);
-      }
-      assert virtualFile != null;
-      OutputStream out = virtualFile.getOutputStream(requestor);
+      OutputStream out = file.getOutputStream(requestor);
       try {
         if (lineSeparatorIfPrependXmlProlog != null) {
           out.write(XML_PROLOG);
@@ -152,22 +172,45 @@ public class StorageUtil {
       finally {
         out.close();
       }
-      return virtualFile;
     }
     catch (FileNotFoundException e) {
-      if (virtualFile == null) {
-        throw e;
-      }
-      else {
-        throw new ReadOnlyModificationException(virtualFile);
-      }
+      throw new ReadOnlyModificationException(file, e, new StateStorage.SaveSession() {
+        @Override
+        public void save() throws IOException {
+          doWrite(requestor, file, content, lineSeparatorIfPrependXmlProlog);
+        }
+      });
     }
     finally {
       token.finish();
     }
   }
 
-  public static void deleteFile(@NotNull File file, @NotNull Object requestor, @Nullable VirtualFile virtualFile) throws IOException {
+  private static boolean isEqualContent(VirtualFile result,
+                                        @Nullable LineSeparator lineSeparatorIfPrependXmlProlog,
+                                        @NotNull BufferExposingByteArrayOutputStream content) throws IOException {
+    boolean equals = true;
+    int headerLength = lineSeparatorIfPrependXmlProlog == null ? 0 : XML_PROLOG.length + lineSeparatorIfPrependXmlProlog.getSeparatorBytes().length;
+    int toWriteLength = headerLength + content.size();
+
+    if (result.getLength() != toWriteLength) {
+      equals = false;
+    }
+    else {
+      byte[] bytes = result.contentsToByteArray();
+      if (lineSeparatorIfPrependXmlProlog != null) {
+        if (!ArrayUtil.startsWith(bytes, XML_PROLOG) || !ArrayUtil.startsWith(bytes, XML_PROLOG.length, lineSeparatorIfPrependXmlProlog.getSeparatorBytes())) {
+          equals = false;
+        }
+      }
+      if (!ArrayUtil.startsWith(bytes, headerLength, content.toByteArray())) {
+        equals = false;
+      }
+    }
+    return equals;
+  }
+
+  public static void deleteFile(@NotNull File file, @NotNull final Object requestor, @Nullable final VirtualFile virtualFile) throws IOException {
     if (virtualFile == null) {
       LOG.warn("Cannot find virtual file " + file.getAbsolutePath());
     }
@@ -178,7 +221,17 @@ public class StorageUtil {
       }
     }
     else if (virtualFile.exists()) {
-      deleteFile(requestor, virtualFile);
+      try {
+        deleteFile(requestor, virtualFile);
+      }
+      catch (FileNotFoundException e) {
+        throw new ReadOnlyModificationException(virtualFile, e, new StateStorage.SaveSession() {
+          @Override
+          public void save() throws IOException {
+            deleteFile(requestor, virtualFile);
+          }
+        });
+      }
     }
   }
 
@@ -186,9 +239,6 @@ public class StorageUtil {
     AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
     try {
       virtualFile.delete(requestor);
-    }
-    catch (FileNotFoundException ignored) {
-      throw new ReadOnlyModificationException(virtualFile);
     }
     finally {
       token.finish();
@@ -203,18 +253,30 @@ public class StorageUtil {
   }
 
   @NotNull
-  private static VirtualFile getOrCreateVirtualFile(@Nullable Object requestor, @NotNull File ioFile) throws IOException {
-    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
-    if (virtualFile == null) {
-      File parentFile = ioFile.getParentFile();
-      // need refresh if the directory has just been created
-      VirtualFile parentVirtualFile = parentFile == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile);
-      if (parentVirtualFile == null) {
-        throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile == null ? "" : parentFile.getPath()));
-      }
-      virtualFile = parentVirtualFile.createChildData(requestor, ioFile.getName());
+  public static VirtualFile getOrCreateVirtualFile(@Nullable final Object requestor, @NotNull final File file) throws IOException {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    if (virtualFile != null) {
+      return virtualFile;
     }
-    return virtualFile;
+    File absoluteFile = file.getAbsoluteFile();
+    FileUtil.createParentDirs(absoluteFile);
+
+    File parentFile = absoluteFile.getParentFile();
+    // need refresh if the directory has just been created
+    final VirtualFile parentVirtualFile = StringUtil.isEmpty(parentFile.getPath()) ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(parentFile);
+    if (parentVirtualFile == null) {
+      throw new IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile));
+    }
+
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      return parentVirtualFile.createChildData(requestor, file.getName());
+    }
+    return ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<VirtualFile, IOException>() {
+      @Override
+      public VirtualFile compute() throws IOException {
+        return parentVirtualFile.createChildData(requestor, file.getName());
+      }
+    });
   }
 
   /**
@@ -247,47 +309,6 @@ public class StorageUtil {
       }
     }
     return defaultSeparator == null ? LineSeparator.getSystemLineSeparator() : defaultSeparator;
-  }
-
-  @Nullable
-  public static BufferExposingByteArrayOutputStream newContentIfDiffers(@NotNull Parent element, @Nullable VirtualFile file) {
-    try {
-      Pair<byte[], String> pair = loadFile(file);
-      BufferExposingByteArrayOutputStream out = writeToBytes(element, pair.second);
-      return pair.first != null && equal(pair.first, out) ? null : out;
-    }
-    catch (IOException e) {
-      LOG.debug(e);
-      return null;
-    }
-  }
-
-  public static boolean equal(byte[] a1, @NotNull BufferExposingByteArrayOutputStream out) {
-    int length = out.size();
-    if (a1.length != length) {
-      return false;
-    }
-
-    byte[] internalBuffer = out.getInternalBuffer();
-    for (int i = 0; i < length; i++) {
-      if (a1[i] != internalBuffer[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Nullable
-  public static Element loadElement(@Nullable InputStream stream) {
-    try {
-      return JDOMUtil.load(stream);
-    }
-    catch (JDOMException ignored) {
-      return null;
-    }
-    catch (IOException ignored) {
-      return null;
-    }
   }
 
   public static void delete(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull RoamingType type) {

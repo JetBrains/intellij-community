@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,8 +69,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   @NotNull
   public TextRange getRangeInsideHost() {
     PsiLanguageInjectionHost host = getHost();
-    ProperTextRange textRange =
-      relevantRangeInHost.isValid() ? new ProperTextRange(relevantRangeInHost.getStartOffset(), relevantRangeInHost.getEndOffset()) : null;
+    ProperTextRange textRange = relevantRangeInHost.isValid() ? ProperTextRange.create(relevantRangeInHost) : null;
     if (host == null) {
       if (textRange != null) return textRange;
       Segment fromSP = hostElementPointer.getRange();
@@ -83,6 +82,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
     return textRange.shiftRight(-hostTextRange.getStartOffset());
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     PsiLanguageInjectionHost host = getHost();

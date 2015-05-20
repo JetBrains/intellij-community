@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.util.pico;
 
+import com.intellij.openapi.extensions.AreaPicoContainer;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +29,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DefaultPicoContainer implements MutablePicoContainer, Serializable {
-  private final ComponentAdapterFactory componentAdapterFactory;
-
+public class DefaultPicoContainer implements AreaPicoContainer, Serializable {
   private final PicoContainer parent;
   private final Set<PicoContainer> children = new HashSet<PicoContainer>();
 
@@ -38,13 +38,12 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   private final Map<String, ComponentAdapter> classNameToAdapter = ContainerUtil.newConcurrentMap();
   private final AtomicReference<FList<ComponentAdapter>> nonAssignableComponentAdapters = new AtomicReference<FList<ComponentAdapter>>(FList.<ComponentAdapter>emptyList());
 
-  public DefaultPicoContainer(@NotNull ComponentAdapterFactory componentAdapterFactory, PicoContainer parent) {
-    this.componentAdapterFactory = componentAdapterFactory;
+  public DefaultPicoContainer(PicoContainer parent) {
     this.parent = parent == null ? null : ImmutablePicoContainerProxyFactory.newProxyInstance(parent);
   }
 
-  protected DefaultPicoContainer() {
-    this(new DefaultComponentAdapterFactory(), null);
+  public DefaultPicoContainer() {
+    this(null);
   }
 
   @Override
@@ -56,14 +55,17 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     return Collections.unmodifiableMap(classNameToAdapter);
   }
 
-  protected LinkedList<ComponentAdapter> getNonAssignableAdaptersOfType(final Class componentType) {
-    LinkedList<ComponentAdapter> result = new LinkedList<ComponentAdapter>();
+  private void appendNonAssignableAdaptersOfType(@NotNull Class componentType, @NotNull List<ComponentAdapter> result) {
+    List<ComponentAdapter> comp = new ArrayList<ComponentAdapter>();
     for (final ComponentAdapter componentAdapter : nonAssignableComponentAdapters.get()) {
       if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
-        result.addFirst(componentAdapter);
+        comp.add(componentAdapter);
       }
     }
-    return result;
+    for (int i = comp.size() - 1; i >= 0; i--) {
+      ComponentAdapter adapter = comp.get(i);
+      result.add(adapter);
+    }
   }
 
   @Override
@@ -98,45 +100,43 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
       return adapterByKey;
     }
 
-    List found = getComponentAdaptersOfType(componentType);
+    List<ComponentAdapter> found = getComponentAdaptersOfType(componentType);
 
     if (found.size() == 1) {
-      return (ComponentAdapter)found.get(0);
+      return found.get(0);
     }
-    else if (found.isEmpty()) {
+    if (found.isEmpty()) {
       if (parent != null) {
         return parent.getComponentAdapterOfType(componentType);
       }
       return null;
     }
-    else {
-      Class[] foundClasses = new Class[found.size()];
-      for (int i = 0; i < foundClasses.length; i++) {
-        foundClasses[i] = ((ComponentAdapter)found.get(i)).getComponentImplementation();
-      }
-
-      throw new AmbiguousComponentResolutionException(componentType, foundClasses);
+    Class[] foundClasses = new Class[found.size()];
+    for (int i = 0; i < foundClasses.length; i++) {
+      foundClasses[i] = found.get(i).getComponentImplementation();
     }
+
+    throw new AmbiguousComponentResolutionException(componentType, foundClasses);
   }
 
   @Override
-  public List getComponentAdaptersOfType(Class componentType) {
-    if (componentType == null) {
-      return Collections.emptyList();
-    }
-    List<ComponentAdapter> found = new ArrayList<ComponentAdapter>();
-    for (final Object o : getComponentAdapters()) {
-      ComponentAdapter componentAdapter = (ComponentAdapter)o;
+  public List<ComponentAdapter> getComponentAdaptersOfType(final Class componentType) {
+    if (componentType == null) return Collections.emptyList();
+    if (componentType == String.class) return Collections.emptyList();
 
-      if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
-        found.add(componentAdapter);
-      }
+    List<ComponentAdapter> result = new SmartList<ComponentAdapter>();
+
+    final ComponentAdapter cacheHit = classNameToAdapter.get(componentType.getName());
+    if (cacheHit != null) {
+      result.add(cacheHit);
     }
-    return found;
+
+    appendNonAssignableAdaptersOfType(componentType, result);
+    return result;
   }
 
   @Override
-  public ComponentAdapter registerComponent(ComponentAdapter componentAdapter) {
+  public ComponentAdapter registerComponent(@NotNull ComponentAdapter componentAdapter) {
     Object componentKey = componentAdapter.getComponentKey();
     if (componentKeyToAdapterCache.containsKey(componentKey)) {
       throw new DuplicateComponentKeyRegistrationException(componentKey);
@@ -163,7 +163,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   }
 
   @Override
-  public ComponentAdapter unregisterComponent(Object componentKey) {
+  public ComponentAdapter unregisterComponent(@NotNull Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.remove(componentKey);
     componentAdapters.remove(adapter);
     if (adapter instanceof AssignableToComponentAdapter) {
@@ -194,7 +194,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     }
 
     List<Object> result = new ArrayList<Object>();
-    for (final ComponentAdapter componentAdapter : componentAdapters.getImmutableSet()) {
+    for (final ComponentAdapter componentAdapter : getComponentAdapters()) {
       if (ReflectionUtil.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
         // may be null in the case of the "implicit" adapter representing "this".
         ContainerUtil.addIfNotNull(result, getInstance(componentAdapter));
@@ -206,8 +206,17 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   @Override
   @Nullable
   public Object getComponentInstance(Object componentKey) {
-    ComponentAdapter componentAdapter = getComponentAdapter(componentKey);
-    return componentAdapter == null ? null : getInstance(componentAdapter);
+    ComponentAdapter adapter = getFromCache(componentKey);
+    if (adapter != null) {
+      return getLocalInstance(adapter);
+    }
+    if (parent != null) {
+      adapter = parent.getComponentAdapter(componentKey);
+      if (adapter != null) {
+        return parent.getComponentInstance(adapter.getComponentKey());
+      }
+    }
+    return null;
   }
 
   @Override
@@ -219,7 +228,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   @Nullable
   private Object getInstance(@NotNull ComponentAdapter componentAdapter) {
-    if (componentAdapters.getImmutableSet().contains(componentAdapter)) {
+    if (getComponentAdapters().contains(componentAdapter)) {
       return getLocalInstance(componentAdapter);
     }
     if (parent != null) {
@@ -258,7 +267,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   @Override
   @Nullable
-  public ComponentAdapter unregisterComponentByInstance(Object componentInstance) {
+  public ComponentAdapter unregisterComponentByInstance(@NotNull Object componentInstance) {
     Collection<ComponentAdapter> adapters = getComponentAdapters();
 
     for (final ComponentAdapter adapter : adapters) {
@@ -290,20 +299,21 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public MutablePicoContainer makeChildContainer() {
-    DefaultPicoContainer pc = new DefaultPicoContainer(componentAdapterFactory, this);
+    DefaultPicoContainer pc = new DefaultPicoContainer(this);
     addChildContainer(pc);
     return pc;
   }
 
   @Override
-  public boolean addChildContainer(PicoContainer child) {
+  public boolean addChildContainer(@NotNull PicoContainer child) {
     return children.add(child);
   }
 
   @Override
-  public boolean removeChildContainer(PicoContainer child) {
+  public boolean removeChildContainer(@NotNull PicoContainer child) {
     return children.remove(child);
   }
 
@@ -342,7 +352,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   @Override
   public ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
-    ComponentAdapter componentAdapter = componentAdapterFactory.createComponentAdapter(componentKey, componentImplementation, parameters);
+    ComponentAdapter componentAdapter = new ConstructorInjectionComponentAdapter(componentKey, componentImplementation, parameters, true);
     return registerComponent(componentAdapter);
   }
 
@@ -397,5 +407,10 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
       return res;
     }
+  }
+
+  @Override
+  public String toString() {
+    return "DefaultPicoContainer" + (getParent() == null ? " (root)" : " (parent="+getParent()+")");
   }
 }

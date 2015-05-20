@@ -52,9 +52,9 @@ class PropertiesManager extends MembersManager<PyElement> {
 
   @NotNull
   private static PyElement getElement(@NotNull final Property property) {
-    final Callable getter = property.getGetter().valueOrNull();
-    final Callable setter = property.getSetter().valueOrNull();
-    final Callable deleter = property.getDeleter().valueOrNull();
+    final PyCallable getter = property.getGetter().valueOrNull();
+    final PyCallable setter = property.getSetter().valueOrNull();
+    final PyCallable deleter = property.getDeleter().valueOrNull();
 
     if (getter != null) {
       return getter;
@@ -111,9 +111,9 @@ class PropertiesManager extends MembersManager<PyElement> {
   @NotNull
   private static Collection<PyFunction> getAllFunctions(@NotNull final Property property) {
     final Collection<PyFunction> result = new ArrayList<PyFunction>(3);
-    final Callable getter = property.getGetter().valueOrNull();
-    final Callable setter = property.getSetter().valueOrNull();
-    final Callable deleter = property.getDeleter().valueOrNull();
+    final PyCallable getter = property.getGetter().valueOrNull();
+    final PyCallable setter = property.getSetter().valueOrNull();
+    final PyCallable deleter = property.getDeleter().valueOrNull();
 
     if (getter instanceof PyFunction) {
       result.add((PyFunction)getter);

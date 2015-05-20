@@ -18,17 +18,13 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -87,6 +83,7 @@ public abstract class FileColorSettingsTable extends JBTable {
   public boolean editCellAt(int row, int column, EventObject e) {
     if (e == null || (e instanceof MouseEvent && ((MouseEvent)e).getClickCount() == 1)) return false;
     final Object at = getModel().getValueAt(row, column);
+    if (!(at instanceof FileColorConfiguration)) return false;
     final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog(myManager, ((FileColorConfiguration)at));
     dialog.getScopeComboBox().setEnabled(false);
     dialog.show();
@@ -194,7 +191,9 @@ public abstract class FileColorSettingsTable extends JBTable {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-      return myConfigurations.get(rowIndex);
+      return 0 <= rowIndex && rowIndex < myConfigurations.size()
+             ? myConfigurations.get(rowIndex)
+             : null;
     }
 
     @NotNull
@@ -244,7 +243,7 @@ public abstract class FileColorSettingsTable extends JBTable {
 
     @Override
     public void addRow() {
-      final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog((FileColorManagerImpl)myManager, null);
+      final FileColorConfigurationEditDialog dialog = new FileColorConfigurationEditDialog(myManager, null);
       dialog.show();
 
       if (dialog.getExitCode() == 0) {
@@ -269,82 +268,49 @@ public abstract class FileColorSettingsTable extends JBTable {
     }
   }
 
-  private static class ScopeNameRenderer extends JLabel implements TableCellRenderer {
-    private static final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
-
-    private ScopeNameRenderer() {
-      setOpaque(true);
+  private static class ScopeNameRenderer extends DefaultTableCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      return super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      if (!(value instanceof FileColorConfiguration)) {
-        return this;
+    protected void setValue(Object value) {
+      Icon icon = null;
+      String text = null;
+      if (value instanceof FileColorConfiguration) {
+        icon = getIcon((FileColorConfiguration)value);
+        text = getText((FileColorConfiguration)value);
       }
-
-      preinit(table, isSelected, hasFocus);
-
-      final FileColorConfiguration configuration = (FileColorConfiguration)value;
-      setText(FileColorManagerImpl.getAlias(configuration.getScopeName()));
-      return this;
+      setIcon(icon);
+      setText(text == null ? "" : FileColorManagerImpl.getAlias(text));
     }
 
-    protected void preinit(JTable table, boolean isSelected, boolean hasFocus) {
-      setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-      setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
+    Icon getIcon(FileColorConfiguration configuration) {
+      return null;
+    }
 
-      setBorder(hasFocus ? UIUtil.getTableFocusCellHighlightBorder()
-                         : NO_FOCUS_BORDER);
+    String getText(FileColorConfiguration configuration) {
+      return configuration.getScopeName();
     }
   }
 
   private static class ColorCellRenderer extends ScopeNameRenderer {
-    private Color myColor;
     private final FileColorManager myManager;
 
     private ColorCellRenderer(final FileColorManager manager) {
-      setOpaque(true);
-
       myManager = manager;
-
-      setIcon(EmptyIcon.ICON_16);
-    }
-
-    private void setIconColor(final Color color) {
-      myColor = color;
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      if (!(value instanceof FileColorConfiguration)) {
-        return this;
-      }
-
-      preinit(table, isSelected, hasFocus);
-
-      final FileColorConfiguration configuration = (FileColorConfiguration)value;
-      setIconColor(myManager.getColor(configuration.getColorName()));
-      setText(FileColorManagerImpl.getAlias(configuration.getColorPresentableName()));
-
-      return this;
+    Icon getIcon(FileColorConfiguration configuration) {
+      Color color = myManager.getColor(configuration.getColorName());
+      return color == null ? EmptyIcon.ICON_16 : new ColorIcon(16, color, true);
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-
-      if (myColor != null) {
-        final Icon icon = getIcon();
-        final int width = icon.getIconWidth();
-        final int height = icon.getIconHeight();
-
-        final Color old = g.getColor();
-
-        g.setColor(myColor);
-        g.fillRect(0, 0, width, height);
-
-        g.setColor(old);
-      }
+    String getText(FileColorConfiguration configuration) {
+      return configuration.getColorPresentableName();
     }
   }
 }

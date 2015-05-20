@@ -40,35 +40,39 @@ import java.io.IOException;
  * @author yole
 */
 public class SvnContentRevision implements ContentRevision, MarkerVcsContentRevision {
-  private final SvnVcs myVcs;
-  protected final FilePath myFile;
-  private final SVNRevision myRevision;
+
+  @NotNull private final SvnVcs myVcs;
+  @NotNull protected final FilePath myFile;
+  @NotNull private final SVNRevision myRevision;
   /**
    * this flag is necessary since SVN would not do remote request only if constant SVNRevision.BASE
    * -> usual current revision content class can't be used
    */
   private final boolean myUseBaseRevision;
 
-  protected SvnContentRevision(SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision, final boolean useBaseRevision) {
+  protected SvnContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull SVNRevision revision, boolean useBaseRevision) {
     myVcs = vcs;
     myRevision = revision;
     myUseBaseRevision = useBaseRevision;
     myFile = file;
   }
 
-  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull final FilePath file, final Status status) {
+  @NotNull
+  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Status status) {
     SVNRevision revision = status.getRevision().isValid() ? status.getRevision() : status.getCommittedRevision();
     return createBaseRevision(vcs, file, revision);
   }
 
-  public static SvnContentRevision createBaseRevision(SvnVcs vcs, FilePath file, SVNRevision revision) {
+  @NotNull
+  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull SVNRevision revision) {
     if (file.getFileType().isBinary()) {
       return new SvnBinaryContentRevision(vcs, file, revision, true);
     }
     return new SvnContentRevision(vcs, file, revision, true);
   }
 
-  public static SvnContentRevision createRemote(@NotNull SvnVcs vcs, @NotNull final FilePath file, final SVNRevision revision) {
+  @NotNull
+  public static SvnContentRevision createRemote(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull SVNRevision revision) {
     if (file.getFileType().isBinary()) {
       return new SvnBinaryContentRevision(vcs, file, revision, false);
     }

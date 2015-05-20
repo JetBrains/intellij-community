@@ -15,141 +15,118 @@
  */
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.RepositoryLocation;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.RootUrlInfo;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
+import org.jetbrains.idea.svn.branchConfig.SvnBranchItem;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchItem;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class WcInfoLoader {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.WcInfoLoader");
-  private final Project myProject;
+
+  @NotNull private final SvnVcs myVcs;
   /**
    * filled when showing for selected location
    */
-  private final RepositoryLocation myLocation;
+  @Nullable private final RepositoryLocation myLocation;
 
-  public WcInfoLoader(final Project project, final RepositoryLocation location) {
-    myProject = project;
+  public WcInfoLoader(@NotNull SvnVcs vcs, @Nullable RepositoryLocation location) {
+    myVcs = vcs;
     myLocation = location;
   }
 
+  @NotNull
   public List<WCInfoWithBranches> loadRoots() {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    if (vcs == null) {
-      return Collections.emptyList();
-    }
-    final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
-    final List<WCInfo> wcInfoList = vcs.getAllWcInfos();
+    List<WCInfoWithBranches> result = ContainerUtil.newArrayList();
 
-    final List<WCInfoWithBranches> result = new ArrayList<WCInfoWithBranches>();
-    for (WCInfo info : wcInfoList) {
-      final WCInfoWithBranches wcInfoWithBranches = createInfo(info, vcs, urlMapping);
-      if (wcInfoWithBranches != null) {
-        result.add(wcInfoWithBranches);
-      }
+    for (WCInfo info : myVcs.getAllWcInfos()) {
+      ContainerUtil.addIfNotNull(result, createInfo(info));
     }
+
     return result;
   }
 
   @Nullable
-  public WCInfoWithBranches reloadInfo(final WCInfoWithBranches info) {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    if (vcs == null) {
-      return null;
-    }
-    final SvnFileUrlMapping urlMapping = vcs.getSvnFileUrlMapping();
-    final File file = new File(info.getPath());
-    final RootUrlInfo rootInfo = urlMapping.getWcRootForFilePath(file);
-    if (rootInfo == null) {
-      return null;
-    }
-    final WCInfo wcInfo = new WCInfo(rootInfo, SvnUtil.isWorkingCopyRoot(file), SvnUtil.getDepth(vcs, file));
-    return createInfo(wcInfo, vcs, urlMapping);
+  public WCInfoWithBranches reloadInfo(@NotNull WCInfoWithBranches info) {
+    File file = info.getRootInfo().getIoFile();
+    RootUrlInfo rootInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(file);
+
+    return rootInfo != null ? createInfo(new WCInfo(rootInfo, SvnUtil.isWorkingCopyRoot(file), SvnUtil.getDepth(myVcs, file))) : null;
   }
 
   @Nullable
-  private WCInfoWithBranches createInfo(final WCInfo info, final SvnVcs vcs, final SvnFileUrlMapping urlMapping) {
-    if (! info.getFormat().supportsMergeInfo()) {
+  private WCInfoWithBranches createInfo(@NotNull WCInfo info) {
+    if (!info.getFormat().supportsMergeInfo()) {
       return null;
     }
 
     final String url = info.getUrl().toString();
-    if ((myLocation != null) && (! myLocation.toPresentableString().startsWith(url)) &&
-        (! url.startsWith(myLocation.toPresentableString()))) {
+    if (myLocation != null && !myLocation.toPresentableString().startsWith(url) && !url.startsWith(myLocation.toPresentableString())) {
       return null;
     }
-    if (!SvnUtil.checkRepositoryVersion15(vcs, url)) {
+    if (!SvnUtil.checkRepositoryVersion15(myVcs, url)) {
       return null;
     }
 
     // check of WC version
-    final RootUrlInfo rootForUrl = urlMapping.getWcRootForUrl(url);
-    if (rootForUrl == null) {
-      return null;
-    }
-    final VirtualFile root = rootForUrl.getRoot();
-    final VirtualFile wcRoot = rootForUrl.getVirtualFile();
-    if (wcRoot == null) {
-      return null;
-    }
-    final SvnBranchConfigurationNew configuration;
-    try {
-      configuration = SvnBranchConfigurationManager.getInstance(myProject).get(wcRoot);
-    }
-    catch (VcsException e) {
-      LOG.info(e);
-      return null;
-    }
-    if (configuration == null) {
-      return null;
-    }
-
-    final List<WCInfoWithBranches.Branch> items = new ArrayList<WCInfoWithBranches.Branch>();
-    final String branchRoot = createBranchesList(url, configuration, items);
-
-    return new WCInfoWithBranches(info, items, root, branchRoot);
+    RootUrlInfo rootForUrl = myVcs.getSvnFileUrlMapping().getWcRootForUrl(url);
+    return rootForUrl != null ? createInfoWithBranches(info, rootForUrl) : null;
   }
 
-  private static String createBranchesList(final String url, final SvnBranchConfigurationNew configuration,
-                                                             final List<WCInfoWithBranches.Branch> items) {
-    String result = null;
-    final String trunkUrl = configuration.getTrunkUrl();
-    if ((trunkUrl != null) && (! SVNPathUtil.isAncestor(trunkUrl, url))) {
-      items.add(new WCInfoWithBranches.Branch(trunkUrl));
-    } else if (trunkUrl != null) {
-      result = trunkUrl;
+  @NotNull
+  private WCInfoWithBranches createInfoWithBranches(@NotNull WCInfo info, @NotNull RootUrlInfo rootUrlInfo) {
+    SvnBranchConfigurationNew configuration =
+      SvnBranchConfigurationManager.getInstance(myVcs.getProject()).get(rootUrlInfo.getVirtualFile());
+    Ref<WCInfoWithBranches.Branch> workingCopyBranch = Ref.create();
+    List<WCInfoWithBranches.Branch> branches = ContainerUtil.newArrayList();
+    String url = info.getUrl().toString();
+
+    // TODO: Probably could utilize SvnBranchConfigurationNew.UrlListener and SvnBranchConfigurationNew.iterateUrls() behavior
+    String trunkUrl = configuration.getTrunkUrl();
+    if (trunkUrl != null) {
+      add(url, trunkUrl, branches, workingCopyBranch);
     }
-    for(String branchUrl: configuration.getBranchUrls()) {
+
+    for (String branchUrl : configuration.getBranchUrls()) {
       for (SvnBranchItem branchItem : configuration.getBranches(branchUrl)) {
-        if (! SVNPathUtil.isAncestor(branchItem.getUrl(), url)) {
-          items.add(new WCInfoWithBranches.Branch(branchItem.getUrl()));
-        } else {
-          result = branchItem.getUrl();
-        }
+        add(url, branchItem.getUrl(), branches, workingCopyBranch);
       }
     }
 
-    Collections.sort(items, new Comparator<WCInfoWithBranches.Branch>() {
+    Collections.sort(branches, new Comparator<WCInfoWithBranches.Branch>() {
       public int compare(final WCInfoWithBranches.Branch o1, final WCInfoWithBranches.Branch o2) {
         return Comparing.compare(o1.getUrl(), o2.getUrl());
       }
     });
-    return result;
+
+    return new WCInfoWithBranches(info, branches, rootUrlInfo.getRoot(), workingCopyBranch.get());
+  }
+
+  private static void add(@NotNull String url,
+                          @NotNull String branchUrl,
+                          @NotNull List<WCInfoWithBranches.Branch> branches,
+                          @NotNull Ref<WCInfoWithBranches.Branch> workingCopyBranch) {
+    WCInfoWithBranches.Branch branch = new WCInfoWithBranches.Branch(branchUrl);
+
+    if (!SVNPathUtil.isAncestor(branchUrl, url)) {
+      branches.add(branch);
+    }
+    else {
+      workingCopyBranch.set(branch);
+    }
   }
 }

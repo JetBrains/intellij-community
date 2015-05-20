@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.switcher.SwitchTarget;
+import com.intellij.ui.tabs.JBTabsPresentation;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ import java.util.*;
 import java.util.List;
 
 public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
-  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter();
+  private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
   private final Map<PlaceInGrid, GridCellImpl> myPlaceInGrid2Cell = new EnumMap<PlaceInGrid, GridCellImpl>(PlaceInGrid.class);
@@ -79,6 +80,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     myTopSplit.setFirstComponent(left);
     myTopSplit.setInnerComponent(center);
     myTopSplit.setLastComponent(right);
+    myTopSplit.setMinSize(48);
     mySplitter.setFirstComponent(myTopSplit);
     mySplitter.setSecondComponent(bottom);
   }
@@ -246,6 +248,20 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
           return new ActionCallback.Done();
         }
       };
+    }
+
+    @Override
+    public void doLayout() {
+      super.doLayout();
+      Component child = getComponentCount() == 1 ? getComponent(0) : null;
+      if (child instanceof JBTabsPresentation) {
+        if (!((JBTabsPresentation)child).isHideTabs()) {
+          Rectangle bounds = child.getBounds();
+          bounds.y --;
+          bounds.height ++;
+          child.setBounds(bounds);
+        }
+      }
     }
   }
 

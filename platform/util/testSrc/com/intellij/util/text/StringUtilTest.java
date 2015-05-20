@@ -17,6 +17,8 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.LineSeparator;
+import com.intellij.xml.util.XmlStringUtil;
 import junit.framework.TestCase;
 
 import java.nio.CharBuffer;
@@ -72,6 +74,11 @@ public class StringUtilTest extends TestCase {
   public void testUnpluralize() {
     assertEquals("s", StringUtil.unpluralize("s"));
     assertEquals("z", StringUtil.unpluralize("zs"));
+  }
+
+  public void testPluralize() {
+    assertEquals("values", StringUtil.pluralize("value"));
+    assertEquals("values", StringUtil.pluralize("values"));
   }
 
   public void testStartsWithConcatenation() {
@@ -130,6 +137,10 @@ public class StringUtilTest extends TestCase {
     assertEquals("Couldn't Connect to Debugger", StringUtil.wordsToBeginFromUpperCase("Couldn't connect to debugger"));
   }
 
+  public void testSentenceCapitalization() {
+    assertEquals("couldn't connect to debugger", StringUtil.wordsToBeginFromLowerCase("Couldn't Connect to Debugger"));
+  }
+
   public void testEscapeStringCharacters() {
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(3, "\\\"\n", "\"", false, new StringBuilder()).toString());
     assertEquals("\\\"\\n", StringUtil.escapeStringCharacters(2, "\"\n", "\"", false, new StringBuilder()).toString());
@@ -169,6 +180,24 @@ public class StringUtilTest extends TestCase {
     assertEquals("\"foo\'", StringUtil.unquoteString("\"foo\'"));
   }
 
+  public void testStripQuotesAroundValue() {
+    assertEquals("", StringUtil.stripQuotesAroundValue(""));
+    assertEquals("", StringUtil.stripQuotesAroundValue("'"));
+    assertEquals("", StringUtil.stripQuotesAroundValue("\""));
+    assertEquals("", StringUtil.stripQuotesAroundValue("''"));
+    assertEquals("", StringUtil.stripQuotesAroundValue("\"\""));
+    assertEquals("", StringUtil.stripQuotesAroundValue("'\""));
+    assertEquals("foo", StringUtil.stripQuotesAroundValue("'foo'"));
+    assertEquals("foo", StringUtil.stripQuotesAroundValue("'foo"));
+    assertEquals("foo", StringUtil.stripQuotesAroundValue("foo'"));
+    assertEquals("f'o'o", StringUtil.stripQuotesAroundValue("'f'o'o'"));
+    assertEquals("f\"o'o", StringUtil.stripQuotesAroundValue("\"f\"o'o'"));
+    assertEquals("f\"o'o", StringUtil.stripQuotesAroundValue("f\"o'o"));
+    assertEquals("\"'f\"o'o\"", StringUtil.stripQuotesAroundValue("\"\"'f\"o'o\"\""));
+    assertEquals("''f\"o'o''", StringUtil.stripQuotesAroundValue("'''f\"o'o'''"));
+    assertEquals("foo' 'bar", StringUtil.stripQuotesAroundValue("foo' 'bar"));
+  }
+
   public void testUnqoteWithQuotationChar() {
     assertEquals("", StringUtil.unquoteString("", '|'));
     assertEquals("|", StringUtil.unquoteString("|", '|'));
@@ -190,6 +219,10 @@ public class StringUtilTest extends TestCase {
   }
 
   public void testJoin() {
+    assertEquals("", StringUtil.join(Collections.<String>emptyList(), ","));
+    assertEquals("qqq", StringUtil.join(Collections.singletonList("qqq"), ","));
+    assertEquals("", StringUtil.join(Collections.<String>singletonList(null), ","));
+    assertEquals("a,b", StringUtil.join(Arrays.asList("a", "b"), ","));
     assertEquals("foo,,bar", StringUtil.join(Arrays.asList("foo", "", "bar"), ","));
     assertEquals("foo,,bar", StringUtil.join(new String[]{"foo", "", "bar"}, ","));
   }
@@ -208,7 +241,7 @@ public class StringUtilTest extends TestCase {
   }
 
   public void testShortened() {
-    String[] names = {"AVeryVeeryLongClassName.java", "com.test.SomeJAVAClassName.java", "strangelowercaseclassname.java", "PrefixPostfix.java", "SomeJAVAClassName.java"};
+    String[] names = {"AVeryVeeryLongClassName.java", "com.test.SomeJAVAClassName.java", "strangelowercaseclassname.java", "PrefixPostfix.java", "SomeJAVAClassName.java", "qwertyuiopasdghjklzxcvbnm1234567890"};
     for (String name : names) {
       for (int i = name.length() + 1; i > 15; i--) {
         String shortened = StringUtil.getShortened(name, i);
@@ -287,5 +320,64 @@ public class StringUtilTest extends TestCase {
     assertFalse(StringUtil.contains("1", "12"));
     assertTrue(StringUtil.contains("12", "1"));
     assertTrue(StringUtil.contains("12", "2"));
+  }
+
+  public void testDetectSeparators() {
+    assertEquals(null, StringUtil.detectSeparators(""));
+    assertEquals(null, StringUtil.detectSeparators("asd"));
+    assertEquals(null, StringUtil.detectSeparators("asd\t"));
+
+    assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\n"));
+    assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\nads\r"));
+    assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\nads\n"));
+
+    assertEquals(LineSeparator.CR, StringUtil.detectSeparators("asd\r"));
+    assertEquals(LineSeparator.CR, StringUtil.detectSeparators("asd\rads\r"));
+    assertEquals(LineSeparator.CR, StringUtil.detectSeparators("asd\rads\n"));
+
+    assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\n"));
+    assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\nads\r"));
+    assertEquals(LineSeparator.CRLF, StringUtil.detectSeparators("asd\r\nads\n"));
+  }
+
+  public void testFormatFileSize() {
+    assertEquals("0B", StringUtil.formatFileSize(0));
+    assertEquals("1B", StringUtil.formatFileSize(1));
+    assertEquals("2.15G", StringUtil.formatFileSize(Integer.MAX_VALUE));
+    assertEquals("9.22E", StringUtil.formatFileSize(Long.MAX_VALUE));
+
+    assertEquals("60.10K", StringUtil.formatFileSize(60100));
+
+    assertEquals("1.23K", StringUtil.formatFileSize(1234));
+    assertEquals("12.35K", StringUtil.formatFileSize(12345));
+    assertEquals("123.46K", StringUtil.formatFileSize(123456));
+    assertEquals("1.23M", StringUtil.formatFileSize(1234567));
+    assertEquals("12.35M", StringUtil.formatFileSize(12345678));
+    assertEquals("123.46M", StringUtil.formatFileSize(123456789));
+    assertEquals("1.23G", StringUtil.formatFileSize(1234567890));
+  }
+
+  public void testFormatDuration() {
+    assertEquals("0ms", StringUtil.formatDuration(0));
+    assertEquals("1ms", StringUtil.formatDuration(1));
+    assertEquals("3w 3d 20h 31m 23s 647ms", StringUtil.formatDuration(Integer.MAX_VALUE));
+    assertEquals("31ep 7714ml 2c 59yr 5mo 0w 3d 7h 12m 55s 807ms", StringUtil.formatDuration(Long.MAX_VALUE));
+
+    assertEquals("1m 0s 100ms", StringUtil.formatDuration(60100));
+
+    assertEquals("1s 234ms", StringUtil.formatDuration(1234));
+    assertEquals("12s 345ms", StringUtil.formatDuration(12345));
+    assertEquals("2m 3s 456ms", StringUtil.formatDuration(123456));
+    assertEquals("20m 34s 567ms", StringUtil.formatDuration(1234567));
+    assertEquals("3h 25m 45s 678ms", StringUtil.formatDuration(12345678));
+    assertEquals("1d 10h 17m 36s 789ms", StringUtil.formatDuration(123456789));
+    assertEquals("2w 0d 6h 56m 7s 890ms", StringUtil.formatDuration(1234567890));
+  }
+
+  public void testXmlWrapInCDATA() {
+    assertEquals("<![CDATA[abcd]]>", XmlStringUtil.wrapInCDATA("abcd"));
+    assertEquals("<![CDATA[abcd]]]><![CDATA[]>]]>", XmlStringUtil.wrapInCDATA("abcd]]>"));
+    assertEquals("<![CDATA[abcd]]]><![CDATA[]>efgh]]>", XmlStringUtil.wrapInCDATA("abcd]]>efgh"));
+    assertEquals("<![CDATA[123<![CDATA[wow<&>]]]><![CDATA[]>]]]><![CDATA[]><![CDATA[123]]>", XmlStringUtil.wrapInCDATA("123<![CDATA[wow<&>]]>]]><![CDATA[123"));
   }
 }

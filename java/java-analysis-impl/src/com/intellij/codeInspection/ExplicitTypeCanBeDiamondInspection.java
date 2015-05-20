@@ -22,8 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,7 +98,11 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaBatchLocalInspec
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-      PsiDiamondTypeUtil.replaceExplicitWithDiamond(element);
+      final PsiNewExpression newExpression =
+        PsiTreeUtil.getParentOfType(PsiDiamondTypeUtil.replaceExplicitWithDiamond(element), PsiNewExpression.class);
+      if (newExpression != null) {
+        CodeStyleManager.getInstance(project).reformat(newExpression);
+      }
     }
   }
 }

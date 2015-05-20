@@ -21,7 +21,6 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.Disposable;
@@ -35,12 +34,14 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.plaf.TreeUI;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +69,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
 
   public void attachToModel(final TestFrameworkRunningModel model) {
     setModel(new DefaultTreeModel(new DefaultMutableTreeNode(model.getRoot())));
-    getSelectionModel().setSelectionMode(getSelectionMode());
+    getSelectionModel().setSelectionMode(model.getProperties().getSelectionMode());
     myModel = model;
     Disposer.register(myModel, myModel.getRoot());
     Disposer.register(myModel, new Disposable() {
@@ -168,10 +169,5 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     });
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
-  }
-
-  @JdkConstants.TreeSelectionMode
-  protected int getSelectionMode() {
-    return TreeSelectionModel.SINGLE_TREE_SELECTION;
   }
 }

@@ -55,7 +55,7 @@
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
         </intentionAction>
         <testFramework implementation="com.theoryinpractice.testng.TestNGFramework"/>
-      <standardResourceProvider implementation="com.theoryinpractice.testng.TestNGPlugin"/>
+      <standardResource url="http://testng.org/testng-1.0.dtd" path="resources/standardSchemas/testng-1.0.dtd"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
       <forcedElementWeigher implementation="com.theoryinpractice.testng.TestNGForcedElementWeigher"/>
       <gotoRelatedProvider implementation="com.theoryinpractice.testng.TestNGRelatedFilesProvider"/>
@@ -68,6 +68,18 @@
     <extensionPoints >
       <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="org.testng.IDEATestNGListener"/>
     </extensionPoints>
+
+  <actions>
+    <group>
+      <action class="com.theoryinpractice.testng.ui.actions.TestNGExcludeFromRunAction" text="Exclude from suite" id="excludeFromTestNGSuite"/>
+      <separator/>
+      <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
+    </group>
+    <group>
+      <action class="com.theoryinpractice.testng.ui.actions.TestNGAddToTestsPatternAction" id="AddToTestNGSuite" text="Add to temp suite"/>
+      <add-to-group anchor="first" group-id="RunContextGroup"/>
+    </group>
+  </actions>
 
     <change-notes>
         <![CDATA[

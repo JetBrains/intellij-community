@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -84,7 +85,7 @@ public abstract class VirtualFileVisitor<T> {
   private boolean mySkipRoot = false;
   private int myDepthLimit = -1;
 
-  private Set<VirtualFile> myVisitedTargets;
+  private Map<VirtualFile, List<VirtualFile>> myVisitedTargets;
   private int myLevel = 0;
   private Stack<T> myValueStack = null;
   private T myValue = null;
@@ -102,7 +103,7 @@ public abstract class VirtualFileVisitor<T> {
       }
     }
     if (myFollowSymLinks) {
-      myVisitedTargets = ContainerUtil.newHashSet();
+      myVisitedTargets = ContainerUtil.newHashMap();
     }
   }
 
@@ -140,11 +141,11 @@ public abstract class VirtualFileVisitor<T> {
   public void afterChildrenVisited(@NotNull VirtualFile file) { }
 
   /**
-   * By default, visitor uses ({@linkplain com.intellij.openapi.vfs.VirtualFile#getChildren()}) to iterate over file's children.
+   * By default, visitor uses ({@linkplain VirtualFile#getChildren()}) to iterate over file's children.
    * You can override this method to implement another mechanism.
    *
    * @param file a virtual file to get children from.
-   * @return children iterable, or null to use {@linkplain com.intellij.openapi.vfs.VirtualFile#getChildren()}.
+   * @return children iterable, or null to use {@linkplain VirtualFile#getChildren()}.
    */
   @Nullable
   public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
@@ -184,11 +185,21 @@ public abstract class VirtualFileVisitor<T> {
     }
 
     VirtualFile target = file.getCanonicalFile();
-    if (!myVisitedTargets.add(target)) {
-      return false;
+    List<VirtualFile> links = myVisitedTargets.get(target);
+    if (links == null) {
+      myVisitedTargets.put(target, ContainerUtil.newSmartList(file));
+      return true;
     }
 
-    return true;
+    boolean hasLoop = false;
+    for (VirtualFile link : links) {
+      if (VfsUtilCore.isAncestor(link, file, true)) {
+        hasLoop = true;
+        break;
+      }
+    }
+    links.add(file);
+    return !hasLoop;
   }
 
   final boolean depthLimitReached() {

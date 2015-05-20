@@ -61,6 +61,7 @@ class SyncCompletion implements CompletionThreading {
     return new WeighingDelegate() {
       @Override
       public void waitFor() {
+        indicator.addDelayedMiddleMatches();
       }
 
       @Override
@@ -115,6 +116,7 @@ class AsyncCompletion implements CompletionThreading {
           while (true) {
             Computable<Boolean> next = queue.poll(30, TimeUnit.MILLISECONDS);
             if (next != null && !next.compute()) {
+              indicator.addDelayedMiddleMatches();
               return;
             }
             indicator.checkCanceled();

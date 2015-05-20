@@ -27,15 +27,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskState;
-import com.intellij.tasks.impl.httpclient.ResponseUtil;
-import com.intellij.util.text.SyncDateFormat;
+import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
+import com.intellij.util.text.DateFormatUtil;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HTTP;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +42,10 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,12 +53,6 @@ import java.util.regex.Pattern;
  * @author Dmitry Avdeev
  */
 public class TaskUtil {
-  private static SyncDateFormat ISO8601_DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ"));
-
-  static {
-    // Use UTC time zone by default (for formatting)
-    ISO8601_DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
-  }
 
   // Almost ISO-8601 strict except date parts may be separated by '/'
   // and date only also allowed just in case
@@ -134,7 +128,7 @@ public class TaskUtil {
     }
     String canonicalForm = String.format("%sT%s.%s%s", datePart, timePart, milliseconds, timezone);
     try {
-      return ISO8601_DATE_FORMAT.parse(canonicalForm);
+      return DateFormatUtil.ISO8601_DATE_FORMAT.parse(canonicalForm);
     }
     catch (ParseException e) {
       return null;
@@ -142,7 +136,7 @@ public class TaskUtil {
   }
 
   public static String formatDate(@NotNull Date date) {
-    return ISO8601_DATE_FORMAT.format(date);
+    return DateFormatUtil.ISO8601_DATE_FORMAT.format(date);
   }
 
   /**
@@ -252,7 +246,7 @@ public class TaskUtil {
   public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpMethod response) {
     if (logger.isDebugEnabled() && response.hasBeenUsed()) {
       try {
-        String content = ResponseUtil.getResponseContentAsString(response);
+        String content = TaskResponseUtil.getResponseContentAsString(response);
         Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
         String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
         if (contentType.contains("xml")) {
@@ -274,7 +268,7 @@ public class TaskUtil {
   public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpResponse response) {
     if (logger.isDebugEnabled()) {
       try {
-        String content = ResponseUtil.getResponseContentAsString(response);
+        String content = TaskResponseUtil.getResponseContentAsString(response);
         org.apache.http.Header header = response.getEntity().getContentType();
         String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
         if (contentType.contains("xml")) {
@@ -306,13 +300,5 @@ public class TaskUtil {
     catch (UnsupportedEncodingException e) {
       throw new AssertionError("UTF-8 is not supported");
     }
-  }
-
-  @Contract("null, _ -> false")
-  public static boolean isStateSupported(@Nullable TaskRepository repository, @NotNull TaskState state) {
-    if (repository == null || !repository.isSupported(TaskRepository.STATE_UPDATING)) {
-      return false;
-    }
-    return repository.getRepositoryType().getPossibleTaskStates().contains(state);
   }
 }

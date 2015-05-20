@@ -27,6 +27,7 @@ import java.util.List;
 class FileId2ValueMapping<Value> {
   private TIntObjectHashMap<Value> id2ValueMap;
   private ValueContainerImpl<Value> valueContainer;
+  private boolean myOnePerFileValidationEnabled = true;
 
   FileId2ValueMapping(ValueContainerImpl<Value> _valueContainer) {
     id2ValueMap = new TIntObjectHashMap<Value>();
@@ -71,12 +72,16 @@ class FileId2ValueMapping<Value> {
     if (mapped != null) {
       valueContainer.removeValue(inputId, mapped);
     }
-    if (DebugAssertions.EXTRA_SANITY_CHECKS) {
+    if (DebugAssertions.EXTRA_SANITY_CHECKS && myOnePerFileValidationEnabled) {
       for (final ValueContainer.ValueIterator<Value> valueIterator = valueContainer.getValueIterator(); valueIterator.hasNext();) {
         valueIterator.next();
         DebugAssertions.assertTrue(!valueIterator.getValueAssociationPredicate().contains(inputId));
       }
     }
     return mapped != null;
+  }
+
+  public void disableOneValuePerFileValidation() {
+    myOnePerFileValidationEnabled = false;
   }
 }

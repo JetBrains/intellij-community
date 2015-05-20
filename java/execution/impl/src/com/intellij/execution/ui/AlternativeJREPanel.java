@@ -29,7 +29,9 @@ import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.PathUtil;
 import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -115,8 +117,8 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
     return FileUtil.toSystemIndependentName(myPathField.getChildComponent().getText().trim());
   }
 
-  private void setPath(final String path) {
-    myPathField.getChildComponent().setText(FileUtil.toSystemDependentName(path == null ? "" : path));
+  private void setPath(@Nullable String path) {
+    myPathField.getChildComponent().setText(StringUtil.notNullize(PathUtil.toSystemDependentName(path)));
   }
 
   public boolean isPathEnabled() {
@@ -128,7 +130,7 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
     enabledChanged();
   }
 
-  public void init(String path, boolean isEnabled){
+  public void init(@Nullable String path, boolean isEnabled){
     setPathEnabled(isEnabled);
     setPath(path);
   }

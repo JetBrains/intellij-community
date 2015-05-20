@@ -15,9 +15,9 @@
  */
 package com.intellij.refactoring.extractclass.usageInfo;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
@@ -46,7 +46,7 @@ public class ReplaceStaticVariableAccess extends FixableUsageInfo {
       }
     }
     final boolean replaceWithGetEnumValue = myEnumConstant && !alreadyMigratedToEnum();
-    final String link = replaceWithGetEnumValue ? "." + PropertyUtil.suggestGetterName("value", expression.getType()) + "()" : "";
+    final String link = replaceWithGetEnumValue ? "." + GenerateMembersUtil.suggestGetterName("value", expression.getType(), expression.getProject()) + "()" : "";
     MutationUtils.replaceExpression(delegateClass + '.' + expression.getReferenceName() + link, expression);
   }
 

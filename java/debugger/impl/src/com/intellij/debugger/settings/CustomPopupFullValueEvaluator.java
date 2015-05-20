@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,22 +29,24 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by Egor on 04.10.2014.
+ * @author egor
  */
-public abstract class CustomPopupFullValueEvaluator extends XFullValueEvaluator {
+public abstract class CustomPopupFullValueEvaluator<T> extends XFullValueEvaluator {
   protected final EvaluationContextImpl myEvaluationContext;
 
-  public CustomPopupFullValueEvaluator(@NotNull String linkText, EvaluationContextImpl evaluationContext) {
+  public CustomPopupFullValueEvaluator(@NotNull String linkText, @NotNull EvaluationContextImpl evaluationContext) {
     super(linkText);
     myEvaluationContext = evaluationContext;
     setShowValuePopup(false);
   }
 
-  protected abstract JComponent createComponent();
+  protected abstract T getData();
+
+  protected abstract JComponent createComponent(T data);
 
   @Override
   public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-    myEvaluationContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
+    myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
       @Override
       public Priority getPriority() {
         return Priority.NORMAL;
@@ -52,10 +54,13 @@ public abstract class CustomPopupFullValueEvaluator extends XFullValueEvaluator 
 
       @Override
       public void contextAction() throws Exception {
-        final JComponent comp = createComponent();
+        if (callback.isObsolete()) return;
+        final T data = getData();
         DebuggerUIUtil.invokeLater(new Runnable() {
           @Override
           public void run() {
+            if (callback.isObsolete()) return;
+            final JComponent comp = createComponent(data);
             Project project = myEvaluationContext.getProject();
             JBPopup popup = DebuggerUIUtil.createValuePopup(project, comp, null);
             JFrame frame = WindowManager.getInstance().getFrame(project);
@@ -63,7 +68,7 @@ public abstract class CustomPopupFullValueEvaluator extends XFullValueEvaluator 
             Dimension size = new Dimension(frameSize.width / 2, frameSize.height / 2);
             popup.setSize(size);
             callback.evaluated("");
-            popup.show(new RelativePoint(frame, new Point((int)size.getWidth() / 2, (int)size.getHeight() / 2)));
+            popup.show(new RelativePoint(frame, new Point(size.width / 2, size.height / 2)));
           }
         });
       }

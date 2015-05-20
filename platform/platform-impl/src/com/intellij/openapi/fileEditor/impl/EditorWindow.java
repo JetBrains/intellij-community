@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.*;
@@ -41,17 +42,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -69,7 +72,31 @@ public class EditorWindow {
   protected JPanel myPanel;
   private EditorTabbedContainer myTabbedPane;
   private final EditorsSplitters myOwner;
-  private static final Icon MODIFIED_ICON = AllIcons.General.Modified;
+  private static final Icon MODIFIED_ICON = !UISettings.getInstance().HIDE_TABS_IF_NEED ? new Icon() {
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+      Font oldFont = g.getFont();
+      try {
+        g.setFont(UIUtil.getLabelFont());
+        g.setColor(JBColor.foreground());
+        g.drawString("*", 0, 10);
+      } finally {
+        config.restore();
+        g.setFont(oldFont);
+      }
+    }
+
+    @Override
+    public int getIconWidth() {
+      return 9;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return 9;
+    }
+  } : AllIcons.General.Modified;
   private static final Icon GAP_ICON = new EmptyIcon(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
 
   private boolean myIsDisposed = false;
@@ -87,7 +114,6 @@ public class EditorWindow {
   protected EditorWindow(final EditorsSplitters owner) {
     myOwner = owner;
     myPanel = new JPanel(new BorderLayout());
-    myPanel.setBorder(new AdaptiveBorder());
     myPanel.setOpaque(false);
 
     myTabbedPane = null;
@@ -104,7 +130,7 @@ public class EditorWindow {
       setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT);
     }
 
-    getWindows().add(this);
+    myOwner.addWindow(this);
     if (myOwner.getCurrentWindow() == null) {
       myOwner.setCurrentWindow(this, false);
     }
@@ -129,123 +155,10 @@ public class EditorWindow {
     }
   }
 
-  private static class AdaptiveBorder implements Border {
-    @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      Insets insets = ((JComponent)c).getInsets();
-      g.setColor(UIUtil.getPanelBackground());
-      paintBorder(g, x, y, width, height, insets);
-      g.setColor(new Color(0, 0, 0, 90));
-      paintBorder(g, x, y, width, height, insets);
-    }
-
-    private static void paintBorder(Graphics g, int x, int y, int width, int height, Insets insets) {
-      if (insets.left == 1) {
-        g.drawLine(x, y, x, y + height);
-      }
-
-      if (insets.right == 1) {
-        g.drawLine(x + width - 1, y, x + width - 1, y + height);
-      }
-
-      if (insets.bottom == 1) {
-        g.drawLine(x, y + height - 1, x + width, y + height - 1);
-      }
-    }
-
-    @Override
-    public Insets getBorderInsets(Component c) {
-      Container parent = c.getParent();
-      if (parent instanceof Splitter) {
-        boolean editorToTheLeft = false;
-        boolean editorToTheRight = false;
-        boolean editorToTheDown = false;
-
-        Splitter splitter = (Splitter)parent;
-
-        boolean vertical = splitter.getOrientation();
-        if (vertical && splitter.getFirstComponent() == c) {
-          editorToTheDown = true;
-        } else if (!vertical) {
-          if (splitter.getFirstComponent() == c) {
-            editorToTheRight = true;
-          }
-          if (splitter.getSecondComponent() == c) editorToTheLeft = true;
-        }
-
-
-        //Frame frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, c);
-        //if (frame instanceof IdeFrame) {
-        //  Project project = ((IdeFrame)frame).getProject();
-        //  ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
-        //  if (!editorToTheLeft) {
-        //    List<String> left = toolWindowManager.getIdsOn(ToolWindowAnchor.LEFT);
-        //    if (left.size() > 0) {
-        //      for (String lid : left) {
-        //        ToolWindow window = toolWindowManager.getToolWindow(lid);
-        //        editorToTheLeft = window != null && window.isVisible() && window.getType() == ToolWindowType.DOCKED;
-        //        if (editorToTheLeft) break;
-        //      }
-        //    }
-        //  }
-        //
-        //  if (!editorToTheRight) {
-        //    List<String> right = toolWindowManager.getIdsOn(ToolWindowAnchor.RIGHT);
-        //    if (right.size() > 0) {
-        //      for (String lid : right) {
-        //        ToolWindow window = toolWindowManager.getToolWindow(lid);
-        //        editorToTheRight = window != null && window.isVisible() && window.getType() == ToolWindowType.DOCKED;
-        //        if (editorToTheRight) break;
-        //      }
-        //    }
-        //  }
-        //}
-
-        Splitter outer = nextOuterSplitter(splitter);
-        if (outer != null) {
-          boolean outerVertical = outer.getOrientation();
-          if (!outerVertical) {
-            if (splitter.getParent() == outer.getFirstComponent()) editorToTheRight = true;
-            if (splitter.getParent() == outer.getSecondComponent()) editorToTheLeft = true;
-          } else {
-            if (splitter.getParent() == outer.getFirstComponent()) {
-              editorToTheDown = true;
-            }
-          }
-        }
-
-        int left = editorToTheLeft ? 1 : 0;
-        int right = editorToTheRight ? 1 : 0;
-        int bottom = editorToTheDown ? 1 : 0;
-        return new Insets(0, left, bottom, right);
-      }
-
-      return new Insets(0, 0, 0, 0);
-    }
-
-    @Nullable
-    private static Splitter nextOuterSplitter(Component c) {
-      Container parent = c.getParent();
-      if (parent == null) return null;
-      Container grandParent = parent.getParent();
-      if (grandParent instanceof Splitter) return (Splitter)grandParent;
-      return null;
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return true;
-    }
-  }
-
-  private Set<EditorWindow> getWindows() {
-    return myOwner.myWindows;
-  }
-
-  private void dispose() {
+  void dispose() {
     try {
       disposeTabs();
-      getWindows ().remove(this);
+      myOwner.removeWindow(this);
     }
     finally {
       myIsDisposed = true;
@@ -465,10 +378,6 @@ public class EditorWindow {
     }
   }
 
-  private boolean isTitleShortenedAt(int index) {
-    return myTabbedPane != null && myTabbedPane.isTitleShortened(index);
-  }
-
   private void setBackgroundColorAt(final int index, final Color color) {
     if (myTabbedPane != null) {
       myTabbedPane.setBackgroundColorAt(index, color);
@@ -641,7 +550,7 @@ public class EditorWindow {
   }
 
   private void checkConsistency() {
-    LOG.assertTrue(getWindows().contains(this), "EditorWindow not in collection");
+    LOG.assertTrue(myOwner.containsWindow(this), "EditorWindow not in collection");
   }
 
   public EditorWithProviderComposite getSelectedEditor() {
@@ -779,10 +688,8 @@ public class EditorWindow {
         final EditorWithProviderComposite firstEC = getEditorAt(0);
         myPanel = new JPanel(new BorderLayout());
         myPanel.setOpaque(false);
-        myPanel.setBorder(new AdaptiveBorder());
-        myPanel.setOpaque(false);
 
-        final Splitter splitter = new Splitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
+        final Splitter splitter = new OnePixelSplitter(orientation == JSplitPane.VERTICAL_SPLIT, 0.5f, 0.1f, 0.9f);
         final EditorWindow res = new EditorWindow(myOwner);
         if (myTabbedPane != null) {
           final EditorWithProviderComposite selectedEditor = getSelectedEditor();
@@ -897,7 +804,7 @@ public class EditorWindow {
     final ArrayList<EditorWindow> res = new ArrayList<EditorWindow>();
     if (myPanel.getParent() instanceof Splitter) {
       final Splitter splitter = (Splitter)myPanel.getParent();
-      for (final EditorWindow win : getWindows()) {
+      for (final EditorWindow win : myOwner.getWindows()) {
         if (win != this && SwingUtilities.isDescendingFrom(win.myPanel, splitter)) {
           res.add(win);
         }
@@ -925,7 +832,7 @@ public class EditorWindow {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       setTitleAt(index, EditorTabbedContainer.calcTabTitle(getManager().getProject(), file));
-      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS || isTitleShortenedAt(index)
+      setToolTipTextAt(index, UISettings.getInstance().SHOW_TABS_TOOLTIPS
                               ? getManager().getFileTooltipText(file)
                               : null);
     }
@@ -956,8 +863,9 @@ public class EditorWindow {
     }
 
     final Icon modifiedIcon;
-    if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK) {
-      modifiedIcon = composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
+    if (UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK || !UISettings.getInstance().HIDE_TABS_IF_NEED) {
+      modifiedIcon =
+        UISettings.getInstance().MARK_MODIFIED_TABS_WITH_ASTERISK && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
       count++;
     }
     else {
@@ -968,8 +876,9 @@ public class EditorWindow {
 
     int i = 0;
     final LayeredIcon result = new LayeredIcon(count);
-    result.setIcon(baseIcon, i++);
-    if (pinIcon != null) result.setIcon(pinIcon, i++);
+    int xShift = !UISettings.getInstance().HIDE_TABS_IF_NEED ? 4 : 0;
+    result.setIcon(baseIcon, i++, xShift, 0);
+    if (pinIcon != null) result.setIcon(pinIcon, i++, xShift, 0);
     if (modifiedIcon != null) result.setIcon(modifiedIcon, i++);
 
     return result;
@@ -1152,6 +1061,11 @@ public class EditorWindow {
 
   private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
     LinkedHashSet<VirtualFile> closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst);
+    VirtualFile selectedFile = getSelectedFile();
+    if (shouldCloseSelected()) {
+      defaultCloseFile(selectedFile, transferFocus);
+      closingOrder.remove(selectedFile);
+    }
 
     for (VirtualFile file : closingOrder) {
       if (myTabbedPane.getTabCount() <= limit || myTabbedPane.getTabCount() == 0 || areAllTabsPinned(fileToIgnore)) {
@@ -1209,6 +1123,20 @@ public class EditorWindow {
     closingOrder.remove(selectedFile);
     closingOrder.add(selectedFile); // selected should be closed last
     return closingOrder;
+  }
+
+  private boolean shouldCloseSelected() {
+    if (!UISettings.getInstance().REUSE_NOT_MODIFIED_TABS) return false;
+    if (!myOwner.getManager().getProject().isInitialized()) return false;
+    VirtualFile file = getSelectedFile();
+    if (file == null) return false;
+    if (!isFileOpen(file)) return false;
+    if (isFilePinned(file)) return false;
+    EditorWithProviderComposite composite = findFileComposite(file);
+    if (composite == null) return false;
+    Component owner = IdeFocusManager.getInstance(myOwner.getManager().getProject()).getFocusOwner();
+    if (owner == null || !SwingUtilities.isDescendingFrom(owner, composite.getSelectedEditor().getComponent())) return false;
+    return !myOwner.getManager().isChanged(composite);
   }
 
   private static boolean isFileModified(EditorComposite composite, VirtualFile file) {

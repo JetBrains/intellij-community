@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -278,7 +279,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
                 //check getter access instead
                 final PsiClass psiClass = ((PsiField)element).getContainingClass();
                 LOG.assertTrue(psiClass != null);
-                final PsiMethod method = psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype((PsiField)element), true);
+                final PsiMethod method = psiClass.findMethodBySignature(GenerateMembersUtil.generateGetterPrototype((PsiField)element), true);
                 if (method != null){
                   element = method;
                 }

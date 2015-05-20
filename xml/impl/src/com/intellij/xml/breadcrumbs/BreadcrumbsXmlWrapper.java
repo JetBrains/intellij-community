@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.ui.Gray;
+import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -342,7 +344,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   private void updateCrumbs(final LogicalPosition position) {
-    if (myFile != null && myEditor != null) {
+    if (myFile != null && myEditor != null && !myProject.isDisposed()) {
       if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         return;
       }
@@ -381,7 +383,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     final PsiElement psiElement = item.getPsiElement();
     moveEditorCaretTo(psiElement);
 
-    if ((modifiers & Event.SHIFT_MASK) == Event.SHIFT_MASK || (modifiers & Event.META_MASK) == Event.META_MASK) {
+    if (BitUtil.isSet(modifiers, Event.SHIFT_MASK) || BitUtil.isSet(modifiers, Event.META_MASK)) {
       final TextRange range = psiElement.getTextRange();
       myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
     }
@@ -389,9 +391,10 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
 
   @Override
   public void itemHovered(@Nullable BreadcrumbsPsiItem item) {
+    HighlightManager hm = HighlightManager.getInstance(myProject);
     if (myHighlighed != null) {
       for (RangeHighlighter highlighter : myHighlighed) {
-        HighlightManager.getInstance(myProject).removeSegmentHighlighter(myEditor, highlighter);
+        hm.removeSegmentHighlighter(myEditor, highlighter);
       }
       myHighlighed = null;
     }
@@ -401,10 +404,10 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       final CrumbPresentation p = item.getPresentation();
       final Color color = p != null ? p.getBackgroundColor(false, false, false) : BreadcrumbsComponent.ButtonSettings.DEFAULT_BG_COLOR;
       final Color background = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.CARET_ROW_COLOR);
-      attributes.setBackgroundColor(XmlTagTreeHighlightingUtil.makeTransparent(color, background, 0.3));
+      attributes.setBackgroundColor(XmlTagTreeHighlightingUtil.makeTransparent(color, background != null ? background : Gray._200, 0.3));
       myHighlighed = new ArrayList<RangeHighlighter>(1);
-      HighlightManager.getInstance(myProject).addRangeHighlight(myEditor, range.getStartOffset(), range.getEndOffset(),
-                                                                attributes, true, true, myHighlighed);
+      int flags = HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE | HighlightManager.HIDE_BY_ANY_KEY;
+      hm.addOccurrenceHighlight(myEditor, range.getStartOffset(), range.getEndOffset(), attributes, flags, myHighlighed, null);
     }
   }
 
@@ -432,7 +435,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     return null;
   }
 
-  private class MyUpdate extends Update {
+  private static class MyUpdate extends Update {
     private final BreadcrumbsXmlWrapper myBreadcrumbsComponent;
     private final Editor myEditor;
 

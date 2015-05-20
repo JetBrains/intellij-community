@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
@@ -41,8 +42,8 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.*;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * @author Konstantin Bulenkov
@@ -88,13 +89,25 @@ public class DarculaLaf extends BasicLookAndFeel {
       final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);
       final UIDefaults metalDefaults = (UIDefaults)superMethod.invoke(new MetalLookAndFeel());
+
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
-      if (SystemInfo.isLinux && !Registry.is("darcula.use.native.fonts.on.linux")) {
-        Font font = findFont("DejaVu Sans");
-        if (font != null) {
+      if (SystemInfo.isLinux) {
+        if (!Registry.is("darcula.use.native.fonts.on.linux")) {
+          Font font = findFont("DejaVu Sans");
+          if (font != null) {
+            for (Object key : defaults.keySet()) {
+              if (key instanceof String && ((String)key).endsWith(".font")) {
+                defaults.put(key, new FontUIResource(font.deriveFont(13f)));
+              }
+            }
+          }
+        } else if (Arrays.asList("CN", "JP", "KR", "TW").contains(Locale.getDefault().getCountry())) {
           for (Object key : defaults.keySet()) {
             if (key instanceof String && ((String)key).endsWith(".font")) {
-              defaults.put(key, new FontUIResource(font.deriveFont(13f)));
+              final Font font = defaults.getFont(key);
+              if (font != null) {
+                defaults.put(key, new FontUIResource("Dialog", font.getStyle(), font.getSize()));
+              }
             }
           }
         }
@@ -105,10 +118,14 @@ public class DarculaLaf extends BasicLookAndFeel {
       patchStyledEditorKit(defaults);
       patchComboBox(metalDefaults, defaults);
       defaults.remove("Spinner.arrowButtonBorder");
-      defaults.put("Spinner.arrowButtonSize", new Dimension(16, 5));
+      defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
       MetalLookAndFeel.setCurrentTheme(createMetalTheme());
-      if (SystemInfo.isWindows) {
-        //JFrame.setDefaultLookAndFeelDecorated(true);
+      if (SystemInfo.isWindows && Registry.is("ide.win.frame.decoration")) {
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
+      }
+      if (SystemInfo.isLinux && JBUI.isHiDPI()) {
+        applySystemFonts(defaults);
       }
       defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
       return defaults;
@@ -117,6 +134,23 @@ public class DarculaLaf extends BasicLookAndFeel {
       log(e);
     }
     return super.getDefaults();
+  }
+
+  private static void applySystemFonts(UIDefaults defaults) {
+    try {
+      String fqn = UIManager.getSystemLookAndFeelClassName();
+      Object systemLookAndFeel = Class.forName(fqn).newInstance();
+      final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
+      superMethod.setAccessible(true);
+      final UIDefaults systemDefaults = (UIDefaults)superMethod.invoke(systemLookAndFeel);
+      for (Map.Entry<Object, Object> entry : systemDefaults.entrySet()) {
+        if (entry.getValue() instanceof Font) {
+          defaults.put(entry.getKey(), entry.getValue());
+        }
+      }
+    } catch (Exception e) {
+      log(e);
+    }
   }
 
   protected DefaultMetalTheme createMetalTheme() {
@@ -141,7 +175,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void patchStyledEditorKit(UIDefaults defaults) {
-    URL url = getClass().getResource(getPrefix() + ".css");
+    URL url = getClass().getResource(getPrefix() + (JBUI.isHiDPI() ? "@2x.css" : ".css"));
     StyleSheet styleSheet = UIUtil.loadStyleSheet(url);
     defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
     try {
@@ -292,7 +326,7 @@ public class DarculaLaf extends BasicLookAndFeel {
       final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
       if (icon == null && value.endsWith(".png")) {
-        icon = IconLoader.findIcon(value, getClass(), true);
+        icon = IconLoader.findIcon(value, DarculaLaf.class, true);
       }
       if (color != null) {
         return  new ColorUIResource(color);

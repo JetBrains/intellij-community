@@ -256,4 +256,42 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
     rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    RemoteCredentialsHolder holder = (RemoteCredentialsHolder)o;
+
+    if (myPort != holder.myPort) return false;
+    if (myAnonymous != holder.myAnonymous) return false;
+    if (myUseKeyPair != holder.myUseKeyPair) return false;
+    if (myStorePassword != holder.myStorePassword) return false;
+    if (myStorePassphrase != holder.myStorePassphrase) return false;
+    if (myHost != null ? !myHost.equals(holder.myHost) : holder.myHost != null) return false;
+    if (myUserName != null ? !myUserName.equals(holder.myUserName) : holder.myUserName != null) return false;
+    if (myPassword != null ? !myPassword.equals(holder.myPassword) : holder.myPassword != null) return false;
+    if (myPrivateKeyFile != null ? !myPrivateKeyFile.equals(holder.myPrivateKeyFile) : holder.myPrivateKeyFile != null) return false;
+    if (myKnownHostsFile != null ? !myKnownHostsFile.equals(holder.myKnownHostsFile) : holder.myKnownHostsFile != null) return false;
+    if (myPassphrase != null ? !myPassphrase.equals(holder.myPassphrase) : holder.myPassphrase != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myHost != null ? myHost.hashCode() : 0;
+    result = 31 * result + myPort;
+    result = 31 * result + (myAnonymous ? 1 : 0);
+    result = 31 * result + (myUserName != null ? myUserName.hashCode() : 0);
+    result = 31 * result + (myPassword != null ? myPassword.hashCode() : 0);
+    result = 31 * result + (myUseKeyPair ? 1 : 0);
+    result = 31 * result + (myPrivateKeyFile != null ? myPrivateKeyFile.hashCode() : 0);
+    result = 31 * result + (myKnownHostsFile != null ? myKnownHostsFile.hashCode() : 0);
+    result = 31 * result + (myPassphrase != null ? myPassphrase.hashCode() : 0);
+    result = 31 * result + (myStorePassword ? 1 : 0);
+    result = 31 * result + (myStorePassphrase ? 1 : 0);
+    return result;
+  }
 }

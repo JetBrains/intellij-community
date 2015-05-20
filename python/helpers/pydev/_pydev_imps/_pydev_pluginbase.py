@@ -14,7 +14,6 @@ import sys
 
 from pydevd_constants import IS_PY24, IS_PY3K, IS_JYTHON
 
-
 if IS_PY24:
     from _pydev_imps._pydev_uuid_old import uuid4
 else:
@@ -96,7 +95,11 @@ def _discover_space(name, globals):
     if '__pluginbase_state__' in globals:
         return globals['__pluginbase_state__'].source
 
-    mod_name = globals.get('__name__')
+    mod_name = None
+    if globals:
+        # in unidecode package they pass [] as globals arg
+        mod_name = globals.get('__name__')
+
     if mod_name is not None and \
        mod_name.startswith(_internalspace.__name__ + '.'):
         end = mod_name.find('.', len(_internalspace.__name__) + 1)
@@ -394,63 +397,3 @@ class PluginBaseState(object):
         if rv is None:
             raise AttributeError('Plugin source went away')
         return rv
-
-
-class _ImportHook(ModuleType):
-
-    def __init__(self, name, system_import):
-        ModuleType.__init__(self, name)
-        self._system_import = system_import
-        self.enabled = True
-
-    def enable(self):
-        """Enables the import hook which drives the plugin base system.
-        This is the default.
-        """
-        self.enabled = True
-
-    def disable(self):
-        """Disables the import hook and restores the default import system
-        behavior.  This effectively breaks pluginbase but can be useful
-        for testing purposes.
-        """
-        self.enabled = False
-
-    def plugin_import(self, name, globals=None, locals=None,
-                      fromlist=None, level=-2):
-        import_name = name
-        if self.enabled:
-            ref_globals = globals
-            if ref_globals is None:
-                ref_globals = sys._getframe(1).f_globals
-            space = _discover_space(name, ref_globals)
-            if space is not None:
-                actual_name = space._rewrite_module_path(name)
-                if actual_name is not None:
-                    import_name = actual_name
-        if level == -2:
-            # fake impossible value; default value depends on version
-            if IS_PY24:
-                # the level parameter was added in version 2.5
-                return self._system_import(import_name, globals, locals, fromlist)
-            elif IS_PY3K:
-                # default value for level parameter in python 3
-                level = 0
-            else:
-                # default value for level parameter in other versions
-                level = -1
-        if IS_JYTHON:
-            import_name = name
-        return self._system_import(import_name, globals, locals,
-                                   fromlist, level)
-
-
-try:
-    import __builtin__ as builtins
-except ImportError:
-    import builtins
-
-import_hook = _ImportHook(__name__ + '.import_hook', builtins.__import__)
-builtins.__import__ = import_hook.plugin_import
-sys.modules[import_hook.__name__] = import_hook
-del builtins

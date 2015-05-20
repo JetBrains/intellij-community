@@ -20,6 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectSetProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -31,25 +34,35 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class OpenProjectSetProcessor extends ProjectSetProcessor {
+
   @Override
   public String getId() {
-    return "project";
+    return PROJECT;
   }
 
   @Override
   public void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull final Context context, @NotNull Runnable runNext) {
+    final String root = context.directory.getPath() + "/" + context.directoryName;
     for (final Pair<String, String> entry : entries) {
       if ("project".equals(entry.getFirst())) {
         final Project[] projects = ProjectManager.getInstance().getOpenProjects();
         context.project = UIUtil.invokeAndWaitIfNeeded(new Computable<Project>() {
           @Override
           public Project compute() {
-            return ProjectUtil.openProject(context.directory.getPath() + "/" + context.directoryName + "/" + entry.getSecond(), ArrayUtil.getFirstElement(projects), false);
+            return ProjectUtil.openProject(root + "/" + entry.getSecond(), ArrayUtil.getFirstElement(projects), false);
           }
         });
-        if (context.project == null) return;
-        runNext.run();
+        if (context.project != null) {
+          runNext.run();
+        }
+        return;
       }
+    }
+    // no "project" entry
+    final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
+    if (dir != null) {
+      Project project = PlatformProjectOpenProcessor.getInstance().doOpenProject(dir, null, false);
+      if (project != null) runNext.run();
     }
   }
 }

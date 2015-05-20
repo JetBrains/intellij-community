@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
 
@@ -86,8 +85,7 @@ class HTMLTextPainter {
 
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
     if (document != null) {
-      final List<LineMarkerInfo> separators = FileSeparatorProvider.getInstance().getFileSeparators(psiFile, document,
-                                                                                                    PsiUtilBase.findEditor(psiFile));
+      final List<LineMarkerInfo> separators = FileSeparatorProvider.getFileSeparators(psiFile, document);
       if (separators != null) {
         methodSeparators.addAll(separators);
       }

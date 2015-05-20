@@ -40,7 +40,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -200,12 +199,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   }
 
   private void unzip(final @Nullable String projectName, String path, final boolean moduleMode) {
-    File dir = new File(path);
-    ZipInputStream zipInputStream = null;
     final WizardInputField basePackage = getBasePackageField();
     try {
-      zipInputStream = myTemplate.getStream();
-      NullableFunction<String, String> pathConvertor = new NullableFunction<String, String>() {
+      final NullableFunction<String, String> pathConvertor = new NullableFunction<String, String>() {
         @Nullable
         @Override
         public String fun(String path) {
@@ -216,13 +212,22 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           return path;
         }
       };
-      ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, pathConvertor, new ZipUtil.ContentProcessor() {
+
+      final File dir = new File(path);
+      myTemplate.processStream(new ArchivedProjectTemplate.StreamProcessor<Void>() {
         @Override
-        public byte[] processContent(byte[] content, File file) throws IOException {
-          FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
-          return fileType.isBinary() ? content : processTemplates(projectName, new String(content, CharsetToolkit.UTF8_CHARSET), file);
+        public Void consume(@NotNull ZipInputStream stream) throws IOException {
+          ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, stream, pathConvertor, new ZipUtil.ContentProcessor() {
+            @Override
+            public byte[] processContent(byte[] content, File file) throws IOException {
+              FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
+              return fileType.isBinary() ? content : processTemplates(projectName, new String(content, CharsetToolkit.UTF8_CHARSET), file);
+            }
+          }, true);
+          return null;
         }
-      }, true);
+      });
+
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
         @Override
         public boolean value(String s) {
@@ -245,9 +250,6 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    finally {
-      StreamUtil.closeStream(zipInputStream);
-    }
   }
 
   private static String getPathFragment(String value) {
@@ -262,7 +264,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         return null;
       }
     }
-    Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
+    Properties properties = FileTemplateManager.getDefaultInstance().getDefaultProperties();
     for (WizardInputField field : myAdditionalFields) {
       properties.putAll(field.getValues());
     }

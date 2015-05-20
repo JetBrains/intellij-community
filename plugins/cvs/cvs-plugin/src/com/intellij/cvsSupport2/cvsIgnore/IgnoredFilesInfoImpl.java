@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.cvsIgnore;
 
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.util.SimpleStringPattern;
 
 import java.io.*;
@@ -72,6 +73,13 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
       if (checkPatterns(PREDEFINED_PATTERNS, fileName)) return true;
       return false;
     }
+
+    public boolean shouldBeIgnored(VirtualFile file) {
+      final String fileName = file.getName();
+      if (checkPatterns(CvsEntriesManager.getInstance().getUserDirIgnores().getPatterns(), fileName)) return true;
+      if (file.isDirectory()) return false;
+      return checkPatterns(PREDEFINED_PATTERNS, fileName);
+    }
   };
 
   private List<SimpleStringPattern> myPatterns = null;
@@ -123,6 +131,12 @@ public class IgnoredFilesInfoImpl implements IgnoredFilesInfo {
   public boolean shouldBeIgnored(String fileName) {
     if (EMPTY_FILTER.shouldBeIgnored(fileName)) return true;
     return checkPatterns(myPatterns, fileName);
+  }
+
+  @Override
+  public boolean shouldBeIgnored(VirtualFile file) {
+    if (EMPTY_FILTER.shouldBeIgnored(file)) return true;
+    return checkPatterns(myPatterns, file.getName());
   }
 
   protected static boolean checkPatterns(List<SimpleStringPattern> patterns, String fileName) {

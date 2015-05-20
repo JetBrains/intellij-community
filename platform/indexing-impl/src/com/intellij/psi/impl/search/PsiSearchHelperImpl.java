@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
@@ -45,6 +46,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.codeInsight.CommentUtilCore;
@@ -79,6 +81,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final SearchScope additionalScope = enlarger.getAdditionalUseScope(element);
       if (additionalScope != null) {
         scope = scope.union(additionalScope);
+      }
+    }
+    for (UseScopeOptimizer optimizer : UseScopeOptimizer.EP_NAME.getExtensions()) {
+      final GlobalSearchScope scopeToExclude = optimizer.getScopeToExclude(element);
+      if (scopeToExclude != null) {
+        scope = scope.intersectWith(GlobalSearchScope.notScope(scopeToExclude));
       }
     }
     return scope;
@@ -154,7 +162,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                            @NotNull final String text,
                                                            final short searchContext,
                                                            final boolean caseSensitively) {
-    boolean result = processElementsWithWord(processor, searchScope, text, searchContext, caseSensitively, shouldProcessInjectedPsi(searchScope));
+    boolean result = processElementsWithWord(processor, searchScope, text, searchContext, caseSensitively,
+                                             shouldProcessInjectedPsi(searchScope));
     return AsyncUtil.wrapBoolean(result);
   }
 
@@ -568,7 +577,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       refProcessor = second;
     }
 
-    boolean uniteWith(@NotNull final RequestWithProcessor another) {
+    private boolean uniteWith(@NotNull final RequestWithProcessor another) {
       if (request.equals(another.request)) {
         final Processor<PsiReference> myProcessor = refProcessor;
         if (myProcessor != another.refProcessor) {
@@ -854,18 +863,18 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @NotNull
   private static MultiMap<VirtualFile, RequestWithProcessor> createMultiMap() {
     // usually there is just one request
-    return MultiMap.createSmartList();
+    return MultiMap.createSmart();
   }
 
   @NotNull
   private static GlobalSearchScope uniteScopes(@NotNull Collection<RequestWithProcessor> requests) {
-    GlobalSearchScope commonScope = null;
-    for (RequestWithProcessor r : requests) {
-      final GlobalSearchScope scope = (GlobalSearchScope)r.request.searchScope;
-      commonScope = commonScope == null ? scope : commonScope.uniteWith(scope);
-    }
-    assert commonScope != null;
-    return commonScope;
+    Set<GlobalSearchScope> scopes = ContainerUtil.map2LinkedSet(requests, new Function<RequestWithProcessor, GlobalSearchScope>() {
+      @Override
+      public GlobalSearchScope fun(RequestWithProcessor r) {
+        return (GlobalSearchScope)r.request.searchScope;
+      }
+    });
+    return GlobalSearchScope.union(scopes.toArray(new GlobalSearchScope[scopes.size()]));
   }
 
   private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<PsiReference>> collectors,
@@ -883,11 +892,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           registerRequest(locals, primitive, processor);
         }
         else {
-          final List<String> words = getWordsToSearch(primitive.word);
-          final Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(words.size() * 2);
-          for (String word : words) {
-            key.add(new IdIndexEntry(word, primitive.caseSensitive));
-          }
+          Set<IdIndexEntry> key = new HashSet<IdIndexEntry>(getWordEntries(primitive.word, primitive.caseSensitive));
           registerRequest(singles.getModifiable(key), primitive, processor);
         }
       }
@@ -913,18 +918,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         localProcessors.put(singleRequest, localProcessor);
       }
     }
-  }
-
-  private static List<String> getWordsToSearch(String word) {
-    List<String> words = StringUtil.getWordsInStringLongestFirst(word);
-    if (!words.isEmpty()) {
-      return words;
-    }
-    String trimmed = word.trim();
-    if (StringUtil.isNotEmpty(trimmed)) {
-      return Collections.singletonList(trimmed);
-    }
-    return Collections.emptyList();
   }
 
   private static void registerRequest(@NotNull Collection<RequestWithProcessor> collection,
@@ -984,7 +977,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull final Collection<IdIndexEntry> keys,
                                                        @NotNull final Processor<VirtualFile> processor) {
     final FileIndexFacade index = FileIndexFacade.getInstance(project);
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+    return DumbService.getInstance(project).runReadActionInSmartMode(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         return FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, new Processor<VirtualFile>() {
@@ -998,14 +991,21 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
-    List<String> words = getWordsToSearch(name);
-    if (words.isEmpty()) return Collections.emptyList();
-    List<IdIndexEntry> keys = new ArrayList<IdIndexEntry>(words.size());
-    for (String word : words) {
-      keys.add(new IdIndexEntry(word, caseSensitively));
+  private static List<IdIndexEntry> getWordEntries(@NotNull String name, final boolean caseSensitively) {
+    List<String> words = StringUtil.getWordsInStringLongestFirst(name);
+    if (words.isEmpty()) {
+      String trimmed = name.trim();
+      if (StringUtil.isNotEmpty(trimmed)) {
+        words = Collections.singletonList(trimmed);
+      }
     }
-    return keys;
+    if (words.isEmpty()) return Collections.emptyList();
+    return ContainerUtil.map2List(words, new Function<String, IdIndexEntry>() {
+      @Override
+      public IdIndexEntry fun(String word) {
+        return new IdIndexEntry(word, caseSensitively);
+      }
+    });
   }
 
   public static boolean processTextOccurrences(@NotNull final PsiElement element,

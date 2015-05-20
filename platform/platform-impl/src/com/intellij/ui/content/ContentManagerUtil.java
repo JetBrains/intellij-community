@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.util.ObjectUtils;
 
 public class ContentManagerUtil {
   private ContentManagerUtil() {
@@ -43,18 +44,14 @@ public class ContentManagerUtil {
         id = mgr.getLastActiveToolWindowId();
       }
     }
-    if(id == null){
+
+    ToolWindowEx toolWindow = id != null ? (ToolWindowEx)mgr.getToolWindow(id) : null;
+    if (requiresVisibleToolWindow && (toolWindow == null || !toolWindow.isVisible())) {
       return null;
     }
 
-    ToolWindowEx toolWindow = (ToolWindowEx)mgr.getToolWindow(id);
-    if (requiresVisibleToolWindow && !toolWindow.isVisible()) {
-      return null;
-    }
-
-    final ContentManager fromContext = PlatformDataKeys.CONTENT_MANAGER.getData(dataContext);
-    if (fromContext != null) return fromContext;
-
-    return toolWindow != null ? toolWindow.getContentManager() : null;
+    ContentManager fromToolWindow = toolWindow != null ? toolWindow.getContentManager() : null;
+    ContentManager fromContext = PlatformDataKeys.CONTENT_MANAGER.getData(dataContext);
+    return ObjectUtils.chooseNotNull(fromContext, fromToolWindow);
   }
 }

@@ -46,6 +46,7 @@ public class RenameClassTest extends MultiFileTestCase {
   }
 
   public void testImport() throws Exception {
+    //noinspection SpellCheckingInspection
     doTest("a.Blubfoo", "BlubFoo");
   }
 

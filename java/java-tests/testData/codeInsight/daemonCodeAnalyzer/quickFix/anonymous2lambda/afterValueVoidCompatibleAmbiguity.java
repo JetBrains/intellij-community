@@ -5,7 +5,9 @@ import java.util.Set;
 class Test {
   public static void main(String[] args) {
     Set<String> strings = new HashSet<>();
-    new Test().query((ResultSet var1) -> strings.add("Col1"));
+    new Test().query(var1 -> {
+      return strings.add("Col1");
+    });
   }
 
   public void query(RowCallbackHandler rch){

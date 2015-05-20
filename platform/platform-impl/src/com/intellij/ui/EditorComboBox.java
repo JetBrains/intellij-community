@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -270,7 +271,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     @Override
     public void setItem(Object anObject) {
       if (anObject != null) {
-        EditorComboBox.this.setText((String)anObject);
+        EditorComboBox.this.setText(anObject.toString());
       } else {
         EditorComboBox.this.setText("");
       }
@@ -366,13 +367,7 @@ public class EditorComboBox extends JComboBox implements DocumentListener {
     }
     if (myEditorField != null) {
       final Dimension preferredSize = new Dimension(myEditorField.getComponent().getPreferredSize());
-      final Insets insets = getInsets();
-      if (insets != null) {
-        preferredSize.width += insets.left;
-        preferredSize.width += insets.right;
-        preferredSize.height += insets.top;
-        preferredSize.height += insets.bottom;
-      }
+      JBInsets.addTo(preferredSize, getInsets());
       return preferredSize;
     }
 

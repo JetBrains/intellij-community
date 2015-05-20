@@ -1,4 +1,4 @@
-// "Create Field 'VAR'" "true"
+// "Create field 'VAR'" "true"
 class A {
     private final String VAR<caret>;
 

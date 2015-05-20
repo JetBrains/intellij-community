@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,9 @@ public class AutoBoxingInspection extends BaseInspection {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
+    if (infos.length == 0) {
+      return null;
+    }
     return new AutoBoxingFix();
   }
 
@@ -284,7 +287,39 @@ public class AutoBoxingInspection extends BaseInspection {
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
-      checkExpression(expression);
+      if (expression instanceof PsiMethodReferenceExpression) {
+        final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
+        if (methodReferenceExpression.isConstructor()) {
+          return;
+        }
+        final PsiElement referenceNameElement = methodReferenceExpression.getReferenceNameElement();
+        if (referenceNameElement == null) {
+          return;
+        }
+        final PsiElement target = methodReferenceExpression.resolve();
+        if (!(target instanceof PsiMethod)) {
+          return;
+        }
+        final PsiMethod method = (PsiMethod)target;
+        final PsiType returnType = method.getReturnType();
+        if (returnType == null || returnType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(returnType)) {
+          return;
+        }
+        final PsiPrimitiveType primitiveType = (PsiPrimitiveType)returnType;
+        final PsiClassType boxedType = primitiveType.getBoxedType(expression);
+        if (boxedType == null) {
+          return;
+        }
+        final PsiType functionalInterfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(methodReferenceExpression);
+        if (functionalInterfaceReturnType == null || ClassUtils.isPrimitive(functionalInterfaceReturnType) ||
+            !functionalInterfaceReturnType.isAssignableFrom(boxedType)) {
+          return;
+        }
+        registerError(referenceNameElement);
+      }
+      else {
+        checkExpression(expression);
+      }
     }
 
     @Override
@@ -341,7 +376,7 @@ public class AutoBoxingInspection extends BaseInspection {
       if (ignoreAddedToCollection && isAddedToCollection(expression)) {
         return;
       }
-      registerError(expression);
+      registerError(expression, expression);
     }
 
     private boolean isAddedToCollection(PsiExpression expression) {

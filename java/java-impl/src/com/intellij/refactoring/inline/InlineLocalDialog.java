@@ -24,7 +24,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineLocalDialog extends AbstractInlineLocalDialog {
-  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
+  public static final String REFACTORING_NAME = RefactoringBundle.message("inline.variable.title");
 
   private final PsiVariable myVariable;
 

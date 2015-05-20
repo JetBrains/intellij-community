@@ -224,6 +224,11 @@ public class PsiTypesUtil {
           return ((PsiArrayType)type).getComponentType();
         }
       }
+      else if (gParent instanceof PsiArrayInitializerExpression) {
+        final PsiType expectedTypeByParent = getExpectedTypeByParent((PsiExpression)parent);
+        return expectedTypeByParent != null && expectedTypeByParent instanceof PsiArrayType
+               ? ((PsiArrayType)expectedTypeByParent).getComponentType() : null;
+      }
     }
     return null;
   }
@@ -238,5 +243,12 @@ public class PsiTypesUtil {
       }
     }
     return Comparing.equal(leftType, rightType);
+  }
+
+  public static boolean isDenotableType(PsiType type) {
+    if (type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) {
+      return false;
+    }
+    return true;
   }
 }

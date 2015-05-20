@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,11 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 /**
  * @author Roman.Chernyatchik
  */
 public abstract class SMLightFixtureTestCase extends UsefulTestCase {
-
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected SMLightFixtureTestCase() {
     PlatformTestCase.initPlatformLangPrefix();
   }
@@ -45,15 +43,11 @@ public abstract class SMLightFixtureTestCase extends UsefulTestCase {
     super.setUp();
 
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
-      factory.createLightFixtureBuilder(getProjectDescriptor());
-
+    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     final LightTempDirTestFixtureImpl tempDirTestFixture = new LightTempDirTestFixtureImpl(true);
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirTestFixture);
     myFixture.setUp();
-
-    setupFixtureWhenInitialized();
   }
 
   @Override
@@ -62,9 +56,6 @@ public abstract class SMLightFixtureTestCase extends UsefulTestCase {
     myFixture = null;
 
     super.tearDown();
-  }
-
-  protected void setupFixtureWhenInitialized() throws IOException {
   }
 
   @Nullable
@@ -76,7 +67,7 @@ public abstract class SMLightFixtureTestCase extends UsefulTestCase {
     return myFixture.getProject();
   }
 
-  protected void createAndAddFile(final String relativePath, final String text) throws IOException {
+  protected void createAndAddFile(final String relativePath, final String text) {
     final PsiFile psiFile = myFixture.addFileToProject(relativePath, text);
     myFixture.configureFromExistingVirtualFile(psiFile.getVirtualFile());
   }

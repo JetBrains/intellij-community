@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.remote.strprotocol.MessageHelper;
 import org.testng.remote.strprotocol.TestResultMessage;
@@ -159,7 +160,7 @@ public class TestProxy extends AbstractTestProxy {
     return !isNotPassed();
   }
 
-  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
+  public Location getLocation(@NotNull final Project project, @NotNull GlobalSearchScope searchScope) {
     if (psiElement == null) return null;
     final PsiElement element = psiElement.getElement();
     if (element == null) return null;
@@ -167,7 +168,7 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   @Nullable
-  public Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties) {
+  public Navigatable getDescriptor(@Nullable Location location, @NotNull TestConsoleProperties properties) {
     if (location == null) return null;
     return EditSourceUtil.getDescriptor(location.getPsiElement());
   }
@@ -290,36 +291,18 @@ public class TestProxy extends AbstractTestProxy {
   }
 
   @Override
-  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
+  public DiffHyperlink getDiffViewerProvider() {
     if (myHyperlink == null) {
+      for (TestProxy proxy : getChildren()) {
+        if (!proxy.isDefect()) continue;
+        final DiffHyperlink provider = proxy.getDiffViewerProvider();
+        if (provider != null) {
+          return provider;
+        }
+      }
       return null;
     }
-    return new AssertEqualsMultiDiffViewProvider() {
-      @Override
-      public void openDiff(Project project) {
-        myHyperlink.openDiff(project);
-      }
-
-      @Override
-      public String getExpected() {
-        return myHyperlink.getLeft();
-      }
-
-      @Override
-      public String getActual() {
-        return myHyperlink.getRight();
-      }
-
-      @Override
-      public void openMultiDiff(Project project, AssertEqualsDiffChain chain) {
-        myHyperlink.openMultiDiff(project, chain);
-      }
-
-      @Override
-      public String getFilePath() {
-        return myHyperlink.getFilePath();
-      }
-    };
+    return myHyperlink;
   }
 
   private static String trimStackTrace(String stackTrace) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -65,10 +68,20 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     return project.getComponent(BookmarkManager.class);
   }
 
-  public BookmarkManager(Project project, MessageBus bus, PsiDocumentManager documentManager) {
+  public BookmarkManager(Project project,
+                         MessageBus bus,
+                         PsiDocumentManager documentManager,
+                         EditorColorsManager colorsManager,
+                         EditorFactory editorFactory) {
     super(project);
+    colorsManager.addEditorColorsListener(new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        colorsChanged();
+      }
+    }, project);
     myBus = bus;
-    EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+    EditorEventMulticaster multicaster = editorFactory.getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);
     multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
 

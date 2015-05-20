@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -302,9 +302,9 @@ public class AbstractTreeBuilder implements Disposable {
 
     final ActionCallback result = new ActionCallback();
 
-    getUi().invokeLaterIfNeeded(false, new Runnable() {
+    getUi().invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeBuilder.queueUpdateFrom") {
       @Override
-      public void run() {
+      public void perform() {
         if (updateStructure && forceResort) {
           getUi().incComparatorStamp();
         }
@@ -461,9 +461,9 @@ public class AbstractTreeBuilder implements Disposable {
 
     final Application app = ApplicationManager.getApplication();
     if (app != null) {
-      app.runReadAction(new Runnable() {
+      app.runReadAction(new TreeRunnable("AbstractTreeBuilder.runBackgroundLoading") {
         @Override
-        public void run() {
+        public void perform() {
           runnable.run();
         }
       });
@@ -482,17 +482,6 @@ public class AbstractTreeBuilder implements Disposable {
     else {
       UIUtil.invokeLaterIfNeeded(runnable);
     }
-  }
-
-  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
-  @Deprecated
-  @NotNull
-  /**
-   * @deprecated use {@link #getInitialized()}
-   * to remove in IDEA 14
-   */
-  public final ActionCallback getIntialized() {
-    return getInitialized();
   }
 
   @NotNull

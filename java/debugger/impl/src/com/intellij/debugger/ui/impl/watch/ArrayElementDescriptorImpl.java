@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.ArrayElementDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
@@ -31,8 +30,6 @@ import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.Value;
 
 public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements ArrayElementDescriptor{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl");
-
   private final int myIndex;
   private final ArrayReference myArray;
 
@@ -60,8 +57,12 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
   }
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+    return getArrayElement(myArray, myIndex);
+  }
+
+  public static Value getArrayElement(ArrayReference reference, int idx) throws EvaluateException {
     try {
-      return myArray.getValue(myIndex);
+      return reference.getValue(idx);
     }
     catch (ObjectCollectedException e) {
       throw EvaluateExceptionUtil.ARRAY_WAS_COLLECTED;

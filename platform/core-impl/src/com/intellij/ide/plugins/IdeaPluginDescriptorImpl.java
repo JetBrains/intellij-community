@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,10 +80,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private Map<PluginId, String> myOptionalConfigs;
   private Map<PluginId, IdeaPluginDescriptorImpl> myOptionalDescriptors;
   @Nullable private List<Element> myActionsElements;
-  private ComponentConfig[] myAppComponents = null;
-  private ComponentConfig[] myProjectComponents = null;
-  private ComponentConfig[] myModuleComponents = null;
-  private boolean myDeleted = false;
+  private ComponentConfig[] myAppComponents;
+  private ComponentConfig[] myProjectComponents;
+  private ComponentConfig[] myModuleComponents;
+  private boolean myDeleted;
   private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
   @Nullable private MultiMap<String, Element> myExtensions;
@@ -97,7 +97,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String mySinceBuild;
   private String myUntilBuild;
   private Boolean mySkipped;
-  private List<String> myModules = null;
+  private List<String> myModules;
 
   public IdeaPluginDescriptorImpl(@NotNull File pluginPath) {
     myPath = pluginPath;
@@ -138,7 +138,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return result;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   private static String createDescriptionKey(final PluginId id) {
     return "plugin." + id + ".description";
   }
@@ -190,7 +190,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  private void readExternal(@NotNull Element element) {
+  // used in upsource
+  protected void readExternal(@NotNull Element element) {
     final PluginBean pluginBean = XmlSerializer.deserialize(element, PluginBean.class);
 
     url = pluginBean.url;
@@ -278,7 +279,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     StringInterner interner = new StringInterner();
     List<Element> extensions = copyElements(pluginBean.extensions, interner);
     if (extensions != null) {
-      myExtensions = MultiMap.createSmartList();
+      myExtensions = MultiMap.createSmart();
       for (Element extension : extensions) {
         myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension), extension);
       }
@@ -286,7 +287,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     List<Element> extensionPoints = copyElements(pluginBean.extensionPoints, interner);
     if (extensionPoints != null) {
-      myExtensionsPoints = MultiMap.createSmartList();
+      myExtensionsPoints = MultiMap.createSmart();
       for (Element extensionPoint : extensionPoints) {
         myExtensionsPoints.putValue(StringUtil.notNullize(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA)), extensionPoint);
       }
@@ -308,7 +309,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
   }
 
-  void registerExtensions(@NotNull ExtensionsArea area, @NotNull String epName) {
+  // made public for Upsource
+  public void registerExtensions(@NotNull ExtensionsArea area, @NotNull String epName) {
     if (myExtensions != null) {
       for (Element element : myExtensions.get(epName)) {
         area.registerExtension(this, element);
@@ -391,7 +393,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myExtensions;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
   public List<File> getClassPath() {
     if (myPath.isDirectory()) {
@@ -591,7 +593,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return CommonBundle.messageOrDefault(bundle, createDescriptionKey(myId), myDescriptionChildText == null ? "" : myDescriptionChildText);
   }
 
-  public void insertDependency(final IdeaPluginDescriptor d) {
+  public void insertDependency(@NotNull IdeaPluginDescriptor d) {
     PluginId[] deps = new PluginId[getDependentPluginIds().length + 1];
     deps[0] = d.getPluginId();
     System.arraycopy(myDependencies, 0, deps, 1, deps.length - 1);
@@ -626,7 +628,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myOptionalDescriptors;
   }
 
-  void setOptionalDescriptors(final Map<PluginId, IdeaPluginDescriptorImpl> optionalDescriptors) {
+  void setOptionalDescriptors(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> optionalDescriptors) {
     myOptionalDescriptors = optionalDescriptors;
   }
 

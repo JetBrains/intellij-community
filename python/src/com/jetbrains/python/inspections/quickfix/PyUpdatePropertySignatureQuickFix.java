@@ -46,7 +46,7 @@ public class PyUpdatePropertySignatureQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PyFunction function = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
+    final PyCallable function = PsiTreeUtil.getParentOfType(element, PyCallable.class, false);
     assert function != null;
     final PyParameterList parameterList = function.getParameterList();
     final PyParameter[] parameters = parameterList.getParameters();

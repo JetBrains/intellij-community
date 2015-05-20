@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 package com.intellij.util.keyFMap;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-class ArrayBackedFMap implements KeyFMap {
+public class ArrayBackedFMap implements KeyFMap {
   static final int ARRAY_THRESHOLD = 8;
   private final int[] keys;
   private final Object[] values;
@@ -52,13 +53,8 @@ class ArrayBackedFMap implements KeyFMap {
       if (oldSize == ARRAY_THRESHOLD) {
         return new MapBackedFMap(keys, keyCode, values, value);
       }
-      int newSize = oldSize + 1;
-      newKeys = new int[newSize];
-      newValues = new Object[newSize];
-      System.arraycopy(keys, 0, newKeys, 0, oldSize);
-      System.arraycopy(values, 0, newValues, 0, oldSize);
-      newKeys[oldSize] = keyCode;
-      newValues[oldSize] = value;
+      newKeys = ArrayUtil.append(keys, keyCode);
+      newValues = ArrayUtil.append(values, value, ArrayUtil.OBJECT_ARRAY_FACTORY);
     }
     return new ArrayBackedFMap(newKeys, newValues);
   }
@@ -85,24 +81,12 @@ class ArrayBackedFMap implements KeyFMap {
           if (key2 == null) return new OneElementFMap<Object>(key1, values[i1]);
           return new PairElementsFMap(key1, values[i1], key2, values[i2]);
         }
-        int newSize = oldSize - 1;
-        int[] newKeys = new int[newSize];
-        Object[] newValues = new Object[newSize];
-        System.arraycopy(keys, 0, newKeys, 0, i);
-        System.arraycopy(values, 0, newValues, 0, i);
-        System.arraycopy(keys, i+1, newKeys, i, oldSize-i-1);
-        System.arraycopy(values, i+1, newValues, i, oldSize-i-1);
+        int[] newKeys = ArrayUtil.remove(keys, i);
+        Object[] newValues = ArrayUtil.remove(values, i, ArrayUtil.OBJECT_ARRAY_FACTORY);
         return new ArrayBackedFMap(newKeys, newValues);
       }
     }
     return this;
-    //if (i == oldSize) {
-      //newKeys = new int[oldSize];
-      //newValues = new Object[oldSize];
-      //System.arraycopy(keys, 0, newKeys, 0, oldSize);
-      //System.arraycopy(values, 0, newValues, 0, oldSize);
-    //}
-
   }
 
   @Override
@@ -133,5 +117,32 @@ class ArrayBackedFMap implements KeyFMap {
   @Override
   public boolean isEmpty() {
     return false;
+  }
+
+  @NotNull
+  public int[] getKeyIds() {
+    return keys;
+  }
+
+  @NotNull
+  @Override
+  public Key[] getKeys() {
+    return getKeysByIndices(keys);
+  }
+
+  @NotNull
+  public Object[] getValues() {
+    return values;
+  }
+
+  @NotNull
+  static Key[] getKeysByIndices(int[] indexes) {
+    Key[] result = new Key[indexes.length];
+
+    for (int i =0; i < indexes.length; i++) {
+      result[i] = Key.getKeyByIndex(indexes[i]);
+    }
+
+    return result;
   }
 }

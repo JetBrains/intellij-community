@@ -143,6 +143,9 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
         if (text.charAt(i) == ' ') {
           spaces++;
         }
+        else if (text.charAt(i) == '\t') {
+          spaces += 8;
+        }
       }
       myCurrentNewLineIndent = spaces;
     }
@@ -317,7 +320,8 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     // line break token
     int end = getBaseTokenEnd();
     advanceBase();
-    while (getBaseTokenType() == PyTokenTypes.SPACE || (!breakStatementOnLineBreak && getBaseTokenType() == PyTokenTypes.LINE_BREAK)) {
+    while (getBaseTokenType() == PyTokenTypes.SPACE || getBaseTokenType() == PyTokenTypes.TAB ||
+           (!breakStatementOnLineBreak && getBaseTokenType() == PyTokenTypes.LINE_BREAK)) {
       end = getBaseTokenEnd();
       advanceBase();
     }

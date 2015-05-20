@@ -50,7 +50,8 @@ import java.util.List;
 public class FormReferencesSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
-    if (!scopeCanContainForms(p.getScope())) return true;
+    SearchScope userScope = p.getScopeDeterminedByUser();
+    if (!scopeCanContainForms(userScope)) return true;
     final PsiElement refElement = p.getElementToSearch();
     final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
@@ -71,9 +72,7 @@ public class FormReferencesSearcher implements QueryExecutor<PsiReference, Refer
     Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
     if (module == null) return true;
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(module);
-    final LocalSearchScope filterScope = p.getScope() instanceof LocalSearchScope
-                                         ? (LocalSearchScope) p.getScope()
-                                         : null;
+    final LocalSearchScope filterScope = userScope instanceof LocalSearchScope ? (LocalSearchScope)userScope : null;
 
     PsiManager psiManager = PsiManager.getInstance(project);
     if (refElement instanceof PsiPackage) {

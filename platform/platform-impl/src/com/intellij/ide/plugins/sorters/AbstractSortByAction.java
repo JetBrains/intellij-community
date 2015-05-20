@@ -20,11 +20,12 @@ import com.intellij.ide.plugins.PluginTable;
 import com.intellij.ide.plugins.PluginTableModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class AbstractSortByAction extends ToggleAction {
+public abstract class AbstractSortByAction extends ToggleAction implements DumbAware {
   protected final PluginTable myTable;
   protected final PluginTableModel myModel;
 
@@ -41,6 +42,11 @@ public abstract class AbstractSortByAction extends ToggleAction {
   @Override
   public final boolean isSelected(AnActionEvent e) {
     return isSelected();
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
   }
 
   @Override

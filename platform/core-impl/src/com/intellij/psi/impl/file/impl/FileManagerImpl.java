@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.ContentBasedFileSubstitutor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbService;
@@ -126,8 +124,22 @@ public class FileManagerImpl implements FileManager {
           }
         }
         removeInvalidFilesAndDirs(false);
+        checkLanguageChange();
       }
     });
+  }
+
+  private void checkLanguageChange() {
+    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<VirtualFile, FileViewProvider>(myVFileToViewProviderMap);
+    myVFileToViewProviderMap.clear();
+    for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
+      VirtualFile vFile = iterator.next();
+      Language language = getLanguage(vFile);
+      if (language != null && language != fileToPsiFileMap.get(vFile).getBaseLanguage()) {
+        iterator.remove();
+      }
+    }
+    myVFileToViewProviderMap.putAll(fileToPsiFileMap);
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
@@ -138,10 +150,14 @@ public class FileManagerImpl implements FileManager {
 
     VirtualFile dir = vFile.getParent();
     PsiDirectory parentDir = dir == null ? null : getCachedDirectory(dir);
+    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
     if (parentDir != null) {
-      PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-      treeEvent.setParent(parentDir);
-      myManager.childrenChanged(treeEvent);
+      event.setParent(parentDir);
+      myManager.childrenChanged(event);
+    } else {
+      event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
+      myManager.beforePropertyChange(event);
+      myManager.propertyChanged(event);
     }
   }
 
@@ -160,6 +176,7 @@ public class FileManagerImpl implements FileManager {
     myVFileToViewProviderMap.clear();
     myVFileToPsiDirMap.clear();
     processQueue();
+    ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
   }
 
   @Override
@@ -231,6 +248,11 @@ public class FileManagerImpl implements FileManager {
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, boolean eventSystemEnabled) {
     Language language = getLanguage(file);
+    return createFileViewProvider(file, eventSystemEnabled, language);
+  }
+
+  @NotNull
+  private FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled, Language language) {
     final FileViewProviderFactory factory = language == null
                                             ? FileTypeFileViewProviders.INSTANCE.forFileType(file.getFileType())
                                             : LanguageFileViewProviders.INSTANCE.forLanguage(language);
@@ -241,18 +263,10 @@ public class FileManagerImpl implements FileManager {
 
   @Nullable
   private Language getLanguage(@NotNull VirtualFile file) {
-    final FileType fileType = file.getFileType();
-    Project project = myManager.getProject();
+    FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
-      return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, project);
-    }
-    // Define language for binary file
-    final ContentBasedFileSubstitutor[] processors = Extensions.getExtensions(ContentBasedFileSubstitutor.EP_NAME);
-    for (ContentBasedFileSubstitutor processor : processors) {
-      Language language = processor.obtainLanguageForFile(file);
-      if (language != null) {
-        return language;
-      }
+      Language language = ((LanguageFileType)fileType).getLanguage();
+      return LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, myManager.getProject());
     }
 
     return null;
@@ -420,7 +434,7 @@ public class FileManagerImpl implements FileManager {
     return ConcurrencyUtil.cacheOrGet(myVFileToPsiDirMap, vFile, psiDir);
   }
 
-  PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile) {
+  public PsiDirectory getCachedDirectory(@NotNull VirtualFile vFile) {
     return myVFileToPsiDirMap.get(vFile);
   }
 

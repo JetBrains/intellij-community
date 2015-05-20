@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,8 +101,10 @@ class DeclarationMover extends LineMover {
     Document document = editor.getDocument();
 
     PsiElement sibling = down ? range.lastElement.getNextSibling() : range.firstElement.getPrevSibling();
-    if (sibling == null) return false;
     sibling = firstNonWhiteElement(sibling, down);
+    if (down && range.lastElement instanceof PsiEnumConstant && sibling instanceof PsiJavaToken) {
+      sibling = ((PsiJavaToken)sibling).getTokenType() == JavaTokenType.COMMA ? firstNonWhiteElement(sibling.getNextSibling(), true) : null;
+    }
     final boolean areWeMovingClass = range.firstElement instanceof PsiClass;
     info.toMove = range;
     try {
@@ -113,6 +115,9 @@ class DeclarationMover extends LineMover {
       }
       else {
         info.toMove2 = intraClassRange;
+      }
+      if (down ? info.toMove2.startLine < info.toMove.endLine : info.toMove2.endLine > info.toMove.startLine) {
+        return false;
       }
     }
     catch (IllegalMoveException e) {
@@ -179,7 +184,7 @@ class DeclarationMover extends LineMover {
   // throws IllegalMoveException when corresponding movement has no sense
   @Nullable
   private LineRange moveInsideOutsideClassPosition(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) throws IllegalMoveException{
-    if (sibling == null) throw new IllegalMoveException();
+    if (sibling == null || sibling instanceof PsiImportList) throw new IllegalMoveException();
     if (sibling instanceof PsiJavaToken &&
         ((PsiJavaToken)sibling).getTokenType() == (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE) &&
         sibling.getParent() instanceof PsiClass) {
@@ -198,6 +203,7 @@ class DeclarationMover extends LineMover {
         && (sibling instanceof PsiJavaToken && ((PsiJavaToken)sibling).getTokenType() == JavaTokenType.SEMICOLON || sibling instanceof PsiErrorElement)
         && firstNonWhiteElement(sibling.getPrevSibling(), false) instanceof PsiEnumConstant) {
       PsiClass aClass = (PsiClass)sibling.getParent();
+      if (!areWeMovingClass && !(aClass.getParent() instanceof PsiClass)) throw new IllegalMoveException();
       Document document = editor.getDocument();
       int startLine = document.getLineNumber(aClass.getTextRange().getStartOffset());
       int endLine = document.getLineNumber(sibling.getTextRange().getEndOffset()) + 1;

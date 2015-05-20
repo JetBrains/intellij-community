@@ -73,7 +73,7 @@ public class SystemExitInspection extends BaseInspection {
       if (!"exit".equals(methodName) && !"halt".equals(methodName)) {
         return;
       }
-      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
+      final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (ignoreInMainMethod && PsiMethodUtil.isMainMethod(containingMethod)) {
         return;
       }

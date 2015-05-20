@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -32,9 +34,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
+  private static final String NO_IMPORTS_OPTIMIZED = "Unused imports not found";
+
 
   @Override
   public void actionPerformed(AnActionEvent event) {
@@ -59,7 +64,7 @@ public class OptimizeImportsAction extends AnAction {
       if (file == null) return;
       dir = file.getContainingDirectory();
     }
-    else if (files != null && ReformatCodeAction.areFiles(files)) {
+    else if (files != null && ReformatCodeAction.containsAtLeastOneFile(files)) {
       final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
       if (!operationStatus.hasReadonlyFiles()) {
         new OptimizeImportsProcessor(project, ReformatCodeAction.convertToPsiFiles(files, project), null).run();
@@ -72,13 +77,16 @@ public class OptimizeImportsAction extends AnAction {
 
       if (projectContext != null || moduleContext != null) {
         final String text;
+        final boolean hasChanges;
         if (moduleContext != null) {
           text = CodeInsightBundle.message("process.scope.module", moduleContext.getName());
+          hasChanges = FormatChangedTextUtil.hasChanges(moduleContext);
         }
         else {
           text = CodeInsightBundle.message("process.scope.project", projectContext.getPresentableUrl());
+          hasChanges = FormatChangedTextUtil.hasChanges(projectContext);
         }
-        DialogWrapper dialog = new OptimizeOnModuleDialog(project, text);
+        DialogWrapper dialog = new OptimizeImportsDialog(project, text, hasChanges);
         if (!dialog.showAndGet()) {
           return;
         }
@@ -106,32 +114,41 @@ public class OptimizeImportsAction extends AnAction {
       }
     }
 
-    boolean processDirectory;
-    boolean includeSubdirectories;
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      includeSubdirectories = processDirectory = false;
-    }
-    else if (!EditorSettingsExternalizable.getInstance().getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG && file != null) {
-      includeSubdirectories = processDirectory = false;
-    }
-    else {
-      final LayoutCodeDialog dialog =
-        new LayoutCodeDialog(project, CodeInsightBundle.message("process.optimize.imports"), file, dir, null, HELP_ID);
-      if (!dialog.showAndGet()) {
+    boolean processDirectory = false;
+    boolean processOnlyVcsChangedFiles = false;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && file == null && dir != null) {
+      String message = CodeInsightBundle.message("process.scope.directory", dir.getName());
+      OptimizeImportsDialog dialog = new OptimizeImportsDialog(project, message, FormatChangedTextUtil.hasChanges(dir));
+      dialog.show();
+      if (!dialog.isOK()) {
         return;
       }
-      EditorSettingsExternalizable.getInstance().getOptions().SHOW_OPIMIZE_IMPORTS_DIALOG = !dialog.isDoNotAskMe();
-      ReformatCodeAction.updateShowDialogSetting(dialog, "\"Optimize Imports\" dialog disabled");
-      processDirectory = dialog.isProcessDirectory();
-      includeSubdirectories = dialog.isIncludeSubdirectories();
+      processDirectory = true;
+      processOnlyVcsChangedFiles = dialog.isProcessOnlyVcsChangedFiles();
     }
 
     if (processDirectory){
-      new OptimizeImportsProcessor(project, dir, includeSubdirectories).run();
+      new OptimizeImportsProcessor(project, dir, true, processOnlyVcsChangedFiles).run();
     }
     else{
-      new OptimizeImportsProcessor(project, file).run();
+      final OptimizeImportsProcessor optimizer = new OptimizeImportsProcessor(project, file);
+      if (editor != null && EditorSettingsExternalizable.getInstance().getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION) {
+        optimizer.setCollectInfo(true);
+        optimizer.setPostRunnable(new Runnable() {
+          @Override
+          public void run() {
+            LayoutCodeInfoCollector collector = optimizer.getInfoCollector();
+            if (collector != null) {
+              String info = collector.getOptimizeImportsNotification();
+              if (!editor.isDisposed() && editor.getComponent().isShowing()) {
+                String message = info != null ? info : NO_IMPORTS_OPTIMIZED;
+                FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message), null);
+              }
+            }
+          }
+        });
+      }
+      optimizer.run();
     }
   }
 
@@ -160,7 +177,7 @@ public class OptimizeImportsAction extends AnAction {
         return;
       }
     }
-    else if (files != null && ReformatCodeAction.areFiles(files)) {
+    else if (files != null && ReformatCodeAction.containsAtLeastOneFile(files)) {
       boolean anyHasOptimizeImports = false;
       for (VirtualFile virtualFile : files) {
         PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
@@ -204,21 +221,49 @@ public class OptimizeImportsAction extends AnAction {
     return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
   }
 
-  private static class OptimizeOnModuleDialog extends DialogWrapper {
-    private final String myText;
+  private static class OptimizeImportsDialog extends DialogWrapper {
+    private final boolean myContextHasChanges;
 
-    OptimizeOnModuleDialog(Project project, String text) {
+    private final String myText;
+    private JCheckBox myOnlyVcsCheckBox;
+    private final LastRunReformatCodeOptionsProvider myLastRunOptions;
+
+    OptimizeImportsDialog(Project project, String text, boolean hasChanges) {
       super(project, false);
       myText = text;
+      myContextHasChanges = hasChanges;
+      myLastRunOptions = new LastRunReformatCodeOptionsProvider(PropertiesComponent.getInstance());
       setOKButtonText(CodeInsightBundle.message("reformat.code.accept.button.text"));
       setTitle(CodeInsightBundle.message("process.optimize.imports"));
       init();
     }
 
+    public boolean isProcessOnlyVcsChangedFiles() {
+      return myOnlyVcsCheckBox.isSelected();
+    }
+
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      return new JLabel(myText);
+      JPanel panel = new JPanel();
+      BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
+      panel.setLayout(layout);
+
+      panel.add(new JLabel(myText));
+      myOnlyVcsCheckBox = new JCheckBox(CodeInsightBundle.message("process.scope.changed.files"));
+      boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
+
+      myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
+      myOnlyVcsCheckBox.setSelected(myContextHasChanges && lastRunVcsChangedTextEnabled);
+      myOnlyVcsCheckBox.setBorder(new EmptyBorder(0, 10 , 0, 0));
+      panel.add(myOnlyVcsCheckBox);
+      return panel;
+    }
+
+    @Nullable
+    @Override
+    protected String getHelpId() {
+      return HELP_ID;
     }
   }
 }

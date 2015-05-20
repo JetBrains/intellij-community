@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
@@ -94,7 +95,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
     else {
       if (project instanceof ProjectEx && ((ProjectEx)project).getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
-        String shelfBaseDirPath = project.getBaseDir().getPath() + File.separator + Project.DIRECTORY_STORE_FOLDER;
+        VirtualFile dir = project.getBaseDir();
+        String shelfBaseDirPath = dir == null ? "" : dir.getPath() + File.separator + Project.DIRECTORY_STORE_FOLDER;
         myFileProcessor = new CompoundShelfFileProcessor(shelfBaseDirPath);
       }
       else {
@@ -182,7 +184,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
       if (rollback) {
         final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
-        new RollbackWorker(myProject, operationName).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
+        boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
+        new RollbackWorker(myProject, operationName, modalContext).
+          doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
       }
     }
     finally {
@@ -484,9 +488,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     return result;
   }
 
-  @Nullable
-  private FilePath unshelveBinaryFile(final ShelvedBinaryFile file, @NotNull final VirtualFile patchTarget) throws IOException {
-    final Ref<FilePath> result = new Ref<FilePath>();
+  private void unshelveBinaryFile(final ShelvedBinaryFile file, @NotNull final VirtualFile patchTarget) throws IOException {
     final Ref<IOException> ex = new Ref<IOException>();
     final Ref<VirtualFile> patchedFileRef = new Ref<VirtualFile>();
     final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
@@ -495,7 +497,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       @Override
       public void run() {
         try {
-          result.set(new FilePathImpl(patchTarget));
           if (shelvedFile == null) {
             patchTarget.delete(this);
           }
@@ -512,7 +513,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     if (!ex.isNull()) {
       throw ex.get();
     }
-    return result.get();
   }
 
   private static boolean needUnshelve(final FilePatch patch, final List<ShelvedChange> changes) {
@@ -665,10 +665,26 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     notifyStateChanged();
   }
 
-  // todo problem: control usage
-  public static List<TextFilePatch> loadPatches(Project project, final String patchPath, CommitContext commitContext) throws IOException, PatchSyntaxException {
+  @NotNull
+  public static List<TextFilePatch> loadPatches(Project project,
+                                                final String patchPath,
+                                                CommitContext commitContext) throws IOException, PatchSyntaxException {
+    return loadPatches(project, patchPath, commitContext, true);
+  }
+
+  @NotNull
+  static List<? extends FilePatch> loadPatchesWithoutContent(Project project,
+                                                             final String patchPath,
+                                                             CommitContext commitContext) throws IOException, PatchSyntaxException {
+    return loadPatches(project, patchPath, commitContext, false);
+  }
+
+  private static List<TextFilePatch> loadPatches(Project project,
+                                                 final String patchPath,
+                                                 CommitContext commitContext,
+                                                 boolean loadContent) throws IOException, PatchSyntaxException {
     char[] text = FileUtil.loadFileText(new File(patchPath), CharsetToolkit.UTF8);
-    PatchReader reader = new PatchReader(new CharArrayCharSequence(text));
+    PatchReader reader = new PatchReader(new CharArrayCharSequence(text), loadContent);
     final List<TextFilePatch> textFilePatches = reader.readAllPatches();
     final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo = reader.getAdditionalInfo(
       null);

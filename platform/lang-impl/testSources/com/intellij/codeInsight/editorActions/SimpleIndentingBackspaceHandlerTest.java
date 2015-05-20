@@ -31,15 +31,15 @@ public class SimpleIndentingBackspaceHandlerTest extends LightPlatformCodeInsigh
   }
 
   private void doTest(String before, String after) {
-    int savedMode = CodeInsightSettings.getInstance().SMART_BACKSPACE;
+    SmartBackspaceMode savedMode = CodeInsightSettings.getInstance().getBackspaceMode();
     try {
-      CodeInsightSettings.getInstance().SMART_BACKSPACE = CodeInsightSettings.INDENT;
+      CodeInsightSettings.getInstance().setBackspaceMode(SmartBackspaceMode.INDENT);
       configureFromFileText(getTestName(false) + ".txt", before);
       executeAction(IdeActions.ACTION_EDITOR_BACKSPACE);
       checkResultByText(after);
     }
     finally {
-      CodeInsightSettings.getInstance().SMART_BACKSPACE = savedMode;
+      CodeInsightSettings.getInstance().setBackspaceMode(savedMode);
     }
   }
 }

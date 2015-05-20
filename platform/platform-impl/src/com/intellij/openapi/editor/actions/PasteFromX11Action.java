@@ -21,15 +21,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.Producer;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,30 +65,19 @@ public class PasteFromX11Action extends EditorAction {
     }
   }
 
-  public static class Handler extends EditorWriteActionHandler {
+  public static class Handler extends BasePasteHandler {
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    protected Transferable getContentsToPaste(Editor editor, DataContext dataContext) {
       Clipboard clip = editor.getComponent().getToolkit().getSystemSelection();
-      if (clip == null) return;
+      if (clip == null) return null;
 
-      final Transferable content;
       try {
-        content = clip.getContents(null);
+        return clip.getContents(null);
       }
       catch (Exception e) {
         LOG.info(e);
-        return;
+        return null;
       }
-      if (content == null) return;
-
-      TextRange range = EditorModificationUtil.pasteTransferable(editor, new Producer<Transferable>() {
-        @Nullable
-        @Override
-        public Transferable produce() {
-          return content;
-        }
-      });
-      editor.putUserData(EditorEx.LAST_PASTED_REGION, range);
     }
   }
 }

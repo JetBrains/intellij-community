@@ -15,7 +15,7 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -29,6 +29,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -97,7 +98,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   @Override
   public boolean canInlineElementInEditor(PsiElement element, Editor editor) {
     if (canInlineElement(element)) {
-      PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
+      PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
       if (!InlineMethodHandler.isThisReference(reference)) {
         if (element instanceof PsiMethod && reference != null) {
           final PsiElement referenceElement = reference.getElement();
@@ -190,7 +191,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   @Nullable
   public static PsiCall findCallToInline(final Editor editor) {
     PsiCall callToInline = null;
-    PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor) : null;
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor) : null;
     if (reference != null) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiJavaCodeReferenceElement) {
@@ -246,8 +247,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     final PsiMethod[] methods = psiClass.getMethods();
     for(PsiMethod method: methods) {
       if (method.isConstructor()) {
-        PsiReturnStatement stmt = findReturnStatement(method);
-        if (stmt != null) {
+        if (PsiUtil.findReturnStatements(method).length > 0) {
           return "Class cannot be inlined because its constructor contains 'return' statements";
         }
       }
@@ -314,17 +314,6 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
     }
     return redundantImplements;
-  }
-
-  private static PsiReturnStatement findReturnStatement(final PsiMethod method) {
-    final Ref<PsiReturnStatement> stmt = Ref.create(null);
-    method.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReturnStatement(final PsiReturnStatement statement) {
-        super.visitReturnStatement(statement);
-        stmt.set(statement);
-      }
-    });
-    return stmt.get();
   }
 
   @Nullable

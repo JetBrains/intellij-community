@@ -70,15 +70,12 @@ public class XmlCharFilter extends CharFilter {
   public static boolean isWithinTag(Lookup lookup) {
     if (isInXmlContext(lookup)) {
       PsiElement psiElement = lookup.getPsiElement();
-      final PsiElement parentElement = psiElement.getParent() != null ? psiElement.getParent():null;
-      String s;
-      return parentElement != null &&
-             ( parentElement instanceof XmlTag ||
-               ( parentElement instanceof PsiErrorElement &&
-                 parentElement.getParent() instanceof XmlDocument
-               ) ||
-                 ((parentElement instanceof XmlDocument || parentElement instanceof XmlText) &&
-                  ((s = psiElement.getText()).equals("<") || s.equals("\""))));
+      final PsiElement parentElement = psiElement != null ? psiElement.getParent() : null;
+      if (parentElement instanceof XmlTag) return true;
+      if (parentElement instanceof PsiErrorElement && parentElement.getParent() instanceof XmlDocument) return true;
+
+      return (parentElement instanceof XmlDocument || parentElement instanceof XmlText) &&
+             (psiElement.textMatches("<") || psiElement.textMatches("\""));
     }
     return false;
   }

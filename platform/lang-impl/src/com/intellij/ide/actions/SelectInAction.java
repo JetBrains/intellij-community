@@ -20,6 +20,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -120,6 +121,9 @@ public class SelectInAction extends AnAction implements DumbAware {
 
     @Override
     public boolean isSelectable(final SelectInTarget target) {
+      if (DumbService.isDumb(mySelectInContext.getProject()) && !DumbService.isDumbAware(target)) {
+        return false;
+      }
       return target.canSelect(mySelectInContext);
     }
 

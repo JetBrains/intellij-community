@@ -86,7 +86,7 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     
     SelectionModel selectionModel = editor.getSelectionModel();
     // Emacs Tab doesn't adjust indent in case of active selection. So do we.
-    if (selectionModel.hasSelection() || selectionModel.hasBlockSelection()) {
+    if (selectionModel.hasSelection()) {
       return Result.CONTINUE;
     }
     

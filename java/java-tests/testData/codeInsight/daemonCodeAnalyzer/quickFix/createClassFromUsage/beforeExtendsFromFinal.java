@@ -1,4 +1,4 @@
-// "Create Class 'Abc'" "false"
+// "Create class 'Abc'" "false"
 public class Test {
   void foo(Class<? extends A> cl){}
   {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -308,7 +307,7 @@ public class BreakpointManager {
     return null;
   }
 
-  private HashMap<String, Element> myOriginalBreakpointsNodes = new HashMap<String, Element>();
+  private final Map<String, Element> myOriginalBreakpointsNodes = new LinkedHashMap<String, Element>();
 
   public void readExternal(@NotNull final Element parentNode) {
     myOriginalBreakpointsNodes.clear();
@@ -527,10 +526,8 @@ public class BreakpointManager {
       if (group.getAttribute(CONVERTED_PARAM) == null) {
         group.setAttribute(CONVERTED_PARAM, "true");
       }
-      group.detach();
+      parentNode.addContent(group.clone());
     }
-
-    parentNode.addContent(myOriginalBreakpointsNodes.values());
   }
 
   @NotNull
@@ -632,33 +629,37 @@ public class BreakpointManager {
             catch (InternalException e) {
               LOG.info(e);
             }
+            catch (InvalidRequestStateException e) {
+              LOG.info(e);
+            }
           }
         }
         protected abstract void addFilter(final T request, final ThreadReference thread);
       }
 
       final EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
+      if (eventRequestManager != null) {
+        new FilterSetter<BreakpointRequest>() {
+          @Override
+          protected void addFilter(@NotNull final BreakpointRequest request, final ThreadReference thread) {
+            request.addThreadFilter(thread);
+          }
+        }.applyFilter(eventRequestManager.breakpointRequests(), newFilterThread);
 
-      new FilterSetter<BreakpointRequest>() {
-        @Override
-        protected void addFilter(@NotNull final BreakpointRequest request, final ThreadReference thread) {
-          request.addThreadFilter(thread);
-        }
-      }.applyFilter(eventRequestManager.breakpointRequests(), newFilterThread);
+        new FilterSetter<MethodEntryRequest>() {
+          @Override
+          protected void addFilter(@NotNull final MethodEntryRequest request, final ThreadReference thread) {
+            request.addThreadFilter(thread);
+          }
+        }.applyFilter(eventRequestManager.methodEntryRequests(), newFilterThread);
 
-      new FilterSetter<MethodEntryRequest>() {
-        @Override
-        protected void addFilter(@NotNull final MethodEntryRequest request, final ThreadReference thread) {
-          request.addThreadFilter(thread);
-        }
-      }.applyFilter(eventRequestManager.methodEntryRequests(), newFilterThread);
-
-      new FilterSetter<MethodExitRequest>() {
-        @Override
-        protected void addFilter(@NotNull final MethodExitRequest request, final ThreadReference thread) {
-          request.addThreadFilter(thread);
-        }
-      }.applyFilter(eventRequestManager.methodExitRequests(), newFilterThread);
+        new FilterSetter<MethodExitRequest>() {
+          @Override
+          protected void addFilter(@NotNull final MethodExitRequest request, final ThreadReference thread) {
+            request.addThreadFilter(thread);
+          }
+        }.applyFilter(eventRequestManager.methodExitRequests(), newFilterThread);
+      }
     }
   }
 
@@ -680,7 +681,6 @@ public class BreakpointManager {
   public void fireBreakpointChanged(Breakpoint breakpoint) {
     breakpoint.reload();
     breakpoint.updateUI();
-    RequestManagerImpl.updateRequests(breakpoint);
   }
 
   public void setBreakpointEnabled(@NotNull final Breakpoint breakpoint, final boolean enabled) {

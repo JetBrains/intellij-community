@@ -16,13 +16,11 @@
 package com.intellij.execution.testframework.sm.runner.states;
 
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Roman.Chernyatchik
  */
-public class TestComparisionFailedState extends TestFailedState implements AbstractTestProxy.AssertEqualsMultiDiffViewProvider {
+public class TestComparisionFailedState extends TestFailedState {
   private final String myErrorMsgPresentation;
   private final String myStacktracePresentation;
   private DiffHyperlink myHyperlink;
@@ -40,8 +38,16 @@ public class TestComparisionFailedState extends TestFailedState implements Abstr
                                     @Nullable final String stackTrace,
                                     @NotNull final String actualText,
                                     @NotNull final String expectedText) {
+    this(localizedMessage, stackTrace, actualText, expectedText, null);
+  }
+
+  public TestComparisionFailedState(@Nullable final String localizedMessage,
+                                    @Nullable final String stackTrace,
+                                    @NotNull final String actualText,
+                                    @NotNull final String expectedText,
+                                    @Nullable final String filePath) {
     super(localizedMessage, stackTrace);
-    myHyperlink = new DiffHyperlink(expectedText, actualText, null);
+    myHyperlink = new DiffHyperlink(expectedText, actualText, filePath);
 
     myErrorMsgPresentation = StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : localizedMessage;
     myStacktracePresentation = StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace;
@@ -64,27 +70,8 @@ public class TestComparisionFailedState extends TestFailedState implements Abstr
     printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
-  public void openDiff(final Project project) {
-    myHyperlink.openDiff(project);
-  }
-
-  @Override
-  public String getExpected() {
-    return myHyperlink.getLeft();
-  }
-
-  @Override
-  public String getActual() {
-    return myHyperlink.getRight();
-  }
-
-  @Override
-  public void openMultiDiff(Project project, AbstractTestProxy.AssertEqualsDiffChain chain) {
-    myHyperlink.openMultiDiff(project, chain);
-  }
-
-  @Override
-  public String getFilePath() {
-    return myHyperlink.getFilePath();
+  @Nullable
+  public DiffHyperlink getHyperlink() {
+    return myHyperlink;
   }
 }

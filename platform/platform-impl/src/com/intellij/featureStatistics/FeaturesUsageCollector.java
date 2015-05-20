@@ -15,13 +15,11 @@
  */
 package com.intellij.featureStatistics;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.internal.statistic.UsagesCollector;
-import com.intellij.internal.statistic.beans.*;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
+import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -35,10 +33,8 @@ public class FeaturesUsageCollector extends UsagesCollector {
 
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) {
+  public Set<UsageDescriptor> getUsages() {
     Set<UsageDescriptor> usages = new HashSet<UsageDescriptor>();
-
-    final FeatureUsageTracker usageTracker = FeatureUsageTracker.getInstance(); //
 
     final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     for (String featureId : registry.getFeatureIds()) {

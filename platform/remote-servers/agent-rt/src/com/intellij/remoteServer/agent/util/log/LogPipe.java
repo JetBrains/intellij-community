@@ -15,7 +15,8 @@
  */
 package com.intellij.remoteServer.agent.util.log;
 
-import com.intellij.remoteServer.agent.util.ILogger;
+import com.intellij.remoteServer.agent.util.CloudAgentLogger;
+import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,18 +28,21 @@ import java.io.InputStreamReader;
  */
 public abstract class LogPipe {
 
-  private final ILogger myLog;
-
   private final String myDeploymentName;
+  private final String myLogPipeName;
+  private final CloudAgentLogger myLogger;
+  private final CloudAgentLoggingHandler myLoggingHandler;
 
   private boolean myClosed;
 
   private int myTotalLines;
   private int myLines2Skip;
 
-  public LogPipe(String deploymentName, ILogger log) {
+  public LogPipe(String deploymentName, String logPipeName, CloudAgentLogger logger, CloudAgentLoggingHandler loggingHandler) {
     myDeploymentName = deploymentName;
-    myLog = log;
+    myLogPipeName = logPipeName;
+    myLogger = logger;
+    myLoggingHandler = loggingHandler;
     myClosed = false;
   }
 
@@ -62,11 +66,11 @@ public abstract class LogPipe {
           while (true) {
             String line = bufferedReader.readLine();
             if (myClosed) {
-              myLog.debug("log pipe closed for: " + myDeploymentName);
+              myLogger.debug("log pipe closed for: " + myDeploymentName);
               break;
             }
             if (line == null) {
-              myLog.debug("end of log stream for: " + myDeploymentName);
+              myLogger.debug("end of log stream for: " + myDeploymentName);
               break;
             }
 
@@ -80,7 +84,7 @@ public abstract class LogPipe {
           }
         }
         catch (IOException e) {
-          myLog.errorEx(e);
+          myLoggingHandler.println(e.toString());
         }
       }
     }.start();
@@ -100,5 +104,7 @@ public abstract class LogPipe {
 
   protected abstract InputStream createInputStream(String deploymentName);
 
-  protected abstract LogListener getLogListener();
+  protected LogListener getLogListener() {
+    return myLoggingHandler.getOrCreateLogListener(myLogPipeName);
+  }
 }

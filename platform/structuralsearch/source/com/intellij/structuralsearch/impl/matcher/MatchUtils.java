@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 
@@ -13,9 +14,14 @@ import org.jetbrains.annotations.NonNls;
 public class MatchUtils {
   public static final String SPECIAL_CHARS = "*(){}[]^$\\.-|";
 
-  public static final boolean compareWithNoDifferenceToPackage(final String typeImage,@NonNls final String typeImage2) {
+  public static final boolean compareWithNoDifferenceToPackage(String typeImage, String typeImage2) {
+    return compareWithNoDifferenceToPackage(typeImage, typeImage2, false);
+  }
+
+  public static final boolean compareWithNoDifferenceToPackage(final String typeImage,@NonNls final String typeImage2, boolean ignoreCase) {
     if (typeImage == null || typeImage2 == null) return typeImage == typeImage2;
-    return typeImage2.endsWith(typeImage) && (
+    final boolean endsWith = ignoreCase ? StringUtil.endsWithIgnoreCase(typeImage2, typeImage) : typeImage2.endsWith(typeImage);
+    return endsWith && (
       typeImage.length() == typeImage2.length() ||
       typeImage2.charAt(typeImage2.length()-typeImage.length()-1)=='.' // package separator
     );

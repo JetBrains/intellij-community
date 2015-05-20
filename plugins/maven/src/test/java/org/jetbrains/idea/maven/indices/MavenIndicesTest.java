@@ -115,7 +115,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   public void testCreatingSeveralWithDifferentIdAndSameUrl() throws Exception {
     MavenIndex i1 = myIndices.add("id1", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     MavenIndex i2 = myIndices.add("id2", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    assertNotSame(i1, i2);
+    assertSame(i1, i2);
     myIndices.updateOrRepair(i1, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     myIndices.updateOrRepair(i2, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
     

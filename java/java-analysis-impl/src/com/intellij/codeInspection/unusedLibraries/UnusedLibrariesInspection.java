@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,7 +187,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   private static class UnusedLibraryGraphAnnotator extends RefGraphAnnotator {
     public static final Key<Set<VirtualFile>> USED_LIBRARY_ROOTS = Key.create("inspection.dependencies");
     private final ProjectFileIndex myFileIndex;
-    private RefManager myManager;
+    private final RefManager myManager;
 
     public UnusedLibraryGraphAnnotator(RefManager manager) {
       myManager = manager;

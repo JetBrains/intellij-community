@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -134,7 +135,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Override
   public void runTransaction(@NotNull PomTransaction transaction) throws IncorrectOperationException{
-    if (!allowPsiModification) {
+    if (!isAllowPsiModification()) {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
     List<Throwable> throwables = new ArrayList<Throwable>(0);
@@ -149,6 +150,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         try{
           transaction.run();
           event = transaction.getAccumulatedEvent();
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch(Exception e){
           LOG.error(e);
@@ -186,12 +190,18 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
           }
         }
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Throwable t) {
         throwables.add(t);
       }
       finally {
         try {
           commitTransaction(transaction);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Throwable t) {
           throwables.add(t);
@@ -356,5 +366,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     finally {
       allowPsiModification = old;
     }
+  }
+
+  public static boolean isAllowPsiModification() {
+    return allowPsiModification;
   }
 }

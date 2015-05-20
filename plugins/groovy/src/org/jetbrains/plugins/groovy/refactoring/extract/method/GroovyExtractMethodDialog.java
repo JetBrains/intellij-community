@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +54,6 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.EventListenerList;
-import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.EventListener;
@@ -225,8 +225,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
 
   private void createUIComponents() {
     mySignature = new GrMethodSignatureComponent("", myProject);
-    mySignature.setPreferredSize(new Dimension(500, 100));
-    mySignature.setMinimumSize(new Dimension(500, 100));
+    mySignature.setPreferredSize(JBUI.size(500, 100));
+    mySignature.setMinimumSize(JBUI.size(500, 100));
     mySignature.setBorder(
       IdeBorderFactory.createTitledBorder(GroovyRefactoringBundle.message("signature.preview.border.title"), false));
     mySignature.setFocusable(false);

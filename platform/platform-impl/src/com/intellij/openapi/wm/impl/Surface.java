@@ -27,22 +27,26 @@ import java.awt.*;
 final class Surface extends JComponent {
   private final Image myTopImage;
   private final Image myBottomImage;
-  private final double myPixelsPerSec;
   private final int myDirection;
+  private final int myDesiredTimeToComplete;
   private final ToolWindowAnchor myAnchor;
   private int myOffset = 0;
 
-  public Surface(final Image topImage, final Image bottomImage, final int direction, final ToolWindowAnchor anchor, final double pixelsPerSec) {
+  public Surface(final Image topImage,
+                 final Image bottomImage,
+                 final int direction,
+                 final ToolWindowAnchor anchor,
+                 final int desiredTimeToComplete) {
     myTopImage = topImage;
     myBottomImage = bottomImage;
     myAnchor = anchor;
     myDirection = direction;
-    myPixelsPerSec = pixelsPerSec;
+    myDesiredTimeToComplete = desiredTimeToComplete;
     setOpaque(true);
   }
 
   public final void runMovement() {
-    if(!isShowing()){
+    if (!isShowing()) {
       return;
     }
     final int distance;
@@ -53,19 +57,19 @@ final class Surface extends JComponent {
     else {
       distance = bounds.height;
     }
-    final double desiredTime = distance / myPixelsPerSec * 1000;
-    final long startTime = System.currentTimeMillis();
     int count = 0;
     myOffset = 0;
+    paintImmediately(0, 0, getWidth(), getHeight());//first paint requires more time than next ones
+    final long startTime = System.currentTimeMillis();
 
 
-    while(true){
-      paintImmediately(0,0,getWidth(),getHeight());
+    while (true) {
+      paintImmediately(0, 0, getWidth(), getHeight());
       final long timeSpent = System.currentTimeMillis() - startTime;
       count++;
-      if (timeSpent >= desiredTime) break;
+      if (timeSpent >= myDesiredTimeToComplete) break;
       final double onePaintTime = (double)timeSpent / count;
-      int iterations = (int)((desiredTime - timeSpent) / onePaintTime);
+      int iterations = (int)((myDesiredTimeToComplete - timeSpent) / onePaintTime);
       iterations = Math.max(1, iterations);
       myOffset += (distance - myOffset) / iterations;
     }

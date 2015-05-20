@@ -20,8 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitCommit;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +41,14 @@ public interface Git {
    */
   @NotNull
   GitCommandResult runCommand(@NotNull Computable<GitLineHandler> handlerConstructor);
+
+  /**
+   * A generic method to run a Git command, when existing methods are not sufficient. <br/>
+   * Can be used instead of {@link #runCommand(Computable)} if the operation will not need to be repeated for sure
+   * (e.g. it is a completely local operation).
+   */
+  @NotNull
+  GitCommandResult runCommand(@NotNull GitLineHandler handler);
 
   @NotNull
   GitCommandResult init(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitLineHandlerListener... listeners);
@@ -70,7 +77,11 @@ public interface Git {
                          @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult checkout(@NotNull GitRepository repository, @NotNull String reference, @Nullable String newBranch, boolean force,
+  GitCommandResult checkout(@NotNull GitRepository repository,
+                            @NotNull String reference,
+                            @Nullable String newBranch,
+                            boolean force,
+                            boolean detach,
                             @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
@@ -106,13 +117,9 @@ public interface Git {
                         boolean updateTracking, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
-  GitCommandResult push(@NotNull GitRepository repository, @NotNull String remote, @Nullable String url, @NotNull String spec,
-                        @NotNull GitLineHandlerListener... listeners);
-
-  @NotNull
   GitCommandResult push(@NotNull GitRepository repository,
-                        @NotNull GitLocalBranch source,
-                        @NotNull GitRemoteBranch target,
+                        @NotNull GitRemote remote,
+                        @NotNull String spec,
                         boolean force,
                         boolean updateTracking,
                         @Nullable String tagMode,
@@ -142,6 +149,23 @@ public interface Git {
   List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range);
 
   @NotNull
-  GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote,
-                         @NotNull List<GitLineHandlerListener> listeners, String... params);
+  GitCommandResult fetch(@NotNull GitRepository repository,
+                         @NotNull GitRemote remote,
+                         @NotNull List<GitLineHandlerListener> listeners,
+                         String... params);
+
+  @NotNull
+  GitCommandResult addRemote(@NotNull GitRepository repository, @NotNull String name, @NotNull String url);
+
+  @NotNull
+  GitCommandResult lsRemote(@NotNull Project project, @NotNull File workingDir, @NotNull String url);
+
+  @NotNull
+  GitCommandResult lsRemote(@NotNull Project project,
+                            @NotNull VirtualFile workingDir,
+                            @NotNull GitRemote remote,
+                            String... additionalParameters);
+
+  @NotNull
+  GitCommandResult remotePrune(@NotNull GitRepository repository, @NotNull GitRemote remote);
 }

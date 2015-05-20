@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
  */
 package com.intellij.debugger.jdi;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -196,6 +197,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
           myFrameCount = 0;
         }
       }
+      catch (InternalException e) {
+        LOG.info(e);
+        myFrameCount = 0;
+      }
     }
     return myFrameCount;
   }
@@ -277,7 +282,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     catch (ObjectCollectedException ignored) {
     }
     catch (InternalException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
+      if (e.errorCode() == 32) {
+        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("drop.frame.error.no.information"));
+      }
+      else throw EvaluateExceptionUtil.createEvaluateException(e);
     }
     catch (IncompatibleThreadStateException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
@@ -298,5 +306,14 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       LOG.info(e);
       return false;
     }
+  }
+
+  public boolean isAtBreakpoint() {
+    try {
+      return getThreadReference().isAtBreakpoint();
+    } catch (InternalException e) {
+      LOG.info(e);
+    }
+    return false;
   }
 }

@@ -16,7 +16,6 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -46,13 +45,13 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 
-public class DumbServiceImpl extends DumbService implements Disposable {
+public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
   private volatile boolean myDumb = false;
   private final DumbModeListener myPublisher;
+  private long myModificationCount;
   private final Queue<DumbModeTask> myUpdatesQueue = new Queue<DumbModeTask>(5);
 
   /**
@@ -63,6 +62,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<Runnable>(5);
   private final Project myProject;
+  private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<Integer>();
 
   public DumbServiceImpl(Project project) {
     myProject = project;
@@ -105,6 +105,24 @@ public class DumbServiceImpl extends DumbService implements Disposable {
   }
 
   @Override
+  public boolean isAlternativeResolveEnabled() {
+    return myAlternativeResolution.get() != null;
+  }
+
+  @Override
+  public void setAlternativeResolveEnabled(boolean enabled) {
+    Integer oldValue = myAlternativeResolution.get();
+    int newValue = (oldValue == null ? 0 : oldValue) + (enabled ? 1 : -1);
+    assert newValue >= 0 : "Non-paired alternative resolution mode";
+    myAlternativeResolution.set(newValue == 0 ? null : newValue);
+  }
+
+  @Override
+  public ModificationTracker getModificationTracker() {
+    return this;
+  }
+
+  @Override
   public boolean isDumb() {
     return myDumb;
   }
@@ -130,16 +148,6 @@ public class DumbServiceImpl extends DumbService implements Disposable {
         myRunWhenSmartQueue.addLast(runnable);
       }
     }
-  }
-
-  @SuppressWarnings("deprecation")
-  public void queueCacheUpdate(@NotNull Collection<CacheUpdater> updaters) {
-    scheduleCacheUpdate(new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters)), false);
-  }
-
-  @SuppressWarnings("deprecation")
-  public void queueCacheUpdateInDumbMode(@NotNull Collection<CacheUpdater> updaters) {
-    scheduleCacheUpdate(new CacheUpdateRunner(myProject, new ArrayList<CacheUpdater>(updaters)), true);
   }
 
   private void scheduleCacheUpdate(@NotNull final DumbModeTask task, boolean forceDumbMode) {
@@ -197,6 +205,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
               @Override
               public Boolean compute() {
                 myDumb = true;
+                myModificationCount++;
                 try {
                   myPublisher.enteredDumbMode();
                 }
@@ -224,6 +233,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
   private void updateFinished() {
     myDumb = false;
+    myModificationCount++;
     if (myProject.isDisposed()) return;
 
     if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
@@ -247,7 +257,7 @@ public class DumbServiceImpl extends DumbService implements Disposable {
           runnable.run();
         }
         catch (Throwable e) {
-          LOG.error(e);
+          LOG.error("Error executing task " + runnable, e);
         }
       }
     }
@@ -269,14 +279,13 @@ public class DumbServiceImpl extends DumbService implements Disposable {
 
   @Override
   public void waitForSmartMode() {
-    final Application application = ApplicationManager.getApplication();
-    if (!application.isUnitTestMode()) {
-      assert !application.isDispatchThread();
-      assert !application.isReadAccessAllowed();
-    }
-
     if (!isDumb()) {
       return;
+    }
+
+    final Application application = ApplicationManager.getApplication();
+    if (application.isReadAccessAllowed() || application.isDispatchThread()) {
+      throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
 
     final Semaphore semaphore = new Semaphore();
@@ -287,7 +296,12 @@ public class DumbServiceImpl extends DumbService implements Disposable {
         semaphore.up();
       }
     });
-    semaphore.waitFor();
+    while (true) {
+      if (semaphore.waitFor(50)) {
+        return;
+      }
+      ProgressManager.checkCanceled();
+    }
   }
 
   @Override
@@ -316,6 +330,11 @@ public class DumbServiceImpl extends DumbService implements Disposable {
       @Override
       public void run() {
         runWhenSmart(runnable);
+      }
+
+      @Override
+      public String toString() {
+        return runnable.toString();
       }
     }, myProject.getDisposed());
   }
@@ -422,6 +441,11 @@ public class DumbServiceImpl extends DumbService implements Disposable {
       }
     });
     return result.get();
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myModificationCount;
   }
 
   private class AppIconProgress extends ProgressIndicatorBase {

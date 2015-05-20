@@ -277,6 +277,16 @@ os.spawnvpe(mode, file, args, env)
         return getattr(os, original_name)(mode, path, patch_args(args), env)
     return new_spawnve
 
+def create_fork_exec(original_name):
+    """
+_posixsubprocess.fork_exec(args, executable_list, close_fds, ... (13 more))
+    """
+    def new_fork_exec(args, *other_args):
+        import _posixsubprocess
+        args = patch_args(args)
+        return getattr(_posixsubprocess, original_name)(args, *other_args)
+    return new_fork_exec
+
 def create_CreateProcess(original_name):
     """
 CreateProcess(*args, **kwargs)
@@ -351,6 +361,11 @@ def patch_new_process_functions():
 
     if sys.platform != 'win32':
         monkey_patch_os('fork', create_fork)
+        try:
+            import _posixsubprocess
+            monkey_patch_module(_posixsubprocess, 'fork_exec', create_fork_exec)
+        except ImportError:
+            pass
     else:
         #Windows
         try:
@@ -380,6 +395,11 @@ def patch_new_process_functions_with_warning():
 
     if sys.platform != 'win32':
         monkey_patch_os('fork', create_warn_multiproc)
+        try:
+            import _posixsubprocess
+            monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_multiproc)
+        except ImportError:
+            pass
     else:
         #Windows
         try:

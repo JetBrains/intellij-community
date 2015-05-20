@@ -25,6 +25,7 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
@@ -46,11 +47,18 @@ public class LightStubBuilder implements StubBuilder {
       }
       Language language = ((LanguageFileType)fileType).getLanguage();
       final IFileElementType contentType = LanguageParserDefinitions.INSTANCE.forLanguage(language).getFileNodeType();
-      if (!(contentType instanceof ILightStubFileElementType)) {
-        LOG.error("File is not of ILightStubFileElementType: " + contentType + ", " + file);
+      if (!(contentType instanceof IStubFileElementType)) {
+        LOG.error("File is not of IStubFileElementType: " + contentType + ", " + file);
         return null;
       }
-      tree = file.getNode().getLighterAST();
+
+      final FileASTNode node = file.getNode();
+      if (contentType instanceof ILightStubFileElementType) {
+        tree = node.getLighterAST();
+      }
+      else {
+        tree = new TreeBackedLighterAST(node);
+      }
     } else {
       FORCED_AST.set(null);
     }
@@ -108,6 +116,9 @@ public class LightStubBuilder implements StubBuilder {
       while (!parents.isEmpty()) {
         parent = parents.pop();
         childNumber = childNumbers.pop();
+        if (children != null && children.size() > 0) {
+          tree.disposeChildren(children);
+        }
         children = kinderGarden.pop();
         parentStub = parentStubs.pop();
         while (++childNumber < children.size()) {

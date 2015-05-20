@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
     final PsiElement element = p.getElementToSearch();
     if (!(element instanceof PsiMethod)) {
       return;
@@ -31,7 +32,13 @@ public class ConstructorReferencesSearcher extends QueryExecutorBase<PsiReferenc
     if (manager[0] == null) {
       return;
     }
+    SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return p.getEffectiveSearchScope();
+      }
+    });
     new ConstructorReferencesSearchHelper(manager[0])
-      .processConstructorReferences(consumer, method, aClass, p.getScope(), p.isIgnoreAccessScope(), true, p.getOptimizer());
+      .processConstructorReferences(consumer, method, aClass, scope, p.getProject(), p.isIgnoreAccessScope(), true, p.getOptimizer());
   }
 }

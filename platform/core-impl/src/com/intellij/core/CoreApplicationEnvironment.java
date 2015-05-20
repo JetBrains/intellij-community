@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,16 @@ import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.components.ExtensionAreas;
@@ -37,10 +40,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeExtension;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
@@ -53,15 +58,12 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.psi.FileContextProvider;
 import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.PsiReferenceServiceImpl;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.meta.MetaDataRegistrar;
-import com.intellij.psi.stubs.BinaryFileStubBuilders;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
@@ -71,6 +73,7 @@ import com.intellij.util.messages.MessageBusFactory;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
+import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -88,7 +91,6 @@ public class CoreApplicationEnvironment {
 
   public CoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
     myParentDisposable = parentDisposable;
-    Extensions.cleanRootArea(myParentDisposable);
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 
@@ -122,17 +124,12 @@ public class CoreApplicationEnvironment {
     registerApplicationService(PsiReferenceService.class, new PsiReferenceServiceImpl());
     registerApplicationService(MetaDataRegistrar.class, new MetaRegistry());
 
-    registerApplicationExtensionPoint(ContentBasedFileSubstitutor.EP_NAME, ContentBasedFileSubstitutor.class);
-    registerExtensionPoint(Extensions.getRootArea(), BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
-    registerExtensionPoint(Extensions.getRootArea(), FileContextProvider.EP_NAME, FileContextProvider.class);
-
-    registerApplicationExtensionPoint(MetaDataContributor.EP_NAME, MetaDataContributor.class);
-
     registerApplicationService(ProgressManager.class, createProgressIndicatorProvider());
 
     registerApplicationService(JobLauncher.class, createJobLauncher());
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
+    myApplication.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
@@ -153,10 +150,11 @@ public class CoreApplicationEnvironment {
   protected JobLauncher createJobLauncher() {
     return new JobLauncher() {
       @Override
-      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
+      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<T> things,
                                                          ProgressIndicator progress,
+                                                         boolean runInReadAction,
                                                          boolean failFastOnAcquireReadAction,
-                                                         @NotNull Processor<T> thingProcessor) throws ProcessCanceledException {
+                                                         @NotNull Processor<? super T> thingProcessor) {
         for (T thing : things) {
           if (!thingProcessor.process(thing))
             return false;
@@ -164,27 +162,18 @@ public class CoreApplicationEnvironment {
         return true;
       }
 
-      @Override
-      public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                         ProgressIndicator progress,
-                                                         boolean runInReadAction,
-                                                         boolean failFastOnAcquireReadAction,
-                                                         @NotNull Processor<T> thingProcessor) {
-        return invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor);
-      }
-
       @NotNull
       @Override
-      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
+      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
                                                                            ProgressIndicator progress,
                                                                            boolean failFastOnAcquireReadAction,
-                                                                           @NotNull Processor<T> thingProcessor) {
+                                                                           @NotNull Processor<? super T> thingProcessor) {
         return AsyncUtil.wrapBoolean(invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor));
       }
 
       @NotNull
       @Override
-      public Job<Void> submitToJobThread(int priority, @NotNull Runnable action, Consumer<Future> onDoneCallback) {
+      public Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<Future> onDoneCallback) {
         action.run();
         if (onDoneCallback != null)
           onDoneCallback.consume(new Future() {
@@ -292,7 +281,11 @@ public class CoreApplicationEnvironment {
     Disposer.register(myParentDisposable, new Disposable() {
       @Override
       public void dispose() {
-        extensionPoint.unregisterExtension(extension);
+        // There is a possible case that particular extension was replaced in particular environment, e.g. Upsource
+        // replaces some IntelliJ extensions.
+        if (extensionPoint.hasExtension(extension)) {
+          extensionPoint.unregisterExtension(extension);
+        }
       }
     });
   }
@@ -313,8 +306,11 @@ public class CoreApplicationEnvironment {
   }
 
   public static <T> void registerApplicationExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<? extends T> aClass) {
-    final String name = extensionPointName.getName();
-    registerExtensionPoint(Extensions.getRootArea(), name, aClass);
+    registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
+  }
+
+  public static void registerExtensionPointAndExtensions(@NotNull File pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
+    PluginManagerCore.registerExtensionPointAndExtensions(pluginRoot, fileName, area);
   }
 
   @NotNull

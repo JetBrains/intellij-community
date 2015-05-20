@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -143,7 +144,7 @@ public class FileReferenceQuickFixProvider {
     }
 
     final CreateFileFix action = new MyCreateFileFix(isdirectory, newFileName, directory, reference);
-    return Arrays.asList(action);
+    return Collections.singletonList(action);
   }
 
 
@@ -155,13 +156,11 @@ public class FileReferenceQuickFixProvider {
 
   private static class MyCreateFileFix extends CreateFileFix {
     private final boolean isDirectory;
-    private final PsiDirectory myDirectory;
     private final FileReference myReference;
 
     public MyCreateFileFix(boolean isdirectory, String newFileName, PsiDirectory directory, FileReference reference) {
       super(isdirectory, newFileName, directory);
       isDirectory = isdirectory;
-      myDirectory = directory;
       myReference = reference;
     }
 
@@ -170,10 +169,11 @@ public class FileReferenceQuickFixProvider {
       if (!isDirectory) {
         String templateName = myReference.getNewFileTemplateName();
         if (templateName != null) {
-          FileTemplate template = FileTemplateManager.getInstance().getTemplate(templateName);
+          Project project = myReference.getElement().getProject();
+          FileTemplate template = FileTemplateManager.getInstance(project).getTemplate(templateName);
           if (template != null) {
             try {
-              return template.getText(FileTemplateManager.getInstance().getDefaultProperties(myDirectory.getProject()));
+              return template.getText(FileTemplateManager.getInstance(project).getDefaultProperties());
             } catch (IOException ex) {
               throw new RuntimeException(ex);
             }

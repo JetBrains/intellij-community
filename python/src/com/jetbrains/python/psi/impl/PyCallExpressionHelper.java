@@ -128,7 +128,7 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  public static Callable resolveCalleeFunction(PyCallExpression call, PyResolveContext resolveContext) {
+  public static PyCallable resolveCalleeFunction(PyCallExpression call, PyResolveContext resolveContext) {
     PsiElement resolved;
     PyExpression callee = call.getCallee();
     if (callee instanceof PyReferenceExpression) {
@@ -150,8 +150,8 @@ public class PyCallExpressionHelper {
         resolved = wrapperInfo.getSecond();
       }
     }
-    if (resolved instanceof Callable) {
-      return (Callable)resolved;
+    if (resolved instanceof PyCallable) {
+      return (PyCallable)resolved;
     }
     return null;
   }
@@ -207,26 +207,26 @@ public class PyCallExpressionHelper {
       final Property property = function.getProperty();
       if (property != null && isQualifiedByInstance(function, qualifiers, context)) {
         final PyType type = context.getReturnType(function);
-        if (type instanceof PyFunctionType) {
-          resolved = ((PyFunctionType)type).getCallable();
+        if (type instanceof PyFunctionTypeImpl) {
+          resolved = ((PyFunctionTypeImpl)type).getCallable();
         }
         else {
           resolved = null;
         }
       }
     }
-    if (resolved instanceof Callable) {
+    if (resolved instanceof PyCallable) {
       PyFunction.Modifier modifier = resolved instanceof PyFunction
                                      ? ((PyFunction)resolved).getModifier()
                                      : null;
       if (modifier == null && wrappedModifier != null) {
         modifier = wrappedModifier;
       }
-      boolean isByInstance = isConstructorCall || isQualifiedByInstance((Callable)resolved, qualifiers, context)
+      boolean isByInstance = isConstructorCall || isQualifiedByInstance((PyCallable)resolved, qualifiers, context)
                              || resolved instanceof PyBoundFunction;
       PyExpression lastQualifier = qualifiers != null && qualifiers.isEmpty() ? null : qualifiers.get(qualifiers.size() - 1);
-      boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, context);
-      final Callable callable = (Callable)resolved;
+      boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((PyCallable)resolved, lastQualifier, context);
+      final PyCallable callable = (PyCallable)resolved;
 
       implicitOffset += getImplicitArgumentCount(callable, modifier, isConstructorCall, isByInstance, isByClass);
       implicitOffset = implicitOffset < 0 ? 0 : implicitOffset; // wrong source can trigger strange behaviour
@@ -247,7 +247,7 @@ public class PyCallExpressionHelper {
   }
 
   /**
-   * Calls the {@link #getImplicitArgumentCount(PyExpression, Callable, com.jetbrains.python.psi.PyFunction.Modifier, EnumSet< com.jetbrains.python.psi.PyFunction.Modifier >, boolean) full version}
+   * Calls the {@link #getImplicitArgumentCount(PyExpression, com.jetbrains.python.psi.PyCallable, com.jetbrains.python.psi.PyFunction.Modifier, EnumSet< com.jetbrains.python.psi.PyFunction.Modifier >, boolean) full version}
    * with null flags and with isByInstance inferred directly from call site (won't work with reassigned bound methods).
    *
    * @param callReference       the call site, where arguments are given.
@@ -279,7 +279,7 @@ public class PyCallExpressionHelper {
    * because one parameter ('self') is implicit.
    */
   private static int getImplicitArgumentCount(
-    Callable callable,
+    PyCallable callable,
     PyFunction.Modifier modifier,
     boolean isConstructorCall,
     boolean isByInstance,
@@ -318,7 +318,7 @@ public class PyCallExpressionHelper {
     return implicit_offset;
   }
 
-  private static boolean isQualifiedByInstance(Callable resolved, List<PyExpression> qualifiers, TypeEvalContext context) {
+  private static boolean isQualifiedByInstance(PyCallable resolved, List<PyExpression> qualifiers, TypeEvalContext context) {
     PyDocStringOwner owner = PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyDocStringOwner.class);
     if (!(owner instanceof PyClass)) {
       return false;
@@ -335,7 +335,7 @@ public class PyCallExpressionHelper {
     return false;
   }
 
-  private static boolean isQualifiedByInstance(Callable resolved, PyExpression qualifier, TypeEvalContext context) {
+  private static boolean isQualifiedByInstance(PyCallable resolved, PyExpression qualifier, TypeEvalContext context) {
     if (isQualifiedByClass(resolved, qualifier, context)) {
       return false;
     }
@@ -347,7 +347,7 @@ public class PyCallExpressionHelper {
     return true; // NOTE. best guess: unknown qualifier is more probably an instance.
   }
 
-  private static boolean isQualifiedByClass(Callable resolved, PyExpression qualifier, TypeEvalContext context) {
+  private static boolean isQualifiedByClass(PyCallable resolved, PyExpression qualifier, TypeEvalContext context) {
     PyType qtype = context.getType(qualifier);
     if (qtype instanceof PyClassType) {
       if (((PyClassType)qtype).isDefinition()) {
@@ -359,6 +359,9 @@ public class PyCallExpressionHelper {
           }
         }
       }
+    }
+    else if (qtype instanceof PyClassLikeType) {
+      return ((PyClassLikeType)qtype).isDefinition(); //Any definition means callable is classmethod
     }
     return false;
   }
@@ -518,10 +521,14 @@ public class PyCallExpressionHelper {
     if (providedType instanceof PyCallableType) {
       return Ref.create(((PyCallableType)providedType).getCallType(context, call));
     }
-    if (target instanceof Callable) {
-      final Callable callable = (Callable)target;
+    if (target instanceof PyCallable) {
+      final PyCallable callable = (PyCallable)target;
       return Ref.create(callable.getCallType(context, call));
     }
+    /*PyCallExpression.PyMarkedCallee markedCallee = call.resolveCallee(PyResolveContext.defaultContext().withTypeEvalContext(context));
+    if (markedCallee != null) {
+      return Ref.create(markedCallee.getCallable().getCallType(context, call));
+    }*/
     return null;
   }
 

@@ -17,13 +17,10 @@ package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
-
-import java.util.Calendar;
 
 public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newLambda";
@@ -75,18 +72,17 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNestedCallsInsideLambdaReturnExpression() { doTest(); }
   public void testIDEA123731() { doTest(); }
   public void testIDEA123869() { doTest(); }
-  @Bombed(day = 30, month = Calendar.NOVEMBER)
   public void testIDEA123848() { doTest(); }
   public void testOnlyLambdaAtTypeParameterPlace() { doTest(); }
   public void testLiftedIntersectionType() { doTest(); }
   public void testInferenceFromReturnStatements() { doTest(); }
   public void testDownUpThroughLambdaReturnStatements() { doTest(); }
-  @Bombed(day = 30, month = Calendar.NOVEMBER)
   public void testIDEA124547() { doTest(); }
   public void testIDEA118362() { doTest(); }
   public void testIDEA126056() { doTest(); }
   public void testIDEA125254() { doTest(); }
   public void testIDEA124961() { doTest(); }
+  public void testIDEA124961_1_8_0_40() { doTest(); }
   public void testIDEA126109() { doTest(); }
   public void testIDEA126809() { doTest(); }
   public void testIDEA124424() { doTest(); }
@@ -97,6 +93,10 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testNestedLambdaExpressionsNoFormalParamsStopAtStandalone() { doTest(); }
 
   public void testNestedLambdaCheckedExceptionsConstraints() throws Exception {
+    doTest();
+  }
+
+  public void testNestedLambdaWithInferenceVariableAsTargetType() throws Exception {
     doTest();
   }
 
@@ -135,8 +135,19 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  @Bombed(month = Calendar.NOVEMBER, day = 30)
   public void testCheckedExceptionsConstraintsSubstitutions() throws Exception {
+    doTest();
+  }
+
+  public void testCheckedExceptionsConstraintsSubstitutions1() throws Exception {
+    doTest();
+  }
+
+  public void testCheckedExceptionsConstraintsSubstitutions2() throws Exception {
+    doTest();
+  }
+
+  public void testCheckedExceptionsConstraintsSubstitutionsDeepInBody() throws Exception {
     doTest();
   }
 
@@ -164,6 +175,30 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA123987() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA136759() throws Exception {
+    doTest();
+  }
+
+  public void testInfiniteLoopAndValueCompatibility() throws Exception {
+    doTest();
+  }
+
+  public void testAcceptInferredVariablesBeforeAdditionalConstraintsLeadToFail() throws Exception {
+    doTest(false);
+  }
+
+  public void testEnsureNoCaptureIsPerformedOverTargetTypeOfCastExpressionWhichMarksFunctionalExpression() throws Exception {
+    doTest();
+  }
+
+  public void testCaptureInReturnStatementOfLambdaExpression() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }
@@ -180,7 +215,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
 /*
   public static Test suite() {
     final TestSuite suite = new TestSuite();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1000; i++) {
       suite.addTestSuite(NewLambdaHighlightingTest.class);
     }
     return suite;

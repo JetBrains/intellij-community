@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,10 +90,12 @@ public final class StoreUtil {
     }
 
     PluginId pluginId = PluginManagerCore.getPluginByClassName(componentClass.getName());
-    if (pluginId != null) {
+    if (pluginId == null) {
+      throw new RuntimeException("No @State annotation found in " + componentClass);
+    }
+    else {
       throw new PluginException("No @State annotation found in " + componentClass, pluginId);
     }
-    throw new RuntimeException("No @State annotation found in " + componentClass);
   }
 
   @Nullable

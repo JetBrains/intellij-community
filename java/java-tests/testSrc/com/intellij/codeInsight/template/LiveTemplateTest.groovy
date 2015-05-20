@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.template
-
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
@@ -37,7 +37,6 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
-
 /**
  * @author spleaner
  */
@@ -257,10 +256,6 @@ class Foo {
     assert 'Bar' in myFixture.lookupElementStrings
   }
 
-  private Editor getEditor() {
-    return myFixture.getEditor();
-  }
-
   private void checkResult() {
     checkResultByFile(getTestName(false) + "-out.java");
   }
@@ -302,7 +297,7 @@ class Foo {
     configure();
     startTemplate("iter", "iterations")
     state.nextTab();
-    ((LookupImpl)LookupManagerImpl.getActiveLookup(getEditor())).finishLookup((char)0);
+    ((LookupImpl)LookupManagerImpl.getActiveLookup(getEditor())).finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
     checkResult();
   }
 
@@ -379,6 +374,13 @@ class Foo {
   }
 
   public void testIterParameterizedInner() {
+    configure();
+    startTemplate("iter", "iterations")
+    stripTrailingSpaces();
+    checkResult();
+  }
+
+  public void testIterParameterizedInnerInMethod() {
     configure();
     startTemplate("iter", "iterations")
     stripTrailingSpaces();
@@ -470,6 +472,8 @@ class Foo {
   @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     if (name in ["testNavigationActionsDontTerminateTemplate", "testTemplateWithEnd", "testDisappearingVar",
+                 "test do replace macro value with empty result",
+                 "test do not replace macro value with null result",
                  "test escape string characters in soutv", "test do not replace macro value with empty result"]) {
       runnable.run();
       return;
@@ -478,7 +482,7 @@ class Foo {
     writeCommand(runnable)
   }
 
-  private writeCommand(Runnable runnable) {
+  private static writeCommand(Runnable runnable) {
     WriteCommandAction.runWriteCommandAction(null, runnable)
   }
 
@@ -831,7 +835,7 @@ class Foo {
 """
   }
 
-  public void "test do not replace macro value with empty result"() {
+  public void "test do not replace macro value with null result"() {
     myFixture.configureByText "a.java", """\
 class Foo {
   {
@@ -864,6 +868,77 @@ class Foo {
 }
 """
   }
+  
+  public void "test do replace macro value with empty result"() {
+    myFixture.configureByText "a.java", """\
+class Foo {
+  {
+    <caret>
+  }
+}
+"""
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("xxx", "user", '$VAR1$ $VAR2$');
+    template.addVariable("VAR1", "", "", true)
+    template.addVariable("VAR2", new MacroCallNode(new MyMirrorMacro("VAR1")), null, true)
+    ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
+    addTemplate(template, testRootDisposable)
+
+    writeCommand { startTemplate(template); }
+    myFixture.checkResult """\
+class Foo {
+  {
+    <caret> 
+  }
+}
+"""
+    writeCommand { myFixture.type '42' }
+    myFixture.checkResult """\
+class Foo {
+  {
+    42<caret> 42
+  }
+}
+"""
+
+    writeCommand { myFixture.type '\b\b' }
+    myFixture.checkResult """\
+class Foo {
+  {
+    <caret> 
+  }
+}
+"""
+  }
+
+  private static class MyMirrorMacro extends Macro {
+    private final String myVariableName
+
+    MyMirrorMacro(String variableName) {
+      this.myVariableName = variableName
+    }
+
+    @Override
+    String getName() {
+      return "mirror"
+    }
+
+    @Override
+    String getPresentableName() {
+      return getName();
+    }
+
+    @Override
+    Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+      def state = TemplateManagerImpl.getTemplateState(context.editor)
+      return state != null ? state.getVariableValue(myVariableName) : null 
+    }
+
+    @Override
+    Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
+      return calculateResult(params, context)
+    }
+  }
 
   public void "test multicaret expanding with space"() {
     myFixture.configureByText "a.java", """\
@@ -887,7 +962,7 @@ class Foo {
 class Foo {
   {
       System.out.println();
-    sout 
+      System.out.println();
       System.out.println();
   }
 }
@@ -917,8 +992,7 @@ class Foo {
 class Foo {
   {
       System.out.println();
-    sout
-            
+      System.out.println();
       System.out.println();
   }
 }
@@ -949,12 +1023,10 @@ class Foo {
 class Foo {
   {
       System.out.println();
-    sout
+      System.out.println();
       System.out.println();
   }
 }
 """)
   }
-
-
 }

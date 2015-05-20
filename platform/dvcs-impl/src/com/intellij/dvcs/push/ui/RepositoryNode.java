@@ -38,13 +38,13 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   private static final int PROGRESS_DELAY = 100;
   private static final int START_DELAY = 500;
-  @NotNull protected final LoadingIcon myLoadingIcon;
+  @NotNull private final LoadingIcon myLoadingIcon;
   @NotNull protected final AtomicBoolean myLoading = new AtomicBoolean();
   @NotNull private final CheckBoxModel myCheckBoxModel;
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   @Nullable private Future<AtomicReference<OutgoingResult>> myFuture;
-  protected final int myCheckBoxHGap;
+  private final int myCheckBoxHGap;
   private final int myCheckBoxVGap;
 
   public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model, boolean enabled) {
@@ -72,8 +72,16 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     return !myLoading.get();
   }
 
+  public void forceUpdateUiModelWithTypedText(@NotNull String forceText) {
+    myRepositoryPanel.getTargetPanel().forceUpdateEditableUiModel(forceText);
+  }
+
   @Override
   public void render(@NotNull ColoredTreeCellRenderer renderer) {
+    render(renderer, null);
+  }
+
+  public void render(@NotNull ColoredTreeCellRenderer renderer, @Nullable String syncEditingText) {
     int repoFixedWidth = 120;
     int borderHOffset = myRepositoryPanel.getHBorderOffset(renderer);
     if (myLoading.get()) {
@@ -83,24 +91,24 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
       repoFixedWidth += checkBoxWidth;
       if (myCheckBoxHGap > 0) {
         renderer.append("");
-        renderer.appendFixedTextFragmentWidth(checkBoxWidth + renderer.getIconTextGap() + borderHOffset);
+        renderer.appendTextPadding(checkBoxWidth + renderer.getIconTextGap() + borderHOffset);
       }
     }
     else {
       if (myCheckBoxHGap <= 0) {
         renderer.append("");
-        renderer.appendFixedTextFragmentWidth(myRepositoryPanel.calculateRendererShiftH(renderer));
+        renderer.appendTextPadding(myRepositoryPanel.calculateRendererShiftH(renderer));
       }
     }
     SimpleTextAttributes repositoryDetailsTextAttributes = PushLogTreeUtil
       .addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isChecked());
 
     renderer.append(getRepoName(renderer, repoFixedWidth), repositoryDetailsTextAttributes);
-    renderer.appendFixedTextFragmentWidth(repoFixedWidth);
+    renderer.appendTextPadding(repoFixedWidth);
     renderer.append(myRepositoryPanel.getSourceName(), repositoryDetailsTextAttributes);
     renderer.append(myRepositoryPanel.getArrow(), repositoryDetailsTextAttributes);
     PushTargetPanel pushTargetPanel = myRepositoryPanel.getTargetPanel();
-    pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)), isChecked());
+    pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)), isChecked(), syncEditingText);
 
     int maxSize = Math.max(myRepositoryPanel.getCheckBoxHeight(), myLoadingIcon.getIconHeight());
     int rendererHeight = renderer.getPreferredSize().height;
@@ -162,6 +170,10 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     t.start();
   }
 
+  @Override
+  public boolean isEditableNow() {
+    return myRepositoryPanel.isEditable();
+  }
 
   public int compareTo(@NotNull RepositoryNode repositoryNode) {
     String name = myRepositoryPanel.getRepositoryName();

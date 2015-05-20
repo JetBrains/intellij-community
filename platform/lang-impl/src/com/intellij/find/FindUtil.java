@@ -21,7 +21,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindInProjectUtil;
-import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -38,7 +37,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -89,7 +87,9 @@ public class FindUtil {
   public static void initStringToFindWithSelection(FindModel findModel, Editor editor) {
     if (editor != null) {
       String s = editor.getSelectionModel().getSelectedText();
-      FindModel.initStringToFindNoMultiline(findModel, s);
+      if (s != null && s.length() < 10000) {
+        FindModel.initStringToFindNoMultiline(findModel, s);
+      }
     }
   }
 
@@ -97,10 +97,8 @@ public class FindUtil {
     SelectionModel selectionModel = editor != null ? editor.getSelectionModel() : null;
     if (selectionModel != null) {
       String selectedText = selectionModel.getSelectedText();
-      if (selectedText != null) {
-        if (selectedText.indexOf("\n") != -1) {
-          return true;
-        }
+      if (selectedText != null && selectedText.contains("\n")) {
+        return true;
       }
     }
     return false;
@@ -209,7 +207,7 @@ public class FindUtil {
     final FindManager findManager = FindManager.getInstance(project);
     String s = editor.getSelectionModel().getSelectedText();
 
-    final FindModel model = (FindModel)findManager.getFindInFileModel().clone();
+    final FindModel model = findManager.getFindInFileModel().clone();
     if (StringUtil.isEmpty(s)) {
       model.setGlobal(true);
     }
@@ -330,7 +328,7 @@ public class FindUtil {
     if (model == null) {
       model = findManager.getFindInFileModel();
     }
-    model = (FindModel)model.clone();
+    model = model.clone();
     model.setForward(!model.isForward());
     if (!model.isGlobal() && !editor.getSelectionModel().hasSelection()) {
       model.setGlobal(true);
@@ -372,7 +370,7 @@ public class FindUtil {
     if (model == null) {
       model = findManager.getFindInFileModel();
     }
-    model = (FindModel)model.clone();
+    model = model.clone();
 
     int offset;
     if (Direction.DOWN.equals(editor.getUserData(KEY)) && model.isForward()) {
@@ -410,7 +408,7 @@ public class FindUtil {
 
   public static void replace(final Project project, final Editor editor) {
     final FindManager findManager = FindManager.getInstance(project);
-    final FindModel model = (FindModel)findManager.getFindInFileModel().clone();
+    final FindModel model = findManager.getFindInFileModel().clone();
     final String s = editor.getSelectionModel().getSelectedText();
     if (!StringUtil.isEmpty(s)) {
       if (s.indexOf('\n') >= 0) {
@@ -778,7 +776,7 @@ public class FindUtil {
 
     short position = HintManager.UNDER;
     if (model.isGlobal()) {
-      final FindModel newModel = (FindModel)model.clone();
+      final FindModel newModel = model.clone();
       FindManager findManager = FindManager.getInstance(project);
       Document document = editor.getDocument();
       FindResult result = findManager.findString(document.getCharsSequence(),

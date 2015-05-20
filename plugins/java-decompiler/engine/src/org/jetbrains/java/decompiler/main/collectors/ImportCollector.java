@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ public class ImportCollector {
 
   private static final String JAVA_LANG_PACKAGE = "java.lang";
 
-  private Map<String, String> mapSimpleNames = new HashMap<String, String>();
-  private Set<String> setNotImportedNames = new HashSet<String>();
+  private final Map<String, String> mapSimpleNames = new HashMap<String, String>();
+  private final Set<String> setNotImportedNames = new HashSet<String>();
   private String currentPackageSlash = "";
   private String currentPackagePoint = "";
 
@@ -89,9 +89,13 @@ public class ImportCollector {
 
     StructContext context = DecompilerContext.getStructContext();
 
+    // check for another class which could 'shadow' this one. Two cases:
+    // 1) class with the same short name in the current package
+    // 2) class with the same short name in the default package
     boolean existsDefaultClass = (context.getClass(currentPackageSlash + nshort) != null
                                   && !npackage.equals(currentPackagePoint)) // current package
-                                 || (context.getClass(nshort) != null);  // default package
+                                 || (context.getClass(nshort) != null 
+                                  && !currentPackagePoint.isEmpty());  // default package
 
     if (existsDefaultClass ||
         (mapSimpleNames.containsKey(nshort) && !npackage.equals(mapSimpleNames.get(nshort)))) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.TabsUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -102,6 +100,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     add(westPanel, BorderLayout.CENTER);
 
     westPanel.add(toolWindow.getContentUI().getTabComponent());
+    toolWindow.getContentUI().initMouseListeners(westPanel, toolWindow.getContentUI());
 
     JPanel eastPanel = new JPanel();
     eastPanel.setOpaque(false);
@@ -173,6 +172,12 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
         toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
       }
     });
+    westPanel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        toolWindow.fireActivated();
+      }
+    });
 
     addMouseListener(new MouseAdapter() {
       public void mouseReleased(final MouseEvent e) {
@@ -217,6 +222,19 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
         return true;
       }
     }.installOn(westPanel);
+    westPanel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseReleased(final MouseEvent e) {
+        Runnable runnable = new Runnable() {
+          @Override
+          public void run() {
+            ToolWindowHeader.this.dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, ToolWindowHeader.this));
+          }
+        };
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(runnable);
+      }
+    });
   }
 
   @Override
@@ -520,7 +538,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     public void actionPerformed(final ActionEvent e) {
       AnAction action =
-        myAlternativeAction != null && (e.getModifiers() & InputEvent.ALT_MASK) == InputEvent.ALT_MASK ? myAlternativeAction : myAction;
+        myAlternativeAction != null && BitUtil.isSet(e.getModifiers(), InputEvent.ALT_MASK) ? myAlternativeAction : myAction;
       final DataContext dataContext = DataManager.getInstance().getDataContext(this);
       final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
       InputEvent inputEvent = e.getSource() instanceof InputEvent ? (InputEvent) e.getSource() : null;

@@ -1,4 +1,4 @@
-// "Invert If Condition" "true"
+// "Invert 'if' condition" "true"
 class A {
     public boolean foo(boolean a, boolean b, boolean c, boolean d) {
 

@@ -15,6 +15,12 @@
  */
 package com.intellij.pom;
 
+/**
+ * Represents an instance which can be shown in the IDE (e.g. a file, a specific location inside a file, etc).
+ * <p/>
+ * Many {@link com.intellij.psi.PsiElement}s implement this interface (see {@link com.intellij.psi.NavigatablePsiElement}). To create an
+ * instance which opens a file in editor and put caret to a specific location use {@link com.intellij.openapi.fileEditor.OpenFileDescriptor}.
+ */
 public interface Navigatable {
   /**
    * Open editor and select/navigate to the object there if possible.

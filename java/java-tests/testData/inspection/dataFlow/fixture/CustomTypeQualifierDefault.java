@@ -1,5 +1,6 @@
 import foo.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class Some {
   void foo(@NotNull String s) {
@@ -18,6 +19,16 @@ class Some {
 @bar.MethodsAreNotNullByDefault
 class NotNullClass {
   static native Object foo(String s);
+  
+  public Object foo() {
+    return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+  }
+
+  @Nullable
+  public Object foo2() {
+    return null;
+  }
+  
 
 }
 class NullableClass {

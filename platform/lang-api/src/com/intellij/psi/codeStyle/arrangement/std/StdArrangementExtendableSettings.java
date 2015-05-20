@@ -41,7 +41,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   @NotNull private final Set<StdArrangementRuleAliasToken> myRulesAliases = new THashSet<StdArrangementRuleAliasToken>();
 
   // cached values
-  @NotNull private final List<ArrangementSectionRule> myExtendedSectionRules = new ArrayList<ArrangementSectionRule>();
+  @NotNull private final List<ArrangementSectionRule> myExtendedSectionRules = Collections.synchronizedList(new ArrayList<ArrangementSectionRule>());
 
   public StdArrangementExtendableSettings() {
     super();
@@ -79,20 +79,22 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
 
   @Override
   public List<ArrangementSectionRule> getExtendedSectionRules() {
-    if (myExtendedSectionRules.isEmpty()) {
-      final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition = new THashMap<String, StdArrangementRuleAliasToken>(myRulesAliases.size());
-      for (StdArrangementRuleAliasToken alias : myRulesAliases) {
-        final String id = alias.getId();
-        tokenIdToDefinition.put(id, alias);
-      }
-
-      final List<ArrangementSectionRule> sections = getSections();
-      for (ArrangementSectionRule section : sections) {
-        final List<StdArrangementMatchRule> extendedRules = new ArrayList<StdArrangementMatchRule>();
-        for (StdArrangementMatchRule rule : section.getMatchRules()) {
-          appendExpandedRules(rule, extendedRules, tokenIdToDefinition);
+    synchronized (myExtendedSectionRules) {
+      if (myExtendedSectionRules.isEmpty()) {
+        final Map<String, StdArrangementRuleAliasToken> tokenIdToDefinition = new THashMap<String, StdArrangementRuleAliasToken>(myRulesAliases.size());
+        for (StdArrangementRuleAliasToken alias : myRulesAliases) {
+          final String id = alias.getId();
+          tokenIdToDefinition.put(id, alias);
         }
-        myExtendedSectionRules.add(ArrangementSectionRule.create(section.getStartComment(), section.getEndComment(), extendedRules));
+
+        final List<ArrangementSectionRule> sections = getSections();
+        for (ArrangementSectionRule section : sections) {
+          final List<StdArrangementMatchRule> extendedRules = new ArrayList<StdArrangementMatchRule>();
+          for (StdArrangementMatchRule rule : section.getMatchRules()) {
+            appendExpandedRules(rule, extendedRules, tokenIdToDefinition);
+          }
+          myExtendedSectionRules.add(ArrangementSectionRule.create(section.getStartComment(), section.getEndComment(), extendedRules));
+        }
       }
     }
     return myExtendedSectionRules;
@@ -164,18 +166,21 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
 
   @Override
   public void addRule(@NotNull StdArrangementMatchRule rule) {
-    super.addRule(rule);
+    addSectionRule(rule);
+    myRulesByPriority.clear();
     myExtendedSectionRules.clear();
   }
 
   @NotNull
   @Override
   public List<? extends ArrangementMatchRule> getRulesSortedByPriority() {
-    if (myRulesByPriority.isEmpty()) {
-      for (ArrangementSectionRule rule : getExtendedSectionRules()) {
-        myRulesByPriority.addAll(rule.getMatchRules());
+    synchronized (myExtendedSectionRules) {
+      if (myRulesByPriority.isEmpty()) {
+        for (ArrangementSectionRule rule : getExtendedSectionRules()) {
+          myRulesByPriority.addAll(rule.getMatchRules());
+        }
+        ContainerUtil.sort(myRulesByPriority);
       }
-      ContainerUtil.sort(myRulesByPriority);
     }
     return myRulesByPriority;
   }

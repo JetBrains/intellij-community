@@ -45,7 +45,8 @@ public class SetListenerController<Listener> implements ListenerController<Liste
   }
 
   public void callListeners(Consumer<Listener> listenerConsumer) {
-    for (Listener listener : myListeners)
+    for (Listener listener : myListeners) {
       listenerConsumer.consume(listener);
+    }
   }
 }

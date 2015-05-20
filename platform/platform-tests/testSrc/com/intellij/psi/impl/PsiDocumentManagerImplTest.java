@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
@@ -46,7 +46,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
+public class PsiDocumentManagerImplTest extends PlatformTestCase {
+  private static final int TIMEOUT = 30000;
+
   private PsiDocumentManagerImpl getPsiDocumentManager() {
     return (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject());
   }
@@ -256,7 +258,7 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
         semaphore.up();
       }
     });
-    waitAndPump(semaphore, 30000);
+    waitAndPump(semaphore, TIMEOUT);
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
     WriteCommandAction.runWriteCommandAction(null, new Runnable() {
@@ -274,7 +276,7 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
         semaphore.up();
       }
     });
-    waitAndPump(semaphore, 30000);
+    waitAndPump(semaphore, TIMEOUT);
     assertTrue(getPsiDocumentManager().isCommitted(document));
 
     final AtomicInteger count = new AtomicInteger();
@@ -366,14 +368,17 @@ public class PsiDocumentManagerImplTest extends PlatformLangTestCase {
       assertEquals("xxx", document.getText());
       assertEquals("xxx", alienDocument.getText());
 
-      while (!getPsiDocumentManager().isCommitted(document)) {
+      long t1 = System.currentTimeMillis() + TIMEOUT;
+      while (!getPsiDocumentManager().isCommitted(document) && System.currentTimeMillis() < t1) {
         UIUtil.dispatchAllInvocationEvents();
       }
-      long start = System.currentTimeMillis();
-      while (!alienDocManager.isCommitted(alienDocument) && System.currentTimeMillis()-start < 20000) {
+      assertTrue("Still not committed: " + document, getPsiDocumentManager().isCommitted(document));
+
+      long t2 = System.currentTimeMillis() + TIMEOUT;
+      while (!alienDocManager.isCommitted(alienDocument) && System.currentTimeMillis() < t2) {
         UIUtil.dispatchAllInvocationEvents();
       }
-      assertTrue("Still not committed: "+alienDocument, alienDocManager.isCommitted(alienDocument));
+      assertTrue("Still not committed: " + alienDocument, alienDocManager.isCommitted(alienDocument));
     }
     finally {
       ProjectUtil.closeAndDispose(alienProject);

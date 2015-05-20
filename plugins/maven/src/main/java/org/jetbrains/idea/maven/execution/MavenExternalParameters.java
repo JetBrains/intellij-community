@@ -57,6 +57,7 @@ import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -121,8 +122,13 @@ public class MavenExternalParameters {
     params.setJdk(getJdk(project, runnerSettings, project != null && MavenRunner.getInstance(project).getState() == runnerSettings));
 
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
+    final String mavenVersion = MavenUtil.getMavenVersion(mavenHome);
 
     params.getProgramParametersList().add("-Didea.version=" + MavenUtil.getIdeaVersionToPassToMavenProcess());
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3") >= 0) {
+      params.getVMParametersList().addProperty("maven.multiModuleProjectDirectory",
+                                               MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());
+    }
 
     addVMParameters(params.getVMParametersList(), mavenHome, runnerSettings);
 
@@ -133,7 +139,7 @@ public class MavenExternalParameters {
 
     if (project != null && parameters.isResolveToWorkspace()) {
       try {
-        String resolverJar = getArtifactResolverJar(MavenUtil.getMavenVersion(mavenHome));
+        String resolverJar = getArtifactResolverJar(mavenVersion);
         confFile = patchConfFile(confFile, resolverJar);
 
         File modulesPathsFile = dumpModulesPaths(project);
@@ -166,7 +172,7 @@ public class MavenExternalParameters {
   }
 
   private static File patchConfFile(File conf, String library) throws IOException {
-    File tmpConf = File.createTempFile("idea-", "-mvn.conf");
+    File tmpConf = FileUtil.createTempFile("idea-", "-mvn.conf");
     tmpConf.deleteOnExit();
     patchConfFile(conf, tmpConf, library);
 
@@ -283,7 +289,7 @@ public class MavenExternalParameters {
     }
 
     File file = new File(PathManager.getSystemPath(), "Maven/idea-projects-state-" + project.getLocationHash() + ".properties");
-    file.getParentFile().mkdirs();
+    FileUtil.ensureExists(file.getParentFile());
 
     OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
     try {
@@ -392,6 +398,7 @@ public class MavenExternalParameters {
     }
   }
 
+  @NotNull
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings) throws ExecutionException {
     return resolveMavenHome(coreSettings, null, null);
   }
@@ -404,6 +411,7 @@ public class MavenExternalParameters {
    * @return
    * @throws ExecutionException
    */
+  @NotNull
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings,
                                         @Nullable Project project,
                                         @Nullable MavenRunConfiguration runConfiguration) throws ExecutionException {
@@ -549,7 +557,7 @@ public class MavenExternalParameters {
     return stringBuilder.toString();
   }
 
-  private static class ProjectSettingsOpenerExecutionException extends ExecutionExceptionWithHyperlink {
+  private static class ProjectSettingsOpenerExecutionException extends WithHyperlinkExecutionException {
 
     private final Project myProject;
 
@@ -564,7 +572,7 @@ public class MavenExternalParameters {
     }
   }
 
-  private static class ProjectJdkSettingsOpenerExecutionException extends ExecutionExceptionWithHyperlink {
+  private static class ProjectJdkSettingsOpenerExecutionException extends WithHyperlinkExecutionException {
 
     private final Project myProject;
 
@@ -579,7 +587,7 @@ public class MavenExternalParameters {
     }
   }
 
-  private static class RunConfigurationOpenerExecutionException extends ExecutionExceptionWithHyperlink {
+  private static class RunConfigurationOpenerExecutionException extends WithHyperlinkExecutionException {
 
     private final MavenRunConfiguration myRunConfiguration;
 
@@ -596,9 +604,9 @@ public class MavenExternalParameters {
     }
   }
 
-  private static abstract class ExecutionExceptionWithHyperlink extends ExecutionException implements HyperlinkListener, NotificationListener {
+  private static abstract class WithHyperlinkExecutionException extends ExecutionException implements HyperlinkListener, NotificationListener {
 
-    public ExecutionExceptionWithHyperlink(String s) {
+    public WithHyperlinkExecutionException(String s) {
       super(s);
     }
 

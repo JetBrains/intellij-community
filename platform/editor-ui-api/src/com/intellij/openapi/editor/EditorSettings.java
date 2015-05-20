@@ -54,6 +54,9 @@ public interface EditorSettings {
   boolean isFoldingOutlineShown();
   void setFoldingOutlineShown(boolean val);
 
+  boolean isAutoCodeFoldingEnabled();
+  void setAutoCodeFoldingEnabled(boolean val);
+
   boolean isUseTabCharacter(Project project);
   void setUseTabCharacter(boolean useTabCharacter);
 
@@ -77,6 +80,9 @@ public interface EditorSettings {
 
   boolean isBlockCursor();
   void setBlockCursor(boolean blockCursor);
+
+  boolean isCaretRowShown();
+  void setCaretRowShown(boolean caretRowShown);
 
   int getLineCursorWidth();
   void setLineCursorWidth(int width);

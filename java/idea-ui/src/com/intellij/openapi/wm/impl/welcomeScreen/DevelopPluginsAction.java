@@ -29,7 +29,7 @@ import java.io.File;
  */
 public class DevelopPluginsAction extends AnAction implements DumbAware {
   @NonNls private static final String PLUGIN_URL = PathManager.getHomePath() + "/Plugin Development Readme.html";
-  @NonNls private static final String PLUGIN_WEBSITE = "http://www.jetbrains.com/idea/plugins/plugin_developers.html";
+  @NonNls private static final String PLUGIN_WEBSITE = "https://www.jetbrains.com/idea/plugins/plugin_developers.html";
 
   @Override
   public void actionPerformed(final AnActionEvent e) {

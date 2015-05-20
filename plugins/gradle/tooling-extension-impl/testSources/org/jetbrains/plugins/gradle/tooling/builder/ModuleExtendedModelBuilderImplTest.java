@@ -28,10 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -118,19 +115,16 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
           }
           else if (module.getName().equals("withIdeaPluginCustomization2")) {
             assertEquals(ContainerUtil.newArrayList("src/main/java", "src/test/java", "src/test/resources"), sourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("some-extra-resource-folder", "src/main/resources"), resourceDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
             assertTrue(testDirectories.isEmpty());
-            assertEquals(ContainerUtil.newArrayList("some-extra-test-resource-folder"), testResourceDirectories);
+            assertTrue(testResourceDirectories.isEmpty());
             assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
           }
           else if (module.getName().equals("withIdeaPluginCustomization3")) {
             assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
-            assertEquals(ContainerUtil.newArrayList(
-              "src/awesome-test/resources", "src/main/resources"), resourceDirectories);
-            assertEquals(ContainerUtil.newArrayList(
-              "src/awesome-test/java", "src/awesome-with-resource-test/java", "src/test/java"), testDirectories);
-            assertEquals(ContainerUtil.newArrayList(
-              "src/awesome-with-resource-test/resources", "src/test/resources"), testResourceDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/awesome-test/resources", "src/main/resources"), resourceDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/awesome-test/java", "src/test/java"), testDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
             assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
           }
           else {
@@ -142,6 +136,24 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
       });
 
     assertEquals(modulesSize, models.size());
+  }
+
+  @Test
+  public void testJavaExtendedModel() throws Exception {
+    final Map<String, ModuleExtendedModel> modulesMap = getModulesMap(ModuleExtendedModel.class);
+    assertEquals(3, modulesMap.size());
+
+    final ModuleExtendedModel rootModule = modulesMap.get(":");
+    assertNotNull(rootModule);
+    assertNull(rootModule.getJavaSourceCompatibility());
+
+    final ModuleExtendedModel defaultJavaModule = modulesMap.get(":defaultJavaModule");
+    assertNotNull(defaultJavaModule);
+    assertNotNull(defaultJavaModule.getJavaSourceCompatibility());
+
+    final ModuleExtendedModel javaModule = modulesMap.get(":javaModule");
+    assertNotNull(javaModule);
+    assertEquals("1.6", javaModule.getJavaSourceCompatibility());
   }
 
   private void fillDirectories(final ModuleExtendedModel model,

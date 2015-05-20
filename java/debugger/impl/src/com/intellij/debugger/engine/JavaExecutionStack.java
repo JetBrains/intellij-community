@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class JavaExecutionStack extends XExecutionStack {
     myThreadProxy = threadProxy;
     myDebugProcess = debugProcess;
     if (current) {
-      myTopFrame = calcTopFrame();
+      initTopFrame();
     }
   }
 
@@ -58,7 +58,7 @@ public class JavaExecutionStack extends XExecutionStack {
     if (current) {
       return AllIcons.Debugger.ThreadCurrent;
     }
-    else if (threadProxy.getThreadReference().isAtBreakpoint()) {
+    else if (threadProxy.isAtBreakpoint()) {
       return AllIcons.Debugger.ThreadAtBreakpoint;
     }
     else if (threadProxy.isSuspended()) {
@@ -74,12 +74,12 @@ public class JavaExecutionStack extends XExecutionStack {
     return myThreadProxy;
   }
 
-  private JavaStackFrame calcTopFrame() {
+  public final void initTopFrame() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       StackFrameProxyImpl frame = myThreadProxy.frame(0);
       if (frame != null) {
-        return new JavaStackFrame(frame, myTracker);
+        myTopFrame = new JavaStackFrame(frame, myTracker);
       }
     }
     catch (EvaluateException e) {
@@ -88,7 +88,6 @@ public class JavaExecutionStack extends XExecutionStack {
     finally {
       myTopFrameReady = true;
     }
-    return null;
   }
 
   @Nullable

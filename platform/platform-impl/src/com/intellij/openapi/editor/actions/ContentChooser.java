@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,7 +184,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       }
     });
 
-    mySplitter.setPreferredSize(new Dimension(500, 500));
+    mySplitter.setPreferredSize(JBUI.size(500, 500));
 
     SplitterProportionsData d = new SplitterProportionsDataImpl();
     d.externalizeToDimensionService(getClass().getName());
@@ -216,7 +217,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     if (myUseIdeaEditor) {
       myViewer = createIdeaEditor(fullString);
       JComponent component = myViewer.getComponent();
-      component.setPreferredSize(new Dimension(300, 500));
+      component.setPreferredSize(JBUI.size(300, 500));
       mySplitter.setSecondComponent(component);
     } else {
       final JTextArea textArea = new JTextArea(fullString);

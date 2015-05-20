@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.WeakList;
+import org.jetbrains.annotations.NotNull;
 
+import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
@@ -65,6 +67,21 @@ public class LowMemoryWatcher {
       }
     }
   };
+  private static final NotificationListener ourLowMemoryListener = new NotificationListener() {
+    @Override
+    public void handleNotification(Notification n, Object hb) {
+      if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(n.getType()) ||
+          MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(n.getType())) {
+        synchronized (ourJanitor) {
+          if (!ourSubmitted) {
+            //noinspection AssignmentToStaticFieldFromInstanceMethod
+            ourSubmitted = true;
+            ourExecutor.submit(ourJanitor);
+          }
+        }
+      }
+    }
+  };
 
   private final Runnable myRunnable;
 
@@ -78,20 +95,7 @@ public class LowMemoryWatcher {
         }
       }
     }
-    ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(new NotificationListener() {
-      @Override
-      public void handleNotification(Notification n, Object hb) {
-        if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(n.getType()) || MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(n.getType())) {
-          synchronized (ourJanitor) {
-            if (!ourSubmitted) {
-              //noinspection AssignmentToStaticFieldFromInstanceMethod
-              ourSubmitted = true;
-              ourExecutor.submit(ourJanitor);
-            }
-          }
-        }
-      }
-    }, null, null);
+    ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(ourLowMemoryListener, null, null);
   }
 
   /**
@@ -99,14 +103,14 @@ public class LowMemoryWatcher {
    * @return a LowMemoryWatcher instance holding the runnable. This instance should be kept in memory while the
    * low memory notification functionality is needed. As soon as it's garbage-collected, the runnable won't receive any further notifications.
    */
-  public static LowMemoryWatcher register(Runnable runnable) {
+  public static LowMemoryWatcher register(@NotNull Runnable runnable) {
     return new LowMemoryWatcher(runnable);
   }
 
   /**
    * Registers a runnable to run on low memory events. The notifications will be issued until parentDisposable is disposed.
    */
-  public static void register(Runnable runnable, Disposable parentDisposable) {
+  public static void register(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
     final Ref<LowMemoryWatcher> watcher = Ref.create(new LowMemoryWatcher(runnable));
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -117,13 +121,29 @@ public class LowMemoryWatcher {
     });
   }
 
-  private LowMemoryWatcher(Runnable runnable) {
+  private LowMemoryWatcher(@NotNull Runnable runnable) {
     myRunnable = runnable;
     ourInstances.add(this);
   }
 
   public void stop() {
     ourInstances.remove(this);
+  }
+
+  /**
+   * LowMemoryWatcher maintains a background thread where all the handlers are invoked.
+   * In server environments, this thread may run indefinitely and prevent the class loader from
+   * being gc-ed. Thus it's necessary to invoke this method to stop that thread and let the classes be garbage-collected.
+   */
+  public static void stopAll() {
+    ourExecutor.shutdown();
+    ourInstances.clear();
+    try {
+      ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).removeNotificationListener(ourLowMemoryListener);
+    }
+    catch (ListenerNotFoundException e) {
+      LOG.error(e);
+    }
   }
 
 }

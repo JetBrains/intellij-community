@@ -44,7 +44,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
           public void run() {
             PsiFile psi =
               PsiDocumentManager.getInstance(getProject())
-                .getPsiFile(getConsoleView().getLanguageConsole().getConsoleEditor().getDocument());
+                .getPsiFile(getConsoleView().getConsoleEditor().getDocument());
             Assert.assertThat("No errors expected", getErrors(psi), Matchers.empty());
           }
         });
@@ -76,7 +76,7 @@ public class IPythonConsoleTest extends PyEnvTestCase {
           @Override
           public void run() {
             PsiFile psi =
-              PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getLanguageConsole().getConsoleEditor().getDocument());
+              PsiDocumentManager.getInstance(getProject()).getPsiFile(getConsoleView().getConsoleEditor().getDocument());
             //TreeUtil.ensureParsed(psi.getNode());
             assertTrue(PsiTreeUtil.hasErrorElements(psi));
           }

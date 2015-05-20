@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -60,11 +62,12 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       return;
     }
     final MultiMap<PsiElement, String> conflicts = checkForConflicts(member);
+    final Project project = member.getProject();
     final boolean conflictsDialogOK;
     if (conflicts.isEmpty()) {
       conflictsDialogOK = true;
     } else {
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(member.getProject(), conflicts, new Runnable() {
+      final ConflictsDialog conflictsDialog = new ConflictsDialog(project, conflicts, new Runnable() {
         @Override
         public void run() {
           final AccessToken token = start();
@@ -80,6 +83,13 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     }
     if (conflictsDialogOK) {
       modifierList.setModifierProperty(getModifier(), true);
+      final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
+      final PsiElement sibling = modifierList.getNextSibling();
+      if (sibling instanceof PsiWhiteSpace) {
+        sibling.replace(whitespace);
+        CodeStyleManager.getInstance(project).reformatRange(member, modifierList.getTextOffset() + 1,
+                                                            modifierList.getNextSibling().getTextOffset());
+      }
     }
   }
 

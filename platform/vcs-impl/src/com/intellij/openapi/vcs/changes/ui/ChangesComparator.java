@@ -15,19 +15,18 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
 public class ChangesComparator implements Comparator<Change> {
   private static final ChangesComparator ourFlattenedInstance = new ChangesComparator(false);
   private static final ChangesComparator ourTreeInstance = new ChangesComparator(true);
+  @NotNull private final HierarchicalFilePathComparator myFilePathComparator;
   private final boolean myTreeCompare;
 
   public static ChangesComparator getInstance(boolean flattened) {
@@ -40,30 +39,17 @@ public class ChangesComparator implements Comparator<Change> {
 
   private ChangesComparator(boolean treeCompare) {
     myTreeCompare = treeCompare;
+    myFilePathComparator = HierarchicalFilePathComparator.IGNORE_CASE;
   }
 
   public int compare(final Change o1, final Change o2) {
     final FilePath filePath1 = ChangesUtil.getFilePath(o1);
     final FilePath filePath2 = ChangesUtil.getFilePath(o2);
     if (myTreeCompare) {
-      final String path1 = FileUtilRt.toSystemIndependentName(filePath1.getPath());
-      final String path2 = FileUtilRt.toSystemIndependentName(filePath2.getPath());
-      final int lastSlash1 = path1.lastIndexOf('/');
-      final String parentPath1 = lastSlash1 >= 0 && !filePath1.isDirectory() ? path1.substring(0, lastSlash1) : path1;
-      final int lastSlash2 = path2.lastIndexOf('/');
-      final String parentPath2 = lastSlash2 >= 0 && !filePath2.isDirectory() ? path2.substring(0, lastSlash2) : path2;
-      // subdirs precede files
-      if (FileUtil.isAncestor(parentPath2, parentPath1, true)) {
-        return -1;
-      }
-      else if (FileUtil.isAncestor(parentPath1, parentPath2, true)) {
-        return 1;
-      }
-      final int compare = StringUtil.compare(parentPath1, parentPath2, !SystemInfo.isFileSystemCaseSensitive);
-      if (compare != 0) {
-        return compare;
-      }
+      return myFilePathComparator.compare(filePath1, filePath2);
     }
-    return filePath1.getName().compareToIgnoreCase(filePath2.getName());
+    else {
+      return filePath1.getName().compareToIgnoreCase(filePath2.getName());
+    }
   }
 }

@@ -16,17 +16,16 @@
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.FrameDialogWrapper;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -65,9 +64,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class GitShowExternalLogAction extends AnAction {
-
-  private static final Logger LOG = Logger.getInstance(GitShowExternalLogAction.class);
+public class GitShowExternalLogAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {

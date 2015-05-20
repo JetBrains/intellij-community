@@ -18,13 +18,15 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-public class PyListLiteralExpressionImpl extends PyElementImpl implements PyListLiteralExpression {
+public class PyListLiteralExpressionImpl extends PySequenceExpressionImpl implements PyListLiteralExpression {
   public PyListLiteralExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -32,11 +34,6 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyListLiteralExpression(this);
-  }
-
-  @NotNull
-  public PyExpression[] getElements() {
-    return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 
   public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
@@ -62,27 +59,6 @@ public class PyListLiteralExpressionImpl extends PyElementImpl implements PyList
   public PsiElement addBefore(@NotNull PsiElement psiElement, PsiElement beforeThis) throws IncorrectOperationException {
     checkPyExpression(psiElement);
     return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, null, (PyExpression)psiElement);
-  }
-
-  @Override
-  public void deleteChildInternal(@NotNull ASTNode child) {
-    if (child.getPsi() instanceof PyExpression) {
-      PyExpression expression = (PyExpression)child.getPsi();
-      ASTNode node = getNode();
-      ASTNode exprNode = expression.getNode();
-      ASTNode next = PyPsiUtils.getNextComma(exprNode);
-      ASTNode prev = PyPsiUtils.getPrevComma(exprNode);
-      super.deleteChildInternal(child);
-      if (next != null) {
-        deleteChildInternal(next);
-      }
-      else if (prev != null) {
-        deleteChildInternal(prev);
-      }
-    }
-    else {
-      super.deleteChildInternal(child);
-    }
   }
 
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {

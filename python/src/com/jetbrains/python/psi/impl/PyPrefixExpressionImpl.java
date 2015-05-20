@@ -83,9 +83,9 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     }
     final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
     final PsiElement resolved = ref.resolve();
-    if (resolved instanceof Callable) {
+    if (resolved instanceof PyCallable) {
       // TODO: Make PyPrefixExpression a PyCallSiteExpression, use getCallType() here and analyze it in PyTypeChecker.analyzeCallSite()
-      return ((Callable)resolved).getReturnType(context, key);
+      return ((PyCallable)resolved).getReturnType(context, key);
     }
     return null;
   }

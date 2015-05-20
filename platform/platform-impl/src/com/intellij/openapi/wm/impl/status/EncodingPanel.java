@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,15 +74,16 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   public EncodingPanel(@NotNull final Project project) {
     super(project);
     update = new Alarm(this);
-    myComponent = new TextPanel() {
+    myComponent = new TextPanel.ExtraSize() {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
         if (actionEnabled && getText() != null) {
           final Rectangle r = getBounds();
           final Insets insets = getInsets();
-          AllIcons.Ide.Statusbar_arrows.paintIcon(this, g, r.width - insets.right - AllIcons.Ide.Statusbar_arrows.getIconWidth() - 2,
-                                                  r.height / 2 - AllIcons.Ide.Statusbar_arrows.getIconHeight() / 2);
+          Icon arrows = AllIcons.Ide.Statusbar_arrows;
+          arrows.paintIcon(this, g, r.width - insets.right - arrows.getIconWidth() - 2,
+                           r.height / 2 - arrows.getIconHeight() / 2);
         }
       }
     };
@@ -95,7 +96,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         return true;
       }
     }.installOn(myComponent);
-    myComponent.setBorder(WidgetBorder.INSTANCE);
+    myComponent.setBorder(WidgetBorder.WIDE);
   }
 
   @Nullable("returns null if charset set cannot be determined from content")

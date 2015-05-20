@@ -35,13 +35,12 @@ public class RunnerWinProcess extends ProcessWrapper {
   }
 
   @NotNull
-  public static RunnerWinProcess create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  public static Process create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     if (!SystemInfo.isWindows) {
       throw new RuntimeException(RunnerWinProcess.class.getSimpleName() + " works on Windows only!");
     }
-    RunnerMediator.injectRunnerCommand(commandLine);
+    boolean success = RunnerMediator.injectRunnerCommand(commandLine);
     Process process = commandLine.createProcess();
-    return new RunnerWinProcess(process);
+    return success ? new RunnerWinProcess(process) : process;
   }
-
 }

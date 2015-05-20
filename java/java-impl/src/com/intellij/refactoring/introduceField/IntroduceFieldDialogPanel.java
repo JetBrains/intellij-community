@@ -63,7 +63,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   protected void initializeInitializerPlace(PsiExpression initializerExpression,
                                             BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     if (initializerExpression != null) {
-      setEnabledInitializationPlaces(initializerExpression, initializerExpression);
+      setEnabledInitializationPlaces(initializerExpression);
       if (!myAllowInitInMethod) {
         myRbInCurrentMethod.setEnabled(false);
       }
@@ -195,9 +195,9 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   }
 
   @Override
-  protected boolean updateInitializationPlaceModel(boolean initializedInSetup) {
+  protected boolean updateInitializationPlaceModel(boolean initializedInSetup, boolean initializedInConstructor) {
     myRbInFieldDeclaration.setEnabled(false);
-    myRbInConstructor.setEnabled(false);
+    myRbInConstructor.setEnabled(initializedInConstructor);
     enableFinal(false);
     if (myRbInSetUp != null){
       if (!initializedInSetup) {

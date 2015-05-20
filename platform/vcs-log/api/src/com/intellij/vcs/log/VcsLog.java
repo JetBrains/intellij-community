@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * Use this interface to access information available in the VCS Log.
@@ -41,15 +42,6 @@ public interface VcsLog {
   List<VcsFullCommitDetails> getSelectedDetails();
 
   /**
-   * Returns details of the given commit, if they have been already loaded.
-   * In most cases they are already in the cache, and will be returned.
-   * Otherwise null is returned.
-   * Asynchronous loading of the details which are not yet available is done automatically from the log table component.
-   */
-  @Nullable
-  VcsFullCommitDetails getDetailsIfAvailable(@NotNull Hash hash);
-
-  /**
    * Returns names of branches which contain the given commit, or null if this information is unavailable.
    */
   @Nullable
@@ -62,9 +54,12 @@ public interface VcsLog {
   Collection<VcsRef> getAllReferences();
 
   /**
-   * Selects the commit node defined by the given reference (commit hash, branch or tag).
+   * Asynchronously selects the commit node defined by the given reference (commit hash, branch or tag).
+   * Returns a {@link Future future} that allows to check if the commit was selected, wait for the selection while log is being loaded,
+   * or cancel commit selection.
    */
-  void jumpToReference(String reference);
+  @NotNull
+  Future<Boolean> jumpToReference(String reference);
 
   /**
    * Returns the VCS log toolbar component.
@@ -77,5 +72,4 @@ public interface VcsLog {
    */
   @NotNull
   Collection<VcsLogProvider> getLogProviders();
-
 }

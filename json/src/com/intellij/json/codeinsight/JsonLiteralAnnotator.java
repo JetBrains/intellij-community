@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.json.codeinsight;
 
 import com.intellij.json.JsonBundle;
@@ -23,21 +38,23 @@ public class JsonLiteralAnnotator implements Annotator {
   private static final Pattern VALID_ESCAPE = Pattern.compile("\\\\([\"\\\\/bfnrt]|u[0-9a-fA-F]{4})");
   private static final Pattern VALID_NUMBER_LITERAL = Pattern.compile("-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?");
 
-  private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode();
+  private static class Holder {
+    private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode();
+  }
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
     if (element instanceof JsonStringLiteral) {
       final JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
       final int elementOffset = element.getTextOffset();
       if (JsonPsiUtil.isPropertyKey(element)) {
-        holder.createInfoAnnotation(element, DEBUG ? "property key" : null).setTextAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY);
+        holder.createInfoAnnotation(element, Holder.DEBUG ? "property key" : null).setTextAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY);
       }
-      final String text = element.getText();
       final int length = text.length();
 
       // Check that string literal is closed properly
-      if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || quoteEscaped(text, length - 1)) {
+      if (length <= 1 || text.charAt(0) != text.charAt(length - 1) || JsonPsiUtil.isEscapedChar(text, length - 1)) {
         holder.createErrorAnnotation(element, JsonBundle.message("msg.missing.closing.quote"));
       }
 
@@ -57,17 +74,9 @@ public class JsonLiteralAnnotator implements Annotator {
       }
     }
     else if (element instanceof JsonNumberLiteral) {
-      if (!VALID_NUMBER_LITERAL.matcher(element.getText()).matches()) {
+      if (!VALID_NUMBER_LITERAL.matcher(text).matches()) {
         holder.createErrorAnnotation(element, JsonBundle.message("msg.illegal.floating.point.literal"));
       }
     }
-  }
-
-  private static boolean quoteEscaped(String text, int quotePos) {
-    int count = 0;
-    for (int i = quotePos - 1; i >= 0 && text.charAt(i) == '\\'; i--) {
-      count++;
-    }
-    return count % 2 != 0;
   }
 }

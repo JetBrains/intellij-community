@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,10 +36,11 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Native;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -51,7 +51,7 @@ import java.util.Locale;
  * @author yole
  */
 public class StartupUtil {
-  @NonNls public static final String NO_SPLASH = "nosplash";
+  public static final String NO_SPLASH = "nosplash";
 
   private static SocketLock ourLock;
 
@@ -59,12 +59,6 @@ public class StartupUtil {
 
   public static boolean shouldShowSplash(final String[] args) {
     return !Arrays.asList(args).contains(NO_SPLASH);
-  }
-
-  /** @deprecated use {@link Main#isHeadless()} (to remove in IDEA 14) */
-  @SuppressWarnings("unused")
-  public static boolean isHeadless() {
-    return Main.isHeadless();
   }
 
   public synchronized static void addExternalInstanceListener(Consumer<List<String>> consumer) {
@@ -87,9 +81,15 @@ public class StartupUtil {
       newConfigFolder = !new File(PathManager.getConfigPath()).exists();
     }
 
-    boolean canStart = checkJdkVersion() && checkSystemFolders() && lockSystemFolders(args);  // note: uses config folder!
-    if (!canStart) {
-      System.exit(Main.STARTUP_IMPOSSIBLE);
+    if (!checkJdkVersion()) {
+      System.exit(Main.JDK_CHECK_FAILED);
+    }
+    // note: uses config folder!
+    if (!checkSystemFolders()) {
+      System.exit(Main.DIR_CHECK_FAILED);
+    }
+    if (!lockSystemFolders(args)) {
+      System.exit(Main.INSTANCE_CHECK_FAILED);
     }
 
     if (newConfigFolder) {
@@ -117,10 +117,16 @@ public class StartupUtil {
     if (!"true".equals(System.getProperty("idea.no.jre.check"))) {
       try {
         // try to find a class from tools.jar
-        Class.forName("com.sun.jdi.Field");
+        Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
       }
       catch (ClassNotFoundException e) {
         String message = "'tools.jar' seems to be not in " + ApplicationNamesInfo.getInstance().getProductName() + " classpath.\n" +
+                         "Please ensure JAVA_HOME points to JDK rather than JRE.";
+        Main.showMessage("JDK Required", message, true);
+        return false;
+      }
+      catch (LinkageError e) {
+        String message = "Cannot load a class from 'tools.jar': " + e.getMessage() + "\n" +
                          "Please ensure JAVA_HOME points to JDK rather than JRE.";
         Main.showMessage("JDK Required", message, true);
         return false;
@@ -129,6 +135,14 @@ public class StartupUtil {
       if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
         String message = "OpenJDK 6 is not supported. Please use Oracle Java or newer OpenJDK.";
         Main.showMessage("Unsupported JVM", message, true);
+        return false;
+      }
+    }
+    
+    if (!"true".equals(System.getProperty("idea.no.64bit.check"))) {
+      if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
+          String message = "32-bit JVM is not supported. Please install 64-bit version.";
+          Main.showMessage("Unsupported JVM", message, true);
         return false;
       }
     }
@@ -156,6 +170,25 @@ public class StartupUtil {
       return false;
     }
 
+    File logDir = new File(PathManager.getLogPath());
+    boolean logOk = false;
+    if (logDir.isDirectory() || logDir.mkdirs()) {
+      try {
+        File ideTempFile = new File(logDir, "idea_log_check.txt");
+        write(ideTempFile, "log check");
+        delete(ideTempFile);
+        logOk = true;
+      }
+      catch (IOException ignored) { }
+    }
+    if (!logOk) {
+      String message = "Log path '" + logDir.getPath() + "' is inaccessible.\n" +
+                       "If you have modified the '" + PathManager.PROPERTY_LOG_PATH + "' property please make sure it is correct,\n" +
+                       "otherwise please re-install the IDE.";
+      Main.showMessage("Invalid Log Path", message, true);
+      return false;
+    }
+
     File ideTempDir = new File(PathManager.getTempPath());
     String tempInaccessible = null;
 
@@ -165,7 +198,7 @@ public class StartupUtil {
     else {
       try {
         File ideTempFile = new File(ideTempDir, "idea_tmp_check.sh");
-        FileUtil.writeToFile(ideTempFile, "#!/bin/sh\nexit 0");
+        write(ideTempFile, "#!/bin/sh\nexit 0");
 
         if (SystemInfo.isWindows || SystemInfo.isMac) {
           tempInaccessible = null;
@@ -177,9 +210,7 @@ public class StartupUtil {
           tempInaccessible = "cannot execute test script";
         }
 
-        if (!FileUtilRt.delete(ideTempFile)) {
-          ideTempFile.deleteOnExit();
-        }
+        delete(ideTempFile);
       }
       catch (Exception e) {
         tempInaccessible = e.getClass().getSimpleName() + ": " + e.getMessage();
@@ -195,6 +226,18 @@ public class StartupUtil {
     }
 
     return true;
+  }
+
+  private static void write(File file, String content) throws IOException {
+    FileWriter writer = new FileWriter(file);
+    try { writer.write(content); }
+    finally { writer.close(); }
+  }
+
+  private static void delete(File ideTempFile) {
+    if (!FileUtilRt.delete(ideTempFile)) {
+      ideTempFile.deleteOnExit();
+    }
   }
 
   private synchronized static boolean lockSystemFolders(String[] args) {
@@ -269,6 +312,11 @@ public class StartupUtil {
       catch (Throwable t) {
         log.info("\"FocusKiller\" library not found or there were problems loading it.", t);
       }
+    }
+
+    if (SystemInfo.isWindows) {
+      // WinP should not unpack .dll files into parent directory
+      System.setProperty("winp.unpack.dll.to.parent.dir", "false");
     }
   }
 

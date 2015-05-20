@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class IdeaApplication {
 
     if (headless && myStarter instanceof ApplicationStarterEx && !((ApplicationStarterEx)myStarter).isHeadless()) {
       Main.showMessage("Startup Error", "Application cannot start in headless mode", true);
-      System.exit(Main.STARTUP_IMPOSSIBLE);
+      System.exit(Main.NO_GRAPHICS);
     }
 
     myStarter.premain(args);
@@ -319,9 +319,13 @@ public class IdeaApplication {
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
+          Project projectFromCommandLine = null;
           if (myPerformProjectLoad) {
-            loadProject();
+            projectFromCommandLine = loadProjectFromExternalCommandLine();
           }
+
+          final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+          bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
@@ -338,15 +342,13 @@ public class IdeaApplication {
     }
   }
 
-  private void loadProject() {
+  private Project loadProjectFromExternalCommandLine() {
     Project project = null;
     if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
       LOG.info("IdeaApplication.loadProject");
       project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
     }
-
-    final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-    bus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project);
+    return project;
   }
 
   public String[] getCommandLineArguments() {

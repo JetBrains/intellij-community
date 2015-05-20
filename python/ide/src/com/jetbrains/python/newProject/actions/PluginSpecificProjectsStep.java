@@ -16,6 +16,8 @@
 package com.jetbrains.python.newProject.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
+import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.platform.DirectoryProjectGenerator;
@@ -26,17 +28,13 @@ import java.util.List;
 
 public class PluginSpecificProjectsStep extends DefaultActionGroup implements DumbAware {
 
-  public PluginSpecificProjectsStep(@NotNull final NullableConsumer<AbstractProjectSettingsStep> callback,
-                                    @NotNull final List<DirectoryProjectGenerator> projectGenerators, boolean isWelcomeScreen) {
+  public PluginSpecificProjectsStep(@NotNull final NullableConsumer<ProjectSettingsStepBase> callback,
+                                    @NotNull final List<DirectoryProjectGenerator> projectGenerators) {
     super("Plugin-specific", true);
     getTemplatePresentation().setIcon(AllIcons.Nodes.PluginLogo);
     for (DirectoryProjectGenerator generator : projectGenerators) {
-      ProjectSpecificAction action = new ProjectSpecificAction(callback, generator, isWelcomeScreen);
-      if (isWelcomeScreen) {
-        addAll(action.getChildren(null));
-      } else {
-        add(action);
-      }
+      ProjectSpecificAction action = new ProjectSpecificAction(generator, new ProjectSpecificSettingsStep(generator, callback));
+      addAll(action.getChildren(null));
     }
   }
 }

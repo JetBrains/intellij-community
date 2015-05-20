@@ -2,12 +2,40 @@
   <extensionPoints>
     <extensionPoint name="pushSupport"
                     interface="com.intellij.dvcs.push.PushSupport" area="IDEA_PROJECT"/>
+    <extensionPoint name="cherryPicker"
+                    interface="com.intellij.dvcs.cherrypick.VcsCherryPicker" area="IDEA_PROJECT"/>
+    <extensionPoint name="vcsRepositoryCreator" interface="com.intellij.dvcs.repo.VcsRepositoryCreator" area="IDEA_PROJECT"/>
   </extensionPoints>
   <actions>
-    <!--<action id="Vcs.Push" class="">-->
-      <!--<keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>-->
-    <!--</action>-->
+    <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
+    <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Actions.Commit" text="Push...">
+      <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
+    </action>
+    <group id="Dvcs.Log.ContextMenu">
+      <separator/>
+      <reference id="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+    </group>
+
+    <group id="Dvcs.Log.Toolbar">
+      <reference id="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.Log.Toolbar"/>
+    </group>
+
+    <group>
+      <reference ref="Vcs.CherryPick"/>
+      <reference ref="Vcs.Push"/>
+      <separator/>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
   </actions>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.dvcs.repo.VcsRepositoryManager</implementation-class>
+    </component>
+  </project-components>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>
   </extensions>

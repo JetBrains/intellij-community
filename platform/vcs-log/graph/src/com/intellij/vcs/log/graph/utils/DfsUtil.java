@@ -37,7 +37,8 @@ public class DfsUtil {
       int nextNode = nextNodeFun.fun(myStack.peek());
       if (nextNode != NextNode.NODE_NOT_FOUND) {
         myStack.push(nextNode);
-      } else {
+      }
+      else {
         myStack.pop();
       }
     }

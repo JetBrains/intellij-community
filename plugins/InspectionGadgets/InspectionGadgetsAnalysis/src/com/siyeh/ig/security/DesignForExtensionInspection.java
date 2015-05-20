@@ -19,10 +19,10 @@ package com.siyeh.ig.security;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +55,7 @@ public class DesignForExtensionInspection extends BaseInspection {
 
   private static class MakeMethodFinalFix extends InspectionGadgetsFix {
 
-    private String myMethodName;
+    private final String myMethodName;
 
     public MakeMethodFinalFix(String methodName) {
       myMethodName = methodName;

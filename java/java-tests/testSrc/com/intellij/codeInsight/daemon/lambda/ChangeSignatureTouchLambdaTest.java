@@ -38,6 +38,10 @@ public class ChangeSignatureTouchLambdaTest extends ChangeSignatureBaseTest {
     doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);
   }
 
+  public void testDelegateInInterface() throws Exception {
+    doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN, "false")}, new ThrownExceptionInfo[0], true);
+  }
+
   private void doTestConflict() {
     try {
       doTest(null, null, null, new ParameterInfoImpl[] {new ParameterInfoImpl(-1, "b", PsiType.BOOLEAN)}, new ThrownExceptionInfo[0], false);

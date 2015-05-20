@@ -53,12 +53,13 @@
     <orderEntry type="library" scope="TEST" name="cucumber-jvm" level="project" />
     <orderEntry type="library" scope="TEST" name="cucumber-java" level="project" />
     <orderEntry type="library" name="JSch" level="project" />
-    <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="cucumber-test-runner" scope="TEST" />
     <orderEntry type="module" module-name="vcs-log-api" />
     <orderEntry type="module" module-name="vcs-log-impl" />
     <orderEntry type="module" module-name="vcs-log-graph" />
     <orderEntry type="module" module-name="dvcs-api" exported="" />
-    <orderEntry type="module" module-name="tasks-tests" scope="TEST" />
+    <orderEntry type="module" module-name="built-in-server" scope="TEST" />
+    <orderEntry type="module" module-name="built-in-server-api" />
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
   </component>
 </module>

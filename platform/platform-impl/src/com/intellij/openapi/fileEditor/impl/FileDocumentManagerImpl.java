@@ -18,18 +18,19 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestPanel;
+import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DocumentContent;
-import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.diff.SimpleDiffRequest;
-import com.intellij.openapi.diff.ex.DiffPanelOptions;
-import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -55,7 +56,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.ExternalChangeAction;
@@ -166,6 +166,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   @Nullable
   public Document getDocument(@NotNull final VirtualFile file) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null) {
       if (!file.isValid() || file.isDirectory() ||
@@ -190,7 +191,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           document.putUserData(FILE_KEY, file);
         }
 
-        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof DummyFileSystem)) {
+        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem)) {
           document.addDocumentListener(
             new DocumentAdapter() {
               @Override
@@ -669,22 +670,22 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       builder.addAction(new AbstractAction(UIBundle.message("file.cache.conflict.show.difference.button")) {
         @Override
         public void actionPerformed(ActionEvent e) {
-          String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
           final ProjectEx project = (ProjectEx)ProjectLocator.getInstance().guessProjectForFile(file);
 
-          SimpleDiffRequest request = new SimpleDiffRequest(project, title);
           FileType fileType = file.getFileType();
           String fsContent = LoadTextUtil.loadText(file).toString();
-          request.setContents(new SimpleContent(fsContent, fileType),
-                              new DocumentContent(project, document, fileType));
-          request.setContentTitles(UIBundle.message("file.cache.conflict.diff.content.file.system.content"),
-                                   UIBundle.message("file.cache.conflict.diff.content.memory.content"));
+          DocumentContent content1 = DiffContentFactory.getInstance().create(fsContent, fileType);
+          DocumentContent content2 = DiffContentFactory.getInstance().create(project, document, file);
+          String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
+          String title1 = UIBundle.message("file.cache.conflict.diff.content.file.system.content");
+          String title2 = UIBundle.message("file.cache.conflict.diff.content.memory.content");
+          DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+          request.putUserData(DiffUserDataKeys.GO_TO_SOURCE_DISABLE, true);
           DialogBuilder diffBuilder = new DialogBuilder(project);
-          DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(diffBuilder.getWindow(), project, diffBuilder, null);
-          diffPanel.getOptions().setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.DONT_SHOW);
+          DiffRequestPanel diffPanel = DiffManager.getInstance().createRequestPanel(project, diffBuilder, diffBuilder.getWindow());
+          diffPanel.setRequest(request);
           diffBuilder.setCenterPanel(diffPanel.getComponent());
           diffBuilder.setDimensionServiceKey("FileDocumentManager.FileCacheConflict");
-          diffPanel.setDiffRequest(request);
           diffBuilder.addOkAction().setText(UIBundle.message("file.cache.conflict.save.changes.button"));
           diffBuilder.addCancelAction();
           diffBuilder.setTitle(title);
@@ -748,7 +749,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @Override
   public void beforeContentsChange(@NotNull VirtualFileEvent event) {
     VirtualFile virtualFile = event.getFile();
-    if (virtualFile.getFileType() == UnknownFileType.INSTANCE && virtualFile.getLength() == 0) {
+    // check file type in second order to avoid content detection running
+    if (virtualFile.getLength() == 0 && virtualFile.getFileType() == UnknownFileType.INSTANCE) {
       virtualFile.putUserData(MUST_RECOMPUTE_FILE_TYPE, Boolean.TRUE);
     }
   }

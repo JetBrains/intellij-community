@@ -25,16 +25,21 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
 
+import static com.intellij.codeInsight.actions.OptimizeImportsProcessor.NotificationInfo.*;
+
 public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   private static final String PROGRESS_TEXT = CodeInsightBundle.message("progress.text.optimizing.imports");
   public static final String COMMAND_NAME = CodeInsightBundle.message("process.optimize.imports");
+  private List<NotificationInfo> myOptimizerNotifications = ContainerUtil.newSmartList();
 
   public OptimizeImportsProcessor(Project project) {
     super(project, COMMAND_NAME, PROGRESS_TEXT, false);
@@ -46,6 +51,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
 
   public OptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs) {
     super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, false);
+  }
+
+  public OptimizeImportsProcessor(Project project, PsiDirectory directory, boolean includeSubdirs, boolean processOnlyVcsChangedFiles) {
+    super(project, directory, includeSubdirs, PROGRESS_TEXT, COMMAND_NAME, processOnlyVcsChangedFiles);
   }
 
   public OptimizeImportsProcessor(Project project, PsiFile file) {
@@ -77,20 +86,79 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         }
       }
     }
-    Runnable runnable = runnables.isEmpty() ? EmptyRunnable.getInstance() : new Runnable() {
+
+    Runnable runnable = !runnables.isEmpty() ? new Runnable() {
       @Override
       public void run() {
         CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
         try {
           for (Runnable runnable : runnables) {
             runnable.run();
+            retrieveAndStoreNotificationInfo(runnable);
           }
+          putNotificationInfoIntoCollector();
         }
         finally {
           CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
         }
       }
-    };
+    } : EmptyRunnable.getInstance();
     return new FutureTask<Boolean>(runnable, true);
+  }
+
+  private void retrieveAndStoreNotificationInfo(@NotNull Runnable runnable) {
+    if (runnable instanceof ImportOptimizer.CollectingInfoRunnable) {
+      String optimizerMessage = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
+      myOptimizerNotifications.add(optimizerMessage != null ? new NotificationInfo(optimizerMessage) : NOTHING_CHANGED_NOTIFICATION);
+    }
+    else if (runnable == EmptyRunnable.getInstance()) {
+      myOptimizerNotifications.add(NOTHING_CHANGED_NOTIFICATION);
+    }
+    else {
+      myOptimizerNotifications.add(SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION);
+    }
+  }
+
+  private void putNotificationInfoIntoCollector() {
+    LayoutCodeInfoCollector collector = getInfoCollector();
+    if (collector == null) {
+      return;
+    }
+
+    boolean atLeastOneOptimizerChangedSomething = false;
+    for (NotificationInfo info : myOptimizerNotifications) {
+      atLeastOneOptimizerChangedSomething |= info.isSomethingChanged();
+      if (info.getMessage() != null) {
+        collector.setOptimizeImportsNotification(info.getMessage());
+        return;
+      }
+    }
+
+    collector.setOptimizeImportsNotification(atLeastOneOptimizerChangedSomething ? "imports optimized" : null);
+  }
+
+  static class NotificationInfo {
+    public static final NotificationInfo NOTHING_CHANGED_NOTIFICATION = new NotificationInfo(false, null);
+    public static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
+
+    private final boolean mySomethingChanged;
+    private final String myMessage;
+
+    NotificationInfo(@NotNull String message) {
+      this(true, message);
+    }
+
+    public boolean isSomethingChanged() {
+      return mySomethingChanged;
+    }
+
+    public String getMessage() {
+      return myMessage;
+    }
+
+    private NotificationInfo(boolean isSomethingChanged, @Nullable String message) {
+      mySomethingChanged = isSomethingChanged;
+      myMessage = message;
+    }
   }
 }

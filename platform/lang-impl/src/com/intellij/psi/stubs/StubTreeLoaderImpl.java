@@ -22,13 +22,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -94,12 +97,13 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       SerializedStubTree stubTree = datas.get(0);
       
       if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
-        //todo find another way of early stub-ast mismatch prevention
-        //return processError(vFile,
-        //                    "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
-        //                    ", docSaved=" + saved +
-        //                    ", queried at " + vFile.getTimeStamp(),
-        //                    null);
+        return processError(vFile,
+                            "Outdated stub in index: " + StubUpdatingIndex.getIndexingStampInfo(vFile) +
+                            ", doc=" + document +
+                            ", docSaved=" + saved +
+                            ", wasIndexedAlready=" + wasIndexedAlready +
+                            ", queried at " + vFile.getTimeStamp(),
+                            null);
       }
 
       Stub stub;
@@ -131,7 +135,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
     
     if (document != null) {
-      return document.getTextLength();
+      return PsiDocumentManager.getInstance(project).getLastCommittedText(document).length();
     }
     return -1;
   }
@@ -159,12 +163,29 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   @Override
-  public long getStubTreeTimestamp(VirtualFile vFile) {
-    return IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID);
+  public boolean canHaveStub(VirtualFile file) {
+    return StubUpdatingIndex.canHaveStub(file);
+  }
+
+  private boolean hasPsiInManyProjects(@NotNull final VirtualFile virtualFile) {
+    VirtualFile file = virtualFile;
+    int count = 0;
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().findCachedViewProvider(file) != null) {
+        count++;
+      }
+    }
+    return count > 1;
   }
 
   @Override
-  public boolean canHaveStub(VirtualFile file) {
-    return StubUpdatingIndex.canHaveStub(file);
+  public String getStubAstMismatchDiagnostics(@NotNull VirtualFile file,
+                                              @NotNull PsiFile psiFile,
+                                              StubTree stubTree,
+                                              Document prevCachedDocument) {
+    String msg = super.getStubAstMismatchDiagnostics(file, psiFile, stubTree, prevCachedDocument);
+    msg += "\nin many projects: " + hasPsiInManyProjects(file);
+    msg += "\nindexing info: " + StubUpdatingIndex.getIndexingStampInfo(file);
+    return msg;
   }
 }

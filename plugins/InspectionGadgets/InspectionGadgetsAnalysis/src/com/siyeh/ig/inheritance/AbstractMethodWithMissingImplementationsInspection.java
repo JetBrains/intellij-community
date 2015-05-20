@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -71,24 +72,30 @@ public class AbstractMethodWithMissingImplementationsInspection
           !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }
-      final InheritorFinder inheritorFinder =
-        new InheritorFinder(containingClass);
+      final InheritorFinder inheritorFinder = new InheritorFinder(containingClass);
       for (final PsiClass inheritor : inheritorFinder.getInheritors()) {
-        if (!inheritor.isInterface() &&
-            !inheritor.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          if (!hasMatchingImplementation(inheritor, method)) {
-            registerMethodError(method);
-            return;
+        if (inheritor.isEnum()) {
+          final List<PsiEnumConstant> enumConstants = PsiTreeUtil.getChildrenOfTypeAsList(inheritor, PsiEnumConstant.class);
+          for (PsiEnumConstant enumConstant : enumConstants) {
+            final PsiEnumConstantInitializer initializingClass = enumConstant.getInitializingClass();
+            if (initializingClass == null || !hasMatchingImplementation(initializingClass, method)) {
+              registerMethodError(method);
+              return;
+            }
           }
+        }
+        else if (!hasMatchingImplementation(inheritor, method)) {
+          registerMethodError(method);
+          return;
         }
       }
     }
 
-    private static boolean hasMatchingImplementation(
-      @NotNull PsiClass aClass,
-      @NotNull PsiMethod method) {
-      final PsiMethod overridingMethod =
-        findOverridingMethod(aClass, method);
+    private static boolean hasMatchingImplementation(@NotNull PsiClass aClass, @NotNull PsiMethod method) {
+      if (aClass.isInterface() || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return true;
+      }
+      final PsiMethod overridingMethod = findOverridingMethod(aClass, method);
       if (overridingMethod == null ||
           overridingMethod.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
@@ -98,8 +105,7 @@ public class AbstractMethodWithMissingImplementationsInspection
       }
       final PsiClass superClass = method.getContainingClass();
       final PsiManager manager = overridingMethod.getManager();
-      final JavaPsiFacade facade =
-        JavaPsiFacade.getInstance(manager.getProject());
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       return facade.arePackagesTheSame(superClass, aClass);
     }
 
@@ -109,27 +115,23 @@ public class AbstractMethodWithMissingImplementationsInspection
      * @return the overriding method.
      */
     @Nullable
-    private static PsiMethod findOverridingMethod(
-      PsiClass aClass, @NotNull PsiMethod method) {
+    private static PsiMethod findOverridingMethod(PsiClass aClass, @NotNull PsiMethod method) {
       final PsiClass superClass = method.getContainingClass();
       if (aClass.equals(superClass)) {
         return null;
       }
       final PsiSubstitutor substitutor =
-        TypeConversionUtil.getSuperClassSubstitutor(superClass,
-                                                    aClass, PsiSubstitutor.EMPTY);
+        TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       final MethodSignature signature = method.getSignature(substitutor);
       final List<Pair<PsiMethod, PsiSubstitutor>> pairs =
-        aClass.findMethodsAndTheirSubstitutorsByName(
-          signature.getName(), true);
+        aClass.findMethodsAndTheirSubstitutorsByName(signature.getName(), true);
       for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
         final PsiMethod overridingMethod = pair.first;
         if (overridingMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
           continue;
         }
-        final PsiClass containingClass =
-          overridingMethod.getContainingClass();
-        if (containingClass.isInterface()) {
+        final PsiClass containingClass = overridingMethod.getContainingClass();
+        if (containingClass != null && containingClass.isInterface() && !overridingMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
           continue;
         }
         final PsiSubstitutor overridingSubstitutor = pair.second;

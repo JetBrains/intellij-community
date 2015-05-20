@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.BitUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -166,7 +165,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
-        if (BitUtil.isSet(e.getModifiers(), InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK)) {
+        if ((e.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK)) == (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK)) {
           addToWatches();
         }
       }
@@ -229,7 +228,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myMode = mode;
 
     if (mode == EvaluationMode.EXPRESSION) {
-      text = new XExpressionImpl(StringUtil.replace(text.getExpression(), "\n", " "), text.getLanguage(), text.getCustomInfo());
+      text = new XExpressionImpl(StringUtil.convertLineSeparators(text.getExpression(), " "), text.getLanguage(), text.getCustomInfo());
     }
 
     myInputComponent = createInputComponent(mode, text);

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -199,12 +200,12 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     List<AnAction> actions = Lists.newArrayList();
     actions.addAll(Arrays.asList(myPrimaryConsoleView.createConsoleActions()));
     actions.add(mySwitchConsoleAction);
-    addExtraActions(actions);
+
+    LanguageConsoleView langConsole = ContainerUtil.findInstance(Arrays.asList(myPrimaryConsoleView, mySecondaryConsoleView), LanguageConsoleView.class);
+    ConsoleHistoryController controller = langConsole != null ? ConsoleHistoryController.getController(langConsole) : null;
+    if (controller != null) actions.add(controller.getBrowseHistory());
 
     return ArrayUtil.toObjectArray(actions, AnAction.class);
-  }
-
-  protected void addExtraActions(List<AnAction> actions) {
   }
 
   @Override
@@ -267,7 +268,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
 
     @Override
-    public void update(final AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       final Presentation presentation = event.getPresentation();
       final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();

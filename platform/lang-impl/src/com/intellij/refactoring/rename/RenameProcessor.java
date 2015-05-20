@@ -122,6 +122,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   @Override
   public void doRun() {
+    if (!myPrimaryElement.isValid()) return;
     prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
 
     super.doRun();

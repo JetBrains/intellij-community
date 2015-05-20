@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,11 +108,13 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .between(FROM_KEYWORD, DOT).spaces(1)
       .between(DOT, IMPORT_KEYWORD).spaces(1)
       .around(DOT).spaces(0)
+      .aroundInside(AT, DECORATOR_CALL).none()
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
       .withinPairInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_PARENTHESES)
       .withinPairInside(LPAR, RPAR, FROM_IMPORT_STATEMENT).spaces(0)
       .withinPairInside(LPAR, RPAR, GENERATOR_EXPRESSION).spaces(0)
+      .withinPairInside(LPAR, RPAR, PARENTHESIZED_EXPRESSION).spaces(0)
       .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)
 
       .withinPair(LBRACE, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES)
@@ -149,7 +151,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
     return TokenSet.create(IElementType.enumerate(new IElementType.Predicate() {
       @Override
-      public boolean matches(IElementType type) {
+      public boolean matches(@NotNull IElementType type) {
         return type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage);
       }
     }));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Bas Leijdekkers
+ * Copyright 2011-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class SimplifiableEqualsExpressionInspection extends BaseInspection {
   @Nls
@@ -165,11 +164,8 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
         if (operands.length != 2) {
           return;
         }
-        final PsiExpression lhs = ParenthesesUtils.stripParentheses(operands[0]);
-        if (lhs == null) {
-          return;
-        }
-        final PsiVariable variable = getVariableFromNullComparison(lhs, false);
+        final PsiExpression lhs = operands[0];
+        final PsiVariable variable = ExpressionUtils.getVariableFromNullComparison(lhs, false);
         if (variable == null) {
           return;
         }
@@ -184,11 +180,8 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
         if (operands.length != 2) {
           return;
         }
-        final PsiExpression lhs = ParenthesesUtils.stripParentheses(operands[0]);
-        if (lhs == null) {
-          return;
-        }
-        final PsiVariable variable = getVariableFromNullComparison(lhs, true);
+        final PsiExpression lhs = operands[0];
+        final PsiVariable variable = ExpressionUtils.getVariableFromNullComparison(lhs, true);
         if (variable == null) {
           return;
         }
@@ -239,60 +232,6 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
       }
       final PsiExpression argument = arguments[0];
       return PsiUtil.isConstantExpression(argument);
-    }
-
-    @Nullable
-    private static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
-      if (!(expression instanceof PsiPolyadicExpression)) {
-        return null;
-      }
-      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
-      final IElementType tokenType = polyadicExpression.getOperationTokenType();
-      if (equals) {
-        if (!JavaTokenType.EQEQ.equals(tokenType)) {
-          return null;
-        }
-      }
-      else {
-        if (!JavaTokenType.NE.equals(tokenType)) {
-          return null;
-        }
-      }
-      final PsiExpression[] operands = polyadicExpression.getOperands();
-      if (operands.length != 2) {
-        return null;
-      }
-      final PsiExpression lhs = ParenthesesUtils.stripParentheses(operands[0]);
-      if (lhs == null) {
-        return null;
-      }
-      final PsiExpression rhs = ParenthesesUtils.stripParentheses(operands[1]);
-      if (rhs == null) {
-        return null;
-      }
-      if (PsiType.NULL.equals(lhs.getType())) {
-        if (!(rhs instanceof PsiReferenceExpression)) {
-          return null;
-        }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)rhs;
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiVariable)) {
-          return null;
-        }
-        return (PsiVariable)target;
-      }
-      else if (PsiType.NULL.equals(rhs.getType())) {
-        if (!(lhs instanceof PsiReferenceExpression)) {
-          return null;
-        }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiVariable)) {
-          return null;
-        }
-        return (PsiVariable)target;
-      }
-      return null;
     }
   }
 }

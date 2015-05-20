@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,22 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -50,14 +56,19 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -66,11 +77,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -90,10 +104,19 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
   private static final int SMALL_BORDER_SIZE = 4;
 
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE, NORMAL_BORDER_SIZE);
-  private static final Border ACTIVE_BORDER = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
-
   private static final Border INACTIVE_BORDER_SMALL = BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE, SMALL_BORDER_SIZE);
-  private static final Border ACTIVE_BORDER_SMALL = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.BLACK, 1), BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1));
+  
+  private static Border createActiveBorder() {
+    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(NORMAL_BORDER_SIZE - 1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1, NORMAL_BORDER_SIZE-1));
+  }
+  
+  private static  Border createActiveBorderSmall() {
+    return BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(getBorderColor(), 1), BorderFactory.createEmptyBorder(SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1, SMALL_BORDER_SIZE-1));
+  }
+
+  private static Color getBorderColor() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
+  }
 
   private final Editor myEditor;
 
@@ -141,7 +164,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         @Override
         public void run() {
           if (!editor.isDisposed() && editor.getComponent().isShowing()) {
-            component.showPopup();
+            component.showPopup(false);
           }
         }
       }, project.getDisposed());
@@ -223,7 +246,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     PriorityQuestionAction action = new PriorityQuestionAction() {
       @Override
       public boolean execute() {
-        showPopup();
+        showPopup(false);
         return true;
       }
 
@@ -273,7 +296,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
       int yShift = -(NORMAL_BORDER_SIZE + AllIcons.Actions.RealIntentionBulb.getIconHeight());
       if (canPlaceBulbOnTheSameLine(editor)) {
-        yShift = -(borderHeight + ((AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight())/2) + 3);
+        yShift = -(borderHeight + (AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight()) /2 + 3);
       }
 
       final int xShift = AllIcons.Actions.RealIntentionBulb.getIconWidth();
@@ -295,7 +318,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     final int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
     if (firstNonSpaceColumnOnTheLine == -1) return false;
     final Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
-    return point.x > (AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2);
+    return point.x > AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2;
   }
 
   private IntentionHintComponent(@NotNull Project project,
@@ -343,7 +366,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       @Override
       public void mousePressed(MouseEvent e) {
         if (!e.isPopupTrigger() && e.getButton() == MouseEvent.BUTTON1) {
-          showPopup();
+          showPopup(true);
         }
       }
 
@@ -387,7 +410,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
   private void onMouseEnter(final boolean small) {
     myIconLabel.setIcon(myHighlightedIcon);
-    setBorder(small ? ACTIVE_BORDER_SMALL : ACTIVE_BORDER);
+    setBorder(small ? createActiveBorderSmall() : createActiveBorder());
 
     String acceleratorsText = KeymapUtil.getFirstKeyboardShortcutText(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
@@ -407,11 +430,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myPopupShown = false;
   }
 
-  private void showPopup() {
+  private void showPopup(boolean mouseClick) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myPopup == null || myPopup.isDisposed()) return;
 
-    if (isShowing()) {
+    if (mouseClick && isShowing()) {
       final RelativePoint swCorner = RelativePoint.getSouthWestOf(this);
       final int yOffset = canPlaceBulbOnTheSameLine(myEditor) ? 0 : myEditor.getLineHeight() - (myEditor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE);
       myPopup.show(new RelativePoint(swCorner.getComponent(), new Point(swCorner.getPoint().x, swCorner.getPoint().y + yOffset)));
@@ -429,10 +452,51 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       Disposer.dispose(myPopup);
     }
     myPopup = JBPopupFactory.getInstance().createListPopup(step);
+
+    boolean committed = PsiDocumentManager.getInstance(myFile.getProject()).isCommitted(myEditor.getDocument());
+    final PsiFile injectedFile = committed ? InjectedLanguageUtil.findInjectedPsiNoCommit(myFile, myEditor.getCaretModel().getOffset()) : null;
+    final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
+    
+    final ScopeHighlighter highlighter = new ScopeHighlighter(myEditor);
+    final ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
+    
     myPopup.addListener(new JBPopupListener.Adapter() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
+        highlighter.dropHighlight();
+        injectionHighlighter.dropHighlight();
         myPopupShown = false;
+      }
+    });
+    myPopup.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        final Object source = e.getSource();
+        highlighter.dropHighlight();
+        injectionHighlighter.dropHighlight();
+        
+        if (source instanceof DataProvider) {
+          final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
+          if (selectedItem instanceof IntentionActionWithTextCaching) {
+            final IntentionAction action = ((IntentionActionWithTextCaching)selectedItem).getAction();
+            if (action instanceof SuppressIntentionActionFromFix) {
+              if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+                final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
+                final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+                if (container != null) {
+                  injectionHighlighter.highlight(container, Collections.singletonList(container));
+                }
+              }
+              else {
+                final PsiElement at = myFile.findElementAt(myEditor.getCaretModel().getOffset());
+                final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
+                if (container != null) {
+                  highlighter.highlight(container, Collections.singletonList(container));
+                }
+              }
+            }
+          }
+        }
       }
     });
 
@@ -441,18 +505,10 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, myEditor.getContentComponent());
       if (ancestor != null) {
         final JComboBox comboBox = (JComboBox)ancestor;
-        myOuterComboboxPopupListener = new PopupMenuListener() {
+        myOuterComboboxPopupListener = new PopupMenuListenerAdapter() {
           @Override
           public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
             hide();
-          }
-
-          @Override
-          public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-          }
-
-          @Override
-          public void popupMenuCanceled(PopupMenuEvent e) {
           }
         };
 
@@ -477,7 +533,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     recreateMyPopup(intentionListStep);
   }
 
-  private class MyComponentHint extends LightweightHint {
+  private static class MyComponentHint extends LightweightHint {
     private boolean myVisible = false;
     private boolean myShouldDelay;
 

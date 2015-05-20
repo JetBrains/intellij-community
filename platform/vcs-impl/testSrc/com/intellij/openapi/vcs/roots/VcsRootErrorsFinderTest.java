@@ -178,6 +178,7 @@ public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
     Collection<VcsRootError> expected = new ArrayList<VcsRootError>();
     expected.addAll(unregAll(vcsRootConfiguration.getUnregErrors()));
     expected.addAll(extraAll(vcsRootConfiguration.getExtraErrors()));
+    myProjectRoot.refresh(false, true);
     Collection<VcsRootError> actual = ContainerUtil.filter(new VcsRootErrorsFinder(myProject).find(), new Condition<VcsRootError>() {
       @Override
       public boolean value(VcsRootError error) {

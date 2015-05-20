@@ -63,7 +63,7 @@ public class MasterPasswordDialog extends DialogWrapper {
     }
 
     if (!enterMasterPasswordDialog(project, safe, requestor).showAndGet()) {
-      throw new MasterPasswordUnavailableException("Cancelled by user");
+      throw new MasterPasswordUnavailableException(PasswordComponentBase.getRequestorTitle(requestor) + ": Cancelled by user");
     }
   }
 

@@ -31,16 +31,16 @@ import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIter
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
+import com.intellij.structuralsearch.plugin.util.DuplicateFilteringResultSink;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -86,8 +86,6 @@ public class MatcherImpl {
   }
 
   public static void validate(Project project, MatchOptions options) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     synchronized(MatcherImpl.class) {
       final LastMatchData data = new LastMatchData();
       data.lastPattern =  PatternCompiler.compilePattern(project, options);
@@ -146,7 +144,7 @@ public class MatcherImpl {
       visitor.matchContext(matchedNodes);
     } finally {
       matchedNodes.reset();
-      matchContext.getOptions().setScope(null);
+      context.getOptions().setScope(null);
     }
   }
 
@@ -171,7 +169,7 @@ public class MatcherImpl {
     visitor.setMatchContext(matchContext);
 
     matchContext.setSink(
-      new MatchConstraintsSink(
+      new DuplicateFilteringResultSink(
         new MatchResultSink() {
           public void newMatch(MatchResult result) {
             processor.process(result, configuration);
@@ -189,10 +187,7 @@ public class MatcherImpl {
           public ProgressIndicator getProgressIndicator() {
             return null;
           }
-        },
-        options.getMaxMatchesCount(),
-        options.isDistinct(),
-        options.isCaseSensitiveMatch()
+        }
       )
     );
     options.setScope(scope);
@@ -243,35 +238,27 @@ public class MatcherImpl {
     scheduler.init();
     progress = matchContext.getSink().getProgressIndicator();
 
-    if (/*TokenBasedSearcher.canProcess(compiledPattern)*/ false) {
-      //TokenBasedSearcher searcher = new TokenBasedSearcher(this);
-      //searcher.search(compiledPattern);
-      if (isTesting) {
-        matchContext.getSink().matchingFinished();
-        return;
+    if (isTesting) {
+      // testing mode;
+      final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
+
+      PsiElement parent = elements[0].getParent();
+      if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
+        visitor.matchContext(new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
       }
+      else {
+        final LanguageFileType fileType = (LanguageFileType)matchContext.getOptions().getFileType();
+        final Language language = fileType.getLanguage();
+        for (PsiElement element : elements) {
+          match(element, language);
+        }
+      }
+
+      matchContext.getSink().matchingFinished();
+      return;
     }
-    else {
-      if (isTesting) {
-        // testing mode;
-        final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
-
-        PsiElement parent = elements[0].getParent();
-        if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
-          visitor.matchContext(new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
-        }
-        else {
-          for (PsiElement element : elements) {
-            match(element);
-          }
-        }
-
-        matchContext.getSink().matchingFinished();
-        return;
-      }
-      if (!findMatches(options, compiledPattern)) {
-        return;
-      }
+    if (!findMatches(options, compiledPattern)) {
+      return;
     }
 
     if (scheduler.getTaskQueueEndAction()==null) {
@@ -330,9 +317,9 @@ public class MatcherImpl {
 
         PsiFile file = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
 
-        if (profile.isMyFile(file, language, patternLanguage, patternLanguage2)) {
+        //if (profile.isMyFile(file, language, patternLanguage, patternLanguage2)) {
           scheduler.addOneTask(new MatchOnePsiFile(psiElement));
-        }
+        //}
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
       }
     }
@@ -348,14 +335,7 @@ public class MatcherImpl {
     }
 
     matchContext.clear();
-    matchContext.setSink(
-      new MatchConstraintsSink(
-        sink,
-        options.getMaxMatchesCount(),
-        options.isDistinct(),
-        options.isCaseSensitiveMatch()
-      )
-    );
+    matchContext.setSink(new DuplicateFilteringResultSink(sink));
     matchContext.setOptions(options);
     matchContext.setMatcher(visitor);
     visitor.setMatchContext(matchContext);
@@ -453,7 +433,7 @@ public class MatcherImpl {
   }
 
   class TaskScheduler implements MatchingProcess {
-    private LinkedList<Runnable> tasks = new LinkedList<Runnable>();
+    private ArrayList<Runnable> tasks = new ArrayList<Runnable>();
     private boolean ended;
     private Runnable taskQueueEndAction;
 
@@ -499,7 +479,7 @@ public class MatcherImpl {
           break;
         }
 
-        final Runnable task = tasks.removeFirst();
+        final Runnable task = tasks.remove(tasks.size() - 1);
         try {
           task.run();
         }
@@ -546,10 +526,10 @@ public class MatcherImpl {
       this.file = file;
     }
 
-    @Nullable
+    @NotNull
     @Override
     protected List<PsiElement> getPsiElementsToProcess() {
-      PsiElement file = this.file;
+      final PsiElement file = this.file;
       this.file = null;
       return new SmartList<PsiElement>(file);
     }
@@ -557,7 +537,7 @@ public class MatcherImpl {
 
   private abstract class MatchOneFile implements Runnable {
     public void run() {
-      List<PsiElement> files = getPsiElementsToProcess();
+      final List<PsiElement> files = getPsiElementsToProcess();
 
       if (progress!=null) {
         progress.setFraction((double)scannedFilesCount/totalFilesToScan);
@@ -565,7 +545,7 @@ public class MatcherImpl {
 
       ++scannedFilesCount;
 
-      if (files == null || files.size() == 0) return;
+      if (files.size() == 0) return;
       final PsiFile psiFile = files.get(0).getContainingFile();
 
       if (psiFile!=null) {
@@ -575,7 +555,7 @@ public class MatcherImpl {
               public void run() {
                 if (project.isDisposed()) return;
                 final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-                Document document = manager.getDocument(psiFile);
+                final Document document = manager.getDocument(psiFile);
                 if (document != null) manager.commitDocument(document);
               }
             });
@@ -594,7 +574,9 @@ public class MatcherImpl {
 
       if (project.isDisposed()) return;
 
-      for(PsiElement file:files) {
+      final LanguageFileType fileType = (LanguageFileType)matchContext.getOptions().getFileType();
+      final Language patternLanguage = fileType.getLanguage();
+      for (PsiElement file : files) {
         if (file instanceof PsiFile) {
           matchContext.getSink().processFile((PsiFile)file);
         }
@@ -605,48 +587,50 @@ public class MatcherImpl {
             public void run() {
               PsiElement file = finalFile;
               if (!file.isValid()) return;
-              file = StructuralSearchUtil.getProfileByLanguage(file.getLanguage()).extendMatchOnePsiFile(file);
-              match(file);
+              final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(file.getLanguage());
+              if (profile == null) {
+                return;
+              }
+              file = profile.extendMatchOnePsiFile(file);
+              match(file, patternLanguage);
             }
           }
         );
       }
     }
 
-    protected abstract @Nullable List<PsiElement> getPsiElementsToProcess();
+    @NotNull
+    protected abstract List<PsiElement> getPsiElementsToProcess();
   }
 
   // Initiates the matching process for given element
   // @param element the current search tree element
-  public void match(PsiElement element) {
-    MatchingStrategy strategy = matchContext.getPattern().getStrategy();
+  void match(PsiElement element, final Language language) {
+    final MatchingStrategy strategy = matchContext.getPattern().getStrategy();
 
-    if (strategy.continueMatching(element)) {
+    final Language elementLanguage = element.getLanguage();
+    if (strategy.continueMatching(element) && elementLanguage.isKindOf(language)) {
       visitor.matchContext(new ArrayBackedNodeIterator(new PsiElement[] {element}));
       return;
     }
     for(PsiElement el=element.getFirstChild();el!=null;el=el.getNextSibling()) {
-      match(el);
+      match(el, language);
     }
     if (element instanceof PsiLanguageInjectionHost) {
       InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         @Override
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          match(injectedPsi);
+          match(injectedPsi, language);
         }
       });
     }
   }
 
-  @Nullable
-  protected MatchResult isMatchedByDownUp(PsiElement element, final MatchOptions options) {
+  @NotNull
+  protected List<MatchResult> matchByDownUp(PsiElement element, final MatchOptions options) {
     final CollectingMatchResultSink sink = new CollectingMatchResultSink();
-    CompiledPattern compiledPattern = prepareMatching(sink, options);
-
-    if (compiledPattern== null) {
-      assert false;
-      return null;
-    }
+    final CompiledPattern compiledPattern = prepareMatching(sink, options);
+    matchContext.setShouldRecursivelyMatch(false);
 
     PsiElement targetNode = compiledPattern.getTargetNode();
     PsiElement elementToStartMatching = null;
@@ -658,21 +642,26 @@ public class MatcherImpl {
         assert !compiledPattern.getNodes().hasNext();
         compiledPattern.getNodes().rewind();
 
+        element = element.getParent();
+        if (element == null) {
+          return Collections.emptyList();
+        }
         while (element.getClass() != targetNode.getClass()) {
           element = element.getParent();
-          if (element == null)  return null;
+          if (element == null)  return Collections.emptyList();
         }
 
         elementToStartMatching = element;
       }
     } else {
-      targetNode = StructuralSearchUtil.getProfileByPsiElement(element).extendMatchedByDownUp(targetNode);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+      if (profile == null) return Collections.emptyList();
+      targetNode = profile.extendMatchedByDownUp(targetNode);
 
       MatchingHandler handler = null;
 
       while (element.getClass() == targetNode.getClass() ||
-             compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element)
-            ) {
+             compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element)) {
         handler = compiledPattern.getHandler(targetNode);
         handler.setPinnedElement(element);
         elementToStartMatching = element;
@@ -681,57 +670,56 @@ public class MatcherImpl {
         targetNode = targetNode.getParent();
 
         if (options.isLooseMatching()) {
-          element = StructuralSearchUtil.getProfileByPsiElement(element).updateCurrentNode(element);
-          targetNode = StructuralSearchUtil.getProfileByPsiElement(element).updateCurrentNode(targetNode);
+          element = profile.updateCurrentNode(element);
+          targetNode = profile.updateCurrentNode(targetNode);
         }
       }
 
-      if (!(handler instanceof TopLevelMatchingHandler)) return null;
+      if (!(handler instanceof TopLevelMatchingHandler)) return Collections.emptyList();
     }
 
     assert targetNode != null : "Could not match down up when no target node";
 
-    match(elementToStartMatching);
+    final LanguageFileType fileType = (LanguageFileType)matchContext.getOptions().getFileType();
+    match(elementToStartMatching, fileType.getLanguage());
     matchContext.getSink().matchingFinished();
-    final int matchCount = sink.getMatches().size();
-    assert matchCount <= 1;
-    return matchCount > 0 ? sink.getMatches().get(0) : null;
+    return sink.getMatches();
   }
 
   private class MatchOneVirtualFile extends MatchOneFile {
-    private final VirtualFile myFileOrDir;
+    private final VirtualFile myFile;
     private final StructuralSearchProfile myProfile;
     private final Language myOurPatternLanguage;
     private final Language myOurPatternLanguage2;
 
-    public MatchOneVirtualFile(VirtualFile fileOrDir,
+    public MatchOneVirtualFile(VirtualFile file,
                                StructuralSearchProfile profile,
                                Language ourPatternLanguage,
                                Language ourPatternLanguage2) {
-      myFileOrDir = fileOrDir;
+      myFile = file;
       myProfile = profile;
       myOurPatternLanguage = ourPatternLanguage;
       myOurPatternLanguage2 = ourPatternLanguage2;
     }
 
-    @Nullable
+    @NotNull
     @Override
     protected List<PsiElement> getPsiElementsToProcess() {
       return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiElement>>() {
         @Override
         public List<PsiElement> compute() {
-          PsiFile file = PsiManager.getInstance(project).findFile(myFileOrDir);
+          final PsiFile file = PsiManager.getInstance(project).findFile(myFile);
           if (file == null) {
-            return null;
+            return Collections.emptyList();
           }
 
           final FileViewProvider viewProvider = file.getViewProvider();
-          List<PsiElement> elementsToProcess = new SmartList<PsiElement>();
+          final List<PsiElement> elementsToProcess = new SmartList<PsiElement>();
 
-          for(Language lang: viewProvider.getLanguages()) {
-            if (myProfile.isMyFile(file, lang, myOurPatternLanguage, myOurPatternLanguage2)) {
+          for (Language lang : viewProvider.getLanguages()) {
+            //if (myProfile.isMyFile(file, lang, myOurPatternLanguage, myOurPatternLanguage2)) {
               elementsToProcess.add(viewProvider.getPsi(lang));
-            }
+            //}
           }
 
           return elementsToProcess;

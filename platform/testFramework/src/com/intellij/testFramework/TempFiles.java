@@ -80,7 +80,7 @@ public class TempFiles {
     try {
       File dir = FileUtil.createTempDirectory(prefix, "test",false);
       tempFileCreated(dir);
-      getVFileByFile(dir);
+      PlatformTestCase.synchronizeTempDirVfs(getVFileByFile(dir));
       return dir;
     }
     catch (IOException e) {

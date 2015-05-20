@@ -93,7 +93,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   @Nullable
   public static List<AnAction> buildSurroundActions(final Project project, final Editor editor, PsiFile file, @Nullable Surrounder surrounder){
     SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
+    if (!selectionModel.hasSelection()) {
       selectionModel.selectLineAtCaret();
     }
     int startOffset = selectionModel.getSelectionStart();

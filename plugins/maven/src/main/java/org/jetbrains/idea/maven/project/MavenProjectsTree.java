@@ -1191,14 +1191,35 @@ public class MavenProjectsTree {
         projectIds.add(project.getMavenId());
       }
 
-      for (MavenProject project : myVirtualFileToProjectMapping.values()) {
-        for (MavenArtifact dep : project.getDependencies()) {
-          if (projectIds.contains(dep)) {
-            if (result == null) result = new ArrayList<MavenProject>();
+      final Set<File> projectPaths = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
-            result.add(project);
+      for (MavenProject project : projects) {
+        projectPaths.add(new File(project.getFile().getPath()));
+      }
+
+      for (MavenProject project : myVirtualFileToProjectMapping.values()) {
+        boolean isDependent = false;
+
+        Set<String> pathsInStack = project.getModulePaths();
+        for (final String path : pathsInStack) {
+          if (projectPaths.contains(new File(path))) {
+            isDependent = true;
             break;
           }
+        }
+
+        if (!isDependent) {
+          for (MavenArtifact dep : project.getDependencies()) {
+            if (projectIds.contains(dep)) {
+              isDependent = true;
+              break;
+            }
+          }
+        }
+
+        if (isDependent) {
+          if (result == null) result = new ArrayList<MavenProject>();
+          result.add(project);
         }
       }
 

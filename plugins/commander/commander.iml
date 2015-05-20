@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
+    <orderEntry type="module" module-name="diff-impl" />
   </component>
   <component name="copyright">
     <Base>

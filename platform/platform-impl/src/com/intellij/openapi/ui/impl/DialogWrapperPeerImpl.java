@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +171,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     myWrapper = wrapper;
-    if (!parent.isShowing() && parent != JOptionPane.getRootFrame()) {
+    if (!parent.isShowing()) {
       throw new IllegalArgumentException("parent must be showing: " + parent);
     }
     myWindowManager = null;
@@ -245,9 +246,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     myDialog = new MyDialog(owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
 
-    if (Registry.is("suppress.focus.stealing")) {
-      setAutoRequestFocus(false);
-    }
+    UIUtil.suppressFocusStealing(getWindow());
 
     myDialog.setModalityType(ideModalityType.toAwtModality());
 
@@ -454,11 +453,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       ApplicationManager.getApplication() != null ? (CommandProcessorEx)CommandProcessor.getInstance() : null;
     final boolean appStarted = commandProcessor != null;
 
-    if (myDialog.isModal() && !isProgressDialog()) {
-      if (appStarted) {
-        commandProcessor.enterModal();
-        LaterInvocator.enterModal(myDialog);
-      }
+    boolean changeModalityState = appStarted && myDialog.isModal()
+                                  && !isProgressDialog(); // ProgressWindow starts a modality state itself
+    if (changeModalityState) {
+      commandProcessor.enterModal();
+      LaterInvocator.enterModal(myDialog);
     }
 
     if (appStarted) {
@@ -469,11 +468,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       myDialog.show();
     }
     finally {
-      if (myDialog.isModal() && !isProgressDialog()) {
-        if (appStarted) {
-          commandProcessor.leaveModal();
-          LaterInvocator.leaveModal(myDialog);
-        }
+      if (changeModalityState) {
+        commandProcessor.leaveModal();
+        LaterInvocator.leaveModal(myDialog);
       }
 
       myDialog.getFocusManager().doWhenFocusSettlesDown(result.createSetDoneRunnable());
@@ -986,16 +983,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
             setupSelectionOnPreferredComponent(toFocus);
 
             if (toFocus != null) {
-              final JComponent toRequest = toFocus;
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  if (isShowing() && isActive()) {
-                    getFocusManager().requestFocus(toRequest, true);
-                    notifyFocused(wrapper);
-                  }
-                }
-              });
+              if (isShowing() && isActive()) {
+                getFocusManager().requestFocus(toFocus, true);
+                notifyFocused(wrapper);
+              }
             } else {
               if (isShowing()) {
                 notifyFocused(wrapper);
@@ -1065,9 +1056,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
               }
               else {
                 myLastMinimumSize = new Dimension(size);
-                Insets insets = window.getInsets();
-                size.width += insets.left + insets.right;
-                size.height += insets.top + insets.bottom;
+                JBInsets.addTo(size, window.getInsets());
               }
               window.setMinimumSize(size);
             }

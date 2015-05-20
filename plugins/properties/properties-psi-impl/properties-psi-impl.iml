@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="indexing-impl" />
     <orderEntry type="module" module-name="structure-view-impl" />
     <orderEntry type="module" module-name="analysis-impl" />
+    <orderEntry type="module" module-name="lang-impl" />
   </component>
 </module>
 

@@ -15,16 +15,16 @@
  */
 package com.intellij.util.lang;
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.zip.ZipShort;
-import gnu.trove.THashMap;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Resource;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -36,7 +36,7 @@ import java.util.zip.ZipFile;
 public class JarMemoryLoader {
   public static final String SIZE_ENTRY = "META-INF/jb/$$size$$";
 
-  private final Map<String, Resource> myResources = new THashMap<String, Resource>();
+  private final Map<String, Resource> myResources = Collections.synchronizedMap(new HashMap<String, Resource>()); // todo do we need it ?
 
   private JarMemoryLoader() { }
 
@@ -63,8 +63,8 @@ public class JarMemoryLoader {
     ZipEntry sizeEntry = entries.nextElement();
     if (sizeEntry == null || !sizeEntry.getName().equals(SIZE_ENTRY)) return null;
 
-    byte[] bytes = FileUtil.loadBytes(zipFile.getInputStream(sizeEntry), 2);
-    int size = ZipShort.getValue(bytes);
+    byte[] bytes = FileUtilRt.loadBytes(zipFile.getInputStream(sizeEntry), 2);
+    int size = ((bytes[1] & 0xFF) << 8) + (bytes[0] & 0xFF);
 
     JarMemoryLoader loader = new JarMemoryLoader();
     for (int i = 0; i < size && entries.hasMoreElements(); i++) {

@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyNonlocalStatement;
@@ -41,5 +42,13 @@ public class PyNonlocalStatementImpl extends PyElementImpl implements PyNonlocal
   @Override
   public PyTargetExpression[] getVariables() {
     return childrenToPsi(TARGET_EXPRESSION_SET, PyTargetExpression.EMPTY_ARRAY);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (ArrayUtil.contains(child.getPsi(), getVariables())) {
+      PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
+    }
+    super.deleteChildInternal(child);
   }
 }

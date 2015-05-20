@@ -22,7 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman.Chernyatchik
+ * @deprecated use {@link SMStacktraceParserEx} instead
  */
+@Deprecated
 public interface SMStacktraceParser {
   @Nullable
   Navigatable getErrorNavigatable(@NotNull Project project, @NotNull String stacktrace);

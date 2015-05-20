@@ -138,6 +138,10 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     }, option);
   }
 
+  /**
+   * to remove in IDEA 16
+   */
+  @Deprecated
   public DumbModeAction getDumbModeAction() {
     return myDumbModeAction;
   }

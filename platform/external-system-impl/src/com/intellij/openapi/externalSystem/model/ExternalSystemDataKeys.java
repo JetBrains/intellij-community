@@ -17,12 +17,15 @@ package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
-import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
-import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemRecentTasksList;
-import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
+import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
+import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
+import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -30,14 +33,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ExternalSystemDataKeys {
 
-  @NotNull public static final DataKey<ProjectSystemId>              EXTERNAL_SYSTEM_ID = DataKey.create("external.system.id");
-  @NotNull public static final DataKey<NotificationGroup>            NOTIFICATION_GROUP = DataKey.create("external.system.notification");
-  @NotNull public static final DataKey<ExternalSystemTasksTreeModel> ALL_TASKS_MODEL    = DataKey.create("external.system.all.tasks.model");
-  @NotNull public static final DataKey<ExternalTaskPojo>             SELECTED_TASK      = DataKey.create("external.system.selected.task");
-  @NotNull public static final DataKey<ExternalProjectPojo>          SELECTED_PROJECT   = DataKey.create("external.system.selected.project");
-
-  @NotNull public static final DataKey<ExternalSystemRecentTasksList> RECENT_TASKS_LIST
-    = DataKey.create("external.system.recent.tasks.list");
+  @NotNull public static final DataKey<ProjectSystemId> EXTERNAL_SYSTEM_ID = DataKey.create("external.system.id");
+  @NotNull public static final DataKey<NotificationGroup> NOTIFICATION_GROUP = DataKey.create("external.system.notification");
+  @NotNull public static final DataKey<ExternalProjectsView> VIEW = DataKey.create("external.system.view");
+  @NotNull public static final DataKey<ProjectNode> SELECTED_PROJECT_NODE = DataKey.create("external.system.selected.project.node");
+  @NotNull public static final DataKey<List<ExternalSystemNode>> SELECTED_NODES = DataKey.create("external.system.selected.nodes");
+  @NotNull public static final DataKey<ExternalSystemUiAware> UI_AWARE = DataKey.create("external.system.ui.aware");
+  @NotNull public static final DataKey<JTree> PROJECTS_TREE = DataKey.create("external.system.tree");
 
   @NotNull public static final Key<Boolean> NEWLY_IMPORTED_PROJECT = new Key<Boolean>("external.system.newly.imported");
   @NotNull public static final Key<Boolean> NEWLY_CREATED_PROJECT = new Key<Boolean>("external.system.newly.created");

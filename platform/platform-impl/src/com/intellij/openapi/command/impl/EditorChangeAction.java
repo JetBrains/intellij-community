@@ -22,14 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.impl.FileStatusManagerImpl;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.CompressionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.nio.charset.Charset;
 
 public class EditorChangeAction extends BasicUndoableAction {
   private final int myOffset;
@@ -37,7 +34,6 @@ public class EditorChangeAction extends BasicUndoableAction {
   private final Object myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
-  @NotNull private static final Charset myCharset= CharsetToolkit.UTF8_CHARSET;
 
   public EditorChangeAction(DocumentEvent e) {
     this((DocumentEx)e.getDocument(), e.getOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
@@ -50,8 +46,8 @@ public class EditorChangeAction extends BasicUndoableAction {
                             long oldTimeStamp) {
     super(document);
     myOffset = offset;
-    myOldString = CompressionUtil.compressCharSequence(oldString, myCharset);
-    myNewString = CompressionUtil.compressCharSequence(newString, myCharset);
+    myOldString = CompressionUtil.compressStringRawBytes(oldString);
+    myNewString = CompressionUtil.compressStringRawBytes(newString);
     myOldTimeStamp = oldTimeStamp;
     myNewTimeStamp = document.getModificationStamp();
   }
@@ -71,8 +67,8 @@ public class EditorChangeAction extends BasicUndoableAction {
   }
 
   public void performUndo() {
-    CharSequence oldString = CompressionUtil.uncompressCharSequence(myOldString, myCharset);
-    CharSequence newString = CompressionUtil.uncompressCharSequence(myNewString, myCharset);
+    CharSequence oldString = CompressionUtil.uncompressStringRawBytes(myOldString);
+    CharSequence newString = CompressionUtil.uncompressStringRawBytes(myNewString);
     exchangeStrings(newString, oldString);
   }
 
@@ -80,8 +76,8 @@ public class EditorChangeAction extends BasicUndoableAction {
   public void redo() {
     DocumentUndoProvider.startDocumentUndo(getDocument());
     try {
-      CharSequence oldString = CompressionUtil.uncompressCharSequence(myOldString, myCharset);
-      CharSequence newString = CompressionUtil.uncompressCharSequence(myNewString, myCharset);
+      CharSequence oldString = CompressionUtil.uncompressStringRawBytes(myOldString);
+      CharSequence newString = CompressionUtil.uncompressStringRawBytes(myNewString);
       exchangeStrings(oldString, newString);
     }
     finally {

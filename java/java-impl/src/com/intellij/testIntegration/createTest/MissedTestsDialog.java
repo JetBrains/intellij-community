@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFramework;
@@ -44,9 +47,9 @@ import java.util.Set;
 public class MissedTestsDialog extends DialogWrapper {
   private final PsiClass mySourceClass;
   private final PsiClass myTestClass;
-  private TestFramework myDescriptor;
+  private final TestFramework myDescriptor;
   private MemberSelectionTable myTable;
-  private JBCheckBox myIncludeInheritedCb = new JBCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
+  private final JBCheckBox myIncludeInheritedCb = new JBCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
 
   public MissedTestsDialog(@Nullable Project project, PsiClass sourceClass, PsiClass testClass, TestFramework descriptor) {
     super(project, true);

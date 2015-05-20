@@ -18,8 +18,10 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -30,9 +32,10 @@ public class MergeContext {
   @NotNull private final String myBranchName;
   @NotNull private final VirtualFile myRoot;
   @NotNull private final WCInfo myWcInfo;
-  @NotNull private String mySourceUrl;
+  @NotNull private final String mySourceUrl;
   @NotNull private final SvnVcs myVcs;
   @NotNull private final String myTitle;
+  @NotNull private final String myRepositoryRelativeSourcePath;
 
   public MergeContext(@NotNull SvnVcs vcs,
                       @NotNull String sourceUrl,
@@ -46,6 +49,7 @@ public class MergeContext {
     mySourceUrl = sourceUrl;
     myWcInfo = wcInfo;
     myTitle = "Merge from " + myBranchName;
+    myRepositoryRelativeSourcePath = SvnUtil.ensureStartSlash(SVNPathUtil.getRelativePath(myWcInfo.getRepositoryRoot(), mySourceUrl));
   }
 
   @NotNull
@@ -74,6 +78,11 @@ public class MergeContext {
   }
 
   @NotNull
+  public String getRepositoryRelativeSourcePath() {
+    return myRepositoryRelativeSourcePath;
+  }
+
+  @NotNull
   public SvnVcs getVcs() {
     return myVcs;
   }
@@ -81,9 +90,5 @@ public class MergeContext {
   @NotNull
   public String getTitle() {
     return myTitle;
-  }
-
-  public void setSourceUrl(@NotNull String sourceUrl) {
-    mySourceUrl = sourceUrl;
   }
 }

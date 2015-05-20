@@ -2,6 +2,7 @@ package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 public interface VariableContext {
   @NotNull
@@ -22,7 +23,7 @@ public interface VariableContext {
   DebuggerViewSupport getViewSupport();
 
   @NotNull
-  MemberFilter createMemberFilter();
+  Promise<MemberFilter> getMemberFilter();
 
   @Nullable
   Scope getScope();

@@ -20,8 +20,7 @@ import com.intellij.vcs.log.graph.utils.UpdatableIntToIntMap;
 import org.jetbrains.annotations.NotNull;
 
 public class IDIntToIntMap implements IntToIntMap {
-  @NotNull
-  public static final UpdatableIntToIntMap EMPTY = new EmptyIDIntToIntMap();
+  @NotNull public static final UpdatableIntToIntMap EMPTY = new EmptyIDIntToIntMap();
 
   private final int size;
 

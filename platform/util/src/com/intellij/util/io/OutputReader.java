@@ -18,16 +18,29 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
 
 public abstract class OutputReader extends BaseOutputReader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.OutputReader");
 
   private final Semaphore myReadFullySemaphore = new Semaphore();
 
+  public OutputReader(@NotNull InputStream inputStream, @Nullable Charset charset, @Nullable SleepingPolicy sleepingPolicy) {
+    super(inputStream, charset, sleepingPolicy);
+    start();
+  }
 
+  public OutputReader(@NotNull InputStream inputStream, @Nullable Charset charset) {
+    super(inputStream, charset);
+    start();
+  }
+
+  @Deprecated
   public OutputReader(@NotNull Reader reader) {
     super(reader);
     start();

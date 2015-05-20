@@ -21,6 +21,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
@@ -38,7 +39,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
-    if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
     final Location contextLocation = context.getLocation();
@@ -62,6 +63,7 @@ public class TestMethodConfigurationProducer extends JUnitConfigurationProducer 
     configuration.beMethodConfiguration(methodLocation);
     configuration.restoreOriginalModule(originalModule);
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, contextLocation);
+    configuration.setForkMode(JUnitConfiguration.FORK_NONE);
     return true;
   }
 

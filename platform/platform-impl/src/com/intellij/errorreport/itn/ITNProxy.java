@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -163,12 +164,20 @@ public class ITNProxy {
     params.put("app.name.version", appInfo.getVersionName());
     params.put("app.eap", Boolean.toString(appInfo.isEAP()));
     params.put("app.internal", Boolean.toString(application.isInternal()));
-    params.put("app.build", appInfo.getBuild().asString());
+    params.put("app.build", appInfo.getApiVersion());
     params.put("app.version.major", appInfo.getMajorVersion());
     params.put("app.version.minor", appInfo.getMinorVersion());
     params.put("app.build.date", format(appInfo.getBuildDate()));
     params.put("app.build.date.release", format(appInfo.getMajorReleaseBuildDate()));
     params.put("app.compilation.timestamp", IdeaLogger.getOurCompilationTimestamp());
+
+    BuildNumber build = appInfo.getBuild();
+    String buildNumberWithAllDetails = build.asStringWithAllDetails();
+    params.put("app.product.code", build.getProductCode());
+    if (StringUtil.startsWith(buildNumberWithAllDetails, build.getProductCode() + "-")) {
+      buildNumberWithAllDetails = buildNumberWithAllDetails.substring(build.getProductCode().length() + 1);
+    }
+    params.put("app.build.number", buildNumberWithAllDetails);
 
     UpdateSettings updateSettings = UpdateSettings.getInstance();
     params.put("update.channel.status", updateSettings.getSelectedChannelStatus().getCode());
@@ -218,7 +227,7 @@ public class ITNProxy {
     HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
 
     connection.setSSLSocketFactory(ourSslContext.getSocketFactory());
-    if (!(SystemInfo.isJavaVersionAtLeast("1.7") && SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true))) {
+    if (!NetUtils.isSniEnabled()) {
       connection.setHostnameVerifier(new EaHostnameVerifier(url.getHost(), "ftp.intellij.net"));
     }
 

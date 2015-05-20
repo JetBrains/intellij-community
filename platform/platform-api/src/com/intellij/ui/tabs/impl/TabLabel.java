@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -33,6 +32,7 @@ import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -104,7 +104,7 @@ public class TabLabel extends JPanel {
     });
   }
 
-  private SimpleColoredComponent createLabel(JBTabsImpl tabs) {
+  private SimpleColoredComponent createLabel(final JBTabsImpl tabs) {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
       protected boolean shouldDrawMacShadow() {
@@ -123,10 +123,47 @@ public class TabLabel extends JPanel {
         }
         return UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
       }
+
+      @Override
+      protected void doPaint(Graphics2D g) {
+        if (UISettings.getInstance().HIDE_TABS_IF_NEED || tabs.getTabsPosition() == JBTabsPosition.left || tabs.getTabsPosition() == JBTabsPosition.right) {
+          super.doPaint(g);
+          return;
+        }
+        Rectangle clip = getVisibleRect();
+        if (getPreferredSize().width <= clip.width) {
+          super.doPaint(g);
+          return;
+        }
+        int dimSize = 30;
+        int dimStep = 2;
+        Composite oldComposite = g.getComposite();
+        Shape oldClip = g.getClip();
+        try {
+          g.setClip(clip.x, clip.y, Math.max(0, clip.width - dimSize), clip.height);
+          super.doPaint(g);
+
+          for (int x = clip.x + clip.width - dimSize; x < clip.x + clip.width; x+=dimStep) {
+            g.setClip(x, clip.y, dimStep, clip.height);
+            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - ((float)x - (clip.x + clip.width - dimSize)) / dimSize));
+            super.doPaint(g);
+          }
+        } finally {
+          g.setComposite(oldComposite);
+          g.setClip(oldClip);
+        }
+      }
+
+      @Override
+      protected void applyAdditionalHints(@NotNull Graphics2D g) {
+        if (!SystemInfo.isJavaVersionAtLeast("1.7") && g.getComposite() instanceof AlphaComposite && (((AlphaComposite)g.getComposite()).getAlpha() < 1)) {
+          g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+        }
+      }
     };
     label.setOpaque(false);
     label.setBorder(null);
-    label.setIconTextGap(tabs.isEditorTabs() ? 2 : new JLabel().getIconTextGap());
+    label.setIconTextGap(tabs.isEditorTabs() ? (!UISettings.getInstance().HIDE_TABS_IF_NEED ? 4 : 2) : new JLabel().getIconTextGap());
     label.setIconOpaque(false);
     label.setIpad(new Insets(0, 0, 0, 0));
 
@@ -136,12 +173,9 @@ public class TabLabel extends JPanel {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs()) {
-      if (UISettings.getInstance().SHOW_CLOSE_BUTTON) {
-        return new Insets(insets.top, insets.left, insets.bottom, 3);
-      }
+    if (myTabs.isEditorTabs() && UISettings.getInstance().SHOW_CLOSE_BUTTON) {
+        insets.right = 3;
     }
-
     return insets;
   }
 
@@ -323,16 +357,6 @@ public class TabLabel extends JPanel {
 
 
   public void setText(final SimpleColoredText text) {
-    myInfo.setTitleIsShortened(false);
-    if (text != null && text.getTexts().size() == 1 && Boolean.TRUE == getClientProperty(JBEditorTabs.TABS_SHORTEN_TITLE_IF_NEED)) {
-      String title = text.getTexts().get(0);
-      if (title.length() > UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT) {
-        SimpleTextAttributes attributes = text.getAttributes().get(0);
-        text.clear();
-        text.append(StringUtil.getShortened(title, UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT), attributes);
-        myInfo.setTitleIsShortened(true);
-      }
-    }
     myLabel.change(new Runnable() {
       public void run() {
         myLabel.clear();

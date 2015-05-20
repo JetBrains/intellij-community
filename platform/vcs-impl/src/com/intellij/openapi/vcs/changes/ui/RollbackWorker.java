@@ -42,15 +42,17 @@ import java.util.List;
 public class RollbackWorker {
   private final Project myProject;
   private final String myOperationName;
+  private final boolean myInvokedFromModalContext;
   private final List<VcsException> myExceptions;
 
   public RollbackWorker(final Project project) {
-    this(project, DefaultRollbackEnvironment.ROLLBACK_OPERATION_NAME);
+    this(project, DefaultRollbackEnvironment.ROLLBACK_OPERATION_NAME, false);
   }
 
-  public RollbackWorker(final Project project, final String operationName) {
+  public RollbackWorker(final Project project, final String operationName, boolean invokedFromModalContext) {
     myProject = project;
     myOperationName = operationName;
+    myInvokedFromModalContext = invokedFromModalContext;
     myExceptions = new ArrayList<VcsException>(0);
   }
 
@@ -62,6 +64,9 @@ public class RollbackWorker {
     final Runnable notifier = changeListManager.prepareForChangeDeletion(changes);
     final Runnable afterRefresh = new Runnable() {
       public void run() {
+        InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?
+                                           InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE :
+                                           InvokeAfterUpdateMode.SILENT;
         changeListManager.invokeAfterUpdate(new Runnable() {
           public void run() {
             notifier.run();
@@ -69,23 +74,31 @@ public class RollbackWorker {
               afterVcsRefreshInAwt.run();
             }
           }
-        }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Refresh change lists after update", ModalityState.current());
+        }, updateMode, "Refresh changelists after update", ModalityState.current());
       }
     };
 
     final Runnable rollbackAction = new MyRollbackRunnable(changes, deleteLocallyAddedFiles, afterRefresh, localHistoryActionName);
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance()
-        .run(new Task.Backgroundable(myProject, myOperationName, true,
+    if (ApplicationManager.getApplication().isDispatchThread() && !myInvokedFromModalContext) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myOperationName, true,
                                      new PerformInBackgroundOption() {
                                        public boolean shouldStartInBackground() {
                                          return VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND;
                                        }
+
                                        public void processSentToBackground() {
                                          VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND = true;
                                        }
                                      }) {
+          public void run(@NotNull ProgressIndicator indicator) {
+            rollbackAction.run();
+          }
+        });
+    }
+    else if (myInvokedFromModalContext) {
+      ProgressManager.getInstance().run(new Task.Modal(myProject, myOperationName, true) {
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             rollbackAction.run();
           }
@@ -177,6 +190,8 @@ public class RollbackWorker {
           LocalHistory.getInstance().putSystemLabel(myProject, (myLocalHistoryActionName == null) ?
                                                                                              myOperationName : myLocalHistoryActionName, -1);
           final VcsDirtyScopeManager manager = PeriodicalTasksCloser.getInstance().safeGetComponent(project, VcsDirtyScopeManager.class);
+          VcsGuess vcsGuess = new VcsGuess(myProject);
+
           for (Change change : changesToRefresh) {
             final ContentRevision beforeRevision = change.getBeforeRevision();
             final ContentRevision afterRevision = change.getAfterRevision();
@@ -184,18 +199,8 @@ public class RollbackWorker {
               manager.fileDirty(beforeRevision.getFile());
             }
             else {
-              if (beforeRevision != null) {
-                final FilePath parent = beforeRevision.getFile().getParentPath();
-                if (parent != null) {
-                  manager.dirDirtyRecursively(parent);
-                }
-              }
-              if (afterRevision != null) {
-                final FilePath parent = afterRevision.getFile().getParentPath();
-                if (parent != null) {
-                  manager.dirDirtyRecursively(parent);
-                }
-              }
+              markDirty(manager, vcsGuess, beforeRevision);
+              markDirty(manager, vcsGuess, afterRevision);
             }
           }
 
@@ -206,6 +211,22 @@ public class RollbackWorker {
       RefreshVFsSynchronously.updateChangesForRollback(changesToRefresh);
 
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(forAwtThread, null, project);
+    }
+
+    private void markDirty(@NotNull VcsDirtyScopeManager manager, @NotNull VcsGuess vcsGuess, @Nullable ContentRevision revision) {
+      if (revision != null) {
+        FilePath parent = revision.getFile().getParentPath();
+        if (parent != null && couldBeMarkedDirty(vcsGuess, parent)) {
+          manager.dirDirtyRecursively(parent);
+        }
+        else {
+          manager.fileDirty(revision.getFile());
+        }
+      }
+    }
+
+    private boolean couldBeMarkedDirty(@NotNull VcsGuess vcsGuess, @NotNull FilePath path) {
+      return vcsGuess.getVcsForDirty(path) != null;
     }
 
     private void deleteAddedFilesLocally(final List<Change> changes) {

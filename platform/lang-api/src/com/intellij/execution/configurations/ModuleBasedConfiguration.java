@@ -48,7 +48,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   protected static final String TO_CLONE_ELEMENT_NAME = "toClone";
 
   public ModuleBasedConfiguration(final String name,
-                                  final ConfigurationModule configurationModule, final ConfigurationFactory factory) {
+                                  @NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
     super(configurationModule.getProject(), factory, name);
     myModule = configurationModule;
   }

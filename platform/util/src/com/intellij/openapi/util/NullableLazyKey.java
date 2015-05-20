@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class NullableLazyKey<T,H extends UserDataHolder> extends Key<T>{
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("NullableLazyKey");
   private final NullableFunction<H,T> myFunction;
 
   private NullableLazyKey(@NonNls String name, final NullableFunction<H, T> function) {
@@ -35,8 +36,12 @@ public class NullableLazyKey<T,H extends UserDataHolder> extends Key<T>{
   public final T getValue(H h) {
     T data = h.getUserData(this);
     if (data == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
       data = myFunction.fun(h);
-      h.putUserData(this, data == null ? (T)ObjectUtils.NULL : data);
+      if (stamp.mayCacheNow()) {
+        //noinspection unchecked
+        h.putUserData(this, data == null ? (T)ObjectUtils.NULL : data);
+      }
     }
     return data == ObjectUtils.NULL ? null : data;
   }

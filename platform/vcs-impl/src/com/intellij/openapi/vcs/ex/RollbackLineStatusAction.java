@@ -72,6 +72,10 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     if (carets.size() != 1) return true;
     Caret caret = carets.get(0);
     if (caret.hasSelection()) return true;
+    if (caret.getOffset() == editor.getDocument().getTextLength() &&
+        tracker.getRangeForLine(editor.getDocument().getLineCount()) != null) {
+      return true;
+    }
     return tracker.getRangeForLine(caret.getLogicalPosition().line) != null;
   }
 

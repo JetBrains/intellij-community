@@ -22,7 +22,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -87,20 +87,36 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     CompletionVariant nextVariant = computeNextVariant(editor, oldPrefix, lastProposedVariant, data, file, fromOtherFiles, false);
     if (nextVariant == null) return;
 
-    editor.getDocument().replaceString(data.startOffset, caretOffset, nextVariant.variant);
-    editor.getCaretModel().moveToOffset(data.startOffset + nextVariant.variant.length());
+    nextVariant.fastenBelts();
+    try {
+      insertStringForEachCaret(editor, nextVariant.variant, caretOffset - data.startOffset);
+    }
+    finally {
+      nextVariant.unfastenBelts();
+    }
+
     completionState.lastProposedVariant = nextVariant;
     completionState.fromOtherFiles = nextVariant.editor != editor;
-    if (nextVariant.editor == editor) highlightWord(nextVariant, project, data);
+    if (nextVariant.editor == editor) highlightWord(nextVariant, project);
   }
 
-  private static void highlightWord(final CompletionVariant variant, final Project project, CompletionData data) {
-    int delta = data.startOffset < variant.offset ? variant.variant.length() - data.myWordUnderCursor.length() : 0;
+  private static void insertStringForEachCaret(final Editor editor, final String text, final int relativeOffset) {
+    editor.getCaretModel().runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        int caretOffset = caret.getOffset();
+        int startOffset = Math.max(0, caretOffset - relativeOffset);
+        editor.getDocument().replaceString(startOffset, caretOffset, text);
+        caret.moveToOffset(startOffset + text.length());
+      }
+    });
+  }  
 
+  private static void highlightWord(final CompletionVariant variant, final Project project) {
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager colorManager = EditorColorsManager.getInstance();
     TextAttributes attributes = colorManager.getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
-    highlightManager.addOccurrenceHighlight(variant.editor, variant.offset + delta, variant.offset + variant.variant.length() + delta, attributes,
+    highlightManager.addOccurrenceHighlight(variant.editor, variant.offset, variant.offset + variant.variant.length(), attributes,
                                             HighlightManager.HIDE_BY_ANY_KEY, null, null);
   }
 
@@ -205,12 +221,25 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   public static class CompletionVariant {
     public final Editor editor;
     public final String variant;
-    public final int offset;
+    public int offset;
+    private RangeMarker marker;
 
     public CompletionVariant(final Editor editor, final String variant, final int offset) {
       this.editor = editor;
       this.variant = variant;
       this.offset = offset;
+    }
+
+    public void fastenBelts() {
+      marker = editor.getDocument().createRangeMarker(offset, offset);
+    }
+
+    public void unfastenBelts() {
+      if (marker.isValid()) {
+        offset = marker.getStartOffset();
+        marker.dispose();
+      }
+      marker = null;
     }
   }
 
@@ -228,24 +257,20 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
                                                          PsiFile file,
                                                          boolean includeWordsFromOtherFiles) {
 
-    final CharSequence chars = editor.getDocument().getCharsSequence();
-
     final ArrayList<CompletionVariant> words = new ArrayList<CompletionVariant>();
     final List<CompletionVariant> afterWords = new ArrayList<CompletionVariant>();
-
-    final int caretOffset = editor.getCaretModel().getOffset();
 
     if (includeWordsFromOtherFiles) {
       for(FileEditor fileEditor: FileEditorManager.getInstance(file.getProject()).getAllEditors()) {
         if (fileEditor instanceof TextEditor) {
           Editor anotherEditor = ((TextEditor)fileEditor).getEditor();
           if (anotherEditor != editor) {
-            addWordsForEditor((EditorEx)anotherEditor, matcher, anotherEditor.getDocument().getCharsSequence(), words, afterWords, 0);
+            addWordsForEditor((EditorEx)anotherEditor, matcher, words, afterWords, false);
           }
         }
       }
     } else {
-      addWordsForEditor((EditorEx)editor, matcher, chars, words, afterWords, caretOffset);
+      addWordsForEditor((EditorEx)editor, matcher, words, afterWords, true);
     }
 
     Set<String> allWords = new HashSet<String>();
@@ -279,19 +304,31 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
   private static void addWordsForEditor(final EditorEx editor,
                                         final CamelHumpMatcher matcher,
-                                        final CharSequence chars,
                                         final List<CompletionVariant> words,
-                                        final List<CompletionVariant> afterWords, final int caretOffset) {
-    int startOffset = 0;
+                                        final List<CompletionVariant> afterWords, boolean takeCaretsIntoAccount) {
+    final CharSequence chars = editor.getDocument().getImmutableCharSequence();
+    final int primaryCaretOffset;
+    final int[] caretOffsets;
+    if (takeCaretsIntoAccount) {
+      CaretModel caretModel = editor.getCaretModel();
+      primaryCaretOffset = caretModel.getOffset();
+      caretOffsets = getCaretOffsets(caretModel);
+    }
+    else {
+      primaryCaretOffset = 0;
+      caretOffsets = new int[1];
+    }
     TokenProcessor processor = new TokenProcessor() {
       @Override
       public boolean processToken(int start, int end) {
-        if ((start > caretOffset || end < caretOffset) &&  //skip prefix itself
-            end - start > matcher.getPrefix().length()) {
+        for (int caretOffset : caretOffsets) {
+          if (start <= caretOffset && end >= caretOffset) return true; //skip prefix itself
+        }
+        if (end - start > matcher.getPrefix().length()) {
           final String word = chars.subSequence(start, end).toString();
           if (matcher.isStartMatch(word)) {
             CompletionVariant v = new CompletionVariant(editor, word, start);
-            if (end > caretOffset) {
+            if (end > primaryCaretOffset) {
               afterWords.add(v);
             }
             else {
@@ -302,7 +339,16 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
         return true;
       }
     };
-    processWords(editor, startOffset, processor);
+    processWords(editor, 0, processor);
+  }
+
+  private static int[] getCaretOffsets(CaretModel caretModel) {
+    int[] caretOffsets = new int[caretModel.getCaretCount()];
+    int i = 0;
+    for (Caret caret : caretModel.getAllCarets()) {
+      caretOffsets[i++] = caret.getOffset();
+    }
+    return caretOffsets;
   }
 
   private static void processWords(Editor editor, int startOffset, TokenProcessor processor) {

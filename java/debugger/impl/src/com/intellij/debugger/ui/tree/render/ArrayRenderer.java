@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,10 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
-import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
@@ -49,7 +47,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 
 /**
  * User: lex
@@ -133,15 +130,11 @@ public class ArrayRenderer extends NodeRendererImpl{
         int idx;
 
         for (idx = start; idx <= end; idx++) {
-          DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
+          if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && elementIsNull(array, idx)) continue;
 
+          DebuggerTreeNode arrayItemNode = nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
           if (arrayItemNode == null) continue;
-          if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS) {
-            // need to init value to be able to ask for null
-            ValueDescriptorImpl descriptor = (ValueDescriptorImpl)arrayItemNode.getDescriptor();
-            descriptor.setContext((EvaluationContextImpl)evaluationContext);
-            if (descriptor.isNull()) continue;
-          }
+
           //if(added >= (ENTRIES_LIMIT  + 1)/ 2) break;
           children.add(arrayItemNode);
           added++;
@@ -198,6 +191,15 @@ public class ArrayRenderer extends NodeRendererImpl{
       }
     }
     builder.setChildren(children);
+  }
+
+  private static boolean elementIsNull(ArrayReference arrayReference, int index) {
+    try {
+      return ArrayElementDescriptorImpl.getArrayElement(arrayReference, index) == null;
+    }
+    catch (EvaluateException e) {
+      return false;
+    }
   }
 
   public void readExternal(Element element) throws InvalidDataException {

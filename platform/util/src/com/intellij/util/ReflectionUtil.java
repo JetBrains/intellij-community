@@ -434,12 +434,19 @@ public class ReflectionUtil {
   }
 
   /**
-   * {@link Class#newInstance()} cannot instantiate private classes
+   * @deprecated use {@link #newInstance(Class)} instead (this method will fail anyway if non-empty {@code parameterTypes} is passed)
+   */
+  public static <T> T newInstance(@NotNull Class<T> aClass, @NotNull Class... parameterTypes) {
+    return newInstance(aClass);
+  }
+
+  /**
+   * Like {@link Class#newInstance()} but also handles private classes
    */
   @NotNull
-  public static <T> T newInstance(@NotNull Class<T> aClass, @NotNull Class... parameterTypes) {
+  public static <T> T newInstance(@NotNull Class<T> aClass) {
     try {
-      Constructor<T> constructor = aClass.getDeclaredConstructor(parameterTypes);
+      Constructor<T> constructor = aClass.getDeclaredConstructor();
       try {
         constructor.setAccessible(true);
       }

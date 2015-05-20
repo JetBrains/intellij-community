@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.echo;
@@ -230,7 +229,7 @@ public class GitCherryPickStepdefs {
 
   private static void assertOnlyDefaultChangelist() {
     String DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME;
-    assertEquals("Only default change list is expected", 1, myChangeListManager.getChangeListsNumber());
+    assertEquals("Only default changelist is expected", 1, myChangeListManager.getChangeListsNumber());
     assertEquals("Default changelist is not active", DEFAULT, myChangeListManager.getDefaultChangeList().getName());
   }
 
@@ -241,9 +240,7 @@ public class GitCherryPickStepdefs {
         return virtualCommits.getRealCommit(virtualHash).getHash();
       }
     }), myProjectDir);
-
-    new GitCherryPicker(myProject, myGit, myPlatformFacade, mySettings.isAutoCommitOnCherryPick())
-        .cherryPick(Collections.singletonMap(myRepository, commits));
+    new GitCherryPicker(myProject, myGit, myPlatformFacade).cherryPick(commits);
   }
 
   private static List<VcsFullCommitDetails> loadDetails(List<String> hashes, @NotNull VirtualFile root) throws VcsException {

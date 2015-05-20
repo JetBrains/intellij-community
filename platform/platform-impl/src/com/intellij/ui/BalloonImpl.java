@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,8 +136,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
           }
         }
 
-        if (UIUtil.isCloseClick((MouseEvent)e)) {
-          hide();
+        if (UIUtil.isCloseClick(me)) {
+          if (isInsideBalloon(me)) {
+            hide();
+            me.consume();
+          }
           return;
         }
       }
@@ -195,13 +198,16 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
   @Override
   public boolean isInside(@NotNull RelativePoint target) {
+    if (myComp == null) return false;
     Component cmp = target.getOriginalComponent();
 
     if (!cmp.isShowing()) return true;
     if (cmp == myCloseRec) return true;
     if (UIUtil.isDescendingFrom(cmp, myComp)) return true;
     if (myComp == null || !myComp.isShowing()) return false;
-    return myComp.contains(target.getScreenPoint().x, target.getScreenPoint().y);
+    Point point = target.getScreenPoint();
+    SwingUtilities.convertPointFromScreen(point, myComp);
+    return myComp.contains(point);
   }
 
   public boolean isMovingForward(RelativePoint target) {
@@ -505,6 +511,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
       createComponent();
       if (!new Rectangle(myLayeredPane.getSize()).contains(new Rectangle(myComp.getSize()))) { // Balloon is bigger than window, don't show it at all.
+        myComp.removeAll();
+        myLayeredPane.remove(myComp);
         myLayeredPane = null;
         hide();
         return;
@@ -581,15 +589,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   private Dimension getContentSizeFor(AbstractPosition position) {
-    Insets insets = position.createBorder(this).getBorderInsets();
-    if (insets == null) {
-      insets = new Insets(0, 0, 0, 0);
-    }
-
     Dimension size = myContent.getPreferredSize();
-    size.width += insets.left + insets.right;
-    size.height += insets.top + insets.bottom;
-
+    JBInsets.addTo(size, position.createBorder(this).getBorderInsets());
     return size;
   }
 
@@ -894,6 +895,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     abstract int getChangeShift(AbstractPosition original, int xShift, int yShift);
 
     public void updateBounds(final BalloonImpl balloon) {
+      if (balloon.myLayeredPane == null || balloon.myComp == null) return;
+
       final Rectangle bounds =
         getUpdatedBounds(balloon.myLayeredPane.getSize(), balloon.myForcedBounds, balloon.myComp.getPreferredSize(), balloon.myShowPointer,
                          balloon.myTargetPoint, balloon.myContainerInsets);
@@ -1071,7 +1074,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     @Override
     Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize) {
-      final Point center = UIUtil.getCenterPoint(new Rectangle(targetPoint, new Dimension(0, 0)), balloonSize);
+      final Point center = UIUtil.getCenterPoint(new Rectangle(targetPoint, JBUI.emptySize()), balloonSize);
       return new Point(center.x, targetPoint.y);
     }
 
@@ -1128,7 +1131,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     @Override
     Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize) {
-      final Point center = UIUtil.getCenterPoint(new Rectangle(targetPoint, new Dimension(0, 0)), balloonSize);
+      final Point center = UIUtil.getCenterPoint(new Rectangle(targetPoint, JBUI.emptySize()), balloonSize);
       return new Point(center.x, targetPoint.y - balloonSize.height);
     }
 
@@ -1186,7 +1189,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     @Override
     Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize) {
-      final Point center = UIUtil.getCenterPoint(new Rectangle(targetPoint, new Dimension(0, 0)), balloonSize);
+      final Point center = UIUtil.getCenterPoint(new Rectangle(targetPoint, JBUI.emptySize()), balloonSize);
       return new Point(targetPoint.x, center.y);
     }
 
@@ -1243,7 +1246,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     @Override
     Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize) {
-      final Point center = UIUtil.getCenterPoint(new Rectangle(targetPoint, new Dimension(0, 0)), balloonSize);
+      final Point center = UIUtil.getCenterPoint(new Rectangle(targetPoint, JBUI.emptySize()), balloonSize);
       return new Point(targetPoint.x - balloonSize.width, center.y);
     }
 
@@ -1351,12 +1354,10 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     @Override
     public void doLayout() {
-      Insets insets = getInsets();
-      if (insets == null) {
-        insets = new Insets(0, 0, 0, 0);
-      }
+      Rectangle bounds = new Rectangle(getWidth(), getHeight());
+      JBInsets.removeFrom(bounds, getInsets());
 
-      myContent.setBounds(insets.left, insets.top, getWidth() - insets.left - insets.right, getHeight() - insets.top - insets.bottom);
+      myContent.setBounds(bounds);
     }
 
     @Override
@@ -1370,12 +1371,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
 
     private Dimension addInsets(Dimension size) {
-      final Insets insets = getInsets();
-      if (insets != null) {
-        size.width += insets.left + insets.right;
-        size.height += insets.top + insets.bottom;
-      }
-
+      JBInsets.addTo(size, getInsets());
       return size;
     }
 

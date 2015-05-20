@@ -17,6 +17,7 @@ package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -62,16 +63,27 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
   private PsiVariable myTargetVariable;
   private PsiClass myTargetClass;
   private final String myNewVisibility;
+  private final boolean myOpenInEditor;
   private final Map<PsiClass, String> myOldClassParameterNames;
+
+  public MoveInstanceMethodProcessor(final Project project,
+                                   final PsiMethod method,
+                                   final PsiVariable targetVariable,
+                                   final String newVisibility,
+                                   final Map<PsiClass, String> oldClassParameterNames) {
+    this(project, method, targetVariable, newVisibility, false, oldClassParameterNames);
+  }
 
   public MoveInstanceMethodProcessor(final Project project,
                                      final PsiMethod method,
                                      final PsiVariable targetVariable,
                                      final String newVisibility,
+                                     boolean openInEditor, 
                                      final Map<PsiClass, String> oldClassParameterNames) {
     super(project);
     myMethod = method;
     myTargetVariable = targetVariable;
+    myOpenInEditor = openInEditor;
     myOldClassParameterNames = oldClassParameterNames;
     LOG.assertTrue(myTargetVariable instanceof PsiParameter || myTargetVariable instanceof PsiField);
     LOG.assertTrue(myTargetVariable.getType() instanceof PsiClassType);
@@ -247,6 +259,10 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         reference.bindToElement(method);
       }
       VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usages), method, myNewVisibility);
+
+      if (myOpenInEditor) {
+        EditorHelper.openInEditor(method);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

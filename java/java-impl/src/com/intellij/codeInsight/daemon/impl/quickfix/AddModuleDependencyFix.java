@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
@@ -150,7 +151,9 @@ class AddModuleDependencyFix extends OrderEntryFix {
               targetClasses.add(psiClass);
             }
           }
-          new AddImportAction(project, myReference, editor, targetClasses.toArray(new PsiClass[targetClasses.size()])).execute();
+          if (!DumbService.isDumb(project)) {
+            new AddImportAction(project, myReference, editor, targetClasses.toArray(new PsiClass[targetClasses.size()])).execute();
+          }
         }
       }
     };

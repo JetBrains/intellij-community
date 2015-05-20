@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -8,6 +7,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.utils.MavenSettings;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -32,21 +33,17 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(MavenShowEffectivePom.class);
 
-  private static void showUnsupportedNotification(@NotNull final Project project, @NotNull final VirtualFile file) {
+  private static void showUnsupportedNotification(@NotNull final Project project) {
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                      "Unsupported action",
-                     "<html>You have to <a href='#'>enable</a> <b>" + CommonBundle.settingsActionPath() + " | Maven | Importing | \"Use Maven3 to import project\"</b> option to use Show Effective POM action</html>",
+                     "<html>Maven3 required to use Show Effective POM action. \n" +
+                     "Please <a href='#'>select Maven3 home directory</a> or use \"Bundled (Maven 3)\"</html>",
                      NotificationType.ERROR,
                      new NotificationListener.Adapter() {
                        @Override
                        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                         MavenServerManager.getInstance().setUseMaven2(false);
                          notification.expire();
-
-                         new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "Option enabled", "Option \"Use Maven3 to import project\" has been enabled", NotificationType.INFORMATION)
-                           .notify(project);
-
-                         actionPerformed(project, file);
+                         ShowSettingsUtil.getInstance().showSettingsDialog(project, MavenSettings.DISPLAY_NAME);
                        }
                      }).notify(project);
   }
@@ -116,7 +113,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
     if (file == null) return;
 
     if (MavenServerManager.getInstance().isUseMaven2()) {
-      showUnsupportedNotification(project, file);
+      showUnsupportedNotification(project);
     }
     else {
       actionPerformed(project, file);

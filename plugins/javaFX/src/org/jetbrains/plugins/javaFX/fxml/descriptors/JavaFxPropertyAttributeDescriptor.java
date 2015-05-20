@@ -3,6 +3,7 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -151,7 +152,14 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
           final XmlAttributeDescriptor attributeDescriptor = ((XmlAttribute)parent).getDescriptor();
           if (attributeDescriptor != null) {
             final PsiElement declaration = attributeDescriptor.getDeclaration();
-            final String boxedQName = getBoxedPropertyType(declaration);
+            final String boxedQName;
+            if (declaration != null) {
+              boxedQName = getBoxedPropertyType(declaration);
+            }
+            else {
+              final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)context);
+              boxedQName = tagClass != null ? tagClass.getQualifiedName() : null;
+            }
             if (boxedQName != null) {
               try {
                 final Class<?> aClass = Class.forName(boxedQName);
@@ -161,10 +169,20 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
               catch (InvocationTargetException e) {
                 final Throwable cause = e.getCause();
                 if (cause instanceof NumberFormatException) {
+                  final PsiReference reference = context.getReference();
+                  if (reference != null) {
+                    final PsiElement resolve = reference.resolve();
+                    if (resolve instanceof XmlAttributeValue) {
+                      final PsiClass tagClass = JavaFxPsiUtil.getTagClass((XmlAttributeValue)resolve);
+                      if (tagClass != null && boxedQName.equals(tagClass.getQualifiedName())) {
+                        return null;
+                      }
+                    }
+                  }
                   return "Invalid value: unable to coerce to " + boxedQName;
                 }
               }
-              catch (Exception ignore) {
+              catch (Throwable ignore) {
               }
             }
           }

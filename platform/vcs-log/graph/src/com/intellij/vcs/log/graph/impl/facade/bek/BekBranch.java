@@ -22,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
+
 class BekBranch {
 
   private static final int MAX_BLOCK_SIZE = 20;
@@ -29,15 +31,12 @@ class BekBranch {
   private static final int SMALL_DELTA_TIME = 60 * 60 * 4 * 1000;
 
 
-  @NotNull
-  private final LinearGraph myPermanentGraph;
-  @NotNull
-  private final List<Integer> myNodeIndexes;
+  @NotNull private final LinearGraph myPermanentGraph;
+  @NotNull private final List<Integer> myNodeIndexes;
 
   private int myNoInsertSize;
 
-  @Nullable
-  private List<Integer> myPrepareForInsertPart = null;
+  @Nullable private List<Integer> myPrepareForInsertPart = null;
 
   public BekBranch(@NotNull LinearGraph permanentGraph, @NotNull List<Integer> nodeIndexes) {
     myPermanentGraph = permanentGraph;
@@ -49,8 +48,7 @@ class BekBranch {
     assert myPrepareForInsertPart == null;
     int currentNode = myNodeIndexes.get(myNoInsertSize - 1);
 
-    if (edgeRestrictions.hasRestriction(currentNode))
-      return;
+    if (edgeRestrictions.hasRestriction(currentNode)) return;
 
     int prevIndex;
     for (prevIndex = myNoInsertSize - 1; prevIndex > 0; prevIndex--) {
@@ -58,27 +56,22 @@ class BekBranch {
       int downNode = myNodeIndexes.get(prevIndex);
 
       // for correct topological order
-      if (edgeRestrictions.hasRestriction(upNode))
-        break;
+      if (edgeRestrictions.hasRestriction(upNode)) break;
 
       // upNode is mergeCommit
-      List<Integer> downNodes = myPermanentGraph.getDownNodes(upNode);
-      if (downNodes.size() > 1 && downNodes.contains(downNode))
-        continue;
+      List<Integer> downNodes = getDownNodes(myPermanentGraph, upNode);
+      if (downNodes.size() > 1 && downNodes.contains(downNode)) continue;
 
       // division
-      if (!downNodes.contains(downNode))
-        break;
+      if (!downNodes.contains(downNode)) break;
 
       long delta = Math.abs(timestampGetter.getTimestamp(upNode) - timestampGetter.getTimestamp(downNode));
 
       // long time between commits
-      if (delta > MAX_DELTA_TIME)
-        break;
+      if (delta > MAX_DELTA_TIME) break;
 
       // if block so long
-      if (prevIndex < myNoInsertSize - MAX_BLOCK_SIZE && delta > SMALL_DELTA_TIME)
-        break;
+      if (prevIndex < myNoInsertSize - MAX_BLOCK_SIZE && delta > SMALL_DELTA_TIME) break;
     }
 
     myPrepareForInsertPart = myNodeIndexes.subList(prevIndex, myNoInsertSize);

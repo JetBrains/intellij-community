@@ -18,6 +18,7 @@ package com.intellij.codeInspection.nullable;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInspection.*;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionTool {
   // deprecated fields remain to minimize changes to users inspection profiles (which are often located in version control).
@@ -52,6 +54,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_PARAMETER_OVERRIDES_NOTNULL = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_GETTER = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_EXTERNAL_SUPER_NOTNULL = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean REQUIRE_NOTNULL_FIELDS_INITIALIZED = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = false;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
@@ -66,7 +69,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       String name = child.getAttributeValue("name");
       String value = child.getAttributeValue("value");
       if ("IGNORE_EXTERNAL_SUPER_NOTNULL".equals(name) && "false".equals(value) ||
-          "REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED".equals(name) && "false".equals(value)) {
+          "REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED".equals(name) && "false".equals(value) ||
+          "REQUIRE_NOTNULL_FIELDS_INITIALIZED".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
     }
@@ -176,17 +180,18 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             }
           }
 
-          List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
-          if (annotated.isDeclaredNotNull && initializers.isEmpty()) {
-            final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
-            if (annotation != null) {
-              holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
-                                     "Not-null fields must be initialized",
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          if (REQUIRE_NOTNULL_FIELDS_INITIALIZED) {
+            if (annotated.isDeclaredNotNull && !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) {
+              final PsiAnnotation annotation = AnnotationUtil.findAnnotation(field, manager.getNotNulls());
+              if (annotation != null) {
+                holder.registerProblem(annotation.isPhysical() ? annotation : field.getNameIdentifier(),
+                                       "Not-null fields must be initialized",
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+              }
             }
           }
 
-          for (PsiExpression rhs : initializers) {
+          for (PsiExpression rhs : DfaPsiUtil.findAllConstructorInitializers(field)) {
             if (rhs instanceof PsiReferenceExpression) {
               PsiElement target = ((PsiReferenceExpression)rhs).resolve();
               if (target instanceof PsiParameter && target.isPhysical()) {
@@ -269,6 +274,12 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   @NotNull
   private static String getPresentableAnnoName(@NotNull PsiModifierListOwner owner) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
+    Set<String> names = ContainerUtil.newHashSet(manager.getNullables());
+    names.addAll(manager.getNotNulls());
+
+    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(owner, names);
+    if (annotation != null) return getPresentableAnnoName(annotation);
+    
     String anno = manager.getNotNull(owner);
     return StringUtil.getShortName(anno != null ? anno : StringUtil.notNullize(manager.getNullable(owner), "???"));
   }
@@ -528,7 +539,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     return true;
   }
 
-  private static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
+  public static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     if (!manager.isNullable(owner, checkBases)) return false;

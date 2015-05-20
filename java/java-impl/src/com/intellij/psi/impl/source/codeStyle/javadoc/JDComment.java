@@ -37,6 +37,8 @@ public class JDComment {
   private String mySince;
   private String myDeprecated;
   private boolean myMultiLineComment;
+  private String myFirstLine = "/**";
+  private String myEndLine = "*/";
 
   public JDComment(@NotNull CommentFormatter formatter) {
     myFormatter = formatter;
@@ -128,18 +130,26 @@ public class JDComment {
         || sb.indexOf("\n") != sb.length() - 1) // If comment has become multiline after formatting - it must be shown as multiline.
                                                 // Last symbol is always '\n', so we need to check if there is one more LF symbol before it.
     {
-      sb.insert(0, "/**\n");
+      sb.insert(0, myFirstLine + '\n');
       sb.append(indent);
     } else {
-      sb.replace(0, prefix.length(), "/** ");
+      sb.replace(0, prefix.length(), myFirstLine + " ");
       sb.deleteCharAt(sb.length()-1);
     }
-    sb.append(" */");
+    sb.append(' ').append(myEndLine);
 
     return sb.toString();
   }
 
   protected void generateSpecial(@NotNull String prefix, @NotNull StringBuilder sb) {
+  }
+
+  public void setFirstCommentLine(@NotNull String firstCommentLine) {
+    myFirstLine = firstCommentLine;
+  }
+
+  public void setLastCommentLine(@NotNull String lastCommentLine) {
+    myEndLine = lastCommentLine;
   }
 
   public void addSeeAlso(@NotNull String seeAlso) {

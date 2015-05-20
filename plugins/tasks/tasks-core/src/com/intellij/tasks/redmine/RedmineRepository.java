@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.RequestFailedException;
-import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
 import com.intellij.tasks.redmine.model.RedmineIssue;
 import com.intellij.tasks.redmine.model.RedmineProject;
@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.intellij.tasks.impl.httpclient.ResponseUtil.GsonSingleObjectDeserializer;
+import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
 import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
 
 /**
@@ -39,7 +39,7 @@ import static com.intellij.tasks.redmine.model.RedmineResponseWrapper.*;
  */
 @Tag("Redmine")
 public class RedmineRepository extends NewBaseRepositoryImpl {
-  private static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+  private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
 
   private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
 
@@ -64,6 +64,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   private String myAPIKey = "";
   private RedmineProject myCurrentProject;
+  private boolean myAssignedToMe = true;
   private List<RedmineProject> myProjects = null;
 
   /**
@@ -90,6 +91,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     super(other);
     setAPIKey(other.myAPIKey);
     setCurrentProject(other.getCurrentProject());
+    setAssignedToMe(other.isAssignedToMe());
   }
 
   @Override
@@ -99,6 +101,7 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     RedmineRepository that = (RedmineRepository)o;
     if (!Comparing.equal(getAPIKey(), that.getAPIKey())) return false;
     if (!Comparing.equal(getCurrentProject(), that.getCurrentProject())) return false;
+    if (isAssignedToMe() != that.isAssignedToMe()) return false;
     return true;
   }
 
@@ -130,8 +133,13 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
         HttpResponse httpResponse = client.execute(myCurrentRequest);
         StatusLine statusLine = httpResponse.getStatusLine();
         if (statusLine != null && statusLine.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          myCurrentRequest = new HttpGet(getIssuesUrl(0, 1, true));
+          // Check that projects can be downloaded via given URL and the latter is not project-specific
+          myCurrentRequest = new HttpGet(getProjectsUrl(0, 1));
           statusLine = client.execute(myCurrentRequest).getStatusLine();
+          if (statusLine != null && statusLine.getStatusCode() == HttpStatus.SC_OK) {
+            myCurrentRequest = new HttpGet(getIssuesUrl(0, 1, true));
+            statusLine = client.execute(myCurrentRequest).getStatusLine();
+          }
         }
         if (statusLine != null && statusLine.getStatusCode() != HttpStatus.SC_OK) {
           throw RequestFailedException.forStatusCode(statusLine.getStatusCode(), statusLine.getReasonPhrase());
@@ -167,8 +175,11 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     URIBuilder builder = new URIBuilder(getRestApiUrl("issues.json"))
       .addParameter("offset", String.valueOf(offset))
       .addParameter("limit", String.valueOf(limit))
-      .addParameter("status_id", withClosed ? "*" : "open")
-      .addParameter("assigned_to_id", "me");
+      .addParameter("sort", "updated_on:desc")
+      .addParameter("status_id", withClosed ? "*" : "open");
+    if (myAssignedToMe) {
+      builder.addParameter("assigned_to_id", "me");
+    }
     // If project was not chosen, all available issues still fetched. Such behavior may seems strange to user.
     if (myCurrentProject != null && myCurrentProject != UNSPECIFIED_PROJECT) {
       builder.addParameter("project_id", String.valueOf(myCurrentProject.getId()));
@@ -186,14 +197,8 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
     int offset = 0;
     ProjectsWrapper wrapper;
     do {
-      URIBuilder builder = new URIBuilder(getRestApiUrl("projects.json"));
-      builder.addParameter("offset", String.valueOf(offset));
-      builder.addParameter("limit", "50");
-      if (isUseApiKeyAuthentication()) {
-        builder.addParameter("key", myAPIKey);
-      }
 
-      HttpGet method = new HttpGet(builder.toString());
+      HttpGet method = new HttpGet(getProjectsUrl(offset, 50));
       wrapper = client.execute(method, new GsonSingleObjectDeserializer<ProjectsWrapper>(GSON, ProjectsWrapper.class));
       offset += wrapper.getProjects().size();
       allProjects.addAll(wrapper.getProjects());
@@ -202,6 +207,17 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
     myProjects = allProjects;
     return Collections.unmodifiableList(myProjects);
+  }
+
+  @NotNull
+  private URI getProjectsUrl(int offset, int limit) throws URISyntaxException {
+    URIBuilder builder = new URIBuilder(getRestApiUrl("projects.json"));
+    builder.addParameter("offset", String.valueOf(offset));
+    builder.addParameter("limit", String.valueOf(limit));
+    if (isUseApiKeyAuthentication()) {
+      builder.addParameter("key", myAPIKey);
+    }
+    return builder.build();
   }
 
   @Nullable
@@ -222,6 +238,14 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
 
   public void setAPIKey(String APIKey) {
     myAPIKey = APIKey;
+  }
+
+  public boolean isAssignedToMe() {
+    return myAssignedToMe;
+  }
+
+  public void setAssignedToMe(boolean assignedToMe) {
+    this.myAssignedToMe = assignedToMe;
   }
 
   private boolean isUseApiKeyAuthentication() {

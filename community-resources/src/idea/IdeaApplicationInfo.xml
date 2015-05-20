@@ -1,37 +1,34 @@
 <component>
-  <version codename="Community Edition" major="14" minor="1" eap="true"/>
-  <company name="JetBrains s.r.o." url="http://www.jetbrains.com/?fromIDE"/>
+  <version codename="Community Edition" major="15" minor="0" eap="true"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="129.1" maxbuild="139.9999" version="14"/>
   <logo url="/idea_community_logo.png" textcolor="aaaaaa" progressColor="FDA916" progressY="230" progressTailIcon="/community_progress_tail.png"/>
-  <about url="/idea_community_about.png" foreground="7A858F" copyrightForeground="7A858F" linkColor="62B6F5" logoX="300" logoY="265" logoW="75" logoH="30"/>
-  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size32opaque="/icon_CEwhite.png" size12="/toolwindows/toolWindowProject.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
+  <about url="/idea_community_about.png" foreground="7A858F" copyrightForeground="7A858F" linkColor="9b5121" logoX="300" logoY="265" logoW="75" logoH="30"/>
+  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size12="/toolwindows/toolWindowProject.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA" script="idea"/>
 
-  <welcome-screen logo-url="/Logo_welcomeScreen.png"
-                  caption-url="/welcomeCaption_community.png"
-                  slogan-url="/developSlogan_community.png"/>
-
-  <third-party url="http://www.jetbrains.org/"/>
-
+  <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
   <editor background-url="/idea_logo_welcome.png"/>
 
+  <plugins url="http://plugins.jetbrains.com/"/>
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"
                patches="http://download.jetbrains.com/idea/"/>
 
   <help file="ideahelp.jar" root="idea"/>
-  <documentation url="http://www.jetbrains.com/idea/documentation"/>
-  <support url="http://www.jetbrains.com/support/idea/index.html"/>
-  <feedback eap-url="http://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
-            release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
-  <plugins url="http://plugins.jetbrains.com"/>
-  <whatsnew url="http://www.jetbrains.com/idea/whatsnew/index.html"/>
-  <keymap win="http://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
-          mac="http://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
+  <documentation url="https://www.jetbrains.com/idea/documentation"/>
+  <support url="https://www.jetbrains.com/support/idea/index.html"/>
+  <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
+            release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+  <whatsnew url="https://www.jetbrains.com/idea/whatsnew/index.html"/>
+  <keymap win="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard.pdf"
+          mac="https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard_Mac.pdf"/>
+  <third-party url="http://www.jetbrains.org/"/>
+  <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>
 
   <plugins-page category="VCS Integration" title="Select VCS Integration Plugins"/>
   <plugins-page title="Select Other Plugins"/>
 
-  <statistics settings="http://jetbrains.com/idea/statistics/stat-assistant.xml" service="http://jetbrains.com/idea/statistics/index.jsp"/>
+  <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml" service="https://www.jetbrains.com/idea/statistics/index.jsp"/>
 </component>

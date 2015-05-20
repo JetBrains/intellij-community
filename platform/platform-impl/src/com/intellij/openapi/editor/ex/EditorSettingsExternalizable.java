@@ -78,9 +78,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     
     public boolean REFRAIN_FROM_SCROLLING = false;
 
-    public boolean SHOW_REFORMAT_DIALOG = true;
-    @SuppressWarnings("SpellCheckingInspection")
-    public boolean SHOW_OPIMIZE_IMPORTS_DIALOG = true;
+    public boolean SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION = true;
+    public boolean SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION = true;
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
@@ -102,7 +101,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @NonNls public static final String STRIP_TRAILING_SPACES_WHOLE = "Whole";
 
   @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
-  @interface StripTrailingSpaces {}
+  public @interface StripTrailingSpaces {}
 
   @NonNls public static final String DEFAULT_FONT_NAME = "Courier";
 
@@ -229,6 +228,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setBlockCursor(boolean val) {
     myOptions.IS_BLOCK_CURSOR = val;
+  }
+
+  public boolean isCaretRowShown() {
+    return true;
   }
 
   public int getBlockIndent() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,46 +18,42 @@ package org.jdom.output;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import org.jdom.Document;
-import org.jetbrains.annotations.NonNls;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 
 public class EclipseJDOMUtil {
-
-  @NonNls private static final String ENCODING = CharsetToolkit.UTF8;
-
-
   private EclipseJDOMUtil() {
   }
-
 
   private static EclipseXMLOutputter createOutputter(String lineSeparator) {
     EclipseXMLOutputter xmlOutputter = new EclipseXMLOutputter(lineSeparator);
     Format format = Format.getCompactFormat().
       setIndent("\t").
       setTextMode(Format.TextMode.NORMALIZE).
-      setEncoding(ENCODING).
+      setEncoding(CharsetToolkit.UTF8).
       setOmitEncoding(false).
       setOmitDeclaration(false);
     xmlOutputter.setFormat(format);
     return xmlOutputter;
   }
 
-  public static void output(final Document doc, final File file, final Project project) throws IOException {
-    FileOutputStream out = new FileOutputStream(file);
+  public static void output(@NotNull Element element, @NotNull File file, @NotNull Project project) throws IOException {
+    Writer writer = new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8);
     try {
-      createOutputter(CodeStyleSettingsManager.getSettings(project).getLineSeparator()).output(doc, out);
+      output(element, writer, project);
     }
     finally {
-      out.close();
+      writer.close();
     }
   }
 
-  public static void output(final Document document, final Writer writer, Project project) throws IOException {
-    createOutputter(CodeStyleSettingsManager.getSettings(project).getLineSeparator()).output(document, writer);
+  public static void output(@NotNull Element element, @NotNull Writer writer, @NotNull Project project) throws IOException {
+    String lineSeparator = CodeStyleSettingsManager.getSettings(project).getLineSeparator();
+    writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+    writer.write(lineSeparator);
+    createOutputter(lineSeparator).output(element, writer);
+    writer.write(lineSeparator);
   }
 }

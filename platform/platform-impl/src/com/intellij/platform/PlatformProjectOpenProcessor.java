@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,12 +186,18 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       projectDir.mkdirs();
     }
 
+    boolean isNew = false;
+
     if (project == null) {
       String projectName = dummyProject ? dummyProjectName : projectDir.getParentFile().getName();
       project = projectManager.newProject(projectName, projectDir.getParent(), true, dummyProject);
+      isNew = true;
     }
 
-    if (project == null) return null;
+    if (project == null) {
+      return null;
+    }
+
     ProjectBaseDirectory.getInstance(project).setBaseDir(baseDir);
     final Module module = runConfigurators ? runDirectoryProjectConfigurators(baseDir, project) : ModuleManager.getInstance(project).getModules()[0];
     if (runConfigurators && dummyProject) { // add content root for chosen (single) file
@@ -207,7 +213,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       });
     }
 
+    if (isNew) {
+      project.save();
+    }
+
     openFileFromCommandLine(project, virtualFile, line);
+
     if (!projectManager.openProject(project)) {
       WelcomeFrame.showIfNoProjectOpened();
       final Project finalProject = project;

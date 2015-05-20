@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,11 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import org.apache.http.client.fluent.Request;
+import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,27 +32,25 @@ class DevelopersLoader {
   private DevelopersLoader() {
   }
 
-  public static Collection<Developer> fetchDevelopers(ProgressIndicator indicator) throws IOException {
-    List<Developer> developers = new LinkedList<Developer>();
-    developers.add(Developer.NULL);
-    BufferedReader reader = new BufferedReader(
-      new InputStreamReader(Request.Get(DEVELOPERS_LIST_URL).connectTimeout(TIMEOUT).execute().returnContent().asStream(),
-                            CharsetToolkit.UTF8_CHARSET));
-    try {
-      while (true) {
-        String line = reader.readLine();
-        if (line == null) break;
-        int i = line.indexOf('\t');
-        if (i == -1) throw new IOException("Protocol error");
-        int id = Integer.parseInt(line.substring(0, i));
-        String name = line.substring(i + 1);
-        developers.add(new Developer(id, name));
-        indicator.checkCanceled();
+  public static Collection<Developer> fetchDevelopers(@NotNull final ProgressIndicator indicator) throws IOException {
+    return HttpRequests.request(DEVELOPERS_LIST_URL).connect(new HttpRequests.RequestProcessor<Collection<Developer>>() {
+      @Override
+      public Collection<Developer> process(@NotNull HttpRequests.Request request) throws IOException {
+        List<Developer> developers = new LinkedList<Developer>();
+        developers.add(Developer.NULL);
+        BufferedReader reader = request.getReader();
+        while (true) {
+          String line = reader.readLine();
+          if (line == null) break;
+          int i = line.indexOf('\t');
+          if (i == -1) throw new IOException("Protocol error");
+          int id = Integer.parseInt(line.substring(0, i));
+          String name = line.substring(i + 1);
+          developers.add(new Developer(id, name));
+          indicator.checkCanceled();
+        }
+        return developers;
       }
-      return developers;
-    }
-    finally {
-      reader.close();
-    }
+    });
   }
 }

@@ -13,25 +13,24 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 public abstract class HgErrorHandler {
-  
   public static HgCommandResult ensureSuccess(@Nullable HgCommandResult result) throws VcsException {
     if (result == null) {
       throw new VcsException("Couldn't execute Mercurial command");
     }
-    if (fatalErrorOccurred(result)) {
+    // workaround for mercurial: trying to merge with ancestor is not important/fatal error but natively hg produces abort error.
+    if (fatalErrorOccurred(result) && !HgErrorUtil.isAncestorMergeError(result)) {
       throw new VcsException(result.getRawError());
     }
     return result;
   }
 
-  private static boolean fatalErrorOccurred(HgCommandResult result) {
-    return 
-      result.getExitValue() == 255 ||
-      result.getRawError().contains("** unknown exception encountered");
+  private static boolean fatalErrorOccurred(@NotNull HgCommandResult result) {
+    return result.getExitValue() == 255 || result.getRawError().contains("** unknown exception encountered");
   }
-  
 }

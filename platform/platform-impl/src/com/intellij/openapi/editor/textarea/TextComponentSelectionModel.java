@@ -192,24 +192,24 @@ public class TextComponentSelectionModel implements SelectionModel {
   @Override
   @Nullable
   public LogicalPosition getBlockStart() {
-    throw new UnsupportedOperationException("Not implemented");
+    return null;
   }
 
   @Override
   @Nullable
   public LogicalPosition getBlockEnd() {
-    throw new UnsupportedOperationException("Not implemented");
+    return null;
   }
 
   @Override
   public boolean isBlockSelectionGuarded() {
-    throw new UnsupportedOperationException("Not implemented");
+    return false;
   }
 
   @Override
   @Nullable
   public RangeMarker getBlockSelectionGuard() {
-    throw new UnsupportedOperationException("Not implemented");
+    return null;
   }
 
   @Override

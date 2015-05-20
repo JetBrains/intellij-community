@@ -17,10 +17,7 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SuppressQuickFix;
-import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -32,6 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,10 +41,12 @@ import java.util.List;
  * @author Roman.Chernyatchik
  * @date Aug 13, 2009
  */
-public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements SuppressQuickFix, Iconable {
+public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements ContainerBasedSuppressQuickFix, InjectionAwareSuppressQuickFix, Iconable {
   @NotNull protected final String myID;
   private final boolean myReplaceOtherSuppressionIds;
+  private ThreeState myShouldBeAppliedToInjectionHost = ThreeState.UNSURE;
 
+  @Override
   @Nullable
   public abstract PsiElement getContainer(final PsiElement context);
 
@@ -58,6 +58,16 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements S
   public AbstractBatchSuppressByNoInspectionCommentFix(@NotNull String ID, final boolean replaceOtherSuppressionIds) {
     myID = ID;
     myReplaceOtherSuppressionIds = replaceOtherSuppressionIds;
+  }
+
+  public void setShouldBeAppliedToInjectionHost(@NotNull ThreeState shouldBeAppliedToInjectionHost) {
+    myShouldBeAppliedToInjectionHost = shouldBeAppliedToInjectionHost;
+  }
+
+  @NotNull
+  @Override
+  public ThreeState isShouldBeAppliedToInjectionHost() {
+    return myShouldBeAppliedToInjectionHost;
   }
 
   @NotNull

@@ -21,16 +21,25 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.xml.CommonXmlStrings.*;
 /**
  * @author yole
  */
 public class XmlStringUtil {
-  @NonNls private static final String HTML_HEADER = "<html>";
-  @NonNls private static final String BODY_HEADER = "<body>";
-  @NonNls private static final String HTML_FOOTER = "</html>";
-  @NonNls private static final String BODY_FOOTER = "</body>";
 
   private XmlStringUtil() {
+  }
+
+  @NotNull
+  public static String wrapInCDATA(@NotNull String str) {
+    StringBuilder sb = new StringBuilder();
+    int cur = 0, len = str.length();
+    while (cur < len) {
+      int next = StringUtil.indexOf(str, CDATA_END, cur);
+      sb.append(CDATA_START).append(str.subSequence(cur, next = next < 0 ? len : next + 1)).append(CDATA_END);
+      cur = next;
+    }
+    return sb.toString();
   }
 
   public static String escapeString(@Nullable String str) {
@@ -58,19 +67,19 @@ public class XmlStringUtil {
           entity = escapeWhiteSpace ? "&#9;" : null;
           break;
         case '\"':
-          entity = "&quot;";
+          entity = QUOT;
           break;
         case '<':
-          entity = "&lt;";
+          entity = LT;
           break;
         case '>':
-          entity = "&gt;";
+          entity = GT;
           break;
         case '&':
-          entity = "&amp;";
+          entity = AMP;
           break;
         case 160: // unicode char for &nbsp;
-          entity = convertNoBreakSpace ? "&nbsp;" : null;
+          entity = convertNoBreakSpace ? NBSP : null;
           break;
         default:
           entity = null;
@@ -105,20 +114,20 @@ public class XmlStringUtil {
 
   @NotNull
   public static String wrapInHtml(@NotNull CharSequence result) {
-    return HTML_HEADER + result + HTML_FOOTER;
+    return HTML_START + result + HTML_END;
   }
 
   public static boolean isWrappedInHtml(@NotNull String tooltip) {
-    return StringUtil.startsWithIgnoreCase(tooltip, HTML_HEADER) &&
-           StringUtil.endsWithIgnoreCase(tooltip, HTML_FOOTER);
+    return StringUtil.startsWithIgnoreCase(tooltip, HTML_START) &&
+           StringUtil.endsWithIgnoreCase(tooltip, HTML_END);
   }
 
   @NotNull
   public static String stripHtml(@NotNull String toolTip) {
-    toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
-    toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
-    toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
-    toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
+    toolTip = StringUtil.trimStart(toolTip, HTML_START);
+    toolTip = StringUtil.trimStart(toolTip, BODY_START);
+    toolTip = StringUtil.trimEnd(toolTip, HTML_END);
+    toolTip = StringUtil.trimEnd(toolTip, BODY_END);
     return toolTip;
   }
 }

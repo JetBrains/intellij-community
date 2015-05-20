@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -28,11 +27,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme, ExternalizableScheme {
+public class CodeStyleSchemeImpl implements CodeStyleScheme, ExternalizableScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
-
-  private static final String NAME = "name";
-  private static final String PARENT = "parent";
 
   private String myName;
   private Element myRootElement;
@@ -94,39 +90,25 @@ public class CodeStyleSchemeImpl implements JDOMExternalizable, CodeStyleScheme,
 
   @Override
   @NotNull
-  public String getName(){
+  public String getName() {
     return myName;
   }
 
   @Override
-  public boolean isDefault(){
+  public boolean isDefault() {
     return myIsDefault;
   }
 
-  public String toString(){
+  public String toString() {
     return getName();
   }
 
-  @Override
   public void writeExternal(Element element) throws WriteExternalException{
     myCodeStyleSettings.writeExternal(element);
   }
 
-  @Override
   public void readExternal(Element element) throws InvalidDataException{
     myCodeStyleSettings.readExternal(element);
-  }
-
-  @NotNull
-  public static CodeStyleSchemeImpl readScheme(@NotNull Element element) {
-    return new CodeStyleSchemeImpl(element.getAttributeValue(NAME), element.getAttributeValue(PARENT), element);
-  }
-
-  public Element saveToDocument() throws WriteExternalException {
-    Element newElement = new Element("code_scheme");
-    newElement.setAttribute(NAME, getName());
-    writeExternal(newElement);
-    return newElement;
   }
 
   @Override

@@ -25,9 +25,12 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
+import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -40,6 +43,7 @@ import java.io.File;
 
 public class DiffHyperlink implements Printable {
   private static final String NEW_LINE = "\n";
+  private static final Logger LOG = Logger.getInstance("#" + DiffHyperlink.class.getName());
 
   protected final String myExpected;
   protected final String myActual;
@@ -95,7 +99,7 @@ public class DiffHyperlink implements Printable {
             }
 
             @Override
-            protected AbstractTestProxy.AssertEqualsMultiDiffViewProvider getNextId() {
+            protected DiffHyperlink getNextId() {
               return chain.getPrevious();
             }
           });
@@ -105,7 +109,7 @@ public class DiffHyperlink implements Printable {
             }
 
             @Override
-            protected AbstractTestProxy.AssertEqualsMultiDiffViewProvider getNextId() {
+            protected DiffHyperlink getNextId() {
               return chain.getNext();
             }
           });
@@ -133,11 +137,12 @@ public class DiffHyperlink implements Printable {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final DiffViewer viewer = e.getData(PlatformDataKeys.DIFF_VIEWER);
+      LOG.assertTrue(viewer != null);
       final Project project = e.getData(CommonDataKeys.PROJECT);
-      final AbstractTestProxy.AssertEqualsMultiDiffViewProvider nextProvider = getNextId();
+      final DiffHyperlink nextProvider = getNextId();
       myChain.setCurrent(nextProvider);
-      final SimpleDiffRequest nextRequest =
-        createRequest(project, myChain, nextProvider.getFilePath(), nextProvider.getExpected(), nextProvider.getActual());
+      final SimpleDiffRequest nextRequest = createRequest(project, myChain,
+                                                          nextProvider.getFilePath(), nextProvider.getLeft(), nextProvider.getRight());
       viewer.setDiffRequest(nextRequest);
     }
 
@@ -148,11 +153,15 @@ public class DiffHyperlink implements Printable {
       e.getPresentation().setEnabled(project != null && viewer != null);
     }
 
-    protected abstract AbstractTestProxy.AssertEqualsMultiDiffViewProvider getNextId();
+    protected abstract DiffHyperlink getNextId();
   }
 
   protected String getTitle() {
     return ExecutionBundle.message("strings.equal.failed.dialog.title");
+  }
+
+  public String getDiffTitle() {
+    return getTitle();
   }
 
   public String getLeft() {
@@ -184,9 +193,31 @@ public class DiffHyperlink implements Printable {
     return string.indexOf('\n') != -1 || string.indexOf('\r') != -1;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof DiffHyperlink)) return false;
+
+    DiffHyperlink hyperlink = (DiffHyperlink)o;
+
+    if (myActual != null ? !myActual.equals(hyperlink.myActual) : hyperlink.myActual != null) return false;
+    if (myExpected != null ? !myExpected.equals(hyperlink.myExpected) : hyperlink.myExpected != null) return false;
+    if (myFilePath != null ? !myFilePath.equals(hyperlink.myFilePath) : hyperlink.myFilePath != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myExpected != null ? myExpected.hashCode() : 0;
+    result = 31 * result + (myActual != null ? myActual.hashCode() : 0);
+    result = 31 * result + (myFilePath != null ? myFilePath.hashCode() : 0);
+    return result;
+  }
+
   public class DiffHyperlinkInfo implements HyperlinkInfo {
     public void navigate(final Project project) {
-      openDiff(project);
+      ViewAssertEqualsDiffAction.openDiff(DataManager.getInstance().getDataContext(), DiffHyperlink.this);
     }
 
     public DiffHyperlink getPrintable() {

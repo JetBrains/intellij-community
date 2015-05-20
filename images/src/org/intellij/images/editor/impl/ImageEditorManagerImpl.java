@@ -18,7 +18,10 @@ package org.intellij.images.editor.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.editor.ImageEditor;
+import org.intellij.images.options.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.image.BufferedImage;
 
 /**
  * Image viewer manager implementation.
@@ -38,6 +41,20 @@ public final class ImageEditorManagerImpl {
   @NotNull
   public static ImageEditor createImageEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new ImageEditorImpl(project, file);
+  }
+
+  @NotNull
+  public static ImageEditorUI createImageEditorUI(BufferedImage image) {
+    ImageEditorUI ui = new ImageEditorUI(null);
+    Options options = OptionsManager.getInstance().getOptions();
+    EditorOptions editorOptions = options.getEditorOptions();
+    GridOptions gridOptions = editorOptions.getGridOptions();
+    TransparencyChessboardOptions transparencyChessboardOptions = editorOptions.getTransparencyChessboardOptions();
+    ui.getImageComponent().setGridVisible(gridOptions.isShowDefault());
+    ui.getImageComponent().setTransparencyChessboardVisible(transparencyChessboardOptions.isShowDefault());
+
+    ui.setImage(image, null);
+    return ui;
   }
 
   /**

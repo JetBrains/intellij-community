@@ -16,19 +16,20 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
-import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.vcs.log.graph.GraphStrUtils.commitsInfoToStr;
 import static org.junit.Assert.assertEquals;
 
-public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWithTextFile {
+public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWithTwoTextFile {
 
   public GraphBuilderHashIndexTest() {
     super("graphHashIndex/");
@@ -37,7 +38,7 @@ public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWi
   @Override
   protected void runTest(String in, String out) {
     final List<GraphCommit<CommitId>> commits = getCommitIdManager().parseCommitList(in);
-    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfoIml.newInstance(commits);
+    PermanentCommitsInfo<CommitId> commitsInfo = PermanentCommitsInfoIml.newInstance(commits, Collections.<Integer, CommitId>emptyMap());
 
     assertEquals(out, commitsInfoToStr(commitsInfo, commits.size(), getCommitIdManager().getToStrFunction()));
   }

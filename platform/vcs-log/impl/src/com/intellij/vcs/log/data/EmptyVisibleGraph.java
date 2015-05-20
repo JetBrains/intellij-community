@@ -21,7 +21,7 @@ import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.graph.actions.GraphMouseAction;
+import com.intellij.vcs.log.graph.actions.GraphAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,8 +50,9 @@ class EmptyVisibleGraph implements VisibleGraph<Integer> {
   }
 
   @Override
-  public int getVisibleRowIndex(@NotNull Integer integer) {
-    return -1;
+  @Nullable
+  public Integer getVisibleRowIndex(@NotNull Integer integer) {
+    return null;
   }
 
   @NotNull
@@ -66,7 +67,7 @@ class EmptyVisibleGraph implements VisibleGraph<Integer> {
 
     @NotNull
     @Override
-    public GraphAnswer<Integer> performMouseAction(@NotNull GraphMouseAction graphMouseAction) {
+    public GraphAnswer<Integer> performAction(@NotNull GraphAction graphAction) {
       return EmptyGraphAnswer.INSTANCE;
     }
 
@@ -77,10 +78,6 @@ class EmptyVisibleGraph implements VisibleGraph<Integer> {
 
     @Override
     public void setLongEdgesHidden(boolean longEdgesHidden) {
-    }
-
-    @Override
-    public void setLinearBranchesExpansion(boolean collapse) {
     }
 
     private static class EmptyGraphAnswer implements GraphAnswer<Integer> {
@@ -95,6 +92,12 @@ class EmptyVisibleGraph implements VisibleGraph<Integer> {
       @Nullable
       @Override
       public Integer getCommitToJump() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Runnable getGraphUpdater() {
         return null;
       }
     }

@@ -18,15 +18,21 @@ package org.testng;
 
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.testng.collections.Lists;
-import org.testng.remote.strprotocol.GenericMessage;
-import org.testng.remote.strprotocol.MessageHelper;
+import org.testng.xml.XmlClass;
+import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
 import org.testng.xml.XmlTest;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
 public class IDEARemoteTestNG extends TestNG {
+
+  private final String myParam;
+  public IDEARemoteTestNG(String param) {
+    myParam = param;
+  }
 
   private static void calculateAllSuites(List<XmlSuite> suites, List<XmlSuite> outSuites) {
     for (XmlSuite s : suites) {
@@ -48,6 +54,19 @@ public class IDEARemoteTestNG extends TestNG {
         for (XmlSuite suite : suites) {
           final List<XmlTest> tests = suite.getTests();
           for (XmlTest test : tests) {
+            try {
+              if (myParam != null) {
+                for (XmlClass aClass : test.getXmlClasses()) {
+                  for (XmlInclude include : aClass.getIncludedMethods()) {
+                    final XmlInclude xmlInclude = new XmlInclude(include.getName(), Collections.singletonList(Integer.parseInt(myParam)), 0);
+                    aClass.setIncludedMethods(Collections.singletonList(xmlInclude));
+                  }
+                }
+              }
+            }
+            catch (NumberFormatException e) {
+              System.err.println("Invocation number: expected integer but found: " + myParam);
+            }
             testCount += test.getClasses().size();
           }
         }
@@ -58,6 +77,7 @@ public class IDEARemoteTestNG extends TestNG {
         addListener((ISuiteListener) new IDEATestNGRemoteListener());
         addListener((ITestListener)  new IDEATestNGRemoteListener());
         super.run();
+        System.exit(0);
       }
       else {
         System.err.println("Nothing found to run");

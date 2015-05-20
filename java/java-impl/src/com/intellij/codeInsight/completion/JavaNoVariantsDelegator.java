@@ -50,8 +50,16 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       result.restartCompletionWhenNothingMatches();
     }
 
+    InheritorsHolder holder = new InheritorsHolder(parameters.getPosition(), result);
+    for (CompletionResult plainResult : plainResults) {
+      Object o = plainResult.getLookupElement().getObject();
+      if (o instanceof PsiClass) {
+        holder.registerClass((PsiClass)o);
+      }
+    }
+
     if (empty) {
-      delegate(parameters, JavaCompletionSorting.addJavaSorting(parameters, result));
+      delegate(parameters, JavaCompletionSorting.addJavaSorting(parameters, result), holder);
     } else if (Registry.is("ide.completion.show.better.matching.classes")) {
       if (parameters.getCompletionType() == CompletionType.BASIC &&
           parameters.getInvocationCount() <= 1 &&
@@ -59,7 +67,6 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
           JavaCompletionContributor.isClassNamePossible(parameters) &&
           !JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
         result = result.withPrefixMatcher(new BetterPrefixMatcher(result.getPrefixMatcher(), BetterPrefixMatcher.getBestMatchingDegree(plainResults)));
-        InheritorsHolder holder = new InheritorsHolder(parameters.getPosition(), result);
         for (CompletionResult plainResult : plainResults) {
           LookupElement element = plainResult.getLookupElement();
           if (element instanceof TypeArgumentCompletionProvider.TypeArgsLookupElement) {
@@ -86,7 +93,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     return true;
   }
 
-  private static void delegate(CompletionParameters parameters, final CompletionResultSet result) {
+  private static void delegate(CompletionParameters parameters, final CompletionResultSet result, final InheritorsHolder inheritorsHolder) {
     if (parameters.getCompletionType() == CompletionType.BASIC) {
       PsiElement position = parameters.getPosition();
       suggestCollectionUtilities(parameters, result, position);
@@ -94,7 +101,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
       if (parameters.getInvocationCount() <= 1 &&
           (JavaCompletionContributor.mayStartClassName(result) || suggestMetaAnnotations(parameters)) &&
           JavaCompletionContributor.isClassNamePossible(parameters)) {
-        suggestNonImportedClasses(parameters, result, null);
+        suggestNonImportedClasses(parameters, result, inheritorsHolder);
         return;
       }
 
@@ -172,8 +179,11 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     }
 
     final Set<LookupElement> allClasses = new LinkedHashSet<LookupElement>();
-    JavaClassNameCompletionContributor.addAllClasses(parameters.withPosition(qualifier.getReferenceNameElement(), qualifier.getTextRange().getEndOffset()),
-                                                     true, qMatcher, new CollectConsumer<LookupElement>(allClasses));
+    PsiElement qualifierName = qualifier.getReferenceNameElement();
+    if (qualifierName != null) {
+      JavaClassNameCompletionContributor.addAllClasses(parameters.withPosition(qualifierName, qualifierName.getTextRange().getEndOffset()),
+                                                       true, qMatcher, new CollectConsumer<LookupElement>(allClasses));
+    }
     return allClasses;
   }
 

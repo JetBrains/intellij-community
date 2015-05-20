@@ -226,7 +226,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   protected abstract Settings getSettings();
 
   @Override
-  protected void restoreState(GrVariable psiField) {
+  protected void restoreState(@NotNull GrVariable psiField) {
     PsiType declaredType = psiField.getDeclaredType();
     myTypePointer = declaredType != null ? SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(declaredType) : null;
     super.restoreState(psiField);

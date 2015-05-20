@@ -53,42 +53,42 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
 
   private static final AttributesDescriptor[] ATTRS =
     new AttributesDescriptor[]{
-      new AttributesDescriptor("Line comment", DefaultHighlighter.LINE_COMMENT),
-      new AttributesDescriptor("Block comment", DefaultHighlighter.BLOCK_COMMENT),
-      new AttributesDescriptor("Groovydoc comment", DefaultHighlighter.DOC_COMMENT_CONTENT),
-      new AttributesDescriptor("Groovydoc tag", DefaultHighlighter.DOC_COMMENT_TAG),
-      new AttributesDescriptor("Keyword", DefaultHighlighter.KEYWORD),
-      new AttributesDescriptor("Number", DefaultHighlighter.NUMBER),
-      new AttributesDescriptor("GString", DefaultHighlighter.GSTRING),
-      new AttributesDescriptor("String", DefaultHighlighter.STRING),
-      new AttributesDescriptor("Braces", DefaultHighlighter.BRACES),
-      new AttributesDescriptor("Brackets", DefaultHighlighter.BRACKETS),
-      new AttributesDescriptor("Parentheses", DefaultHighlighter.PARENTHESES),
-      new AttributesDescriptor("Operation sign", DefaultHighlighter.OPERATION_SIGN),
-      new AttributesDescriptor("Bad character", DefaultHighlighter.BAD_CHARACTER),
-      //new AttributesDescriptor("Wrong string literal", DefaultHighlighter.WRONG_STRING),
-      new AttributesDescriptor("Unresolved reference access", DefaultHighlighter.UNRESOLVED_ACCESS),
-      new AttributesDescriptor("List/map to object conversion", DefaultHighlighter.LITERAL_CONVERSION),
-      new AttributesDescriptor("Annotation", DefaultHighlighter.ANNOTATION),
-      new AttributesDescriptor("Local variable", DefaultHighlighter.LOCAL_VARIABLE),
-      new AttributesDescriptor("Reassigned local variable", DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE),
-      new AttributesDescriptor("Parameter", DefaultHighlighter.PARAMETER),
-      new AttributesDescriptor("Reassigned parameter", DefaultHighlighter.REASSIGNED_PARAMETER),
-      new AttributesDescriptor("Static field", DefaultHighlighter.STATIC_FIELD),
-      new AttributesDescriptor("Instance field", DefaultHighlighter.INSTANCE_FIELD),
-      new AttributesDescriptor("Constructor call", DefaultHighlighter.CONSTRUCTOR_CALL),
-      new AttributesDescriptor("Instance method call", DefaultHighlighter.METHOD_CALL),
-      new AttributesDescriptor("Static method call", DefaultHighlighter.STATIC_METHOD_ACCESS),
-      new AttributesDescriptor("Method declaration", DefaultHighlighter.METHOD_DECLARATION),
-      new AttributesDescriptor("Constructor declaration", DefaultHighlighter.CONSTRUCTOR_DECLARATION),
-      new AttributesDescriptor("Class reference", DefaultHighlighter.CLASS_REFERENCE),
-      new AttributesDescriptor("Type parameter reference", DefaultHighlighter.TYPE_PARAMETER),
-      new AttributesDescriptor("Map key accessed as a property", DefaultHighlighter.MAP_KEY),
-      new AttributesDescriptor("Instance property reference", DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE),
-      new AttributesDescriptor("Static property reference", DefaultHighlighter.STATIC_PROPERTY_REFERENCE),
-      new AttributesDescriptor("Valid string escape", DefaultHighlighter.VALID_STRING_ESCAPE),
-      new AttributesDescriptor("Invalid string escape", DefaultHighlighter.INVALID_STRING_ESCAPE),
-      new AttributesDescriptor("Label", DefaultHighlighter.LABEL),
+      new AttributesDescriptor("Line comment", GroovySyntaxHighlighter.LINE_COMMENT),
+      new AttributesDescriptor("Block comment", GroovySyntaxHighlighter.BLOCK_COMMENT),
+      new AttributesDescriptor("Groovydoc comment", GroovySyntaxHighlighter.DOC_COMMENT_CONTENT),
+      new AttributesDescriptor("Groovydoc tag", GroovySyntaxHighlighter.DOC_COMMENT_TAG),
+      new AttributesDescriptor("Keyword", GroovySyntaxHighlighter.KEYWORD),
+      new AttributesDescriptor("Number", GroovySyntaxHighlighter.NUMBER),
+      new AttributesDescriptor("GString", GroovySyntaxHighlighter.GSTRING),
+      new AttributesDescriptor("String", GroovySyntaxHighlighter.STRING),
+      new AttributesDescriptor("Braces", GroovySyntaxHighlighter.BRACES),
+      new AttributesDescriptor("Brackets", GroovySyntaxHighlighter.BRACKETS),
+      new AttributesDescriptor("Parentheses", GroovySyntaxHighlighter.PARENTHESES),
+      new AttributesDescriptor("Operation sign", GroovySyntaxHighlighter.OPERATION_SIGN),
+      new AttributesDescriptor("Bad character", GroovySyntaxHighlighter.BAD_CHARACTER),
+      //new AttributesDescriptor("Wrong string literal", GroovySyntaxHighlighter.WRONG_STRING),
+      new AttributesDescriptor("Unresolved reference access", GroovySyntaxHighlighter.UNRESOLVED_ACCESS),
+      new AttributesDescriptor("List/map to object conversion", GroovySyntaxHighlighter.LITERAL_CONVERSION),
+      new AttributesDescriptor("Annotation", GroovySyntaxHighlighter.ANNOTATION),
+      new AttributesDescriptor("Local variable", GroovySyntaxHighlighter.LOCAL_VARIABLE),
+      new AttributesDescriptor("Reassigned local variable", GroovySyntaxHighlighter.REASSIGNED_LOCAL_VARIABLE),
+      new AttributesDescriptor("Parameter", GroovySyntaxHighlighter.PARAMETER),
+      new AttributesDescriptor("Reassigned parameter", GroovySyntaxHighlighter.REASSIGNED_PARAMETER),
+      new AttributesDescriptor("Static field", GroovySyntaxHighlighter.STATIC_FIELD),
+      new AttributesDescriptor("Instance field", GroovySyntaxHighlighter.INSTANCE_FIELD),
+      new AttributesDescriptor("Constructor call", GroovySyntaxHighlighter.CONSTRUCTOR_CALL),
+      new AttributesDescriptor("Instance method call", GroovySyntaxHighlighter.METHOD_CALL),
+      new AttributesDescriptor("Static method call", GroovySyntaxHighlighter.STATIC_METHOD_ACCESS),
+      new AttributesDescriptor("Method declaration", GroovySyntaxHighlighter.METHOD_DECLARATION),
+      new AttributesDescriptor("Constructor declaration", GroovySyntaxHighlighter.CONSTRUCTOR_DECLARATION),
+      new AttributesDescriptor("Class reference", GroovySyntaxHighlighter.CLASS_REFERENCE),
+      new AttributesDescriptor("Type parameter reference", GroovySyntaxHighlighter.TYPE_PARAMETER),
+      new AttributesDescriptor("Map key accessed as a property", GroovySyntaxHighlighter.MAP_KEY),
+      new AttributesDescriptor("Instance property reference", GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE),
+      new AttributesDescriptor("Static property reference", GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE),
+      new AttributesDescriptor("Valid string escape", GroovySyntaxHighlighter.VALID_STRING_ESCAPE),
+      new AttributesDescriptor("Invalid string escape", GroovySyntaxHighlighter.INVALID_STRING_ESCAPE),
+      new AttributesDescriptor("Label", GroovySyntaxHighlighter.LABEL),
     };
 
   @Override
@@ -148,31 +148,31 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
   @Nullable
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     Map<String, TextAttributesKey> map = new HashMap<String, TextAttributesKey>();
-    map.put("keyword", DefaultHighlighter.KEYWORD);
-    map.put("annotation", DefaultHighlighter.ANNOTATION);
-    map.put("statmet", DefaultHighlighter.STATIC_METHOD_ACCESS);
-    map.put("instmet", DefaultHighlighter.METHOD_CALL);
-    map.put("constructorCall", DefaultHighlighter.CONSTRUCTOR_CALL);
-    map.put("statfield", DefaultHighlighter.STATIC_FIELD);
-    map.put("instfield", DefaultHighlighter.INSTANCE_FIELD);
-    map.put("gdoc", DefaultHighlighter.DOC_COMMENT_CONTENT);
-    map.put("doctag", DefaultHighlighter.DOC_COMMENT_TAG);
-    map.put("unresolved", DefaultHighlighter.UNRESOLVED_ACCESS);
-    map.put("classref", DefaultHighlighter.CLASS_REFERENCE);
-    map.put("typeparam", DefaultHighlighter.TYPE_PARAMETER);
-    map.put("literal", DefaultHighlighter.LITERAL_CONVERSION);
-    map.put("mapkey", DefaultHighlighter.MAP_KEY);
-    map.put("prop", DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE);
-    map.put("staticprop", DefaultHighlighter.STATIC_PROPERTY_REFERENCE);
-    map.put("validescape", DefaultHighlighter.VALID_STRING_ESCAPE);
-    map.put("invalidescape", DefaultHighlighter.INVALID_STRING_ESCAPE);
-    map.put("local", DefaultHighlighter.LOCAL_VARIABLE);
-    map.put("reLocal", DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE);
-    map.put("param", DefaultHighlighter.PARAMETER);
-    map.put("reParam", DefaultHighlighter.REASSIGNED_PARAMETER);
-    map.put("method", DefaultHighlighter.METHOD_DECLARATION);
-    map.put("constructor", DefaultHighlighter.CONSTRUCTOR_DECLARATION);
-    map.put("label", DefaultHighlighter.LABEL);
+    map.put("keyword", GroovySyntaxHighlighter.KEYWORD);
+    map.put("annotation", GroovySyntaxHighlighter.ANNOTATION);
+    map.put("statmet", GroovySyntaxHighlighter.STATIC_METHOD_ACCESS);
+    map.put("instmet", GroovySyntaxHighlighter.METHOD_CALL);
+    map.put("constructorCall", GroovySyntaxHighlighter.CONSTRUCTOR_CALL);
+    map.put("statfield", GroovySyntaxHighlighter.STATIC_FIELD);
+    map.put("instfield", GroovySyntaxHighlighter.INSTANCE_FIELD);
+    map.put("gdoc", GroovySyntaxHighlighter.DOC_COMMENT_CONTENT);
+    map.put("doctag", GroovySyntaxHighlighter.DOC_COMMENT_TAG);
+    map.put("unresolved", GroovySyntaxHighlighter.UNRESOLVED_ACCESS);
+    map.put("classref", GroovySyntaxHighlighter.CLASS_REFERENCE);
+    map.put("typeparam", GroovySyntaxHighlighter.TYPE_PARAMETER);
+    map.put("literal", GroovySyntaxHighlighter.LITERAL_CONVERSION);
+    map.put("mapkey", GroovySyntaxHighlighter.MAP_KEY);
+    map.put("prop", GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE);
+    map.put("staticprop", GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE);
+    map.put("validescape", GroovySyntaxHighlighter.VALID_STRING_ESCAPE);
+    map.put("invalidescape", GroovySyntaxHighlighter.INVALID_STRING_ESCAPE);
+    map.put("local", GroovySyntaxHighlighter.LOCAL_VARIABLE);
+    map.put("reLocal", GroovySyntaxHighlighter.REASSIGNED_LOCAL_VARIABLE);
+    map.put("param", GroovySyntaxHighlighter.PARAMETER);
+    map.put("reParam", GroovySyntaxHighlighter.REASSIGNED_PARAMETER);
+    map.put("method", GroovySyntaxHighlighter.METHOD_DECLARATION);
+    map.put("constructor", GroovySyntaxHighlighter.CONSTRUCTOR_DECLARATION);
+    map.put("label", GroovySyntaxHighlighter.LABEL);
     return map;
   }
 }

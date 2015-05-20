@@ -432,20 +432,21 @@ public interface PsiElement extends UserDataHolder, Iconable {
   boolean isWritable();
 
   /**
-   * Returns the reference associated with this PSI element. If the element has multiple
-   * associated references (see {@link #getReferences()} for an example), returns the first
-   * associated reference.
+   * Returns the reference from this PSI element to another PSI element (or elements), if one exists.
+   * If the element has multiple associated references (see {@link #getReferences()}
+   * for an example), returns the first associated reference.
    *
    * @return the reference instance, or null if the PSI element does not have any
    *         associated references.
+   * @see com.intellij.psi.search.searches.ReferencesSearch
    */
   @Nullable
   @Contract(pure=true)
   PsiReference getReference();
 
   /**
-   * Returns all references associated with this PSI element. An element can be associated
-   * with multiple references when, for example, the element is a string literal containing
+   * Returns all references from this PSI element to other PSI elements. An element can
+   * have multiple references when, for example, the element is a string literal containing
    * multiple sub-strings which are valid full-qualified class names. If an element
    * contains only one text fragment which acts as a reference but the reference has
    * multiple possible targets, {@link PsiPolyVariantReference} should be used instead
@@ -457,6 +458,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return the array of references, or an empty array if the element has no associated
    *         references.
    * @see com.intellij.psi.PsiReferenceService#getReferences
+   * @see com.intellij.psi.search.searches.ReferencesSearch
    */
   @NotNull
   @Contract(pure=true)

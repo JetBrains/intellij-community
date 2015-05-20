@@ -18,14 +18,14 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.util.JDOMExternalizable;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, TextAttributesScheme, Scheme {
+public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme {
   @NonNls String DEFAULT_SCHEME_NAME = "Default";
 
   void setName(String name);
@@ -90,4 +90,6 @@ public interface EditorColorsScheme extends Cloneable, JDOMExternalizable, TextA
 
   float getConsoleLineSpacing();
   void setConsoleLineSpacing(float lineSpacing);
+
+  void readExternal(Element parentNode);
 }

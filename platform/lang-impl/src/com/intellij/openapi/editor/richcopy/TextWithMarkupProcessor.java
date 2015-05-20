@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -45,6 +46,7 @@ import com.intellij.openapi.editor.richcopy.view.RtfTransferableData;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
@@ -71,16 +73,11 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
   @NotNull
   @Override
   public List<RawTextWithMarkup> collectTransferableData(PsiFile file, Editor editor, int[] startOffsets, int[] endOffsets) {
-    if (!Registry.is("editor.richcopy.enable")) {
+    if (!RichCopySettings.getInstance().isEnabled()) {
       return Collections.emptyList();
     }
 
     try {
-      SelectionModel selectionModel = editor.getSelectionModel();
-      if (selectionModel.hasBlockSelection()) {
-        return Collections.emptyList(); // unsupported legacy mode
-      }
-
       RichCopySettings settings = RichCopySettings.getInstance();
       List<Caret> carets = editor.getCaretModel().getAllCarets();
       Caret firstCaret = carets.get(0);
@@ -98,7 +95,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       logInitial(editor, startOffsets, endOffsets, indentSymbolsToStrip, firstLineStartOffset);
       CharSequence text = editor.getDocument().getCharsSequence();
       EditorColorsScheme schemeToUse = settings.getColorsScheme(editor.getColorsScheme());
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getVirtualFile(), schemeToUse, file.getProject());
+      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getViewProvider().getVirtualFile(),
+                                                                           schemeToUse, file.getProject());
       highlighter.setText(text);
       MarkupModel markupModel = DocumentMarkupModel.forDocument(editor.getDocument(), file.getProject(), false);
       Context context = new Context(text, schemeToUse, indentSymbolsToStrip);
@@ -276,7 +274,17 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       myText = charSequence;
       myDefaultForeground = scheme.getDefaultForeground();
       myDefaultBackground = scheme.getDefaultBackground();
-      builder = new SyntaxInfo.Builder(myDefaultForeground, myDefaultBackground, scheme.getEditorFontSize());
+
+      // Java assumes screen resolution of 72dpi when calculating font size in pixels. External applications are supposedly using correct
+      // resolution, so we need to adjust font size for copied text to look the same in them.
+      // (See https://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-Desktop/html/java2d.html#gdlwn)
+      // Java on Mac is not affected by this issue.
+      int javaFontSize = scheme.getEditorFontSize();
+      float fontSize = SystemInfo.isMac || ApplicationManager.getApplication().isHeadlessEnvironment() ? 
+                       javaFontSize : 
+                       javaFontSize * 72f / Toolkit.getDefaultToolkit().getScreenResolution();
+      
+      builder = new SyntaxInfo.Builder(myDefaultForeground, myDefaultBackground, fontSize);
       myIndentSymbolsToStrip = indentSymbolsToStrip;
     }
 

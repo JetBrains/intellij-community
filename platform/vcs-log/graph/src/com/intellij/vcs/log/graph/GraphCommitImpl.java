@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class GraphCommitImpl<CommitId> extends ImmutableList<CommitId> implements GraphCommit<CommitId>{
+public class GraphCommitImpl<CommitId> extends ImmutableList<CommitId> implements GraphCommit<CommitId> {
 
   @NotNull private final CommitId myId;
   @NotNull private final Object myParents;
@@ -32,10 +32,12 @@ public class GraphCommitImpl<CommitId> extends ImmutableList<CommitId> implement
     myTimestamp = timestamp;
     if (parents.isEmpty()) {
       myParents = ArrayUtil.EMPTY_OBJECT_ARRAY;
-    } else if (parents.size() == 1) {
+    }
+    else if (parents.size() == 1) {
       myParents = parents.get(0);
       assert !(myParents instanceof Object[]);
-    } else {
+    }
+    else {
       myParents = parents.toArray();
     }
   }

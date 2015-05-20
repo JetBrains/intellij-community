@@ -18,7 +18,7 @@ package com.intellij.util.keyFMap;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-class PairElementsFMap implements KeyFMap {
+public class PairElementsFMap implements KeyFMap {
   private final Key key1;
   private final Key key2;
   private final Object value1;
@@ -54,6 +54,12 @@ class PairElementsFMap implements KeyFMap {
     return key == key1 ? (V)value1 : key == key2 ? (V)value2 : null;
   }
 
+  @NotNull
+  @Override
+  public Key[] getKeys() {
+    return new Key[] { key1, key2 };
+  }
+
   @Override
   public String toString() {
     return "Pair: (" + key1 + " -> " + value1 + "; " + key2 + " -> " + value2 + ")";
@@ -62,5 +68,21 @@ class PairElementsFMap implements KeyFMap {
   @Override
   public boolean isEmpty() {
     return false;
+  }
+
+  public Key getKey1() {
+    return key1;
+  }
+
+  public Key getKey2() {
+    return key2;
+  }
+
+  public Object getValue1() {
+    return value1;
+  }
+
+  public Object getValue2() {
+    return value2;
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,8 +48,8 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
     if (document != null) {
       XmlTag tag = document.getRootTag();
       if (tag != null) {
-        String classAttr = tag.getAttributeValue("class");
-        String idAttr = tag.getAttributeValue("id");
+        String classAttr = tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME);
+        String idAttr = tag.getAttributeValue(HtmlUtil.ID_ATTRIBUTE_NAME);
         if (!isNullOrEmpty(classAttr) || !isNullOrEmpty(idAttr)) {
           String commentString = buildCommentString(classAttr, idAttr);
           return text + "\n<!-- /" + commentString + " -->";

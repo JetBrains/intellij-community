@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.wrapreturnvalue;
 
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -215,11 +216,17 @@ class WrapReturnValueDialog extends RefactoringDialog {
         final PsiClass currentClass = facade.findClass(existingClassField.getText(), GlobalSearchScope.allScope(myProject));
         if (currentClass != null) {
           model.removeAllElements();
+          final PsiType returnType = sourceMethod.getReturnType();
+          assert returnType != null;
           for (PsiField field : currentClass.getFields()) {
-            final PsiType returnType = sourceMethod.getReturnType();
-            assert returnType != null;
-            if (TypeConversionUtil.isAssignable(field.getType(), returnType)) {
+            final PsiType fieldType = field.getType();
+            if (TypeConversionUtil.isAssignable(fieldType, returnType)) {
               model.addElement(field);
+            }
+            else {
+              if (WrapReturnValueProcessor.getInferredType(fieldType, returnType, currentClass, sourceMethod) != null) {
+                model.addElement(field);
+              }
             }
           }
         }

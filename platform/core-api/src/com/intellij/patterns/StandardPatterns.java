@@ -97,7 +97,7 @@ public class StandardPatterns {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
-          if (pattern.getCondition().accepts(o, context)) return true;
+          if (pattern.accepts(o, context)) return true;
         }
         return false;
       }
@@ -126,7 +126,7 @@ public class StandardPatterns {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         for (final ElementPattern pattern : patterns) {
-          if (!pattern.getCondition().accepts(o, context)) return false;
+          if (!pattern.accepts(o, context)) return false;
         }
         return true;
       }
@@ -154,7 +154,7 @@ public class StandardPatterns {
     return new ObjectPattern.Capture<E>(new InitialPatternConditionPlus(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return !pattern.getCondition().accepts(o, context);
+        return !pattern.accepts(o, context);
       }
 
       @Override
@@ -174,7 +174,7 @@ public class StandardPatterns {
     return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        pattern.getCondition().accepts(o, context);
+        pattern.accepts(o, context);
         return true;
       }
     });

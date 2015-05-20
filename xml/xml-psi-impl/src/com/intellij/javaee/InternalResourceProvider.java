@@ -30,8 +30,10 @@ public class InternalResourceProvider implements StandardResourceProvider{
     impl.addInternalResource(XmlUtil.XSLT_URI,"xslt-1_0.xsd");
     impl.addInternalResource(XmlUtil.XSLT_URI,"2.0", "xslt-2_0.xsd");
     impl.addInternalResource(XmlUtil.XINCLUDE_URI,"xinclude.xsd");
+
     impl.addInternalResource(XmlUtil.XML_SCHEMA_URI, "XMLSchema.xsd");
     impl.addInternalResource(XmlUtil.XML_SCHEMA_URI + ".xsd", "XMLSchema.xsd");
+
     impl.addInternalResource("http://www.w3.org/2001/XMLSchema.dtd", "XMLSchema.dtd");
     impl.addInternalResource(XmlUtil.XML_SCHEMA_INSTANCE_URI, "XMLSchema-instance.xsd");
     impl.addInternalResource("http://www.w3.org/2001/xml.xsd","xml.xsd");

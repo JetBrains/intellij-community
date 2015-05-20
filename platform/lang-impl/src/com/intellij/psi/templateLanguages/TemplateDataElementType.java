@@ -23,10 +23,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -72,7 +69,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   public ASTNode parseContents(ASTNode chameleon) {
     final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
     final FileElement treeElement = new DummyHolder(((TreeElement)chameleon).getManager(), null, table).getTreeElement();
-    final PsiFile file = (PsiFile)TreeUtil.getFileElement((TreeElement)chameleon).getPsi();
+    final FileElement fileElement = TreeUtil.getFileElement((TreeElement)chameleon);
+    final PsiFile file = (PsiFile)fileElement.getPsi();
     PsiFile originalFile = file.getOriginalFile();
 
     final TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)originalFile.getViewProvider();
@@ -112,8 +110,10 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     DebugUtil.checkTreeStructure(parsed);
     DebugUtil.checkTreeStructure(treeElement);
     DebugUtil.checkTreeStructure(chameleon);
-    DebugUtil.checkTreeStructure(file.getNode());
-    DebugUtil.checkTreeStructure(originalFile.getNode());
+    if (fileElement != chameleon) {
+      DebugUtil.checkTreeStructure(file.getNode());
+      DebugUtil.checkTreeStructure(originalFile.getNode());
+    }
 
     return childNode;
   }
@@ -213,6 +213,10 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
         return language;
       }
     };
+
+    // Since we're already inside a template language PSI that was built regardless of the file size (for whatever reason), 
+    // there should also be no file size checks for template data files.
+    SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
 
     return viewProvider.getPsi(language);
   }

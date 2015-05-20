@@ -16,6 +16,7 @@
 package org.jetbrains.groovy.compiler.rt;
 
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.Nullable;
 import sun.misc.URLClassPath;
 
 import java.io.BufferedReader;
@@ -66,46 +67,7 @@ public class GroovycRunner {
     }
     */
 
-    if (args.length != 3) {
-      if (args.length != 4 || !"--indy".equals(args[3])) {
-        System.err.println("There is no arguments for groovy compiler");
-        System.exit(1);
-      }
-      System.setProperty("groovy.target.indy", "true");
-    }
-
-    final boolean optimize = GroovyRtConstants.OPTIMIZE.equals(args[0]);
-    final boolean forStubs = "stubs".equals(args[1]);
-    String argPath = args[2];
-
-    if (!new File(argPath).exists()) {
-      System.err.println("Arguments file for groovy compiler not found");
-      System.exit(1);
-    }
-
-    ClassLoader loader = optimize ? buildMainLoader(argPath) : GroovycRunner.class.getClassLoader();
-    Thread.currentThread().setContextClassLoader(loader);
-
-    try {
-      Class.forName("org.codehaus.groovy.control.CompilationUnit", true, loader);
-    }
-    catch (Throwable e) {
-      System.err.println(GroovyRtConstants.NO_GROOVY);
-      System.exit(1);
-    }
-
-    try {
-      Class<?> aClass = Class.forName("org.jetbrains.groovy.compiler.rt.DependentGroovycRunner", true, loader);
-      Method method = aClass.getDeclaredMethod("runGroovyc", boolean.class, String.class);
-      method.invoke(null, forStubs, argPath);
-    }
-    catch (Throwable e) {
-      while (e.getCause() != null) {
-        e = e.getCause();
-      }
-      e.printStackTrace();
-      System.exit(1);
-    }
+    System.exit(intMain(args));
     /*
     finally {
       if (ourController != null) {
@@ -121,6 +83,65 @@ public class GroovycRunner {
     */
   }
 
+  public static int intMain(String[] args) {
+    boolean indy = false;
+    if (args.length != 3) {
+      if (args.length != 4 || !"--indy".equals(args[3])) {
+        System.err.println("There is no arguments for groovy compiler");
+        return 1;
+      }
+      indy = true;
+    }
+
+    final boolean optimize = GroovyRtConstants.OPTIMIZE.equals(args[0]);
+    final boolean forStubs = "stubs".equals(args[1]);
+    String argPath = args[2];
+
+    return intMain2(indy, optimize, forStubs, argPath, null);
+  }
+
+  public static int intMain2(boolean indy, boolean optimize, boolean forStubs, String argPath, Queue mailbox) {
+    if (indy) {
+      System.setProperty("groovy.target.indy", "true");
+    }
+
+    if (!new File(argPath).exists()) {
+      System.err.println("Arguments file for groovy compiler not found");
+      return 1;
+    }
+
+    ClassLoader loader = optimize ? buildMainLoader(argPath) : GroovycRunner.class.getClassLoader();
+    if (loader == null) {
+      return 1;
+    }
+    if (optimize) {
+      Thread.currentThread().setContextClassLoader(loader);
+    }
+
+    try {
+      Class.forName("org.codehaus.groovy.control.CompilationUnit", true, loader);
+    }
+    catch (Throwable e) {
+      System.err.println(GroovyRtConstants.NO_GROOVY);
+      return 1;
+    }
+
+    try {
+      Class<?> aClass = Class.forName("org.jetbrains.groovy.compiler.rt.DependentGroovycRunner", true, loader);
+      Method method = aClass.getDeclaredMethod("runGroovyc", boolean.class, String.class, Queue.class);
+      method.invoke(null, forStubs, argPath, mailbox);
+    }
+    catch (Throwable e) {
+      while (e.getCause() != null) {
+        e = e.getCause();
+      }
+      e.printStackTrace();
+      return 1;
+    }
+    return 0;
+  }
+
+  @Nullable
   private static ClassLoader buildMainLoader(String argsPath) {
     Set<URL> bootstrapUrls = new HashSet<URL>();
     try {
@@ -148,7 +169,7 @@ public class GroovycRunner {
     }
     catch (IOException e) {
       e.printStackTrace();
-      System.exit(1);
+      return null;
     }
 
     final ClassLoader[] ref = new ClassLoader[1];

@@ -1,4 +1,4 @@
-// "Create Property" "false"
+// "Create property" "false"
 class Calculator {
     int i;
     public void printError() {

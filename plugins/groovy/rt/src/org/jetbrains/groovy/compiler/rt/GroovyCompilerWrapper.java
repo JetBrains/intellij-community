@@ -26,6 +26,7 @@ import org.codehaus.groovy.control.*;
 import org.codehaus.groovy.control.messages.*;
 import org.codehaus.groovy.syntax.SyntaxException;
 import org.codehaus.groovy.tools.GroovyClass;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,18 +42,21 @@ public class GroovyCompilerWrapper {
     "A groovyc error occurred while trying to load one of the classes in project dependencies, please ensure it's present. " +
     "See the message and the stack trace below for reference\n\n";
   private final List<CompilerMessage> collector;
-  private final boolean forStubs;
+  private boolean forStubs;
 
   public GroovyCompilerWrapper(List<CompilerMessage> collector, boolean forStubs) {
     this.collector = collector;
     this.forStubs = forStubs;
   }
 
-  public List<OutputItem> compile(final CompilationUnit unit) {
-    List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
+  public void onContinuation() {
+    this.forStubs = false;
+  }
+
+  public List<OutputItem> compile(final CompilationUnit unit, int throughPhase) {
     try {
-      unit.compile(forStubs ? Phases.CONVERSION : Phases.ALL);
-      addCompiledFiles(unit, compiledFiles, forStubs);
+      unit.compile(throughPhase);
+      return getCompiledFiles(unit);
     }
     catch (CompilationFailedException e) {
       processCompilationException(e);
@@ -81,41 +85,14 @@ public class GroovyCompilerWrapper {
     finally {
       addWarnings(unit.getErrorCollector());
     }
-    return compiledFiles;
+    return Collections.emptyList();
   }
 
-  private static void addCompiledFiles(CompilationUnit compilationUnit,
-                                       final List<OutputItem> compiledFiles,
-                                       final boolean forStubs) throws IOException {
+  private List<OutputItem> getCompiledFiles(CompilationUnit compilationUnit) throws IOException {
     File targetDirectory = compilationUnit.getConfiguration().getTargetDirectory();
 
-    final String outputPath = targetDirectory.getAbsolutePath().replace(File.separatorChar, '/');
-
     if (forStubs) {
-      compilationUnit.applyToPrimaryClassNodes(new CompilationUnit.PrimaryClassNodeOperation() {
-        public void call(SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {
-          final String topLevel = classNode.getName();
-          final String stubPath = outputPath + "/" + topLevel.replace('.', '/') + ".java";
-          String fileName = source.getName();
-          if (fileName.startsWith("file:")) {
-            try {
-              fileName = new URL(fileName).getFile();
-            }
-            catch (MalformedURLException ignored) {
-            }
-          }
-          if (new File(stubPath).exists()) {
-            compiledFiles.add(new OutputItem(stubPath, fileName));
-          }
-          /*
-          else {
-            collector.add(new CompilerMessage(CompilerMessage.WARNING, "Groovyc didn't generate stub for " + topLevel, fileName,
-                                              classNode.getLineNumber(), classNode.getColumnNumber()));
-          }
-          */
-        }
-      });
-      return;
+      return getStubOutputItems(compilationUnit, targetDirectory);
     }
 
     final SortedSet<String> allClasses = new TreeSet<String>();
@@ -125,6 +102,7 @@ public class GroovyCompilerWrapper {
       allClasses.add(listOfClass.getName());
     }
 
+    List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
     for (Iterator iterator = compilationUnit.iterator(); iterator.hasNext();) {
       SourceUnit sourceUnit = (SourceUnit) iterator.next();
       String fileName = sourceUnit.getName();
@@ -142,7 +120,7 @@ public class GroovyCompilerWrapper {
           String className = tailItr.next();
           if (className.equals(topLevel) || className.startsWith(nested)) {
             tailItr.remove();
-            compiledFiles.add(new OutputItem(outputPath + "/" + className.replace('.', '/') + ".class", fileName));
+            compiledFiles.add(new OutputItem(targetDirectory, className.replace('.', '/') + ".class", fileName));
           }
           else {
             break;
@@ -150,6 +128,30 @@ public class GroovyCompilerWrapper {
         }
       }
     }
+    return compiledFiles;
+  }
+
+  @NotNull
+  static List<OutputItem> getStubOutputItems(CompilationUnit compilationUnit, final File stubDirectory) {
+    final List<OutputItem> compiledFiles = new ArrayList<OutputItem>();
+    compilationUnit.applyToPrimaryClassNodes(new CompilationUnit.PrimaryClassNodeOperation() {
+      public void call(SourceUnit source, GeneratorContext context, ClassNode classNode) throws CompilationFailedException {
+        final String topLevel = classNode.getName();
+        String fileName = source.getName();
+        if (fileName.startsWith("file:")) {
+          try {
+            fileName = new URL(fileName).getFile();
+          }
+          catch (MalformedURLException ignored) {
+          }
+        }
+        OutputItem item = new OutputItem(stubDirectory, topLevel.replace('.', '/') + ".java", fileName);
+        if (new File(item.getOutputPath()).exists()) {
+          compiledFiles.add(item);
+        }
+      }
+    });
+    return compiledFiles;
   }
 
   private void addWarnings(ErrorCollector errorCollector) {
@@ -194,7 +196,7 @@ public class GroovyCompilerWrapper {
 
     if (forStubs) {
       collector.add(new CompilerMessage(GroovyCompilerMessageCategories.INFORMATION,
-                                        "Groovyc stub generation failed", null, -1, -1));
+                                        GroovyRtConstants.GROOVYC_STUB_GENERATION_FAILED, null, -1, -1));
     }
 
     final StringWriter writer = new StringWriter();
@@ -214,7 +216,7 @@ public class GroovyCompilerWrapper {
     String message = exception.getMessage();
     String justMessage = message.substring(0, message.lastIndexOf(LINE_AT));
     collector.add(new CompilerMessage(GroovyCompilerMessageCategories.ERROR, justMessage, exception.getSourceLocator(),
-        exception.getLine(), exception.getStartColumn()));
+                                      exception.getLine(), exception.getStartColumn()));
   }
 
   private void addErrorMessage(GroovyRuntimeException exception) {
@@ -248,7 +250,10 @@ public class GroovyCompilerWrapper {
       return ((ClassNode)node).getModule();
     }
     if (node instanceof AnnotatedNode) {
-      return ((AnnotatedNode)node).getDeclaringClass().getModule();
+      ClassNode declaringClass = ((AnnotatedNode)node).getDeclaringClass();
+      if (declaringClass != null) {
+        return declaringClass.getModule();
+      }
     }
     return null;
   }
@@ -261,8 +266,8 @@ public class GroovyCompilerWrapper {
     private final String myOutputPath;
     private final String mySourceFileName;
 
-    public OutputItem(String outputPath, String sourceFileName) {
-      myOutputPath = outputPath;
+    public OutputItem(File targetDirectory, String outputPath, String sourceFileName) {
+      myOutputPath = targetDirectory.getAbsolutePath().replace(File.separatorChar, '/') + "/" + outputPath;
       mySourceFileName = sourceFileName;
     }
 

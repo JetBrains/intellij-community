@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,15 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class RefJavaUtil {
-  public abstract void addReferences(final PsiModifierListOwner psiFrom, final RefJavaElement ref, @Nullable PsiElement findIn);
+  public abstract void addReferences(@NotNull PsiModifierListOwner psiFrom, @NotNull RefJavaElement ref, @Nullable PsiElement findIn);
 
-  public abstract RefClass getTopLevelClass(RefElement refElement);
+  public abstract RefClass getTopLevelClass(@NotNull RefElement refElement);
 
-  public abstract boolean isInheritor(RefClass subClass, RefClass superClass);
+  public abstract boolean isInheritor(@NotNull RefClass subClass, RefClass superClass);
 
   @Nullable //default package name
   public abstract String getPackageName(RefEntity refEntity);
@@ -42,9 +43,10 @@ public abstract class RefJavaUtil {
 
   public abstract int compareAccess(String a1, String a2);
 
-  public abstract String getAccessModifier(PsiModifierListOwner psiElement);
+  @NotNull
+  public abstract String getAccessModifier(@NotNull PsiModifierListOwner psiElement);
 
-  public abstract void setAccessModifier(RefJavaElement refElement, String newAccess);
+  public abstract void setAccessModifier(@NotNull RefJavaElement refElement, @NotNull String newAccess);
 
   public abstract void setIsStatic(RefJavaElement refElement, boolean isStatic);
 

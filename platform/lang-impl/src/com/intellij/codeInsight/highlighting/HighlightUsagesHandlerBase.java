@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,14 +100,21 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
 
   public abstract List<T> getTargets();
 
+  @Nullable
+  public String getFeatureId() {
+    return null;
+  }
+
   protected abstract void selectTargets(List<T> targets, Consumer<List<T>> selectionConsumer);
 
   public abstract void computeUsages(List<T> targets);
 
   protected void addOccurrence(@NotNull PsiElement element) {
     TextRange range = element.getTextRange();
-    range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
-    myReadUsages.add(range);
+    if (range != null) {
+      range = InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range);
+      myReadUsages.add(range);
+    }
   }
 
   public List<TextRange> getReadUsages() {

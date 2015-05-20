@@ -41,12 +41,7 @@ public class ToggleActionCommand extends AbstractCommand {
   public static final String OFF = "off";
   
   public ToggleActionCommand(String text, int line) {
-    super(text, line);
-  }
-
-  @Override
-  protected boolean isAwtThread() {
-    return true;
+    super(text, line, true);
   }
 
   @Override

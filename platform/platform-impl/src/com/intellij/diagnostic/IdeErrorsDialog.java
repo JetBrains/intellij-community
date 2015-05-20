@@ -25,6 +25,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -226,7 +227,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private class ForwardAction extends AnAction implements DumbAware {
     public ForwardAction() {
       super("Next", null, AllIcons.Actions.Forward);
-      AnAction forward = ActionManager.getInstance().getAction("Forward");
+      AnAction forward = ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB);
       if (forward != null) {
         registerCustomShortcutSet(forward.getShortcutSet(), getRootPane(), getDisposable());
       }
@@ -246,7 +247,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private class BackAction extends AnAction implements DumbAware {
     public BackAction() {
       super("Previous", null, AllIcons.Actions.Back);
-      AnAction back = ActionManager.getInstance().getAction("Back");
+      AnAction back = ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB);
       if (back != null) {
         registerCustomShortcutSet(back.getShortcutSet(), getRootPane(), getDisposable());
       }
@@ -468,6 +469,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   private void updateAttachmentWarning(final AbstractMessage message) {
+    if (message == null) return;
     final List<Attachment> includedAttachments = ContainerUtil.filter(message.getAttachments(), new Condition<Attachment>() {
       public boolean value(final Attachment attachment) {
         return attachment.isIncluded();
@@ -791,7 +793,11 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (element != null) {
         String className = element.getClassName();
         if (visitedClassNames.add(className) && PluginManagerCore.isPluginClass(className)) {
-          return PluginManagerCore.getPluginByClassName(className);
+          PluginId id = PluginManagerCore.getPluginByClassName(className);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(diagnosePluginDetection(className, id));
+          }
+          return id;
         }
       }
     }
@@ -847,6 +853,22 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     return null;
+  }
+
+  @NotNull
+  private static String diagnosePluginDetection(String className, PluginId id) {
+    String msg = "Detected plugin " + id + " by class " + className;
+    IdeaPluginDescriptor descriptor = PluginManager.getPlugin(id);
+    if (descriptor != null) {
+      msg += "; ideaLoader=" + descriptor.getUseIdeaClassLoader();
+      
+      ClassLoader loader = descriptor.getPluginClassLoader();
+      msg += "; loader=" + loader;
+      if (loader instanceof PluginClassLoader) {
+        msg += "; loaded class: " + ((PluginClassLoader)loader).hasLoadedClass(className);
+      }
+    }
+    return msg;
   }
 
   private class ClearFatalsAction extends AbstractAction {

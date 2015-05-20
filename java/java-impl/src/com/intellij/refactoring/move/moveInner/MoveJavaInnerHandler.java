@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,8 @@ public class MoveJavaInnerHandler implements MoveInnerHandler {
       newClass = createNewClass(options);
       PsiDocComment defaultDocComment = newClass.getDocComment();
       if (defaultDocComment != null && innerClass.getDocComment() == null) {
-        innerClass = (PsiClass)innerClass.addAfter(defaultDocComment, null).getParent();
+        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(defaultDocComment.getProject());
+        innerClass = (PsiClass)codeStyleManager.reformat(innerClass.addAfter(defaultDocComment, null).getParent());
       }
 
       newClass = (PsiClass)newClass.replace(innerClass);

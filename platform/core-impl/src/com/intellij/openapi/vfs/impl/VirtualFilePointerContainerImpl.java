@@ -189,12 +189,11 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
       result = EMPTY;
     }
     else {
-      VirtualFilePointer[] vf = myList.toArray(new VirtualFilePointer[myList.size()]);
-      List<VirtualFile> cachedFiles = new ArrayList<VirtualFile>(vf.length);
-      List<String> cachedUrls = new ArrayList<String>(vf.length);
-      List<VirtualFile> cachedDirectories = new ArrayList<VirtualFile>(vf.length / 3);
+      List<VirtualFile> cachedFiles = new ArrayList<VirtualFile>(myList.size());
+      List<String> cachedUrls = new ArrayList<String>(myList.size());
+      List<VirtualFile> cachedDirectories = new ArrayList<VirtualFile>(myList.size() / 3);
       boolean allFilesAreDirs = true;
-      for (VirtualFilePointer v : vf) {
+      for (VirtualFilePointer v : myList) {
         VirtualFile file = v.getFile();
         String url = v.getUrl();
         cachedUrls.add(url);

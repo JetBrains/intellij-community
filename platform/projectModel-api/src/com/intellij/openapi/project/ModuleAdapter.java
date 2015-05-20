@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -25,20 +26,14 @@ import java.util.List;
  */
 public abstract class ModuleAdapter implements ModuleListener {
   @Override
-  public void moduleAdded(Project project, Module module) { }
+  public void moduleAdded(@NotNull Project project, @NotNull Module module) { }
 
   @Override
-  public void beforeModuleRemoved(Project project, Module module) { }
+  public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) { }
 
   @Override
-  public void moduleRemoved(Project project, Module module) { }
+  public void moduleRemoved(@NotNull Project project, @NotNull Module module) { }
 
-  @SuppressWarnings("deprecation")
   @Override
-  public void modulesRenamed(Project project, List<Module> modules, Function<Module, String> oldNameProvider) {
-    modulesRenamed(project, modules);
-  }
-
-  /** @deprecated implement {@link #modulesRenamed(Project, List, Function)} (to remove in IDEA 14) */
-  public void modulesRenamed(Project project, List<Module> modules) { }
+  public void modulesRenamed(@NotNull Project project, @NotNull List<Module> modules, @NotNull Function<Module, String> oldNameProvider) { }
 }

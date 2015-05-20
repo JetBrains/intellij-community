@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,22 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       }
     }
     throw new EvaluateException(error.getMessage(), error);
+  }
+
+  @Override
+  public boolean isValid() {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (!super.isValid()) {
+      return false;
+    }
+    try {
+      if (myStackFrame != null) {
+        myStackFrame.location(); //extra check if jdi frame is valid
+      }
+      return true;
+    } catch (InvalidStackFrameException e) {
+      return false;
+    }
   }
 
   @Override
@@ -208,9 +224,15 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     }
     catch (InternalException e) {
       // suppress some internal errors caused by bugs in specific JDI implementations
-      if(e.errorCode() != 23) {
+      if (e.errorCode() != 23 && e.errorCode() != 35) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
+      else {
+        LOG.info("Exception while getting this object", e);
+      }
+    }
+    catch (IllegalArgumentException e) {
+        LOG.info("Exception while getting this object", e);
     }
     return myThisReference;
   }

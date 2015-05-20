@@ -28,7 +28,7 @@ import com.intellij.testFramework.IdeaTestCase;
  */
 public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
   private boolean myShowAnonymousByDefault;
-
+  
   protected JavaFileStructureTestCase() {
     IdeaTestCase.initPlatformPrefix();
   }
@@ -49,12 +49,12 @@ public abstract class JavaFileStructureTestCase extends FileStructureTestBase {
     return "java";
   }
 
-  public void setShowAnonymous(boolean show) throws Exception {
+  public void setShowAnonymous(boolean show) {
     myPopup.setTreeActionState(JavaAnonymousClassesNodeProvider.class, show);
     update();
   }
 
-  public void setShowParents(boolean show) throws Exception {
+  public void setShowParents(boolean show) {
     myPopup.setTreeActionState(JavaInheritedMembersNodeProvider.class, show);
     update();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -31,11 +32,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +130,7 @@ public class ShelvedChange {
       File baseDir = new File(project.getBaseDir().getPath());
 
       File file = getAbsolutePath(baseDir, myBeforePath);
-      final FilePathImpl beforePath = new FilePathImpl(file, false);
+      FilePath beforePath = VcsUtil.getFilePath(file, false);
       beforePath.refresh();
       ContentRevision beforeRevision = null;
       if (myFileStatus != FileStatus.ADDED) {
@@ -141,7 +144,7 @@ public class ShelvedChange {
       }
       ContentRevision afterRevision = null;
       if (myFileStatus != FileStatus.DELETED) {
-        final FilePathImpl afterPath = new FilePathImpl(getAbsolutePath(baseDir, myAfterPath), false);
+        FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
         afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
       }
       myChange = new Change(beforeRevision, afterRevision, myFileStatus);
@@ -248,8 +251,13 @@ public class ShelvedChange {
 
     private String getBaseContent() {
       myBeforeFilePath.refresh();
-      final Document doc = FileDocumentManager.getInstance().getDocument(myBeforeFilePath.getVirtualFile());
-      return doc.getText();
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
+        public String compute() {
+          final Document doc = FileDocumentManager.getInstance().getDocument(myBeforeFilePath.getVirtualFile());
+          return doc.getText();
+        }
+      });
     }
 
     @Override

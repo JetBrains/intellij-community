@@ -39,7 +39,7 @@ public class PropertiesUtilTest extends LightPlatformCodeInsightFixtureTestCase 
   }
 
   public void testBaseNameWithLongLocale() {
-    assertBaseNameEquals("property_latin.properties", "property");
+    assertBaseNameEquals("property_latin.properties", "property_latin");
   }
 
   public void testBaseNameWithCountryAndVariant() {

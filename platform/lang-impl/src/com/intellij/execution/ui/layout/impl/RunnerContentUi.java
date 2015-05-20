@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -228,7 +229,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myTabs.getPresentation().setPaintBorder(0, 0, 0, 0).setPaintFocus(false)
       .setRequestFocusOnLastFocusedComponent(true);
     myTabs.getComponent().setBackground(myToolbar.getBackground());
-    myTabs.getComponent().setBorder(new EmptyBorder(0, 2, 0, 0));
+    myTabs.getComponent().setBorder(new EmptyBorder(0, 1, 0, 0));
 
     final NonOpaquePanel wrappper = new NonOpaquePanel(new BorderLayout(0, 0));
     wrappper.add(myToolbar, BorderLayout.WEST);
@@ -421,7 +422,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
     Dimension size = gridCell.getSize();
     if (size == null) {
-      size = new Dimension(200, 200);
+      size = JBUI.size(200, 200);
     }
     final DockableGrid content = new DockableGrid(null, null, size, Arrays.asList(contents), window);
     if (target != null) {
@@ -1381,7 +1382,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     public MyComponent() {
       setOpaque(true);
       setFocusCycleRoot(true);
-      setBorder(new ToolWindow.Border(true, false, true, true));
+      setBorder(new ToolWindow.Border(false, false, false, false));
     }
 
     @Override

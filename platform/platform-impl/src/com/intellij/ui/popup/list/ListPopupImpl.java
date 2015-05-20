@@ -19,6 +19,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -103,6 +105,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
 
     return shouldShow;
+  }
+
+  @Override
+  public void goBack() {
+    myList.clearSelection();
+    super.goBack();
   }
 
   @Override
@@ -579,4 +587,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     return true;
   }
 
+  @Override
+  public void showInBestPositionFor(@NotNull Editor editor) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      handleSelect(true);
+    }
+    else {
+      super.showInBestPositionFor(editor);
+    }
+  }
 }

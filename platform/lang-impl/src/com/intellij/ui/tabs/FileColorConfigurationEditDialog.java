@@ -27,6 +27,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,9 +85,6 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
 
   @Override
   protected JComponent createNorthPanel() {
-    final JPanel result = new JPanel();
-    result.setLayout(new BoxLayout(result, BoxLayout.Y_AXIS));
-
     final List<NamedScope> scopeList = new ArrayList<NamedScope>();
     final Project project = myManager.getProject();
     final NamedScopesHolder[] scopeHolders = NamedScopeManager.getAllNamedScopeHolders(project);
@@ -108,36 +106,22 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
       }
     });
 
-    final JPanel pathPanel = new JPanel();
-    pathPanel.setLayout(new BorderLayout());
-
     final JLabel pathLabel = new JLabel("Scope:");
     pathLabel.setDisplayedMnemonic('S');
     pathLabel.setLabelFor(myScopeComboBox);
-    pathPanel.add(pathLabel, BorderLayout.WEST);
-    pathPanel.add(myScopeComboBox, BorderLayout.CENTER);
-
-    /*
-    final JButton newScope = new JButton("Add scope...");
-    newScope.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        // TBD: refresh scope list
-      }
-    });
-    pathPanel.add(newScope, BorderLayout.EAST);
-    */
-
-    result.add(pathPanel);
-
-    final JPanel colorPanel = new JPanel();
-    colorPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-    colorPanel.setLayout(new BoxLayout(colorPanel, BoxLayout.X_AXIS));
     final JLabel colorLabel = new JLabel("Color:");
-    colorPanel.add(colorLabel);
-    colorPanel.add(myColorSelectionComponent);
-    colorPanel.add(Box.createHorizontalGlue());
-    result.add(colorPanel);
 
+    JPanel result = new JPanel(new GridBagLayout());
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.fill = GridBagConstraints.BOTH;
+    gbc.insets = JBUI.insets(5);
+    gbc.gridx = 0;
+    result.add(pathLabel, gbc);
+    result.add(colorLabel, gbc);
+    gbc.gridx = 1;
+    gbc.weightx = 1;
+    result.add(myScopeComboBox, gbc);
+    result.add(myColorSelectionComponent, gbc);
     return result;
   }
 
@@ -182,7 +166,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myScopeComboBox;
+    return myScopeComboBox.isEnabled() ? myScopeComboBox : myColorSelectionComponent;
   }
 
   private void updateOKButton() {

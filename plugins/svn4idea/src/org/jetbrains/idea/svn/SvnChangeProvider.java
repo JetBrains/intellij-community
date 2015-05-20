@@ -19,20 +19,23 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -56,17 +59,25 @@ public class SvnChangeProvider implements ChangeProvider {
   public static final String ourDefaultListName = VcsBundle.message("changes.default.changelist.name");
   public static final String PROPERTY_LAYER = "Property";
 
-  private final SvnVcs myVcs;
-  private final VcsContextFactory myFactory;
-  private final SvnFileUrlMappingImpl mySvnFileUrlMapping;
+  private static final NotNullFactory<Map<String, File>> NAME_TO_FILE_MAP_FACTORY = new NotNullFactory<Map<String, File>>() {
+    @NotNull
+    @Override
+    public Map<String, File> create() {
+      return ContainerUtil.newHashMap();
+    }
+  };
 
-  public SvnChangeProvider(final SvnVcs vcs) {
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final VcsContextFactory myFactory;
+  @NotNull private final SvnFileUrlMappingImpl mySvnFileUrlMapping;
+
+  public SvnChangeProvider(@NotNull SvnVcs vcs) {
     myVcs = vcs;
     myFactory = VcsContextFactory.SERVICE.getInstance();
     mySvnFileUrlMapping = (SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping();
   }
 
-  public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress,
+  public void getChanges(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder, @Nullable ProgressIndicator progress,
                          final ChangeListManagerGate addGate) throws VcsException {
     final SvnScopeZipper zipper = new SvnScopeZipper(dirtyScope);
     zipper.run();
@@ -76,21 +87,18 @@ public class SvnChangeProvider implements ChangeProvider {
 
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
-
-      final StatusWalkerPartner partner = new StatusWalkerPartner(myVcs, progress);
       final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs, mySvnFileUrlMapping);
-
       final EventDispatcher<StatusReceiver> statusReceiver = EventDispatcher.create(StatusReceiver.class);
       statusReceiver.addListener(context);
       statusReceiver.addListener(nestedCopiesBuilder);
 
-      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), partner);
+      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), progress);
 
       for (FilePath path : zipper.getRecursiveDirs()) {
         walker.go(path, Depth.INFINITY);
       }
 
-      partner.setFileProvider(fileProvider);
+      walker.setFileProvider(fileProvider);
       for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
         walker.go(item.getDir(), Depth.IMMEDIATES);
       }
@@ -129,13 +137,15 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private void processUnsaved(VcsDirtyScope dirtyScope, ChangeListManagerGate addGate, SvnChangeProviderContext context)
+  private static void processUnsaved(@NotNull VcsDirtyScope dirtyScope,
+                                     ChangeListManagerGate addGate,
+                                     @NotNull SvnChangeProviderContext context)
     throws SVNException {
-    final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    final Document[] unsavedDocuments = fileDocumentManager.getUnsavedDocuments();
-    for (Document unsavedDocument : unsavedDocuments) {
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+
+    for (Document unsavedDocument : fileDocumentManager.getUnsavedDocuments()) {
       final VirtualFile file = fileDocumentManager.getFile(unsavedDocument);
-      if (file != null && dirtyScope.belongsTo(new FilePathImpl(file)) && fileDocumentManager.isFileModified(file)) {
+      if (file != null && dirtyScope.belongsTo(VcsUtil.getFilePath(file)) && fileDocumentManager.isFileModified(file)) {
         final FileStatus status = addGate.getStatus(file);
         if (status == null || FileStatus.NOT_CHANGED.equals(status)) {
           context.addModifiedNotSavedChange(file);
@@ -144,82 +154,70 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private ISVNStatusFileProvider createFileProvider(Map<String, SvnScopeZipper.MyDirNonRecursive> nonRecursiveMap) {
-    // translate into terms of File.getAbsolutePath()
-    final Map<String, Map> preparedMap = new HashMap<String, Map>();
+  @NotNull
+  private static ISVNStatusFileProvider createFileProvider(@NotNull Map<String, SvnScopeZipper.MyDirNonRecursive> nonRecursiveMap) {
+    final Map<String, Map<String, File>> result = ContainerUtil.newHashMap();
+
     for (SvnScopeZipper.MyDirNonRecursive item : nonRecursiveMap.values()) {
-      final Map result = new HashMap();
+      File file = item.getDir().getIOFile();
+
+      Map<String, File> fileMap = ContainerUtil.getOrCreate(result, file.getAbsolutePath(), NAME_TO_FILE_MAP_FACTORY);
       for (FilePath path : item.getChildrenList()) {
-        result.put(path.getName(), path.getIOFile());
+        fileMap.put(path.getName(), path.getIOFile());
       }
-      preparedMap.put(item.getDir().getIOFile().getAbsolutePath(), result);
+
+      // also add currently processed file to the map of its parent, as there are cases when SVNKit calls ISVNStatusFileProvider with file
+      // parent (and not file that was passed to doStatus()), gets null result and does not provide any status
+      // see http://issues.tmatesoft.com/issue/SVNKIT-567 for details
+      if (file.getParentFile() != null) {
+        Map<String, File> parentMap = ContainerUtil.getOrCreate(result, file.getParentFile().getAbsolutePath(), NAME_TO_FILE_MAP_FACTORY);
+
+        parentMap.put(file.getName(), file);
+      }
     }
+
     return new ISVNStatusFileProvider() {
-      public Map getChildrenFiles(File parent) {
-        return preparedMap.get(parent.getAbsolutePath());
+      @Override
+      public Map<String, File> getChildrenFiles(File parent) {
+        return result.get(parent.getAbsolutePath());
       }
     };
   }
 
-  private void processCopiedAndDeleted(final SvnChangeProviderContext context, final VcsDirtyScope dirtyScope) throws SVNException {
+  private void processCopiedAndDeleted(@NotNull SvnChangeProviderContext context, @Nullable VcsDirtyScope dirtyScope) throws SVNException {
     for(SvnChangedFile copiedFile: context.getCopiedFiles()) {
-      if (context.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
-      processCopiedFile(copiedFile, context.getBuilder(), context, dirtyScope);
+      context.checkCanceled();
+      processCopiedFile(copiedFile, context, dirtyScope);
     }
     for(SvnChangedFile deletedFile: context.getDeletedFiles()) {
-      if (context.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
+      context.checkCanceled();
       context.processStatus(deletedFile.getFilePath(), deletedFile.getStatus());
     }
   }
 
-  public void getChanges(final FilePath path, final boolean recursive, final ChangelistBuilder builder)
+  public void getChanges(@NotNull FilePath path, boolean recursive, @NotNull ChangelistBuilder builder)
     throws SVNException, SvnBindException {
     final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, null);
-    final StatusWalkerPartner partner = new StatusWalkerPartner(myVcs, ProgressManager.getInstance().getProgressIndicator());
-    final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, partner);
+    SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, context, ProgressManager.getInstance().getProgressIndicator());
     walker.go(path, recursive ? Depth.INFINITY : Depth.IMMEDIATES);
     processCopiedAndDeleted(context, null);
   }
 
-  private void processCopiedFile(SvnChangedFile copiedFile,
-                                 ChangelistBuilder builder,
-                                 SvnChangeProviderContext context, final VcsDirtyScope dirtyScope) throws SVNException {
+  private void processCopiedFile(@NotNull SvnChangedFile copiedFile,
+                                 @NotNull SvnChangeProviderContext context,
+                                 @Nullable VcsDirtyScope dirtyScope) throws SVNException {
     boolean foundRename = false;
     final Status copiedStatus = copiedFile.getStatus();
     final String copyFromURL = copiedFile.getCopyFromURL();
-    final FilePath copiedToPath = copiedFile.getFilePath();
-
-    // if copy target is _deleted_, treat like deleted, not moved!
-    /*for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
-      final SvnChangedFile deletedFile = iterator.next();
-      final FilePath deletedPath = deletedFile.getFilePath();
-
-      if (Comparing.equal(deletedPath, copiedToPath)) {
-        return;
-      }
-    }*/
-
     final Set<SvnChangedFile> deletedToDelete = new HashSet<SvnChangedFile>();
 
-    for (Iterator<SvnChangedFile> iterator = context.getDeletedFiles().iterator(); iterator.hasNext();) {
-      SvnChangedFile deletedFile = iterator.next();
+    for (SvnChangedFile deletedFile : context.getDeletedFiles()) {
       final Status deletedStatus = deletedFile.getStatus();
-      if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
+      if (deletedStatus.getURL() != null && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
         final String clName = SvnUtil.getChangelistName(copiedFile.getStatus());
-        final Change newChange = context.createMovedChange(createBeforeRevision(deletedFile, true),
-                                                        CurrentContentRevision.create(copiedFile.getFilePath()), copiedStatus,
-                                                        deletedStatus);
-        applyMovedChange(copiedFile.getFilePath(), builder, dirtyScope, deletedToDelete, deletedFile, clName, newChange);
-        for(Iterator<SvnChangedFile> iterChild = context.getDeletedFiles().iterator(); iterChild.hasNext();) {
-          SvnChangedFile deletedChild = iterChild.next();
+        applyMovedChange(context, copiedFile.getFilePath(), dirtyScope, deletedToDelete, deletedFile, copiedStatus, clName);
+        for (SvnChangedFile deletedChild : context.getDeletedFiles()) {
           final Status childStatus = deletedChild.getStatus();
-          if (childStatus == null) {
-            continue;
-          }
           final SVNURL childUrl = childStatus.getURL();
           if (childUrl == null) {
             continue;
@@ -230,10 +228,8 @@ public class SvnChangeProvider implements ChangeProvider {
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);
             FilePath newFilePath = myFactory.createFilePathOn(newPath);
             if (!context.isDeleted(newFilePath)) {
-              final Change movedChange = context.createMovedChange(createBeforeRevision(deletedChild, true),
-                                                              CurrentContentRevision.create(newFilePath),
-                                                              context.getTreeConflictStatus(newPath), childStatus);
-              applyMovedChange(newFilePath, builder, dirtyScope, deletedToDelete, deletedChild, clName, movedChange);
+              applyMovedChange(context, newFilePath, dirtyScope, deletedToDelete, deletedChild, context.getTreeConflictStatus(newPath),
+                               clName);
             }
           }
         }
@@ -263,8 +259,8 @@ public class SvnChangeProvider implements ChangeProvider {
         final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
         final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
         final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
-        builder.processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
-                                    SvnUtil.getChangelistName(status), SvnVcs.getKey());
+        context.getBuilder().processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
+                                                 SvnUtil.getChangelistName(status), SvnVcs.getKey());
         foundRename = true;
       }
     }
@@ -276,31 +272,41 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private void applyMovedChange(final FilePath oldPath,
-                                ChangelistBuilder builder,
-                                final VcsDirtyScope dirtyScope,
-                                Set<SvnChangedFile> deletedToDelete, SvnChangedFile deletedFile, String clName, final Change newChange) {
+  private void applyMovedChange(@NotNull SvnChangeProviderContext context,
+                                @NotNull FilePath oldPath,
+                                @Nullable final VcsDirtyScope dirtyScope,
+                                @NotNull Set<SvnChangedFile> deletedToDelete,
+                                @NotNull SvnChangedFile deletedFile,
+                                @Nullable Status copiedStatus,
+                                @Nullable String clName) throws SVNException {
+    final Change change = context
+      .createMovedChange(createBeforeRevision(deletedFile, true), CurrentContentRevision.create(oldPath), copiedStatus,
+                         deletedFile.getStatus());
     final boolean isUnder = dirtyScope == null ? true : ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return ChangeListManagerImpl.isUnder(newChange, dirtyScope);
+        return ChangeListManagerImpl.isUnder(change, dirtyScope);
       }
     });
     if (isUnder) {
-      builder.removeRegisteredChangeFor(oldPath);
-      builder.processChangeInList(newChange, clName, SvnVcs.getKey());
+      context.getBuilder().removeRegisteredChangeFor(oldPath);
+      context.getBuilder().processChangeInList(change, clName, SvnVcs.getKey());
       deletedToDelete.add(deletedFile);
     }
   }
 
-  private SvnContentRevision createBeforeRevision(final SvnChangedFile changedFile, final boolean forDeleted) {
-    return SvnContentRevision.createBaseRevision(myVcs,
-                                                 forDeleted ? FilePathImpl.createForDeletedFile(changedFile.getStatus().getFile(),
-                                                                                                changedFile.getFilePath().isDirectory()) :
-                                                 changedFile.getFilePath(), changedFile.getStatus().getRevision());
+  @NotNull
+  private SvnContentRevision createBeforeRevision(@NotNull SvnChangedFile changedFile, boolean forDeleted) {
+    Status status = changedFile.getStatus();
+    FilePath path = changedFile.getFilePath();
+
+    return SvnContentRevision
+      .createBaseRevision(myVcs, forDeleted ? FilePathImpl.createForDeletedFile(status.getFile(), path.isDirectory()) : path,
+                          status.getRevision());
   }
 
-  private static File guessWorkingCopyPath(final File file, @NotNull final SVNURL url, final String copyFromURL) throws SVNException {
+  @NotNull
+  private static File guessWorkingCopyPath(@NotNull File file, @NotNull SVNURL url, @NotNull String copyFromURL) throws SVNException {
     String copiedPath = url.getPath();
     String copyFromPath = SVNURL.parseURIEncoded(copyFromURL).getPath();
     String commonPathAncestor = SVNPathUtil.getCommonPathAncestor(copiedPath, copyFromPath);
@@ -319,17 +325,15 @@ public class SvnChangeProvider implements ChangeProvider {
     }
 
     String result = StringUtil.join(resultSegments, "/");
-    if (startsWithSlash) {
-      result = "/" + result;
-    }
-    return new File(result);
+
+    return new File(startsWithSlash ? SvnUtil.ensureStartSlash(result) : result);
   }
 
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
   }
 
-  public void doCleanup(final List<VirtualFile> files) {
-    new CleanupWorker(VfsUtil.toVirtualFileArray(files), myVcs.getProject(), "action.Subversion.cleanup.progress.title").execute();
+  public void doCleanup(@NotNull List<VirtualFile> files) {
+    new CleanupWorker(VfsUtilCore.toVirtualFileArray(files), myVcs.getProject(), "action.Subversion.cleanup.progress.title").execute();
   }
 }

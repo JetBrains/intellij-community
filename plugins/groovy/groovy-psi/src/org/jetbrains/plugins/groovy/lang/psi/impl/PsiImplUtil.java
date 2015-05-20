@@ -972,4 +972,19 @@ public class PsiImplUtil {
     }
     return null;
   }
+
+  @NotNull
+  public static GroovyResolveResult reflectedToBase(GroovyResolveResult result, GrMethod baseMethod, GrReflectedMethod reflectedMethod) {
+    PsiSubstitutor substitutor = result.getSubstitutor();
+    PsiTypeParameter[] reflectedParameters = reflectedMethod.getTypeParameters();
+    PsiTypeParameter[] baseParameters = baseMethod.getTypeParameters();
+    assert baseParameters.length == reflectedParameters.length;
+    for (int i = 0; i < baseParameters.length; i++) {
+      substitutor = substitutor.put(baseParameters[i], result.getSubstitutor().substitute(reflectedParameters[i]));
+    }
+
+    return new GroovyResolveResultImpl(baseMethod, result.getCurrentFileResolveContext(), result.getSpreadState(),
+                                       substitutor, result.isAccessible(), result.isStaticsOK(),
+                                       result.isInvokedOnProperty(), result.isValidResult());
+  }
 }

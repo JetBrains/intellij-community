@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,19 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.StateSplitter;
+import com.intellij.openapi.components.StateStorageException;
+import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.store.ReadOnlyModificationException;
-import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.tracker.VirtualFileTracker;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.TObjectObjectProcedure;
@@ -48,23 +47,21 @@ import java.util.Set;
 public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData> {
   private final File myDir;
   private volatile VirtualFile myVirtualFile;
+  @SuppressWarnings("deprecation")
   private final StateSplitter mySplitter;
 
-  private DirectoryStorageData myStorageData;
-
   public DirectoryBasedStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
-                               @NotNull String dir,
-                               @NotNull StateSplitter splitter,
+                               @NotNull File dir,
+                               @SuppressWarnings("deprecation") @NotNull StateSplitter splitter,
                                @NotNull Disposable parentDisposable,
                                @Nullable final Listener listener) {
     super(pathMacroSubstitutor);
-
-    myDir = new File(dir);
+    myDir = dir;
     mySplitter = splitter;
 
     VirtualFileTracker virtualFileTracker = ServiceManager.getService(VirtualFileTracker.class);
     if (virtualFileTracker != null && listener != null) {
-      virtualFileTracker.addTracker(LocalFileSystem.PROTOCOL_PREFIX + myDir.getAbsolutePath().replace(File.separatorChar, '/'), new VirtualFileAdapter() {
+      virtualFileTracker.addTracker(VfsUtilCore.pathToUrl(PathUtil.toSystemIndependentName(myDir.getPath())), new VirtualFileAdapter() {
         @Override
         public void contentsChanged(@NotNull VirtualFileEvent event) {
           notifyIfNeed(event);
@@ -94,28 +91,29 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> result) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Collection<VirtualFile> changedFiles, @NotNull Set<String> componentNames) {
     // todo reload only changed file, compute diff
     DirectoryStorageData oldData = myStorageData;
-    DirectoryStorageData newData = loadState();
+    DirectoryStorageData newData = loadData();
     myStorageData = newData;
     if (oldData == null) {
-      result.addAll(newData.getComponentNames());
+      componentNames.addAll(newData.getComponentNames());
     }
     else {
-      result.addAll(oldData.getComponentNames());
-      result.addAll(newData.getComponentNames());
+      componentNames.addAll(oldData.getComponentNames());
+      componentNames.addAll(newData.getComponentNames());
     }
   }
 
   @Nullable
   @Override
-  protected Element getStateAndArchive(@NotNull DirectoryStorageData storageData, @NotNull String componentName) {
+  protected Element getStateAndArchive(@NotNull DirectoryStorageData storageData, Object component, @NotNull String componentName) {
     return storageData.getCompositeStateAndArchive(componentName, mySplitter);
   }
 
   @NotNull
-  private DirectoryStorageData loadState() {
+  @Override
+  protected DirectoryStorageData loadData() {
     DirectoryStorageData storageData = new DirectoryStorageData();
     storageData.loadFrom(getVirtualFile(), myPathMacroSubstitutor);
     return storageData;
@@ -128,17 +126,6 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       myVirtualFile = virtualFile = LocalFileSystem.getInstance().findFileByIoFile(myDir);
     }
     return virtualFile;
-  }
-
-  @Override
-  @NotNull
-  protected DirectoryStorageData getStorageData(boolean reloadData) {
-    if (myStorageData != null && !reloadData) {
-      return myStorageData;
-    }
-
-    myStorageData = loadState();
-    return myStorageData;
   }
 
   @Override
@@ -178,7 +165,7 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     }
   }
 
-  private static class MySaveSession implements SaveSession, ExternalizationSession {
+  private static class MySaveSession extends SaveSessionBase {
     private final DirectoryBasedStorage storage;
     private final DirectoryStorageData originalStorageData;
     private DirectoryStorageData copiedStorageData;
@@ -192,26 +179,13 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     }
 
     @Override
-    public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state, Storage storageSpec) {
-      Element compositeState;
-      try {
-        compositeState = DefaultStateSerializer.serializeState(state, storageSpec);
-      }
-      catch (WriteExternalException e) {
-        LOG.debug(e);
-        return;
-      }
-      catch (Throwable e) {
-        LOG.error("Unable to serialize " + componentName + " state", e);
-        return;
-      }
-
+    protected void setSerializedState(@NotNull Object component, @NotNull String componentName, @Nullable Element element) {
       removedFileNames.addAll(originalStorageData.getFileNames(componentName));
-      if (JDOMUtil.isEmpty(compositeState)) {
+      if (JDOMUtil.isEmpty(element)) {
         doSetState(componentName, null, null);
       }
       else {
-        for (Pair<Element, String> pair : storage.mySplitter.splitState(compositeState)) {
+        for (Pair<Element, String> pair : storage.mySplitter.splitState(element)) {
           removedFileNames.remove(pair.second);
           doSetState(componentName, pair.second, pair.first);
         }
@@ -243,16 +217,11 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
     }
 
     @Override
-    public void save() {
+    public void save() throws IOException {
       VirtualFile dir = storage.getVirtualFile();
       if (copiedStorageData.isEmpty()) {
         if (dir != null && dir.exists()) {
-          try {
-            StorageUtil.deleteFile(this, dir);
-          }
-          catch (IOException e) {
-            throw new StateStorageException(e);
-          }
+          StorageUtil.deleteFile(this, dir);
         }
         storage.myStorageData = copiedStorageData;
         return;
@@ -315,30 +284,23 @@ public class DirectoryBasedStorage extends StateStorageBase<DirectoryStorageData
       }
     }
 
-    private void deleteFiles(@NotNull VirtualFile dir) {
+    private void deleteFiles(@NotNull VirtualFile dir) throws IOException {
       AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(DocumentRunnable.IgnoreDocumentRunnable.class);
       try {
         for (VirtualFile file : dir.getChildren()) {
           if (removedFileNames.contains(file.getName())) {
-            deleteFile(file, this);
+            try {
+              file.delete(this);
+            }
+            catch (FileNotFoundException e) {
+              throw new ReadOnlyModificationException(file, e, null);
+            }
           }
         }
       }
       finally {
         token.finish();
       }
-    }
-  }
-
-  public static void deleteFile(@NotNull VirtualFile file, @NotNull Object requestor) {
-    try {
-      file.delete(requestor);
-    }
-    catch (FileNotFoundException ignored) {
-      throw new ReadOnlyModificationException(file);
-    }
-    catch (IOException e) {
-      throw new StateStorageException(e);
     }
   }
 }

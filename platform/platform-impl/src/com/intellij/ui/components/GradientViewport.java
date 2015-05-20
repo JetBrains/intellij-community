@@ -28,8 +28,8 @@ public class GradientViewport extends JViewport {
   private final Insets myInsets;
   private final boolean myAlways;
 
-  public GradientViewport(Component view, int top, int left, int bottom, int right, boolean forScrollBars) {
-    myInsets = new Insets(top, left, bottom, right);
+  public GradientViewport(Component view, Insets insets, boolean forScrollBars) {
+    myInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
     myAlways = forScrollBars;
     setView(view);
   }

@@ -16,7 +16,7 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -55,7 +55,7 @@ class InlineMethodHandler extends JavaInlineActionHandler {
       return;
     }
 
-    PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
+    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
     if (reference != null) {
       final PsiElement refElement = reference.getElement();
       if (refElement != null && !isEnabledForLanguage(refElement.getLanguage())) {

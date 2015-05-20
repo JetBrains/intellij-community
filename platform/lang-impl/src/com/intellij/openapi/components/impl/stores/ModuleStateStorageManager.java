@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,19 +25,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-class ModuleStateStorageManager extends StateStorageManagerImpl {
+public class ModuleStateStorageManager extends StateStorageManagerImpl {
   @NonNls private static final String ROOT_TAG_NAME = "module";
   private final ModuleImpl myModule;
 
-  public ModuleStateStorageManager(@Nullable TrackingPathMacroSubstitutor pathMacroManager, @NotNull ModuleImpl module) {
+  public ModuleStateStorageManager(@NotNull TrackingPathMacroSubstitutor pathMacroManager, @NotNull ModuleImpl module) {
     super(pathMacroManager, ROOT_TAG_NAME, module, module.getPicoContainer());
 
     myModule = module;
   }
 
+  @NotNull
   @Override
   protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
     return new ModuleStoreImpl.ModuleFileData(ROOT_TAG_NAME, myModule);
@@ -58,7 +60,7 @@ class ModuleStateStorageManager extends StateStorageManagerImpl {
 
         return ContainerUtil.concat(sessions, Collections.singletonList(new StateStorage.SaveSession() {
           @Override
-          public void save() {
+          public void save() throws IOException {
             if (data.isDirty()) {
               myModule.getStateStore().getMainStorage().forceSave();
             }

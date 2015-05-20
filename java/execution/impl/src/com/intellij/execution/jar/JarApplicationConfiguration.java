@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +74,16 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myConfigurationModule.readExternal(element);
   }
 
+  @Override
+  public RunConfiguration clone() {
+    JarApplicationConfiguration clone = (JarApplicationConfiguration)super.clone();
+    clone.myEnvs = new LinkedHashMap<String, String>(myEnvs);
+    clone.myConfigurationModule = new JavaRunConfigurationModule(getProject(), true);
+    clone.myConfigurationModule.setModule(myConfigurationModule.getModule());
+    clone.myBean = XmlSerializerUtil.createCopy(myBean);
+    return clone;
+  }
+
   public void setModule(Module module) {
     myConfigurationModule.setModule(module);
   }
@@ -87,7 +98,6 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     XmlSerializer.serializeInto(myBean, element, SERIALIZATION_FILTERS);
     EnvironmentVariablesComponent.writeExternal(element, getEnvs());
-    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
     if (myConfigurationModule.getModule() != null) {
       myConfigurationModule.writeExternal(element);
     }
@@ -145,6 +155,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myBean.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
   }
 
+  @Nullable
   @Override
   public String getAlternativeJrePath() {
     return myBean.ALTERNATIVE_JRE_PATH;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public abstract class RunTab implements DataProvider, Disposable {
       logConsoleManager = new LogConsoleManagerBase(myProject, mySearchScope) {
         @Override
         protected Icon getDefaultIcon() {
-          return AllIcons.Debugger.Console;
+          return AllIcons.Debugger.Console_log;
         }
 
         @Override
@@ -117,7 +117,7 @@ public abstract class RunTab implements DataProvider, Disposable {
     if (runConfiguration instanceof RunConfigurationBase) {
       RunConfigurationBase configuration = (RunConfigurationBase)runConfiguration;
       if (myManager == null) {
-        myManager = new LogFilesManager(getLogConsoleManager());
+        myManager = new LogFilesManager(myProject, getLogConsoleManager(), contentDescriptor);
       }
       myManager.addLogConsoles(configuration, processHandler);
       if (processHandler != null) {

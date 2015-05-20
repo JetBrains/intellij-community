@@ -1,9 +1,6 @@
 package com.intellij.tasks.bugzilla;
 
-import com.intellij.tasks.Comment;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.*;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +57,25 @@ public class BugzillaTask extends Task {
   public TaskType getType() {
     String severity = (String)myResponse.get("severity");
     return severity.equalsIgnoreCase("enhancement")? TaskType.FEATURE : TaskType.BUG;
+  }
+
+  @Nullable
+  @Override
+  public TaskState getState() {
+    final String status = (String)myResponse.get("status");
+    if (status.equals("IN_PROGRESS")) {
+      return TaskState.IN_PROGRESS;
+    }
+    else if (status.equals("CONFIRMED")) {
+      return TaskState.OPEN;
+    }
+    else if (status.equals("UNCONFIRMED")) {
+      return TaskState.SUBMITTED;
+    }
+    else if (status.equals("RESOLVED")) {
+      return TaskState.RESOLVED;
+    }
+    return TaskState.OTHER;
   }
 
   @Nullable

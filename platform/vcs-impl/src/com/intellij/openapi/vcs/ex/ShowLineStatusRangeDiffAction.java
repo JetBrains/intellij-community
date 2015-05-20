@@ -15,9 +15,15 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.actions.DocumentFragmentContent;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,9 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author irengrig
- */
 public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
   public ShowLineStatusRangeDiffAction(@NotNull LineStatusTracker lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
     super(VcsBundle.message("action.name.show.difference"), AllIcons.Actions.Diff, lineStatusTracker, range);
@@ -42,53 +45,41 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    DiffManager.getInstance().getDiffTool().show(createDiffData());
+    DiffManager.getInstance().showDiff(e.getProject(), createDiffData());
   }
 
   private DiffRequest createDiffData() {
-    return new DiffRequest(myLineStatusTracker.getProject()) {
-      @NotNull
-      public DiffContent[] getContents() {
-        Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getVcsDocument());
-        return new DiffContent[]{
-          createDiffContent(myLineStatusTracker.getVcsDocument(),
-                            myLineStatusTracker.getVcsRange(range),
-                            null),
-          createDiffContent(myLineStatusTracker.getDocument(),
-                            myLineStatusTracker.getCurrentTextRange(range),
-                            myLineStatusTracker.getVirtualFile())};
-      }
+    Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getVcsDocument());
 
-      public String[] getContentTitles() {
-        return new String[]{VcsBundle.message("diff.content.title.up.to.date"),
-          VcsBundle.message("diff.content.title.current.range")};
-      }
+    DiffContent vcsContent = createDiffContent(myLineStatusTracker.getVcsDocument(),
+                                               myLineStatusTracker.getVcsTextRange(range),
+                                               null);
+    DiffContent currentContent = createDiffContent(myLineStatusTracker.getDocument(),
+                                                   myLineStatusTracker.getCurrentTextRange(range),
+                                                   myLineStatusTracker.getVirtualFile());
 
-      public String getWindowTitle() {
-        return VcsBundle.message("dialog.title.diff.for.range");
-      }
-    };
+    return new SimpleDiffRequest(VcsBundle.message("dialog.title.diff.for.range"),
+                                 vcsContent, currentContent,
+                                 VcsBundle.message("diff.content.title.up.to.date"),
+                                 VcsBundle.message("diff.content.title.current.range")
+    );
   }
 
   @NotNull
-  private DiffContent createDiffContent(@NotNull Document uDocument, @NotNull TextRange textRange, @Nullable VirtualFile file) {
+  private DiffContent createDiffContent(@NotNull Document document, @NotNull TextRange textRange, @Nullable VirtualFile file) {
     final Project project = myLineStatusTracker.getProject();
-    final DiffContent diffContent = new DocumentContent(project, uDocument);
-    return new FragmentContent(diffContent, textRange, project, file);
+    DocumentContent content = DiffContentFactory.getInstance().create(project, document, file);
+    return new DocumentFragmentContent(project, content, textRange);
   }
 
   @NotNull
   private static Range expand(@NotNull Range range, @NotNull Document document, @NotNull Document uDocument) {
-    if (range.getType() == Range.MODIFIED) return range;
-    if (range.getType() == Range.INSERTED || range.getType() == Range.DELETED) {
-      boolean canExpandBefore = range.getLine1() != 0 && range.getVcsLine1() != 0;
-      boolean canExpandAfter = range.getLine2() < document.getLineCount() && range.getVcsLine2() < uDocument.getLineCount();
-      int offset1 = range.getLine1() - (canExpandBefore ? 1 : 0);
-      int uOffset1 = range.getVcsLine1() - (canExpandBefore ? 1 : 0);
-      int offset2 = range.getLine2() + (canExpandAfter ? 1 : 0);
-      int uOffset2 = range.getVcsLine2() + (canExpandAfter ? 1 : 0);
-      return new Range(offset1, offset2, uOffset1, uOffset2, range.getType());
-    }
-    throw new IllegalArgumentException("Unknown range type: " + range.getType());
+    boolean canExpandBefore = range.getLine1() != 0 && range.getVcsLine1() != 0;
+    boolean canExpandAfter = range.getLine2() < document.getLineCount() && range.getVcsLine2() < uDocument.getLineCount();
+    int offset1 = range.getLine1() - (canExpandBefore ? 1 : 0);
+    int uOffset1 = range.getVcsLine1() - (canExpandBefore ? 1 : 0);
+    int offset2 = range.getLine2() + (canExpandAfter ? 1 : 0);
+    int uOffset2 = range.getVcsLine2() + (canExpandAfter ? 1 : 0);
+    return new Range(offset1, offset2, uOffset1, uOffset2);
   }
 }

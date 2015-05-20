@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,21 +116,15 @@ public class FileChooserDescriptor implements Cloneable {
     return myChooseMultiple;
   }
 
-  /** @deprecated use {@link #isChooseMultiple()} (to be removed in IDEA 15) */
-  @SuppressWarnings("UnusedDeclaration")
-  public boolean getChooseMultiple() {
-    return isChooseMultiple();
-  }
-
   public String getTitle() {
     return myTitle;
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
     withTitle(title);
   }
 
-  public FileChooserDescriptor withTitle(String title) {
+  public FileChooserDescriptor withTitle(@Nls(capitalization = Nls.Capitalization.Title) String title) {
     myTitle = title;
     return this;
   }
@@ -202,12 +197,6 @@ public class FileChooserDescriptor implements Cloneable {
   public FileChooserDescriptor withTreeRootVisible(boolean isTreeRootVisible) {
     myTreeRootVisible = isTreeRootVisible;
     return this;
-  }
-
-  /** @deprecated use {@link #withTreeRootVisible(boolean)} (to be removed in IDEA 15) */
-  @SuppressWarnings("UnusedDeclaration")
-  public FileChooserDescriptor setIsTreeRootVisible(boolean treeRootVisible) {
-    return withTreeRootVisible(treeRootVisible);
   }
 
   public boolean isShowHiddenFiles() {

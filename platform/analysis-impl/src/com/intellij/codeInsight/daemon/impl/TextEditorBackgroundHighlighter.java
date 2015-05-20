@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,12 +47,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   private PsiFile myFile;
   private final Project myProject;
   private boolean myCompiled;
-  private static final int[] EXCEPT_VISIBLE = {
-    Pass.UPDATE_OVERRIDEN_MARKERS,
-    Pass.LOCAL_INSPECTIONS,
-    Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
-    Pass.EXTERNAL_TOOLS,
-  };
 
   public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
@@ -78,7 +72,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     }
   }
 
-  public List<TextEditorHighlightingPass> getPasses(@NotNull int[] passesToIgnore) {
+  @NotNull
+  List<TextEditorHighlightingPass> getPasses(@NotNull int[] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     renewFile();
@@ -98,8 +93,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   @Override
   @NotNull
   public TextEditorHighlightingPass[] createPassesForVisibleArea() {
-    List<TextEditorHighlightingPass> passes = getPasses(EXCEPT_VISIBLE);
-    return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(new TextEditorHighlightingPass[passes.size()]);
+    return createPassesForEditor();
   }
 
   @Override

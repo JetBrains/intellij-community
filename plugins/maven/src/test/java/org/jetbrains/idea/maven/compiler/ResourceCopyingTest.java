@@ -122,6 +122,70 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/resourceOutput/foo/dir/file.properties");
   }
 
+  public void testResourcesPluginGoalAbsoluteCustomTargetPath() throws Exception {
+    createProjectSubFile("src/test/resources/dir/file.properties");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <version>2.6</version>" +
+                  "      <executions>" +
+                  "       <execution>" +
+                  "         <id>default-testResources</id>" +
+                  "         <phase>process-test-resources</phase>" +
+                  "         <goals>" +
+                  "           <goal>testResources</goal>" +
+                  "         </goals>" +
+                  "         <configuration>" +
+                  "           <outputDirectory>${project.build.testOutputDirectory}/custom</outputDirectory>" +
+                  "         </configuration>" +
+                  "       </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    compileModules("project");
+    assertCopied("target/test-classes/custom/dir/file.properties");
+  }
+
+  public void testResourcesPluginGoalRelativeCustomTargetPath() throws Exception {
+    createProjectSubFile("src/test/resources/dir/file.properties");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-resources-plugin</artifactId>" +
+                  "      <version>2.6</version>" +
+                  "      <executions>" +
+                  "       <execution>" +
+                  "         <id>default-testResources</id>" +
+                  "         <phase>process-test-resources</phase>" +
+                  "         <goals>" +
+                  "           <goal>testResources</goal>" +
+                  "         </goals>" +
+                  "         <configuration>" +
+                  "           <outputDirectory>target/test-classes/custom</outputDirectory>" +
+                  "         </configuration>" +
+                  "       </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    compileModules("project");
+    assertCopied("target/test-classes/custom/dir/file.properties");
+  }
+
   public void testAbsoluteCustomTargetPath() throws Exception {
     createProjectSubFile("res/foo/file.properties");
 

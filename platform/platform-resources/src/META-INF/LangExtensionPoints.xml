@@ -74,6 +74,9 @@
                     interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate"/>
     <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate"/>
     <extensionPoint name="backspaceHandlerDelegate" interface="com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate"/>
+    <extensionPoint name="editor.backspaceModeOverride" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.BackspaceModeOverride"/>
+    </extensionPoint>
 
     <extensionPoint name="codeStyleSettingsProvider"
                     interface="com.intellij.psi.codeStyle.CodeStyleSettingsProvider"/>
@@ -160,6 +163,11 @@
       <with attribute="implementationClass" implements="com.intellij.lang.PairedBraceMatcher"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.quoteHandler"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.editorActions.QuoteHandler"/>
+    </extensionPoint>
+
     <extensionPoint name="lang.foldingBuilder"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.folding.FoldingBuilder"/>
@@ -243,8 +251,10 @@
     <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>
+    <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.UseScopeOptimizer"/>
 
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
+    <extensionPoint name="languageTestDataChecker" interface="com.intellij.openapi.projectRoots.LanguageTestDataChecker"/>
 
     <extensionPoint name="gotoClassContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
@@ -267,6 +277,7 @@
     <extensionPoint name="librarySettingsProvider" interface="com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider"/>
 
     <extensionPoint name="smartPointerElementInfoFactory" interface="com.intellij.psi.impl.smartPointers.SmartPointerElementInfoFactory"/>
+    <extensionPoint name="smartPointer.anchorProvider" interface="com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider"/>
     <extensionPoint name="elementSignatureProvider" interface="com.intellij.codeInsight.folding.impl.ElementSignatureProvider"/>
     <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor"/>
     <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor"/>
@@ -315,6 +326,7 @@
     <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro"/>
     <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"/>
     <extensionPoint name="liveTemplatePreprocessor" interface="com.intellij.codeInsight.template.impl.TemplatePreprocessor"/>
+    <extensionPoint name="liveTemplateSubstitutor" interface="com.intellij.codeInsight.template.TemplateSubstitutor"/>
     <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate"/>
     <extensionPoint name="variableTypeCalculator" interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator"/>
 
@@ -459,6 +471,9 @@
     <extensionPoint name="completion.confidence" beanClass="com.intellij.codeInsight.completion.CompletionConfidenceEP">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.CompletionConfidence"/>
     </extensionPoint>
+
+    <extensionPoint name="completion.preselectionBehaviourProvider"
+                    interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider"/>
 
     <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper"/>
     <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter"/>
@@ -704,6 +719,7 @@
     <extensionPoint name="templateCompletionProcessor"
                     interface="com.intellij.codeInsight.template.macro.TemplateCompletionProcessor"/>
 
+    <extensionPoint name="targetElementUtilExtender" interface="com.intellij.codeInsight.TargetElementUtilExtender"/>
     <extensionPoint name="targetElementEvaluator" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.TargetElementEvaluator"/>
     </extensionPoint>
@@ -816,6 +832,12 @@
 
     <extensionPoint name="previewPanelProvider" interface="com.intellij.openapi.preview.PreviewPanelProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger"/>
+
+    <extensionPoint name="scratch.rootType" interface="com.intellij.ide.scratch.RootType"/>
+
+    <extensionPoint name="packageDependencies.visitor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.packageDependencies.DependencyVisitorFactory"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
 

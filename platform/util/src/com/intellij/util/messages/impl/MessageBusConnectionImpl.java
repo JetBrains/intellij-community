@@ -27,6 +27,7 @@ import com.intellij.util.messages.MessageHandler;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Queue;
 
@@ -120,6 +121,12 @@ public class MessageBusConnectionImpl implements MessageBusConnection {
     }
     catch (ProcessCanceledException e) {
       throw e;
+    }
+    catch (InvocationTargetException e) {
+      if (e.getCause() instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)e.getCause();
+      }
+      LOG.error(e.getCause() == null ? e : e.getCause());
     }
     catch (Throwable e) {
       LOG.error(e.getCause() == null ? e : e.getCause());

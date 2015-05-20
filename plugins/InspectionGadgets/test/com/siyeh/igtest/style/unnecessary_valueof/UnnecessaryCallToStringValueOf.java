@@ -3,7 +3,7 @@ package com.siyeh.igtest.style.unnecessary_valueof;
 public class UnnecessaryCallToStringValueOf {
 
     String foo() {
-        return "star" + String.valueOf(7);
+        return "star" + <warning descr="'String.valueOf(7)' can be simplified to '7'">String.valueOf(7)</warning>;
     }
 
     String bar() {
@@ -18,15 +18,15 @@ public class UnnecessaryCallToStringValueOf {
     }
 
     void polyadic(String s) {
-      s = "abc" + String.valueOf('d') + "efg";
+      s = "abc" + <warning descr="'String.valueOf('d')' can be simplified to ''d''">String.valueOf('d')</warning> + "efg";
     }
 
     void printStream() {
-        System.out.print(String.valueOf(7));
+        System.out.print(<warning descr="'String.valueOf(7)' can be simplified to '7'">String.valueOf(7)</warning>);
     }
 
     void builder(StringBuilder builder) {
-        builder.append(String.valueOf(0x8));
+        builder.append(<warning descr="'String.valueOf(0x8)' can be simplified to '0x8'">String.valueOf(0x8)</warning>);
     }
 
     public static void main22(String[] args) {
@@ -36,4 +36,12 @@ public class UnnecessaryCallToStringValueOf {
     static void foo(String s) {
         System.out.println(s);
     }
+
+  void exception() {
+    try {
+
+    } catch (RuntimeException e) {
+      org.slf4j.LoggerFactory.getLogger(UnnecessaryCallToStringValueOf.class).info("this: {}", String.valueOf(e));
+    }
+  }
 }

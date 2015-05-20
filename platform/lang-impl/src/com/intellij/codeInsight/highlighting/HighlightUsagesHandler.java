@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.injected.editor.EditorWindow;
@@ -37,6 +38,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,10 +62,10 @@ import java.util.*;
 public class HighlightUsagesHandler extends HighlightHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.highlighting.HighlightUsagesHandler");
 
-  public static void invoke(@NotNull Project project, @NotNull Editor editor, PsiFile file) {
+  public static void invoke(@NotNull final Project project, @NotNull final Editor editor, final PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    SelectionModel selectionModel = editor.getSelectionModel();
+    final SelectionModel selectionModel = editor.getSelectionModel();
     if (file == null && !selectionModel.hasSelection()) {
       selectionModel.selectWordAtCaret(false);
     }
@@ -74,10 +76,35 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     final HighlightUsagesHandlerBase handler = createCustomHandler(editor, file);
     if (handler != null) {
+      final String featureId = handler.getFeatureId();
+
+      if (featureId != null) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(featureId);
+      }
+
       handler.highlightUsages();
       return;
     }
 
+    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+      @Override
+      public void run() {
+        UsageTarget[] usageTargets = getUsageTargets(editor, file);
+        if (usageTargets == null) {
+          handleNoUsageTargets(file, editor, selectionModel, project);
+          return;
+        }
+
+        boolean clearHighlights = isClearHighlights(editor);
+        for (UsageTarget target : usageTargets) {
+          target.highlightUsages(file, editor, clearHighlights);
+        }
+      }
+    });
+  }
+
+  @Nullable
+  private static UsageTarget[] getUsageTargets(@NotNull Editor editor, PsiFile file) {
     UsageTarget[] usageTargets = UsageTargetUtil.findUsageTargets(editor, file);
 
     if (usageTargets == null) {
@@ -93,7 +120,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     if (usageTargets == null) {
-      PsiReference ref = TargetElementUtilBase.findReference(editor);
+      PsiReference ref = TargetElementUtil.findReference(editor);
 
       if (ref instanceof PsiPolyVariantReference) {
         ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
@@ -109,28 +136,25 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         }
       }
     }
+    return usageTargets;
+  }
 
-    if (usageTargets == null) {
-      if (file.findElementAt(editor.getCaretModel().getOffset()) instanceof PsiWhiteSpace) return;
-      selectionModel.selectWordAtCaret(false);
-      String selection = selectionModel.getSelectedText();
-      LOG.assertTrue(selection != null);
-      for (int i = 0; i < selection.length(); i++) {
-        if (!Character.isJavaIdentifierPart(selection.charAt(i))) {
-          selectionModel.removeSelection();
-          return;
-        }
+  private static void handleNoUsageTargets(PsiFile file,
+                                           @NotNull Editor editor,
+                                           SelectionModel selectionModel,
+                                           @NotNull Project project) {
+    if (file.findElementAt(editor.getCaretModel().getOffset()) instanceof PsiWhiteSpace) return;
+    selectionModel.selectWordAtCaret(false);
+    String selection = selectionModel.getSelectedText();
+    LOG.assertTrue(selection != null);
+    for (int i = 0; i < selection.length(); i++) {
+      if (!Character.isJavaIdentifierPart(selection.charAt(i))) {
+        selectionModel.removeSelection();
       }
-
-      doRangeHighlighting(editor, project);
-      selectionModel.removeSelection();
-      return;
     }
 
-    boolean clearHighlights = isClearHighlights(editor);
-    for (UsageTarget target : usageTargets) {
-      target.highlightUsages(file, editor, clearHighlights);
-    }
+    doRangeHighlighting(editor, project);
+    selectionModel.removeSelection();
   }
 
   @Nullable
@@ -146,10 +170,10 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   @Nullable
   private static PsiElement getTargetElement(Editor editor, PsiFile file) {
-    PsiElement target = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getReferenceSearchFlags());
+    PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.getInstance().getReferenceSearchFlags());
 
     if (target == null) {
-      int offset = TargetElementUtilBase.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+      int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
       PsiElement element = file.findElementAt(offset);
       if (element == null) return null;
     }

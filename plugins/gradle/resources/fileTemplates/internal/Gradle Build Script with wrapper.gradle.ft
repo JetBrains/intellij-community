@@ -1,17 +1,15 @@
-apply plugin: 'java'
-
-sourceCompatibility = 1.5
-version = '1.0'
+#if (${MODULE_GROUP} && ${MODULE_GROUP} != "")
+group '${MODULE_GROUP}'
+#end
+#if (${MODULE_VERSION} && ${MODULE_VERSION} != "")
+version '${MODULE_VERSION}'
+#end
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '1.9'
-  distributionUrl = 'http://services.gradle.org/distributions/gradle-1.9-all.zip'
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.11'
+#if (${GRADLE_VERSION} && ${GRADLE_VERSION} != "")
+  gradleVersion = '${GRADLE_VERSION}'
+#else
+  gradleVersion = '2.3'
+#end
+  distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
 }

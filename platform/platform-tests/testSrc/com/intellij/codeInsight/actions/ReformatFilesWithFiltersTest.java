@@ -1,8 +1,6 @@
-
 package com.intellij.codeInsight.actions;
 
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -11,13 +9,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Set;
 
 import static com.intellij.psi.search.GlobalSearchScopesCore.directoryScope;
@@ -246,7 +242,7 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
     AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(getProject(), directory, true, false);
     ReformatCodeAction.registerScopeFilter(processor, scope);
 
-    processor = new RearrangeCodeProcessor(processor, null);
+    processor = new RearrangeCodeProcessor(processor);
     processor.run();
   }
 

@@ -1,10 +1,8 @@
 public class Foo {
     void m() {
-        if (is()) {
-            <caret>
-        }
+        is();.if    <caret>
     }
-  
+
     boolean is() {
       return false;
     }

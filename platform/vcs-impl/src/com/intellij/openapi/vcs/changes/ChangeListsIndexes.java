@@ -15,52 +15,53 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.BaseRevision;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
+
 public class ChangeListsIndexes {
-  private final TreeMap<String, FileStatus> myFileToStatus;
-  private final Map<String, Pair<VcsKey, VcsRevisionNumber>> myFileToVcs;
+  private final TreeMap<FilePath, FileStatus> myFileToStatus;
+  private final Map<FilePath, Pair<VcsKey, VcsRevisionNumber>> myFileToVcs;
 
   ChangeListsIndexes() {
-    myFileToStatus = new TreeMap<String, FileStatus>();
-    myFileToVcs = new HashMap<String, Pair<VcsKey, VcsRevisionNumber>>();
+    myFileToStatus = new TreeMap<FilePath, FileStatus>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
+    myFileToVcs = new HashMap<FilePath, Pair<VcsKey, VcsRevisionNumber>>();
   }
 
   ChangeListsIndexes(final ChangeListsIndexes idx) {
-    myFileToStatus = new TreeMap<String, FileStatus>(idx.myFileToStatus);
-    myFileToVcs = new HashMap<String, Pair<VcsKey, VcsRevisionNumber>>(idx.myFileToVcs);
+    myFileToStatus = new TreeMap<FilePath, FileStatus>(idx.myFileToStatus);
+    myFileToVcs = new HashMap<FilePath, Pair<VcsKey, VcsRevisionNumber>>(idx.myFileToVcs);
   }
 
   void add(final FilePath file, final FileStatus status, final VcsKey key, VcsRevisionNumber number) {
-    final String fileKey = file.getIOFile().getAbsolutePath();
-    myFileToStatus.put(fileKey, status);
-    myFileToVcs.put(fileKey, Pair.create(key, number));
+    myFileToStatus.put(file, status);
+    myFileToVcs.put(file, Pair.create(key, number));
   }
 
   void remove(final FilePath file) {
-    final String fileKey = file.getIOFile().getAbsolutePath();
-    myFileToStatus.remove(fileKey);
-    myFileToVcs.remove(fileKey);
+    myFileToStatus.remove(file);
+    myFileToVcs.remove(file);
   }
 
   public FileStatus getStatus(final VirtualFile file) {
-    return myFileToStatus.get(new File(file.getPath()).getAbsolutePath());
+    return myFileToStatus.get(VcsUtil.getFilePath(file));
   }
   
-  public FileStatus getStatus(final File file) {
-    return myFileToStatus.get(file.getAbsolutePath());
+  public FileStatus getStatus(@NotNull FilePath file) {
+    return myFileToStatus.get(file);
   }
 
   public void changeAdded(final Change change, final VcsKey key) {
@@ -88,7 +89,7 @@ public class ChangeListsIndexes {
   @Nullable
   private VcsKey getVcsForRevision(final ContentRevision revision) {
     if (revision != null) {
-      final String fileKey = revision.getFile().getIOFile().getAbsolutePath();
+      final FilePath fileKey = revision.getFile();
       final Pair<VcsKey, VcsRevisionNumber> pair = myFileToVcs.get(fileKey);
       return pair == null ? null : pair.getFirst();
     }
@@ -124,24 +125,24 @@ public class ChangeListsIndexes {
                        Set<BaseRevision> toAdd,
                        Set<BeforeAfter<BaseRevision>> toModify) {
     // this is old
-    final Set<String> oldKeySet = new HashSet<String>(myFileToVcs.keySet());
-    final Set<String> toRemoveSet = new HashSet<String>(oldKeySet);
-    final Set<String> newKeySet = newIndexes.myFileToVcs.keySet();
-    final Set<String> toAddSet = new HashSet<String>(newKeySet);
+    final Set<FilePath> oldKeySet = newHashSet(myFileToVcs.keySet());
+    final Set<FilePath> toRemoveSet = newHashSet(oldKeySet);
+    final Set<FilePath> newKeySet = newIndexes.myFileToVcs.keySet();
+    final Set<FilePath> toAddSet = newHashSet(newKeySet);
     toRemoveSet.removeAll(newKeySet);
     toAddSet.removeAll(oldKeySet);
     // those that modified
     oldKeySet.removeAll(toRemoveSet);
 
-    for (String s : toRemoveSet) {
+    for (FilePath s : toRemoveSet) {
       final Pair<VcsKey, VcsRevisionNumber> pair = myFileToVcs.get(s);
       toRemove.add(fromPairAndPath(s, pair));
     }
-    for (String s : toAddSet) {
+    for (FilePath s : toAddSet) {
       final Pair<VcsKey, VcsRevisionNumber> pair = newIndexes.myFileToVcs.get(s);
       toAdd.add(fromPairAndPath(s, pair));
     }
-    for (String s : oldKeySet) {
+    for (FilePath s : oldKeySet) {
       final Pair<VcsKey, VcsRevisionNumber> old = myFileToVcs.get(s);
       final Pair<VcsKey, VcsRevisionNumber> newOne = newIndexes.myFileToVcs.get(s);
       assert old != null && newOne != null;
@@ -151,20 +152,21 @@ public class ChangeListsIndexes {
     }
   }
 
-  private BaseRevision fromPairAndPath(String s, Pair<VcsKey, VcsRevisionNumber> pair) {
+  private static BaseRevision fromPairAndPath(FilePath s, Pair<VcsKey, VcsRevisionNumber> pair) {
     return new BaseRevision(pair.getFirst(), pair.getSecond(), s);
   }
 
   public List<BaseRevision> getAffectedFilesUnderVcs() {
     final List<BaseRevision> result = new ArrayList<BaseRevision>();
-    for (Map.Entry<String, Pair<VcsKey, VcsRevisionNumber>> entry : myFileToVcs.entrySet()) {
+    for (Map.Entry<FilePath, Pair<VcsKey, VcsRevisionNumber>> entry : myFileToVcs.entrySet()) {
       final Pair<VcsKey, VcsRevisionNumber> value = entry.getValue();
       result.add(fromPairAndPath(entry.getKey(), value));
     }
     return result;
   }
 
-  public SortedSet<String> getAffectedPaths() {
-    return Collections.unmodifiableSortedSet((SortedSet<String>)myFileToStatus.keySet());
+  @NotNull
+  public NavigableSet<FilePath> getAffectedPaths() {
+    return Sets.unmodifiableNavigableSet(myFileToStatus.navigableKeySet());
   }
 }

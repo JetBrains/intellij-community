@@ -1,4 +1,4 @@
-// "Add Exception to Method Signature" "true"
+// "Add exception to method signature" "true"
 import java.io.*;
 
 class C {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -115,7 +116,7 @@ class FilterDialog extends DialogWrapper {
 
     makePopup();
 
-    panel.setPreferredSize(new Dimension(335, 160));
+    panel.setPreferredSize(JBUI.size(335, 160));
 
     mainPanel.add(panel, BorderLayout.NORTH);
 

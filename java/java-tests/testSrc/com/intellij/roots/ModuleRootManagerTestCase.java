@@ -9,9 +9,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -25,7 +27,20 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
 
   @Override
   protected Sdk getTestProjectJdk() {
-    final Sdk jdk = super.getTestProjectJdk();
+    return getMockJdk17WithRtJarOnly();
+  }
+
+  @NotNull
+  protected static Sdk getMockJdk17WithRtJarOnly() {
+    return retainRtJarOnly(IdeaTestUtil.getMockJdk17());
+  }
+
+  protected Sdk getMockJdk18WithRtJarOnly() {
+    return retainRtJarOnly(IdeaTestUtil.getMockJdk18());
+  }
+
+  @NotNull
+  private static Sdk retainRtJarOnly(Sdk jdk) {
     final SdkModificator modificator = jdk.getSdkModificator();
     VirtualFile rtJar = null;
     for (VirtualFile root : modificator.getRoots(OrderRootType.CLASSES)) {
@@ -41,8 +56,12 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
     return jdk;
   }
 
-  protected VirtualFile getRtJar() {
-    return getTestProjectJdk().getRootProvider().getFiles(OrderRootType.CLASSES)[0];
+  protected VirtualFile getRtJarJdk17() {
+    return getMockJdk17WithRtJarOnly().getRootProvider().getFiles(OrderRootType.CLASSES)[0];
+  }
+
+  protected VirtualFile getRtJarJdk18() {
+    return getMockJdk18WithRtJarOnly().getRootProvider().getFiles(OrderRootType.CLASSES)[0];
   }
 
   protected VirtualFile getJDomJar() {

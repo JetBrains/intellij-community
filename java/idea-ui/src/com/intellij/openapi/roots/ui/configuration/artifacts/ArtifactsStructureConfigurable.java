@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -35,6 +36,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsState;
 import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.InvalidArtifact;
@@ -293,6 +295,7 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   @Override
   public void apply() throws ConfigurationException {
     myPackagingEditorContext.saveEditorSettings();
+    checkForEmptyAndDuplicatedNames("Artifact", CommonBundle.getErrorTitle(), ArtifactConfigurableBase.class);
     super.apply();
 
     myPackagingEditorContext.getManifestFilesInfo().saveManifestFiles();
@@ -315,6 +318,24 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
     myPackagingEditorContext.saveEditorSettings();
     super.disposeUIResources();
     myPackagingEditorContext.disposeUIResources();
+  }
+
+  @Override
+  protected void updateSelection(@Nullable NamedConfigurable configurable) {
+    boolean selectionChanged = !Comparing.equal(myCurrentConfigurable, configurable);
+    if (selectionChanged && myCurrentConfigurable instanceof ArtifactConfigurable) {
+      ArtifactEditorImpl editor = myPackagingEditorContext.getArtifactEditor(((ArtifactConfigurable)myCurrentConfigurable).getArtifact());
+      if (editor != null) {
+        editor.getLayoutTreeComponent().saveElementProperties();
+      }
+    }
+    super.updateSelection(configurable);
+    if (selectionChanged && configurable instanceof ArtifactConfigurable) {
+      ArtifactEditorImpl editor = myPackagingEditorContext.getArtifactEditor(((ArtifactConfigurable)configurable).getArtifact());
+      if (editor != null) {
+        editor.getLayoutTreeComponent().resetElementProperties();
+      }
+    }
   }
 
   @Override

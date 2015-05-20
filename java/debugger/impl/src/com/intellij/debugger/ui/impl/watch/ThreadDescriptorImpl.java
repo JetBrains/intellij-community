@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
     }
     myIsExpandable   = calcExpandable(myIsSuspended);
     mySuspendContext = SuspendManagerUtil.getSuspendContextForThread(suspendContext, thread);
-    myIsAtBreakpoint = suspendManager != null? SuspendManagerUtil.findContextByThread(suspendManager, thread) != null : thread.getThreadReference().isAtBreakpoint();
+    myIsAtBreakpoint = suspendManager != null? SuspendManagerUtil.findContextByThread(suspendManager, thread) != null : thread.isAtBreakpoint();
     myIsCurrent      = suspendContext != null? suspendContext.getThread() == thread : false;
     myIsFrozen       = suspendManager != null? suspendManager.isFrozen(thread) : myIsSuspended;
   }

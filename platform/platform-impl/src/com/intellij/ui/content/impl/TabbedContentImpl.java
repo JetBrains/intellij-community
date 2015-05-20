@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package com.intellij.ui.content.impl;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.util.ContentUtilEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -92,6 +95,16 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     setComponent(tab.second);
   }
 
+  public boolean findAndSelectContent(@NotNull JComponent contentComponent) {
+    String tabName = findTabNameByComponent(contentComponent);
+    if (tabName != null) {
+      setDisplayName(tabName);
+      setComponent(contentComponent);
+      return true;
+    }
+    return false;
+  }
+
   @Override
   public String getTabName() {
     String selected = findTabNameByComponent(getComponent());
@@ -123,5 +136,27 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   @Override
   public void setTitlePrefix(String titlePrefix) {
     myPrefix = titlePrefix;
+  }
+
+  @Override
+  public void split() {
+    List<Pair<String, JComponent>> copy = new ArrayList<Pair<String, JComponent>>(myTabs);
+    int selectedTab = ContentUtilEx.getSelectedTab(this);
+    ContentManager manager = getManager();
+    String prefix = getTitlePrefix();
+    manager.removeContent(this, true);
+    PropertiesComponent.getInstance().setValue(SPLIT_PROPERTY_PREFIX + prefix, Boolean.TRUE.toString());
+    for (int i = 0; i < copy.size(); i++) {
+      final boolean select = i == selectedTab;
+      final JComponent component = copy.get(i).second;
+      final String tabName = copy.get(i).first;
+      ContentUtilEx.addTabbedContent(manager, component, prefix, tabName, select);
+    }
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    myTabs.clear();
   }
 }

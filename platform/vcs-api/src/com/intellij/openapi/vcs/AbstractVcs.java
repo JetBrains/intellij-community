@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -410,7 +411,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * If VCS does not implement detection whether directory is versioned ({@link #isVersionedDirectory(com.intellij.openapi.vfs.VirtualFile)}),
+   * If VCS does not implement detection whether directory is versioned ({@link #isVersionedDirectory(VirtualFile)}),
    * it should return <code>false</code>. Otherwise return <code>true</code>
    */
   public boolean supportsVersionedStateDetection() {
@@ -420,7 +421,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   /**
    * Returns the configurable to be shown in the VCS directory mapping dialog which should be displayed
    * for configuring VCS-specific settings for the specified root, or null if no such configuration is required.
-   * The VCS-specific settings are stored in {@link com.intellij.openapi.vcs.VcsDirectoryMapping#getRootSettings()}.
+   * The VCS-specific settings are stored in {@link VcsDirectoryMapping#getRootSettings()}.
    *
    * @param mapping the mapping being configured
    * @return the configurable instance, or null if no configuration is required.

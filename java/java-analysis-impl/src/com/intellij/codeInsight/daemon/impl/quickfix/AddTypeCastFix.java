@@ -26,6 +26,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
-public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private final PsiType myType;
 
   public AddTypeCastFix(@NotNull PsiType type, @NotNull PsiExpression expression) {

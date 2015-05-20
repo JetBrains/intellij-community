@@ -100,6 +100,14 @@ class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
         if (InheritanceUtil.isInheritorOrSelf(innerClass, containingClass, true)) {
           return;
         }
+
+        PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+        while (parentClass != null && PsiTreeUtil.isAncestor(innerClass, parentClass, true)) {
+          if (InheritanceUtil.isInheritorOrSelf(parentClass, containingClass, true)) {
+            return;
+          }
+          parentClass = PsiTreeUtil.getParentOfType(parentClass, PsiClass.class, true);
+        }
       }
       referencesStaticallyAccessible = false;
     }

@@ -7,11 +7,11 @@ import com.intellij.structuralsearch.MatchResultSink;
 import com.intellij.structuralsearch.MatchingProcess;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CollectingMatchResultSink implements MatchResultSink {
-  private final List<MatchResult> matches = new LinkedList<MatchResult>();
+  private final List<MatchResult> matches = new ArrayList<MatchResult>();
 
   public void newMatch(MatchResult result) {
     matches.add(result);

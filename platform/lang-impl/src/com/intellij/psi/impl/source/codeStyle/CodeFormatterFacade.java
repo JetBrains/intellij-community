@@ -237,13 +237,8 @@ public class CodeFormatterFacade {
             formatter.setProgressTask(new FormattingProgressTask(project, file, document));
           }
 
-          CommonCodeStyleSettings.IndentOptions indentOptions = null;
-          if (builder instanceof FormattingModelBuilderEx) {
-            indentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, ranges, mySettings);
-          }
-          if (indentOptions == null) {
-            indentOptions  = mySettings.getIndentOptionsByFile(file, textRanges.size() == 1 ? textRanges.get(0).getTextRange() : null);
-          }
+          CommonCodeStyleSettings.IndentOptions indentOptions =
+            mySettings.getIndentOptionsByFile(file, textRanges.size() == 1 ? textRanges.get(0).getTextRange() : null);
 
           formatter.format(model, mySettings, indentOptions, ranges);
           for (FormatTextRanges.FormatTextRange range : textRanges) {

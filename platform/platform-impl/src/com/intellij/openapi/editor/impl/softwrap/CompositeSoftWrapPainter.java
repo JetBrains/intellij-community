@@ -181,6 +181,11 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
     }
     myDelegate = new ArrowSoftWrapPainter(myEditor);
   }
+  
+  public void reinit() {
+    myDelegate = null;
+    mySymbolsDrawingIndex = -1;
+  }
 
   private static <K, V> Map<K, V> asMap(Iterable<K> keys, Iterable<V> values) throws IllegalArgumentException {
     Map<K, V> result = new HashMap<K,V>();

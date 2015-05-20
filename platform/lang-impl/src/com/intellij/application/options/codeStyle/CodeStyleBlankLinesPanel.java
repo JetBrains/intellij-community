@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Trinity;
@@ -23,7 +22,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
@@ -38,7 +36,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 
-public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPanel {
+public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.CodeStyleBlankLinesPanel");
 
@@ -259,11 +257,6 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
     }
   }
 
-  @Override
-  protected void onLanguageChange(Language language) {
-    resetImpl(getSettings());
-  }
-
   private class IntOption {
     private final JTextField myTextField;
     private final Field myTarget;
@@ -295,7 +288,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
         if (myTargetClass != null) {
           return myTarget.getInt(settings.getCustomSettings(myTargetClass));
         }
-        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
+        CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getDefaultLanguage());
         return myTarget.getInt(commonSettings);
       }
       catch (IllegalAccessException e) {
@@ -309,7 +302,7 @@ public class CodeStyleBlankLinesPanel extends MultilanguageCodeStyleAbstractPane
           myTarget.setInt(settings.getCustomSettings(myTargetClass), value);
         }
         else {
-          CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getSelectedLanguage());
+          CommonCodeStyleSettings commonSettings = settings.getCommonSettings(getDefaultLanguage());
           myTarget.setInt(commonSettings, value);
         }
       }

@@ -18,16 +18,13 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
-import com.jetbrains.python.psi.stubs.PyClassStub;
-import com.jetbrains.python.psi.stubs.PySuperClassIndex;
+import com.jetbrains.python.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -38,6 +35,7 @@ import java.util.List;
  * @author max
  */
 public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> {
+
   public PyClassElementType() {
     this("CLASS_DECLARATION");
   }
@@ -106,6 +104,10 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     if (name != null) {
       sink.occurrence(PyClassNameIndex.KEY, name);
       sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
+    }
+    final PyClass pyClass = createPsi(stub);
+    for (String attribute: PyClassAttributesIndex.getAllDeclaredAttributeNames(pyClass)) {
+      sink.occurrence(PyClassAttributesIndex.KEY, attribute);
     }
     for (QualifiedName s : stub.getSuperClasses()) {
       if (s != null) {

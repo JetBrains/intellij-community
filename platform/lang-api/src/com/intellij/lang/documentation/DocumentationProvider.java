@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package com.intellij.lang.documentation;
 
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
+import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -35,9 +37,25 @@ public interface DocumentationProvider {
    */
   ExtensionPointName<DocumentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationProvider");
 
+  /**
+   * Returns the text to show in the Ctrl-hover popup for the specified element.
+   *
+   * @param element         the element for which the documentation is requested (for example, if the mouse is over
+   *                        a method reference, this will be the method to which the reference is resolved).
+   * @param originalElement the element under the mouse cursor
+   * @return the documentation to show, or null if the provider can't provide any documentation for this element.
+   */
   @Nullable
   String getQuickNavigateInfo(PsiElement element, PsiElement originalElement);
 
+  /**
+   * Returns the list of possible URLs to show as external documentation for the specified element.
+   * @param element         the element for which the documentation is requested (for example, if the mouse is over
+   *                        a method reference, this will be the method to which the reference is resolved).
+   * @param originalElement the element under the mouse cursor
+   * @return the list of URLs to open in the browser. If the list contains a single URL, it will be opened.
+   *         If the list contains multiple URls, the user will be prompted to choose one of them.
+   */
   @Nullable
   List<String> getUrlFor(PsiElement element, PsiElement originalElement);
 
@@ -45,10 +63,11 @@ public interface DocumentationProvider {
    * Callback for asking the doc provider for the complete documentation.
    * <p/>
    * Underlying implementation may be time-consuming, that's why this method is expected not to be called from EDT.
-   *  
-   * @param element          target element which documentation is being requested
-   * @param originalElement  element initially picked up from the current context
-   * @return                 target element's documentation (if any)
+   *
+   * @param element         the element for which the documentation is requested (for example, if the mouse is over
+   *                        a method reference, this will be the method to which the reference is resolved).
+   * @param originalElement the element under the mouse cursor
+   * @return                target element's documentation (if any)
    */
   @Nullable
   String generateDoc(PsiElement element, @Nullable PsiElement originalElement);
@@ -56,6 +75,16 @@ public interface DocumentationProvider {
   @Nullable
   PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element);
 
+  /**
+   * Returns the target element for a link in a documentation comment. The link needs to use the
+   * {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL} protocol.
+   *
+   * @param psiManager the PSI manager for the project in which the documentation is requested.
+   * @param link       the text of the link, not including the protocol.
+   * @param context    the element from which the navigation is performed.
+   * @return the navigation target, or null if the link couldn't be resolved.
+   * @see DocumentationManagerUtil#createHyperlink(StringBuilder, String, String, boolean)
+   */
   @Nullable
   PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context);
 }

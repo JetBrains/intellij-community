@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,11 @@ public class RegistryValue {
   }
 
   public boolean isChangedFromDefault() {
-    return !asString().equals(getBundleValue(myKey, false));
+    return isChangedFromDefault(asString());
+  }
+
+  boolean isChangedFromDefault(@NotNull String newValue) {
+    return !newValue.equals(getBundleValue(myKey, false));
   }
 
   private String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
@@ -212,6 +216,6 @@ public class RegistryValue {
   }
 
   public boolean isBoolean() {
-    return "true".equals(myStringCachedValue) || "false".equals(myStringCachedValue);
+    return "true".equals(asString()) || "false".equals(asString());
   }
 }

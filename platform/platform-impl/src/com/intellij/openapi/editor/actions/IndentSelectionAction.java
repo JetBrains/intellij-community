@@ -119,6 +119,8 @@ public class IndentSelectionAction extends EditorAction {
 
   static void doIndent(final int endIndex, final int startIndex, final Document document, final Project project, final Editor editor,
                                final int blockIndent) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    
     boolean bulkMode = endIndex - startIndex > 50;
     if (bulkMode) ((DocumentEx)document).setInBulkUpdate(true);
 
@@ -137,13 +139,15 @@ public class IndentSelectionAction extends EditorAction {
       }
       for(int i=startIndex; i<=endIndex; i++) {
         if (!nonModifiableLines.contains(i)) {
-          EditorActionUtil.indentLine(project, editor, i, blockIndent);
+          caretOffset = EditorActionUtil.indentLine(project, editor, i, blockIndent, caretOffset);
         }
       }
     }
     finally {
       if (bulkMode) ((DocumentEx)document).setInBulkUpdate(false);
     }
+    
+    editor.getCaretModel().moveToOffset(caretOffset);
   }
 
   static boolean canIndent(Document document, PsiFile file, int line, @NotNull IndentStrategy indentStrategy) {

@@ -18,12 +18,14 @@ package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -42,9 +44,20 @@ public class PropertiesElementFactory {
 
   @NotNull
   public static IProperty createProperty(@NotNull Project project, @NonNls @NotNull String name, @NonNls @NotNull String value) {
-    String text = escape(name) + "=" + escapeValue(value);
+    String text = getPropertyText(name, value, null, project);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
+  }
+
+  @NotNull
+  public static String getPropertyText(@NonNls @NotNull String name,
+                                       @NonNls @NotNull String value,
+                                       @NonNls @Nullable Character delimiter,
+                                       @Nullable Project project) {
+    if (delimiter == null) {
+      delimiter = project == null ? PropertiesCodeStyleSettings.DEFAULT_KEY_VALUE_DELIMITER : PropertiesCodeStyleSettings.getInstance(project).KEY_VALUE_DELIMITER;
+    }
+    return escape(name) + String.valueOf(delimiter) + escapeValue(value);
   }
 
   @NotNull

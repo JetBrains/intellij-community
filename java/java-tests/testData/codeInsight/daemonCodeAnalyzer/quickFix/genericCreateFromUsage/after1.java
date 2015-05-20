@@ -1,4 +1,4 @@
-// "Create Method 'get'" "true"
+// "Create method 'get'" "true"
 class W<T> {
     public T get(T s) {
         <selection>return null;</selection>

@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +30,8 @@ import static com.intellij.util.ObjectUtils.NULL;
  * @author peter
  */
 public abstract class FactoryMap<K,V> implements Map<K, V> {
-  protected Map<K,V> myMap;
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("factoryMap");
+  protected Map<K, V> myMap;
 
   protected Map<K, V> createMap() {
     return new THashMap<K, V>();
@@ -49,8 +52,11 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     final Map<K, V> map = getMap();
     V value = map.get(getKey(key));
     if (value == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
       value = create((K)key);
-      map.put((K)getKey(key), value == null ? (V)NULL : value);
+      if (stamp.mayCacheNow()) {
+        map.put((K)getKey(key), value == null ? (V)NULL : value);
+      }
     }
     return value == NULL ? null : value;
   }
@@ -82,8 +88,10 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   public Set<K> keySet() {
     if (myMap == null) return Collections.emptySet();
     final Set<K> ts = myMap.keySet();
+    //noinspection SuspiciousMethodCalls
     if (ts.contains(NULL)) {
       final HashSet<K> hashSet = new HashSet<K>(ts);
+      //noinspection SuspiciousMethodCalls
       hashSet.remove(NULL);
       hashSet.add(null);
       return hashSet;
@@ -105,6 +113,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   public boolean removeValue(Object value) {
     if (myMap == null) return false;
     Object t = ObjectUtils.notNull(value, NULL);
+    //noinspection SuspiciousMethodCalls
     return myMap.values().remove(t);
   }
 

@@ -1,4 +1,4 @@
-// "Create Field 'FIELD'" "true"
+// "Create field 'FIELD'" "true"
 class C {
     public void foo() {
         int i = ITest.FIELD<caret>;

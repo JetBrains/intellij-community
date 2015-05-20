@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,15 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
-  private static final TokenSet TYPE_TOKENS = 
-    TokenSet.orSet(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET, 
-                   TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.COMMA,
-                                   JavaTokenType.AT,//anno
-                                   JavaTokenType.RBRACKET, JavaTokenType.LBRACKET, //arrays
-                                   JavaTokenType.QUEST, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD));//wildcards
-  
+  private static class Holder {
+    private static final TokenSet TYPE_TOKENS =
+      TokenSet.orSet(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET,
+                     TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.COMMA,
+                                     JavaTokenType.AT,//anno
+                                     JavaTokenType.RBRACKET, JavaTokenType.LBRACKET, //arrays
+                                     JavaTokenType.QUEST, JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD));//wildcards
+  }
+
   public JavaPairedBraceMatcher() {
     super(new JavaBraceMatcher(), JavaLanguage.INSTANCE);
   }
@@ -60,9 +62,9 @@ public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
     if (fileType != JavaFileType.INSTANCE) return false;
 
     final IElementType braceElementType = left ? JavaTokenType.LT : JavaTokenType.GT;
-    int paired = 1;
     int count = 0;
     try {
+      int paired = 1;
       while (true) {
         count++;
         if (left) {
@@ -83,7 +85,7 @@ public class JavaPairedBraceMatcher extends PairedBraceMatcherAdapter {
           continue;
         }
 
-        if (!TYPE_TOKENS.contains(tokenType)) {
+        if (!Holder.TYPE_TOKENS.contains(tokenType)) {
           return false;
         }
       }

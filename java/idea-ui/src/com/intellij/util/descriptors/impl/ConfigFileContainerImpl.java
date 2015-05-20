@@ -51,7 +51,9 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
       @Override
       public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
-        fileChanged(event.getFile());
+        if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
+          fileChanged(event.getFile());
+        }
       }
 
       @Override

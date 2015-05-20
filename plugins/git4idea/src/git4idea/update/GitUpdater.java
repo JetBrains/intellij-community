@@ -29,7 +29,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
-import git4idea.config.GitVcsSettings;
+import git4idea.config.UpdateMethod;
 import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -76,43 +76,35 @@ public abstract class GitUpdater {
    * @return {@link GitMergeUpdater} or {@link GitRebaseUpdater}.
    */
   @NotNull
-  public static GitUpdater getUpdater(@NotNull Project project, @NotNull Git git, @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
-                                      @NotNull VirtualFile root, @NotNull ProgressIndicator progressIndicator,
-                                      @NotNull UpdatedFiles updatedFiles) {
-    final GitVcsSettings settings = GitVcsSettings.getInstance(project);
-    if (settings == null) {
-      return getDefaultUpdaterForBranch(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+  public static GitUpdater getUpdater(@NotNull Project project,
+                                      @NotNull Git git,
+                                      @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
+                                      @NotNull VirtualFile root,
+                                      @NotNull ProgressIndicator progressIndicator,
+                                      @NotNull UpdatedFiles updatedFiles,
+                                      @NotNull UpdateMethod updateMethod) {
+    if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
+      updateMethod = resolveUpdateMethod(project, root);
     }
-    switch (settings.getUpdateType()) {
-      case REBASE:
-        return new GitRebaseUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
-      case MERGE:
-        return new GitMergeUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
-      case BRANCH_DEFAULT:
-        // use default for the branch
-        return getDefaultUpdaterForBranch(project, git, root, trackedBranches, progressIndicator, updatedFiles);
-    }
-    return getDefaultUpdaterForBranch(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+    return updateMethod == UpdateMethod.REBASE ?
+           new GitRebaseUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles):
+           new GitMergeUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
   }
 
   @NotNull
-  private static GitUpdater getDefaultUpdaterForBranch(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root,
-                                                       @NotNull Map<VirtualFile, GitBranchPair> trackedBranches,
-                                                       @NotNull ProgressIndicator progressIndicator, @NotNull UpdatedFiles updatedFiles) {
-    try {
-      GitLocalBranch branch = GitBranchUtil.getCurrentBranch(project, root);
-      boolean rebase = false;
-      if (branch != null) {
+  public static UpdateMethod resolveUpdateMethod(@NotNull Project project, @NotNull VirtualFile root) {
+    GitLocalBranch branch = GitBranchUtil.getCurrentBranch(project, root);
+    boolean rebase = false;
+    if (branch != null) {
+      try {
         String rebaseValue = GitConfigUtil.getValue(project, root, "branch." + branch.getName() + ".rebase");
         rebase = rebaseValue != null && rebaseValue.equalsIgnoreCase("true");
       }
-      if (rebase) {
-        return new GitRebaseUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+      catch (VcsException e) {
+        LOG.warn("Couldn't get git config branch." + branch.getName() + ".rebase", e);
       }
-    } catch (VcsException e) {
-      LOG.info("getDefaultUpdaterForBranch branch", e);
     }
-    return new GitMergeUpdater(project, git, root, trackedBranches, progressIndicator, updatedFiles);
+    return rebase ? UpdateMethod.REBASE : UpdateMethod.MERGE;
   }
 
   @NotNull
@@ -153,7 +145,13 @@ public abstract class GitUpdater {
   /**
    * Performs update (via rebase or merge - depending on the implementing classes).
    */
+  @NotNull
   protected abstract GitUpdateResult doUpdate();
+
+  @NotNull
+  GitBranchPair getSourceAndTarget() {
+    return myTrackedBranches.get(myRoot);
+  }
 
   protected void markStart(VirtualFile root) throws VcsException {
     // remember the current position

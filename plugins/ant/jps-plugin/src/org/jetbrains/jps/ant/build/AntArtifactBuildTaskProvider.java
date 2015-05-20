@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.ant.execution.AntMain2;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,7 @@ import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -173,6 +175,8 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         programParams.add(targetName);
       }
 
+      context.processMessage(new ProgressMessage("Running " + (targetName != null ? "'" + targetName + "'" : "default") + " Ant target from '" +
+                                                 PathUtilRt.getFileName(buildFilePath) + "' file..."));
       Iterable<AntBuildTaskListener> listeners = JpsServiceManager.getInstance().getExtensions(AntBuildTaskListener.class);
       for (AntBuildTaskListener listener : listeners) {
         listener.beforeAntBuildTaskStarted(myExtension, vmParams, programParams);

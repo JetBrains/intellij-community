@@ -171,7 +171,7 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
     setBaseProjectPath(path);
   }
 
-  public List<Module> commit(final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
+  public List<Module> commit(@NotNull final Project project, final ModifiableModuleModel model, final ModulesProvider modulesProvider) {
     final boolean fromProjectStructure = model != null;
     ModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
     final LibraryTable.ModifiableModel projectLibraryTable = modelsProvider.getLibraryTableModifiableModel(project);
@@ -410,7 +410,8 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
            "tests".equalsIgnoreCase(name) || 
            "testSource".equalsIgnoreCase(name) || 
            "testSources".equalsIgnoreCase(name) || 
-           "testSrc".equalsIgnoreCase(name);
+           "testSrc".equalsIgnoreCase(name) ||
+           "tst".equalsIgnoreCase(name);
   }
 
   public interface ProjectConfigurationUpdater {

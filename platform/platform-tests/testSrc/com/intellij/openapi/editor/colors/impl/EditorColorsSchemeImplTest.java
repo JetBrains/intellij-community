@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,29 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestCase;
+import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static com.intellij.openapi.editor.colors.FontPreferencesTest.checkState;
-import static com.intellij.openapi.editor.colors.FontPreferencesTest.getAnotherExistingNonDefaultFontName;
-import static com.intellij.openapi.editor.colors.FontPreferencesTest.getExistingNonDefaultFontName;
+import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
+import static java.util.Collections.singletonList;
 
 public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase {
-  EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null, null);
+  EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
+
+  static {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 
   public void testDefaults() {
     checkState(myScheme.getFontPreferences(),
@@ -78,15 +89,15 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     myScheme.setConsoleFontName(fontName2);
 
     checkState(myScheme.getFontPreferences(),
-               Arrays.asList(fontName1),
-               Arrays.asList(fontName1),
+               singletonList(fontName1),
+               singletonList(fontName1),
                fontName1,
                fontName1, FontPreferences.DEFAULT_FONT_SIZE);
     assertEquals(fontName1, myScheme.getEditorFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Arrays.asList(fontName2),
-               Arrays.asList(fontName2),
+               singletonList(fontName2),
+               singletonList(fontName2),
                fontName2,
                fontName2, FontPreferences.DEFAULT_FONT_SIZE);
     assertEquals(fontName2, myScheme.getConsoleFontName());
@@ -98,15 +109,15 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     myScheme.setConsoleFontSize(21);
 
     checkState(myScheme.getFontPreferences(),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
+               singletonList(FontPreferences.DEFAULT_FONT_NAME),
+               singletonList(FontPreferences.DEFAULT_FONT_NAME),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, 25);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getEditorFontName());
     assertEquals(25, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
-               Arrays.asList(FontPreferences.DEFAULT_FONT_NAME),
+               singletonList(FontPreferences.DEFAULT_FONT_NAME),
+               singletonList(FontPreferences.DEFAULT_FONT_NAME),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, 21);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getConsoleFontName());
@@ -122,15 +133,15 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     myScheme.setConsoleFontSize(21);
 
     checkState(myScheme.getFontPreferences(),
-               Arrays.asList(fontName1),
-               Arrays.asList(fontName1),
+               singletonList(fontName1),
+               singletonList(fontName1),
                fontName1,
                fontName1, 25);
     assertEquals(fontName1, myScheme.getEditorFontName());
     assertEquals(25, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Arrays.asList(fontName2),
-               Arrays.asList(fontName2),
+               singletonList(fontName2),
+               singletonList(fontName2),
                fontName2,
                fontName2, 21);
     assertEquals(fontName2, myScheme.getConsoleFontName());
@@ -146,18 +157,47 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     myScheme.setConsoleFontName(fontName2);
 
     checkState(myScheme.getFontPreferences(),
-               Arrays.asList(fontName1),
-               Arrays.asList(fontName1),
+               singletonList(fontName1),
+               singletonList(fontName1),
                fontName1,
                fontName1, 25);
     assertEquals(fontName1, myScheme.getEditorFontName());
     assertEquals(25, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Arrays.asList(fontName2),
-               Arrays.asList(fontName2),
+               singletonList(fontName2),
+               singletonList(fontName2),
                fontName2,
                fontName2, 21);
     assertEquals(fontName2, myScheme.getConsoleFontName());
     assertEquals(21, myScheme.getConsoleFontSize());
+  }
+
+  public void testWriteInheritedFromDefault() throws Exception {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
+    editorColorsScheme.setName("test");
+    Element root = new Element("scheme");
+    ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
+    root.removeChildren("option"); // Remove font options
+    assertXmlOutputEquals("<scheme name=\"test\" version=\"141\" parent_scheme=\"Default\" />", root);
+  }
+
+  public void testWriteInheritedFromDarcula() throws Exception {
+    EditorColorsScheme darculaScheme = EditorColorsManager.getInstance().getScheme("Darcula");
+    EditorColorsScheme editorColorsScheme = (EditorColorsScheme)darculaScheme.clone();
+    editorColorsScheme.setName("test");
+    Element root = new Element("scheme");
+    ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
+    root.removeChildren("option"); // Remove font options
+    assertXmlOutputEquals("<scheme name=\"test\" version=\"141\" parent_scheme=\"Darcula\" />", root);
+  }
+
+  private static void assertXmlOutputEquals(String expected, Element root) throws IOException {
+    StringWriter writer = new StringWriter();
+    Format format = Format.getPrettyFormat();
+    format.setLineSeparator("\n");
+    new XMLOutputter(format).output(root, writer);
+    String actual = writer.toString();
+    assertEquals(expected, actual);
   }
 }

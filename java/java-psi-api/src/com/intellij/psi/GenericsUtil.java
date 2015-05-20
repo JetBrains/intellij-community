@@ -297,7 +297,7 @@ public class GenericsUtil {
       }
       else if (substituted instanceof PsiCapturedWildcardType) {
         final PsiType extendsBound = ((PsiCapturedWildcardType)substituted).getUpperBound();
-        if (acceptExtendsBound(extendsType, extendsBound)) {
+        if (acceptExtendsBound(extendsType, extendsBound) || extendsType.equals(substitutor.substitute(extendsBound))) {
           return null;
         }
       }
@@ -422,7 +422,7 @@ public class GenericsUtil {
           }
           else {
             final PsiType accepted = typeArgument.accept(this);
-            if (typeArgument instanceof PsiIntersectionType) {
+            if (typeArgument instanceof PsiIntersectionType && !(accepted instanceof PsiWildcardType)) {
               toPut = PsiWildcardType.createExtends(typeParameter.getManager(), accepted);
             }
             else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,19 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CopyProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -44,6 +47,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -51,7 +55,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +68,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
@@ -82,8 +86,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   private final boolean myHighlightProblems;
   private boolean myShowFlatten;
 
-  private final Collection<T> myIncludedChanges;
-  private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
+  private final Set<T> myIncludedChanges;
+  @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myAlwaysExpandList;
 
   @NonNls private static final String TREE_CARD = "Tree";
@@ -93,12 +97,18 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
   @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
 
-  private final Runnable myInclusionListener;
+  @Nullable private final Runnable myInclusionListener;
   @Nullable private ChangeNodeDecorator myChangeDecorator;
   private Runnable myGenericSelectionListener;
+  @NotNull private final CopyProvider myTreeCopyProvider;
+  @NotNull private final ChangesBrowserNodeListCopyProvider myListCopyProvider;
 
-  public ChangesTreeList(final Project project, Collection<T> initiallyIncluded, final boolean showCheckboxes,
-                         final boolean highlightProblems, @Nullable final Runnable inclusionListener, @Nullable final ChangeNodeDecorator decorator) {
+  public ChangesTreeList(@NotNull final Project project,
+                         @NotNull Collection<T> initiallyIncluded,
+                         final boolean showCheckboxes,
+                         final boolean highlightProblems,
+                         @Nullable final Runnable inclusionListener,
+                         @Nullable final ChangeNodeDecorator decorator) {
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myHighlightProblems = highlightProblems;
@@ -217,6 +227,13 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
                                    : myTree.getPathForLocation(e.getX(), e.getY());
         if (clickPath == null) return false;
 
+        final int row = myTree.getRowForLocation(e.getPoint().x, e.getPoint().y);
+        if (row >= 0) {
+          final Rectangle baseRect = myTree.getRowBounds(row);
+          baseRect.setSize(checkboxWidth, baseRect.height);
+          if (baseRect.contains(e.getPoint())) return false;
+        }
+
         myDoubleClickHandler.run();
         return true;
       }
@@ -226,6 +243,9 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     setEmptyText(emptyText);
+
+    myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(myTree);
+    myListCopyProvider = new ChangesBrowserNodeListCopyProvider(myProject, myList);
   }
 
   public void setEmptyText(@NotNull String emptyText) {
@@ -254,7 +274,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     myChangeDecorator = changeDecorator;
   }
 
-  public void setDoubleClickHandler(final Runnable doubleClickHandler) {
+  public void setDoubleClickHandler(@NotNull final Runnable doubleClickHandler) {
     myDoubleClickHandler = doubleClickHandler;
   }
 
@@ -363,15 +383,15 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         if (myProject.isDisposed()) return;
         TreeUtil.expandAll(myTree);
 
-        int listSelection = 0;
-        int scrollRow = -1;
+        int selectedListRow = 0;
+        int selectedTreeRow = -1;
 
         if (myShowCheckboxes) {
           if (myIncludedChanges.size() > 0) {
             for (int i = 0; i < sortedChanges.size(); i++) {
               T t = sortedChanges.get(i);
               if (myIncludedChanges.contains(t)) {
-                listSelection = i;
+                selectedListRow = i;
                 break;
               }
             }
@@ -394,46 +414,32 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
               @SuppressWarnings("unchecked")
               final CheckboxTree.NodeState state = getNodeStatus(node);
               if (state == CheckboxTree.NodeState.FULL && node.isLeaf()) {
-                scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
+                selectedTreeRow = myTree.getRowForPath(new TreePath(node.getPath()));
                 break;
               }
             }
           }
         } else {
           if (toSelect != null) {
-            ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-            final int[] rowToSelect = new int[] {-1}; 
-            TreeUtil.traverse(root, new TreeUtil.Traverse() {
-              @Override
-              public boolean accept(Object node) {
-                if (node instanceof DefaultMutableTreeNode) {
-                  Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-                  if (userObject instanceof Change) {
-                    Change change = (Change)userObject;
-                    VirtualFile virtualFile = change.getVirtualFile();
-                    if ((virtualFile != null && virtualFile.equals(toSelect)) || seemsToBeMoved(change, toSelect)) {
-                      TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
-                      rowToSelect[0] = myTree.getRowForPath(new TreePath(path));
-                    }
-                  }
-                }
-
-                return rowToSelect[0] == -1;
-              }
-            });
-
-            scrollRow = rowToSelect[0] == -1 ? scrollRow : rowToSelect[0];
+            int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
+            if (rowInTree > -1) {
+              selectedTreeRow = rowInTree;
+            }
+            int rowInList = findRowContainingFile(myList.getModel(), toSelect);
+            if (rowInList > -1) {
+              selectedListRow = rowInList;
+            }
           }
         }
         
         if (changes.size() > 0) {
-          myList.setSelectedIndex(listSelection);
-          myList.ensureIndexIsVisible(listSelection);
+          myList.setSelectedIndex(selectedListRow);
+          myList.ensureIndexIsVisible(selectedListRow);
 
-          if (scrollRow >= 0) {
-            myTree.setSelectionRow(scrollRow);
+          if (selectedTreeRow >= 0) {
+            myTree.setSelectionRow(selectedTreeRow);
           }
-          TreeUtil.showRowCentered(myTree, scrollRow, false);
+          TreeUtil.showRowCentered(myTree, selectedTreeRow, false);
         }
       }
     };
@@ -442,6 +448,42 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     } else {
       SwingUtilities.invokeLater(runnable);
     }
+  }
+
+  private static int findRowContainingFile(@NotNull ListModel listModel, @NotNull final VirtualFile toSelect) {
+    for (int i = 0; i < listModel.getSize(); i++) {
+      Object item = listModel.getElementAt(i);
+      if (item instanceof Change && matches((Change)item, toSelect)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private int findRowContainingFile(@NotNull TreeNode root, @NotNull final VirtualFile toSelect) {
+    final Ref<Integer> row = Ref.create(-1);
+    TreeUtil.traverse(root, new TreeUtil.Traverse() {
+      @Override
+      public boolean accept(Object node) {
+        if (node instanceof DefaultMutableTreeNode) {
+          Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+          if (userObject instanceof Change) {
+            if (matches((Change)userObject, toSelect)) {
+              TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
+              row.set(myTree.getRowForPath(new TreePath(path)));
+            }
+          }
+        }
+
+        return row.get() == -1;
+      }
+    });
+    return row.get();
+  }
+
+  private static boolean matches(@NotNull Change change, @NotNull VirtualFile file) {
+    VirtualFile virtualFile = change.getVirtualFile();
+    return virtualFile != null && virtualFile.equals(file) || seemsToBeMoved(change, file);
   }
 
   private static boolean seemsToBeMoved(Change change, VirtualFile toSelect) {
@@ -542,18 +584,12 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         return Collections.emptyList();
       }
       else {
-        final List<T> changes = new ArrayList<T>();
-        final TIntHashSet checkSet = new TIntHashSet();
+        LinkedHashSet<T> changes = ContainerUtil.newLinkedHashSet();
         for (TreePath path : paths) {
           //noinspection unchecked
-          List<T> list = getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent());
-          for (T object : list) {
-            if (checkSet.add(object.hashCode()) || !changes.contains(object)) {
-              changes.add(object);
-            }
-          }
+          changes.addAll(getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent()));
         }
-        return changes;
+        return ContainerUtil.newArrayList(changes);
       }
     }
   }
@@ -912,6 +948,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       }
     });
     myTree.setSelectionPaths(treeSelection.toArray(new TreePath[treeSelection.size()]));
+    if (treeSelection.size() == 1) myTree.scrollPathToVisible(treeSelection.get(0));
 
     // list
     final ListModel model = myList.getModel();
@@ -925,6 +962,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       }
     }
     myList.setSelectedIndices(int2int(listSelection));
+    if (listSelection.size() == 1) myList.ensureIndexIsVisible(listSelection.get(0));
   }
 
   private static int[] int2int(List<Integer> treeSelection) {
@@ -952,6 +990,9 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
   @Override
   public void calcData(DataKey key, DataSink sink) {
+    if (PlatformDataKeys.COPY_PROVIDER == key) {
+      sink.put(PlatformDataKeys.COPY_PROVIDER, myShowFlatten ? myListCopyProvider : myTreeCopyProvider);
+    }
   }
 
   private class MyTree extends Tree implements TypeSafeDataProvider {
@@ -1027,6 +1068,38 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     public void calcData(DataKey key, DataSink sink) {
       // just delegate to the change list
       ChangesTreeList.this.calcData(key, sink);
+    }
+  }
+
+  private static class ChangesBrowserNodeListCopyProvider implements CopyProvider {
+
+    @NotNull private final Project myProject;
+    @NotNull private final JList myList;
+
+    ChangesBrowserNodeListCopyProvider(@NotNull Project project, @NotNull JList list) {
+      myProject = project;
+      myList = list;
+    }
+
+    @Override
+    public void performCopy(@NotNull DataContext dataContext) {
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(myList.getSelectedValues(),
+                                                                                     new Function<Object, String>() {
+        @Override
+        public String fun(Object object) {
+          return ChangesBrowserNode.create(myProject, object).getTextPresentation();
+        }
+      }, "\n")));
+    }
+
+    @Override
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+      return !myList.isSelectionEmpty();
+    }
+
+    @Override
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
+      return true;
     }
   }
 }

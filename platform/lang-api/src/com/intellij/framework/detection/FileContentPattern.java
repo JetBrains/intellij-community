@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
       public boolean accepts(@NotNull final FileContent fileContent, final ProcessingContext context) {
         try {
           String rootTagNamespace = parseHeaderWithException(fileContent).getRootTagNamespace();
-          return rootTagNamespace != null && namespacePattern.getCondition().accepts(rootTagNamespace, context);
+          return rootTagNamespace != null && namespacePattern.accepts(rootTagNamespace, context);
         }
         catch (IOException e) {
           return false;

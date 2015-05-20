@@ -68,7 +68,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
           !isSingleArgDecoratorCall(myContext, (PyFunction)object)) {
         final Project project = ((PyFunction)object).getProject();
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
-        final TypeEvalContext context = TypeEvalContext.userInitiated(project, myContext != null ? myContext.getContainingFile() : null);
+        final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
         final List<PyParameter> parameters = PyUtil.getParameters((PyFunction)object, context);
         final String params = StringUtil.join(parameters, new Function<PyParameter, String>() {
           @Override

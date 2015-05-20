@@ -16,11 +16,14 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -38,7 +41,18 @@ public class IgnoredFilesComponent {
       project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
         @Override
         public void after(@NotNull List<? extends VFileEvent> events) {
-          resetCaches();
+          if (hasSignificantChanges(events)) {
+            resetCaches();
+          }
+        }
+
+        private <T extends VFileEvent> boolean hasSignificantChanges(List<T> events) {
+          return ContainerUtil.exists(events, new Condition<T>() {
+            @Override
+            public boolean value(VFileEvent event) {
+              return !(event instanceof VFileContentChangeEvent);
+            }
+          });
         }
       });
     }

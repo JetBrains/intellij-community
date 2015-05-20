@@ -9,8 +9,6 @@ import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbEditableCell;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Utilities;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -23,6 +21,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   protected JTextArea myEditablePanel;
   public final static String EDITABLE_PANEL = "Editable panel";
   public final static String VIEW_PANEL = "View panel";
+  protected boolean isRunning = false;
 
   public IpnbEditablePanel(@NotNull K cell) {
     super(cell);
@@ -42,15 +41,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   private void addEditablePanel() {
     myEditablePanel = createEditablePanel();
     final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.gridx = 0;
-    c.gridy = 0;
-    c.gridwidth = 1;
 
     panel.setName(EDITABLE_PANEL);
     panel.setBackground(IpnbEditorUtil.getBackground());
-    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myEditablePanel, c);
+    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myEditablePanel);
 
     add(panel, EDITABLE_PANEL);
   }
@@ -71,23 +65,28 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     myViewPanel.setName(VIEW_PANEL);
 
     final JPanel panel = new JPanel(new GridBagLayout());
-    final GridBagConstraints c = new GridBagConstraints();
-    c.fill = GridBagConstraints.HORIZONTAL;
-    c.gridx = 0;
-    c.gridy = 0;
-    c.gridwidth = 1;
-    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myViewPanel, c);
+    addPromptPanel(panel, null, IpnbEditorUtil.PromptType.None, myViewPanel);
     panel.setBackground(IpnbEditorUtil.getBackground());
     add(panel, VIEW_PANEL);
   }
 
   public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
                              @NotNull final IpnbEditorUtil.PromptType promptType,
-                             @NotNull final JComponent component, @NotNull final GridBagConstraints c) {
+                             @NotNull final JComponent component) {
+    final GridBagConstraints c = new GridBagConstraints();
+    c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
+    c.gridy = 0;
+    c.gridwidth = 1;
+
     c.weightx = 0;
     c.anchor = GridBagConstraints.NORTHWEST;
-    final JComponent promptComponent = IpnbEditorUtil.createPromptComponent(promptNumber, promptType);
+    Integer number = promptNumber;
+    if (isRunning) {
+      number = -1;
+    }
+
+    final JComponent promptComponent = IpnbEditorUtil.createPromptComponent(number, promptType);
     c.insets = new Insets(2,2,2,5);
     parent.add(promptComponent, c);
 
@@ -164,22 +163,6 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       }
     });
     return textArea;
-  }
-
-  public int getLineCount(@NotNull final JTextArea textArea) {
-    int totalCharacters = textArea.getText().length();
-    int lineCount = 1;
-
-    try {
-      int offset = totalCharacters;
-      while (offset > 0) {
-        offset = Utilities.getRowStart(textArea, offset) - 1;
-        lineCount++;
-      }
-    } catch (BadLocationException e) {
-      return 1;
-    }
-    return lineCount;
   }
 
   public boolean contains(int y) {

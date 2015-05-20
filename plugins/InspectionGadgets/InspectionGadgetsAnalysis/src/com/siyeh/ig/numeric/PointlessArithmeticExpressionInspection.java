@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -132,6 +133,7 @@ public class PointlessArithmeticExpressionInspection
                                @NotNull @NonNls String replacement) {
     final StringBuilder result = new StringBuilder();
     boolean stop = false;
+    boolean longTypeSeen = false;
     for (PsiElement child : expression.getChildren()) {
       if (child == fromTarget) {
         stop = true;
@@ -141,11 +143,18 @@ public class PointlessArithmeticExpressionInspection
         stop = false;
       }
       else if (child instanceof PsiComment || !stop) {
+        if (child instanceof PsiExpression) {
+          final PsiExpression childExpression = (PsiExpression)child;
+          longTypeSeen |= TypeConversionUtil.isLongType(childExpression.getType());
+        }
         result.append(child.getText());
       }
       else if (child instanceof PsiJavaToken && untilTarget == null) {
         stop = false;
       }
+    }
+    if (!longTypeSeen && TypeConversionUtil.isLongType(expression.getType()) && replacement.isEmpty()) {
+      result.insert(0, "(long)");
     }
     return result.toString();
   }
@@ -213,11 +222,8 @@ public class PointlessArithmeticExpressionInspection
       else if (tokenType.equals(JavaTokenType.ASTERISK)) {
         isPointless = multiplyExpressionIsPointless(operands);
       }
-      else if (tokenType.equals(JavaTokenType.DIV)) {
+      else if (tokenType.equals(JavaTokenType.DIV) || tokenType.equals(JavaTokenType.PERC)) {
         isPointless = divideExpressionIsPointless(operands);
-      }
-      else if (tokenType.equals(JavaTokenType.PERC)) {
-        isPointless = modExpressionIsPointless(operands);
       }
       else {
         isPointless = false;
@@ -231,7 +237,7 @@ public class PointlessArithmeticExpressionInspection
     private boolean subtractionExpressionIsPointless(PsiExpression[] expressions) {
       PsiExpression previousExpression = null;
       for (int i = 0; i < expressions.length; i++) {
-        PsiExpression expression = expressions[i];
+        final PsiExpression expression = expressions[i];
         if (previousExpression != null &&
             (isZero(expression) || areExpressionsIdenticalWithoutSideEffects(previousExpression, expression, i))) {
           return true;
@@ -260,19 +266,6 @@ public class PointlessArithmeticExpressionInspection
     }
 
     private boolean divideExpressionIsPointless(PsiExpression[] expressions) {
-      PsiExpression previousExpression = null;
-      for (int i = 0; i < expressions.length; i++) {
-        final PsiExpression expression = expressions[i];
-        if (previousExpression != null &&
-            (isOne(expression) || areExpressionsIdenticalWithoutSideEffects(previousExpression, expression, i))) {
-          return true;
-        }
-        previousExpression = expression;
-      }
-      return false;
-    }
-
-    private boolean modExpressionIsPointless(PsiExpression[] expressions) {
       PsiExpression previousExpression = null;
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];

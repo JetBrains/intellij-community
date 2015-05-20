@@ -16,7 +16,7 @@
     </description>
 
   <version>3.0</version>
-  <vendor url="http://www.jetbrains.com" logo="/general/ijLogo.png">JetBrains s.r.o.</vendor>
+  <vendor url="https://www.jetbrains.com">JetBrains s.r.o.</vendor>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>

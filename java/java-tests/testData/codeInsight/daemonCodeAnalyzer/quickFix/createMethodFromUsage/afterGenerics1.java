@@ -1,4 +1,4 @@
-// "Create Method 'bar'" "true"
+// "Create method 'bar'" "true"
 public class Test {
     <T extends String> void foo (T t1, T t2) {
         bar (t1, t2);

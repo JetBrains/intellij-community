@@ -25,11 +25,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.*;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
-import git4idea.GitBranch;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import git4idea.GitRemoteBranch;
-import git4idea.GitStandardRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.push.GitPushTagMode;
 import git4idea.repo.GitRemote;
@@ -68,6 +67,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
     public boolean PUSH_AUTO_UPDATE = false;
+    public boolean PUSH_UPDATE_ALL_ROOTS = true;
     public Value ROOT_SYNC = Value.NOT_DECIDED;
     public String RECENT_GIT_ROOT_PATH = null;
     public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<String, String>();
@@ -96,8 +96,9 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return PeriodicalTasksCloser.getInstance().safeGetService(project, GitVcsSettings.class);
   }
 
+  @NotNull
   public UpdateMethod getUpdateType() {
-    return myState.UPDATE_TYPE;
+    return ObjectUtils.notNull(myState.UPDATE_TYPE, UpdateMethod.BRANCH_DEFAULT);
   }
 
   public void setUpdateType(UpdateMethod updateType) {
@@ -144,6 +145,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public void setAutoUpdateIfPushRejected(boolean autoUpdate) {
     myState.PUSH_AUTO_UPDATE = autoUpdate;
+  }
+
+  public boolean shouldUpdateAllRootsIfPushRejected() {
+    return myState.PUSH_UPDATE_ALL_ROOTS;
+  }
+
+  public void setUpdateAllRootsIfPushRejected(boolean updateAllRoots) {
+    myState.PUSH_UPDATE_ALL_ROOTS = updateAllRoots;
   }
 
   @NotNull
@@ -255,8 +264,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     if (remote == null) {
       return null;
     }
-    GitRemoteBranch remoteBranch = GitUtil.findRemoteBranch(repository, remote, targetInfo.targetBranchName);
-    return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, targetInfo.targetBranchName, GitBranch.DUMMY_HASH));
+    return GitUtil.findOrCreateRemoteBranch(repository, remote, targetInfo.targetBranchName);
   }
 
   public void setPushTarget(@NotNull GitRepository repository, @NotNull String sourceBranch,

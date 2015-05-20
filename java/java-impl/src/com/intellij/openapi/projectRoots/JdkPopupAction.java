@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.icons.AllIcons;
@@ -39,7 +40,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -158,7 +158,7 @@ public class JdkPopupAction extends AnAction {
       try {
         File file = new File(path);
         File javaExe = new File(new File(file, "bin"), "java.exe");
-        ProcessOutput output = ExecUtil.execAndGetOutput(Arrays.asList(javaExe.getAbsolutePath(), "-version"), null);
+        ProcessOutput output = ExecUtil.execAndGetOutput(new GeneralCommandLine(javaExe.getAbsolutePath(), "-version"));
         List<String> lines = output.getStderrLines();
         if (lines.isEmpty()) {
           lines = output.getStdoutLines();

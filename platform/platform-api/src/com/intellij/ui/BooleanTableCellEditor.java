@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author peter
@@ -32,6 +33,11 @@ public class BooleanTableCellEditor extends DefaultCellEditor {
 
   public BooleanTableCellEditor() {
     this(false);
+  }
+
+  @Override
+  public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+    return super.getTableCellEditorComponent(table, value, true, row, column);
   }
 
   public Object getCellEditorValue() {

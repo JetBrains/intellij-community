@@ -30,7 +30,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  *
- * @see com.intellij.openapi.fileEditor.TextEditor
+ * @see TextEditor
  */
 public interface FileEditor extends UserDataHolder, Disposable {
   /**
@@ -82,8 +82,8 @@ public interface FileEditor extends UserDataHolder, Disposable {
   boolean isModified();
 
   /**
-   * @return whether the editor is valid or not. For some reasons
-   * editor can become invalid. For example, text editor becomes invalid when its file is deleted.
+   * @return whether the editor is valid or not. An editor is valid if the contents displayed in it still exists. For example, an editor
+   * displaying the contents of a file stops being valid if the file is deleted.
    */
   boolean isValid();
 

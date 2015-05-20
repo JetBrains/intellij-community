@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,16 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.ZipFileCache;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.zip.JBZipEntry;
+import com.intellij.util.io.zip.JBZipFile;
 import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -41,15 +45,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /**
  * @author anna
@@ -149,34 +150,21 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    @NonNls final String productName;
-    if (new File(sdkHome, "lib/rubymine.jar").exists()) {
-      productName = "RubyMine ";
-    }
-    else if (new File(sdkHome, "lib/pycharm.jar").exists()) {
-      productName = "PyCharm ";
-    }
-    else if (new File(sdkHome, "lib/webide.jar").exists()) {
-      productName = "WebStorm/PhpStorm ";
-    }
-    else if (new File(sdkHome, "license/AppCode_license.txt").exists()) {
-      productName = "AppCode ";
-    }
-    else if (new File(sdkHome, "license/CLion_Preview_License.txt").exists()) {
-      productName = "CLion ";
-    }
-    else {
-      productName = "IDEA ";
-    }
     String buildNumber = getBuildNumber(sdkHome);
-    return productName + (buildNumber != null ? buildNumber : "");
+    return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
   }
 
   @Nullable
   public static String getBuildNumber(String ideaHome) {
     try {
-      @NonNls final String buildTxt = SystemInfo.isMac ? "/Resources/build.txt" : "/build.txt";
-      return FileUtil.loadFile(new File(ideaHome + buildTxt)).trim();
+      @NonNls final String buildTxt = SystemInfo.isMac ? "Resources/build.txt" : "build.txt";
+      File file = new File(ideaHome, buildTxt);
+      if (SystemInfo.isMac && !file.exists()) {
+        // IntelliJ IDEA 13 and earlier used a different location for build.txt on Mac;
+        // recognize the old location as well
+        file = new File(ideaHome, "build.txt");
+      }
+      return FileUtil.loadFile(file).trim();
     }
     catch (IOException e) {
       return null;
@@ -210,7 +198,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         for (File jar : jars) {
           @NonNls String name = jar.getName();
           if (jar.isFile() && Arrays.binarySearch(forbidden, name) < 0 && (name.endsWith(".jar") || name.endsWith(".zip"))) {
-            result.add(jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR));
+            VirtualFile file = jfs.findFileByPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
+            LOG.assertTrue(file != null, jar.getPath() + " not found");
+            result.add(file);
           }
         }
       }
@@ -275,45 +265,41 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return false;
   }
 
-  private static int getIdeaClassFileVersion(Sdk ideaSdk) {
+  @Nullable
+  private static JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
+    File apiJar = getOpenApiJar(ideaSdk.getHomePath());
+    if (apiJar != null) {
+      int classFileVersion = getIdeaClassFileVersion(apiJar);
+      if (classFileVersion > 0) {
+        LanguageLevel languageLevel = ClsParsingUtil.getLanguageLevelByVersion(classFileVersion);
+        if (languageLevel != null) {
+          return JavaSdkVersion.fromLanguageLevel(languageLevel);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private static int getIdeaClassFileVersion(File apiJar) {
     try {
-      File apiJar = getOpenApiJar(ideaSdk.getHomePath());
-      if (apiJar != null) {
-        ZipFile zipFile = ZipFileCache.acquire(apiJar.getPath());
-        try {
-          ZipEntry entry = zipFile.getEntry("com/intellij/psi/PsiManager.class");
-          if (entry != null) {
-            DataInputStream stream = new DataInputStream(zipFile.getInputStream(entry));
-            try {
-              if (stream.skip(6) == 6) {
-                return stream.readUnsignedShort();
-              }
-            }
-            finally {
-              stream.close();
-            }
+      JBZipFile zipFile = new JBZipFile(apiJar);
+      try {
+        JBZipEntry entry = zipFile.getEntry(PsiManager.class.getName().replace('.', '/') + ".class");
+        if (entry != null) {
+          byte[] bytes = entry.getData();
+          if (bytes != null && bytes.length > 8) {
+            return ((int)bytes[6] << 8) + (int)bytes[7];
           }
         }
-        finally {
-          ZipFileCache.release(zipFile);
-        }
+      }
+      finally {
+        zipFile.close();
       }
     }
     catch (IOException ignored) { }
 
     return -1;
-  }
-
-  @Nullable
-  private static JavaSdkVersion getRequiredJdkVersion(final Sdk ideaSdk) {
-    int classFileVersion = getIdeaClassFileVersion(ideaSdk);
-    switch(classFileVersion) {
-      case 48: return JavaSdkVersion.JDK_1_4;
-      case 49: return JavaSdkVersion.JDK_1_5;
-      case 50: return JavaSdkVersion.JDK_1_6;
-      case 51: return JavaSdkVersion.JDK_1_7;
-    }
-    return null;
   }
 
   public static void setupSdkPaths(final SdkModificator sdkModificator, final String sdkHome, final Sdk internalJava) {

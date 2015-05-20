@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
@@ -38,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
   private static final Logger LOG = Logger.getInstance("#" + MethodReferenceResolver.class.getName());
@@ -100,7 +98,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
               final PsiExpressionList argumentList = getArgumentList();
               final PsiType[] typeParameters = reference.getTypeParameters();
               return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
-                                             argumentList != null ? argumentList.getExpressionTypes() : null, typeParameters.length > 0 ? typeParameters : null,
+                                             argumentList != null ? argumentList.getExpressionTypes() : null,
+                                             method.hasTypeParameters() && typeParameters.length > 0 ? typeParameters : null,
                                              getLanguageLevel()) {
                 @Override
                 public boolean isVarargs() {
@@ -110,10 +109,10 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                 @NotNull
                 @Override
                 public PsiSubstitutor inferTypeArguments(@NotNull ParameterTypeInferencePolicy policy, boolean includeReturnConstraint) {
-                  return inferTypeArguments();
+                  return inferTypeArguments(includeReturnConstraint);
                 }
 
-                private PsiSubstitutor inferTypeArguments() {
+                private PsiSubstitutor inferTypeArguments(boolean includeReturnConstraint) {
                   if (interfaceMethod == null) return substitutor;
                   final InferenceSession session = new InferenceSession(method.getTypeParameters(), substitutor, reference.getManager(), reference);
                   session.initThrowsConstraints(method);
@@ -126,7 +125,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                     return substitutor;
                   }
 
-                  if (interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
+                  if (includeReturnConstraint && interfaceMethodReturnType != PsiType.VOID && interfaceMethodReturnType != null) {
                     if (method.isConstructor()) {
                       //todo
                       session.initBounds(reference, method.getContainingClass().getTypeParameters());
@@ -213,14 +212,14 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
     @Nullable
     @Override
-    public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
+    protected CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
       if (mySignature == null) return null;
 
-      checkSameSignatures(conflicts);
-      checkAccessStaticLevels(conflicts, true);
+      if (conflicts.size() > 1) checkSameSignatures(conflicts);
+      if (conflicts.size() > 1) checkAccessStaticLevels(conflicts, true);
 
       final PsiType[] argTypes = mySignature.getParameterTypes();
-      boolean hasReceiver = PsiMethodReferenceUtil.hasReceiver(argTypes, myQualifierResolveResult, myReferenceExpression);
+      boolean hasReceiver = PsiMethodReferenceUtil.isSecondSearchPossible(argTypes, myQualifierResolveResult, myReferenceExpression);
 
       final List<CandidateInfo> firstCandidates = new ArrayList<CandidateInfo>();
       final List<CandidateInfo> secondCandidates = new ArrayList<CandidateInfo>();
@@ -229,7 +228,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         if (!(conflict instanceof MethodCandidateInfo)) continue;
         final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
 
-        final PsiSubstitutor substitutor = conflict.getSubstitutor();
+        final PsiSubstitutor substitutor = ((MethodCandidateInfo)conflict).getSubstitutor(false);
         final PsiType[] parameterTypes = psiMethod.getSignature(substitutor).getParameterTypes();
 
         final boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();

@@ -3834,18 +3834,12 @@
   <item name="org.apache.commons.lang.Validate void notEmpty(java.util.Map, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <!-- hardcoded start -->
-  <item name="org.apache.commons.lang.Validate void notNull(java.lang.Object)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value = &quot;null -&gt; fail&quot;, pure = true"/>
-    </annotation>
+  <item name="org.apache.commons.lang.Validate void notNull(java.lang.Object) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="org.apache.commons.lang.Validate void notNull(java.lang.Object, java.lang.String)">
-    <annotation name="org.jetbrains.annotations.Contract">
-      <val val="value = &quot;null, _ -&gt; fail&quot;, pure = true"/>
-    </annotation>
+  <item name="org.apache.commons.lang.Validate void notNull(java.lang.Object, java.lang.String) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <!-- hardcoded end -->
   <item name="org.apache.commons.lang.WordUtils WordUtils()">
     <annotation name="org.jetbrains.annotations.Contract">
       <val val="pure=true"/>

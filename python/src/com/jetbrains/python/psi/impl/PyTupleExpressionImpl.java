@@ -16,10 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyTupleExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -31,7 +28,7 @@ import java.util.Iterator;
 /**
  * @author yole
  */
-public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpression {
+public class PyTupleExpressionImpl extends PySequenceExpressionImpl implements PyTupleExpression {
   public PyTupleExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -39,11 +36,6 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyTupleExpression(this);
-  }
-
-  @NotNull
-  public PyExpression[] getElements() {
-    return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
@@ -56,6 +48,19 @@ public class PyTupleExpressionImpl extends PyElementImpl implements PyTupleExpre
   }
 
   public Iterator<PyExpression> iterator() {
-    return Arrays.<PyExpression>asList(getElements()).iterator();
+    return Arrays.asList(getElements()).iterator();
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    super.deleteChildInternal(child);
+    final PyExpression[] children = getElements();
+    final PyElementGenerator generator = PyElementGenerator.getInstance(getProject());
+    if (children.length == 1 && PyPsiUtils.getNextComma(children[0]) == null ) {
+      addAfter(generator.createComma().getPsi(), children[0]);
+    }
+    else if (children.length == 0 && !(getParent() instanceof PyParenthesizedExpression)) {
+      replace(generator.createExpressionFromText(LanguageLevel.forElement(this), "()"));
+    }
   }
 }

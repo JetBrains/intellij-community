@@ -26,6 +26,7 @@ import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,6 +35,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static git4idea.util.GitUIUtil.code;
 
 /**
@@ -45,12 +47,11 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
   static final int REBASE_EXIT_CODE = MERGE_EXIT_CODE + 1;
 
   private static final String HTML_IDENT = "&nbsp;&nbsp;&nbsp;&nbsp;";
-  public static final String DESCRIPTION_START = "<html>Push of current branch ";
-  public static final String DESCRIPTION_ENDING =
-    "Remote changes need to be merged before pushing.<br/>To push anyway you can merge or rebase now.</html>";
+  public static final String DESCRIPTION_START = "Push of current branch ";
 
   private final Project myProject;
   private final Collection<GitRepository> myRepositories;
+  private final boolean myRebaseOverMergeProblemDetected;
   private final JCheckBox myUpdateAllRoots;
   private final RebaseAction myRebaseAction;
   private final MergeAction myMergeAction;
@@ -58,39 +59,53 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
 
   protected GitRejectedPushUpdateDialog(@NotNull Project project,
                                         @NotNull Collection<GitRepository> repositories,
-                                        @NotNull PushUpdateSettings initialSettings) {
+                                        @NotNull PushUpdateSettings initialSettings,
+                                        boolean rebaseOverMergeProblemDetected) {
     super(project);
     myProject = project;
     myRepositories = repositories;
+    myRebaseOverMergeProblemDetected = rebaseOverMergeProblemDetected;
 
     myUpdateAllRoots = new JCheckBox("Update not rejected repositories as well", initialSettings.shouldUpdateAllRoots());
     myUpdateAllRoots.setMnemonic('u');
     myAutoUpdateInFuture = new JCheckBox("<html>Remember the update method choice and <u>s</u>ilently update in future <br/>(you may change this in the Settings)</html>");
     myAutoUpdateInFuture.setMnemonic('s');
 
-    myMergeAction = new MergeAction(this);
-    myRebaseAction = new RebaseAction(this);
-    getDefaultAction(initialSettings.getUpdateMethod()).putValue(DEFAULT_ACTION, Boolean.TRUE);
-    getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
-    
+    myMergeAction = new MergeAction();
+    myRebaseAction = new RebaseAction();
+    setDefaultAndFocusedActions(initialSettings.getUpdateMethod());
     init();
     setTitle("Push Rejected");
   }
 
-  private AbstractAction getDefaultAction(@Nullable UpdateMethod updateMethod) {
-    if (updateMethod == UpdateMethod.REBASE) {
-      return myRebaseAction;
+  private void setDefaultAndFocusedActions(@Nullable UpdateMethod updateMethod) {
+    Action defaultAction;
+    Action focusedAction;
+    if (myRebaseOverMergeProblemDetected) {
+      defaultAction = myMergeAction;
+      focusedAction = getCancelAction();
     }
-    return myMergeAction;
+    else if (updateMethod == UpdateMethod.REBASE) {
+      defaultAction = myRebaseAction;
+      focusedAction = myMergeAction;
+    }
+    else {
+      defaultAction = myMergeAction;
+      focusedAction = myRebaseAction;
+    }
+    defaultAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
+    focusedAction.putValue(FOCUSED_ACTION, Boolean.TRUE);
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    JBLabel desc = new JBLabel(makeDescription());
+    JBLabel desc = new JBLabel(wrapInHtml(makeDescription()));
 
     JPanel options = new JPanel(new BorderLayout());
-    options.add(myAutoUpdateInFuture, BorderLayout.SOUTH);
-    
+    if (!myRebaseOverMergeProblemDetected) {
+      options.add(myAutoUpdateInFuture, BorderLayout.SOUTH);
+    }
+
     if (!GitUtil.justOneGitRepository(myProject)) {
       options.add(myUpdateAllRoots);
     }
@@ -99,7 +114,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     JPanel rootPanel = new JPanel(new BorderLayout(GAP, GAP));
     rootPanel.add(desc);
     rootPanel.add(options, BorderLayout.SOUTH);
-    JLabel iconLabel = new JLabel(UIUtil.getQuestionIcon());
+    JLabel iconLabel = new JLabel(myRebaseOverMergeProblemDetected ? UIUtil.getWarningIcon() : UIUtil.getQuestionIcon());
     rootPanel.add(iconLabel, BorderLayout.WEST);
 
     return rootPanel;
@@ -115,14 +130,14 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
       assert !myRepositories.isEmpty() : "repositories are empty";
       GitRepository repository = myRepositories.iterator().next();
       GitBranch currentBranch = getCurrentBranch(repository);
-      return DESCRIPTION_START + code(currentBranch.getName()) + " was rejected. <br/>" + DESCRIPTION_ENDING;
+      return DESCRIPTION_START + code(currentBranch.getName()) + " was rejected. <br/>" + descriptionEnding();
     }
     else if (myRepositories.size() == 1) {  // there are more than 1 repositories in the project, but only one was rejected
       GitRepository repository = myRepositories.iterator().next();
       GitBranch currentBranch = getCurrentBranch(repository);
 
-      return DESCRIPTION_START + code(currentBranch.getName()) + " in repository <br/>" + code(repository.getPresentableUrl()) + " was rejected. <br/>" +
-             DESCRIPTION_ENDING;
+      return DESCRIPTION_START + code(currentBranch.getName()) + " in repository <br/>" + code(repository.getPresentableUrl()) +
+             " was rejected. <br/>" + descriptionEnding();
     }
     else {  // several repositories rejected the push
       Map<GitRepository, GitBranch> currentBranches = getCurrentBranches();
@@ -132,7 +147,7 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
         for (GitRepository repository : DvcsUtil.sortRepositories(currentBranches.keySet())) {
           sb.append(HTML_IDENT).append(code(repository.getPresentableUrl())).append("<br/>");
         }
-        sb.append(DESCRIPTION_ENDING);
+        sb.append(descriptionEnding());
         return sb.toString();
       }
       else {
@@ -142,10 +157,20 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
           GitBranch currentBranch = entry.getValue();
           sb.append(HTML_IDENT + code(currentBranch.getName()) + " in " + code(repository.getPresentableUrl()) + "<br/>");
         }
-        sb.append(DESCRIPTION_ENDING);
+        sb.append(descriptionEnding());
         return sb.toString();
       }
     }
+  }
+
+  @NotNull
+  private String descriptionEnding() {
+    String desc = "Remote changes need to be merged before pushing.";
+    if (myRebaseOverMergeProblemDetected) {
+      desc += "<br/><br/>In this case <b>merge is highly recommended</b>, because there are non-pushed merge commits. " +
+              "<br/>Rebasing them can lead to problems.";
+    }
+    return desc;
   }
 
   private static boolean allBranchesHaveTheSameName(@NotNull Map<GitRepository, GitBranch> branches) {
@@ -190,31 +215,37 @@ class GitRejectedPushUpdateDialog extends DialogWrapper {
     return myAutoUpdateInFuture.isSelected();
   }
 
-  private static class MergeAction extends AbstractAction {
-    private final DialogWrapper myDialog;
+  @TestOnly
+  boolean warnsAboutRebaseOverMerge() {
+    return myRebaseOverMergeProblemDetected;
+  }
 
-    MergeAction(DialogWrapper dialog) {
+  @TestOnly
+  @NotNull
+  Action getDefaultAction() {
+    return Boolean.TRUE.equals(myMergeAction.getValue(DEFAULT_ACTION)) ? myMergeAction : myRebaseAction;
+  }
+
+  private class MergeAction extends AbstractAction {
+    MergeAction() {
       super("&Merge");
-      myDialog = dialog;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      myDialog.close(MERGE_EXIT_CODE);
+      close(MERGE_EXIT_CODE);
     }
   }
 
-  private static class RebaseAction extends AbstractAction {
-    private final DialogWrapper myDialog;
+  private class RebaseAction extends AbstractAction {
 
-    RebaseAction(DialogWrapper dialog) {
-      super("&Rebase");
-      myDialog = dialog;
+    RebaseAction() {
+      super(myRebaseOverMergeProblemDetected ? "Rebase Anyway" : "&Rebase");
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      myDialog.close(REBASE_EXIT_CODE);
+      close(REBASE_EXIT_CODE);
     }
   }
 

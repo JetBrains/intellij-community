@@ -15,8 +15,12 @@
  */
 package com.intellij.dvcs.branch;
 
+import com.intellij.dvcs.repo.RepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see RepositoryManager#isSyncEnabled()
+ */
 public interface DvcsSyncSettings {
 
   enum Value {

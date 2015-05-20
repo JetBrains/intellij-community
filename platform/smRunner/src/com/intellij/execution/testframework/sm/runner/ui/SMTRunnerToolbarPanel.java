@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.ToolbarPanel;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 
 import javax.swing.*;
 

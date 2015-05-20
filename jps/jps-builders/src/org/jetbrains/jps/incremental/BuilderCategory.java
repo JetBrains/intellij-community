@@ -16,8 +16,11 @@
 package org.jetbrains.jps.incremental;
 
 /**
+ * The category of a module-level builder. Determines the order of executing builders when compiling a module.
+ *
  * @author Eugene Zhuravlev
- *         Date: 9/17/11
+ * @since  9/17/11
+ * @see ModuleLevelBuilder#getCategory()
  */
 public enum BuilderCategory {
   INITIAL,

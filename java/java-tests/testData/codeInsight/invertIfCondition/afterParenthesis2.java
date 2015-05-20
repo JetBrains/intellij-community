@@ -1,4 +1,4 @@
-// "Invert If Condition" "true"
+// "Invert 'if' condition" "true"
 class Inversion {
         public void context(boolean a, boolean b, boolean c) {
             if (!a || !b || !c) {

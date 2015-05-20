@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -62,7 +65,14 @@ public class ImageLoader implements Serializable {
   public static Image loadFromUrl(@NotNull URL url) {
     for (Pair<String, Integer> each : getFileNames(url.toString())) {
       try {
-        return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
+        Image image = loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
+
+        //we can't check all 3rd party plugins and convince the authors to add @2x icons.
+        // isHiDPI() != isRetina() => we should scale images manually
+        if (image != null && JBUI.isHiDPI() && !each.first.contains("@2x")) {
+          image = upscale(image);
+        }
+        return image;
       }
       catch (IOException ignore) {
       }
@@ -70,9 +80,22 @@ public class ImageLoader implements Serializable {
     return null;
   }
 
+  @NotNull
+  private static Image upscale(Image image) {
+    float scale = JBUI.scale(1f);
+    int width = (int)(scale * image.getWidth(null));
+    int height = (int)(scale * image.getHeight(null));
+    @SuppressWarnings("UndesirableClassUsage")
+    BufferedImage tmp = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g = tmp.createGraphics();
+    g.drawImage(image, AffineTransform.getScaleInstance(scale, scale), null);
+    image = tmp;
+    return image;
+  }
+
   @Nullable
   public static Image loadFromUrl(URL url, boolean dark, boolean retina) {
-    for (Pair<String, Integer> each : getFileNames(url.toString(), dark, retina)) {
+    for (Pair<String, Integer> each : getFileNames(url.toString(), dark, retina || JBUI.isHiDPI())) {
       try {
         return loadFromStream(URLUtil.openStream(new URL(each.first)), each.second);
       }
@@ -101,7 +124,7 @@ public class ImageLoader implements Serializable {
   }
 
   public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
-    return getFileNames(file, UIUtil.isUnderDarcula(), UIUtil.isRetina());
+    return getFileNames(file, UIUtil.isUnderDarcula(), UIUtil.isRetina() || JBUI.isHiDPI());
   }
 
   public static List<Pair<String, Integer>> getFileNames(@NotNull String file, boolean dark, boolean retina) {

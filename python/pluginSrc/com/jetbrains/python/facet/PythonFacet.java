@@ -44,39 +44,45 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> implements Libr
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel model = rootManager.getModifiableModel();
         boolean modelChanged = false;
-        // Just remove all old facet libraries except one, that is necessary
-        final Sdk sdk = getConfiguration().getSdk();
-        final String name = (sdk != null) ? getFacetLibraryName(sdk.getName()) : null;
-        boolean librarySeen = false;
-        for (OrderEntry entry : model.getOrderEntries()) {
-          if (entry instanceof LibraryOrderEntry) {
-            final String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
-            if (name != null && name.equals(libraryName)) {
-              librarySeen = true;
-              continue;
+        try {
+          // Just remove all old facet libraries except one, that is necessary
+          final Sdk sdk = getConfiguration().getSdk();
+          final String name = (sdk != null) ? getFacetLibraryName(sdk.getName()) : null;
+          boolean librarySeen = false;
+          for (OrderEntry entry : model.getOrderEntries()) {
+            if (entry instanceof LibraryOrderEntry) {
+              final String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
+              if (name != null && name.equals(libraryName)) {
+                librarySeen = true;
+                continue;
+              }
+              if (libraryName != null && libraryName.endsWith(PYTHON_FACET_LIBRARY_NAME_SUFFIX)) {
+                model.removeOrderEntry(entry);
+                modelChanged = true;
+              }
             }
-            if (libraryName != null && libraryName.endsWith(PYTHON_FACET_LIBRARY_NAME_SUFFIX)) {
-              model.removeOrderEntry(entry);
+          }
+          if (name != null) {
+            final ModifiableModelsProvider provider = ModifiableModelsProvider.SERVICE.getInstance();
+            final LibraryTable.ModifiableModel libraryTableModifiableModel = provider.getLibraryTableModifiableModel();
+            Library library = libraryTableModifiableModel.getLibraryByName(name);
+            if (library == null) {
+              // we just create new project library
+              library = PythonSdkTableListener.addLibrary(sdk);
+            }
+            if (!librarySeen) {
+              model.addLibraryEntry(library);
               modelChanged = true;
             }
           }
         }
-        if (name != null) {
-          final ModifiableModelsProvider provider = ModifiableModelsProvider.SERVICE.getInstance();
-          final LibraryTable.ModifiableModel libraryTableModifiableModel = provider.getLibraryTableModifiableModel();
-          Library library = libraryTableModifiableModel.getLibraryByName(name);
-          if (library == null) {
-            // we just create new project library
-            library = PythonSdkTableListener.addLibrary(sdk);
+        finally {
+          if (modelChanged){
+            model.commit();
           }
-          if (!librarySeen) {
-            model.addLibraryEntry(library);
-            modelChanged = true;
+          else {
+            model.dispose();
           }
-        }
-
-        if (modelChanged){
-          model.commit();
         }
       }
     });

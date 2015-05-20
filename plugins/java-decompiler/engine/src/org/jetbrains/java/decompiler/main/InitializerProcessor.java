@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class InitializerProcessor {
 
   public static void extractInitializers(ClassWrapper wrapper) {
 
-    MethodWrapper meth = wrapper.getMethodWrapper("<clinit>", "()V");
+    MethodWrapper meth = wrapper.getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
     if (meth != null && meth.root != null) {  // successfully decompiled static constructor
       extractStaticInitializers(wrapper, meth);
     }
@@ -56,7 +56,7 @@ public class InitializerProcessor {
   private static void liftConstructor(ClassWrapper wrapper) {
 
     for (MethodWrapper meth : wrapper.getMethods()) {
-      if ("<init>".equals(meth.methodStruct.getName()) && meth.root != null) {
+      if (CodeConstants.INIT_NAME.equals(meth.methodStruct.getName()) && meth.root != null) {
         Statement firstdata = findFirstData(meth.root);
         if (firstdata == null) {
           return;
@@ -103,7 +103,7 @@ public class InitializerProcessor {
   private static void hideEmptySuper(ClassWrapper wrapper) {
 
     for (MethodWrapper meth : wrapper.getMethods()) {
-      if ("<init>".equals(meth.methodStruct.getName()) && meth.root != null) {
+      if (CodeConstants.INIT_NAME.equals(meth.methodStruct.getName()) && meth.root != null) {
         Statement firstdata = findFirstData(meth.root);
         if (firstdata == null || firstdata.getExprents().isEmpty()) {
           return;
@@ -169,7 +169,7 @@ public class InitializerProcessor {
     List<MethodWrapper> lstMethWrappers = new ArrayList<MethodWrapper>();
 
     for (MethodWrapper meth : wrapper.getMethods()) {
-      if ("<init>".equals(meth.methodStruct.getName()) && meth.root != null) { // successfully decompiled constructor
+      if (CodeConstants.INIT_NAME.equals(meth.methodStruct.getName()) && meth.root != null) { // successfully decompiled constructor
         Statement firstdata = findFirstData(meth.root);
         if (firstdata == null || firstdata.getExprents().isEmpty()) {
           return;

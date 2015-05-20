@@ -53,14 +53,21 @@ public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {
       return;
     }
 
+    final String name = psiClass.getName();
+    if (name == null) {
+      return;
+    }
+
     final VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
 
     final boolean isInSource = (virtualFile != null) && fileIndex.isInContent(virtualFile);
     if (isInSource) {
-      consumer.consumeToken(element, element.getText(), true, 0, getRangeToCheck(element.getText(), psiClass.getName()),
-                            IdentifierSplitter.getInstance());
+      final String elementText = element.getText();
+      if (elementText.contains(name)) {
+        consumer.consumeToken(element, elementText, true, 0, getRangeToCheck(elementText, name), IdentifierSplitter.getInstance());
+      }
     }
   }
 

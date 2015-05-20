@@ -17,12 +17,12 @@ package com.jetbrains.numpy.documentation;
 
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPsiFacade;
-import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +45,7 @@ public class NumPyDocString {
   private static final Pattern PARAMETER_WITHOUT_TYPE = Pattern.compile("^([^ :,]+)$");
   private static final Pattern REDIRECT = Pattern.compile("^Refer to `(.*)` for full documentation.$");
   private static final Pattern NUMPY_UNION_PATTERN = Pattern.compile("^\\{(.*)\\}$");
+  private static final Pattern NUMPY_ARRAY_PATTERN = Pattern.compile("(\\(\\.\\.\\..*\\))(.*)");
   private static final Pattern QUOTED_STRING_PATTERN = Pattern.compile("^(?:\\\"(.*)\\\")|(?:\\'(.*)\\')$");
 
   private final String mySignature;
@@ -251,19 +252,21 @@ public class NumPyDocString {
     DocStringParameterBuilder builder = null;
     for (String line : lines) {
       if (!HAS_INDENT.matcher(line).find()) {
-        if (builder != null) {
-          parameters.add(builder.build());
-        }
         builder = new DocStringParameterBuilder();
         Matcher parameterWithTypeMatcher = PARAMETER_WITH_TYPE.matcher(line);
         if (parameterWithTypeMatcher.matches()) {
           builder.setName(parameterWithTypeMatcher.group(1));
           builder.setType(parameterWithTypeMatcher.group(2));
+          parameters.add(builder.build());
         } else {
           Matcher parameterWithoutTypeMatcher = PARAMETER_WITHOUT_TYPE.matcher(line);
           if (parameterWithoutTypeMatcher.matches()) {
             builder.setName(parameterWithoutTypeMatcher.group(1));
             builder.setType("object");
+            parameters.add(builder.build());
+          }
+          else {
+            builder.appendDescription(line.trim());
           }
         }
       } else {
@@ -271,9 +274,6 @@ public class NumPyDocString {
           builder.appendDescription(line.trim());
         }
       }
-    }
-    if (builder != null) {
-      parameters.add(builder.build());
     }
   }
 
@@ -288,6 +288,10 @@ public class NumPyDocString {
 
   @NotNull
   public static List<String> getNumpyUnionType(@NotNull String typeString) {
+    final Matcher arrayMatcher = NUMPY_ARRAY_PATTERN.matcher(typeString);
+    if (arrayMatcher.matches()) {
+      typeString = arrayMatcher.group(2);
+    }
     Matcher matcher = NUMPY_UNION_PATTERN.matcher(typeString);
     if (matcher.matches()) {
       typeString = matcher.group(1);

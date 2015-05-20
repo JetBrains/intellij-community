@@ -58,7 +58,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
                                                               ActionManager.getInstance(), 0));
       }
     });
-
+    updateCustomComponent(checkBox, presentation);
     return checkBox;
   }
 
@@ -70,14 +70,17 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     if (property instanceof JCheckBox) {
       JCheckBox checkBox = (JCheckBox)property;
 
-      checkBox.setText(presentation.getText());
-      checkBox.setToolTipText(presentation.getDescription());
-      checkBox.setMnemonic(presentation.getMnemonic());
-      checkBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
-      checkBox.setSelected(Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY)));
-
-      checkBox.setEnabled(presentation.isEnabled());
-      checkBox.setVisible(presentation.isVisible());
+      updateCustomComponent(checkBox, presentation);
     }
+  }
+
+  protected void updateCustomComponent(JCheckBox checkBox, Presentation presentation) {
+    checkBox.setText(presentation.getText());
+    checkBox.setToolTipText(presentation.getDescription());
+    checkBox.setMnemonic(presentation.getMnemonic());
+    checkBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
+    checkBox.setSelected(Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY)));
+    checkBox.setEnabled(presentation.isEnabled());
+    checkBox.setVisible(presentation.isVisible());
   }
 }

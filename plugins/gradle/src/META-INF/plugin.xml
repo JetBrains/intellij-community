@@ -14,7 +14,7 @@
   ~
   -->
 
-<idea-plugin url="http://confluence.jetbrains.com/display/IDEADEV/Gradle+integration">
+<idea-plugin url="https://confluence.jetbrains.com/display/IDEADEV/Gradle+integration">
   <name>Gradle</name>
   <id>org.jetbrains.plugins.gradle</id>
   <vendor>JetBrains</vendor>
@@ -46,6 +46,9 @@
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
     <extensionPoint name="taskManager" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskManagerExtension"/>
     <extensionPoint name="resolve.contributor" interface="org.jetbrains.plugins.gradle.service.resolve.GradleMethodContextContributor"/>
+    <extensionPoint name="settingsControlProvider" interface="org.jetbrains.plugins.gradle.service.settings.GradleSettingsControlProvider"/>
+    <extensionPoint name="importCustomizer" interface="org.jetbrains.plugins.gradle.service.project.GradleImportCustomizer"/>
+    <extensionPoint name="frameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -62,6 +65,8 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
+    <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
+    <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -111,6 +116,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.project.GradleNotification"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService"/>
 
     <stepsBeforeRunProvider implementation="org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider" />
     <configurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
@@ -147,9 +153,27 @@
 
   <actions>
 
+    <action id="Gradle.ExecuteTask" class="org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction" text="Execute Gradle Task"
+            icon="GradleIcons.Gradle">
+    </action>
+    <action id="Gradle.ToggleOfflineAction" class="org.jetbrains.plugins.gradle.action.ToggleOfflineAction"
+            text="Toggle Offline Mode" description="Toggle offline mode for Gradle builds"
+            icon="GradleIcons.OfflineMode"/>
+    
     <group id="Gradle.GenerateGroup">
       <action id="AddGradleDslPluginAction" class="org.jetbrains.plugins.gradle.codeInsight.actions.AddGradleDslPluginAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </group>
+
+    <group>
+      <separator/>
+      <reference id="Gradle.ExecuteTask"/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.LeftPanel"/>
+    </group>
+
+    <group>
+      <reference id="Gradle.ToggleOfflineAction"/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.RightPanel"/>
     </group>
 
   </actions>

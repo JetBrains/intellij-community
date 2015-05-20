@@ -16,6 +16,8 @@
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.dataFlow.ContractInference
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -239,6 +241,28 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
     assert c == []
   }
 
+  public void "test return boxed integer"() {
+    def c = inferContracts("""
+    static Object test1(Object o1) {
+        return o1 == null ? 1 : smth();
+    }
+    
+    static native Object smth()
+    """)
+    assert c == ['null -> !null']
+  }
+
+  public void "test return boxed boolean"() {
+    def c = inferContracts("""
+    static Object test1(Object o1) {
+        return o1 == null ? false : smth();
+    }
+    
+    static native Object smth()
+    """)
+    assert c == ['null -> !null']
+  }
+
   public void "test boolean autoboxing in delegation"() {
     def c = inferContracts("""
     static Boolean test04(String s) {
@@ -262,6 +286,15 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
               return new Boolean(false);
           else
              return null;
+      }
+    """)
+    assert c == []
+  }
+
+  public void "test double constant auto-unboxing"() {
+    def c = inferContracts("""
+      static double method() {
+        return 1;
       }
     """)
     assert c == []
@@ -359,13 +392,13 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
 
   public void "test use delegated method notnull"() {
     def c = inferContracts("""
-    final Object foo(Object bar) {
-        return doo();
+    final Object foo(Object bar, boolean b) {
+        return b ? doo() : null;
     }
 
     @org.jetbrains.annotations.NotNull Object doo() {}
     """)
-    assert c == ['_ -> !null']
+    assert c == ['_, true -> !null', '_, false -> null']
   }
 
   public void "test use delegated method notnull with contracts"() {
@@ -379,7 +412,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
       return smth();
     }
     """)
-    assert c == ['_, null -> fail', '_, _ -> !null']
+    assert c == ['_, null -> fail']
   }
 
   public void "test dig into type cast"() {
@@ -389,6 +422,33 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
   }
     """)
     assert c == ['null -> null']
+  }
+
+  public void "test compare with string literal"() {
+    def c = inferContracts("""
+  String s(String s) {
+    return s == "a" ? "b" : null;
+  }
+    """)
+    assert c == ['null -> null']
+  }
+  
+  public void "test negative compare with string literal"() {
+    def c = inferContracts("""
+  String s(String s) {
+    return s != "a" ? "b" : null;
+  }
+    """)
+    assert c == ['null -> !null']
+  }
+
+  public void "test primitive return type"() {
+    def c = inferContracts("""
+  String s(String s) {
+    return s != "a" ? "b" : null;
+  }
+    """)
+    assert c == ['null -> !null']
   }
 
   public void "test return after if without else"() {
@@ -406,6 +466,57 @@ public static boolean isBlank(String s) {
         return true;
     }    """)
     assert c == ['null -> true']
+  }
+
+  public void "test do not generate too many contract clauses"() {
+    def c = inferContracts("""
+public static void validate(String p1, String p2, String p3, String p4, String p5, String
+            p6, Integer p7, Integer p8, Integer p9, Boolean p10, String p11, Integer p12, Integer p13) {
+        if (p1 == null && p2 == null && p3 == null && p4 == null && p5 == null && p6 == null && p7 == null && p8 ==
+                null && p9 == null && p10 == null && p11 == null && p12 == null && p13 == null)
+            throw new RuntimeException();
+
+        if (p10 != null && (p8 == null && p7 == null && p9 == null))
+            throw new RuntimeException();
+
+        if ((p12 != null || p13 != null) && (p12 == null || p13 == null))
+            throw new RuntimeException();
+    }
+        """)
+    assert c.size() <= ContractInference.MAX_CONTRACT_COUNT // there could be 74 of them in total
+  }
+
+  public void "test no inference for unused anonymous class methods where annotations won't be used anyway"() {
+    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+class Foo {{
+  new Object() {
+    Object foo() { return null;}
+  };
+}}"""), PsiAnonymousClass).methods[0]
+    assert ContractInference.inferContracts(method).collect { it as String } == []
+  }
+
+  public void "test inference for used anonymous class methods"() {
+    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+class Foo {{
+  new Object() {
+    Object foo() { return null;}
+    Object bar() { return foo();}
+  };
+}}"""), PsiAnonymousClass).methods[0]
+    assert ContractInference.inferContracts(method).collect { it as String } == [' -> null']
+  }
+
+  public void "test anonymous class methods potentially used from outside"() {
+    def method = PsiTreeUtil.findChildOfType(myFixture.addClass("""
+class Foo {{
+  Runnable r = new Runnable() {
+    public void run() {
+      throw new RuntimeException();
+    }
+  };    
+}}"""), PsiAnonymousClass).methods[0]
+    assert ContractInference.inferContracts(method).collect { it as String } == [' -> fail']
   }
 
   private String inferContract(String method) {

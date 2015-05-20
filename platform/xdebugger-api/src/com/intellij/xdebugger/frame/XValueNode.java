@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public interface XValueNode extends Obsolescent {
    * If value text exceeds this constant it's recommended to truncate it and use {@link #setFullValueEvaluator(XFullValueEvaluator)} method
    * to provide full value
    */
-  int MAX_VALUE_LENGTH = 100;
+  int MAX_VALUE_LENGTH = 1000;
 
   /**
    * Setup presentation of the value

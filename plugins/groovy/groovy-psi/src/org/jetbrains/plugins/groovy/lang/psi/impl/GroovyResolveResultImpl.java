@@ -52,10 +52,6 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     this(element, resolveContext, spreadState, substitutor, isAccessible, staticsOK, false, true);
   }
 
-  public GroovyResolveResultImpl(PsiClassType.ClassResolveResult classResolveResult) {
-    this(classResolveResult.getElement(), null, null, classResolveResult.getSubstitutor(), classResolveResult.isAccessible(), classResolveResult.isStaticsScopeCorrect(), false, classResolveResult.isValidResult());
-  }
-
   public GroovyResolveResultImpl(@NotNull PsiElement element,
                                  @Nullable PsiElement resolveContext,
                                  @Nullable SpreadState spreadState,
@@ -110,17 +106,16 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    GroovyResolveResultImpl that = (GroovyResolveResultImpl) o;
+    GroovyResolveResultImpl that = (GroovyResolveResultImpl)o;
 
     return myIsAccessible == that.myIsAccessible &&
-        myElement.getManager().areElementsEquivalent(myElement, that.myElement);
-
+           myElement.getManager().areElementsEquivalent(myElement, that.myElement);
   }
 
   public int hashCode() {
     int result = 0;
     if (myElement instanceof PsiNamedElement) {
-      String name = ((PsiNamedElement) myElement).getName();
+      String name = ((PsiNamedElement)myElement).getName();
       if (name != null) {
         result = name.hashCode();
       }
@@ -151,5 +146,20 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
            "myElement=" + myElement +
            ", mySubstitutor=" + mySubstitutor +
            '}';
+  }
+
+  @NotNull
+  public static GroovyResolveResult from(@NotNull PsiClassType.ClassResolveResult classResolveResult) {
+    if (classResolveResult.getElement() == null) return GroovyResolveResult.EMPTY_RESULT;
+    return new GroovyResolveResultImpl(
+      classResolveResult.getElement(),
+      null,
+      null,
+      classResolveResult.getSubstitutor(),
+      classResolveResult.isAccessible(),
+      classResolveResult.isStaticsScopeCorrect(),
+      false,
+      classResolveResult.isValidResult()
+    );
   }
 }

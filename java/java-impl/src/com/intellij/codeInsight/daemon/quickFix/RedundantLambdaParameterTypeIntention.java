@@ -81,15 +81,27 @@ public class RedundantLambdaParameterTypeIntention extends PsiElementBaseIntenti
                 return parameter.getName();
               }
             }, ", ") + ") -> {}", expression);
+          final PsiParameter[] methodParams = method.getParameterList().getParameters();
           final PsiSubstitutor substitutor = javaPsiFacade.getResolveHelper()
-            .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(),
+            .inferTypeArguments(typeParameters, methodParams, arguments, ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(),
                                 gParent, DefaultParameterTypeInferencePolicy.INSTANCE);
 
           for (PsiTypeParameter parameter : typeParameters) {
             final PsiType psiType = substitutor.substitute(parameter);
             if (psiType == null || dependsOnTypeParams(psiType, expression, parameter)) return false;
           }
-          return functionalInterfaceType.isAssignableFrom(substitutor.substitute(method.getParameterList().getParameters()[idx].getType()));
+          
+          
+          final PsiType paramType;
+          if (idx < methodParams.length) {
+            paramType = methodParams[idx].getType();
+          }
+          else {
+            final PsiParameter lastParam = methodParams[methodParams.length - 1];
+            if (!lastParam.isVarArgs()) return false;
+            paramType = ((PsiEllipsisType)lastParam.getType()).getComponentType();
+          }
+          return functionalInterfaceType.isAssignableFrom(substitutor.substitute(paramType));
         }
       }
       if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType)) {

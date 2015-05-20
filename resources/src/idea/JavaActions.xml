@@ -11,7 +11,7 @@
       <action id="GenerateSetter" class="com.intellij.codeInsight.generation.actions.GenerateSetterAction"/>
       <action id="GenerateGetterAndSetter" class="com.intellij.codeInsight.generation.actions.GenerateGetterAndSetterAction"/>
       <action id="GenerateEquals" class="com.intellij.codeInsight.generation.actions.GenerateEqualsAction"/>
-      <action id="Actions.ActionsPlugin.GenerateToString" class="org.jetbrains.generate.tostring.GenerateToStringAction" text="to_String()" description="Generate toString() method"/>
+      <action id="Actions.ActionsPlugin.GenerateToString" class="org.jetbrains.java.generate.GenerateToStringAction" text="to_String()" description="Generate toString() method"/>
       <action id="GenerateCreateUI" class="com.intellij.codeInsight.generation.actions.GenerateCreateUIAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
@@ -68,8 +68,13 @@
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
     </action>
 
-    <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction">
+    <action id="IntroduceFunctionalParameter" class="com.intellij.refactoring.actions.IntroduceFunctionalParameterAction">
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceParameter"/>
+      <keyboard-shortcut first-keystroke="control shift alt P" keymap="$default"/>
+    </action>
+
+    <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceFunctionalParameter"/>
     </action>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
@@ -122,7 +127,6 @@
     </group>
 
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
-      <add-to-group group-id="RunMenu" anchor="last"/>
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
     </action>
     <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
@@ -153,7 +157,7 @@
     </action>
 
     <group id="JavaDebuggerActions">
-      <action id="Debugger.Inspect" class="com.intellij.debugger.actions.InspectAction"/>
+      <!--<action id="Debugger.Inspect" class="com.intellij.debugger.actions.InspectAction"/>-->
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
@@ -161,19 +165,13 @@
       <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
-      <action id="Debugger.CopyValue" class="com.intellij.debugger.actions.CopyValueAction"/>
-      <action id="Debugger.CompareValueWithClipboard" class="com.intellij.debugger.actions.CompareValueWithClipboardAction"/>
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
       </action>
-      <action id="Debugger.NewWatch" class="com.intellij.debugger.actions.NewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
-      <action id="Debugger.EditWatch" class="com.intellij.debugger.actions.EditWatchAction"/>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction"/>
       <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
       <action id="Debugger.EditTypeSource" class="com.intellij.debugger.actions.JumpToObjectAction"/>
       <reference ref="Debugger.PopFrame"/>
-      <action id="Debugger.RemoveAllWatches" class="com.intellij.debugger.actions.RemoveAllWatchesAction"/>
-      <action id="Debugger.RemoveWatch" class="com.intellij.debugger.actions.RemoveWatchAction" icon="AllIcons.Actions.Delete"/>
       <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
@@ -182,7 +180,6 @@
       </action>
       <!--<action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>-->
       <!--<action id="Debugger.ShowAsHex" class="com.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
-      <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction"/>
       <action id="Debugger.ResumeThread" class="com.intellij.debugger.actions.ResumeThreadAction"/>
       <action id="Debugger.FreezeThread" class="com.intellij.debugger.actions.FreezeThreadAction"/>
       <action id="Debugger.InterruptThread" class="com.intellij.debugger.actions.InterruptThreadAction"/>
@@ -235,7 +232,7 @@
 
     <group id="Debugger.FramePanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
       <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
@@ -247,15 +244,15 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <group id="Debugger.EvaluationDialogPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
       <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
@@ -268,15 +265,15 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
     <group id="Debugger.InspectPanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
       <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
@@ -289,9 +286,9 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 
@@ -312,13 +309,13 @@
     </group>
 
     <group id="Debugger.WatchesPanelPopup">
-      <reference ref="Debugger.NewWatch"/>
-      <reference ref="Debugger.EditWatch"/>
-      <reference ref="Debugger.RemoveWatch"/>
-      <reference ref="Debugger.RemoveAllWatches"/>
+      <!--<reference ref="Debugger.NewWatch"/>-->
+      <!--<reference ref="Debugger.EditWatch"/>-->
+      <!--<reference ref="Debugger.RemoveWatch"/>-->
+      <!--<reference ref="Debugger.RemoveAllWatches"/>-->
       <separator/>
       <reference ref="Debugger.AdjustArrayRange"/>
-      <reference ref="Debugger.Inspect"/>
+      <!--<reference ref="Debugger.Inspect"/>-->
       <reference ref="Debugger.MarkObject"/>
       <!--<reference ref="Debugger.SetValue"/>-->
       <reference ref="Debugger.EditNodeSource"/>
@@ -331,9 +328,9 @@
       <separator/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
-      <reference ref="Debugger.CopyValue"/>
+      <!--<reference ref="Debugger.CopyValue"/>-->
       <reference ref="Debugger.ViewText"/>
-      <reference ref="Debugger.CompareValueWithClipboard"/>
+      <!--<reference ref="Debugger.CompareValueWithClipboard"/>-->
       <reference ref="Debugger.CustomizeContextView"/>
     </group>
 

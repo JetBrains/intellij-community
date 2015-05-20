@@ -73,7 +73,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
               PsiTypeParameter typeParameter = typeParameters[i];
               final PsiType substitution = helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
               if (substitution == null || PsiType.NULL.equals(substitution)) return null;
-              mappings[i] = GenericsUtil.eliminateWildcards(substitution);
+              mappings[i] = GenericsUtil.eliminateWildcards(substitution, false);
             }
 
             final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();

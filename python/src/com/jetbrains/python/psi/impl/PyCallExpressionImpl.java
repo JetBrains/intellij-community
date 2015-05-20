@@ -22,7 +22,8 @@ import com.jetbrains.python.FunctionParameter;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +94,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   @Override
-  public Callable resolveCalleeFunction(PyResolveContext resolveContext) {
+  public PyCallable resolveCalleeFunction(PyResolveContext resolveContext) {
     return PyCallExpressionHelper.resolveCalleeFunction(this, resolveContext);
   }
 

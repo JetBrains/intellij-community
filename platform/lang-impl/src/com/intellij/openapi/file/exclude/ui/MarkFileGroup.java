@@ -19,11 +19,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager;
+import com.intellij.openapi.project.DumbAware;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class MarkFileGroup extends DefaultActionGroup {
+public class MarkFileGroup extends DefaultActionGroup implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();

@@ -1,12 +1,29 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncFunction;
+import org.jetbrains.concurrency.Obsolescent;
+import org.jetbrains.concurrency.ObsolescentFunction;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.debugger.values.Value;
 import org.jetbrains.debugger.values.ValueType;
@@ -25,24 +42,45 @@ public final class Variables {
   };
 
   @NotNull
-  public static Promise<Void> processScopeVariables(@NotNull Scope scope,
+  public static Promise<Void> processVariables(@NotNull final VariableContext context,
+                                               @NotNull final Promise<List<Variable>> variables,
+                                               @NotNull final Obsolescent obsolescent,
+                                               @NotNull final PairConsumer<MemberFilter, List<Variable>> consumer) {
+    // start properties loading to achieve, possibly, parallel execution (properties loading & member filter computation)
+    return context.getMemberFilter()
+      .then(new ValueNodeAsyncFunction<MemberFilter, Void>(obsolescent) {
+        @NotNull
+        @Override
+        public Promise<Void> fun(final MemberFilter memberFilter) {
+          return variables.then(new ObsolescentFunction<List<Variable>, Void>() {
+            @Override
+            public boolean isObsolete() {
+              return obsolescent.isObsolete();
+            }
+
+            @Override
+            public Void fun(List<Variable> variables) {
+              consumer.consume(memberFilter, variables);
+              return null;
+            }
+          });
+        }
+      });
+  }
+
+  @NotNull
+  public static Promise<Void> processScopeVariables(@NotNull final Scope scope,
                                                     @NotNull final XCompositeNode node,
                                                     @NotNull final VariableContext context,
                                                     final boolean isLast) {
-    return scope.getVariables().then(new AsyncFunction<List<Variable>, Void>() {
-      @NotNull
+    return processVariables(context, scope.getVariablesHost().get(), node, new PairConsumer<MemberFilter, List<Variable>>() {
       @Override
-      public Promise<Void> fun(List<Variable> variables) {
-        if (node.isObsolete()) {
-          return Promise.REJECTED;
-        }
-
-        final MemberFilter memberFilter = context.createMemberFilter();
+      public void consume(final MemberFilter memberFilter, List<Variable> variables) {
         Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
         List<Variable> properties = new ArrayList<Variable>(variables.size() + additionalVariables.size());
         List<Variable> functions = new SmartList<Variable>();
         for (Variable variable : variables) {
-          if (memberFilter.isMemberVisible(variable, false)) {
+          if (memberFilter.isMemberVisible(variable)) {
             Value value = variable.getValue();
             if (value != null &&
                 value.getType() == ValueType.FUNCTION &&
@@ -56,13 +94,15 @@ public final class Variables {
           }
         }
 
-        Collections.sort(properties, memberFilter.hasNameMappings() ? new Comparator<Variable>() {
+        Comparator<Variable> comparator = memberFilter.hasNameMappings() ? new Comparator<Variable>() {
           @Override
           public int compare(@NotNull Variable o1, @NotNull Variable o2) {
             return naturalCompare(memberFilter.getName(o1), memberFilter.getName(o2));
           }
-        } : NATURAL_NAME_COMPARATOR);
-        sort(functions);
+        } : NATURAL_NAME_COMPARATOR;
+
+        Collections.sort(properties, comparator);
+        Collections.sort(functions, comparator);
 
         addAditionalVariables(variables, additionalVariables, properties, memberFilter);
 
@@ -76,19 +116,18 @@ public final class Variables {
         else if (isLast && properties.isEmpty()) {
           node.addChildren(XValueChildrenList.EMPTY, true);
         }
-
-        return Promise.DONE;
       }
     });
   }
 
   @Nullable
-  public static List<Variable> sortFilterAndAddValueList(@NotNull List<Variable> variables,
-                                                         @NotNull XCompositeNode node,
-                                                         @NotNull VariableContext context,
-                                                         int maxChildrenToAdd,
-                                                         boolean defaultIsLast) {
-    List<Variable> list = filterAndSort(variables, context, true);
+  public static List<Variable> processNamedObjectProperties(@NotNull List<Variable> variables,
+                                                            @NotNull XCompositeNode node,
+                                                            @NotNull VariableContext context,
+                                                            @NotNull MemberFilter memberFilter,
+                                                            int maxChildrenToAdd,
+                                                            boolean defaultIsLast) {
+    List<Variable> list = filterAndSort(variables, memberFilter);
     if (list.isEmpty()) {
       if (defaultIsLast) {
         node.addChildren(XValueChildrenList.EMPTY, true);
@@ -98,7 +137,7 @@ public final class Variables {
 
     int to = Math.min(maxChildrenToAdd, list.size());
     boolean isLast = to == list.size();
-    node.addChildren(createVariablesList(list, 0, to, context), defaultIsLast && isLast);
+    node.addChildren(createVariablesList(list, 0, to, context, memberFilter), defaultIsLast && isLast);
     if (isLast) {
       return null;
     }
@@ -109,20 +148,19 @@ public final class Variables {
   }
 
   @NotNull
-  public static List<Variable> filterAndSort(@NotNull List<Variable> variables, @NotNull VariableContext context, boolean filterFunctions) {
+  public static List<Variable> filterAndSort(@NotNull List<Variable> variables, @NotNull MemberFilter memberFilter) {
     if (variables.isEmpty()) {
       return Collections.emptyList();
     }
 
-    MemberFilter memberFilter = context.createMemberFilter();
     Collection<Variable> additionalVariables = memberFilter.getAdditionalVariables();
     List<Variable> result = new ArrayList<Variable>(variables.size() + additionalVariables.size());
     for (Variable variable : variables) {
-      if (memberFilter.isMemberVisible(variable, filterFunctions)) {
+      if (memberFilter.isMemberVisible(variable)) {
         result.add(variable);
       }
     }
-    sort(result);
+    Collections.sort(result, NATURAL_NAME_COMPARATOR);
 
     addAditionalVariables(variables, additionalVariables, result, memberFilter);
     return result;
@@ -140,10 +178,6 @@ public final class Variables {
       }
       result.add(variable);
     }
-  }
-
-  private static void sort(@NotNull List<Variable> result) {
-    Collections.sort(result, NATURAL_NAME_COMPARATOR);
   }
 
   // prefixed '_' must be last, fixed case sensitive natural compare
@@ -241,37 +275,33 @@ public final class Variables {
   }
 
   @NotNull
-  public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext) {
-    return createVariablesList(variables, from, to, variableContext, null);
-  }
-
-  @NotNull
   public static XValueChildrenList createVariablesList(@NotNull List<Variable> variables, int from, int to, @NotNull VariableContext variableContext, @Nullable MemberFilter memberFilter) {
     XValueChildrenList list = new XValueChildrenList(to - from);
     VariableContext getterOrSetterContext = null;
     for (int i = from; i < to; i++) {
       Variable variable = variables.get(i);
-      list.add(memberFilter == null ? new VariableView(variable, variableContext) : new VariableView(memberFilter.getName(variable), variable, variableContext));
+      String normalizedName = memberFilter == null ? variable.getName() : memberFilter.getName(variable);
+      list.add(new VariableView(normalizedName, variable, variableContext));
       if (variable instanceof ObjectProperty) {
         ObjectProperty property = (ObjectProperty)variable;
         if (property.getGetter() != null) {
           if (getterOrSetterContext == null) {
             getterOrSetterContext = new NonWatchableVariableContext(variableContext);
           }
-          list.add(new VariableView(new VariableImpl("get " + property.getName(), property.getGetter()), getterOrSetterContext));
+          list.add(new VariableView(new VariableImpl("get " + normalizedName, property.getGetter()), getterOrSetterContext));
         }
         if (property.getSetter() != null) {
           if (getterOrSetterContext == null) {
             getterOrSetterContext = new NonWatchableVariableContext(variableContext);
           }
-          list.add(new VariableView(new VariableImpl("set " + property.getName(), property.getSetter()), getterOrSetterContext));
+          list.add(new VariableView(new VariableImpl("set " + normalizedName, property.getSetter()), getterOrSetterContext));
         }
       }
     }
     return list;
   }
 
-  private static class NonWatchableVariableContext extends VariableContextWrapper {
+  private static final class NonWatchableVariableContext extends VariableContextWrapper {
     public NonWatchableVariableContext(VariableContext variableContext) {
       super(variableContext, null);
     }

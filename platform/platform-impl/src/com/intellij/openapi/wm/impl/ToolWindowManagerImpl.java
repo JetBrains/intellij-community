@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.Patches;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
@@ -73,10 +72,13 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.wm.impl.FloatingDecorator.DIVIDER_WIDTH;
 
 /**
  * @author Anton Katilin
@@ -91,6 +93,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final DesktopLayout myLayout;
   private final Map<String, InternalDecorator> myId2InternalDecorator;
   private final Map<String, FloatingDecorator> myId2FloatingDecorator;
+  private final Map<String, WindowedDecorator> myId2WindowedDecorator;
   private final Map<String, StripeButton> myId2StripeButton;
   private final Map<String, FocusWatcher> myId2FocusWatcher;
   private final Set<String> myDumbAwareIds = Collections.synchronizedSet(ContainerUtil.<String>newTroveSet());
@@ -187,6 +190,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     myId2InternalDecorator = new HashMap<String, InternalDecorator>();
     myId2FloatingDecorator = new HashMap<String, FloatingDecorator>();
+    myId2WindowedDecorator = new HashMap<String, WindowedDecorator>();
     myId2StripeButton = new HashMap<String, StripeButton>();
     myId2FocusWatcher = new HashMap<String, FocusWatcher>();
 
@@ -447,6 +451,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (e instanceof KeyEvent) {
           dispatchKeyEvent((KeyEvent)e);
         }
+        if (e instanceof WindowEvent && (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) && e.getSource() == myFrame) {
+          resetHoldState();
+        }
         return false;
       }
     }, myProject);
@@ -703,7 +710,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private boolean isToHide(final WindowInfoImpl info) {
-    return (info.isAutoHide() || info.isSliding()) && !(info.isFloating() && hasModalChild(info));
+    return (info.isAutoHide() || info.isSliding()) && !(info.isFloating() && hasModalChild(info)) && !info.isWindowed();
   }
 
   /**
@@ -809,6 +816,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (info.isFloating()) {
         appendRemoveFloatingDecoratorCmd(info, commandsList);
       }
+      else if (info.isWindowed()) {
+        appendRemoveWindowedDecoratorCmd(info, commandsList);
+      }
       else { // docked and sliding windows
         appendRemoveDecoratorCmd(id, false, commandsList);
       }
@@ -864,7 +874,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private FloatingDecorator getFloatingDecorator(final String id) {
     return myId2FloatingDecorator.get(id);
   }
-
+  /**
+   * @return windowed decorator for the tool window with specified <code>ID</code>.
+   */
+  private WindowedDecorator getWindowedDecorator(String id) {
+    return myId2WindowedDecorator.get(id);
+  }
   /**
    * @return internal decorator for the tool window with specified <code>ID</code>.
    */
@@ -1038,6 +1053,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (toBeShownInfo.isFloating()) {
       commandsList.add(new AddFloatingDecoratorCmd(decorator, toBeShownInfo));
     }
+    else if (toBeShownInfo.isWindowed()) {
+      commandsList.add(new AddWindowedDecoratorCmd(decorator, toBeShownInfo));
+    }
     else { // docked and sliding windows
 
       // If there is tool window on the same side then we have to hide it, i.e.
@@ -1147,7 +1165,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        @NotNull final ToolWindowAnchor anchor,
                                        @NotNull final Disposable parentDisposable,
                                        final boolean canWorkInDumbMode) {
-    ToolWindow window = registerToolWindow(id, null, anchor, false, canCloseContent, canWorkInDumbMode);
+    return registerToolWindow(id, canCloseContent, anchor, parentDisposable, canWorkInDumbMode, false);
+  }
+
+  @NotNull
+  @Override
+  public ToolWindow registerToolWindow(@NotNull String id,
+                                       boolean canCloseContent,
+                                       @NotNull ToolWindowAnchor anchor,
+                                       Disposable parentDisposable,
+                                       boolean canWorkInDumbMode,
+                                       boolean secondary) {
+    ToolWindow window = registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode);
     return registerDisposable(id, parentDisposable, window);
   }
 
@@ -1250,6 +1279,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (info.isFloating()) {
         appendRemoveFloatingDecoratorCmd(info, commandsList);
       }
+      else  if (info.isWindowed()) {
+         appendRemoveWindowedDecoratorCmd(info, commandsList);
+       }
       else { // floating and sliding windows
         appendRemoveDecoratorCmd(id, false, commandsList);
       }
@@ -1374,7 +1406,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return false;
     }
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
-    return stripe.getButtonFor(toolWindowId) != null;
+    return stripe != null && stripe.getButtonFor(toolWindowId) != null;
   }
 
   @Override
@@ -1397,6 +1429,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
+    if (stripe == null) {
+      return;
+    }
     final ToolWindowImpl window = getInternalDecorator(toolWindowId).getToolWindow();
     if (!window.isAvailable()) {
       window.setPlaceholderMode(true);
@@ -1731,6 +1766,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (info.isFloating()) {
         appendRemoveFloatingDecoratorCmd(info, commandsList);
       }
+      else if (info.isWindowed()) {
+        appendRemoveWindowedDecoratorCmd(info, commandsList);
+      }
       else { // docked and sliding windows
         appendRemoveDecoratorCmd(id, dirtyMode, commandsList);
       }
@@ -1774,6 +1812,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void appendRemoveFloatingDecoratorCmd(final WindowInfoImpl info, final List<FinalizableCommand> commandsList) {
     final RemoveFloatingDecoratorCmd command = new RemoveFloatingDecoratorCmd(info);
+    commandsList.add(command);
+  }
+
+  private void appendRemoveWindowedDecoratorCmd(final WindowInfoImpl info, final List<FinalizableCommand> commandsList) {
+    final RemoveWindowedDecoratorCmd command = new RemoveWindowedDecoratorCmd(info);
     commandsList.add(command);
   }
 
@@ -1822,8 +1865,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private void appendUpdateToolWindowsPaneCmd(final List<FinalizableCommand> commandsList) {
     final JRootPane rootPane = myFrame.getRootPane();
-    final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, myWindowManager.getCommandProcessor());
-    commandsList.add(command);
+    if (rootPane != null) {
+      final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, myWindowManager.getCommandProcessor());
+      commandsList.add(command);
+    }
   }
 
   private EditorsSplitters getSplittersToFocus() {
@@ -2080,10 +2125,105 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     @Override
     public void run() {
       try {
-        if (Patches.SPECIAL_INPUT_METHOD_PROCESSING) {
-          myFloatingDecorator.remove(myFloatingDecorator.getRootPane());
-        }
         myFloatingDecorator.dispose();
+      }
+      finally {
+        finish();
+      }
+    }
+
+    @Override
+    @Nullable
+    public Condition getExpireCondition() {
+      return ApplicationManager.getApplication().getDisposed();
+    }
+  }
+
+  /**
+   * This command creates and shows <code>WindowedDecorator</code>.
+   */
+  private final class AddWindowedDecoratorCmd extends FinalizableCommand {
+    private final WindowedDecorator myWindowedDecorator;
+
+    /**
+     * Creates floating decorator for specified floating decorator.
+     */
+    private AddWindowedDecoratorCmd(final InternalDecorator decorator, final WindowInfoImpl info) {
+      super(myWindowManager.getCommandProcessor());
+      myWindowedDecorator = new WindowedDecorator(myProject, info.copy(), decorator);
+      Window window = myWindowedDecorator.getFrame();
+      final Rectangle bounds = info.getFloatingBounds();
+      if (bounds != null) {
+        bounds.setBounds(bounds.x + DIVIDER_WIDTH, bounds.y + DIVIDER_WIDTH, bounds.width - 2 * DIVIDER_WIDTH, bounds.height - 2 * DIVIDER_WIDTH);
+      }
+      if (bounds != null &&
+          bounds.width > 0 &&
+          bounds.height > 0 &&
+          myWindowManager.isInsideScreenBounds(bounds.x, bounds.y, bounds.width)) {
+        window.setBounds(bounds);
+      }
+      else { // place new frame at the center of main frame if there are no floating bounds
+        Dimension size = decorator.getSize();
+        if (size.width == 0 || size.height == 0) {
+          size = decorator.getPreferredSize();
+        }
+        window.setSize(size);
+        window.setLocationRelativeTo(myFrame);
+      }
+      myId2WindowedDecorator.put(info.getId(), myWindowedDecorator);
+      myWindowedDecorator.addDisposable(new Disposable() {
+        @Override
+        public void dispose() {
+          if (myId2WindowedDecorator.get(info.getId()) != null) {
+            hideToolWindow(info.getId(), false);
+          }
+        }
+      });
+    }
+
+    @Override
+    public void run() {
+      try {
+        myWindowedDecorator.show(false);
+        Window window = myWindowedDecorator.getFrame();
+        JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+        Rectangle rootPaneBounds = rootPane.getBounds();
+        Point point = rootPane.getLocationOnScreen();
+        Rectangle windowBounds = window.getBounds();
+        //Point windowLocation = windowBounds.getLocation();
+        //windowLocation.translate(windowLocation.x - point.x, windowLocation.y - point.y);
+        window.setLocation(2 * windowBounds.x - point.x,  2 * windowBounds.y - point.y);
+        window.setSize(2 * windowBounds.width - rootPaneBounds.width, 2 * windowBounds.height - rootPaneBounds.height);
+      }
+      finally {
+        finish();
+      }
+    }
+  }
+
+  /**
+   * This command hides and destroys floating decorator for tool window
+   * with specified <code>ID</code>.
+   */
+  private final class RemoveWindowedDecoratorCmd extends FinalizableCommand {
+    private final WindowedDecorator myWindowedDecorator;
+
+    private RemoveWindowedDecoratorCmd(final WindowInfoImpl info) {
+      super(myWindowManager.getCommandProcessor());
+      myWindowedDecorator = getWindowedDecorator(info.getId());
+      myId2WindowedDecorator.remove(info.getId());
+
+      JRootPane rootPane = ((RootPaneContainer)myWindowedDecorator.getFrame()).getRootPane();
+      Rectangle bounds = rootPane.getBounds();
+      Point location = rootPane.getLocationOnScreen();
+      bounds.setBounds(location.x - DIVIDER_WIDTH, location.y - DIVIDER_WIDTH, bounds.width + 2 * DIVIDER_WIDTH, bounds.height + 2 * DIVIDER_WIDTH);
+      info.setFloatingBounds(bounds);
+    }
+
+    @Override
+    public void run() {
+      try {
+        Disposer.dispose(myWindowedDecorator);
       }
       finally {
         finish();

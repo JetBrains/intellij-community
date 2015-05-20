@@ -160,11 +160,7 @@ public class KeyedExtensionCollector<T, KeyT> {
               LOG.error(e);
               continue;
             }
-            catch (NoClassDefFoundError e) {
-              LOG.error(e);
-              continue;
-            }
-            catch (UnsupportedClassVersionError e) {
+            catch (LinkageError e) {
               LOG.error(e);
               continue;
             }

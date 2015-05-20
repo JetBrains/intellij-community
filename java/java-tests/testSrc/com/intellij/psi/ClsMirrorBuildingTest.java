@@ -82,6 +82,13 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     doTest(clsPath, txtPath);
   }
 
+  public void testStaticMethodInInterface() {
+    String testDir = JavaTestUtil.getJavaTestDataPath();
+    String clsPath = testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/util/function/Function.class";
+    String txtPath = testDir + "/psi/cls/mirror/Function.txt";
+    doTest(clsPath, txtPath);
+  }
+
   public void testStrayInnersFiltering() throws IOException {
     String path = JavaTestUtil.getJavaTestDataPath() + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class";
     VirtualFile file = StandardFileSystems.jar().findFileByPath(path);

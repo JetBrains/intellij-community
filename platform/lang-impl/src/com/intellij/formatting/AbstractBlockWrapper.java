@@ -246,7 +246,7 @@ public abstract class AbstractBlockWrapper {
           if (anchorBlock instanceof CompositeBlockWrapper) {
             List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)anchorBlock).getChildren();
             for (AbstractBlockWrapper c : children) {
-              if (c.getStartOffset() != getStartOffset()) {
+              if (c.getStartOffset() != getStartOffset() && c.getStartOffset() < targetBlockStartOffset) {
                 anchorBlock = c;
                 break;
               }

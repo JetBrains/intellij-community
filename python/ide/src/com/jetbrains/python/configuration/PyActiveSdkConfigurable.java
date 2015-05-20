@@ -116,7 +116,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
           PythonSdkAdditionalData additionalData = (PythonSdkAdditionalData)sdk.getSdkAdditionalData();
           if (additionalData != null) {
             final String path = additionalData.getAssociatedProjectPath();
-            if (!myProject.getBasePath().equals(path))
+            final String basePath = myProject.getBasePath();
+            if (basePath != null && !basePath.equals(path))
               additionalData.setAssociatedProjectPath(null);
           }
           updateSdkList(false);

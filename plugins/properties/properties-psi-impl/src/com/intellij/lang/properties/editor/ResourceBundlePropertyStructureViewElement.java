@@ -22,44 +22,60 @@ package com.intellij.lang.properties.editor;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.JBColor;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class ResourceBundlePropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final ResourceBundle myResourceBundle;
-  private final IProperty myProperty;
+  @NotNull private final PropertiesAnchorizer.PropertyAnchor myAnchor;
   private String myPresentableName;
 
   private static final TextAttributesKey INCOMPLETE_PROPERTY_KEY;
+  private static final TextAttributesKey INCOMPLETE_GROUP_KEY;
+  private static final TextAttributesKey GROUP_KEY;
+
+  public static final String PROPERTY_GROUP_KEY_TEXT = "<property>";
 
   static {
-    TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
-    textAttributes.setForegroundColor(Color.red);
-    INCOMPLETE_PROPERTY_KEY = TextAttributesKey.createTextAttributesKey("INCOMPLETE_PROPERTY_KEY", textAttributes);
+    TextAttributes incompleteKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
+    incompleteKeyTextAttributes.setForegroundColor(JBColor.RED);
+    INCOMPLETE_PROPERTY_KEY = TextAttributesKey.createTextAttributesKey("INCOMPLETE_PROPERTY_KEY", incompleteKeyTextAttributes);
 
+    TextAttributes groupKeyTextAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(PropertiesHighlighter.PROPERTY_KEY).clone();
+    groupKeyTextAttributes.setFontType(Font.ITALIC);
+    GROUP_KEY = TextAttributesKey.createTextAttributesKey("GROUP_KEY", groupKeyTextAttributes);
+
+    final TextAttributes incompleteGroupKeyTextAttribute = groupKeyTextAttributes.clone();
+    incompleteGroupKeyTextAttribute.setForegroundColor(JBColor.RED);
+    INCOMPLETE_GROUP_KEY = TextAttributesKey.createTextAttributesKey("INCOMPLETE_GROUP_KEY", incompleteGroupKeyTextAttribute);
   }
 
-  public ResourceBundlePropertyStructureViewElement(final ResourceBundle resourceBundle, final IProperty property) {
+  public ResourceBundlePropertyStructureViewElement(final ResourceBundle resourceBundle, final @NotNull PropertiesAnchorizer.PropertyAnchor anchor) {
     myResourceBundle = resourceBundle;
-    myProperty = property;
+    myAnchor = anchor;
   }
 
   public IProperty getProperty() {
-    return myProperty;
+    return getValue().getRepresentative();
   }
 
   @Override
   public PsiElement[] getPsiElements() {
-    return new PsiElement[] {getValue()};
+    return new PsiElement[] {getProperty().getPsiElement()};
   }
 
   public void setPresentableName(final String presentableName) {
@@ -67,8 +83,8 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   @Override
-  public PsiElement getValue() {
-    return myProperty.getPsiElement();
+  public PropertiesAnchorizer.PropertyAnchor getValue() {
+    return myAnchor;
   }
 
   @Override
@@ -83,7 +99,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {
-        return myPresentableName == null ? myProperty.getName() : myPresentableName;
+        return myPresentableName == null ? getProperty().getName() : myPresentableName.isEmpty() ? PROPERTY_GROUP_KEY_TEXT : myPresentableName;
       }
 
       @Override
@@ -98,12 +114,14 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
       @Override
       public TextAttributesKey getTextAttributesKey() {
-        boolean isComplete = PropertiesUtil.isPropertyComplete(myResourceBundle, myProperty.getName());
-
-        if (isComplete) {
-          return PropertiesHighlighter.PROPERTY_KEY;
+        if (myPresentableName != null && myPresentableName.isEmpty()) {
+          return PropertiesUtil.isPropertyComplete(myResourceBundle, getProperty().getName())
+                 ? GROUP_KEY
+                 : INCOMPLETE_GROUP_KEY;
         }
-        return INCOMPLETE_PROPERTY_KEY;
+        return PropertiesUtil.isPropertyComplete(myResourceBundle, getProperty().getName())
+               ? PropertiesHighlighter.PROPERTY_KEY
+               : INCOMPLETE_PROPERTY_KEY;
       }
     };
   }

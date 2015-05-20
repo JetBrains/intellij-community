@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 
 /**
  * @author Max Medvedev
  */
 public class GrReferenceHighlighterFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
-  public GrReferenceHighlighterFactory(Project project) {
+  public GrReferenceHighlighterFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
     super(project);
-    TextEditorHighlightingPassRegistrar.getInstance(project).registerTextEditorHighlightingPass(this, null, null, false, -1);
+    registrar.registerTextEditorHighlightingPass(this, null, null, false, -1);
   }
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!(file instanceof GroovyFileBase)) return null;
+    if (!GrFileIndexUtil.isGroovySourceFile(file)) return null;
     return new GrReferenceHighlighter(editor.getDocument(), (GroovyFileBase)file);
   }
 }

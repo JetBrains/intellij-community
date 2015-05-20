@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.ConstantZipperUpdater;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -209,8 +208,8 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
       if (file == null) { return; }
       final boolean isDirectory = file.isDirectory();
       // need to create FilePath explicitly without referring to VirtualFile because the path of VirtualFile may change
-      final FilePathImpl path = forDelete ? new FilePathImpl(new File(file.getPath()), isDirectory) :
-        new FilePathImpl(file);
+      FilePath path = forDelete ? VcsUtil.getFilePath(new File(file.getPath()), isDirectory) :
+                                VcsUtil.getFilePath(file);
 
       final Collection<VcsDirtyScopeManager> managers = getManagers(file);
       for (VcsDirtyScopeManager manager : managers) {

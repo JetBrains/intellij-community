@@ -128,8 +128,8 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     }
   }
 
-  private static void addRename(Map<PsiElement, String> renames, String newName, Maybe<Callable> accessor) {
-    final Callable callable = accessor.valueOrNull();
+  private static void addRename(Map<PsiElement, String> renames, String newName, Maybe<PyCallable> accessor) {
+    final PyCallable callable = accessor.valueOrNull();
     if (callable instanceof PyFunction) {
       renames.put(callable, newName);
     }

@@ -27,7 +27,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.LanguageLevel;
@@ -60,6 +59,9 @@ public class JavaCharFilter extends CharFilter {
       if (o instanceof PsiMethod) {
         final PsiType type = ((PsiMethod)o).getReturnType();
         if (type != null && PsiType.BOOLEAN.isAssignableFrom(type)) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
+      if (o instanceof PsiKeyword && ((PsiKeyword)o).textMatches(PsiKeyword.INSTANCEOF)) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
 
       return null;

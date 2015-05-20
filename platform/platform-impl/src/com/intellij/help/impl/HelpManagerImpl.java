@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.HelpSetPath;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +29,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +51,8 @@ public class HelpManagerImpl extends HelpManager {
   private Object myFXHelpBrowser = null;
 
   public void invokeHelp(@Nullable String id) {
+    UsageTrigger.trigger("ide.help." + id);
+
     if (myHelpSet == null) {
       myHelpSet = createHelpSet();
     }
@@ -63,7 +67,19 @@ public class HelpManagerImpl extends HelpManager {
     }
 
     if (myHelpSet == null) {
-      BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().getWebHelpUrl() + "?" + id);
+      ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
+      String url = info.getWebHelpUrl() + "?";
+      if (PlatformUtils.isCLion()) {
+        url += "Keyword=" + id;
+        url += "&ProductVersion=" + info.getMajorVersion() + "." + info.getMinorVersion();
+        
+        if (info.isEAP()) {
+          url += "&EAP"; 
+        }
+      } else {
+        url += id;
+      }
+      BrowserUtil.browse(url);
       return;
     }
 

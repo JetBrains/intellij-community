@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -34,5 +35,6 @@ public interface SettingsStep {
   void addExpertPanel(@NotNull JComponent panel);
   void addExpertField(@NotNull String label, @NotNull JComponent field);
 
+  @Nullable
   JTextField getModuleNameField();
 }

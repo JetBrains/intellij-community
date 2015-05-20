@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -60,5 +61,13 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
     final PyElementGenerator pyElementGenerator = PyElementGenerator.getInstance(getProject());
     add(pyElementGenerator.createComma().getPsi());
     add(pyElementGenerator.createFromText(LanguageLevel.getDefault(), PyGlobalStatement.class, "global " + name).getGlobals()[0]);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    if (ArrayUtil.contains(child.getPsi(), getGlobals())) {
+      PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, child.getPsi());
+    }
+    super.deleteChildInternal(child);
   }
 }

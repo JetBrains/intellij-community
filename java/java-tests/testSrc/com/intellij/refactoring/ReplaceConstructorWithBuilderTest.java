@@ -111,7 +111,7 @@ public class ReplaceConstructorWithBuilderTest extends MultiFileTestCase {
         final LinkedHashMap<String, ParameterData> map = new LinkedHashMap<String, ParameterData>();
         final PsiMethod[] constructors = aClass.getConstructors();
         for (PsiMethod constructor : constructors) {
-          ParameterData.createFromConstructor(constructor, map);
+          ParameterData.createFromConstructor(constructor, "set", map);
         }
         if (expectedDefaults != null) {
           for (Map.Entry<String, String> entry : expectedDefaults.entrySet()) {

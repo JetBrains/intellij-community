@@ -120,6 +120,7 @@ public class MockProject extends MockComponentManager implements Project {
     return myBaseDir;
   }
 
+  @Nullable
   @Override
   public String getBasePath() {
     return null;

@@ -111,11 +111,6 @@ public abstract class HgTest extends AbstractVcsTestCase {
     });
   }
 
-  @Override
-  protected String getPluginName() {
-    return "hg4idea";
-  }
-
   protected abstract HgTestRepository initRepositories() throws Exception;
 
   protected abstract void tearDownRepositories() throws Exception;

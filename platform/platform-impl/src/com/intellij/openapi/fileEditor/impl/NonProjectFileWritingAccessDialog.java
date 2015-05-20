@@ -38,8 +38,12 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     myFileList.setCellRenderer(new FileListRenderer());
     myFileList.setModel(new CollectionListModel<VirtualFile>(nonProjectFiles));
     
+    getOKAction().putValue(DEFAULT_ACTION, null);
+    getCancelAction().putValue(DEFAULT_ACTION, true);
+    
     init();
   }
+
 
   @Nullable
   @Override
@@ -54,6 +58,6 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
   }
 
   protected String getHelpId() {
-    return "readOnlyHandler.nonProjectFilesDialog";
+    return "Non-Project_Files_Access_Dialog";
   }
 }

@@ -23,11 +23,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public class ApplicationUtil {
   // throws exception if can't grab read action right now
@@ -54,11 +52,21 @@ public class ApplicationUtil {
    * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
-  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable, @NotNull final ProgressIndicator indicator) throws Exception {
+  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable,
+                                           @NotNull final ProgressIndicator indicator) throws Exception {
+    return runWithCheckCanceled(callable, indicator, PooledThreadExecutor.INSTANCE);
+  }
+
+  /**
+   * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
+   * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
+   */
+  public static <T> T runWithCheckCanceled(@NotNull final Callable<T> callable,
+                                           @NotNull final ProgressIndicator indicator, @NotNull ExecutorService executorService) throws Exception {
     final Ref<T> result = Ref.create();
     final Ref<Throwable> error = Ref.create();
 
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    Future<?> future = executorService.submit(new Runnable() {
       @Override
       public void run() {
         ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {

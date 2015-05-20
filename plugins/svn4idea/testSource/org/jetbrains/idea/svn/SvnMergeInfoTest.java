@@ -25,11 +25,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
+import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.jetbrains.idea.svn.info.Info;
+import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
@@ -44,6 +45,7 @@ import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 // TODO: Many tests in this class are written with direct SVNKit usage - could not utilize it for svn 1.8
@@ -55,6 +57,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
   private File myBranchVcsRoot;
   private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;
   private WCInfo myWCInfo;
+  private WCInfoWithBranches myWCInfoWithBranches;
   private OneShotMergeInfoHelper myOneShotMergeInfoHelper;
 
   private SvnVcs myVcs;
@@ -97,7 +100,9 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     final String repoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
-    myMergeChecker = new BranchInfo(myVcs, repoUrl, repoUrl + "/branch", repoUrl + "/trunk", repoUrl + "/trunk");
+    myWCInfoWithBranches = new WCInfoWithBranches(myWCInfo, Collections.<WCInfoWithBranches.Branch>emptyList(), vcsRoot,
+                                                  new WCInfoWithBranches.Branch(repoUrl + "/trunk"));
+    myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl + "/branch"));
   }
 
   @Test

@@ -56,6 +56,7 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.siyeh.ipp.types.ExpandOneLineLambda2CodeBlockIntention;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -386,7 +387,7 @@ public class RefactoringUtil {
 
   public static PsiType getTypeByExpressionWithExpectedType(PsiExpression expr) {
     PsiType type = getTypeByExpression(expr);
-    final boolean isFunctionalType = type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType;
+    final boolean isFunctionalType = type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType || type instanceof PsiLambdaParameterType;
     if (type != null && !isFunctionalType) {
       return type;
     }
@@ -718,6 +719,7 @@ public class RefactoringUtil {
     PsiUtil.setModifierProperty(method, PsiModifier.FINAL, false);
     PsiUtil.setModifierProperty(method, PsiModifier.SYNCHRONIZED, false);
     PsiUtil.setModifierProperty(method, PsiModifier.NATIVE, false);
+    PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, false);
     removeFinalParameters(method);
   }
 
@@ -890,7 +892,7 @@ public class RefactoringUtil {
       final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
       LOG.assertTrue(lambdaExpressionBody != null);
       final PsiStatement lastBodyStatement;
-      if (LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression) == PsiType.VOID) {
+      if (PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
         lastBodyStatement = elementFactory.createStatementFromText("a;", lambdaExpression);
         ((PsiExpressionStatement)lastBodyStatement).getExpression().replace(lambdaExpressionBody);
       }
@@ -933,6 +935,21 @@ public class RefactoringUtil {
 
   public static boolean isLoopOrIf(PsiElement element) {
     return element instanceof PsiLoopStatement || element instanceof PsiIfStatement;
+  }
+
+  public static PsiElement expandExpressionLambdaToCodeBlock(@NotNull PsiElement element) {
+    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
+    LOG.assertTrue(lambdaExpression != null);
+    final PsiElement body = lambdaExpression.getBody();
+    LOG.assertTrue(body instanceof PsiExpression);
+    String blockText = "{";
+    blockText += PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression)) ? "" : "return ";
+    blockText +=  body.getText() + ";}";
+
+    final String resultedLambdaText = lambdaExpression.getParameterList().getText() + "->" + blockText;
+    final PsiExpression expressionFromText =
+      JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(resultedLambdaText, lambdaExpression);
+    return CodeStyleManager.getInstance(element.getProject()).reformat(lambdaExpression.replace(expressionFromText));
   }
 
   public interface ImplicitConstructorUsageVisitor {

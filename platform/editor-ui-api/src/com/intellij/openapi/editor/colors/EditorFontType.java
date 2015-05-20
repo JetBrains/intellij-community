@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.util.ObjectUtils;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +39,6 @@ public enum EditorFontType {
   }
 
   public static EditorFontType getConsoleType(EditorFontType fontType) {
-    return ourConsoleTypes.get(fontType);
+    return ObjectUtils.chooseNotNull(ourConsoleTypes.get(fontType), fontType);
   }
 }

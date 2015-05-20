@@ -590,7 +590,7 @@
         <exclude name="**/DebuggerSettings.xml"/>
         <exclude name="**/DefaultCodeStyleSchemes.xml"/>
         <exclude name="**/DefaultColorSchemesManager.xml"/>
-        <exclude name="**/FileTypeManager.xml"/>
+        <exclude name="**/defaultFileTypes.xml"/>
         <exclude name="**/IdeaTestComponents.xml"/>
     </jar>
 

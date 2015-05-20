@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     myFacetListener = new MyFacetManagerAdapter();
     messageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       @Override
-      public void moduleAdded(Project project, Module module) {
+      public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         onModuleAdded(module);
       }
 
       @Override
-      public void beforeModuleRemoved(final Project project, final Module module) {
+      public void beforeModuleRemoved(@NotNull final Project project, @NotNull final Module module) {
         Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
         for (Facet facet : allFacets) {
           onFacetRemoved(facet, true);
@@ -59,7 +59,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
       }
 
       @Override
-      public void moduleRemoved(Project project, Module module) {
+      public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
         onModuleRemoved(module);
       }
     });

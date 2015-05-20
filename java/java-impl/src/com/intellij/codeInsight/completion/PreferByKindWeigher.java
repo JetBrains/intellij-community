@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
@@ -134,6 +135,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   enum MyResult {
     annoMethod,
     probableKeyword,
+    castVariable,
     localOrParameter,
     qualifiedWithField,
     qualifiedWithGetter,
@@ -171,6 +173,10 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (PsiKeyword.INTERFACE.equals(keyword) && psiElement().afterLeaf("@").accepts(myPosition)) {
         return MyResult.improbableKeyword;
       }
+    }
+
+    if (item.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY) != null) {
+      return MyResult.castVariable;
     }
 
     if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
@@ -256,6 +262,18 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       return true;
     }
     PsiStatement[] siblings = ((PsiCodeBlock)statement.getParent()).getStatements();
-    return statement == siblings[siblings.length - 1];
+    PsiStatement lastOne = siblings[siblings.length - 1];
+    if (statement == lastOne) {
+      return true;
+    }
+
+    // we might complete 'return' before an expression, then it's still last statement
+    if (siblings.length >= 2 && statement == siblings[siblings.length - 2] && lastOne instanceof PsiExpressionStatement) {
+      int start = statement.getTextRange().getStartOffset();
+      int end = lastOne.getTextRange().getStartOffset();
+      return !StringUtil.contains(statement.getContainingFile().getViewProvider().getContents(), start, end, '\n');
+    }
+
+    return false;
   }
 }

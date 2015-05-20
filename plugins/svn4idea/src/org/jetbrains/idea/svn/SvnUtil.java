@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -41,7 +42,7 @@ import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,6 +92,8 @@ public class SvnUtil {
   public static final Pattern ERROR_PATTERN = Pattern.compile("^svn: (E(\\d+)): (.*)$", Pattern.MULTILINE);
   public static final Pattern WARNING_PATTERN = Pattern.compile("^svn: warning: (W(\\d+)): (.*)$", Pattern.MULTILINE);
 
+  private static final Pair<SVNURL, WorkingCopyFormat> UNKNOWN_REPOSITORY_AND_FORMAT = Pair.create(null, WorkingCopyFormat.UNKNOWN);
+
   private SvnUtil() { }
 
   @Nullable
@@ -115,16 +118,6 @@ public class SvnUtil {
     final Info info = vcs.getInfo(parent);
 
     return info != null;
-  }
-
-  public static List<File> toFiles(Iterable<String> paths) {
-    List<File> result = ContainerUtil.newArrayList();
-
-    for (String path : paths) {
-      result.add(new File(path));
-    }
-
-    return result;
   }
 
   public static Collection<VirtualFile> crawlWCRoots(final Project project, File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
@@ -314,45 +307,28 @@ public class SvnUtil {
     }
   }
 
-  public static Collection<List<Change>> splitChangesIntoWc(final SvnVcs vcs, final List<Change> changes) {
-    return splitIntoRepositories(vcs, changes, new Convertor<Change, File>() {
+  @NotNull
+  public static Map<Pair<SVNURL, WorkingCopyFormat>, Set<Change>> splitChangesIntoWc(@NotNull SvnVcs vcs, @NotNull List<Change> changes) {
+    return splitIntoRepositoriesMap(vcs, changes, new Convertor<Change, FilePath>() {
       @Override
-      public File convert(Change o) {
-        return ChangesUtil.getFilePath(o).getIOFile();
+      public FilePath convert(@NotNull Change change) {
+        return ChangesUtil.getFilePath(change);
       }
     });
   }
 
-  public static <T> Collection<List<T>> splitIntoRepositories(final SvnVcs vcs, final List<T> committables,
-                                                              Convertor<T, File> convertor) {
-    if (committables.size() == 1) {
-      return Collections.singletonList(committables);
-    }
+  @NotNull
+  public static <T> Map<Pair<SVNURL, WorkingCopyFormat>, Set<T>> splitIntoRepositoriesMap(@NotNull final SvnVcs vcs,
+                                                                                          @NotNull List<T> items,
+                                                                                          @NotNull final Convertor<T, FilePath> converter) {
+    return ContainerUtil.classify(items.iterator(), new Convertor<T, Pair<SVNURL, WorkingCopyFormat>>() {
+      @Override
+      public Pair<SVNURL, WorkingCopyFormat> convert(@NotNull T item) {
+        RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(converter.convert(item).getIOFile());
 
-    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = splitIntoRepositoriesMap(vcs, committables, convertor);
-
-    if (result.size() == 1) {
-      return Collections.singletonList(committables);
-    }
-    final Collection<List<T>> result2 = new ArrayList<List<T>>();
-    for (Map.Entry<Pair<SVNURL, WorkingCopyFormat>, Collection<T>> entry : result.entrySet()) {
-      result2.add((List<T>)entry.getValue());
-    }
-    return result2;
-  }
-
-  public static <T> MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> splitIntoRepositoriesMap(SvnVcs vcs,
-    List<T> committables, Convertor<T, File> convertor) {
-    final MultiMap<Pair<SVNURL, WorkingCopyFormat>, T> result = MultiMap.create();
-    for (T committable : committables) {
-      final RootUrlInfo path = vcs.getSvnFileUrlMapping().getWcRootForFilePath(convertor.convert(committable));
-      if (path == null) {
-        result.putValue(Pair.create((SVNURL)null, WorkingCopyFormat.UNKNOWN), committable);
-      } else {
-        result.putValue(Pair.create(path.getRepositoryUrlUrl(), path.getFormat()), committable);
+        return path == null ? UNKNOWN_REPOSITORY_AND_FORMAT : Pair.create(path.getRepositoryUrlUrl(), path.getFormat());
       }
-    }
-    return result;
+    });
   }
 
   /**
@@ -495,18 +471,32 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static SVNURL getBranchForUrl(final SvnVcs vcs, final VirtualFile vcsRoot, final String urlPath) {
-    final SvnBranchConfigurationNew configuration;
+  public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull String urlValue) {
+    SVNURL url = null;
+
     try {
-      final SVNURL url = SVNURL.parseURIEncoded(urlPath);
-      configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
-      return (configuration == null) ? null : configuration.getWorkingBranch(url);
+      url = createUrl(urlValue);
     }
-    catch (SVNException e) {
-      return null;
-    } catch (VcsException e1) {
-      return null;
+    catch (SvnBindException e) {
+      LOG.debug(e);
     }
+
+    return url != null ? getBranchForUrl(vcs, vcsRoot, url) : null;
+  }
+
+  @Nullable
+  public static SVNURL getBranchForUrl(@NotNull SvnVcs vcs, @NotNull VirtualFile vcsRoot, @NotNull SVNURL url) {
+    SVNURL result = null;
+    SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(vcs.getProject()).get(vcsRoot);
+
+    try {
+      result = configuration.getWorkingBranch(url);
+    }
+    catch (SvnBindException e) {
+      LOG.debug(e);
+    }
+
+    return result;
   }
 
   public static boolean checkRepositoryVersion15(@NotNull SvnVcs vcs, @NotNull String url) {
@@ -536,6 +526,7 @@ public class SvnUtil {
     }
   }
 
+  @NotNull
   public static Depth getDepth(final SvnVcs vcs, final File file) {
     Info info = vcs.getInfo(file);
 
@@ -659,6 +650,8 @@ public class SvnUtil {
     return  FileUtilRt.getRelativePath(FileUtil.toSystemIndependentName(parentPath), FileUtil.toSystemIndependentName(childPath), '/');
   }
 
+  @NotNull
+  @Contract(pure = true)
   public static String ensureStartSlash(@NotNull String path) {
     return StringUtil.startsWithChar(path, '/') ? path : '/' + path;
   }
@@ -729,8 +722,13 @@ public class SvnUtil {
 
   @NotNull
   public static SVNURL createUrl(@NotNull String url) throws SvnBindException {
+    return createUrl(url, true);
+  }
+
+  @NotNull
+  public static SVNURL createUrl(@NotNull String url, boolean encoded) throws SvnBindException {
     try {
-      SVNURL result = SVNURL.parseURIEncoded(url);
+      SVNURL result = encoded ? SVNURL.parseURIEncoded(url) : SVNURL.parseURIDecoded(url);
 
       // explicitly check if port corresponds to default port and recreate url specifying default port indicator
       if (result.hasPort() && hasDefaultPort(result)) {

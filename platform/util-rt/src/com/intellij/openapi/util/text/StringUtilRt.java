@@ -200,7 +200,11 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int parseInt(final String string, final int defaultValue) {
+  public static int parseInt(@Nullable String string, final int defaultValue) {
+    if (string == null) {
+      return defaultValue;
+    }
+
     try {
       return Integer.parseInt(string);
     }

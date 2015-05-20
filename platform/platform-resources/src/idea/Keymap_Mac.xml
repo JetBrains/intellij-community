@@ -214,6 +214,7 @@
     </action>
     <action id="ActivateChangesToolWindow">
       <keyboard-shortcut first-keystroke="meta 9"/>
+      <keyboard-shortcut first-keystroke="meta shift 9"/>
     </action>
     <action id="Generate">
       <keyboard-shortcut first-keystroke="meta N"/>
@@ -387,6 +388,9 @@
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="meta O"/>
     </action>
+    <action id="GotoChangedFile">
+      <keyboard-shortcut first-keystroke="meta O"/>
+    </action>
     <action id="GotoSymbol">
       <keyboard-shortcut first-keystroke="meta alt O"/>
     </action>
@@ -452,9 +456,6 @@
       <keyboard-shortcut first-keystroke="meta UP"/>
       <keyboard-shortcut first-keystroke="alt HOME"/>
     </action>
-
-    <action id="Console.TableResult.Reload" />
-
 
     <action id="EditorScrollUp"/> <!-- Disables meta up -->
     <action id="EditorScrollDown"/>  <!-- Disables meta down -->

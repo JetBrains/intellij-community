@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -184,6 +185,10 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
           return false;
         }
         boolean sameRow = isAboveSelectedItem(event, watchTree);
+        if (!sameRow || clickCount > 1) {
+          editAlarm.cancelAllRequests();
+          return false;
+        }
         final AnAction editWatchAction = ActionManager.getInstance().getAction(XDebuggerActions.XEDIT_WATCH);
         Presentation presentation = editWatchAction.getTemplatePresentation().clone();
         DataContext context = DataManager.getInstance().getDataContext(watchTree);
@@ -194,7 +199,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
             editWatchAction.actionPerformed(actionEvent);
           }
         };
-        if (sameRow && editAlarm.isEmpty() && quitePeriod.isEmpty()) {
+        if (editAlarm.isEmpty() && quitePeriod.isEmpty()) {
           editAlarm.addRequest(runnable, UIUtil.getMultiClickInterval());
         } else {
           editAlarm.cancelAllRequests();
@@ -286,7 +291,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
   private static void showWatchesTab(@NotNull XDebugSessionImpl session) {
     XDebugSessionTab tab = session.getSessionTab();
     if (tab != null) {
-      tab.toFront(false);
+      tab.toFront(false, null);
       // restore watches tab if minimized
       JComponent component = tab.getUi().getComponent();
       if (component instanceof DataProvider) {
@@ -384,7 +389,7 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     updateSessionData();
   }
 
-  private void updateSessionData() {
+  public void updateSessionData() {
     List<XExpression> watchExpressions = new ArrayList<XExpression>();
     final List<? extends WatchNode> children = myRootNode.getAllChildren();
     if (children != null) {
@@ -428,11 +433,15 @@ public class XWatchesViewImpl extends XDebugView implements DnDNativeTarget, XWa
     if (object instanceof XValueNodeImpl[]) {
       final XValueNodeImpl[] nodes = (XValueNodeImpl[])object;
       for (XValueNodeImpl node : nodes) {
-        String expression = node.getValueContainer().getEvaluationExpression();
-        if (expression != null) {
-          //noinspection ConstantConditions
-          addWatchExpression(XExpressionImpl.fromText(expression), -1, false);
-        }
+        node.getValueContainer().calculateEvaluationExpression().done(new Consumer<String>() {
+          @Override
+          public void consume(String expression) {
+            if (expression != null) {
+              //noinspection ConstantConditions
+              addWatchExpression(XExpressionImpl.fromText(expression), -1, false);
+            }
+          }
+        });
       }
     }
     else if (object instanceof EventInfo) {

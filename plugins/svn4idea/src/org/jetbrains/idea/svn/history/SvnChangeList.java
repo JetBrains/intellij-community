@@ -45,7 +45,8 @@ import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -144,7 +145,7 @@ public class SvnChangeList implements CommittedChangeList {
     }
   }
 
-  public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, DataInput stream, final boolean supportsCopyFromInfo,
+  public SvnChangeList(SvnVcs vcs, @NotNull SvnRepositoryLocation location, @NotNull DataInput stream, final boolean supportsCopyFromInfo,
                        final boolean supportsReplaced) throws IOException {
     myVcs = vcs;
     myLocation = location;
@@ -412,7 +413,7 @@ public class SvnChangeList implements CommittedChangeList {
     private SvnRepositoryContentRevision createRevision(final SvnRepositoryContentRevision previousRevision, final boolean isDir) {
       return previousRevision == null ? null :
              SvnRepositoryContentRevision.create(myVcs, previousRevision.getFullPath(),
-                                                 new FilePathImpl(previousRevision.getFile().getIOFile(), isDir),
+                                                 VcsUtil.getFilePath(previousRevision.getFile().getIOFile(), isDir),
                                                  previousRevision.getRevisionNumber().getRevision().getNumber());
     }
 
@@ -620,7 +621,7 @@ public class SvnChangeList implements CommittedChangeList {
     return myMessage;
   }
 
-  public void writeToStream(final DataOutput stream) throws IOException {
+  public void writeToStream(@NotNull DataOutput stream) throws IOException {
     stream.writeUTF(myRepositoryRoot);
     stream.writeLong(myRevision);
     stream.writeUTF(myAuthor);
@@ -657,7 +658,8 @@ public class SvnChangeList implements CommittedChangeList {
     }
   }
 
-  private void readFromStream(final DataInput stream, final boolean supportsCopyFromInfo, final boolean supportsReplaced) throws IOException {
+  private void readFromStream(@NotNull DataInput stream, final boolean supportsCopyFromInfo, final boolean supportsReplaced)
+    throws IOException {
     myRepositoryRoot = stream.readUTF();
     myRevision = stream.readLong();
     myAuthor = stream.readUTF();
@@ -792,16 +794,9 @@ public class SvnChangeList implements CommittedChangeList {
     }
   }
 
-  public Set<String> getChangedPaths() {
-    return myChangedPaths;
-  }
-
-  public Set<String> getAddedPaths() {
-    return myAddedPaths;
-  }
-
-  public Set<String> getDeletedPaths() {
-    return myDeletedPaths;
+  @NotNull
+  public Set<String> getAffectedPaths() {
+    return ContainerUtil.newHashSet(ContainerUtil.concat(myAddedPaths, myDeletedPaths, myChangedPaths));
   }
 
   @Nullable

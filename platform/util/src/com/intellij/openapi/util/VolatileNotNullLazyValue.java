@@ -22,17 +22,20 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class VolatileNotNullLazyValue<T> extends NotNullLazyValue<T> {
-
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("VolatileNotNullLazyValue");
   private volatile T myValue;
 
   @Override
   @NotNull
   public final T getValue() {
     T value = myValue;
-    if (value != null) {
-      return value;
+    if (value == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      value = compute();
+      if (stamp.mayCacheNow()) {
+        myValue = value;
+      }
     }
-    value = myValue = compute();
     return value;
   }
 }

@@ -37,6 +37,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyInsertRequiredSubTags = true;
   private boolean myAutoCloseTag = true;
+  private boolean mySyncTagEditing = true;
   private boolean myAutomaticallyStartAttribute = true;
   private boolean myInsertQuotesForAttributeValue = true;
 
@@ -181,5 +182,13 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setAutoCloseTag(boolean autoCloseTag) {
     myAutoCloseTag = autoCloseTag;
+  }
+
+  public boolean isSyncTagEditing() {
+    return mySyncTagEditing;
+  }
+
+  public void setSyncTagEditing(boolean syncTagEditing) {
+    mySyncTagEditing = syncTagEditing;
   }
 }

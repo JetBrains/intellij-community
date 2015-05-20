@@ -6,8 +6,6 @@
     <JAVADOC />
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/lib/src/velocity-1.7-src.zip!/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/commons-collections-3.2.1-src.zip!/commons-collections-3.2.1-src/src/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/commons-lang-2.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

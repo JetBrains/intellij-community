@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -82,7 +83,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   }
 
   @Override
-  protected void showUnknownModuleTypeNotification(List<Module> modulesWithUnknownTypes) {
+  protected void showUnknownModuleTypeNotification(@NotNull List<Module> modulesWithUnknownTypes) {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesWithUnknownTypes.isEmpty()) {
       String message;
       if (modulesWithUnknownTypes.size() == 1) {
@@ -109,20 +110,22 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
     }
   }
 
+  @NotNull
   @Override
-  protected ModuleEx createModule(String filePath) {
+  protected ModuleEx createModule(@NotNull String filePath) {
     return new ModuleImpl(filePath, myProject);
   }
 
+  @NotNull
   @Override
-  protected ModuleEx createAndLoadModule(String filePath) throws IOException {
+  protected ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException {
     ModuleImpl module = new ModuleImpl(filePath, myProject);
     module.getStateStore().load();
     return module;
   }
 
   @Override
-  protected boolean isUnknownModuleType(Module module) {
+  protected boolean isUnknownModuleType(@NotNull Module module) {
     return ModuleType.get(module) instanceof UnknownModuleType;
   }
 

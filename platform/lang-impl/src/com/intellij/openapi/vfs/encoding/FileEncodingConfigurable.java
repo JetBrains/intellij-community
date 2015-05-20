@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -33,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +40,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 
-public class FileEncodingConfigurable implements SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll {
+public class FileEncodingConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final Project myProject;
   private EncodingFileTreeTable myTreeView;
   private JScrollPane myTreePanel;
@@ -142,12 +141,21 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
 
     Map<VirtualFile, Charset> editing = myTreeView.getValues();
-    Map<VirtualFile, Charset> mapping = EncodingProjectManager.getInstance(myProject).getAllMappings();
-    boolean same = editing.equals(mapping)
+    Map<VirtualFile, Charset> existingMapping = getExistingMappingIncludingDefault(myProject);
+    boolean same = editing.equals(existingMapping)
        && Comparing.equal(encodingManager.getDefaultCharsetForPropertiesFiles(null), mySelectedCharsetForPropertiesFiles.get())
        && encodingManager.isNative2AsciiForPropertiesFiles() == myTransparentNativeToAsciiCheckBox.isSelected()
       ;
     return !same;
+  }
+
+  @NotNull
+  static Map<VirtualFile, Charset> getExistingMappingIncludingDefault(@NotNull Project project) {
+    Map<VirtualFile, Charset> existingMapping = new HashMap<VirtualFile, Charset>();
+    EncodingProjectManagerImpl encodingProjectManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project);
+    existingMapping.putAll(encodingProjectManager.getAllMappings());
+    existingMapping.put(null, encodingProjectManager.getDefaultCharset());
+    return existingMapping;
   }
 
   private boolean isIdeEncodingModified() {
@@ -170,7 +178,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
     String projectCharsetName = getSelectedCharsetName(mySelectedProjectCharset);
 
     Map<VirtualFile,Charset> result = myTreeView.getValues();
-    EncodingProjectManager encodingProjectManager = EncodingProjectManager.getInstance(myProject);
+    EncodingProjectManagerImpl encodingProjectManager = ((EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject));
     encodingProjectManager.setMapping(result);
     encodingProjectManager.setDefaultCharsetName(projectCharsetName);
     encodingProjectManager.setDefaultCharsetForPropertiesFiles(null, mySelectedCharsetForPropertiesFiles.get());
@@ -183,7 +191,7 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
   @Override
   public void reset() {
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(myProject);
-    myTreeView.reset(encodingManager.getAllMappings());
+    myTreeView.reset(getExistingMappingIncludingDefault(myProject));
     myTransparentNativeToAsciiCheckBox.setSelected(encodingManager.isNative2AsciiForPropertiesFiles());
     mySelectedCharsetForPropertiesFiles.set(encodingManager.getDefaultCharsetForPropertiesFiles(null));
 
@@ -204,11 +212,5 @@ public class FileEncodingConfigurable implements SearchableConfigurable, Optiona
 
   private void createUIComponents() {
     myTreePanel = ScrollPaneFactory.createScrollPane(new JBTable());
-  }
-
-  @Override
-  public boolean needDisplay() {
-    // TODO[yole] cleaner API
-    return !PlatformUtils.isRubyMine();
   }
 }

@@ -15,68 +15,81 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class RepositoryContentHandler extends DefaultHandler {
-  @NonNls public static final String CATEGORY = "category";
-  @NonNls public static final String IDEA_PLUGIN = "idea-plugin";
-  @NonNls public static final String NAME = "name";
-  @NonNls public static final String ID = "id";
-  @NonNls public static final String DESCRIPTION = "description";
-  @NonNls public static final String VERSION = "version";
-  @NonNls public static final String VENDOR = "vendor";
-  @NonNls public static final String EMAIL = "email";
-  @NonNls public static final String URL = "url";
-  @NonNls public static final String IDEA_VERSION = "idea-version";
-  @NonNls public static final String SINCE_BUILD = "since-build";
-  @NonNls private static final String UNTIL_BUILD = "until-build";
-  @NonNls public static final String CHNAGE_NOTES = "change-notes";
-  @NonNls private static final String DEPENDS = "depends";
-  @NonNls private static final String DOWNLOADS = "downloads";
-  @NonNls private static final String DOWNLOAD_URL = "downloadUrl";
-  @NonNls private static final String DOWNLOAD_URL_NEW_STYLE = "download-url";
-  @NonNls private static final String SIZE = "size";
+/**
+ * Plugin repository XML parser.
+ * Supports both updates.xml and plugins.jetbrains.com formats.
+ */
+class RepositoryContentHandler extends DefaultHandler {
+  private static final String CATEGORY = "category";
+  private static final String PLUGIN = "plugin";
+  private static final String IDEA_PLUGIN = "idea-plugin";
+  private static final String NAME = "name";
+  private static final String ID = "id";
+  private static final String DESCRIPTION = "description";
+  private static final String VERSION = "version";
+  private static final String VENDOR = "vendor";
+  private static final String EMAIL = "email";
+  private static final String URL = "url";
+  private static final String IDEA_VERSION = "idea-version";
+  private static final String SINCE_BUILD = "since-build";
+  private static final String UNTIL_BUILD = "until-build";
+  private static final String CHANGE_NOTES = "change-notes";
+  private static final String DEPENDS = "depends";
+  private static final String DOWNLOADS = "downloads";
+  private static final String DOWNLOAD_URL = "downloadUrl";
+  private static final String DOWNLOAD_URL_NEW_STYLE = "download-url";
+  private static final String SIZE = "size";
+  private static final String RATING = "rating";
+  private static final String DATE = "date";
 
-  @NonNls private static final String RATING = "rating";
-  @NonNls private static final String DATE = "date";
-  private PluginNode currentPlugin;
   private final StringBuilder currentValue = new StringBuilder();
-  private ArrayList<IdeaPluginDescriptor> plugins;
-  private Stack<String> categoriesStack;
+  private PluginNode currentPlugin;
+  private List<IdeaPluginDescriptor> plugins;
+  private Stack<String> categories;
+  private String categoryName;
 
-
-  @Override
-  public void startDocument() throws SAXException {
-    plugins = new ArrayList<IdeaPluginDescriptor>();
-    categoriesStack = new Stack<String>();
+  @NotNull
+  public List<IdeaPluginDescriptor> getPluginsList() {
+    return plugins != null ? plugins : Collections.<IdeaPluginDescriptor>emptyList();
   }
 
   @Override
-  public void startElement(@NotNull String namespaceURI, @NotNull String localName, @NotNull String qName, @NotNull Attributes attributes) throws SAXException {
+  public void startDocument() throws SAXException {
+    plugins = ContainerUtil.newArrayList();
+    categories = ContainerUtil.newStack();
+  }
+
+  @Override
+  public void startElement(String namespaceURI, String localName, String qName, Attributes attributes) throws SAXException {
     if (qName.equals(CATEGORY)) {
-      categoriesStack.push(attributes.getValue(NAME));
+      String category = attributes.getValue(NAME);
+      if (!StringUtil.isEmptyOrSpaces(category)) {
+        categories.push(category);
+        categoryName = null;
+      }
     }
     else if (qName.equals(IDEA_PLUGIN)) {
-      String categoryName = constructCategoryTree();
       currentPlugin = new PluginNode();
-      currentPlugin.setCategory(categoryName);
+      currentPlugin.setCategory(buildCategoryName());
       currentPlugin.setDownloads(attributes.getValue(DOWNLOADS));
       currentPlugin.setSize(attributes.getValue(SIZE));
       currentPlugin.setUrl(attributes.getValue(URL));
-      final String dateString = attributes.getValue(DATE);
+      String dateString = attributes.getValue(DATE);
       if (dateString != null) {
         currentPlugin.setDate(dateString);
       }
-
+      currentPlugin.setIncomplete(false);
       plugins.add(currentPlugin);
     }
     else if (qName.equals(IDEA_VERSION)) {
@@ -87,11 +100,22 @@ public class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setVendorEmail(attributes.getValue(EMAIL));
       currentPlugin.setVendorUrl(attributes.getValue(URL));
     }
+    else if (qName.equals(PLUGIN)) {
+      currentPlugin = new PluginNode();
+      String id = attributes.getValue(ID);
+      if (id != null) {
+        currentPlugin.setId(id);
+      }
+      currentPlugin.setDownloadUrl(attributes.getValue(URL));
+      currentPlugin.setVersion(attributes.getValue(VERSION));
+      currentPlugin.setIncomplete(true);
+      plugins.add(currentPlugin);
+    }
     currentValue.setLength(0);
   }
 
   @Override
-  public void endElement(String namespaceURI, @NotNull String localName, @NotNull String qName) throws SAXException {
+  public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
     String currentValueString = currentValue.toString();
     currentValue.setLength(0);
 
@@ -111,19 +135,23 @@ public class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setVendor(currentValueString);
     }
     else if (qName.equals(DEPENDS)) {
-      currentPlugin.addDepends(PluginId.getId(currentValueString));
+      currentPlugin.addDepends(currentValueString);
     }
-    else if (qName.equals(CHNAGE_NOTES)) {
+    else if (qName.equals(CHANGE_NOTES)) {
       currentPlugin.setChangeNotes(currentValueString);
     }
     else if (qName.equals(CATEGORY)) {
-      categoriesStack.pop();
+      categories.pop();
+      categoryName = null;
     }
     else if (qName.equals(RATING)) {
       currentPlugin.setRating(currentValueString);
     }
     else if (qName.equals(DOWNLOAD_URL) || qName.equals(DOWNLOAD_URL_NEW_STYLE)) {
       currentPlugin.setDownloadUrl(currentValueString);
+    }
+    else if (qName.equals(IDEA_PLUGIN) || qName.equals(PLUGIN)) {
+      currentPlugin = null;
     }
   }
 
@@ -132,19 +160,15 @@ public class RepositoryContentHandler extends DefaultHandler {
     currentValue.append(ch, start, length);
   }
 
-  public List<IdeaPluginDescriptor> getPluginsList() {
-    return plugins;
-  }
-
-  private String constructCategoryTree() {
-    StringBuilder category = new StringBuilder();
-    for (int i = 0; i < categoriesStack.size(); i++) {
-      String str = categoriesStack.get(i);
-      if (str.length() > 0) {
-        if (i > 0) category.append("/");
-        category.append(str);
+  private String buildCategoryName() {
+    if (categoryName == null) {
+      StringBuilder builder = new StringBuilder();
+      for (int i = 0; i < categories.size(); i++) {
+        if (i > 0) builder.append('/');
+        builder.append(categories.get(i));
       }
+      categoryName = builder.toString();
     }
-    return category.toString();
+    return categoryName;
   }
 }

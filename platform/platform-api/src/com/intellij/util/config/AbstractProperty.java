@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.config;
 
 import com.intellij.openapi.util.Comparing;
@@ -28,17 +27,28 @@ public abstract class AbstractProperty<T> {
     }
   };
 
-  @NonNls public abstract String getName();
+  @NonNls
+  public abstract String getName();
+
   public abstract T getDefault(AbstractPropertyContainer container);
+
   public abstract T copy(T value);
 
   public boolean areEqual(T value1, T value2) {
     return Comparing.equal(value1, value2);
   }
 
-  public T get(AbstractPropertyContainer container) { return (T) container.getValueOf(this); }
-  public void set(AbstractPropertyContainer container, T value) { container.setValueOf(this, value); }
-  public final T cast(Object value) { return (T) value; }
+  public T get(AbstractPropertyContainer container) {
+    return (T)container.getValueOf(this);
+  }
+
+  public void set(AbstractPropertyContainer container, T value) {
+    container.setValueOf(this, value);
+  }
+
+  public final T cast(Object value) {
+    return (T)value;
+  }
 
   public String toString() {
     return getName();
@@ -60,7 +70,9 @@ public abstract class AbstractProperty<T> {
     };
 
     protected abstract Object getValueOf(PropertyImpl property);
+
     protected abstract void setValueOf(PropertyImpl property, Object value);
+
     public abstract boolean hasProperty(AbstractProperty property);
 
     /**
@@ -73,7 +85,7 @@ public abstract class AbstractProperty<T> {
 
     /**
      * Only containers can delegate to another.
-     * Other clients should use {@link AbstractProperty#get AbstractProperty.get}  
+     * Other clients should use {@link AbstractProperty#get AbstractProperty.get}
      */
     protected final <T> T delegateGet(AbstractPropertyContainer container, AbstractProperty<T> property) {
       return (T)container.getValueOf(property);

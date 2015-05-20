@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,19 +47,19 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.List;
 
 public class DirectoryIndexImpl extends DirectoryIndex {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
+  private static final Logger LOG = Logger.getInstance(DirectoryIndexImpl.class);
 
   private final Project myProject;
   private final MessageBusConnection myConnection;
 
-  private volatile boolean myDisposed = false;
-  private volatile RootIndex myRootIndex = null;
+  private volatile boolean myDisposed;
+  private volatile RootIndex myRootIndex;
 
-  public DirectoryIndexImpl(@NotNull Project project) {
+  public DirectoryIndexImpl(@NotNull Project project, ModuleManager moduleManager) {
     myProject = project;
     myConnection = project.getMessageBus().connect(project);
     subscribeToFileChanges();
-    markContentRootsForRefresh();
+    markContentRootsForRefresh(moduleManager);
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
@@ -99,8 +99,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     });
   }
 
-  protected void markContentRootsForRefresh() {
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+  private static void markContentRootsForRefresh(@NotNull ModuleManager moduleManager) {
+    Module[] modules = moduleManager.getModules();
     for (Module module : modules) {
       VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
       for (VirtualFile contentRoot : contentRoots) {

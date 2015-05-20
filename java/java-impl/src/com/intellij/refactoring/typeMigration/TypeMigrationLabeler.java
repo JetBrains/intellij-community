@@ -478,6 +478,10 @@ public class TypeMigrationLabeler {
     return null;
   }
 
+  public void clearStopException() {
+    myException = null;
+  }
+  
   boolean addRoot(final TypeMigrationUsageInfo usageInfo, final PsiType type, final PsiElement place, boolean alreadyProcessed) {
     if (myShowWarning && myMigrationRoots.size() > 10 && !ApplicationManager.getApplication().isUnitTestMode()) {
       myShowWarning = false;
@@ -689,6 +693,12 @@ public class TypeMigrationLabeler {
             }
           }
         }
+
+        @Override
+        public void visitClass(PsiClass aClass) {}
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {}
       });
     }
   }

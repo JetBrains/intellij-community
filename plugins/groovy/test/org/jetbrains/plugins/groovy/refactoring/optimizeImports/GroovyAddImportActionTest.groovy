@@ -56,7 +56,7 @@ A<caret>bc<String, > foo = null
   }
 
   private def importClass() {
-    myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
+    myFixture.launchAction(myFixture.findSingleIntention("Import class"))
   }
 
 

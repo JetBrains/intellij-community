@@ -36,6 +36,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class TableView<Item> extends BaseTableView implements ItemsProvider, SelectionProvider {
+
+  private boolean myInStopEditing = false;
+
   public TableView() {
     this(new ListTableModel<Item>(ColumnInfo.EMPTY_ARRAY));
   }
@@ -59,7 +62,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   public void setModel(final ListTableModel<Item> model) {
     setModelAndUpdateColumns(model);
   }
-  
+
   public void setModelAndUpdateColumns(final ListTableModel<Item> model) {
     super.setModel(model);
     createDefaultColumnsFromModel();
@@ -264,7 +267,15 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   }
 
   public void stopEditing() {
-    TableUtil.stopEditing(this);
+    if (!myInStopEditing) {
+      try {
+        myInStopEditing = true;
+        TableUtil.stopEditing(this);
+      }
+      finally {
+        myInStopEditing = false;
+      }
+    }
   }
 
   @Override

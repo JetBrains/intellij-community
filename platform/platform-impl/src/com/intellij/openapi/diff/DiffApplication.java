@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
+@Deprecated
 public class DiffApplication extends ApplicationStarterBase {
   public DiffApplication() {
     super("diff", 2);

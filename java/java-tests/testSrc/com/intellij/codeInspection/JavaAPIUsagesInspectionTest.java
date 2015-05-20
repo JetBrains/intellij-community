@@ -70,6 +70,15 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
     });
   }
 
+  public void testOverrideAnnotation() throws Exception {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
   @Override
   protected Sdk getTestProjectSdk() {
     return IdeaTestUtil.getMockJdk18();
@@ -77,8 +86,10 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
 
   //generate apiXXX.txt
   /*
+  //todo exclude inheritors of ConcurrentMap#putIfAbsent
   public void testCollectSinceApiUsages() {
     final String version = "1.8";
+    final LinkedHashSet<String> notDocumented = new LinkedHashSet<String>();
     final ContentIterator contentIterator = new ContentIterator() {
       @Override
       public boolean processFile(VirtualFile fileOrDir) {
@@ -88,6 +99,26 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
             @Override
             public void visitElement(PsiElement element) {
               super.visitElement(element);
+              if (isDocumentedSinceApi(element)) {
+                System.out.println(Java15APIUsageInspection.getSignature((PsiMember)element));
+                if (element instanceof PsiMethod) {
+                  OverridingMethodsSearch.search((PsiMethod)element, GlobalSearchScope.notScope(GlobalSearchScope.projectScope(getProject())), true).forEach(
+                    new Processor<PsiMethod>() {
+                      @Override
+                      public boolean process(PsiMethod method) {
+                        if (isDocumentedSinceApi(method.getNavigationElement())) {
+                          return true;
+                        }
+  
+                        notDocumented.add(Java15APIUsageInspection.getSignature(method));
+                        return true;
+                      }
+                    });
+                }
+              }
+            }
+
+            public boolean isDocumentedSinceApi(PsiElement element) {
               if (element instanceof PsiDocCommentOwner) {
                 final PsiDocComment comment = ((PsiDocCommentOwner)element).getDocComment();
                 if (comment != null) {
@@ -95,13 +126,14 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
                     if (Comparing.strEqual(tag.getName(), "since")) {
                       final PsiDocTagValue value = tag.getValueElement();
                       if (value != null && value.getText().equals(version)) {
-                        System.out.println(Java15APIUsageInspection.getSignature((PsiMember)element));
+                        return true;
                       }
                       break;
                     }
                   }
                 }
               }
+              return false;
             }
           });
         }
@@ -111,6 +143,8 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
     final VirtualFile srcFile = JarFileSystem.getInstance().findFileByPath("c:/tools/jdk8/src.zip!/");
     assert srcFile != null;
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator);
+
+    notDocumented.forEach(System.out::println);
   }
 
   @Override

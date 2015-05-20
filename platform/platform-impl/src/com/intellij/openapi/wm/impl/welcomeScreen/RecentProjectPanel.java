@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,22 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.ProjectGroup;
+import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ClickListener;
@@ -40,6 +44,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,16 +58,53 @@ import java.io.File;
 public class RecentProjectPanel extends JPanel {
   protected final JBList myList;
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
+  protected AnAction removeRecentProjectAction;
+  private int myHoverIndex = -1;
+  private final int closeButtonInset = JBUI.scale(7);
+  private Icon currentIcon = AllIcons.Welcome.Project.Remove;
+  private static final Logger LOG = Logger.getInstance("#" + RecentProjectPanel.class.getName());
+
+  private final JPanel myCloseButtonForEditor = new JPanel() {
+    {
+      setPreferredSize(new Dimension(currentIcon.getIconWidth(), currentIcon.getIconHeight()));
+      setOpaque(true);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      currentIcon.paintIcon(this, g, 0, 0);
+    }
+  };
+
+
+  private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
+
+    int realCloseButtonInset = (UIUtil.isRetina((Graphics2D)myList.getGraphics())) ?
+                           closeButtonInset * 2 : closeButtonInset;
+
+    Rectangle closeButtonRect = new Rectangle(myCloseButtonForEditor.getX() - realCloseButtonInset,
+                                              myCloseButtonForEditor.getY() - realCloseButtonInset,
+                                              myCloseButtonForEditor.getWidth() + realCloseButtonInset * 2,
+                                              myCloseButtonForEditor.getHeight() + realCloseButtonInset * 2);
+
+    Rectangle rectInListCoordinates = new Rectangle(new Point(closeButtonRect.x + listCellBounds.x,
+                                                              closeButtonRect.y + listCellBounds.y),
+                                                    closeButtonRect.getSize());
+    return rectInListCoordinates.contains(p);
+  }
 
   public RecentProjectPanel(WelcomeScreen screen) {
     super(new BorderLayout());
 
-    final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false);
+    final AnAction[] recentProjectActions = RecentProjectsManager.getInstance().getRecentProjectsActions(false, isUseGroups());
 
     myPathShortener = new UniqueNameBuilder<ReopenProjectAction>(SystemProperties.getUserHome(), File.separator, 40);
     for (AnAction action : recentProjectActions) {
-      ReopenProjectAction item = (ReopenProjectAction)action;
-      myPathShortener.addPath(item, item.getProjectPath());
+      if (action instanceof ReopenProjectAction) {
+        final ReopenProjectAction item = (ReopenProjectAction)action;
+
+        myPathShortener.addPath(item, item.getProjectPath());
+      }
     }
 
     myList = createList(recentProjectActions, getPreferredScrollableViewportSize());
@@ -73,11 +115,14 @@ public class RecentProjectPanel extends JPanel {
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         int selectedIndex = myList.getSelectedIndex();
         if (selectedIndex >= 0) {
-          if (myList.getCellBounds(selectedIndex, selectedIndex).contains(event.getPoint())) {
+          Rectangle cellBounds = myList.getCellBounds(selectedIndex, selectedIndex);
+          if (cellBounds.contains(event.getPoint())) {
             Object selection = myList.getSelectedValue();
-
-            if (selection != null) {
-              ((AnAction)selection).actionPerformed(AnActionEvent.createFromInputEvent((AnAction)selection, event, ActionPlaces.WELCOME_SCREEN));
+            if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
+              removeRecentProjectAction.actionPerformed(null);
+            } else if (selection != null) {
+              ((AnAction)selection).actionPerformed(
+                AnActionEvent.createFromInputEvent((AnAction)selection, event, ActionPlaces.WELCOME_SCREEN));
             }
           }
         }
@@ -98,7 +143,7 @@ public class RecentProjectPanel extends JPanel {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
 
-    new AnAction() {
+    removeRecentProjectAction = new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         Object[] selection = myList.getSelectedValues();
@@ -108,16 +153,24 @@ public class RecentProjectPanel extends JPanel {
                                                      "Remove '" + StringUtil.join(selection, new Function<Object, String>() {
                                                        @Override
                                                        public String fun(Object action) {
-                                                         return ((ReopenProjectAction)action).getTemplatePresentation().getText();
+                                                         return ((AnAction)action).getTemplatePresentation().getText();
                                                        }
                                                      }, "'\n'") +
                                                      "' from recent projects list?",
                                                      "Remove Recent Project",
                                                      Messages.getQuestionIcon());
           if (rc == Messages.OK) {
-            RecentProjectsManager manager = RecentProjectsManagerBase.getInstance();
+            RecentProjectsManager manager = RecentProjectsManager.getInstance();
             for (Object projectAction : selection) {
-              manager.removePath(((ReopenProjectAction)projectAction).getProjectPath());
+              if (projectAction instanceof ReopenProjectAction) {
+                manager.removePath(((ReopenProjectAction)projectAction).getProjectPath());
+              } else if (projectAction instanceof ProjectGroupActionGroup) {
+                final ProjectGroup group = ((ProjectGroupActionGroup)projectAction).getGroup();
+                for (String path : group.getProjects()) {
+                  manager.removePath(path);
+                }
+                manager.removeGroup(group);
+              }
             }
             ListUtil.removeSelectedItems(myList);
           }
@@ -128,7 +181,8 @@ public class RecentProjectPanel extends JPanel {
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!ListWithFilter.isSearchActive(myList));
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, screen);
+    };
+    removeRecentProjectAction.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, screen);
 
     addMouseMotionListener();
 
@@ -142,13 +196,18 @@ public class RecentProjectPanel extends JPanel {
                       : ListWithFilter.wrap(myList, scroll, new Function<Object, String>() {
                         @Override
                         public String fun(Object o) {
-                          ReopenProjectAction item = (ReopenProjectAction)o;
-                          String home = SystemProperties.getUserHome();
-                          String path = item.getProjectPath();
-                          if (FileUtil.startsWith(path, home)) {
-                            path = path.substring(home.length());
+                          if (o instanceof ReopenProjectAction) {
+                            ReopenProjectAction item = (ReopenProjectAction)o;
+                            String home = SystemProperties.getUserHome();
+                            String path = item.getProjectPath();
+                            if (FileUtil.startsWith(path, home)) {
+                              path = path.substring(home.length());
+                            }
+                            return item.getProjectName() + " " + path;
+                          } else if (o instanceof ProjectGroupActionGroup) {
+                            return ((ProjectGroupActionGroup)o).getGroup().getName();
                           }
-                          return item.getProjectName() + " " + path;
+                          return o.toString();
                         }
                       });
     add(list, BorderLayout.CENTER);
@@ -162,32 +221,65 @@ public class RecentProjectPanel extends JPanel {
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
   }
 
+  protected boolean isUseGroups() {
+    return false;
+  }
+
   protected Dimension getPreferredScrollableViewportSize() {
-    return new Dimension(250, 400);
+    return JBUI.size(250, 400);
   }
   
   protected void addMouseMotionListener() {
-    myList.addMouseMotionListener(new MouseMotionAdapter() {
+
+    MouseAdapter mouseAdapter = new MouseAdapter() {
       boolean myIsEngaged = false;
+      @Override
       public void mouseMoved(MouseEvent e) {
-        if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
+        Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (focusOwner == null) {
+          myList.requestFocus();
+        }
+        if (myList.getSelectedIndices().length > 1) {
+          return;
+        }
+        if (myIsEngaged && !UIUtil.isSelectionButtonDown(e) && !(focusOwner instanceof JRootPane)) {
           Point point = e.getPoint();
           int index = myList.locationToIndex(point);
           myList.setSelectedIndex(index);
 
-          final Rectangle bounds = myList.getCellBounds(index, index);
-          if (bounds != null && bounds.contains(point)) {
+          final Rectangle cellBounds = myList.getCellBounds(index, index);
+          if (cellBounds != null && cellBounds.contains(point)) {
             myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            if (rectInListCoordinatesContains(cellBounds, point)) {
+              currentIcon = AllIcons.Welcome.Project.Remove_hover;
+            } else {
+              currentIcon = AllIcons.Welcome.Project.Remove;
+            }
+            myHoverIndex = index;
+            myList.repaint(cellBounds);
           }
           else {
             myList.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            myHoverIndex = -1;
+            myList.repaint();
           }
         }
         else {
           myIsEngaged = true;
         }
       }
-    });
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        myHoverIndex = -1;
+        currentIcon = AllIcons.Welcome.Project.Remove;
+        myList.repaint();
+      }
+    };
+
+    myList.addMouseMotionListener(mouseAdapter);
+    myList.addMouseListener(mouseAdapter);
+
   }
 
   protected JBList createList(AnAction[] recentProjectActions, Dimension size) {
@@ -203,7 +295,7 @@ public class RecentProjectPanel extends JPanel {
     JPanel title = new JPanel() {
       @Override
       public Dimension getPreferredSize() {
-        return new Dimension(super.getPreferredSize().width, 28);
+        return new Dimension(super.getPreferredSize().width, JBUI.scale(28));
       }
     };
     title.setBorder(new BottomLineBorder());
@@ -219,7 +311,7 @@ public class RecentProjectPanel extends JPanel {
   private static class MyList extends JBList {
     private final Dimension mySize;
 
-    private MyList(Dimension size, @NotNull Object... listData) {
+    private MyList(Dimension size, @NotNull Object ... listData) {
       super(listData);
       mySize = size;
       setEmptyText("  No Project Open Yet  ");
@@ -232,15 +324,19 @@ public class RecentProjectPanel extends JPanel {
     }
   }
 
-  protected static class RecentProjectItemRenderer extends JPanel implements ListCellRenderer {
+  protected class RecentProjectItemRenderer extends JPanel implements ListCellRenderer {
+
     protected final JLabel myName = new JLabel();
     protected final JLabel myPath = new JLabel();
+    protected boolean myHovered;
+    protected JPanel myCloseThisItem = myCloseButtonForEditor;
+
     private final UniqueNameBuilder<ReopenProjectAction> myShortener;
 
     protected RecentProjectItemRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
       super(new VerticalFlowLayout());
       myShortener = pathShortener;
-      myPath.setFont(myPath.getFont().deriveFont(SystemInfo.isMac ? 10f : 11f));
+      myPath.setFont(JBUI.Fonts.label(SystemInfo.isMac ? 10f : 11f));
       setFocusable(true);
       layoutComponents();
     }
@@ -260,8 +356,7 @@ public class RecentProjectPanel extends JPanel {
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      ReopenProjectAction item = (ReopenProjectAction)value;
-
+      myHovered = myHoverIndex == index;
       Color fore = getListForeground(isSelected, list.hasFocus());
       Color back = getListBackground(isSelected, list.hasFocus());
 
@@ -270,21 +365,49 @@ public class RecentProjectPanel extends JPanel {
 
       setBackground(back);
 
-      myName.setText(item.getProjectName());
-      myPath.setText(getTitle2Text(item, myPath));
-
+      if (value instanceof ReopenProjectAction) {
+        ReopenProjectAction item = (ReopenProjectAction)value;
+        myName.setText(item.getTemplatePresentation().getText());
+        myPath.setText(getTitle2Text(item, myPath, JBUI.scale(40)));
+      } else if (value instanceof ProjectGroupActionGroup) {
+        final ProjectGroupActionGroup group = (ProjectGroupActionGroup)value;
+        myName.setText(group.getGroup().getName());
+        myPath.setText("");
+      }
       return this;
     }
 
-    private String getTitle2Text(ReopenProjectAction action, JComponent pathLabel) {
+    protected String getTitle2Text(ReopenProjectAction action, JComponent pathLabel, int leftOffset) {
       String fullText = action.getProjectPath();
       if (fullText == null || fullText.length() == 0) return " ";
 
       fullText = FileUtil.getLocationRelativeToUserHome(fullText, false);
 
-      int labelWidth = pathLabel.getWidth();
-      if (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
-        return myShortener.getShortPath(action);
+      try {
+        FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
+        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset;
+        if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
+          int left = 1; int right = 1;
+          int center = fullText.length() / 2;
+          String s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+          while (fm.stringWidth(s) > maxWidth) {
+            if (left == right) {
+              left++;
+            } else {
+              right++;
+            }
+
+            if (center - left < 0 || center + right >= fullText.length()) {
+              return "";
+            }
+            s = fullText.substring(0, center - left) + "..." + fullText.substring(center + right);
+          }
+          return s;
+        }
+      } catch (Exception e) {
+        LOG.error("Path label font: " + pathLabel.getFont());
+        LOG.error("Panel width: " + RecentProjectPanel.this.getWidth());
+        LOG.error(e);
       }
 
       return fullText;
@@ -293,7 +416,13 @@ public class RecentProjectPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      return new Dimension(Math.min(size.width, 245), size.height);
+      return new Dimension(Math.min(size.width, JBUI.scale(245)), size.height);
+    }
+
+    @NotNull
+    @Override
+    public Dimension getSize() {
+      return getPreferredSize();
     }
   }
 }

@@ -52,6 +52,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
+   * If you want to change suppression id you have to define it in XML as well.
+   * 
    * <p>Inspection tool ID is a descriptive name to be used in "suppress" comments and annotations.
    * <p>It must satisfy {@link #VALID_ID_PATTERN} regexp pattern.
    * <p>If not defined {@link #getShortName()} is used as tool ID.
@@ -73,7 +75,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   @NotNull
   @Override
-  protected String getSuppressId() {
+  protected final String getSuppressId() {
     return getID();
   }
 
@@ -119,7 +121,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   /**
    * Override the method to provide your own inspection visitor, if you need to store additional state in the
    * LocalInspectionToolSession user data or get information about the inspection scope.
-   * Visitor created must not be recursive (e.g. it must not inherit {@link com.intellij.psi.PsiRecursiveElementVisitor})
+   * Visitor created must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
    *
@@ -135,7 +137,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * Override the method to provide your own inspection visitor.
-   * Visitor created must not be recursive (e.g. it must not inherit {@link com.intellij.psi.PsiRecursiveElementVisitor})
+   * Visitor created must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
    *

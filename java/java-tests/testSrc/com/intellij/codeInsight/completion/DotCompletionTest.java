@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -49,18 +48,10 @@ public class DotCompletionTest extends LightCompletionTestCase {
   }
 
   public void testShowStatic() throws Exception {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean oldSetting = settings.SHOW_STATIC_AFTER_INSTANCE;
-    settings.SHOW_STATIC_AFTER_INSTANCE = false;
-    try {
-      configureByFile("Dot4.java");
-      assertEquals("", myPrefix);
-      assertContainsItems("foo");
-      assertNotContainItems("a");
-    }
-    finally {
-      settings.SHOW_STATIC_AFTER_INSTANCE = oldSetting;
-    }
+    configureByFile("Dot4.java");
+    assertEquals("", myPrefix);
+    assertContainsItems("foo");
+    assertNotContainItems("a");
   }
 
   public void testImports() throws Exception {

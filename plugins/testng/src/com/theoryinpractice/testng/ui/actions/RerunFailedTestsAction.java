@@ -5,9 +5,9 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -22,12 +22,11 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.configuration.SearchingForTestsTask;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
+import com.theoryinpractice.testng.configuration.TestNGConfigurationProducer;
 import com.theoryinpractice.testng.configuration.TestNGRunnableState;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.net.ServerSocket;
 import java.util.*;
 
 public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
@@ -50,12 +49,11 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
       public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
         return new TestNGRunnableState(env, configuration) {
           @Override
-          protected SearchingForTestsTask createSearchingForTestsTask(ServerSocket serverSocket,
-                                                                      final TestNGConfiguration config, final File tempFile) {
-            return new SearchingForTestsTask(serverSocket, config, tempFile, client) {
+          public SearchingForTestsTask createSearchingForTestsTask() {
+            return new SearchingForTestsTask(myServerSocket, getConfiguration(), myTempFile, client) {
               @Override
-              protected void fillTestObjects(final Map<PsiClass, Collection<PsiMethod>> classes) throws CantRunException {
-                final HashMap<PsiClass, Collection<PsiMethod>> fullClassList = ContainerUtil.newHashMap();
+              protected void fillTestObjects(final Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {
+                final HashMap<PsiClass, Map<PsiMethod, List<String>>> fullClassList = ContainerUtil.newHashMap();
                 super.fillTestObjects(fullClassList);
                 for (final PsiClass aClass : fullClassList.keySet()) {
                   if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -68,29 +66,50 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
                   }
                 }
 
-                final GlobalSearchScope scope = config.getConfigurationModule().getSearchScope();
-                final Project project = config.getProject();
-                for (AbstractTestProxy proxy : failedTests) {
-                  final Location location = proxy.getLocation(project, scope);
-                  if (location != null) {
-                    final PsiElement element = location.getPsiElement();
-                    if (element instanceof PsiMethod && element.isValid()) {
-                      final PsiMethod psiMethod = (PsiMethod)element;
-                      PsiClass psiClass = psiMethod.getContainingClass();
-                      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-                        final AbstractTestProxy parent = proxy.getParent();
-                        final PsiElement elt = parent != null ? parent.getLocation(project, scope).getPsiElement() : null;
-                        if (elt instanceof PsiClass) {
-                          psiClass = (PsiClass)elt;
-                        }
-                      }
-                      Collection<PsiMethod> psiMethods = classes.get(psiClass);
-                      if (psiMethods == null) {
-                        psiMethods = new ArrayList<PsiMethod>();
-                        classes.put(psiClass, psiMethods);
-                      }
-                      psiMethods.add(psiMethod);
+                final GlobalSearchScope scope = getConfiguration().getConfigurationModule().getSearchScope();
+                final Project project = getConfiguration().getProject();
+                for (final AbstractTestProxy proxy : failedTests) {
+                  ApplicationManager.getApplication().runReadAction(new Runnable() {
+                    public void run() {
+                      includeFailedTestWithDependencies(classes, scope, project, proxy);
                     }
+                  });
+                }
+              }
+
+              private void includeFailedTestWithDependencies(Map<PsiClass, Map<PsiMethod, List<String>>> classes,
+                                                             GlobalSearchScope scope,
+                                                             Project project,
+                                                             AbstractTestProxy proxy) {
+                final Location location = proxy.getLocation(project, scope);
+                if (location != null) {
+                  final PsiElement element = location.getPsiElement();
+                  if (element instanceof PsiMethod && element.isValid()) {
+                    final PsiMethod psiMethod = (PsiMethod)element;
+                    PsiClass psiClass = psiMethod.getContainingClass();
+                    if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                      final AbstractTestProxy parent = proxy.getParent();
+                      final PsiElement elt = parent != null ? parent.getLocation(project, scope).getPsiElement() : null;
+                      if (elt instanceof PsiClass) {
+                        psiClass = (PsiClass)elt;
+                      }
+                    }
+                    Map<PsiMethod, List<String>> psiMethods = classes.get(psiClass);
+                    if (psiMethods == null) {
+                      psiMethods = new LinkedHashMap<PsiMethod, List<String>>();
+                      classes.put(psiClass, psiMethods);
+                    }
+                    List<String> strings = psiMethods.get(psiMethod);
+                    if (strings == null) {
+                      strings = new ArrayList<String>();
+                    }
+                    if (location instanceof PsiMemberParameterizedLocation) {
+                      final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
+                      if (paramSetName != null) {
+                        strings.add(TestNGConfigurationProducer.getInvocationNumber(paramSetName));
+                      }
+                    }
+                    psiMethods.put(psiMethod, strings);
                   }
                 }
               }

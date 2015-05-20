@@ -87,7 +87,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
         }
       }
       if (PsiType.LONG.equals(operandType) && PsiType.INT.equals(castType)) {
-        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class);
+        final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
         if (MethodUtils.isHashCode(method)) {
           return;
         }

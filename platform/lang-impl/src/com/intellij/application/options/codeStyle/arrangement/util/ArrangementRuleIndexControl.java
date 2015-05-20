@@ -77,12 +77,15 @@ public class ArrangementRuleIndexControl extends JPanel {
       return;
     }
     
-    g.setColor(myIsError ? JBColor.red : UIUtil.getBorderColor());
+    g.setColor(myIsError ? JBColor.red : JBColor.border());
     Rectangle bounds = getBounds();
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     int y = Math.max(0, myBaseLine - myHeight - (myDiameter - myHeight) / 2);
     g.drawOval(0, y, myDiameter, myDiameter);
-    
+
+    if (UIUtil.isUnderDarcula()) {
+      g.setColor(UIUtil.getLabelForeground());
+    }
     g.drawChars(myChars, 0, myChars.length, (bounds.width - myIndexWidth) / 2, myBaseLine);
   }
 

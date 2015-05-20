@@ -1,7 +1,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.LightRefactoringTestCase;
@@ -120,6 +120,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals("Parameter initializer depends on class <b><code>User.Local</code></b> which is not available inside method and cannot be inlined", e.getMessage());
     }
+  }
+
+  public void testRightSideAssignment() throws Exception {
+    doTest(false);
   }
 
   public void testRefNewInnerForMethod() throws Exception {
@@ -302,8 +306,9 @@ public class InlineParameterTest extends LightRefactoringTestCase {
   }
 
   private static void performAction() {
-    final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
-      .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil
+                                                                               .REFERENCED_ELEMENT_ACCEPTED |
+                                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     new InlineParameterHandler().inlineElement(getProject(), myEditor, element);
   }
 }

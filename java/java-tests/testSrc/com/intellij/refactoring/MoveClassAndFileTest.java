@@ -77,7 +77,9 @@ public class MoveClassAndFileTest extends RefactoringTestCase {
     final PsiDirectory[] dirs = aPackage.getDirectories();
     assertEquals(dirs.length, 1);
 
-    new JavaMoveFilesOrDirectoriesHandler().doMove(getProject(), elements, dirs[0], null);
+    final JavaMoveFilesOrDirectoriesHandler handler = new JavaMoveFilesOrDirectoriesHandler();
+    assertTrue(handler.canMove(elements, dirs[0]));
+    handler.doMove(getProject(), elements, dirs[0], null);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
   }

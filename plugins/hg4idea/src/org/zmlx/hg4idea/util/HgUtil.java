@@ -16,12 +16,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
@@ -38,9 +32,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -222,8 +213,8 @@ public abstract class HgUtil {
   /**
    * Checks if the given directory is an hg root.
    */
-  public static boolean isHgRoot(VirtualFile dir) {
-    return dir.findChild(DOT_HG) != null;
+  public static boolean isHgRoot(@Nullable VirtualFile dir) {
+    return dir != null && dir.findChild(DOT_HG) != null;
   }
 
   /**
@@ -284,36 +275,9 @@ public abstract class HgUtil {
     return getHgRootOrThrow(project, VcsUtil.getFilePath(file.getPath()));
   }
 
-  /**
-   * Returns the currently selected file, based on which HgBranch components will identify the current repository root.
-   */
-  @Nullable
-  public static VirtualFile getSelectedFile(@NotNull Project project) {
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, statusBar);
-    VirtualFile result = null;
-    if (fileEditor != null) {
-      if (fileEditor instanceof TextEditor) {
-        Document document = ((TextEditor)fileEditor).getEditor().getDocument();
-        result = FileDocumentManager.getInstance().getFile(document);
-      }
-    }
-
-    if (result == null) {
-      final FileEditorManager manager = FileEditorManager.getInstance(project);
-      if (manager != null) {
-        Editor editor = manager.getSelectedTextEditor();
-        if (editor != null) {
-          result = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        }
-      }
-    }
-    return result;
-  }
-
   @Nullable
   public static VirtualFile getRootForSelectedFile(@NotNull Project project) {
-    VirtualFile selectedFile = getSelectedFile(project);
+    VirtualFile selectedFile = DvcsUtil.getSelectedFile(project);
     if (selectedFile != null) {
       return getHgRootOrNull(project, selectedFile);
     }
@@ -329,7 +293,7 @@ public abstract class HgUtil {
   public static String getNewBranchNameFromUser(@NotNull HgRepository repository,
                                                 @NotNull String dialogTitle) {
     return Messages.showInputDialog(repository.getProject(), "Enter the name of new branch:", dialogTitle, Messages.getQuestionIcon(), "",
-                                    HgReferenceValidator.newInstance(repository));
+                                    new HgBranchReferenceValidator(repository));
   }
 
   /**
@@ -673,6 +637,11 @@ public abstract class HgUtil {
         names.add(hash.getName());
       }
     }
+    return names;
+  }
+
+  public static List<String> getSortedNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
+    List<String> names = getNamesWithoutHashes(namesWithHashes);
     Collections.sort(names);
     return names;
   }
@@ -690,10 +659,17 @@ public abstract class HgUtil {
       email = authorString.substring(startEmailIndex + 1, endEmailIndex);
       userName = authorString.substring(0, startEmailIndex).trim();
     }
-    // vasya.pupkin@email.com --> vasya.pupkin, vasya.pupkin@email.com
+    // vasya.pupkin@email.com || <vasya.pupkin@email.com>
     else if (!authorString.contains(" ") && startDomainIndex > 0) { //simple e-mail check. john@localhost
-      userName = authorString.substring(0, startDomainIndex).trim();
-      email = authorString;
+      if (startEmailIndex >= 0 && startDomainIndex > startEmailIndex && startDomainIndex < endEmailIndex) {
+        // <vasya.pupkin@email.com> --> vasya.pupkin, vasya.pupkin@email.com
+        userName = authorString.substring(startEmailIndex + 1, startDomainIndex).trim();
+        email = authorString.substring(startEmailIndex + 1, endEmailIndex).trim();
+      } else {
+        // vasya.pupkin@email.com --> vasya.pupkin, vasya.pupkin@email.com
+        userName = authorString.substring(0, startDomainIndex).trim();
+        email = authorString;
+      }
     }
 
     else {

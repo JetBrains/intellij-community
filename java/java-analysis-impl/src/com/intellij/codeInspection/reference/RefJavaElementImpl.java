@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,13 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   private static final int ACCESS_PROTECTED = 0x01;
   private static final int ACCESS_PACKAGE = 0x02;
   private static final int ACCESS_PUBLIC = 0x03;
+
   private static final int IS_STATIC_MASK = 0x04;
   private static final int IS_FINAL_MASK = 0x08;
   private static final int IS_USES_DEPRECATION_MASK = 0x200;
-  private static final int IS_SYNTHETIC_JSP_ELEMENT = 0x400;
+  private static final int IS_SYNTHETIC_JSP_ELEMENT_MASK = 0x400;
 
-  protected RefJavaElementImpl(String name, @NotNull RefJavaElement owner) {
+  protected RefJavaElementImpl(@NotNull String name, @NotNull RefJavaElement owner) {
     super(name, owner);
     String am = owner.getAccessModifier();
     doSetAccessModifier(am);
@@ -90,6 +91,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     myOutTypeReferences.add(refClass);
   }
 
+  @NotNull
   public static String getName(PsiElement element) {
    if (element instanceof PsiAnonymousClass) {
      PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
@@ -148,11 +150,11 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
 
   @Override
   public boolean isSyntheticJSP() {
-    return checkFlag(IS_SYNTHETIC_JSP_ELEMENT);
+    return checkFlag(IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
   public void setSyntheticJSP(boolean b) {
-    setFlag(b, IS_SYNTHETIC_JSP_ELEMENT);
+    setFlag(b, IS_SYNTHETIC_JSP_ELEMENT_MASK);
   }
 
   @Override
@@ -169,7 +171,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     doSetAccessModifier(am);
   }
 
-  private void doSetAccessModifier(String am) {
+  private void doSetAccessModifier(@NotNull String am) {
     final int access_id;
 
     if (PsiModifier.PRIVATE.equals(am)) {

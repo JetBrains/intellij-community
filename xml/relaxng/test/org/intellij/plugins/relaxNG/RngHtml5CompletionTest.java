@@ -93,4 +93,8 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
   public void testHtml5_17() throws Throwable {
     doTestCompletion("html5_17");
   }
+  
+  public void testHtml5_overwritten_attributes() throws Throwable {
+    myTestFixture.testCompletionTyping("html5_overwritten_attributes.xml", "a\n", "html5_overwritten_attributes_after.xml");
+  }
 }

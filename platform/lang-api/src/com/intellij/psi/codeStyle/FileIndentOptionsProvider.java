@@ -16,14 +16,20 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Rustam Vishnyakov
  */
-public abstract class FileIndentOptionsProvider {
+public abstract class FileIndentOptionsProvider { 
 
   public final static ExtensionPointName<FileIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIndentOptionsProvider");
   /**
@@ -42,4 +48,33 @@ public abstract class FileIndentOptionsProvider {
   public boolean useOnFullReformat() {
     return true;
   }
+
+  /**
+   * @return information used to create user notification in editor. If the option is <code>null</code>, no notification
+   * will be shown.
+   */
+  @Nullable
+  public EditorNotificationInfo getNotificationInfo(@NotNull Project project,
+                                                    @NotNull VirtualFile file,
+                                                    @NotNull FileEditor fileEditor,
+                                                    @NotNull CommonCodeStyleSettings.IndentOptions user,
+                                                    @NotNull CommonCodeStyleSettings.IndentOptions detected) {
+    return null;
+  }
+  
+  /**
+   * Tells if there should not be any notification for this specific file.
+   * @param file  The file to check.
+   * @return <code>true</code> if the file can be silently accepted without a warning.
+   */
+  public boolean isAcceptedWithoutWarning(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {
+    return false;
+  }
+
+  /**
+   * Sets the file as accepted by end user.
+   * @param file The file to be accepted. A particular implementation of <code>FileIndentOptionsProvider</code> may ignore this parameter
+   *             and set a global acceptance flag so that no notification will be shown anymore.
+   */
+  public void setAccepted(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {}
 }

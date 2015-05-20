@@ -102,6 +102,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
   private void switchEditor() {
     if (myOldEditor != null) {
       myOldEditor.removePropertyChangeListener(this);
+      myOldEditor = null;
     }
     EditorEx editor = (EditorEx)getEditor();
     if (editor != null) {

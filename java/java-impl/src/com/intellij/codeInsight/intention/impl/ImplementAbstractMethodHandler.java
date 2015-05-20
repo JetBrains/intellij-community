@@ -40,7 +40,9 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 
@@ -180,8 +182,10 @@ public class ImplementAbstractMethodHandler {
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass, true)) {
       if (!inheritor.isInterface()) {
-        PsiMethod method = inheritor.findMethodBySignature(myMethod, true);
-        if (method == null || !method.getContainingClass().equals(psiClass)) continue;
+        final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);
+        PsiMethod method = classSubstitutor != null ? MethodSignatureUtil.findMethodBySignature(inheritor, myMethod.getSignature(classSubstitutor), true)
+                                                    : inheritor.findMethodBySignature(myMethod, true);;
+        if (method == null || !psiClass.equals(method.getContainingClass())) continue;
         list.add(inheritor);
       }
     }

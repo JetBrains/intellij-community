@@ -64,7 +64,10 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
   protected static boolean canShowDiff(Change[] changes) {
     if (changes == null || changes.length == 0) return false;
-    return !ChangesUtil.getFilePath(changes [0]).isDirectory() || changes[0].hasOtherLayers();
+    for (Change change : changes) {
+      if (!ChangesUtil.getFilePath(change).isDirectory() || change.hasOtherLayers()) return true;
+    }
+    return false;
   }
 
   public void actionPerformed(final AnActionEvent e) {

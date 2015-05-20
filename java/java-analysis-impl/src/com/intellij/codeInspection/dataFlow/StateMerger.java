@@ -23,6 +23,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -51,15 +52,18 @@ class StateMerger {
       if (statesWithNegations.isEmpty()) continue;
 
       ProgressManager.checkCanceled();
-      
-      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts = MultiMap.createLinked();
-      for (DfaMemoryStateImpl state : ContainerUtil.concat(statesByFact.get(fact), statesWithNegations)) {
-        statesByUnrelatedFacts.putValue(getUnrelatedFacts(fact, state), state);
-      }
+
+      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts1 = mapByUnrelatedFacts(fact, statesByFact.get(fact));
+      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts2 = mapByUnrelatedFacts(fact, statesWithNegations);
 
       Replacements replacements = new Replacements(states);
-      for (Set<Fact> key : statesByUnrelatedFacts.keySet()) {
-        final Collection<DfaMemoryStateImpl> group = statesByUnrelatedFacts.get(key);
+      for (Set<Fact> key : statesByUnrelatedFacts1.keySet()) {
+        final Collection<DfaMemoryStateImpl> group1 = statesByUnrelatedFacts1.get(key);
+        final Collection<DfaMemoryStateImpl> group2 = statesByUnrelatedFacts2.get(key);
+        if (group1.isEmpty() || group2.isEmpty()) continue;
+
+        final Collection<DfaMemoryStateImpl> group = ContainerUtil.newArrayList(ContainerUtil.concat(group1, group2));
+        
         final Set<DfaVariableValue> unknowns = getAllUnknownVariables(group);
         replacements.stripAndMerge(group, new Function<DfaMemoryStateImpl, DfaMemoryStateImpl>() {
           @Override
@@ -77,6 +81,16 @@ class StateMerger {
       if (replacements.hasMerges()) return replacements.getMergeResult();
     }
     return null;
+  }
+
+  @NotNull
+  private MultiMap<Set<Fact>, DfaMemoryStateImpl> mapByUnrelatedFacts(Fact fact,
+                                                                      Collection<DfaMemoryStateImpl> states1) {
+    MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts1 = MultiMap.createLinked();
+    for (DfaMemoryStateImpl state : states1) {
+      statesByUnrelatedFacts1.putValue(getUnrelatedFacts(fact, state), state);
+    }
+    return statesByUnrelatedFacts1;
   }
 
   private LinkedHashSet<Fact> getUnrelatedFacts(final Fact fact, DfaMemoryStateImpl state) {
@@ -358,9 +372,20 @@ class StateMerger {
     boolean invalidatesFact(Fact another) {
       if (another.myType != myType) return false;
       if (myType == FactType.equality) {
-        return myVar == another.myVar || myVar == another.myArg;
+        return aboutSame(myVar, another.myVar) || aboutSame(myVar, another.myArg);
       }
-      return myVar == another.myVar && myArg == another.myArg;
+      return aboutSame(myVar, another.myVar) && aboutSame(myArg, another.myArg);
+    }
+    
+    static boolean aboutSame(Object v1, Object v2) {
+      return normalize(v1) == normalize(v2);
+    }
+
+    static Object normalize(Object value) {
+      if (value instanceof DfaVariableValue && ((DfaVariableValue)value).isNegated()) {
+        return ((DfaVariableValue)value).createNegated();
+      }
+      return value;
     }
 
     void removeFromState(DfaMemoryStateImpl state) {

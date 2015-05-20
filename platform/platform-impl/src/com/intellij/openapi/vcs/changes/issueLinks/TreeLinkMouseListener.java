@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,10 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase {
       int dx = e.getX() - rectangle.x;
       final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
       if (myLastHitNode == null || myLastHitNode.get() != treeNode) {
-        myLastHitNode = new WeakReference<TreeNode>(treeNode);
-        myRenderer.getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), -1, false);
+        if (doCacheLastNode()) {
+          myLastHitNode = new WeakReference<TreeNode>(treeNode);
+        }
+        myRenderer.getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), tree.getRowForPath(path), false);
       }
       tag = myRenderer.getFragmentTagAt(dx);
       if (tag != null && treeNode instanceof HaveTooltip) {
@@ -69,6 +71,10 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase {
     }
     showTooltip(tree, e, haveTooltip);
     return tag;
+  }
+
+  protected boolean doCacheLastNode() {
+    return true;
   }
 
   public interface HaveTooltip {

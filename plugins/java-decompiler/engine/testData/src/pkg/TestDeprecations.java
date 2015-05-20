@@ -15,7 +15,7 @@
  */
 package pkg;
 
-public class TestDeprecations {
+public abstract class TestDeprecations {
   /** @deprecated */
   public int byComment;
 
@@ -23,14 +23,36 @@ public class TestDeprecations {
   public int byAnno;
 
   /** @deprecated */
-  public void byComment() { }
-
-  @Deprecated
-  public void byAnno() { }
+  public void byComment() {
+    int a =5;
+  }
 
   /** @deprecated */
-  public static class ByComment { }
+  public abstract void byCommentAbstract();
 
   @Deprecated
-  public static class ByAnno { }
+  public void byAnno() {
+    int a =5;
+  }
+
+  @Deprecated
+  public abstract void byAnnoAbstract();
+
+  /** @deprecated */
+  public static class ByComment {
+    int a =5;
+
+    void foo() {
+      int x = 5;
+    }
+  }
+
+  @Deprecated
+  public static class ByAnno {
+    int a =5;
+
+    void foo() {
+      int x = 5;
+    }
+  }
 }

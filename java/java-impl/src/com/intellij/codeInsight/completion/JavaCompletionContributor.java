@@ -26,6 +26,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -39,6 +40,7 @@ import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AnnotationTypeFilter;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
@@ -52,10 +54,7 @@ import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.ProcessingContext;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,10 +161,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       return createAnnotationFilter(position);
     }
 
-    if (psiElement().afterLeaf("=").inside(PsiVariable.class).accepts(position)) {
-      return new OrFilter(
-        new ClassFilter(PsiVariable.class, false),
-        new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class)));
+    PsiVariable var = PsiTreeUtil.getParentOfType(position, PsiVariable.class, false, PsiClass.class);
+    if (var != null && PsiTreeUtil.isAncestor(var.getInitializer(), position, false)) {
+      return new ExcludeDeclaredFilter(new ClassFilter(PsiVariable.class));
     }
 
     if (SWITCH_LABEL.accepts(position)) {
@@ -226,6 +224,12 @@ public class JavaCompletionContributor extends CompletionContributor {
       new TypeArgumentCompletionProvider(false, inheritors).addCompletions(parameters, new ProcessingContext(), result);
     }
 
+    if (JavaSmartCompletionContributor.LAMBDA.accepts(parameters.getPosition())) {
+      for (LookupElement element : LambdaCompletionProvider.getLambdaVariants(parameters)) {
+        result.addElement(PrioritizedLookupElement.withPriority(element, 1));
+      }
+    }
+
     PrefixMatcher matcher = result.getPrefixMatcher();
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, inheritors);
@@ -236,6 +240,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     addKeywords(parameters, result);
+
+    addExpressionVariants(parameters, position, result);
 
     Set<String> usedWords = addReferenceVariants(parameters, result, inheritors);
 
@@ -258,6 +264,16 @@ public class JavaCompletionContributor extends CompletionContributor {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
     result.stopHere();
+  }
+
+  private void addExpressionVariants(@NotNull CompletionParameters parameters, PsiElement position, CompletionResultSet result) {
+    if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
+        !JavaCompletionData.AFTER_DOT.accepts(position)) {
+      JavaCompletionData.addExpectedTypeMembers(parameters, result);
+      if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
+        new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
+      }
+    }
   }
 
   public static boolean isInJavaContext(PsiElement position) {
@@ -320,7 +336,7 @@ public class JavaCompletionContributor extends CompletionContributor {
               }
 
               if (isSwitchLabel) {
-                result.addElement(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':')));
+                result.addElement(new IndentingDecorator(TailTypeDecorator.withTail(element, TailType.createSimpleTailType(':'))));
               }
               else {
                 final LookupItem item = element.as(LookupItem.CLASS_CONDITION_KEY);
@@ -378,17 +394,26 @@ public class JavaCompletionContributor extends CompletionContributor {
     return usedWords;
   }
 
-  private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
+  private static void addKeywords(CompletionParameters parameters, final CompletionResultSet result) {
+    Consumer<LookupElement> noMiddleMatches = new Consumer<LookupElement>() {
+      @Override
+      public void consume(LookupElement element) {
+        if (element.getLookupString().startsWith(result.getPrefixMatcher().getPrefix())) {
+          result.addElement(element);
+        }
+      }
+    };
+
     PsiElement position = parameters.getPosition();
     final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
     final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
     final JavaCompletionData completionData = getCompletionData(PsiUtil.getLanguageLevel(position));
     completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
     completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
-    completionData.fillCompletions(parameters, result);
+    completionData.fillCompletions(parameters, noMiddleMatches);
 
     for (final LookupElement item : lookupSet) {
-      result.addElement(item);
+      noMiddleMatches.consume(item);
     }
   }
 
@@ -785,6 +810,22 @@ public class JavaCompletionContributor extends CompletionContributor {
   static void processLabelReference(CompletionResultSet result, PsiLabelReference ref) {
     for (String s : ref.getVariants()) {
       result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.SEMICOLON));
+    }
+  }
+  
+  private static class IndentingDecorator extends LookupElementDecorator<LookupElement> {
+    public IndentingDecorator(LookupElement delegate) {
+      super(delegate);
+    }
+
+    @Override
+    public void handleInsert(InsertionContext context) {
+      super.handleInsert(context);
+      Project project = context.getProject();
+      Document document = context.getDocument();
+      int lineStartOffset = DocumentUtil.getLineStartOffset(context.getStartOffset(), document);
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      CodeStyleManager.getInstance(project).adjustLineIndent(context.getFile(), lineStartOffset);
     }
   }
 }

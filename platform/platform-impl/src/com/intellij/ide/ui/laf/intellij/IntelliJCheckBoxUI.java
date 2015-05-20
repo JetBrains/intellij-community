@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -34,13 +35,19 @@ public class IntelliJCheckBoxUI extends DarculaCheckBoxUI {
   @Override
   protected void paintCheckSign(Graphics2D g, boolean enabled, int w, int h) {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-    g.setStroke(new BasicStroke(1 *2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
+    g.setStroke(new BasicStroke(JBUI.scale(1) *2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
 
-    g.setPaint(getShadowColor(enabled, true));
-    g.drawLine(5, 9, 7, 11);
-    g.drawLine(7, 11, w-3, 5);
+    final int x1 = JBUI.scale(5);
+    final int y1 = JBUI.scale(9);
+    final int x2 = JBUI.scale(7);
+    final int y2 = JBUI.scale(11);
+    if (enabled) {
+      g.setPaint(getShadowColor(true, true));
+      g.drawLine(x1, y1, x2, y2);
+      g.drawLine(x2, y2, w - JBUI.scale(2) - 1, JBUI.scale(5));
+    }
     g.setPaint(getCheckSignColor(enabled, true));
-    g.drawLine(5, 7, 7, 9);
-    g.drawLine(7, 9, w-3, 3);
+    g.drawLine(x1, y1 - 2, x2, y2 - 2);
+    g.drawLine(x2, y2 - 2, w - JBUI.scale(2) - 1, JBUI.scale(5) - 2);
   }
 }

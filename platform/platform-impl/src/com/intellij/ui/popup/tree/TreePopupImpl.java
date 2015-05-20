@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -408,7 +408,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
 
       Rectangle visibleRect = getVisibleRect();
       int rowForLocation = getClosestRowForLocation(0, visibleRect.y);
-      for (int i = rowForLocation; i < rowForLocation + getVisibleRowCount() + 1; i++) {
+      for (int i = rowForLocation; i < rowForLocation + TreeUtil.getVisibleRowCount(this) + 1; i++) {
         final TreePath eachPath = getPathForRow(i);
         if (eachPath == null) continue;
 

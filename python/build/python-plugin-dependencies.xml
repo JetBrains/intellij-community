@@ -1,0 +1,10 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- This version of python-plugin-dependencies.xml is used in release versions of the
+       Python plugin and contains the real list of optional dependencies for the Python plugin.
+  -->
+  <depends optional="true" config-file="python-rest-plugin.xml">org.jetbrains.plugins.rest</depends>
+  <depends optional="true" config-file="intellilang-python-support.xml">org.intellij.intelliLang</depends>
+
+  <xi:include href="/META-INF/ipython-notebook.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+</idea-plugin>

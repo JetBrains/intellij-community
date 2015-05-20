@@ -33,6 +33,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CommonProcessors;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,10 @@ public class JUnitEntryPoint extends EntryPoint {
         final PsiClass aClass = (PsiClass)psiElement;
         if (JUnitUtil.isTestClass(aClass, false, true)) {
           if (!PsiClassUtil.isRunnableClass(aClass, true, true)) {
+            final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class);
+            if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, true, true)) {
+              return true;
+            }
             final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {
               @Override
               protected boolean accept(PsiClass psiClass) {

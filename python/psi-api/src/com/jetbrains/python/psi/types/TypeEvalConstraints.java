@@ -30,14 +30,17 @@ import org.jetbrains.annotations.Nullable;
 class TypeEvalConstraints {
   final boolean myAllowDataFlow;
   final boolean myAllowStubToAST;
+  final boolean myAllowCallContext;
   @Nullable final PsiFile myOrigin;
 
   /**
    * @see com.jetbrains.python.psi.types.TypeEvalContext
    */
-  TypeEvalConstraints(final boolean allowDataFlow, final boolean allowStubToAST, @Nullable final PsiFile origin) {
+  TypeEvalConstraints(final boolean allowDataFlow, final boolean allowStubToAST, final boolean allowCallContext,
+                      @Nullable final PsiFile origin) {
     myAllowDataFlow = allowDataFlow;
     myAllowStubToAST = allowStubToAST;
+    myAllowCallContext = allowCallContext;
     myOrigin = origin;
   }
 
@@ -50,6 +53,7 @@ class TypeEvalConstraints {
 
     if (myAllowDataFlow != that.myAllowDataFlow) return false;
     if (myAllowStubToAST != that.myAllowStubToAST) return false;
+    if (myAllowCallContext != that.myAllowCallContext) return false;
     if (myOrigin != null ? !myOrigin.equals(that.myOrigin) : that.myOrigin != null) return false;
 
     return true;
@@ -60,11 +64,12 @@ class TypeEvalConstraints {
     int result = (myAllowDataFlow ? 1 : 0);
     result = 31 * result + (myAllowStubToAST ? 1 : 0);
     result = 31 * result + (myOrigin != null ? myOrigin.hashCode() : 0);
+    result = 31 * result + (myAllowCallContext ? 1 : 0);
     return result;
   }
 
   @Override
   public String toString() {
-    return String.format("TypeEvalConstraints(%b, %b, %s)", myAllowDataFlow, myAllowStubToAST, myOrigin);
+    return String.format("TypeEvalConstraints(%b, %b, %b, %s)", myAllowDataFlow, myAllowStubToAST, myAllowCallContext, myOrigin);
   }
 }

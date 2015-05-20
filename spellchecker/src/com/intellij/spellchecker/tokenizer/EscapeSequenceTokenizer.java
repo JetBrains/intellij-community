@@ -15,42 +15,35 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class EscapeSequenceTokenizer {
+public abstract class EscapeSequenceTokenizer<T extends PsiElement> extends Tokenizer<T> {
+  private static Key<int[]> ESCAPE_OFFSETS = Key.create("escape.tokenizer.offsets");
+
   public static void processTextWithOffsets(PsiElement element, TokenConsumer consumer, StringBuilder unescapedText,
                                             int[] offsets, int startOffset) {
-    StringBuilder currentToken = new StringBuilder();
-    int currentTokenStart = startOffset;
-    for (int i = 0; i < unescapedText.length(); i++) {
-      if (offsets[i+1]-offsets[i] == 1) {
-        if (currentToken.length() == 0) {
-          currentTokenStart = offsets[i] + startOffset;
-        }
-        currentToken.append(unescapedText.charAt(i));
-      }
-      else {
-        if (currentToken.length() > 0) {
-          processCurrentToken(element, currentToken, currentTokenStart, consumer);
-          currentToken.setLength(0);
-        }
-      }
-    }
-    if (currentToken.length() > 0) {
-      processCurrentToken(element, currentToken, currentTokenStart, consumer);
-    }
+    if (element != null) element.putUserData(ESCAPE_OFFSETS, offsets);
+    final String text = unescapedText.toString();
+    consumer.consumeToken(element, text, false, startOffset, TextRange.allOf(text), PlainTextSplitter.getInstance());
+    if (element != null) element.putUserData(ESCAPE_OFFSETS, null);
   }
 
-  private static void processCurrentToken(PsiElement element,
-                                          StringBuilder currentToken,
-                                          int currentTokenStart, TokenConsumer consumer) {
-    final String token = currentToken.toString();
-    // +1 for the starting quote of the string literal
-    consumer.consumeToken(element, token, false, currentTokenStart, TextRange.allOf(token), PlainTextSplitter.getInstance());
+  @NotNull
+  public TextRange getHighlightingRange(PsiElement element, int offset, TextRange range) {
+    final int[] offsets = element.getUserData(ESCAPE_OFFSETS);
+    if (offsets != null) {
+      int start = offsets[range.getStartOffset()];
+      int end = offsets[range.getEndOffset()];
+
+      return new TextRange(offset + start, offset + end);
+    }
+    return super.getHighlightingRange(element, offset, range);
   }
 }

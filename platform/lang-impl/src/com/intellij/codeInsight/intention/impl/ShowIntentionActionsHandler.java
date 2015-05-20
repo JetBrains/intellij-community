@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
@@ -38,13 +39,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
 
     //intentions check isWritable before modification: if (!file.isWritable()) return;
-    if (file instanceof PsiCodeFragment) return;
 
     TemplateState state = TemplateManagerImpl.getTemplateState(editor);
     if (state != null && !state.isFinished()) {
@@ -107,6 +107,16 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static boolean isAvailableHere(Editor editor, PsiFile psiFile, PsiElement psiElement, boolean inProject, IntentionAction action) {
     try {
       Project project = psiFile.getProject();
+      if (action instanceof SuppressIntentionActionFromFix) {
+        final ThreeState shouldBeAppliedToInjectionHost = ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost();
+        if (editor instanceof EditorWindow && shouldBeAppliedToInjectionHost == ThreeState.YES) {
+          return false;
+        }
+        if (!(editor instanceof EditorWindow) && shouldBeAppliedToInjectionHost == ThreeState.NO) {
+          return false;
+        }
+      }
+      
       if (action instanceof PsiElementBaseIntentionAction) {
         if (!inProject || psiElement == null || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
       }

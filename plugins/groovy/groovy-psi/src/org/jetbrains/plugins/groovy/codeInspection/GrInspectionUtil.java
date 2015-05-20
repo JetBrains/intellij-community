@@ -22,7 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -62,7 +62,7 @@ public class GrInspectionUtil {
 
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(infotype).range(refNameElement);
       builder.descriptionAndTooltip(message);
-      return builder.needsUpdateOnTyping(false).textAttributes(DefaultHighlighter.UNRESOLVED_ACCESS).create();
+      return builder.needsUpdateOnTyping(false).textAttributes(GroovySyntaxHighlighter.UNRESOLVED_ACCESS).create();
     }
 
     HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());

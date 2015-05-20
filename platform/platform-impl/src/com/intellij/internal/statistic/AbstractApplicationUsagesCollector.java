@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,76 +18,81 @@ package com.intellij.internal.statistic;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistence;
 import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.persistence.CollectedUsages;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.Collections;
 import java.util.Set;
 
 public abstract class AbstractApplicationUsagesCollector extends UsagesCollector {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.internal.statistic.AbstractApplicationUsagesCollector");
+  private static final Logger LOG = Logger.getInstance(AbstractApplicationUsagesCollector.class);
 
-    public void persistProjectUsages(@NotNull Project project) {
-      try {
-        final Set<UsageDescriptor> projectUsages = getProjectUsages(project);
-        persistProjectUsages(project, projectUsages);
-      }
-      catch (CollectUsagesException e) {
-        LOG.info(e);
-      }
+  public void persistProjectUsages(@NotNull Project project) {
+    try {
+      persistProjectUsages(project, new CollectedUsages(getProjectUsages(project), System.currentTimeMillis()));
     }
-
-    public void persistProjectUsages(@NotNull Project project, @NotNull Set<UsageDescriptor> usages) {
-        persistProjectUsages(project, usages, ApplicationStatisticsPersistenceComponent.getInstance());
+    catch (CollectUsagesException e) {
+      LOG.info(e);
     }
+  }
 
-    public void persistProjectUsages(@NotNull Project project,
-                                     @NotNull Set<UsageDescriptor> usages,
-                                     @NotNull ApplicationStatisticsPersistence persistence) {
-        persistence.persistUsages(getGroupId(), project, usages);
-    }
+  public void persistProjectUsages(@NotNull Project project, @NotNull CollectedUsages usages) {
+    persistProjectUsages(project, usages, ApplicationStatisticsPersistenceComponent.getInstance());
+  }
 
-    @NotNull
-    public Set<UsageDescriptor> getApplicationUsages() {
-        return getApplicationUsages(ApplicationStatisticsPersistenceComponent.getInstance());
-    }
+  public void persistProjectUsages(@NotNull Project project,
+                                   @NotNull CollectedUsages usages,
+                                   @NotNull ApplicationStatisticsPersistence persistence) {
+    persistence.persistUsages(getGroupId(), project, usages);
+  }
 
-    @NotNull
-    public Set<UsageDescriptor> getApplicationUsages(@NotNull final ApplicationStatisticsPersistence persistence) {
-        final Map<String, Integer> result = new HashMap<String, Integer>();
+  @NotNull
+  public Set<UsageDescriptor> getApplicationUsages() {
+    return getApplicationUsages(ApplicationStatisticsPersistenceComponent.getInstance());
+  }
 
-        for (Set<UsageDescriptor> usageDescriptors : persistence.getApplicationData(getGroupId()).values()) {
-            for (UsageDescriptor usageDescriptor : usageDescriptors) {
-                final String key = usageDescriptor.getKey();
-                final Integer count = result.get(key);
-                result.put(key, count == null ? 1 : count.intValue() + 1);
-            }
+  @NotNull
+  public Set<UsageDescriptor> getApplicationUsages(@NotNull ApplicationStatisticsPersistence persistence) {
+    ObjectIntHashMap<String> result = new ObjectIntHashMap<String>();
+    long lastTimeSent = UsageStatisticsPersistenceComponent.getInstance().getLastTimeSent();
+    for (CollectedUsages usageDescriptors : persistence.getApplicationData(getGroupId()).values()) {
+      if (!usageDescriptors.usages.isEmpty() && usageDescriptors.collectionTime > lastTimeSent) {
+        result.ensureCapacity(usageDescriptors.usages.size());
+        for (UsageDescriptor usageDescriptor : usageDescriptors.usages) {
+          String key = usageDescriptor.getKey();
+          result.put(key, result.get(key, 0) + usageDescriptor.getValue());
         }
-
-        return ContainerUtil.map2Set(result.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
-            @Override
-            public UsageDescriptor fun(Map.Entry<String, Integer> entry) {
-                return new UsageDescriptor(entry.getKey(), entry.getValue());
-            }
-        });
+      }
     }
 
-    @Override
-    @NotNull
-    public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
-        if (project != null) {
-          final Set<UsageDescriptor> projectUsages = getProjectUsages(project);
-          persistProjectUsages(project, projectUsages);
+    if (result.isEmpty()){
+      return Collections.emptySet();
+    }
+    else {
+      final THashSet<UsageDescriptor> descriptors = new THashSet<UsageDescriptor>(result.size());
+      result.forEachEntry(new TObjectIntProcedure<String>() {
+        @Override
+        public boolean execute(String key, int value) {
+          descriptors.add(new UsageDescriptor(key, value));
+          return true;
         }
-
-        return getApplicationUsages();
+      });
+      return descriptors;
     }
+  }
 
-    @NotNull
-    public abstract Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException;
+  @Override
+  @NotNull
+  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
+    return getApplicationUsages();
+  }
+
+  @NotNull
+  public abstract Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException;
 }

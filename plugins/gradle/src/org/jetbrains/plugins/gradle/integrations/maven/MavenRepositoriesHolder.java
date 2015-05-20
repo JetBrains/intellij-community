@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 
 import java.util.Set;
@@ -44,9 +45,10 @@ public class MavenRepositoriesHolder {
     return myRemoteRepositories;
   }
 
-  public boolean contains(String repositoryId) {
+  public boolean contains(String url) {
+    final String pathOrUrl = MavenIndex.normalizePathOrUrl(url);
     for (MavenRemoteRepository repository : myRemoteRepositories) {
-      if (repository.getId().equals(repositoryId)) return true;
+      if (MavenIndex.normalizePathOrUrl(repository.getUrl()).equals(pathOrUrl)) return true;
     }
     return false;
   }

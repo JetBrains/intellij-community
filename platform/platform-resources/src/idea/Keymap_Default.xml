@@ -87,6 +87,9 @@
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
   </action>
+  <action id="ShowReformatFileDialog">
+    <keyboard-shortcut first-keystroke="control shift alt L"/>
+  </action>
   <action id="Generate">
     <keyboard-shortcut first-keystroke="alt INSERT"/>
   </action>
@@ -120,6 +123,9 @@
   </action>
   <action id="EditorAddOrRemoveCaret">
     <mouse-shortcut keystroke="alt shift button1"/>
+  </action>
+  <action id="EditorAddRectangularSelectionOnMouseDrag">
+    <mouse-shortcut keystroke="ctrl alt shift button1"/>
   </action>
   <action id="EditorCreateRectangularSelection">
     <mouse-shortcut keystroke="alt shift button2"/>
@@ -225,6 +231,9 @@
     <keyboard-shortcut first-keystroke="control shift F4"/>
   </action>
   <action id="GotoClass">
+    <keyboard-shortcut first-keystroke="control N"/>
+  </action>
+  <action id="GotoChangedFile">
     <keyboard-shortcut first-keystroke="control N"/>
   </action>
   <action id="GotoSymbol">
@@ -455,8 +464,11 @@
   <action id="CompareTwoFiles">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
-  <action id="CompareDirs">
+  <action id="Diff.ShowDiff">
     <keyboard-shortcut first-keystroke="control D"/>
+  </action>
+  <action id="Diff.ShowSettingsPopup">
+    <keyboard-shortcut first-keystroke="control shift D"/>
   </action>
   <action id="SendEOF">
     <keyboard-shortcut first-keystroke="control D"/>
@@ -537,6 +549,12 @@
   </action>
   <action id="NextDiff">
     <keyboard-shortcut first-keystroke="F7"/>
+  </action>
+  <action id="Diff.FocusOppositePane">
+    <keyboard-shortcut first-keystroke="control TAB"/>
+  </action>
+  <action id="Diff.FocusOppositePaneAndScroll">
+    <keyboard-shortcut first-keystroke="control shift TAB"/>
   </action>
   <action id="Move">
     <keyboard-shortcut first-keystroke="F6"/>
@@ -836,6 +854,7 @@
   </action>
   <action id="ActivateChangesToolWindow">
     <keyboard-shortcut first-keystroke="alt 9"/>
+    <keyboard-shortcut first-keystroke="alt shift 9"/>
   </action>
   <action id="NewElement">
      <keyboard-shortcut first-keystroke="alt INSERT"/>
@@ -992,32 +1011,18 @@
   <action id="VcsHistory.ShowAllAffected">
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
+  <action id="ShelveChanges.UnshelveWithDialog">
+    <keyboard-shortcut first-keystroke="ctrl shift U" />
+  </action>
 
-  <action id="DatabaseView.PropertiesAction" />
-
-  <action id="Jdbc.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
-  <action id="Jpa.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
-
-  <action id="Console.TableResult.PreviousPage"><keyboard-shortcut first-keystroke="control alt UP"/></action>
-  <action id="Console.TableResult.NextPage"><keyboard-shortcut first-keystroke="control alt DOWN"/></action>
-  <action id="Console.TableResult.Reload"><keyboard-shortcut first-keystroke="control R"/></action>
-  <action id="Console.TableResult.EditValue"><keyboard-shortcut first-keystroke="F2"/><keyboard-shortcut first-keystroke="alt ENTER"/></action>
+  <action id="Console.Open"><keyboard-shortcut first-keystroke="control shift F10"/></action>
+  <action id="Console.Execute"><keyboard-shortcut first-keystroke="ENTER"/></action>
+  <action id="Console.Execute.Multiline"><keyboard-shortcut first-keystroke="control ENTER"/></action>
 
   <action id="Console.History.Next" />
   <action id="Console.History.Previous" />
   <action id="Console.History.Browse"><keyboard-shortcut first-keystroke="control alt E"/></action>
 
-  <action id="Console.Jdbc.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
-  <action id="Console.Jdbc.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
-
-  <action id="Console.Jpa.Execute"><keyboard-shortcut first-keystroke="control ENTER"/></action>
-  <action id="Console.Jpa.Terminate"><keyboard-shortcut first-keystroke="control alt shift DELETE"/></action>
-  <action id="Console.Jpa.GenerateSql"><keyboard-shortcut first-keystroke="control shift ENTER"/></action>
-  <action id="Console.Jpa.GenerateDDL"><keyboard-shortcut first-keystroke="control alt shift ENTER"/></action>
-
-  <action id="Jdbc.RunSqlScript"><keyboard-shortcut first-keystroke="control shift F10"/></action>
-
-  <action id="Console.Execute"><keyboard-shortcut first-keystroke="ENTER"/></action>
   <action id ="Refactorings.QuickListPopupAction">
     <keyboard-shortcut first-keystroke="control alt shift T"/>
   </action>

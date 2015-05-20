@@ -29,13 +29,15 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,8 +52,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.images.editor.ImageFileEditor;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,14 +64,14 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-/**
- * @author Kirill Likhodedov
- */
 public class DvcsUtil {
+
+  private static final Logger LOG = Logger.getInstance(DvcsUtil.class);
 
   private static final Logger LOGGER = Logger.getInstance(DvcsUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
   private static final int SHORT_HASH_LENGTH = 8;
+  private static final int LONG_HASH_LENGTH = 40;
 
   public static void installStatusBarWidget(@NotNull Project project, @NotNull StatusBarWidget widget) {
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
@@ -113,16 +117,6 @@ public class DvcsUtil {
     }, ", ");
   }
 
-  @NotNull
-  public static String joinRootsPaths(@NotNull Collection<VirtualFile> roots) {
-    return StringUtil.join(roots, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile virtualFile) {
-        return virtualFile.getPresentableUrl();
-      }
-    }, ", ");
-  }
-
   public static boolean anyRepositoryIsFresh(Collection<? extends Repository> repositories) {
     for (Repository repository : repositories) {
       if (repository.isFresh()) {
@@ -130,23 +124,6 @@ public class DvcsUtil {
       }
     }
     return false;
-  }
-
-  /**
-   * Report a warning that the given root has no associated Repositories.
-   */
-  public static void noVcsRepositoryForRoot(@NotNull Logger log,
-                                            @NotNull VirtualFile root,
-                                            @NotNull Project project,
-                                            @NotNull RepositoryManager repositoryManager,
-                                            @Nullable AbstractVcs vcs) {
-    if (vcs == null) {
-      return;
-    }
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    List<VirtualFile> roots = Arrays.asList(vcsManager.getRootsUnderVcs(vcs));
-    log.warn(String.format("Repository not found for root: %s. All roots: %s, all repositories: %s", root, roots,
-                           repositoryManager.getRepositories()));
   }
 
   @Nullable
@@ -187,13 +164,13 @@ public class DvcsUtil {
 
   @NotNull
   public static String getShortHash(@NotNull String hash) {
-    if (hash.length() == 0) return "";
-    if (hash.length() == 40) return hash.substring(0, SHORT_HASH_LENGTH);
-    if (hash.length() > 40)  // revision string encoded with date too
-    {
-      return hash.substring(hash.indexOf("[") + 1, SHORT_HASH_LENGTH);
+    if (hash.length() < SHORT_HASH_LENGTH) {
+      LOG.debug("Unexpectedly short hash: [" + hash + "]");
     }
-    return hash;
+    if (hash.length() > LONG_HASH_LENGTH) {
+      LOG.debug("Unexpectedly long hash: [" + hash + "]");
+    }
+    return hash.substring(0, Math.min(SHORT_HASH_LENGTH, hash.length()));
   }
 
   @NotNull
@@ -219,9 +196,9 @@ public class DvcsUtil {
     }
   };
 
-  public static void assertFileExists(File file, String message) {
+  public static void assertFileExists(File file, String message) throws IllegalStateException {
     if (!file.exists()) {
-      throw new RepoStateException(message);
+      throw new IllegalStateException(message);
     }
   }
 
@@ -234,13 +211,25 @@ public class DvcsUtil {
    * @return file content.
    */
   @NotNull
-  public static String tryLoadFile(@NotNull final File file) {
+  public static String tryLoadFile(@NotNull final File file) throws RepoStateException {
     return tryOrThrow(new Callable<String>() {
       @Override
       public String call() throws Exception {
-        return StringUtil.convertLineSeparators(FileUtil.loadFile(file).trim());
+        return StringUtil.convertLineSeparators(FileUtil.loadFile(file)).trim();
       }
     }, file);
+  }
+
+  @Nullable
+  @Contract("_ , !null -> !null")
+  public static String tryLoadFileOrReturn(@NotNull final File file, @Nullable String defaultValue) {
+    try {
+      return tryLoadFile(file);
+    }
+    catch (RepoStateException e) {
+      LOG.error(e);
+      return defaultValue;
+    }
   }
 
   /**
@@ -249,14 +238,14 @@ public class DvcsUtil {
    * If an other exception happens, rethrows it as a {@link RepoStateException}.
    * In the case of success returns the result of the task execution.
    */
-  public static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) {
+  private static <T> T tryOrThrow(Callable<T> actionToTry, File fileToLoad) throws RepoStateException {
     IOException cause = null;
     for (int i = 0; i < IO_RETRIES; i++) {
       try {
         return actionToTry.call();
       }
       catch (IOException e) {
-        LOGGER.info("IOException while loading " + fileToLoad, e);
+        LOG.info("IOException while loading " + fileToLoad, e);
         cause = e;
       }
       catch (Exception e) {    // this shouldn't happen since only IOExceptions are thrown in clients.
@@ -283,7 +272,7 @@ public class DvcsUtil {
   }
 
   public static void addMappingIfSubRoot(@NotNull Project project, @NotNull String newRepositoryPath, @NotNull String vcsName) {
-    if (FileUtil.isAncestor(project.getBasePath(), newRepositoryPath, true)) {
+    if (project.getBasePath() != null && FileUtil.isAncestor(project.getBasePath(), newRepositoryPath, true)) {
       ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
       manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), newRepositoryPath, vcsName));
     }
@@ -305,14 +294,14 @@ public class DvcsUtil {
   }
 
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<T> repositories) {
-    List<T> repos = ContainerUtil.filter(repositories, new Condition<T>() {
+    List<T> validRepositories = ContainerUtil.filter(repositories, new Condition<T>() {
       @Override
       public boolean value(T t) {
         return t.getRoot().isValid();
       }
     });
-    Collections.sort(repos, REPOSITORY_COMPARATOR);
-    return repos;
+    Collections.sort(validRepositories, REPOSITORY_COMPARATOR);
+    return validRepositories;
   }
 
   @Nullable
@@ -359,17 +348,33 @@ public class DvcsUtil {
   @Nullable
   public static VirtualFile getVcsRoot(@NotNull Project project, @Nullable VirtualFile file) {
     VirtualFile root = null;
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (file != null) {
-      if (fileIndex.isInLibrarySource(file) || fileIndex.isInLibraryClasses(file)) {
-        LOGGER.debug("File is in library sources " + file);
+      root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
+      if (root == null) {
+        LOGGER.debug("Cannot get root by file. Trying with get by library: " + file);
         root = getVcsRootForLibraryFile(project, file);
-      }
-      else {
-        LOGGER.debug("File is not in library sources " + file);
-        root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(file);
       }
     }
     return root;
+  }
+
+  @NotNull
+  public static <R extends Repository> Map<R, List<VcsFullCommitDetails>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
+                                                                                              @NotNull List<? extends VcsFullCommitDetails> commits) {
+    Map<R, List<VcsFullCommitDetails>> groupedCommits = ContainerUtil.newHashMap();
+    for (VcsFullCommitDetails commit : commits) {
+      R repository = repoManager.getRepositoryForRoot(commit.getRoot());
+      if (repository == null) {
+        LOGGER.info("No repository found for commit " + commit);
+        continue;
+      }
+      List<VcsFullCommitDetails> commitsInRoot = groupedCommits.get(repository);
+      if (commitsInRoot == null) {
+        commitsInRoot = ContainerUtil.newArrayList();
+        groupedCommits.put(repository, commitsInRoot);
+      }
+      commitsInRoot.add(commit);
+    }
+    return groupedCommits;
   }
 }

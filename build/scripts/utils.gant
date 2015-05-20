@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,26 @@
  * limitations under the License.
  */
 
+
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 
 includeTool << JpsGantTool
 
-binding.setVariable("p", {String key ->
-  return getProperty(key) as String
+binding.setVariable("p", {String key, String defaultValue = null ->
+  try {
+    return getProperty(key) as String
+  }
+  catch (MissingPropertyException e) {
+    if (defaultValue != null) {
+      return defaultValue
+    }
+    throw e;
+  }
 })
 
 binding.setVariable("guessJdk", {
@@ -53,13 +64,13 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=150m")
-binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=225m")
-binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
-                                        "-Djsse.enableSNIExtension=false " +
-                                        "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50")
+binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=240m")
+binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
+binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
+                                        "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                        "-XX:+HeapDumpOnOutOfMemoryError")
 
-binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
+binding.setVariable("vmOptions", { "$common_vmoptions".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 
@@ -125,8 +136,26 @@ binding.setVariable("loadProject", {
       classpath "$jdkHome/lib/tools.jar"
     }
   }
-  projectBuilder.dataStorageRoot = new File("$home/.jps-build-data")
+  projectBuilder.buildIncrementally = Boolean.parseBoolean(p("jps.build.incrementally", "false"))
+  def dataDirName = projectBuilder.buildIncrementally ? ".jps-incremental-build" : ".jps-build-data"
+  projectBuilder.dataStorageRoot = new File("$home/$dataDirName")
+  projectBuilder.setupAdditionalLogging(new File("${p("teamcity.build.tempDir", p("java.io.tmpdir"))}/system/build-log/build.log"),
+                                        p("jps.build.debug.logging.categories", ""))
   loadProjectFromPath(home)
+
+  def compilerOptions = JpsJavaExtensionService.instance.getOrCreateCompilerConfiguration(project).currentCompilerOptions
+  compilerOptions.GENERATE_NO_WARNINGS = true
+  compilerOptions.DEPRECATION = false
+  compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
+})
+
+binding.setVariable("prepareOutputFolder", {
+  def targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
+  projectBuilder.targetFolder = targetFolder
+  if (projectBuilder.buildIncrementally && Boolean.parseBoolean(p("jps.build.clear.incremental.caches", "false"))) {
+    FileUtil.delete(new File(targetFolder))
+    FileUtil.delete(projectBuilder.dataStorageRoot)
+  }
 })
 
 boolean hasSourceRoots(JpsModule module) {
@@ -180,12 +209,14 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
   projectBuilder.info("##teamcity[publishArtifacts '$relativePath']")
 })
 
-def suspendUntilDebuggerConnect = System.getProperty("debug.suspend") ?: "n"
-def debugPort = System.getProperty("debug.port") ?: 5555
-if (suspendUntilDebuggerConnect == 'y') {
-  println """\
-------------->----------- This process is suspended until remote debugger connects to the port $debugPort ----<----
--------------------------------------------^------^------^------^------^------^------^-----------------------
+def debugPort = System.getProperty("debug.port")
+def debugSuspend = System.getProperty("debug.suspend") ?: "n"
+if (debugSuspend == 'y') {
+  println """
+
+------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
+---------------------------------------^------^------^------^------^------^------^----------------------------------------
+
 """
 }
 
@@ -224,17 +255,21 @@ binding.setVariable("wireBuildDate", { String buildNumber, String appInfoFile ->
   patchFiles([appInfoFile], ["BUILD_NUMBER": buildNumber, "BUILD_DATE": DSTAMP])
 })
 
-binding.setVariable("commonJvmArgs", {
+binding.setVariable("commonJvmArgsForTests", {
+  def jdwp = "-Xrunjdwp:transport=dt_socket,server=y,suspend=$debugSuspend"
+  if (debugPort != null) jdwp += ",address=$debugPort"
   return [
-   "-ea",
-   "-server",
-   "-Didea.home.path=$home",
-   "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
-   "-XX:+HeapDumpOnOutOfMemoryError",
-   "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
-   "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
-   "-Xdebug",
-   "-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendUntilDebuggerConnect,address=$debugPort"]
+    "-ea",
+    "-Dio.netty.leakDetectionLevel=PARANOID",
+    "-server",
+    "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
+    "-XX:+HeapDumpOnOutOfMemoryError",
+    "-Didea.home.path=$home",
+    "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
+    "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
+    "-Xdebug",
+    jdwp
+  ]
 })
 
 binding.setVariable("classPathLibs", [
@@ -249,7 +284,9 @@ binding.setVariable("classPathLibs", [
 
 binding.setVariable("platformApiModules", [
   "analysis-api",
+  "built-in-server-api",
   "core-api",
+  "diff-api",
   "dvcs-api",
   "editor-ui-api",
   "external-system-api",
@@ -257,56 +294,57 @@ binding.setVariable("platformApiModules", [
   "jps-model-api",
   "lang-api",
   "lvcs-api",
-  "projectModel-api",
   "platform-api",
+  "projectModel-api",
+  "remote-servers-agent-rt",
+  "remote-servers-api",
   "structure-view-api",
   "usageView",
-  "vcs-api",
   "vcs-api-core",
+  "vcs-api",
   "vcs-log-api",
   "vcs-log-graph-api",
   "xdebugger-api",
-  "remote-servers-api",
-  "remote-servers-agent-rt",
   "xml-analysis-api",
   "xml-openapi",
   "xml-psi-api",
-  "xml-structure-view-api",
+  "xml-structure-view-api"
 ])
-
 
 binding.setVariable("platformImplementationModules", [
   "analysis-impl",
+  "built-in-server",
   "core-impl",
+  "diff-impl",
   "dvcs-impl",
   "editor-ui-ex",
   "images",
   "indexing-impl",
   "jps-model-impl",
   "jps-model-serialization",
+  "json",
   "lang-impl",
   "lvcs-impl",
-  "projectModel-impl",
   "platform-impl",
+  "projectModel-impl",
+  "protocol-reader-runtime",
+  "RegExpSupport",
+  "relaxng",
+  "remote-servers-impl",
+  "script-debugger-backend",
+  "script-debugger-ui",
+  "smRunner",
+  "spellchecker",
   "structure-view-impl",
+  "testRunner",
   "vcs-impl",
   "vcs-log-graph",
   "vcs-log-impl",
-  "testRunner",
-  "smRunner",
-  "relaxng",
-  "RegExpSupport",
-  "spellchecker",
   "xdebugger-impl",
-  "remote-servers-impl",
-  "xml",
   "xml-analysis-impl",
   "xml-psi-impl",
   "xml-structure-view-impl",
-  "json",
-  "protocol-reader-runtime",
-  "script-debugger-backend",
-  "script-debugger-ui"
+  "xml"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
@@ -341,10 +379,11 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String minor = p("component.version.minor")
   String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
+  String EAP = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "-EAP" : ""
 
   Map properties = readIdeaProperties(args)
 
-  def coreKeys = ["idea.platform.prefix", "idea.paths.selector"]
+  def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
 
   String coreProperties = submapToXml(properties, coreKeys);
 
@@ -356,11 +395,11 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   new File("$path/bin/idea.properties").text = effectiveProperties.toString()
-  String ideaVmOptions = "$mem64 -XX:+UseCompressedOops".split(" ").join("\n")
+  String ideaVmOptions = "$mem64 -XX:+UseCompressedOops"
   if (isEap() && !args.mac_no_yjp) {
     ideaVmOptions += " ${yjpOptions(args.system_selector)}"
   }
-  new File("$path/bin/idea.vmoptions").text = ideaVmOptions
+  new File("$path/bin/${executable}.vmoptions").text = ideaVmOptions.split(" ").join("\n")
 
   String classPath = classPathLibs.collect {"\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -401,6 +440,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@executable@@", value: executable)
     replacefilter(token: "@@icns@@", value: icns)
     replacefilter(token: "@@bundle_name@@", value: fullName)
+    replacefilter(token: "@@product_state@@", value: EAP)
     replacefilter(token: "@@bundle_identifier@@", value: args.bundleIdentifier)
     replacefilter(token: "@@year@@", value: "$todayYear")
     replacefilter(token: "@@version@@", value: version)
@@ -615,6 +655,23 @@ binding.setVariable("zipSources", { String home, String targetDir ->
   notifyArtifactBuilt(sources)
 })
 
+binding.setVariable("zipSourcesOfModules", { String home, String targetFilePath, Collection<String> modules ->
+  projectBuilder.stage("zip sources of ${modules.size()} modules to $targetFilePath")
+
+  ant.mkdir(dir: new File(targetFilePath).getParent())
+  ant.delete(file: targetFilePath)
+  ant.zip(destfile: targetFilePath) {
+    modules.each {
+      JpsModule module = findModule(it)
+      module.getSourceRoots(JavaSourceRootType.SOURCE).flatten().collect {it.file}.each { File srcRoot ->
+        zipfileset(prefix: module.name, dir: srcRoot.absolutePath)
+      }
+    }
+  }
+
+  notifyArtifactBuilt(targetFilePath)
+})
+
 /**
  * E.g.
  *
@@ -643,9 +700,10 @@ private Map readIdeaProperties(Map args) {
   ideaPropertiesFile.close();
 
   def defaultProperties = ["CVS_PASSFILE": "~/.cvspass",
-                           "JVMVersion": "1.6*",
+                           "JVMVersion": "1.6+",
                            "com.apple.mrj.application.live-resize": "false",
                            "idea.paths.selector": args.system_selector,
+                           "idea.executable": args.executable,
                            "java.endorsed.dirs": "",
                            "idea.smooth.progress": "false",
                            "apple.laf.useScreenMenuBar": "true",
@@ -697,17 +755,18 @@ private List<File> getChildren(File file) {
   return file.listFiles().sort { File f -> f.name.toLowerCase() }
 }
 
-binding.setVariable("getCustomJDK", { File customJdkDir ->
-  getChildren(customJdkDir).each {
-    if (it.getName().endsWith(".tar.gz")) {
-      def customJdkFileName = it.getAbsolutePath().substring(0, it.getAbsolutePath().length() - 3)
-      if (new File(customJdkFileName).exists()){ ant.delete(file: customJdkFileName) }
-      if (new File("${home}/build/jdk/custom_jdk_${buildNumber}.tar").exists()){
-        ant.delete(file: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
+binding.setVariable("getBundledJDK", { File jdkDir, String prefix, String ext, String bundledJDKFileName ->
+  getChildren(jdkDir).each {
+    if (it.getName().startsWith(prefix) && it.getName().endsWith(ext)) {
+      if (new File(bundledJDKFileName).exists()) { ant.delete(file: bundledJDKFileName) }
+      def JdkFileName = it.getAbsolutePath()
+      if (ext == ".tar.gz") {
+        JdkFileName = JdkFileName.substring(0, JdkFileName.length() - 3)
+        if (new File(JdkFileName).exists()) { ant.delete(file: JdkFileName) }
+        ant.gunzip(src: it.getAbsolutePath())
       }
-      ant.gunzip(src: it.getAbsolutePath())
-      projectBuilder.info("customJdkFileName: " + customJdkFileName)
-      ant.copy(file: customJdkFileName, tofile: "${home}/build/jdk/custom_jdk_${buildNumber}.tar")
+      projectBuilder.info("JdkFileName: " + JdkFileName)
+      ant.copy(file: JdkFileName, tofile: bundledJDKFileName)
     }
   }
 })
@@ -726,6 +785,79 @@ binding.setVariable("buildWinZip", { String zipPath, List paths ->
   notifyArtifactBuilt(zipPath)
 })
 
+binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, List commonPaths, String distWin, String distUnix, String distMac ->
+  projectBuilder.stage("Building cross-platform zip")
+
+  def zipDir = "$sandbox/cross-platform-zip"
+  def ideaPropertiesFile = commonPaths.collect { new File(it, "bin/idea.properties") }.find { it.exists() }
+  ["win", "linux"].each {
+    ant.mkdir(dir: "$zipDir/bin/$it")
+    ant.copy(file: ideaPropertiesFile.absolutePath, todir: "$zipDir/bin/$it")
+  }
+  ant.fixcrlf(file: "$zipDir/bin/win/idea.properties", eol: "dos")
+  ant.copy(todir: "$zipDir/bin/linux") {
+    fileset(dir: "$distUnix/bin") {
+      include(name: "idea*.vmoptions")
+    }
+  }
+  ant.copy(todir: "$zipDir/bin/mac") {
+    fileset(dir: "$distMac/bin") {
+      include(name: "idea*.vmoptions")
+      include(name: "idea.properties")
+    }
+  }
+
+  ant.zip(zipfile: zipPath, duplicate: "fail") {
+    commonPaths.each {
+      fileset(dir: it) {
+        exclude(name: "bin/idea.properties")
+      }
+    }
+    fileset(dir: zipDir)
+
+    fileset(dir: distWin) {
+      exclude(name: "bin/fsnotifier*.exe")
+      exclude(name: "bin/idea*.exe.vmoptions")
+      exclude(name: "bin/idea*.exe")
+    }
+    zipfileset(dir: "$distWin/bin", prefix: "bin/win") {
+      include(name: "fsnotifier*.exe")
+      include(name: "idea*.exe.vmoptions")
+    }
+
+    fileset(dir: distUnix) {
+      exclude(name: "bin/fsnotifier*")
+      exclude(name: "bin/idea*.vmoptions")
+      exclude(name: "bin/*.sh")
+      exclude(name: "help/**")
+    }
+    zipfileset(dir: "$distUnix/bin", filemode: "775", prefix: "bin") {
+      include(name: "*.sh")
+    }
+    zipfileset(dir: "$distUnix/bin", prefix: "bin/linux", filemode: "775") {
+      include(name: "fsnotifier*")
+    }
+
+    fileset(dir: distMac) {
+      exclude(name: "bin/fsnotifier*")
+      exclude(name: "bin/restarter*")
+      exclude(name: "bin/*.sh")
+      exclude(name: "bin/*.py")
+      exclude(name: "bin/idea.properties")
+      exclude(name: "bin/idea*.vmoptions")
+    }
+    zipfileset(dir: "$distMac/bin", filemode: "775", prefix: "bin") {
+      include(name: "restarter*")
+      include(name: "*.py")
+    }
+    zipfileset(dir: "$distMac/bin", prefix: "bin/mac", filemode: "775") {
+      include(name: "fsnotifier*")
+    }
+  }
+
+  notifyArtifactBuilt(zipPath)
+})
+
 binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
   projectBuilder.stage(".mac.zip")
 
@@ -738,6 +870,8 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         exclude(name: "bin/fsnotifier")
         exclude(name: "bin/restarter")
         exclude(name: "MacOS/*")
+        exclude(name: "build.txt")
+        exclude(name: "NOTICE.txt")
         extraBins.each {
           exclude(name: it)
         }
@@ -755,6 +889,13 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
         extraBins.each {
           include(name: it)
         }
+      }
+    }
+
+    allPaths.each {
+      zipfileset(dir: it, prefix: "$zipRoot/Resources") {
+        include(name: "build.txt")
+        include(name: "NOTICE.txt")
       }
     }
 
@@ -813,11 +954,12 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   if (pathsSelector != null) {
     def paths = getProperty("paths")
     def launcherPropertiesTemp = "${paths.sandbox}/launcher.properties"
-    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector])
+    copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector,
+                                                                  "IDE-NAME": p("component.names.product").toUpperCase()])
     launcherProperties = launcherPropertiesTemp
   }
 
-  ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
+  ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
     sysproperty(key: "java.awt.headless", value: "true")
     arg(value: inputPath)
     arg(value: appInfo)
@@ -893,13 +1035,18 @@ binding.setVariable("buildSearchableOptions", { String target, List licenses, Cl
   ant.replace(file: classpathFile, token: File.pathSeparator, value: "\n")
 
   ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
-    jvmarg(line: "-Xbootclasspath/a:${projectBuilder.moduleOutput(findModule("boot"))} -ea -Xmx500m -XX:MaxPermSize=200m")
-    jvmarg(line: "-Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig}")
+    jvmarg(line: "-ea -Xmx500m -XX:MaxPermSize=200m")
+    jvmarg(value: "-Xbootclasspath/a:${projectBuilder.moduleOutput(findModule("boot"))}")
+    jvmarg(value: "-Didea.home.path=${home}")
+    jvmarg(value: "-Didea.system.path=${paths.ideaSystem}")
+    jvmarg(value: "-Didea.config.path=${paths.ideaConfig}")
     if (jvmArgs != null) {
       jvmarg(line: jvmArgs)
     }
 
-    arg(line: "${classpathFile} com.intellij.idea.Main traverseUI ${target}/searchableOptions.xml")
+    arg(value: "${classpathFile}")
+    arg(line: "com.intellij.idea.Main traverseUI")
+    arg(value: "${target}/searchableOptions.xml")
 
     classpath() {
       pathelement(location: "${projectBuilder.moduleOutput(findModule("java-runtime"))}")

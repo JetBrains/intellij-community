@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,34 @@ package com.intellij.execution.junit;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.junit2.segments.Extractor;
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Reader;
-import java.nio.charset.Charset;
 
 /**
  * @author dyoma
  */
-public class JUnitProcessHandler extends OSProcessHandler {
+public class JUnitProcessHandler extends KillableColoredProcessHandler {
   private final Extractor myOut;
   private final Extractor myErr;
-  private final Charset myCharset;
 
-  public JUnitProcessHandler(@NotNull Process process, final String commandLine, @NotNull Charset charset) {
-    super(process, commandLine);
-    myOut = new Extractor(getProcess().getInputStream(), charset);
-    myErr = new Extractor(getProcess().getErrorStream(), charset);
-    myCharset = charset;
+  private JUnitProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    super(commandLine);
+
+    myOut = new Extractor(getProcess().getInputStream(), commandLine.getCharset());
+    myErr = new Extractor(getProcess().getErrorStream(), commandLine.getCharset());
+    addProcessListener(new ProcessAdapter(){
+      @Override
+      public void processTerminated(ProcessEvent event) {
+        Disposer.dispose(myOut);
+        Disposer.dispose(myErr);
+      }
+    });
   }
 
   @Override
@@ -50,24 +58,20 @@ public class JUnitProcessHandler extends OSProcessHandler {
     return myErr.createReader();
   }
 
+  @NotNull
   public Extractor getErr() {
     return myErr;
   }
 
+  @NotNull
   public Extractor getOut() {
     return myOut;
   }
 
-  @Override
-  public Charset getCharset() {
-    return myCharset;
-  }
-
-  public static JUnitProcessHandler runCommandLine(final GeneralCommandLine commandLine) throws ExecutionException {
-    final JUnitProcessHandler processHandler = new JUnitProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(),
-                                                                 commandLine.getCharset());
+  @NotNull
+  public static JUnitProcessHandler runCommandLine(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    final JUnitProcessHandler processHandler = new JUnitProcessHandler(commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
-
 }

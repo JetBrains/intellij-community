@@ -14,15 +14,20 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.impl.elements.ManifestFileUtil;
+import com.intellij.util.Base64;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -45,6 +50,7 @@ public class MavenResourceCompilerConfigurationGenerator {
   private static Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
 
   private static final Pattern SIMPLE_NEGATIVE_PATTERN = Pattern.compile("!\\?(\\*\\.\\w+)");
+  private static final String IDEA_MAVEN_DISABLE_MANIFEST = System.getProperty("idea.maven.disable.manifest");
 
   private final Project myProject;
 
@@ -124,7 +130,9 @@ public class MavenResourceCompilerConfigurationGenerator {
       }
 
       Element pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-      resourceConfig.outputDirectory = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "outputDirectory", null);
+
+      resourceConfig.outputDirectory = getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "resources");
+      resourceConfig.testOutputDirectory = getResourcesPluginGoalOutputDirectory(mavenProject, pluginConfiguration, "testResources");
 
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
@@ -152,7 +160,7 @@ public class MavenResourceCompilerConfigurationGenerator {
 
       projectConfig.moduleConfigurations.put(module.getName(), resourceConfig);
 
-      generateManifest(mavenProject, module);
+      generateManifest(mavenProject, module, resourceConfig);
     }
 
     addNonMavenResources(projectConfig);
@@ -182,7 +190,29 @@ public class MavenResourceCompilerConfigurationGenerator {
     });
   }
 
-  private static void generateManifest(@NotNull MavenProject mavenProject, @NotNull Module module) {
+  @Nullable
+  private static String getResourcesPluginGoalOutputDirectory(@NotNull MavenProject mavenProject,
+                                                              @Nullable Element pluginConfiguration,
+                                                              @NotNull String goal) {
+    final Element goalConfiguration = mavenProject.getPluginGoalConfiguration("org.apache.maven.plugins", "maven-resources-plugin", goal);
+    String outputDirectory = MavenJDOMUtil.findChildValueByPath(goalConfiguration, "outputDirectory", null);
+    if (outputDirectory == null) {
+      outputDirectory = MavenJDOMUtil.findChildValueByPath(pluginConfiguration, "outputDirectory", null);
+    }
+    return outputDirectory == null || FileUtil.isAbsolute(outputDirectory)
+           ? outputDirectory
+           : mavenProject.getDirectory() + '/' + outputDirectory;
+  }
+
+  private static void generateManifest(@NotNull MavenProject mavenProject,
+                                       @NotNull Module module,
+                                       @NotNull MavenModuleResourceConfiguration resourceConfig) {
+    if (mavenProject.isAggregator()) return;
+    if (Boolean.valueOf(IDEA_MAVEN_DISABLE_MANIFEST)) {
+      resourceConfig.manifest = null;
+      return;
+    }
+
     try {
       String jdkVersion = null;
       Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
@@ -192,22 +222,24 @@ public class MavenResourceCompilerConfigurationGenerator {
           jdkVersion = jdkVersion.substring(quoteIndex + 1, jdkVersion.length() - 1);
         }
       }
+
       Manifest manifest = new ManifestBuilder(mavenProject).withJdkVersion(jdkVersion).build();
-      File manifestFile = new File(mavenProject.getBuildDirectory(), ManifestFileUtil.MANIFEST_FILE_NAME);
-      FileUtil.createIfDoesntExist(manifestFile);
-      OutputStream outputStream = new FileOutputStream(manifestFile);
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       try {
         manifest.write(outputStream);
+        MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
+        final String resolvedText = MavenPropertyResolver.resolve(outputStream.toString(CharsetToolkit.UTF8), domModel);
+        resourceConfig.manifest = Base64.encode(resolvedText.getBytes(CharsetToolkit.UTF8));
       }
       finally {
         StreamUtil.closeStream(outputStream);
       }
     }
     catch (ManifestBuilder.ManifestBuilderException e) {
-      LOG.error("Unable to generate artifact manifest", e);
+      LOG.warn("Unable to generate artifact manifest", e);
     }
-    catch (IOException e) {
-      LOG.error("Unable to save generated artifact manifest", e);
+    catch (Exception e) {
+      LOG.warn("Unable to save generated artifact manifest", e);
     }
   }
 

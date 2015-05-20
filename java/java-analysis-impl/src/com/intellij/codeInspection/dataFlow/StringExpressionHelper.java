@@ -62,6 +62,10 @@ public class StringExpressionHelper {
           final Set<PsiExpression> returns = new com.intellij.util.containers.HashSet<PsiExpression>();
 
           body.accept(new JavaRecursiveElementVisitor() {
+            public void visitClass(PsiClass aClass) {}
+
+            public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
             @Override
             public void visitReturnStatement(PsiReturnStatement statement) {
               PsiExpression returnValue = statement.getReturnValue();

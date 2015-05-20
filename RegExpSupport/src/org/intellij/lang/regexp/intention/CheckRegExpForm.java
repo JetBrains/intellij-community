@@ -40,6 +40,7 @@ import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.lang.regexp.RegExpModifierProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -53,6 +54,10 @@ import java.util.regex.Pattern;
  */
 public class CheckRegExpForm {
   private static final String LAST_EDITED_REGEXP = "last.edited.regexp";
+
+  private static final JBColor BACKGROUND_COLOR_MATCH = new JBColor(new Color(231, 250, 219), new Color(68, 85, 66));
+  private static final JBColor BACKGROUND_COLOR_NOMATCH = new JBColor(new Color(255, 177, 160), new Color(110, 43, 40));
+
   private final PsiFile myRegexpFile;
 
   private EditorTextField mySampleText; //TODO[kb]: make it multiline
@@ -138,23 +143,33 @@ public class CheckRegExpForm {
   }
 
   private void updateBalloon() {
-    boolean correct = false;
-    PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(myRegexpFile);
+    boolean correct = isMatchingText(myRegexpFile, mySampleText.getText());
+
+    mySampleText.setBackground(correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
+    myMessage.setText(correct ? "Matches!" : "no match");
+    myRootPanel.revalidate();
+  }
+
+  @TestOnly
+  public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
+    return isMatchingText(regexpFile, sampleText);
+  }
+
+  private static boolean isMatchingText(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
+    final String regExp = regexpFile.getText();
+
+    PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
     int flags = 0;
     if (host != null) {
-      for (RegExpModifierProvider provider : RegExpModifierProvider.EP.getExtensions()) {
-        flags = provider.getFlags(host, myRegexpFile);
+      for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
+        flags = provider.getFlags(host, regexpFile);
         if (flags > 0) break;
       }
     }
     try {
-      correct = Pattern.compile(myRegExp.getText(), flags).matcher(mySampleText.getText()).matches();
+      return Pattern.compile(regExp, flags).matcher(sampleText).matches();
     } catch (Exception ignore) {}
 
-    JBColor color1 = new JBColor(new Color(231, 250, 219), new Color(68, 85, 66));
-    JBColor color2 = new JBColor(new Color(255, 177, 160), new Color(110, 43, 40));
-    mySampleText.setBackground(correct ? color1 : color2);
-    myMessage.setText(correct ? "Matches!" : "no match");
-    myRootPanel.revalidate();
+    return false;
   }
 }

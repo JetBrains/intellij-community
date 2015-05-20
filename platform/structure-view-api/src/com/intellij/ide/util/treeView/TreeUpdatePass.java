@@ -83,7 +83,7 @@ public class TreeUpdatePass {
   @NonNls
   @Override
   public String toString() {
-    return "TreUpdatePass node=" + myNode + " structure=" + myUpdateStructure + " stamp=" + myUpdateStamp + " expired=" + myExpired + " currentNode=" + myCurrentNode + " allocation=" + myAllocation;
+    return "TreeUpdatePass node=" + myNode + " structure=" + myUpdateStructure + " stamp=" + myUpdateStamp + " expired=" + myExpired + " currentNode=" + myCurrentNode + " allocation=" + myAllocation;
   }
 
   public boolean willUpdate(@NotNull DefaultMutableTreeNode node) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -182,7 +183,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     UIUtil.setLineStyleAngled(myTree);
 
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    scrollPane.setPreferredSize(new Dimension(500, 300));
+    scrollPane.setPreferredSize(JBUI.size(500, 300));
 
     myTree.addKeyListener(new KeyAdapter() {
       @Override

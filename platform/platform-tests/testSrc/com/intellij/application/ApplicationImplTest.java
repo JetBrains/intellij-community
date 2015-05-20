@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,22 @@ package com.intellij.application;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.text.DecimalFormat;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -51,7 +53,7 @@ public class ApplicationImplTest extends PlatformTestCase {
 
   private volatile Throwable exception;
   public void testAcquireReadActionLockVsRunReadActionPerformance() throws Throwable {
-    final int N = 10000000;
+    final int N = 100000000;
     final Application application = ApplicationManager.getApplication();
     String err = null;
 
@@ -79,21 +81,20 @@ public class ApplicationImplTest extends PlatformTestCase {
             long l1 = PlatformTestUtil.measure(new Runnable() {
               @Override
               public void run() {
-                Runnable action = new Runnable() {
-                  @Override
-                  public void run() {
-                  }
-                };
                 for (int i=0; i<N; i++) {
-                  application.runReadAction(action);
+                  application.runReadAction(new Runnable() {
+                    @Override
+                    public void run() {
+                    }
+                  });
                 }
               }
             });
 
             assertFalse(application.isReadAccessAllowed());
-            double ratioPercent = (l1 - l2) * 100.0 / l1;
-            if (Math.abs(ratioPercent) > 8) {
-              return "Suspiciously different times for acquireReadActionLock(" +l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: "+ new DecimalFormat("00.0").format(ratioPercent) + "%";
+            int ratioPercent = (int)((l1 - l2) * 100.0 / l1);
+            if (Math.abs(ratioPercent) > 20) {
+              return "Suspiciously different times for acquireReadActionLock(" +l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: "+ ratioPercent + "%";
             }
           }
           catch (Throwable e) {
@@ -288,19 +289,74 @@ public class ApplicationImplTest extends PlatformTestCase {
   }
 
   public void testAsyncProgressVsReadAction() throws Throwable {
-    Future<?> future = ProgressManagerImpl.runProcessWithProgressAsynchronously(new Task.Backgroundable(getProject(), "xx") {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        try {
-          assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
-          assertFalse(ApplicationManager.getApplication().isDispatchThread());
+    Future<?> future = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
+      new Task.Backgroundable(getProject(), "xx") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            assertFalse(ApplicationManager.getApplication().isReadAccessAllowed());
+            assertFalse(ApplicationManager.getApplication().isDispatchThread());
+          }
+          catch (Exception e) {
+            exception = e;
+          }
         }
-        catch (Exception e) {
+      });
+    future.get();
+    if (exception != null) throw exception;
+  }
+
+  public void testWriteActionIsAllowedFromEDTOnly() throws InterruptedException {
+    Thread thread = new Thread("test") {
+      @Override
+      public void run() {
+        try {
+          ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+        }
+        catch (Throwable e) {
           exception = e;
         }
       }
+    };
+    thread.start();
+    thread.join();
+    assertNotNull(exception);
+  }
+
+  public void testRunProcessWithProgressSynchronouslyInReadAction() throws Throwable {
+    boolean result = ((ApplicationEx)ApplicationManager.getApplication())
+      .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, new Runnable() {
+        @Override
+        public void run() {
+          try {
+            assertFalse(SwingUtilities.isEventDispatchThread());
+            assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
+          }
+          catch (Throwable e) {
+            exception = e;
+          }
+        }
+      });
+    assertTrue(result);
+    if (exception != null) throw exception;
+  }
+
+  public void testRunProcessWithProgressSynchronouslyInReadActionWithPendingWriteAction() throws Throwable {
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+      }
     });
-    future.get();
+    boolean result = ((ApplicationEx)ApplicationManager.getApplication())
+      .runProcessWithProgressSynchronouslyInReadAction(getProject(), "title", true, "cancel", null, new Runnable() {
+        @Override
+        public void run() {
+          TimeoutUtil.sleep(10000);
+        }
+      });
+    assertTrue(result);
+    UIUtil.dispatchAllInvocationEvents();
     if (exception != null) throw exception;
   }
 }

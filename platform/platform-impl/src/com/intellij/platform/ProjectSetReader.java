@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package com.intellij.platform;
 
-import com.google.gson.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.projectImport.ProjectSetProcessor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,29 +32,20 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class ProjectSetReader {
-
-  public void readDescriptor(@Language("JSON") @NotNull String descriptor, @Nullable ProjectSetProcessor.Context context) {
-
-    ProjectSetProcessor[] extensions = ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions();
+  public void readDescriptor(@NotNull JsonObject descriptor, @Nullable ProjectSetProcessor.Context context) {
     Map<String, ProjectSetProcessor> processors = new HashMap<String, ProjectSetProcessor>();
-    for (ProjectSetProcessor extension : extensions) {
+    for (ProjectSetProcessor extension : ProjectSetProcessor.EXTENSION_POINT_NAME.getExtensions()) {
       processors.put(extension.getId(), extension);
     }
 
-    JsonElement parse;
-    try {
-      parse = new JsonParser().parse(descriptor);
-    }
-    catch (JsonSyntaxException e) {
-      LOG.error(e);
-      return;
-    }
-    Iterator<Map.Entry<String, JsonElement>> iterator = parse.getAsJsonObject().entrySet().iterator();
     if (context == null) {
       context = new ProjectSetProcessor.Context();
     }
     context.directoryName = "";
-    runProcessor(processors, context, iterator);
+    if (descriptor.get(ProjectSetProcessor.PROJECT) == null) {
+      descriptor.add(ProjectSetProcessor.PROJECT, new JsonObject()); // open directory by default
+    }
+    runProcessor(processors, context, descriptor.entrySet().iterator());
   }
 
   private static void runProcessor(final Map<String, ProjectSetProcessor> processors, final ProjectSetProcessor.Context context, final Iterator<Map.Entry<String, JsonElement>> iterator) {

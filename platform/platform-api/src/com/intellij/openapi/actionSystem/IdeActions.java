@@ -40,6 +40,8 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_BACKSPACE = "EditorBackSpace";
   @NonNls String ACTION_EDITOR_MOVE_CARET_LEFT_WITH_SELECTION = "EditorLeftWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION = "EditorRightWithSelection";
+  @NonNls String ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION = "EditorUpWithSelection";
+  @NonNls String ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION = "EditorDownWithSelection";
   @NonNls String ACTION_EDITOR_MOVE_CARET_UP = "EditorUp";
   @NonNls String ACTION_EDITOR_MOVE_CARET_LEFT = "EditorLeft";
   @NonNls String ACTION_EDITOR_MOVE_CARET_DOWN = "EditorDown";
@@ -58,6 +60,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_USE_SOFT_WRAPS = "EditorToggleUseSoftWraps";
   @NonNls String ACTION_EDITOR_ADD_OR_REMOVE_CARET= "EditorAddOrRemoveCaret";
   @NonNls String ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION= "EditorCreateRectangularSelection";
+  @NonNls String ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG= "EditorAddRectangularSelectionOnMouseDrag";
   @NonNls String ACTION_EDITOR_CLONE_CARET_BELOW= "EditorCloneCaretBelow";
   @NonNls String ACTION_EDITOR_CLONE_CARET_ABOVE= "EditorCloneCaretAbove";
   @NonNls String ACTION_EDITOR_TOGGLE_STICKY_SELECTION= "EditorToggleStickySelection";
@@ -91,6 +94,7 @@ public interface IdeActions {
   @NonNls String ACTION_CHOOSE_LOOKUP_ITEM_DOT = "EditorChooseLookupItemDot";
   @NonNls String ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB = "ExpandLiveTemplateByTab";
   @NonNls String ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM = "ExpandLiveTemplateCustom";
+  @NonNls String ACTION_UPDATE_TAG_WITH_EMMET = "EmmetUpdateTag";
 
   @NonNls String ACTION_LOOKUP_UP = "EditorLookupUp";
   @NonNls String ACTION_LOOKUP_DOWN = "EditorLookupDown";
@@ -151,6 +155,7 @@ public interface IdeActions {
   @NonNls String ACTION_CLOSE_ALL_UNMODIFIED_EDITORS = "CloseAllUnmodifiedEditors";
   @NonNls String ACTION_CLOSE_ALL_EDITORS_BUT_THIS = "CloseAllEditorsButActive";
 
+  @NonNls String ACTION_SHOW_DIFF_COMMON = "Diff.ShowDiff";
   @NonNls String ACTION_PREVIOUS_DIFF = "PreviousDiff";
   @NonNls String ACTION_NEXT_DIFF = "NextDiff";
 
@@ -284,6 +289,8 @@ public interface IdeActions {
 
   String ACTION_MOVE_STATEMENT_UP_ACTION = "MoveStatementUp";
   String ACTION_MOVE_STATEMENT_DOWN_ACTION = "MoveStatementDown";
+  
+  String ACTION_MOVE_LINE_UP_ACTION = "MoveLineUp";
 
   String ACTION_COMPARE_CLIPBOARD_WITH_SELECTION = "CompareClipboardWithSelection";
 
@@ -298,4 +305,6 @@ public interface IdeActions {
 
   String ACTION_RECENT_FILES = "RecentFiles";
   String ACTION_SEARCH_EVERYWHERE = "SearchEverywhere";
+  
+  String ACTION_MARK_ALL_NOTIFICATIONS_AS_READ = "MarkNotificationsAsRead";
 }

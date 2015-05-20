@@ -36,19 +36,20 @@ public class AuxiliaryRightPanel extends JPanel {
 
   private final DescriptionLabel myDescriptionLabel;
   private final JLabel myErrorLabel;
-  private final SaveInputComponent mySaveInputComponent;
+  private final ValidatedTextField myValidatedTextField;
   private final CardLayout myLayout;
+  private final JPanel myCardPanel;
 
   public AuxiliaryRightPanel(final DescriptionSaveListener descriptionListener) {
+    myCardPanel = new JPanel();
     myDescriptionLabel = new DescriptionLabel();
 
     myErrorLabel = new JLabel();
-    myErrorLabel.setBackground(UIUtil.isUnderDarcula() ? JBColor.PINK.darker() :JBColor.PINK);
+    myErrorLabel.setBackground(UIUtil.isUnderDarcula() ? JBColor.PINK.darker() : JBColor.PINK);
     myErrorLabel.setForeground(JBColor.BLACK);
     myErrorLabel.setOpaque(true);
-    myErrorLabel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
 
-    mySaveInputComponent = new SaveInputComponent(new SaveInputComponentValidator() {
+    myValidatedTextField = new ValidatedTextField(new SaveInputComponentValidator() {
       @Override
       public void doSave(@NotNull String text) {
         descriptionListener.saveDescription(text.trim());
@@ -58,10 +59,16 @@ public class AuxiliaryRightPanel extends JPanel {
       public boolean checkValid(@NotNull String text) {
         return true;
       }
+
+      @Override
+      public void cancel() {
+        descriptionListener.cancel();
+      }
     });
 
     myLayout = new CardLayout();
-    setLayout(myLayout);
+    myCardPanel.setLayout(myLayout);
+    myCardPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 4, 0));
 
     new ClickListener() {
       @Override
@@ -74,11 +81,15 @@ public class AuxiliaryRightPanel extends JPanel {
       }
     }.installOn(myDescriptionLabel);
 
-    add(myDescriptionLabel, SHOW_DESCRIPTION_CARD);
-    add(myErrorLabel, ERROR_CARD);
-    add(mySaveInputComponent, EDIT_DESCRIPTION_CARD);
+    myCardPanel.add(myDescriptionLabel, SHOW_DESCRIPTION_CARD);
+    myCardPanel.add(myErrorLabel, ERROR_CARD);
+    myCardPanel.add(myValidatedTextField, EDIT_DESCRIPTION_CARD);
 
     showDescription(null);
+
+    setLayout(new BorderLayout());
+    add(myValidatedTextField.getHintLabel(), BorderLayout.NORTH);
+    add(myCardPanel, BorderLayout.CENTER);
   }
 
   public void showDescription(@Nullable String newDescription) {
@@ -86,25 +97,27 @@ public class AuxiliaryRightPanel extends JPanel {
       newDescription = "";
     }
     myDescriptionLabel.setAllText(newDescription);
-    myLayout.show(this, SHOW_DESCRIPTION_CARD);
+    myLayout.show(myCardPanel, SHOW_DESCRIPTION_CARD);
   }
 
   public void editDescription(@Nullable String startValue) {
     if (startValue == null) {
       startValue = "";
     }
-    mySaveInputComponent.setText(startValue);
-    myLayout.show(this, EDIT_DESCRIPTION_CARD);
-    mySaveInputComponent.requestFocusToTextField();
+    myValidatedTextField.setText(startValue);
+    myLayout.show(myCardPanel, EDIT_DESCRIPTION_CARD);
+    myValidatedTextField.requestFocus();
   }
 
   public void showError(final @NotNull String errorText) {
     myErrorLabel.setText(errorText);
-    myLayout.show(this, ERROR_CARD);
+    myLayout.show(myCardPanel, ERROR_CARD);
   }
 
   public interface DescriptionSaveListener {
     void saveDescription(@NotNull String description);
+
+    void cancel();
   }
 
   private static class DescriptionLabel extends MultiLineLabel {

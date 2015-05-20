@@ -35,6 +35,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -842,8 +843,15 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        if (!myIsOutputPaused) {
-          new OutputFlusher().doFlush();
+        if (!myProject.isDisposed()) {
+          DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+            @Override
+            public void run() {
+              if (!myIsOutputPaused) {
+                new OutputFlusher().doFlush();
+              }
+            }
+          });
         }
       }
     });

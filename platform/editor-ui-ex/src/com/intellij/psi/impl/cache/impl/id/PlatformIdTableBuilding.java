@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -212,52 +211,5 @@ public abstract class PlatformIdTableBuilding {
       }
       return Collections.emptyMap();
     }
-  }
-
-  public static class PlainTextTodoIndexer extends VersionedTodoIndexer {
-    @Override
-    @NotNull
-    public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
-      String chars = inputData.getContentAsText().toString(); // matching strings is faster than HeapCharBuffer
-
-      final IndexPattern[] indexPatterns = IndexPatternUtil.getIndexPatterns();
-      if (indexPatterns.length <= 0) {
-        return Collections.emptyMap();
-      }
-      OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
-      for (IndexPattern indexPattern : indexPatterns) {
-        Pattern pattern = indexPattern.getOptimizedIndexingPattern();
-        if (pattern != null) {
-          Matcher matcher = pattern.matcher(chars);
-          while (matcher.find()) {
-            if (matcher.start() != matcher.end()) {
-              occurrenceConsumer.incTodoOccurrence(indexPattern);
-            }
-          }
-        }
-      }
-      Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
-      for (IndexPattern indexPattern : indexPatterns) {
-        final int count = occurrenceConsumer.getOccurrenceCount(indexPattern);
-        if (count > 0) {
-          map.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
-        }
-      }
-      return map;
-    }
-
-  }
-
-  static {
-    IdTableBuilding.registerIdIndexer(PlainTextFileType.INSTANCE, new IdTableBuilding.PlainTextIndexer());
-    registerTodoIndexer(PlainTextFileType.INSTANCE, new PlainTextTodoIndexer());
-
-    //IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_MODULE, null);
-    //IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_WORKSPACE, null);
-    //IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_PROJECT, null);
-
-    //registerTodoIndexer(StdFileTypes.IDEA_MODULE, null);
-    //registerTodoIndexer(StdFileTypes.IDEA_WORKSPACE, null);
-    //registerTodoIndexer(StdFileTypes.IDEA_PROJECT, null);
   }
 }

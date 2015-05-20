@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,26 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.*;
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.ui.*;
+import com.intellij.codeInsight.ConditionCheckManager;
+import com.intellij.codeInsight.ConditionChecker;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.*;
-import com.intellij.ui.components.*;
-import org.jetbrains.annotations.*;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Dialog that appears when user clicks the "Configure IsNull/IsNotNull/True/False Check/Assertion Methods"
@@ -92,8 +99,8 @@ public class ConditionCheckDialog extends DialogWrapper {
     mainSplitter.setFirstComponent(topThirdSplitter);
     mainSplitter.setSecondComponent(bottomTwoThirdsSplitter);
 
-    topThirdSplitter.setPreferredSize(new Dimension(600, 150));
-    bottomTwoThirdsSplitter.setPreferredSize(new Dimension(600, 300));
+    topThirdSplitter.setPreferredSize(JBUI.size(600, 150));
+    bottomTwoThirdsSplitter.setPreferredSize(JBUI.size(600, 300));
 
     myAssertIsNullMethodPanel
       .setOtherMethodsPanels(myAssertIsNotNullMethodPanel, myIsNullCheckMethodPanel, myIsNotNullCheckMethodPanel, myAssertTrueMethodPanel,
@@ -150,7 +157,7 @@ public class ConditionCheckDialog extends DialogWrapper {
       myList = new JBList(new CollectionListModel<ConditionChecker>(checkers));
       myPanel = new JPanel(new BorderLayout());
       myPanel.setBorder(IdeBorderFactory.createTitledBorder(initTitle(type), false, new Insets(10, 0, 0, 0)));
-      myPanel.setPreferredSize(new Dimension(400, 150));
+      myPanel.setPreferredSize(JBUI.size(400, 150));
 
       myList.setCellRenderer(new ColoredListCellRenderer() {
         @Override

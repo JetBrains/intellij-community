@@ -27,7 +27,7 @@ class Test {
     I i =  flag ? (() -> 123)   : (() -> 222);
     I i1 =  flag ? (() -> {<error descr="Missing return statement">}</error>)   : (() -> 222);
     Object i2 =  flag ? (<error descr="Target type of a lambda conversion must be an interface">() -> 42</error>)   : (<error descr="Target type of a lambda conversion must be an interface">() -> 222</error>);
-    I i3 =  flag ? (<error descr="Incompatible parameter types in lambda expression">(x) -> 42</error>)   : (() -> 222);
+    I i3 =  flag ? (<error descr="Incompatible parameter types in lambda expression: wrong number of parameters: expected 0 but found 1">(x)</error> -> 42)   : (() -> 222);
     I i4 =  flag ? (() -> 42) : new I() {
       @Override
       public int m() {

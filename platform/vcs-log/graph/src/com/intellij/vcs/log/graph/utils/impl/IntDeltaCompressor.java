@@ -25,15 +25,14 @@ import org.jetbrains.annotations.NotNull;
 
   @NotNull
   public static IntDeltaCompressor newInstance(@NotNull IntList deltaList) {
-    if (deltaList.size() < 0)
-      throw new NegativeArraySizeException("size < 0: " + deltaList.size());
+    if (deltaList.size() < 0) throw new NegativeArraySizeException("size < 0: " + deltaList.size());
 
     int bytesAfterCompression = ByteArrayUtils.countBytesAfterCompression(deltaList);
     Flags startedDeltaIndex = new BitSetFlags(bytesAfterCompression);
     byte[] compressedDeltas = new byte[bytesAfterCompression];
 
     int currentStartIndex = 0;
-    for (int  i = 0; i < deltaList.size(); i++) {
+    for (int i = 0; i < deltaList.size(); i++) {
       startedDeltaIndex.set(currentStartIndex, true);
 
       int value = deltaList.get(i);
@@ -59,10 +58,10 @@ import org.jetbrains.annotations.NotNull;
 
   // [left, right)
   public int getSumOfInterval(int left, int right) {
-    if (left < 0 || left > right || right > size())
-      throw new IllegalArgumentException("Size is: " + size() + ", but interval is: (" + left +", " + right + ")");
-    if (left == size())
-      return 0;
+    if (left < 0 || left > right || right > size()) {
+      throw new IllegalArgumentException("Size is: " + size() + ", but interval is: (" + left + ", " + right + ")");
+    }
+    if (left == size()) return 0;
 
     int startIndex = myStartIndexMap.getLongIndex(left);
     int sum = 0;
@@ -76,8 +75,7 @@ import org.jetbrains.annotations.NotNull;
 
   @Override
   public int get(int index) {
-    if (index < 0 || index >= size())
-      throw new IllegalArgumentException("Size is: " + size() + ", but index is: " + index);
+    if (index < 0 || index >= size()) throw new IllegalArgumentException("Size is: " + size() + ", but index is: " + index);
 
     int startIndex = myStartIndexMap.getLongIndex(index);
     int sizeOf = getNextStartIndex(startIndex) - startIndex;
@@ -91,8 +89,7 @@ import org.jetbrains.annotations.NotNull;
 
   private int getNextStartIndex(int currentIndex) {
     for (int i = currentIndex + 1; i < myStartedDeltaIndex.size(); i++) {
-      if (myStartedDeltaIndex.get(i))
-        return i;
+      if (myStartedDeltaIndex.get(i)) return i;
     }
     return myStartedDeltaIndex.size();
   }

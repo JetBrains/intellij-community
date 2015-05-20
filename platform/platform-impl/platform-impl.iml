@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
-    <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="module" module-name="lvcs-api" exported="" />
@@ -39,6 +38,8 @@
     <orderEntry type="module" module-name="editor-ui-ex" exported="" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
+    <orderEntry type="module" module-name="diff-api" />
+    <orderEntry type="module" module-name="built-in-server" scope="RUNTIME" />
+    <orderEntry type="library" name="imgscalr" level="project" />
   </component>
 </module>
-

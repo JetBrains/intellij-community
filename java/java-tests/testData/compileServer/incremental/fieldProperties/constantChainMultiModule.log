@@ -1,0 +1,30 @@
+Cleaning output files:
+out/production/moduleA/a/A.class
+End of files
+Compiling files:
+moduleA/src/a/A.java
+End of files
+Cleaning output files:
+out/production/moduleA/a/A.class
+out/production/moduleA/a/AA.class
+End of files
+Compiling files:
+moduleA/src/a/A.java
+moduleA/src/a/AA.java
+End of files
+Cleaning output files:
+out/production/moduleB/b/B.class
+out/production/moduleB/b/BB.class
+End of files
+Compiling files:
+moduleB/src/b/B.java
+moduleB/src/b/BB.java
+End of files
+Cleaning output files:
+out/production/moduleC/c/C.class
+out/production/moduleC/c/CC.class
+End of files
+Compiling files:
+moduleC/src/c/C.java
+moduleC/src/c/CC.java
+End of files

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,14 @@ public class TreeUtil {
   public static ASTNode findParent(ASTNode element, IElementType type) {
     for (ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
       if (parent.getElementType() == type) return parent;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static ASTNode findParent(ASTNode element, TokenSet types) {
+    for (ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
+      if (types.contains(parent.getElementType())) return parent;
     }
     return null;
   }
@@ -273,7 +281,7 @@ public class TreeUtil {
     return nextLeaf((TreeElement)node, null);
   }
 
-  public static Key<FileElement> CONTAINING_FILE_KEY_AFTER_REPARSE = Key.create("CONTAINING_FILE_KEY_AFTER_REPARSE");
+  public static final Key<FileElement> CONTAINING_FILE_KEY_AFTER_REPARSE = Key.create("CONTAINING_FILE_KEY_AFTER_REPARSE");
   public static FileElement getFileElement(TreeElement element) {
     TreeElement parent = element;
     while (parent != null && !(parent instanceof FileElement)) {
@@ -449,7 +457,9 @@ public class TreeUtil {
     FileElement tree = file.getTreeElement();
     assert tree != null : file;
 
-    final StubBuilder builder = ((IStubFileElementType)file.getContentElementType()).getBuilder();
+    final IStubFileElementType type = file.getElementTypeForStubBuilder();
+    assert type != null;
+    final StubBuilder builder = type.getBuilder();
     tree.acceptTree(new RecursiveTreeElementWalkingVisitor() {
       @Override
       protected void visitNode(TreeElement node) {

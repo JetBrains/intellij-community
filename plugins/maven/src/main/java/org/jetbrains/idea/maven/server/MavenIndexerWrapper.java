@@ -89,6 +89,16 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     }
   }
 
+  public synchronized boolean indexExists(File dir) {
+    try {
+      return getOrCreateWrappee().indexExists(dir);
+    }
+    catch (RemoteException e) {
+      handleRemoteError(e);
+    }
+    return false;
+  }
+
   public int getIndexCount() {
     return perform(new Retriable<Integer>() {
       @Override

@@ -29,10 +29,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
 
 /**
  * @author Dmitry Avdeev
@@ -110,8 +112,8 @@ public class DefaultXmlSuppressionProvider extends XmlSuppressionProvider implem
     if (id == null) {
       return true;
     }
-    @NonNls final String[] parts = text.split("[ ,]");
-    return ArrayUtil.find(parts, id) != -1 || ArrayUtil.find(parts, XmlSuppressableInspectionTool.ALL) != -1;
+    @NonNls final HashSet<String> parts = ContainerUtil.newHashSet(StringUtil.getWordsIn(text));
+    return parts.contains(id) || parts.contains(XmlSuppressableInspectionTool.ALL);
   }
 
   protected void suppress(PsiFile file, final PsiElement suppressionElement, String inspectionId, final int offset) {

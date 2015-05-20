@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import java.util.NoSuchElementException;
  * Date: Jun 5, 2010 3:52:59 PM
  */
 public class Maybe<T> {
-  private boolean myIsDefined;
-  private T myValue;
+  private final boolean myIsDefined;
+  private final T myValue;
 
   /**
    * @return true iff this instance has a defined value.

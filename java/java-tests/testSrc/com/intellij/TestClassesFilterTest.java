@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,40 +45,40 @@ public class TestClassesFilterTest {
                         "com.intellij.package7.*package8";
 
     TestClassesFilter classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Collections.singletonList("Group1"));
-    assertTrue(classesFilter.matches("com.intellij.package1.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package1.Test2"));
-    assertFalse(classesFilter.matches("com.intellij.package2.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package2.ExcludedTest"));
-    assertTrue(classesFilter.matches("com.intellij.package3.package4"));
-    assertTrue(classesFilter.matches("com.intellij.package3.package5.package4"));
-    assertFalse(classesFilter.matches("com.intellij.package3"));
-    assertFalse(classesFilter.matches("com.intellij"));
-    assertFalse(classesFilter.matches("com.intellij.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package5.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package5.Test2"));
-    assertFalse(classesFilter.matches("com.intellij.package6.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package6.ExcludedTest"));
-    assertFalse(classesFilter.matches("com.intellij.package7.package8"));
-    assertFalse(classesFilter.matches("com.intellij.package7.package5.package8"));
-    assertFalse(classesFilter.matches("com.intellij.package7"));
+    assertTrue(classesFilter.matches("com.intellij.package1.Test", null));
+    assertTrue(classesFilter.matches("com.intellij.package1.Test2", null));
+    assertFalse(classesFilter.matches("com.intellij.package2.Test", null));
+    assertTrue(classesFilter.matches("com.intellij.package2.ExcludedTest", null));
+    assertTrue(classesFilter.matches("com.intellij.package3.package4", null));
+    assertTrue(classesFilter.matches("com.intellij.package3.package5.package4", null));
+    assertFalse(classesFilter.matches("com.intellij.package3", null));
+    assertFalse(classesFilter.matches("com.intellij", null));
+    assertFalse(classesFilter.matches("com.intellij.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package5.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package5.Test2", null));
+    assertFalse(classesFilter.matches("com.intellij.package6.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package6.ExcludedTest", null));
+    assertFalse(classesFilter.matches("com.intellij.package7.package8", null));
+    assertFalse(classesFilter.matches("com.intellij.package7.package5.package8", null));
+    assertFalse(classesFilter.matches("com.intellij.package7", null));
 
     classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Collections.singletonList("Group2"));
-    assertFalse(classesFilter.matches("com.intellij.package1.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
-    assertFalse(classesFilter.matches("com.intellij.package2.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package2.ExcludedTest"));
-    assertFalse(classesFilter.matches("com.intellij.package3.package4"));
-    assertFalse(classesFilter.matches("com.intellij.package3.package5.package4"));
-    assertFalse(classesFilter.matches("com.intellij.package3"));
-    assertFalse(classesFilter.matches("com.intellij"));
-    assertFalse(classesFilter.matches("com.intellij.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package5.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package5.Test2"));
-    assertFalse(classesFilter.matches("com.intellij.package6.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package6.ExcludedTest"));
-    assertTrue(classesFilter.matches("com.intellij.package7.package8"));
-    assertTrue(classesFilter.matches("com.intellij.package7.package5.package8"));
-    assertFalse(classesFilter.matches("com.intellij.package7"));
+    assertFalse(classesFilter.matches("com.intellij.package1.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package1.Test2", null));
+    assertFalse(classesFilter.matches("com.intellij.package2.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package2.ExcludedTest", null));
+    assertFalse(classesFilter.matches("com.intellij.package3.package4", null));
+    assertFalse(classesFilter.matches("com.intellij.package3.package5.package4", null));
+    assertFalse(classesFilter.matches("com.intellij.package3", null));
+    assertFalse(classesFilter.matches("com.intellij", null));
+    assertFalse(classesFilter.matches("com.intellij.Test", null));
+    assertTrue(classesFilter.matches("com.intellij.package5.Test", null));
+    assertTrue(classesFilter.matches("com.intellij.package5.Test2", null));
+    assertFalse(classesFilter.matches("com.intellij.package6.Test", null));
+    assertTrue(classesFilter.matches("com.intellij.package6.ExcludedTest", null));
+    assertTrue(classesFilter.matches("com.intellij.package7.package8", null));
+    assertTrue(classesFilter.matches("com.intellij.package7.package5.package8", null));
+    assertFalse(classesFilter.matches("com.intellij.package7", null));
 
     classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText),
                                                        Collections.singletonList(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED));
@@ -88,14 +88,14 @@ public class TestClassesFilterTest {
     checkForAllExcludedDefinedGroup(classesFilter);
 
     classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Arrays.asList("Group1", "Group2"));
-    assertTrue(classesFilter.matches("com.intellij.package1.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package5.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package4.Test"));
+    assertTrue(classesFilter.matches("com.intellij.package1.Test", null));
+    assertTrue(classesFilter.matches("com.intellij.package5.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package4.Test", null));
 
     classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Arrays.asList("Group1", GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED));
-    assertTrue(classesFilter.matches("com.intellij.package1.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package5.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package4.Test"));
+    assertTrue(classesFilter.matches("com.intellij.package1.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package5.Test", null));
+    assertTrue(classesFilter.matches("com.intellij.package4.Test", null));
   }
 
   private static InputStreamReader getReader(String filterText) throws UnsupportedEncodingException {
@@ -103,21 +103,21 @@ public class TestClassesFilterTest {
   }
 
   private static void checkForAllExcludedDefinedGroup(TestClassesFilter classesFilter) {
-    assertFalse(classesFilter.matches("com.intellij.package1.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
-    assertTrue(classesFilter.matches("com.intellij.package2.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package2.ExcludedTest"));
-    assertFalse(classesFilter.matches("com.intellij.package3.package4"));
-    assertFalse(classesFilter.matches("com.intellij.package3.package5.package4"));
-    assertTrue(classesFilter.matches("com.intellij.package3"));
-    assertTrue(classesFilter.matches("com.intellij"));
-    assertTrue(classesFilter.matches("com.intellij.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package5.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package5.Test2"));
-    assertTrue(classesFilter.matches("com.intellij.package6.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package6.ExcludedTest"));
-    assertFalse(classesFilter.matches("com.intellij.package7.package8"));
-    assertFalse(classesFilter.matches("com.intellij.package7.package5.package8"));
-    assertTrue(classesFilter.matches("com.intellij.package7"));
+    assertFalse(classesFilter.matches("com.intellij.package1.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package1.Test2", null));
+    assertTrue(classesFilter.matches("com.intellij.package2.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package2.ExcludedTest", null));
+    assertFalse(classesFilter.matches("com.intellij.package3.package4", null));
+    assertFalse(classesFilter.matches("com.intellij.package3.package5.package4", null));
+    assertTrue(classesFilter.matches("com.intellij.package3", null));
+    assertTrue(classesFilter.matches("com.intellij", null));
+    assertTrue(classesFilter.matches("com.intellij.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package5.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package5.Test2", null));
+    assertTrue(classesFilter.matches("com.intellij.package6.Test", null));
+    assertFalse(classesFilter.matches("com.intellij.package6.ExcludedTest", null));
+    assertFalse(classesFilter.matches("com.intellij.package7.package8", null));
+    assertFalse(classesFilter.matches("com.intellij.package7.package5.package8", null));
+    assertTrue(classesFilter.matches("com.intellij.package7", null));
   }
 }

@@ -17,10 +17,8 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
@@ -86,7 +84,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   public void testAccessToProjectSystemFiles() throws Exception {
-    saveProject();
+    PlatformTestUtil.saveProject(getProject());
     VirtualFile fileUnderProjectDir = new WriteAction<VirtualFile>() {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
@@ -120,8 +118,8 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
         result.setResult(ModuleManager.getInstance(getProject()).findModuleByName(moduleName));
       }
     }.execute().getResultObject();
-    saveProject();
-    
+    PlatformTestUtil.saveProject(getProject());
+
     VirtualFile fileUnderModuleDir = new WriteAction<VirtualFile>() {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
@@ -134,18 +132,6 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(moduleWithoutContentRoot.getModuleFile(), true);
     typeAndCheck(myModule.getModuleFile(), true);
     typeAndCheck(fileUnderModuleDir, false);
-  }
-
-  private void saveProject() {
-    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    boolean save = app.isDoNotSave();
-    app.doNotSave(false);
-    try {
-      getProject().save();
-    }
-    finally {
-      app.doNotSave(save);
-    }
   }
 
   public void testAllowEditingInOneFileOnly() throws Exception {

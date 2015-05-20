@@ -76,11 +76,14 @@ class UpdateFoldRegionsOperation implements Runnable {
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
     Map<TextRange,Boolean> rangeToExpandStatusMap = newTroveMap();
 
-    removeInvalidRegions(info, foldingModel, rangeToExpandStatusMap);
+    // FoldingUpdate caches instances of our object, so they must be immutable.
+    FoldingUpdate.FoldingMap elementsToFold = new FoldingUpdate.FoldingMap(myElementsToFoldMap); 
+
+    removeInvalidRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap);
 
     Map<FoldRegion, Boolean> shouldExpand = newTroveMap();
     Map<FoldingGroup, Boolean> groupExpand = newTroveMap();
-    List<FoldRegion> newRegions = addNewRegions(info, foldingModel, rangeToExpandStatusMap, shouldExpand, groupExpand);
+    List<FoldRegion> newRegions = addNewRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
   }
@@ -100,14 +103,14 @@ class UpdateFoldRegionsOperation implements Runnable {
 
   private List<FoldRegion> addNewRegions(@NotNull EditorFoldingInfo info,
                                          @NotNull FoldingModelEx foldingModel,
-                                         @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
+                                         FoldingUpdate.FoldingMap elementsToFold, @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
                                          @NotNull Map<FoldRegion, Boolean> shouldExpand,
                                          @NotNull Map<FoldingGroup, Boolean> groupExpand) {
     List<FoldRegion> newRegions = newArrayList();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
-    for (PsiElement element : myElementsToFoldMap.keySet()) {
+    for (PsiElement element : elementsToFold.keySet()) {
       ProgressManager.checkCanceled();
-      final Collection<FoldingDescriptor> descriptors = myElementsToFoldMap.get(element);
+      final Collection<FoldingDescriptor> descriptors = elementsToFold.get(element);
       for (FoldingDescriptor descriptor : descriptors) {
         FoldingGroup group = descriptor.getGroup();
         TextRange range = descriptor.getRange();
@@ -165,7 +168,7 @@ class UpdateFoldRegionsOperation implements Runnable {
 
   private void removeInvalidRegions(@NotNull EditorFoldingInfo info,
                                     @NotNull FoldingModelEx foldingModel,
-                                    @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap) {
+                                    FoldingUpdate.FoldingMap elementsToFold, @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap) {
     List<FoldRegion> toRemove = newArrayList();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (FoldRegion region : foldingModel.getAllFoldRegions()) {
@@ -176,7 +179,7 @@ class UpdateFoldRegionsOperation implements Runnable {
         if (isInjected != myForInjected) continue;
       }
       final Collection<FoldingDescriptor> descriptors;
-      if (element != null && !(descriptors = myElementsToFoldMap.get(element)).isEmpty()) {
+      if (element != null && !(descriptors = elementsToFold.get(element)).isEmpty()) {
         boolean matchingDescriptorFound = false;
         FoldingDescriptor[] array = descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
         for (FoldingDescriptor descriptor : array) {
@@ -194,7 +197,7 @@ class UpdateFoldRegionsOperation implements Runnable {
               break;
             }
             else {
-              myElementsToFoldMap.remove(element, descriptor);
+              elementsToFold.remove(element, descriptor);
             }
           }
         }

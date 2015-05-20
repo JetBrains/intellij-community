@@ -528,59 +528,28 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   private void insertLookupString(LookupElement item, final int prefix) {
-    final Document document = myEditor.getDocument();
-
     final String lookupString = getCaseCorrectedLookupString(item);
 
-    if (myEditor.getSelectionModel().hasBlockSelection()) {
-      LogicalPosition blockStart = myEditor.getSelectionModel().getBlockStart();
-      LogicalPosition blockEnd = myEditor.getSelectionModel().getBlockEnd();
-      assert blockStart != null && blockEnd != null;
+    final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
+      @Override
+      public void perform(Caret caret) {
+        EditorModificationUtil.deleteSelectedText(hostEditor);
+        final int caretOffset = hostEditor.getCaretModel().getOffset();
+        int lookupStart = Math.max(caretOffset - prefix, 0);
 
-      int minLine = Math.min(blockStart.line, blockEnd.line);
-      int maxLine = Math.max(blockStart.line, blockEnd.line);
-      int minColumn = Math.min(blockStart.column, blockEnd.column);
-      int maxColumn = Math.max(blockStart.column, blockEnd.column);
+        int len = hostEditor.getDocument().getTextLength();
+        LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
+                       "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
+        LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
 
-      int caretLine = document.getLineNumber(myEditor.getCaretModel().getOffset());
+        hostEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
 
-      for (int line = minLine; line <= maxLine; line++) {
-        int bs = myEditor.logicalPositionToOffset(new LogicalPosition(line, minColumn));
-        int start = bs - prefix;
-        int end = myEditor.logicalPositionToOffset(new LogicalPosition(line, maxColumn));
-        if (start > end) {
-          LOG.error("bs=" + bs + "; start=" + start + "; end=" + end +
-                    "; blockStart=" + blockStart + "; blockEnd=" + blockEnd + "; line=" + line + "; len=" +
-                    (document.getLineEndOffset(line) - document.getLineStartOffset(line)));
-        }
-        document.replaceString(start, end, lookupString);
+        int offset = lookupStart + lookupString.length();
+        hostEditor.getCaretModel().moveToOffset(offset);
+        hostEditor.getSelectionModel().removeSelection();
       }
-      LogicalPosition start = new LogicalPosition(minLine, minColumn - prefix);
-      LogicalPosition end = new LogicalPosition(maxLine, start.column + lookupString.length());
-      myEditor.getSelectionModel().setBlockSelection(start, end);
-      myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(caretLine, end.column));
-    } else {
-      final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
-      hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          EditorModificationUtil.deleteSelectedText(hostEditor);
-          final int caretOffset = hostEditor.getCaretModel().getOffset();
-          int lookupStart = Math.max(caretOffset - prefix, 0);
-
-          int len = hostEditor.getDocument().getTextLength();
-          LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
-                         "ls: " + lookupStart + " caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
-          LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
-
-          hostEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
-
-          int offset = lookupStart + lookupString.length();
-          hostEditor.getCaretModel().moveToOffset(offset);
-          hostEditor.getSelectionModel().removeSelection();
-        }
-      });
-    }
+    });
 
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
@@ -688,14 +657,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false,
                                                      HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false));
 
-    if (!isVisible()) {
+    if (!isVisible() || !myList.isShowing()) {
       hide();
       return false;
     }
 
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
-
-    LOG.assertTrue(myList.isShowing(), "!showing, disposed=" + myDisposed);
 
     return true;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.openapi.vfs.local;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,7 +35,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
@@ -45,7 +47,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-public class LocalFileSystemTest extends PlatformLangTestCase {
+public class LocalFileSystemTest extends PlatformTestCase {
   private LocalFileSystem myFS;
 
   @Override
@@ -452,7 +454,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertEquals(newName, sourceFile.getName());
 
     topDir.getChildren();
-    newName = newName.toLowerCase();
+    newName = newName.toLowerCase(Locale.ENGLISH);
     FileUtil.rename(file, intermediate);
     FileUtil.rename(intermediate, new File(top, newName));
     topDir.refresh(false, true);
@@ -581,5 +583,44 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     finally {
       RefreshWorker.setCancellingCondition(null);
     }
+  }
+
+  public void testInvalidFileName() {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        VirtualFile tempDir = myFS.refreshAndFindFileByIoFile(createTempDirectory());
+        assertNotNull(tempDir);
+        try {
+          tempDir.createChildData(this, "a/b");
+          fail("invalid file name should have been rejected");
+        }
+        catch (IOException e) {
+          assertEquals(VfsBundle.message("file.invalid.name.error", "a/b"), e.getMessage());
+        }
+      }
+    }.execute();
+  }
+
+  public void testDuplicateViaRename() {
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        VirtualFile tempDir = myFS.refreshAndFindFileByIoFile(createTempDirectory());
+        assertNotNull(tempDir);
+
+        VirtualFile file1 = tempDir.createChildData(this, "a.txt");
+        FileUtil.delete(VfsUtilCore.virtualToIoFile(file1));
+
+        VirtualFile file2 = tempDir.createChildData(this, "b.txt");
+        try {
+          file2.rename(this, "a.txt");
+          fail("duplicate file name should have been rejected");
+        }
+        catch (IOException e) {
+          assertEquals(VfsBundle.message("vfs.target.already.exists.error", file1.getPath()), e.getMessage());
+        }
+      }
+    }.execute();
   }
 }

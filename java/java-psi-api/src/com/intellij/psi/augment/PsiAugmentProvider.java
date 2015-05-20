@@ -15,10 +15,15 @@
  */
 package com.intellij.psi.augment;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +31,7 @@ import java.util.List;
 
 
 public abstract class PsiAugmentProvider {
+  private static final Logger LOG = Logger.getInstance("#" + PsiAugmentProvider.class.getName());
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
 
   @NotNull
@@ -43,5 +49,39 @@ public abstract class PsiAugmentProvider {
     }
 
     return result;
+  }
+
+  /**
+   * Extends {@link PsiTypeElement#getType()} so type could be retrieved from external place
+   * e.g. from variable initializer in lombok case (http://projectlombok.org/features/val.html)
+   * 
+   * @param typeElement place where inference takes place, 
+   *                    also nested PsiTypeElement-s (e.g. for List<String> PsiTypeElements corresponding to both List and String would be suggested)
+   * @return inferred type or null, if inference is not applicable
+   * 
+   * @since 14.1
+   */
+  @Nullable
+  protected PsiType inferType(PsiTypeElement typeElement) {
+    return null;
+  }
+
+  @Nullable
+  public static PsiType getInferredType(PsiTypeElement typeElement) {
+    for (PsiAugmentProvider provider : Extensions.getExtensions(EP_NAME)) {
+      try {
+        final PsiType type = provider.inferType(typeElement);
+        if (type != null) {
+          return type;
+        }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error("provider: " + provider, e);
+      }
+    }
+    return null;
   }
 }

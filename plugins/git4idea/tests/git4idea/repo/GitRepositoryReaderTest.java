@@ -8,10 +8,10 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
-import git4idea.branch.GitBranchesCollection;
 import git4idea.test.GitPlatformTest;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -106,66 +106,69 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
   }
 
   @NotNull
-  private static GitLocalBranch readCurrentBranch(@NotNull File resultDir) throws IOException {
+  private static Branch readCurrentBranch(@NotNull File resultDir) throws IOException {
     String branch = FileUtil.loadFile(new File(resultDir, "current-branch.txt")).trim();
     return readBranchFromLine(branch);
   }
 
   @NotNull
-  private static GitLocalBranch readBranchFromLine(@NotNull String branch) {
+  private static Branch readBranchFromLine(@NotNull String branch) {
     List<String> branchAndHash = StringUtil.split(branch, " ");
-    return new GitLocalBranch(branchAndHash.get(1), HashImpl.build(branchAndHash.get(0)));
-  }
-
-  @Test
-  public void testHEAD() throws Exception {
-    assertEquals("HEAD is incorrect", readHead(myTempDir), myRepositoryReader.readCurrentRevision());
-  }
-
-  @Test
-  public void testCurrentBranch() throws Exception {
-    assertEqualBranches(readCurrentBranch(myTempDir), myRepositoryReader.readCurrentBranch());
+    return new Branch(branchAndHash.get(1), HashImpl.build(branchAndHash.get(0)));
   }
 
   @Test
   public void testBranches() throws Exception {
     Collection<GitRemote> remotes = GitConfig.read(myPlatformFacade, new File(myGitDir, "config")).parseRemotes();
-    GitBranchesCollection branchesCollection = myRepositoryReader.readBranches(remotes);
-    GitLocalBranch currentBranch = myRepositoryReader.readCurrentBranch();
-    Collection<? extends GitBranch> localBranches = branchesCollection.getLocalBranches();
-    Collection<? extends GitBranch> remoteBranches = branchesCollection.getRemoteBranches();
+    GitBranchState state = myRepositoryReader.readState(remotes);
 
-    assertEqualBranches(readCurrentBranch(myTempDir), currentBranch);
-    assertBranches(localBranches, readBranches(myTempDir, true));
-    assertBranches(remoteBranches, readBranches(myTempDir, false));
+    assertEquals("HEAD revision is incorrect", readHead(myTempDir), state.getCurrentRevision());
+    assertEqualBranches(readCurrentBranch(myTempDir), state.getCurrentBranch());
+    assertBranches(state.getLocalBranches(), readBranches(myTempDir, true));
+    assertBranches(state.getRemoteBranches(), readBranches(myTempDir, false));
   }
 
-  private static void assertEqualBranches(@NotNull GitLocalBranch expected, @NotNull GitLocalBranch actual) {
-    assertEquals(expected.getName(), actual.getName());
-    assertEquals(expected.getHash(), actual.getHash());
+  private static void assertEqualBranches(@NotNull Branch expected, @NotNull GitLocalBranch actual) {
+    assertEquals(expected.name, actual.getName());
+    assertEquals("Incorrect hash of branch " + actual.getName(), expected.hash, actual.getHash());
   }
 
-  private static void assertBranches(Collection<? extends GitBranch> actualBranches, Collection<? extends GitBranch> expectedBranches) {
-    VcsTestUtil.assertEqualCollections(actualBranches, expectedBranches, new VcsTestUtil.EqualityChecker<GitBranch, GitBranch>() {
+  private static void assertBranches(Collection<? extends GitBranch> actualBranches, Collection<Branch> expectedBranches) {
+    VcsTestUtil.assertEqualCollections(actualBranches, expectedBranches, new VcsTestUtil.EqualityChecker<GitBranch, Branch>() {
       @Override
-      public boolean areEqual(@NotNull GitBranch actual, @NotNull GitBranch expected) {
+      public boolean areEqual(GitBranch actual, Branch expected) {
         return branchesAreEqual(actual, expected);
       }
     });
   }
 
   @NotNull
-  private static Collection<GitBranch> readBranches(@NotNull File resultDir, boolean local) throws IOException {
+  private static Collection<Branch> readBranches(@NotNull File resultDir, boolean local) throws IOException {
     String content = FileUtil.loadFile(new File(resultDir, local ? "local-branches.txt" : "remote-branches.txt"));
-    Collection<GitBranch> branches = ContainerUtil.newArrayList();
+    Collection<Branch> branches = ContainerUtil.newArrayList();
     for (String line : StringUtil.splitByLines(content)) {
       branches.add(readBranchFromLine(line));
     }
     return branches;
   }
 
-  private static boolean branchesAreEqual(GitBranch actual, GitBranch expected) {
-    return actual.getName().equals(expected.getName()) && actual.getHash().equals(expected.getHash());
+  private static boolean branchesAreEqual(GitBranch actual, Branch expected) {
+    return actual.getFullName().equals(expected.name) && actual.getHash().equals(expected.hash);
+  }
+
+  private static class Branch {
+    final String name;
+    final Hash hash;
+
+    private Branch(String name, Hash hash) {
+      this.name = name;
+      this.hash = hash;
+    }
+
+    @Override
+    public String toString() {
+      return name;
+    }
   }
 
 }

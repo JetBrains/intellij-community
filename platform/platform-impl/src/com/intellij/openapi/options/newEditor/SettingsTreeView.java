@@ -33,9 +33,7 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -54,6 +52,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
@@ -72,7 +71,6 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
   private static final Color WRONG_CONTENT = JBColor.RED;
   private static final Color MODIFIED_CONTENT = JBColor.BLUE;
   public static final Color FOREGROUND = new JBColor(Gray.x1A, Gray.xBB);
-  public static final Color BACKGROUND = new JBColor(0xE6EBF0, 0x3E434C);
 
   final SimpleTree myTree;
   final FilteringTreeBuilder myBuilder;
@@ -93,7 +91,7 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
     myTree.putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, Boolean.TRUE);
-    myTree.setBackground(BACKGROUND);
+    myTree.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     myTree.getInputMap().clear();
     TreeUtil.installActions(myTree);
 
@@ -107,8 +105,29 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
     myTree.setExpandableItemsEnabled(false);
     RelativeFont.BOLD.install(myTree);
 
+    myTree.setTransferHandler(new TransferHandler() {
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        MyNode node = extractNode(myTree.getPathForRow(myTree.getLeadSelectionRow()));
+        if (node != null) {
+          StringBuilder sb = new StringBuilder("File | Settings");
+          for (String name : getPathNames(node)) {
+            sb.append(" | ").append(name);
+          }
+          return new TextTransferable(sb.toString());
+        }
+        return null;
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
+
     myScroller = ScrollPaneFactory.createScrollPane(null, true);
-    myScroller.setViewport(new GradientViewport(myTree, 5, 0, 0, 0, true) {
+    myScroller.setViewport(new GradientViewport(myTree, JBUI.insetsTop(5), true) {
       private JLabel myHeader;
 
       @Override
@@ -134,9 +153,9 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
       }
     });
     myScroller.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    myScroller.setBackground(BACKGROUND);
-    myScroller.getViewport().setBackground(BACKGROUND);
-    myScroller.getVerticalScrollBar().setBackground(BACKGROUND);
+    myScroller.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    myScroller.getViewport().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    myScroller.getVerticalScrollBar().setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     add(myScroller);
 
     myTree.addComponentListener(new ComponentAdapter() {
@@ -170,8 +189,11 @@ final class SettingsTreeView extends JComponent implements Disposable, OptionsEd
 
   @NotNull
   String[] getPathNames(Configurable configurable) {
+    return getPathNames(findNode(configurable));
+  }
+
+  private static String[] getPathNames(MyNode node) {
     ArrayDeque<String> path = new ArrayDeque<String>();
-    MyNode node = findNode(configurable);
     while (node != null) {
       path.push(node.myDisplayName);
       SimpleNode parent = node.getParent();

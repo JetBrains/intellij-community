@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.RegistryToggleAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
 
 /**
  * @author Konstantin Bulenkov
@@ -23,5 +27,16 @@ import com.intellij.openapi.actionSystem.RegistryToggleAction;
 public class UseInlineDebuggerAction extends RegistryToggleAction {
   public UseInlineDebuggerAction() {
     super("ide.debugger.inline");
+  }
+
+  @Override
+  public void doWhenDone(AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (editor != null) {
+        editor.getComponent().repaint();
+      }
+    }
   }
 }

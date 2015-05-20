@@ -57,7 +57,7 @@ public class Splitter extends JPanel {
   private final float myMaxProp;
 
 
-  protected float myProportion;// first size divided by total size
+  protected float myProportion;// first size divided by (first + second)
 
   private final Divider myDivider;
   private JComponent mySecondComponent;
@@ -261,7 +261,7 @@ public class Splitter extends JPanel {
         d = total;
       }
       else {
-        size1 = myProportion * total;
+        size1 = myProportion * (total - d);
         double size2 = total - size1 - d;
 
         if (isHonorMinimumSize()) {
@@ -286,7 +286,7 @@ public class Splitter extends JPanel {
       }
 
       int iSize1 = (int)Math.round(Math.floor(size1));
-      int iSize2 = (int)Math.round(total - size1 - d);
+      int iSize2 = total - iSize1 - d;
 
       if (isVertical()) {
         firstRect.setBounds(0, 0, width, iSize1);
@@ -414,10 +414,10 @@ public class Splitter extends JPanel {
    * @param verticalSplit <code>true</code> means that splitter will have vertical split
    */
   public void setOrientation(boolean verticalSplit) {
-    if (myVerticalSplit == verticalSplit) return;
+    boolean changed = myVerticalSplit != verticalSplit;
     myVerticalSplit = verticalSplit;
     myDivider.setOrientation(verticalSplit);
-    firePropertyChange(PROP_ORIENTATION, !myVerticalSplit, myVerticalSplit);
+    if (changed) firePropertyChange(PROP_ORIENTATION, !myVerticalSplit, myVerticalSplit);
     revalidate();
     repaint();
   }

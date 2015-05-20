@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.reference.SoftReference;
-
-import java.lang.ref.WeakReference;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ObjectUtils.NULL;
@@ -26,21 +23,18 @@ import static com.intellij.util.ObjectUtils.NULL;
  * @author peter
  */
 public abstract class WeakFactoryMap<T,V> {
-  private final ConcurrentMap<T, WeakReference<V>> myMap = ContainerUtil.createConcurrentWeakMap();
+  private final ConcurrentMap<T, V> myMap = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
 
   protected abstract V create(T key);
 
   public final V get(T key) {
-    final WeakReference<V> reference = myMap.get(key);
-    final V v = SoftReference.dereference(reference);
+    final V v = myMap.get(key);
     if (v != null) {
       return v == NULL ? null : v;
     }
 
     final V value = create(key);
-    WeakReference<V> valueRef = new WeakReference<V>(value == null ? (V)NULL : value);
-    WeakReference<V> prevRef = myMap.putIfAbsent(key, valueRef);
-    V prev = SoftReference.dereference(prevRef);
+    V prev = myMap.putIfAbsent(key, notNull(value));
     return prev == null || prev == NULL ? value : prev;
   }
 
@@ -52,11 +46,12 @@ public abstract class WeakFactoryMap<T,V> {
     myMap.clear();
   }
 
-  private static <K> K getKey(K key) {
+  private static <K> K notNull(K key) {
+    //noinspection unchecked
     return key == null ? (K)NULL : key;
   }
 
   public void put(T key, V value) {
-    myMap.put(getKey(key), new WeakReference<V>(value == null ? (V)NULL : value));
+    myMap.put(notNull(key), notNull(value));
   }
 }

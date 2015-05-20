@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -27,6 +26,8 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -87,15 +88,11 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     if (moduleLevel != null && isLanguageLevelAcceptable(project, module, myLevel)) {
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
       rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          rootModel.commit();
-        }
-      });
+      rootModel.commit();
     }
     else {
       LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
+      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.INSTANCE, false, true);
     }
   }
 
@@ -108,6 +105,6 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return false;
+    return true;
   }
 }

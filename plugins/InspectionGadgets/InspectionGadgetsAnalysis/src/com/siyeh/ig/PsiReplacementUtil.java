@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiReplacementUtil {
   private static final Logger LOG = Logger.getInstance("#" + PsiReplacementUtil.class.getName());
@@ -123,5 +124,28 @@ public class PsiReplacementUtil {
     final PsiElement element = replacementExpression.bindToElement(target);
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     styleManager.shortenClassReferences(element);
+  }
+
+  @NotNull
+  public static String getElementText(@NotNull PsiElement element, @Nullable PsiElement elementToReplace, @Nullable String replacement) {
+    final StringBuilder out = new StringBuilder();
+    getElementText(element, elementToReplace, replacement, out);
+    return out.toString();
+  }
+
+  private static void getElementText(@NotNull PsiElement element, @Nullable PsiElement elementToReplace,
+                                     @Nullable String replacement, @NotNull StringBuilder out) {
+    if (element.equals(elementToReplace)) {
+      out.append(replacement);
+      return;
+    }
+    final PsiElement[] children = element.getChildren();
+    if (children.length == 0) {
+      out.append(element.getText());
+      return;
+    }
+    for (PsiElement child : children) {
+      getElementText(child, elementToReplace, replacement, out);
+    }
   }
 }

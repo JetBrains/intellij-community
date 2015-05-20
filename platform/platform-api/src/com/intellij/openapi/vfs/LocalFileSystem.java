@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.Processor;
 import com.intellij.util.io.fs.IFile;
@@ -44,39 +42,23 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return LocalFileSystemHolder.ourInstance;
   }
 
-  /**
-   * Checks whether given file is a symbolic link.
-   *
-   * @param file a file to check.
-   * @return <code>true</code> if the file is a symbolic link, <code>false</code> otherwise
-   * @since 11.0
-   */
-  @Override
-  public boolean isSymLink(@NotNull final VirtualFile file) {
-    return false;
-  }
-
-  /**
-   * Checks whether given file is a special file.
-   *
-   * @param file a file to check.
-   * @return <code>true</code> if the file exists and is a special one, <code>false</code> otherwise
-   * @since 11.0
-   */
-  @Override
-  public boolean isSpecialFile(@NotNull final VirtualFile file) {
-    return false;
-  }
-
   @Nullable
   public abstract VirtualFile findFileByIoFile(@NotNull File file);
 
+  /**
+   * @deprecated use {@link #findFileByIoFile(File)} instead
+   */
+  @Deprecated
   @Nullable
   public abstract VirtualFile findFileByIoFile(@NotNull IFile file);
 
   @Nullable
   public abstract VirtualFile refreshAndFindFileByIoFile(@NotNull File file);
 
+  /**
+   * @deprecated use {@link #refreshAndFindFileByIoFile(File)} instead
+   */
+  @Deprecated
   @Nullable
   public abstract VirtualFile refreshAndFindFileByIoFile(@NotNull IFile ioFile);
 
@@ -99,13 +81,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files);
 
   public abstract void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish);
-
-  /** @deprecated fake root considered harmful (to remove in IDEA 14) */
-  public final VirtualFile getRoot() {
-    VirtualFile[] roots = ManagingFS.getInstance().getLocalRoots();
-    assert roots.length > 0 : SystemInfo.OS_NAME;
-    return roots[0];
-  }
 
   public interface WatchRequest {
     @NotNull
@@ -141,12 +116,25 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return result.size() == 1 ? result.iterator().next() : null;
   }
 
+  @NotNull
   public abstract Set<WatchRequest> replaceWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests,
                                                         @Nullable final Collection<String> recursiveRoots,
                                                         @Nullable final Collection<String> flatRoots);
 
+  /**
+   * Registers a handler that allows a version control system plugin to intercept file operations in the local file system
+   * and to perform them through the VCS tool.
+   *
+   * @param handler the handler instance.
+   */
   public abstract void registerAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
+  /**
+   * Unregisters a handler that allows a version control system plugin to intercept file operations in the local file system
+   * and to perform them through the VCS tool.
+   *
+   * @param handler the handler instance.
+   */
   public abstract void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
   public abstract boolean processCachedFilesInSubtree(@NotNull VirtualFile file, @NotNull Processor<VirtualFile> processor);

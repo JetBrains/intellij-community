@@ -37,7 +37,7 @@ public class PsiCommentManipulator extends AbstractElementManipulator<PsiComment
     FileType type = psiComment.getContainingFile().getFileType();
     PsiFile fromText = PsiFileFactory.getInstance(psiComment.getProject()).createFileFromText("__." + type.getDefaultExtension(), type, newText);
     PsiComment newElement = PsiTreeUtil.getParentOfType(fromText.findElementAt(0), psiComment.getClass(), false);
-    assert newElement != null;
+    assert newElement != null : type + " " + type.getDefaultExtension() + " " + newText;
     return (PsiComment)psiComment.replace(newElement);
   }
 

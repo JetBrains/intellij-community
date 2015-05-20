@@ -78,7 +78,14 @@ final class ObjectNode<T> {
   void removeChild(@NotNull ObjectNode<T> child) {
     List<ObjectNode<T>> children = myChildren;
     if (children != null) {
-      children.remove(child);
+      // optimisation: iterate backwards
+      for (int i = children.size() - 1; i >= 0; i--) {
+        ObjectNode<T> node = children.get(i);
+        if (node.equals(child)) {
+          children.remove(i);
+          break;
+        }
+      }
     }
     child.myParent = null;
   }

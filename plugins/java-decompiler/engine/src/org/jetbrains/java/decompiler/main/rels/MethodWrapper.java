@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@ import java.util.List;
 
 public class MethodWrapper {
 
-  public RootStatement root;
+  public final RootStatement root;
 
-  public VarProcessor varproc;
+  public final VarProcessor varproc;
 
-  public StructMethod methodStruct;
+  public final StructMethod methodStruct;
 
-  public CounterContainer counter;
+  public final CounterContainer counter;
 
   public DirectGraph graph;
 
@@ -43,7 +43,7 @@ public class MethodWrapper {
 
   public boolean decompiledWithErrors;
 
-  public HashSet<String> setOuterVarNames = new HashSet<String>();
+  public final HashSet<String> setOuterVarNames = new HashSet<String>();
 
   public MethodWrapper(RootStatement root, VarProcessor varproc, StructMethod methodStruct, CounterContainer counter) {
     this.root = root;

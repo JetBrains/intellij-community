@@ -35,8 +35,11 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticPropertyAttributeDescriptor;
 
@@ -139,8 +142,11 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
       if (descriptor instanceof JavaFxStaticPropertyAttributeDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
         if (declaration instanceof PsiMember) {
-          appendClassName((PsiElement)((PsiMember)declaration).getContainingClass());
+          appendClassName(((PsiMember)declaration).getContainingClass());
         }
+      }
+      else if (descriptor instanceof JavaFxDefaultAttributeDescriptor && FxmlConstants.TYPE.equals(descriptor.getName())) {
+        appendClassName(JavaFxPsiUtil.findPsiClass(attribute.getValue(), attribute));
       }
     }
 
@@ -153,7 +159,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
       } else if (descriptor instanceof JavaFxPropertyElementDescriptor && ((JavaFxPropertyElementDescriptor)descriptor).isStatic()) {
         final PsiElement declaration = descriptor.getDeclaration();
         if (declaration instanceof PsiMember) {
-          appendClassName((PsiElement)((PsiMember)declaration).getContainingClass());
+          appendClassName(((PsiMember)declaration).getContainingClass());
         }
       }
     }

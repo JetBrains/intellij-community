@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.CalledInAny;
+import org.jetbrains.annotations.CalledInAny;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.ContainerUtil;

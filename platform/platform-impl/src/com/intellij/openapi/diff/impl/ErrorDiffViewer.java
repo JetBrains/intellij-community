@@ -36,8 +36,64 @@ import java.awt.*;
 public class ErrorDiffViewer implements DiffViewer {
   @NotNull private final DiffRequest myRequest;
 
-  protected ErrorDiffViewer(@NotNull DiffRequest request) {
+  @NotNull private final JPanel myPanel;
+  @NotNull private final DiffToolbarComponent myToolbar;
+
+  protected ErrorDiffViewer(Window window, @NotNull DiffRequest request) {
     myRequest = request;
+
+    myPanel = new AbstractDataProviderPanel(new BorderLayout(), false) {
+      @Override
+      public void calcData(DataKey key, DataSink sink) {
+        final Object data = myRequest.getGenericData().get(key.getName());
+        if (data != null) {
+          sink.put(key, data);
+        }
+      }
+    };
+    myPanel.setFocusable(true);
+
+    final ActionManager actionManager = ActionManager.getInstance();
+    myToolbar = new DiffToolbarComponent(myPanel);
+    final DiffRequest.ToolbarAddons addons = new DiffRequest.ToolbarAddons() {
+      @Override
+      public void customize(DiffToolbar toolbar) {
+        toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
+        toolbar.addAction(actionManager.getAction("ContextHelp"));
+        toolbar.addSeparator();
+      }
+    };
+    myToolbar.resetToolbar(addons);
+    final DiffToolbarImpl toolbar = myToolbar.getToolbar();
+    myRequest.customizeToolbar(toolbar);
+    /*group.addAction(actionManager.getAction("Diff.PrevChange"));
+    group.addAction(actionManager.getAction("Diff.NextChange"));*/
+
+    myPanel.add(myToolbar, BorderLayout.NORTH);
+
+    DiffContent content1 = myRequest.getContents()[0];
+    DiffContent content2 = myRequest.getContents()[1];
+
+    String message;
+    if (DiffUtil.oneIsUnknown(content1, content2)) {
+      message = DiffBundle.message("diff.can.not.show.unknown");
+    }
+    else {
+      message = DiffBundle.message("diff.can.not.show");
+    }
+
+    final JPanel messagePanel = createMessagePanel(message);
+    myPanel.add(messagePanel, BorderLayout.CENTER);
+
+    setWindowTitle(window, request.getWindowTitle());
+  }
+
+  private static void setWindowTitle(Window window, String title) {
+    if (title == null || title.isEmpty()) title = "Diff";
+    if (window instanceof JDialog) {
+      ((JDialog)window).setTitle(title);
+    }
+    else if (window instanceof JFrame) ((JFrame)window).setTitle(title);
   }
 
   @Override
@@ -52,48 +108,7 @@ public class ErrorDiffViewer implements DiffViewer {
 
   @Override
   public JComponent getComponent() {
-    final JPanel result = new AbstractDataProviderPanel(new BorderLayout(), false) {
-      @Override
-      public void calcData(DataKey key, DataSink sink) {
-        final Object data = myRequest.getGenericData().get(key.getName());
-        if (data != null) {
-          sink.put(key, data);
-        }
-      }
-    };
-
-    final ActionManager actionManager = ActionManager.getInstance();
-    final DiffToolbarComponent toolbarComponent = new DiffToolbarComponent(result);
-    final DiffRequest.ToolbarAddons addons = new DiffRequest.ToolbarAddons() {
-      @Override
-      public void customize(DiffToolbar toolbar) {
-        toolbar.addAction(actionManager.getAction("DiffPanel.Toolbar"));
-        toolbar.addAction(actionManager.getAction("ContextHelp"));
-        toolbar.addSeparator();
-      }
-    };
-    toolbarComponent.resetToolbar(addons);
-    final DiffToolbarImpl toolbar = toolbarComponent.getToolbar();
-    myRequest.customizeToolbar(toolbar);
-    /*group.addAction(actionManager.getAction("Diff.PrevChange"));
-    group.addAction(actionManager.getAction("Diff.NextChange"));*/
-
-    result.add(toolbarComponent, BorderLayout.NORTH);
-
-    DiffContent content1 = myRequest.getContents()[0];
-    DiffContent content2 = myRequest.getContents()[1];
-
-    String message;
-    if (DiffUtil.oneIsUnknown(content1, content2)) {
-      message = DiffBundle.message("diff.can.not.show.unknown");
-    }
-    else {
-      message = DiffBundle.message("diff.can.not.show");
-    }
-
-    final JPanel messagePanel = createMessagePanel(message);
-    result.add(messagePanel, BorderLayout.CENTER);
-    return result;
+    return myPanel;
   }
 
   @NotNull
@@ -109,7 +124,7 @@ public class ErrorDiffViewer implements DiffViewer {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return null;
+    return myPanel;
   }
 
   @Override

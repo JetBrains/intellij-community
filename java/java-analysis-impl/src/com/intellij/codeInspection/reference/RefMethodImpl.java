@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final int IS_RETURN_VALUE_USED_MASK = 0x400000;
 
   private static final int IS_TEST_METHOD_MASK = 0x4000000;
-  private static final int IS_CALLED_ON_SUBCLASS = 0x8000000;
+  private static final int IS_CALLED_ON_SUBCLASS_MASK = 0x8000000;
 
   private static final String RETURN_VALUE_UNDEFINED = "#";
 
@@ -67,7 +67,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   // To be used only from RefImplicitConstructor.
-  protected RefMethodImpl(String name, @NotNull RefClass ownerClass) {
+  protected RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
     super(name, ownerClass);
     myOwnerClass = ownerClass;
     ((RefClassImpl)ownerClass).add(this);
@@ -79,7 +79,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  public void add(RefEntity child) {
+  public void add(@NotNull RefEntity child) {
     if (child instanceof RefParameter) {
       return;
     }
@@ -701,11 +701,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   @Override
   public boolean isCalledOnSubClass() {
-    return checkFlag(IS_CALLED_ON_SUBCLASS);
+    return checkFlag(IS_CALLED_ON_SUBCLASS_MASK);
   }
 
   public void setCalledOnSubClass(boolean isCalledOnSubClass){
-    setFlag(isCalledOnSubClass, IS_CALLED_ON_SUBCLASS);
+    setFlag(isCalledOnSubClass, IS_CALLED_ON_SUBCLASS_MASK);
   }
 
 }

@@ -165,7 +165,10 @@ public class AttributesFlyweight {
     }
     writeColor(element, "EFFECT_COLOR", getEffectColor());
     writeColor(element, "ERROR_STRIPE_COLOR", getErrorStripeColor());
-    JDOMExternalizerUtil.writeField(element, "EFFECT_TYPE", String.valueOf(fromEffectType(getEffectType())));
+    int effectType = fromEffectType(getEffectType());
+    if (effectType != 0) {
+      JDOMExternalizerUtil.writeField(element, "EFFECT_TYPE", String.valueOf(effectType));
+    }
   }
 
   private static final int EFFECT_BORDER = 0;
@@ -176,29 +179,16 @@ public class AttributesFlyweight {
   private static final int EFFECT_BOLD_DOTTED_LINE = 5;
 
   private static int fromEffectType(EffectType effectType) {
-    int EFFECT_TYPE;
-    if (effectType == EffectType.BOXED) {
-      EFFECT_TYPE = EFFECT_BORDER;
+    if (effectType == null) return -1;
+    switch (effectType) {
+      case BOXED: return EFFECT_BORDER;
+      case LINE_UNDERSCORE: return EFFECT_LINE;
+      case BOLD_LINE_UNDERSCORE: return EFFECT_BOLD_LINE;
+      case STRIKEOUT: return EFFECT_STRIKEOUT;
+      case WAVE_UNDERSCORE: return EFFECT_WAVE;
+      case BOLD_DOTTED_LINE: return EFFECT_BOLD_DOTTED_LINE;
+      default: return -1;
     }
-    else if (effectType == EffectType.LINE_UNDERSCORE) {
-      EFFECT_TYPE = EFFECT_LINE;
-    }
-    else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-      EFFECT_TYPE = EFFECT_BOLD_LINE;
-    }
-    else if (effectType == EffectType.STRIKEOUT) {
-      EFFECT_TYPE = EFFECT_STRIKEOUT;
-    }
-    else if (effectType == EffectType.WAVE_UNDERSCORE) {
-      EFFECT_TYPE = EFFECT_WAVE;
-    }
-    else if (effectType == EffectType.BOLD_DOTTED_LINE) {
-      EFFECT_TYPE = EFFECT_BOLD_DOTTED_LINE;
-    }
-    else {
-      EFFECT_TYPE = -1;
-    }
-    return EFFECT_TYPE;
   }
 
   private static EffectType toEffectType(int effectType) {

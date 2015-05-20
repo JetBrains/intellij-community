@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,12 @@ package com.jetbrains.python.testing;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunConfiguration;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.jetbrains.python.testing.nosetest.PythonNoseTestUrlProvider;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Roman.Chernyatchik
@@ -27,14 +33,22 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties {
 
   private final boolean myIsEditable;
 
-  public PythonTRunnerConsoleProperties(final ModuleRunConfiguration config, final Executor executor, boolean editable) {
+  public PythonTRunnerConsoleProperties(@NotNull ModuleRunConfiguration config, @NotNull Executor executor, boolean editable) {
     super(config, FRAMEWORK_NAME, executor);
-
     myIsEditable = editable;
   }
 
   @Override
   public boolean isEditable() {
     return myIsEditable;
+  }
+
+  @Nullable
+  @Override
+  public SMTestLocator getTestLocator() {
+    return new SMTestLocator.Composite(
+      pair(PythonUnitTestTestIdUrlProvider.PROTOCOL_ID, PythonUnitTestTestIdUrlProvider.INSTANCE),
+      pair(PythonNoseTestUrlProvider.PROTOCOL_ID, PythonNoseTestUrlProvider.INSTANCE)
+    );
   }
 }

@@ -16,12 +16,12 @@
 package com.jetbrains.python.formatter;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
@@ -30,6 +30,9 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author traff
@@ -58,6 +61,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
     private final Project myProject;
     private final CodeStyleSettings mySettings;
     private final PyCodeStyleSettings myPyCodeStyleSettings;
+    private final List<Couple<PsiComment>> myCommentReplacements = new ArrayList<Couple<PsiComment>>();
     private TextRange myRange;
     private int myDelta = 0;
 
@@ -72,34 +76,62 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
         return range;
       }
       myRange = range;
-      element.accept(this);
+      final PsiDocumentManager manager = PsiDocumentManager.getInstance(myProject);
+      final Document document = manager.getDocument(element.getContainingFile());
+      if (document != null) {
+        manager.doPostponedOperationsAndUnblockDocument(document);
+        try {
+          // collect all comments
+          element.accept(this);
+          for (Couple<PsiComment> pair : myCommentReplacements) {
+            pair.getFirst().replace(pair.getSecond());
+          }
+        }
+        finally {
+          manager.commitDocument(document);
+        }
+      }
       return TextRange.create(range.getStartOffset(), range.getEndOffset() + myDelta);
     }
 
     @Override
-    public void visitComment(PsiComment element) {
-      if (!myRange.contains(element.getTextRange())) {
+    public void visitComment(PsiComment comment) {
+      if (!myRange.contains(comment.getTextRange())) {
         return;
       }
-      String text = element.getText();
-      int commentStart = text.indexOf('#');
-      if (commentStart != -1 && (commentStart + 1) < text.length()) {
-        char charAfterDash = text.charAt(commentStart + 1);
-        if (charAfterDash == '!' && element.getTextRange().getStartOffset() == 0) {
-          return; //shebang
+      final String origText = comment.getText();
+      final int commentStart = origText.indexOf('#');
+      if (commentStart != -1 && (commentStart + 1) < origText.length()) {
+        final char charAfterDash = origText.charAt(commentStart + 1);
+        if (charAfterDash == '!' && comment.getTextRange().getStartOffset() == 0) {
+          return; // shebang
         }
         if (charAfterDash == '#' || charAfterDash == ':') {
+          return; // doc comment
+        }
+        final String commentTextWithoutDash = origText.substring(commentStart + 1);
+        final String newText;
+        if (isTrailingComment(comment)) {
+          newText = "# " + StringUtil.trimLeading(commentTextWithoutDash);
+        }
+        else if (!StringUtil.isWhiteSpace(charAfterDash)) {
+          newText = "# " + commentTextWithoutDash;
+        }
+        else {
           return;
         }
-        String commentText = StringUtil.trimLeading(text.substring(commentStart + 1));
-
-        String newText = "# " + commentText;
-        if (!newText.equals(text)) {
-          myDelta += newText.length() - text.length();
-          element.replace(
-            PyElementGenerator.getInstance(myProject).createFromText(LanguageLevel.getDefault(), PsiComment.class, newText));
+        if (!newText.equals(origText)) {
+          myDelta += newText.length() - origText.length();
+          final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(myProject);
+          final PsiComment newComment = elementGenerator.createFromText(LanguageLevel.forElement(comment), PsiComment.class, newText);
+          myCommentReplacements.add(Couple.of(comment, newComment));
         }
       }
     }
+  }
+
+  private static boolean isTrailingComment(@NotNull PsiComment comment) {
+    final PsiElement prevElement = comment.getPrevSibling();
+    return prevElement != null && (!(prevElement instanceof PsiWhiteSpace) || !prevElement.textContains('\n'));
   }
 }

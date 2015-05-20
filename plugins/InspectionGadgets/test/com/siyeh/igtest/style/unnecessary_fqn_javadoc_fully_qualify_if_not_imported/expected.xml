@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>DoubleQualify.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unnecessary fully qualified name</problem_class>
+    <description>Fully qualified name &lt;code&gt;java.util.HashMap&lt;/code&gt; is unnecessary, and can be replaced with an import #loc</description>
+  </problem>
+
+</problems>

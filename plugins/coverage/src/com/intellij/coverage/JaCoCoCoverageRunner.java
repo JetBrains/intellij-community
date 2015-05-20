@@ -90,14 +90,16 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
       className = className.replace('\\', '.').replace('/', '.');
       final ClassData classData = data.getOrCreateClassData(className);
       final Collection<IMethodCoverage> methods = classCoverage.getMethods();
-      LineData[] lines = new LineData[classCoverage.getLastLine()];
+      LineData[] lines = new LineData[classCoverage.getLastLine() + 1];
       for (IMethodCoverage method : methods) {
         final String desc = method.getName() + method.getDesc();
+        // Line numbers are 1-based here.
         final int firstLine = method.getFirstLine();
         final int lastLine = method.getLastLine();
-        for (int i = firstLine; i < lastLine; i++) {
+        for (int i = firstLine; i <= lastLine; i++) {
           final ILine methodLine = method.getLine(i);
           final int methodLineStatus = methodLine.getStatus();
+          if (methodLineStatus == ICounter.EMPTY) continue;
           final LineData lineData = new LineData(i , desc) {
             @Override
             public int getStatus() {

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.search;
 
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -26,11 +27,10 @@ public class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference
 
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<PsiReference> consumer) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    final SearchScope scope = queryParameters.getScope();
+    final SearchScope scope = queryParameters.getScopeDeterminedByUser();
     final PsiElement element = queryParameters.getElementToSearch();
     final PsiFile containingFile = element.getContainingFile();
-    final boolean isPhysical = containingFile == null || containingFile.getViewProvider().isPhysical();
-    if (isPhysical && !(scope instanceof GlobalSearchScope)) return;
+    if (isPhysicalAndNonScratch(containingFile) && !(scope instanceof GlobalSearchScope)) return;
     final LocalSearchScope currentScope;
     if (scope instanceof LocalSearchScope) {
       if (queryParameters.isIgnoreAccessScope()) return;
@@ -47,11 +47,16 @@ public class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference
       if (virtualFile.getFileType().isBinary()) continue;
       PsiFile file = psiManager.findFile(virtualFile);
 
-      if (file != null && !file.getViewProvider().isPhysical() && !(file instanceof PsiCodeFragment)) {
-        final LocalSearchScope newScope = new LocalSearchScope(file);
-        final LocalSearchScope searchScope = currentScope == null ? newScope : newScope.intersectWith(currentScope);
-        ReferencesSearch.searchOptimized(element, searchScope, true, queryParameters.getOptimizer(), consumer);
-      }
+      if (isPhysicalAndNonScratch(file)) continue;
+      LocalSearchScope newScope = new LocalSearchScope(file);
+      LocalSearchScope searchScope = currentScope == null ? newScope : newScope.intersectWith(currentScope);
+      ReferencesSearch.searchOptimized(element, searchScope, true, queryParameters.getOptimizer(), consumer);
     }
+  }
+
+  private static boolean isPhysicalAndNonScratch(PsiFile file) {
+    if (file == null || file instanceof PsiCodeFragment) return true;
+    return file.getViewProvider().isPhysical() &&
+           ScratchFileService.getInstance().getRootType(file.getVirtualFile()) == null;
   }
 }

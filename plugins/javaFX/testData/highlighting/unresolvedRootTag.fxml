@@ -3,7 +3,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.Label?>
 
-<fx:root type="<error descr="Cannot resolve class or package 'unknownPackage'">unknownPackage</error>.<error descr="Cannot resolve class 'unknownClass'">unknownClass</error>" xmlns:fx="http://javafx.com/fxml">
+<fx:root type=<error descr="Cannot resolve class unknownPackage.unknownClass">"unknownPackage.unknownClass"</error> xmlns:fx="http://javafx.com/fxml">
   <TextField fx:id="textField" text=""/>
   <Label text="Hello"/>
 </fx:root>

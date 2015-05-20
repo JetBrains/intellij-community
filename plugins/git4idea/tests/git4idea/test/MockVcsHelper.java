@@ -68,6 +68,11 @@ public class MockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
+  public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs) {
     throw new UnsupportedOperationException();
   }

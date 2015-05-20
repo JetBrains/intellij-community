@@ -164,7 +164,7 @@
           <option name="HAS_PARENS" value="true" />
           <option name="HAS_STRING_ESCAPES" value="true" />
         </options>
-        <keywords keywords="break;case;catch;continue;defaul;delete;do;else;false;finally;for;function;if;in;instanceof;new;null;return;switch;this;throw;true;try;typeof;var;void;while;with" ignore_case="false" />
+        <keywords keywords="break;case;catch;continue;default;delete;do;else;false;finally;for;function;if;in;instanceof;new;null;return;switch;this;throw;true;try;typeof;var;void;while;with" ignore_case="false" />
       </highlighting>
       <extensionMap>
         <mapping ext="js"/>

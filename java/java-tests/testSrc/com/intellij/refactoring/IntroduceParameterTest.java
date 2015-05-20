@@ -33,7 +33,6 @@ import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -322,13 +321,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
       enabled = myEditor.getSettings().isVariableInplaceRenameEnabled();
       myEditor.getSettings().setVariableInplaceRenameEnabled(false);
-      new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, new DataContext() {
-        @Override
-        @Nullable
-        public Object getData(@NonNls final String dataId) {
-          return null;
-        }
-      });
+      new IntroduceParameterHandler().invoke(getProject(), myEditor, myFile, DataContext.EMPTY_CONTEXT);
       checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
     }
     finally {
@@ -343,6 +336,12 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   }
 
   public void testCodeDuplicates() {
+    configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
+    perform(true, 0, "anObject", false, true, true, false, 0, true);
+    checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
+  }
+
+  public void testCodeDuplicatesFromConstructor() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     perform(true, 0, "anObject", false, true, true, false, 0, true);
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");

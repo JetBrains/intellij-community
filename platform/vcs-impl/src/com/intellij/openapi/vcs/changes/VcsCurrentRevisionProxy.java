@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vcs.impl.CurrentRevisionProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
 
   @NotNull
   public FilePath getFile() {
-    return new FilePathImpl(myFile);
+    return VcsUtil.getFilePath(myFile);
   }
 
   @NotNull

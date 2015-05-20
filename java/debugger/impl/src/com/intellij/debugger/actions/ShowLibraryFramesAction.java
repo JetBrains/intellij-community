@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author egor
@@ -36,10 +37,10 @@ public class ShowLibraryFramesAction extends ToggleAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     final Presentation presentation = e.getPresentation();
-    final boolean shouldShow = !(Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
+    final boolean shouldShow = !Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY));
     presentation.setText(shouldShow ? ourTextWhenShowIsOn : ourTextWhenShowIsOff);
   }
 

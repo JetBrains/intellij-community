@@ -22,14 +22,11 @@ import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.MergeTexts;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -60,56 +57,35 @@ public class ConflictedDiffRequestPresentable implements DiffRequestPresentable 
   @Override
   public MyResult step(DiffChainContext context) {
     if (myChange.getAfterRevision() == null) return createErrorResult();
-    final Getter<MergeTexts> mergeProvider = myChange.getMergeProvider();
     FileType type = myChange.getVirtualFile() != null ? myChange.getVirtualFile().getFileType() : null;
-    if (mergeProvider != null) {
-      // guaranteed text
-      final MergeTexts texts = mergeProvider.get();
-      if (texts == null) {
+    if (myFile.getFileType().isBinary()) {
+      final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, myFile.getName(), context);
+      if (! nowItIsText) {
         return createErrorResult();
       }
+    }
+    final AbstractVcs vcs = ChangesUtil.getVcsForChange(myChange, myProject);
+    if (vcs == null || vcs.getMergeProvider() == null) {
+      return createErrorResult();
+    }
+    try {
+      final MergeData mergeData = vcs.getMergeProvider().loadRevisions(myFile);
+      final Charset charset = myFile.getCharset();
       final MergeRequest request = DiffRequestFactory.getInstance()
-        .create3WayDiffRequest(texts.getLeft(), texts.getRight(), texts.getBase(), type, myProject, null, null);
+        .create3WayDiffRequest(CharsetToolkit.bytesToString(mergeData.CURRENT, charset),
+                               CharsetToolkit.bytesToString(mergeData.LAST, charset),
+                               CharsetToolkit.bytesToString(mergeData.ORIGINAL, charset),
+                               type, myProject, null, null);
       request.setWindowTitle(FileUtil.toSystemDependentName(myFile.getPresentableUrl()));
       // todo titles?
-      request.setVersionTitles(new String[] {myChange.getAfterRevision().getRevisionNumber().asString(),
-        "Base Version", "Last Revision"});
+      VcsRevisionNumber lastRevisionNumber = mergeData.LAST_REVISION_NUMBER;
+      request.setVersionTitles(new String[]{myChange.getAfterRevision().getRevisionNumber().asString(),
+        "Base Version", lastRevisionNumber != null ? lastRevisionNumber.asString() : ""});
       return new MyResult(request, DiffPresentationReturnValue.useRequest);
-
-    } else {
-      FilePathImpl filePath = new FilePathImpl(myFile);
-      if (filePath.getFileType().isBinary()) {
-        final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, filePath, context);
-        if (! nowItIsText) {
-          return createErrorResult();
-        }
-      }
-      final AbstractVcs vcs = ChangesUtil.getVcsForChange(myChange, myProject);
-      if (vcs == null || vcs.getMergeProvider() == null) {
-        return createErrorResult();
-      }
-      try {
-        final MergeData mergeData = vcs.getMergeProvider().loadRevisions(myFile);
-        if (mergeData == null) {
-          return createErrorResult();
-        }
-        final Charset charset = myFile.getCharset();
-        final MergeRequest request = DiffRequestFactory.getInstance()
-          .create3WayDiffRequest(CharsetToolkit.bytesToString(mergeData.CURRENT, charset),
-                                 CharsetToolkit.bytesToString(mergeData.LAST, charset),
-                                 CharsetToolkit.bytesToString(mergeData.ORIGINAL, charset),
-                                 type, myProject, null, null);
-        request.setWindowTitle(FileUtil.toSystemDependentName(myFile.getPresentableUrl()));
-        // todo titles?
-        VcsRevisionNumber lastRevisionNumber = mergeData.LAST_REVISION_NUMBER;
-        request.setVersionTitles(new String[]{myChange.getAfterRevision().getRevisionNumber().asString(),
-          "Base Version", lastRevisionNumber != null ? lastRevisionNumber.asString() : ""});
-        return new MyResult(request, DiffPresentationReturnValue.useRequest);
-      }
-      catch (VcsException e) {
-        LOG.info(e);
-        return createErrorResult();
-      }
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+      return createErrorResult();
     }
   }
 

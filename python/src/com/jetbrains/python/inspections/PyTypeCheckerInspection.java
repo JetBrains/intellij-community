@@ -15,13 +15,16 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.Function;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -32,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author vlan
@@ -89,51 +93,92 @@ public class PyTypeCheckerInspection extends PyInspection {
         boolean genericsCollected = false;
         for (Map.Entry<PyExpression, PyNamedParameter> entry : results.getArguments().entrySet()) {
           final PyNamedParameter p = entry.getValue();
+          final PyExpression key = entry.getKey();
           if (p.isPositionalContainer() || p.isKeywordContainer()) {
             // TODO: Support *args, **kwargs
             continue;
+          }
+          if (p.hasDefaultValue()) {
+           final PyExpression value = p.getDefaultValue();
+            String keyName = key.getName();
+            if (key instanceof PyKeywordArgument) {
+              final PyExpression valueExpression = ((PyKeywordArgument)key).getValueExpression();
+              keyName = valueExpression != null ? valueExpression.getName() : "";
+            }
+            if (value != null && keyName != null && keyName.equals(value.getName()))
+              continue;
           }
           final PyType paramType = myTypeEvalContext.getType(p);
           if (paramType == null) {
             continue;
           }
-          final PyType argType = myTypeEvalContext.getType(entry.getKey());
+          final PyType argType = myTypeEvalContext.getType(key);
           if (!genericsCollected) {
             substitutions.putAll(PyTypeChecker.unifyReceiver(results.getReceiver(), myTypeEvalContext));
             genericsCollected = true;
           }
-          checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, substitutions);
+          checkTypes(paramType, argType, key, myTypeEvalContext, substitutions);
         }
       }
     }
 
     @Nullable
-    private String checkTypes(@Nullable PyType superType, @Nullable PyType subType, @Nullable PsiElement node,
+    private String checkTypes(@Nullable PyType expected, @Nullable PyType actual, @Nullable PsiElement node,
                               @NotNull TypeEvalContext context, @NotNull Map<PyGenericType, PyType> substitutions) {
-      if (subType != null && superType != null) {
-        if (!PyTypeChecker.match(superType, subType, context, substitutions)) {
-          final String superName = PythonDocumentationProvider.getTypeName(superType, context);
-          String expected = String.format("'%s'", superName);
-          final boolean hasGenerics = PyTypeChecker.hasGenerics(superType, context);
+      if (actual != null && expected != null) {
+        if (!PyTypeChecker.match(expected, actual, context, substitutions)) {
+          final String expectedName = PythonDocumentationProvider.getTypeName(expected, context);
+          String quotedExpectedName = String.format("'%s'", expectedName);
+          final boolean hasGenerics = PyTypeChecker.hasGenerics(expected, context);
           ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
           if (hasGenerics) {
-            final PyType subst = PyTypeChecker.substitute(superType, substitutions, context);
-            if (subst != null) {
-              expected = String.format("'%s' (matched generic type '%s')",
-                                       PythonDocumentationProvider.getTypeName(subst, context),
-                                       superName);
+            final PyType substitute = PyTypeChecker.substitute(expected, substitutions, context);
+            if (substitute != null) {
+              quotedExpectedName = String.format("'%s' (matched generic type '%s')",
+                                       PythonDocumentationProvider.getTypeName(substitute, context),
+                                       expectedName);
               highlightType = ProblemHighlightType.WEAK_WARNING;
             }
           }
-          final String msg = String.format("Expected type %s, got '%s' instead",
-                                           expected,
-                                           PythonDocumentationProvider.getTypeName(subType, context));
+          final String actualName = PythonDocumentationProvider.getTypeName(actual, context);
+          String msg= String.format("Expected type %s, got '%s' instead", quotedExpectedName, actualName);
+          if (expected instanceof PyStructuralType) {
+            final Set<String> expectedAttributes = ((PyStructuralType)expected).getAttributeNames();
+            final Set<String> actualAttributes = getAttributes(actual, context);
+            if (actualAttributes != null) {
+              final Sets.SetView<String> missingAttributes = Sets.difference(expectedAttributes, actualAttributes);
+              if (missingAttributes.size() == 1) {
+                msg = String.format("Type '%s' doesn't have expected attribute '%s'", actualName, missingAttributes.iterator().next());
+              }
+              else {
+                msg = String.format("Type '%s' doesn't have expected attributes %s",
+                                    actualName,
+                                    StringUtil.join(missingAttributes, new Function<String, String>() {
+                                      @Override
+                                      public String fun(String s) {
+                                        return String.format("'%s'", s);
+                                      }
+                                    }, ", "));
+              }
+            }
+          }
           registerProblem(node, msg, highlightType);
           return msg;
         }
       }
       return null;
     }
+  }
+
+  @Nullable
+  private static Set<String> getAttributes(@NotNull PyType type, @NotNull TypeEvalContext context) {
+    if (type instanceof PyStructuralType) {
+      return ((PyStructuralType)type).getAttributeNames();
+    }
+    else if (type instanceof PyClassType) {
+      return PyTypeChecker.getClassTypeAttributes((PyClassType)type, true, context);
+    }
+    return null;
   }
 
   @Override

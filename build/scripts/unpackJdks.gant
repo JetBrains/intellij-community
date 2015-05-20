@@ -1,0 +1,93 @@
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+
+target(default: "Unpack JDKs") {
+  unpackJdks()
+}
+
+def unpackJdks() {
+  def osDirName = SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux"
+  String basePath
+  if (new File(home).getName().equals("community")) {
+    basePath = new File(home).getParent()
+  }
+  else {
+    basePath = home
+  }
+
+  def jdkDir = new File(basePath, "build/jdk")
+  def osDir = new File(jdkDir, osDirName)
+  if (!osDir.isDirectory()) {
+    projectBuilder.info("Cannot unpack JDK: $osDir not found")
+    return
+  }
+
+  unpackJdk(osDir, jdkDir, "1.6")
+  unpackJdk(osDir, jdkDir, "1.8")
+}
+
+private void unpackJdk(File osDir, File jdkDir, String majorVersion) {
+  def jdkFiles = osDir.listFiles().findAll { it.name.startsWith("jdk$majorVersion") }
+  if (SystemInfo.isWindows) {
+    def arch = System.getenv("ProgramFiles(x86)") != null ? "x64" : "x32"
+    jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.zip") }
+  }
+  if (jdkFiles.empty) {
+    projectBuilder.info("Cannot unpack JDK: jdk$majorVersion* not found in $osDir")
+    return
+  }
+  if (jdkFiles.size() > 1) {
+    projectBuilder.info("Cannot unpack JDK: several matching files are found ($jdkFiles)")
+    return
+  }
+
+  File jdkFile = jdkFiles.first()
+  def destDir = new File(jdkDir, majorVersion)
+  FileUtil.delete(destDir)
+  if (jdkFile.name.endsWith(".zip")) {
+    ant.unzip(src: jdkFile, dest: destDir)
+  }
+  else if (jdkFile.name.endsWith(".tar")) {
+    projectBuilder.info("Extracting $jdkFile to $destDir")
+    ant.mkdir(dir: destDir)
+    //'tar' and 'mv' commands are used instead of Ant tasks to ensure that executable flag and symlink will be preserved
+    ant.exec(executable: "tar", dir: jdkFile.getParent()) {
+      arg(value: "-xf")
+      arg(value: jdkFile.name)
+      arg(value: "--directory")
+      arg(value: destDir)
+    }
+    if (SystemInfo.isMac && !jdkFile.name.contains("apple")) {
+      new File(destDir, "jre/jdk/Contents").listFiles().each { file ->
+        ant.exec(executable: "mv", dir: destDir) {
+          arg(value: file.absolutePath)
+          arg(value: destDir)
+        }
+      }
+    }
+  }
+  else {
+    projectBuilder.info("Cannot unpack JDK: unknown extension of file '${jdkFile.name}'")
+  }
+}
+

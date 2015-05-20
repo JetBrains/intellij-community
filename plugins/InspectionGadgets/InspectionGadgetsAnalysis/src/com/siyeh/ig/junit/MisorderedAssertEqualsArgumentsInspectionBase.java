@@ -188,7 +188,7 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
     }
 
     private boolean looksLikeExpectedArgument(PsiExpression expression) {
-      if (ExpressionUtils.computeConstantExpression(expression) != null) {
+      if (ExpressionUtils.computeConstantExpression(expression) != null || PsiType.NULL.equals(expression.getType())) {
         return true;
       }
       if (expression instanceof PsiReferenceExpression) {

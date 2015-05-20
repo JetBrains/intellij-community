@@ -1,4 +1,4 @@
-// "Create Enum Constant 'CRIME'" "true"
+// "Create enum constant 'CRIME'" "true"
 import java.util.*;
 
 class AutomaticTypeInference {

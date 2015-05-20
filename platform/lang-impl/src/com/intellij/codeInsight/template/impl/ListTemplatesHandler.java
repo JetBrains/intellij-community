@@ -120,7 +120,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         }
       }
 
-      if (searchInDescription) {
+      if (searchInDescription && !matchingTemplates.containsKey(template)) {
         String templateDescription = template.getDescription();
         if (!prefixWithoutDots.isEmpty() && templateDescription != null && prefixSearchPattern.matcher(templateDescription).matches()) {
           matchingTemplates.put(template, prefixWithoutDots);

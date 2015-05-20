@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,10 @@ import java.util.*;
 
 public class BasePathMacroManager extends PathMacroManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.BasePathMacroManager");
-  private static final CompositePathMacroFilter FILTER = new CompositePathMacroFilter(Extensions.getExtensions(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME));
+
+  private static class Holder {
+    private static final CompositePathMacroFilter FILTER = new CompositePathMacroFilter(Extensions.getExtensions(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME));
+  }
 
   private PathMacrosImpl myPathMacros;
 
@@ -53,13 +56,13 @@ public class BasePathMacroManager extends PathMacroManager {
     myPathMacros = (PathMacrosImpl)pathMacros;
   }
 
-  protected static void addFileHierarchyReplacements(ExpandMacroToPathMap result, String macroName, @Nullable String path) {
+  protected static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @Nullable String path) {
     if (path != null) {
       addFileHierarchyReplacements(result, getLocalFileSystem().findFileByPath(path), '$' + macroName + '$');
     }
   }
 
-  private static void addFileHierarchyReplacements(ExpandMacroToPathMap result, @Nullable VirtualFile f, String macro) {
+  private static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @Nullable VirtualFile f, @NotNull String macro) {
     if (f == null) {
       return;
     }
@@ -89,11 +92,13 @@ public class BasePathMacroManager extends PathMacroManager {
     }
   }
 
+  @NotNull
   private static VirtualFileSystem getLocalFileSystem() {
     // Use VFM directly because of mocks in tests.
     return VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
   }
 
+  @NotNull
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
@@ -103,6 +108,7 @@ public class BasePathMacroManager extends PathMacroManager {
     return result;
   }
 
+  @NotNull
   protected ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
@@ -112,6 +118,7 @@ public class BasePathMacroManager extends PathMacroManager {
     return result;
   }
 
+  @NotNull
   @Override
   public TrackingPathMacroSubstitutor createTrackingSubstitutor() {
     return new MyTrackingPathMacroSubstitutor();
@@ -132,6 +139,7 @@ public class BasePathMacroManager extends PathMacroManager {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, true);
   }
 
+  @NotNull
   @Override
   public String collapsePathsRecursively(@NotNull final String text) {
     return getReplacePathMap().substituteRecursively(text, SystemInfo.isFileSystemCaseSensitive);
@@ -147,7 +155,8 @@ public class BasePathMacroManager extends PathMacroManager {
     getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive);
   }
 
-  public PathMacrosImpl getPathMacros() {
+  @NotNull
+  private PathMacrosImpl getPathMacros() {
     if (myPathMacros == null) {
       myPathMacros = PathMacrosImpl.getInstanceEx();
     }
@@ -159,9 +168,6 @@ public class BasePathMacroManager extends PathMacroManager {
 
     private final MultiMap<String, String> myMacroToComponentNames = MultiMap.createSet();
     private final MultiMap<String, String> myComponentNameToMacros = MultiMap.createSet();
-
-    public MyTrackingPathMacroSubstitutor() {
-    }
 
     @Override
     public void reset() {
@@ -188,7 +194,7 @@ public class BasePathMacroManager extends PathMacroManager {
 
     @Override
     public void collapsePaths(@NotNull final Element element) {
-      getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, false, FILTER);
+      getReplacePathMap().substitute(element, SystemInfo.isFileSystemCaseSensitive, false, Holder.FILTER);
     }
 
     public int hashCode() {

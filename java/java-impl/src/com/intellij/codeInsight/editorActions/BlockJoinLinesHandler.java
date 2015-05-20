@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
@@ -39,17 +40,8 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
     if (!(codeBlock.getParent() instanceof PsiBlockStatement)) return -1;
     final PsiElement parentStatement = codeBlock.getParent().getParent();
 
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(elementAtStartLineEnd.getProject());
-    if (!(parentStatement instanceof PsiIfStatement && codeStyleSettings.IF_BRACE_FORCE != CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
-          parentStatement instanceof PsiWhileStatement && codeStyleSettings.WHILE_BRACE_FORCE !=
-                                                          CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
-          (parentStatement instanceof PsiForStatement || parentStatement instanceof PsiForeachStatement) &&
-          codeStyleSettings.FOR_BRACE_FORCE != CommonCodeStyleSettings.FORCE_BRACES_ALWAYS ||
-                                                                                     parentStatement instanceof PsiDoWhileStatement &&
-                                                                                     codeStyleSettings
-                                                                                       .DOWHILE_BRACE_FORCE !=
-                                                                                     CommonCodeStyleSettings.FORCE_BRACES_ALWAYS)) {
-      return -1;
+    if (getForceBraceSetting(parentStatement) == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS) {
+      return CANNOT_JOIN;
     }
     PsiElement foundStatement = null;
     for (PsiElement element = elementAtStartLineEnd.getNextSibling(); element != null; element = element.getNextSibling()) {
@@ -72,5 +64,23 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
       LOG.error(e);
     }
     return -1;
+  }
+
+  private static int getForceBraceSetting(PsiElement statement) {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(statement.getProject());
+    final CommonCodeStyleSettings codeStyleSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    if (statement instanceof PsiIfStatement) {
+      return codeStyleSettings.IF_BRACE_FORCE;
+    }
+    if (statement instanceof PsiWhileStatement) {
+      return codeStyleSettings.WHILE_BRACE_FORCE;
+    }
+    if (statement instanceof PsiForStatement) {
+      return codeStyleSettings.FOR_BRACE_FORCE;
+    }
+    if (statement instanceof PsiDoWhileStatement) {
+      return codeStyleSettings.DOWHILE_BRACE_FORCE;
+    }
+    return CommonCodeStyleSettings.DO_NOT_FORCE;
   }
 }

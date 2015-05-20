@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,12 @@
  */
 package com.intellij.openapi.fileChooser.actions;
 
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
@@ -25,9 +29,17 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class GotoDesktopDirAction extends FileChooserAction {
+  private final NullableLazyValue<VirtualFile> myDesktopDirectory = new NullableLazyValue<VirtualFile>() {
+    @Nullable
+    @Override
+    protected VirtualFile compute() {
+      return getDesktopDirectory();
+    }
+  };
+
   @Override
   protected void actionPerformed(final FileSystemTree tree, AnActionEvent e) {
-    final VirtualFile dir = getDesktopDirectory();
+    final VirtualFile dir = myDesktopDirectory.getValue();
     if (dir != null) {
       tree.select(dir, new Runnable() {
         @Override
@@ -40,13 +52,21 @@ public class GotoDesktopDirAction extends FileChooserAction {
 
   @Override
   protected void update(FileSystemTree tree, AnActionEvent e) {
-    VirtualFile dir = getDesktopDirectory();
+    VirtualFile dir = myDesktopDirectory.getValue();
     e.getPresentation().setEnabled(dir != null && tree.isUnderRoots(dir));
   }
 
   @Nullable
   private static VirtualFile getDesktopDirectory() {
-    File file = new File(SystemProperties.getUserHome(), "Desktop");
-    return file.isDirectory() ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file) : null;
+    File desktop = new File(SystemProperties.getUserHome(), "Desktop");
+
+    if (!desktop.isDirectory() && SystemInfo.hasXdgOpen()) {
+      String path = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-user-dir", "DESKTOP"));
+      if (path != null) {
+        desktop = new File(path);
+      }
+    }
+
+    return desktop.isDirectory() ? LocalFileSystem.getInstance().refreshAndFindFileByIoFile(desktop) : null;
   }
 }

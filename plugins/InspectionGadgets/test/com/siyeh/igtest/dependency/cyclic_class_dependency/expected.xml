@@ -2,13 +2,6 @@
 <problems>
   <problem>
     <file>Cyclic.java</file>
-    <line>9</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Cyclic class dependency</problem_class>
-    <description>Class 'anonymous (java.lang.Object)' is cyclically dependent on 3 other classes</description>
-  </problem>
-
-  <problem>
-    <file>Cyclic.java</file>
     <line>17</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Cyclic class dependency</problem_class>
     <description>Class 'Base' is cyclically dependent on classes 'com.siyeh.igtest.dependency.cyclic_class_dependency.src.Cyclic' and 'com.siyeh.igtest.dependency.cyclic_class_dependency.src.Top'</description>

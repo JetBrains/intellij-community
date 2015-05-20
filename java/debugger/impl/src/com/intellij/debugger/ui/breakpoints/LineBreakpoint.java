@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,12 +67,11 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
-  @Nullable
-  private String myOwnerMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
   protected LineBreakpoint(Project project, XBreakpoint xBreakpoint) {
@@ -119,16 +118,6 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   @Override
   public Key<LineBreakpoint> getCategory() {
     return CATEGORY;
-  }
-
-  @Override
-  protected void reload(PsiFile file) {
-    super.reload(file);
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
-    if (position != null) {
-      int offset = position.getOffset();
-      myOwnerMethodName = findOwnerMethod(file, offset);
-    }
   }
 
   @Override
@@ -200,8 +189,16 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     updateUI();
   }
 
+  private static Pattern ourAnonymousPattern = Pattern.compile(".*\\$\\d*$");
+  private static boolean isAnonymousClass(ReferenceType classType) {
+    if (classType instanceof ClassType) {
+      return ourAnonymousPattern.matcher(classType.name()).matches();
+    }
+    return false;
+  }
+
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
-    return true;
+    return !(loc.method().isConstructor() && loc.codeIndex() == 0 && isAnonymousClass(classType));
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {
@@ -210,22 +207,28 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       final VirtualFile breakpointFile = position.getFile().getVirtualFile();
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       if (breakpointFile != null && fileIndex.isUnderSourceRootOfType(breakpointFile, JavaModuleSourceRootTypes.SOURCES)) {
+        if (debugProcess.getSearchScope().contains(breakpointFile)) {
+          return true;
+        }
         // apply filtering to breakpoints from content sources only, not for sources attached to libraries
         final Collection<VirtualFile> candidates = findClassCandidatesInSourceContent(className, debugProcess.getSearchScope(), fileIndex);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Found "+ (candidates == null? "null" : candidates.size()) + " candidate containing files for class " + className);
         }
         if (candidates == null) {
+          // If no candidates are found in scope then assume that class is loaded dynamically and allow breakpoint
           return true;
         }
-        for (VirtualFile classFile : candidates) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Breakpoint file: " + breakpointFile.getPath()+ "; candidate file: " + classFile.getPath());
-          }
-          if (breakpointFile.equals(classFile)) {
-            return true;
-          }
-        }
+
+        // breakpointFile is not in scope here and there are some candidates in scope
+        //for (VirtualFile classFile : candidates) {
+        //  if (LOG.isDebugEnabled()) {
+        //    LOG.debug("Breakpoint file: " + breakpointFile.getPath()+ "; candidate file: " + classFile.getPath());
+        //  }
+        //  if (breakpointFile.equals(classFile)) {
+        //    return true;
+        //  }
+        //}
         if (LOG.isDebugEnabled()) {
           final GlobalSearchScope scope = debugProcess.getSearchScope();
           final boolean contains = scope.contains(breakpointFile);
@@ -324,10 +327,6 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       }
     }
     return className;
-  }
-
-  public String toString() {
-    return getDescription();
   }
 
   @Override
@@ -429,7 +428,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     if (printFullTrace) {
       builder.append(DebuggerBundle.message(
         "status.line.breakpoint.reached.full.trace",
-        location.declaringType().name() + "." + location.method().name())
+        DebuggerUtilsEx.getLocationMethodQName(location))
       );
       try {
         final List<StackFrame> frames = event.thread().frames();
@@ -442,7 +441,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     else {
       builder.append(DebuggerBundle.message(
         "status.line.breakpoint.reached",
-        location.declaringType().name() + "." + location.method().name(),
+        DebuggerUtilsEx.getLocationMethodQName(location),
         sourceName,
         getLineIndex() + 1
       ));
@@ -530,7 +529,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   @Nullable
   public String getMethodName() {
-    return myOwnerMethodName;
+    XSourcePosition position = myXBreakpoint.getSourcePosition();
+    if (position != null) {
+      int offset = position.getOffset();
+      return findOwnerMethod(getPsiFile(), offset);
+    }
+    return null;
   }
-
 }

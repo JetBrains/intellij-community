@@ -1,12 +1,9 @@
 package com.intellij.usagesStatistics;
 
-import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.PatchedUsage;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.internal.statistic.persistence.BasicSentUsagesPersistenceComponent;
-import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -28,75 +25,6 @@ public class StatisticsUploadAssistantTest extends TestCase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
-    }
-
-    public void testCreateNewPatch() {
-        final Map<GroupDescriptor, Set<UsageDescriptor>> all = createDescriptors("g:a1:1", "g:a2:2", "g:a3:3");
-        final Map<GroupDescriptor, Set<UsageDescriptor>> sent = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
-
-        final Map<GroupDescriptor, Set<PatchedUsage>> patched = StatisticsUploadAssistant.getPatchedUsages(all, sent);
-
-        assertMapEquals(patched, createDescriptors("g:a1:1", "g:a2:2", "g:a3:3"));
-    }
-
-    public void testEmptyPatchs() {
-        final Map<GroupDescriptor, Set<UsageDescriptor>> all = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
-        final Map<GroupDescriptor, Set<UsageDescriptor>> sent = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
-        assertEquals(StatisticsUploadAssistant.getPatchedUsages(all, sent).size(), 0);
-    }
-
-    public void testCreateEmptyPatch() {
-        final Map<GroupDescriptor, Set<UsageDescriptor>> all = createDescriptors("g:a1:1", "g:a2:2", "g:a3:3", "g2:a1:1", "g2:a2:2", "g2:a3:3");
-        final Map<GroupDescriptor, Set<UsageDescriptor>> sent = createDescriptors("g:a1:1", "g:a2:2", "g:a3:3", "g2:a1:1", "g2:a2:2", "g2:a3:3");
-
-        assertEquals(StatisticsUploadAssistant.getPatchedUsages(all, sent).size(), 0);
-    }
-
-    public void testCreatePatchEmptyAll() {
-        final Map<GroupDescriptor, Set<UsageDescriptor>> all = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
-        final Map<GroupDescriptor, Set<UsageDescriptor>> sent = createDescriptors("g:a1:1", "g:a2:2", "g2:a1:1", "g2:a2:2", "g2:a3:3");
-
-        final Map<GroupDescriptor, Set<PatchedUsage>> patched = StatisticsUploadAssistant.getPatchedUsages(all, sent);
-
-        assertMapEquals(patched, createDescriptors("g:a1:-1", "g2:a2:-2", "g2:a3:-3", "g:a2:-2", "g2:a1:-1"));
-    }
-
-    public void testCreatePatchMerged() {
-        final Map<GroupDescriptor, Set<UsageDescriptor>> all = createDescriptors("g:a1:100", "g:a2:2", "g2:a1:0", "g2:a2:1");
-        final Map<GroupDescriptor, Set<UsageDescriptor>> sent = createDescriptors("g:a1:2", "g:a2:100", "g2:a1:1", "g2:a2:1", "g2:a3:3");
-
-        final Map<GroupDescriptor, Set<PatchedUsage>> patched = StatisticsUploadAssistant.getPatchedUsages(all, sent);
-
-        assertMapEquals(patched, createDescriptors("g:a1:98", "g:a2:-98", "g2:a1:-1", "g2:a3:-3"));
-    }
-
-    public void testPersistSentPatch() {
-        final Map<GroupDescriptor, Set<UsageDescriptor>> allUsages = createDescriptors("g:a1:-1", "g2:a2:-2", "g2:a3:-3", "g:a2:-2", "g2:a1:-1", "g3:a1:13");
-        final SentUsagesPersistence usagesPersistence = new BasicSentUsagesPersistenceComponent();
-
-        Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = StatisticsUploadAssistant.getPatchedUsages(allUsages, usagesPersistence);
-        String result = StatisticsUploadAssistant.getStringPatch(patchedUsages, 500);
-        StatisticsUploadAssistant.persistSentPatch(result, usagesPersistence);
-
-        assertMapEquals(ConvertUsagesUtil.convertString(result), ConvertUsagesUtil.convertString("g:a2=-2,a1=-1;g2:a3=-3,a2=-2,a1=-1;g3:a1=13;"));
-
-        patchedUsages = StatisticsUploadAssistant.getPatchedUsages(allUsages, usagesPersistence);
-        result = StatisticsUploadAssistant.getStringPatch(patchedUsages, 500);
-        StatisticsUploadAssistant.persistSentPatch(result, usagesPersistence);
-
-        assertEquals("sent usages must be persisted", result.length(), 0);
-        assertEquals(allUsages.size(), usagesPersistence.getSentUsages().size());
-    }
-
-    public void testConvertUsages() {
-        final Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = StatisticsUploadAssistant
-                .getPatchedUsages(createDescriptors("g:a1:-1", "g2:a2:-2", "g2:a3:-3", "g:a2:-2", "g2:a1:-1", "g3:a1:13"),
-                                  new HashMap<GroupDescriptor, Set<UsageDescriptor>>());
-
-        final String result = ConvertUsagesUtil.convertUsages(patchedUsages);
-        final Map<GroupDescriptor, Set<UsageDescriptor>> convertedUsages = ConvertUsagesUtil.convertString(result);
-
-        assertMapEquals(patchedUsages, convertedUsages);
     }
 
     public void testConvertUsagesWithPriority() {
@@ -160,39 +88,6 @@ public class StatisticsUploadAssistantTest extends TestCase {
       assertMapEquals(patchedUsages, ConvertUsagesUtil.convertString(veryLongGroupId + ":k1=1;g1:k1=1,k2=2;"));
     }
 
-    public void testPersistSentPatchWithRestrictedSize() {
-        int size = 15;
-        final Map<GroupDescriptor, Set<UsageDescriptor>> allUsages = createDescriptors("g:a1:-1", "g2:a2:-2", "g2:a3:-3", "g:a2:-2", "g3:a1:-1", "g3:a2:13");
-
-        final SentUsagesPersistence usagesPersistence = new BasicSentUsagesPersistenceComponent();
-        Map<GroupDescriptor, Set<PatchedUsage>> patchedUsages = StatisticsUploadAssistant.getPatchedUsages(allUsages, usagesPersistence);
-        String first = StatisticsUploadAssistant.getStringPatch(patchedUsages, size);
-        StatisticsUploadAssistant.persistSentPatch(first, usagesPersistence);
-
-        assertTrue(first.length() <= size);
-        assertMapEquals(ConvertUsagesUtil.convertString(first), ConvertUsagesUtil.convertString("g:a1=-1,a2=-2"));
-
-        patchedUsages = StatisticsUploadAssistant.getPatchedUsages(allUsages, usagesPersistence);
-        String second = StatisticsUploadAssistant.getStringPatch(patchedUsages, size);
-        StatisticsUploadAssistant.persistSentPatch(second, usagesPersistence);
-        assertTrue(second.length() <= size);
-        assertFalse(second.contains(first));
-        assertMapEquals(ConvertUsagesUtil.convertString(second), ConvertUsagesUtil.convertString("g2:a2=-2,a3=-3"));
-
-        patchedUsages = StatisticsUploadAssistant.getPatchedUsages(allUsages, usagesPersistence);
-        String third = StatisticsUploadAssistant.getStringPatch(patchedUsages, size);
-        StatisticsUploadAssistant.persistSentPatch(third, usagesPersistence);
-        assertTrue(third.length() <= size);
-        assertFalse(third.contains(first));
-        assertFalse(third.contains(second));
-        assertMapEquals(ConvertUsagesUtil.convertString(third), ConvertUsagesUtil.convertString("g3:a1=-1,a2=13"));
-
-
-        patchedUsages = StatisticsUploadAssistant.getPatchedUsages(allUsages, usagesPersistence);
-        assertEquals(patchedUsages.size(), 0);
-
-        assertEquals(allUsages.size(), usagesPersistence.getSentUsages().size());
-    }
 
     private static <T extends UsageDescriptor> void  assertMapEquals(@NotNull Map<GroupDescriptor, Set<T>> expected, @NotNull Map<GroupDescriptor, Set<UsageDescriptor>> actual) {
         assertEquals(expected.size(), actual.size());

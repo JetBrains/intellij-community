@@ -24,25 +24,20 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.io.HttpRequests;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipInputStream;
@@ -52,23 +47,39 @@ import java.util.zip.ZipInputStream;
  *         Date: 11/14/12
  */
 public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
+  private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);
 
   private static final String URL = "http://download.jetbrains.com/idea/project_templates/";
 
   public static final String TEMPLATE = "template";
   public static final String INPUT_DEFAULT = "default";
-  public static final Function<Element, String> ELEMENT_STRING_FUNCTION = new Function<Element, String>() {
-    @Override
-    public String fun(Element element) {
-      return element.getText();
-    }
-  };
 
   private final ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>> myTemplates = new ClearableLazyValue<MultiMap<String, ArchivedProjectTemplate>>() {
     @NotNull
     @Override
     protected MultiMap<String, ArchivedProjectTemplate> compute() {
-      return getTemplates();
+      try {
+        return HttpRequests.request(URL + ApplicationInfo.getInstance().getBuild().getProductCode() + "_templates.xml")
+          .connect(new HttpRequests.RequestProcessor<MultiMap<String, ArchivedProjectTemplate>>() {
+            @Override
+            public MultiMap<String, ArchivedProjectTemplate> process(@NotNull HttpRequests.Request request) throws IOException {
+              try {
+                return create(JDOMUtil.load(request.getReader()));
+              }
+              catch (JDOMException e) {
+                LOG.error(e);
+                return MultiMap.emptyInstance();
+              }
+            }
+          });
+      }
+      catch (IOException e) {  // timeouts, lost connection etc
+        LOG.info(e);
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      return MultiMap.emptyInstance();
     }
   };
 
@@ -81,97 +92,53 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(String group, WizardContext context) {
+  public ProjectTemplate[] createTemplates(@Nullable String group, WizardContext context) {
     Collection<ArchivedProjectTemplate> templates = myTemplates.getValue().get(group);
-    return templates.toArray(new ProjectTemplate[templates.size()]);
+    return templates.isEmpty() ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(new ProjectTemplate[templates.size()]);
   }
 
-  private static MultiMap<String, ArchivedProjectTemplate> getTemplates() {
-    InputStream stream = null;
-    HttpURLConnection connection = null;
-    String code = ApplicationInfo.getInstance().getBuild().getProductCode();
-    try {
-      connection = getConnection(code + "_templates.xml");
-      stream = connection.getInputStream();
-      String text = StreamUtil.readText(stream, CharsetToolkit.UTF8_CHARSET);
-      return createFromText(text);
-    }
-    catch (IOException ex) {  // timeouts, lost connection etc
-      LOG.info(ex);
-      return MultiMap.emptyInstance();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      return MultiMap.emptyInstance();
-    }
-    finally {
-      StreamUtil.closeStream(stream);
-      if (connection != null) {
-        connection.disconnect();
-      }
-    }
+  @NotNull
+  @TestOnly
+  public static MultiMap<String, ArchivedProjectTemplate> createFromText(@NotNull String value) throws IOException, JDOMException {
+    return create(JDOMUtil.loadDocument(value).getRootElement());
   }
 
-  @SuppressWarnings("unchecked")
-  public static MultiMap<String, ArchivedProjectTemplate> createFromText(String text) throws IOException, JDOMException {
-
-    MultiMap<String, ArchivedProjectTemplate> map = new MultiMap<String, ArchivedProjectTemplate>();
-    Element rootElement = JDOMUtil.loadDocument(text).getRootElement();
-    List<ArchivedProjectTemplate> templates = createGroupTemplates(rootElement, Namespace.NO_NAMESPACE);
-    for (ArchivedProjectTemplate template : templates) {
+  @NotNull
+  private static MultiMap<String, ArchivedProjectTemplate> create(@NotNull Element element) throws IOException, JDOMException {
+    MultiMap<String, ArchivedProjectTemplate> map = MultiMap.create();
+    for (ArchivedProjectTemplate template : createGroupTemplates(element)) {
       map.putValue(template.getCategory(), template);
     }
     return map;
   }
 
-  @SuppressWarnings("unchecked")
-  private static List<ArchivedProjectTemplate> createGroupTemplates(Element groupElement, final Namespace ns) {
-    List<Element> elements = groupElement.getChildren(TEMPLATE, ns);
-
-    return ContainerUtil.mapNotNull(elements, new NullableFunction<Element, ArchivedProjectTemplate>() {
+  private static List<ArchivedProjectTemplate> createGroupTemplates(Element groupElement) {
+    return ContainerUtil.mapNotNull(groupElement.getChildren(TEMPLATE), new NullableFunction<Element, ArchivedProjectTemplate>() {
       @Override
       public ArchivedProjectTemplate fun(final Element element) {
+        if (!checkRequiredPlugins(element)) {
+          return null;
+        }
 
-        if (!checkRequiredPlugins(element, ns)) return null;
-        String type = element.getChildText("moduleType");
-
-        final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
-
-        final String path = element.getChildText("path", ns);
-        final String description = element.getChildTextTrim("description", ns);
-        String name = element.getChildTextTrim("name", ns);
+        final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(element.getChildText("moduleType"));
+        final String path = element.getChildText("path");
+        final String description = element.getChildTextTrim("description");
+        String name = element.getChildTextTrim("name");
         RemoteProjectTemplate template = new RemoteProjectTemplate(name, element, moduleType, path, description);
-        template.populateFromElement(element, ns);
+        template.populateFromElement(element);
         return template;
       }
     });
   }
 
-  public static List<String> getFrameworks(Element element) {
-    List<Element> frameworks = element.getChildren("framework");
-    return ContainerUtil.map(frameworks, ELEMENT_STRING_FUNCTION);
-  }
-
-  private static boolean checkRequiredPlugins(Element element, Namespace ns) {
-    @SuppressWarnings("unchecked") List<Element> plugins = element.getChildren("requiredPlugin", ns);
-    for (Element plugin : plugins) {
-      String id = plugin.getTextTrim();
-      if (!PluginManager.isPluginInstalled(PluginId.getId(id))) {
+  private static boolean checkRequiredPlugins(Element element) {
+    for (Element plugin : element.getChildren("requiredPlugin")) {
+      if (!PluginManager.isPluginInstalled(PluginId.getId(plugin.getTextTrim()))) {
         return false;
       }
     }
     return true;
   }
-
-  private static HttpURLConnection getConnection(String path) throws IOException {
-    HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(URL + path);
-    connection.setConnectTimeout(2000);
-    connection.setReadTimeout(2000);
-    connection.connect();
-    return connection;
-  }
-
-  private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);
 
   private static class RemoteProjectTemplate extends ArchivedProjectTemplate {
     private final ModuleType myModuleType;
@@ -194,15 +161,13 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     }
 
     @Override
-    public ZipInputStream getStream() throws IOException {
-      final HttpURLConnection connection = getConnection(myPath);
-      return new ZipInputStream(connection.getInputStream()) {
+    public <T> T processStream(@NotNull final StreamProcessor<T> consumer) throws IOException {
+      return HttpRequests.request(URL + myPath).connect(new HttpRequests.RequestProcessor<T>() {
         @Override
-        public void close() throws IOException {
-          super.close();
-          connection.disconnect();
+        public T process(@NotNull HttpRequests.Request request) throws IOException {
+          return consumeZipStream(consumer, new ZipInputStream(request.getInputStream()));
         }
-      };
+      });
     }
 
     @Nullable

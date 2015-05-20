@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.lang;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -28,13 +29,12 @@ import java.util.List;
 public class CompoundRuntimeException extends RuntimeException {
   private final List<Throwable> myThrowables;
 
-
-  public CompoundRuntimeException(final List<Throwable> throwables) {
+  public CompoundRuntimeException(@NotNull List<Throwable> throwables) {
     //noinspection HardCodedStringLiteral
-    super("Several Exceptions occured", throwables.get(0));
+    super("Several Exceptions occurred", throwables.get(0));
+
     myThrowables = throwables;
   }
-
 
   @Override
   public void printStackTrace(PrintStream s) {
@@ -51,12 +51,25 @@ public class CompoundRuntimeException extends RuntimeException {
     }
   }
 
-  public static void doThrow(@NotNull List<Throwable> throwables) {
-    if (throwables.size()== 1) {
-      Throwable throwable = throwables.get(0);
-      if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
-      if (throwable instanceof Error) throw (Error)throwable;
+  public static void doThrow(@Nullable List<Throwable> throwables) {
+    if (ContainerUtil.isEmpty(throwables)) {
+      return;
     }
-    throw new CompoundRuntimeException(throwables);
+
+    if (throwables.size() == 1) {
+      Throwable throwable = throwables.get(0);
+      if (throwable instanceof Error) {
+        throw (Error)throwable;
+      }
+      else if (throwable instanceof RuntimeException) {
+        throw (RuntimeException)throwable;
+      }
+      else {
+        throw new RuntimeException(throwable);
+      }
+    }
+    else {
+      throw new CompoundRuntimeException(throwables);
+    }
   }
 }

@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -47,17 +46,12 @@ public class HgUpdateCommand {
   private final Project project;
   private final VirtualFile repo;
 
-  private String branch;
   private String revision;
   private boolean clean;
 
   public HgUpdateCommand(@NotNull Project project, @NotNull VirtualFile repo) {
     this.project = project;
     this.repo = repo;
-  }
-
-  public void setBranch(String branch) {
-    this.branch = branch;
   }
 
   public void setRevision(String revision) {
@@ -79,8 +73,6 @@ public class HgUpdateCommand {
     if (!StringUtil.isEmptyOrSpaces(revision)) {
       arguments.add("--rev");
       arguments.add(revision);
-    } else if (!StringUtil.isEmptyOrSpaces(branch)) {
-      arguments.add(branch);
     }
 
     final HgPromptCommandExecutor executor = new HgPromptCommandExecutor(project);
@@ -103,7 +95,6 @@ public class HgUpdateCommand {
       DvcsUtil.workingTreeChangeFinished(project, token);
     }
 
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
     VfsUtil.markDirtyAndRefresh(true, true, false, repo);
     return result;
   }
@@ -120,28 +111,28 @@ public class HgUpdateCommand {
     return exitCode.get();
   }
 
-  public static void updateTo(@NotNull final String taskName, @NotNull List<HgRepository> repos, @Nullable final Runnable callInAwtLater) {
+  public static void updateTo(@NotNull final String targetRevision, @NotNull List<HgRepository> repos, @Nullable final Runnable callInAwtLater) {
     FileDocumentManager.getInstance().saveAllDocuments();
     for (HgRepository repo : repos) {
       final VirtualFile repository = repo.getRoot();
       Project project = repo.getProject();
-      updateRepoTo(project, repository, taskName, callInAwtLater);
+      updateRepoTo(project, repository, targetRevision, callInAwtLater);
     }
   }
 
   public static void updateRepoTo(@NotNull final Project project,
                                   @NotNull final VirtualFile repository,
-                                  @NotNull final String taskName,
+                                  @NotNull final String targetRevision,
                                   @Nullable final Runnable callInAwtLater) {
-    updateRepoTo(project, repository, taskName, false, callInAwtLater);
+    updateRepoTo(project, repository, targetRevision, false, callInAwtLater);
   }
 
   public static void updateRepoTo(@NotNull final Project project,
                                   @NotNull final VirtualFile repository,
-                                  @NotNull final String taskName,
+                                  @NotNull final String targetRevision,
                                   final boolean clean,
                                   @Nullable final Runnable callInAwtLater) {
-    new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.updateTo.description", taskName)) {
+    new Task.Backgroundable(project, HgVcsMessages.message("action.hg4idea.updateTo.description", targetRevision)) {
       @Override
       public void onSuccess() {
         if (callInAwtLater != null) {
@@ -151,17 +142,17 @@ public class HgUpdateCommand {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        updateRepoToInCurrentThread(project, repository, taskName, clean);
+        updateRepoToInCurrentThread(project, repository, targetRevision, clean);
       }
     }.queue();
   }
 
   public static boolean updateRepoToInCurrentThread(@NotNull final Project project,
                                                     @NotNull final VirtualFile repository,
-                                                    @NotNull final String taskName,
+                                                    @NotNull final String targetRevision,
                                                     final boolean clean) {
     final HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(project, repository);
-    hgUpdateCommand.setRevision(taskName);
+    hgUpdateCommand.setRevision(targetRevision);
     hgUpdateCommand.setClean(clean);
     HgCommandResult result = hgUpdateCommand.execute();
     new HgConflictResolver(project).resolve(repository);
@@ -177,7 +168,6 @@ public class HgUpdateCommand {
     }
     getRepositoryManager(project).updateRepository(repository);
     HgErrorUtil.markDirtyAndHandleErrors(project, repository);
-    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, repository);
     return success;
   }
 }

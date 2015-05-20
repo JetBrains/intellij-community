@@ -20,6 +20,7 @@ package org.jetbrains.jps.builders.java.dependencyView;
  * Date: 20.01.12
  */
 public interface LoggerWrapper<T> {
+  boolean isDebugEnabled();
   void debug(String comment, T t);
   void debug(String comment, String t);
   void debug(String comment, boolean t);

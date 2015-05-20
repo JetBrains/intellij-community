@@ -27,6 +27,8 @@ import java.util.List;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 /**
+ * Allows to control the list of build targets which are compiled when the Make action is invoked for a specific scope.
+ *
  * @author nik
  */
 public abstract class BuildTargetScopeProvider {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2013 Bas Leijdekkers
+ * Copyright 2008-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       @NonNls final String referenceName = methodExpression.getReferenceName();
-      if (!"valueOf".equals(referenceName) || ExpressionUtils.isConversionToStringNecessary(expression)) {
+      if (!"valueOf".equals(referenceName)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -128,6 +128,10 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
         if (PsiType.CHAR.equals(componentType)) {
           return;
         }
+      }
+      final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, "java.lang.Throwable");
+      if (ExpressionUtils.isConversionToStringNecessary(expression, throwable)) {
+        return;
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {

@@ -11,6 +11,14 @@ import java.util.List;
 
 public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
 
+  @NotNull private final VcsUserRegistry myUserRegistry;
+
+  // created as application service
+  @SuppressWarnings("unused")
+  private VcsLogObjectsFactoryImpl(@NotNull VcsUserRegistry userRegistry) {
+    myUserRegistry = userRegistry;
+  }
+
   @NotNull
   @Override
   public Hash createHash(@NotNull String stringHash) {
@@ -60,7 +68,7 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @NotNull
   @Override
   public VcsUser createUser(@NotNull String name, @NotNull String email) {
-    return new VcsUserImpl(name, email);
+    return myUserRegistry.createUser(name, email);
   }
 
   @NotNull

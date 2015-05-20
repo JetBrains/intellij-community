@@ -70,27 +70,17 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     group.add(myInheritCompilerOutput);
     group.add(myPerModuleCompilerOutput);
 
-    final ActionListener listener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        enableCompilerSettings(!myInheritCompilerOutput.isSelected());
-      }
-    };
-
-    myInheritCompilerOutput.addActionListener(listener);
-    myPerModuleCompilerOutput.addActionListener(listener);
-
     myOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.output.title"), new CommitPathRunnable() {
       @Override
       public void saveUrl(String url) {
-        if (getCompilerExtension().isCompilerOutputPathInherited()) return;  //do not override settings if any
+        if (myInheritCompilerOutput.isSelected()) return;  //do not override settings if any
         getCompilerExtension().setCompilerOutputPath(url);
       }
     });
     myTestsOutputPathPanel = createOutputPathPanel(ProjectBundle.message("module.paths.test.output.title"), new CommitPathRunnable() {
       @Override
       public void saveUrl(String url) {
-        if (getCompilerExtension().isCompilerOutputPathInherited()) return; //do not override settings if any
+        if (myInheritCompilerOutput.isSelected()) return; //do not override settings if any
         getCompilerExtension().setCompilerOutputPathForTests(url);
       }
     });
@@ -129,14 +119,25 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     outputPathsPanel.add(myCbExcludeOutput, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
                                                                    GridBagConstraints.NONE, new Insets(6, 16, 0, 0), 0, 0));
 
+    final boolean outputPathInherited = getCompilerExtension().isCompilerOutputPathInherited();
+    myInheritCompilerOutput.setSelected(outputPathInherited);
+    myPerModuleCompilerOutput.setSelected(!outputPathInherited);
+    
     // fill with data
     updateOutputPathPresentation();
 
     //compiler settings
-    final boolean outputPathInherited = getCompilerExtension().isCompilerOutputPathInherited();
-    myInheritCompilerOutput.setSelected(outputPathInherited);
-    myPerModuleCompilerOutput.setSelected(!outputPathInherited);
     enableCompilerSettings(!outputPathInherited);
+
+    final ActionListener listener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        enableCompilerSettings(!myInheritCompilerOutput.isSelected());
+      }
+    };
+
+    myInheritCompilerOutput.addActionListener(listener);
+    myPerModuleCompilerOutput.addActionListener(listener);
 
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(ProjectBundle.message("project.roots.output.compiler.title"),
@@ -217,6 +218,14 @@ public class BuildElementsEditor extends ModuleElementsEditor {
         }
       }
     };
+
+    final ActionListener listener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        commitRunnable.run();
+      }
+    };
+    myPerModuleCompilerOutput.addActionListener(listener);
 
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override

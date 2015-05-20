@@ -73,29 +73,10 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
         super.visitLambdaExpression(expression);
-        final PsiElement body = expression.getBody();
-        if (body instanceof PsiCodeBlock) {
-          PsiExpression psiExpression = LambdaUtil.extractSingleExpressionFromBody(body);
-          if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
-            if (LambdaUtil.isExpressionStatementExpression(psiExpression)) {
-              final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-              if (parent instanceof PsiExpressionList) {
-                final PsiElement gParent = parent.getParent();
-                if (gParent instanceof PsiCallExpression) {
-                  final CandidateInfo[] candidates = PsiResolveHelper.SERVICE.getInstance(gParent.getProject())
-                    .getReferencedMethodCandidates((PsiCallExpression)gParent, false);
-                  if (candidates.length > 1) {
-                    final List<CandidateInfo> info = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
-                    final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
-                    final JavaMethodsConflictResolver conflictResolver = new JavaMethodsConflictResolver((PsiExpressionList)parent, level);
-                    conflictResolver.checkSpecifics(info, MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY, level);
-                    if (info.size() > 1) {
-                      return;
-                    }
-                  }
-                }
-              }
-            }
+        if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
+          final PsiElement body = expression.getBody();
+          final PsiExpression psiExpression = isCodeBlockRedundant(expression, body);
+          if (psiExpression != null) {
             final PsiElement errorElement;
             final PsiElement parent = psiExpression.getParent();
             if (parent instanceof PsiReturnStatement) {
@@ -108,17 +89,51 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
           }
         }
       }
+    };
+  }
 
-      private boolean findCommentsOutsideExpression(PsiElement body, PsiExpression psiExpression) {
-        final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(body, PsiComment.class);
-        for (PsiComment comment : comments) {
-          if (!PsiTreeUtil.isAncestor(psiExpression, comment, true)) {
-            return true;
+  public static PsiExpression isCodeBlockRedundant(PsiExpression expression, PsiElement body) {
+    if (body instanceof PsiCodeBlock) {
+      PsiExpression psiExpression = LambdaUtil.extractSingleExpressionFromBody(body);
+      if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
+        if (LambdaUtil.isExpressionStatementExpression(psiExpression)) {
+          final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+          if (parent instanceof PsiExpressionList) {
+            final PsiElement gParent = parent.getParent();
+            if (gParent instanceof PsiCallExpression) {
+              final CandidateInfo[] candidates = PsiResolveHelper.SERVICE.getInstance(gParent.getProject())
+                .getReferencedMethodCandidates((PsiCallExpression)gParent, false, true);
+              if (candidates.length > 1) {
+                final List<CandidateInfo> info = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
+                final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
+                final JavaMethodsConflictResolver conflictResolver = new JavaMethodsConflictResolver((PsiExpressionList)parent, level);
+                final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
+                if (argumentList == null) {
+                  return null;
+                }
+                conflictResolver.checkParametersNumber(info, argumentList.getExpressions().length, false);
+                conflictResolver.checkSpecifics(info, MethodCandidateInfo.ApplicabilityLevel.VARARGS, level);
+                if (info.size() > 1) {
+                  return null;
+                }
+              }
+            }
           }
         }
-        return false;
+        return psiExpression;
       }
-    };
+    }
+    return null;
+  }
+
+  private static boolean findCommentsOutsideExpression(PsiElement body, PsiExpression psiExpression) {
+    final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(body, PsiComment.class);
+    for (PsiComment comment : comments) {
+      if (!PsiTreeUtil.isAncestor(psiExpression, comment, true)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class ReplaceWithExprFix implements LocalQuickFix, HighPriorityAction {

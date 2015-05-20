@@ -51,11 +51,17 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     }
   }
 
-  public void addMethod(@NotNull PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
+  public void addMethod(@NotNull PsiMethod method, final PsiSubstitutor substitutor, boolean staticProblem) {
     final boolean isAccessible = JavaResolveUtil.isAccessible(method, getContainingClass(method), method.getModifierList(),
                                                               myPlace, myAccessClass, myCurrentFileContext, myPlaceFile) &&
                                  !isShadowed(method);
     if (isAccepted(method) && !(isInterfaceStaticMethodAccessibleThroughInheritance(method) && ImportsUtil.hasStaticImportOn(myPlace, method, true))) {
+      if (!staticProblem && myAccessClass != null && method.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && containingClass.isInterface() && !containingClass.equals(myAccessClass)) {
+          staticProblem = true;
+        }
+      }
       add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, false));
       if (acceptVarargs() && method.isVarArgs() && PsiUtil.isLanguageLevel8OrHigher(myPlace)) {
         add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, true));
@@ -65,7 +71,10 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   private boolean isInterfaceStaticMethodAccessibleThroughInheritance(PsiMethod method) {
-    if (method.hasModifierProperty(PsiModifier.STATIC) && !(myCurrentFileContext instanceof PsiImportStaticStatement)) {
+    if (method.hasModifierProperty(PsiModifier.STATIC) && 
+        !(myCurrentFileContext instanceof PsiImportStaticStatement) && 
+        myPlace instanceof PsiMethodCallExpression && 
+        ((PsiMethodCallExpression)myPlace).getMethodExpression().getQualifierExpression() == null) {
       final PsiClass containingClass = method.getContainingClass();
       return containingClass != null && containingClass.isInterface();
     }

@@ -65,8 +65,6 @@ public abstract class EncodingManager extends EncodingRegistry {
 
   public abstract void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable);
 
-  public abstract void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
-
   @Nullable
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
 }

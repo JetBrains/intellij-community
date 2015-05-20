@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -58,7 +59,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
   private final int myCaretOffset;
 
-  protected IdentifierHighlighterPass(final Project project, final PsiFile file, final Editor editor) {
+  protected IdentifierHighlighterPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument(), false);
     myFile = file;
     myEditor = editor;
@@ -84,23 +85,27 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       return;
     }
 
-    int flags = TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED;
-    PsiElement myTarget = TargetElementUtilBase.getInstance().findTargetElement(myEditor, flags, myCaretOffset);
+    int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
+    PsiElement myTarget;
+    try {
+      myTarget = TargetElementUtil.getInstance().findTargetElement(myEditor, flags, myCaretOffset);
+    }
+    catch (IndexNotReadyException e) {
+      return;
+    }
     
     if (myTarget == null) {
       if (!PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {
         // when document is committed, try to check injected stuff - it's fast
         Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myEditor, myFile, myCaretOffset);
-        if (injectedEditor != null) {
-          myTarget = TargetElementUtilBase.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset()); 
-        }
+        myTarget = TargetElementUtil.getInstance().findTargetElement(injectedEditor, flags, injectedEditor.getCaretModel().getOffset());
       }
     }
     
     if (myTarget != null) {
       highlightTargetUsages(myTarget);
     } else {
-      PsiReference ref = TargetElementUtilBase.findReference(myEditor);
+      PsiReference ref = TargetElementUtil.findReference(myEditor);
       if (ref instanceof PsiPolyVariantReference) {
         ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
         if (results.length > 0) {
@@ -117,19 +122,19 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   /**
-   * Returns read and write usages of psi element inside single file
+   * Returns read and write usages of psi element inside a single element
    *
    * @param target target psi element
-   * @param psiFile psi file for element
+   * @param psiElement psi element to search in
    * @return a pair where first element is read usages and second is write usages
    */
-  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiFile psiFile, boolean withDeclarations) {
+  public static Couple<Collection<TextRange>> getHighlightUsages(@NotNull PsiElement target, PsiElement psiElement, boolean withDeclarations) {
     Collection<TextRange> readRanges = new ArrayList<TextRange>();
     Collection<TextRange> writeRanges = new ArrayList<TextRange>();
     final ReadWriteAccessDetector detector = ReadWriteAccessDetector.findDetector(target);
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
     final FindUsagesHandler findUsagesHandler = findUsagesManager.getFindUsagesHandler(target, true);
-    final LocalSearchScope scope = new LocalSearchScope(psiFile);
+    final LocalSearchScope scope = new LocalSearchScope(psiElement);
     Collection<PsiReference> refs = findUsagesHandler != null
                               ? findUsagesHandler.findReferencesToHighlight(target, scope)
                               : ReferencesSearch.search(target, scope).findAll();
@@ -144,7 +149,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     }
 
     if (withDeclarations) {
-      final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(psiFile, target);
+      final TextRange declRange = HighlightUsagesHandler.getNameIdentifierRange(psiElement.getContainingFile(), target);
       if (declRange != null) {
         if (detector != null && detector.isDeclarationWriteAccess(target)) {
           writeRanges.add(declRange);
@@ -166,7 +171,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    final boolean virtSpace = TargetElementUtilBase.inVirtualSpace(myEditor, myEditor.getCaretModel().getOffset());
+    final boolean virtSpace = TargetElementUtil.inVirtualSpace(myEditor, myEditor.getCaretModel().getOffset());
     final List<HighlightInfo> infos = virtSpace ? Collections.<HighlightInfo>emptyList() : getHighlights();
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
   }

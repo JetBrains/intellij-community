@@ -7,6 +7,7 @@ package com.intellij.refactoring;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiEllipsisType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
@@ -307,6 +308,8 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
   }
 
   public void testSpecJavadoc() throws Exception {
+    JavaCodeStyleSettings settings = getCurrentCodeStyleSettings().getCustomSettings(JavaCodeStyleSettings.class);
+    settings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
     doTestFirstParamType("meth", "Spec", PsiType.DOUBLE,
                  myJavaFacade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_SET, null));
   }

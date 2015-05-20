@@ -18,6 +18,7 @@ package com.intellij.refactoring.convertToInstanceMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -231,6 +232,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     if (!myTargetClass.isInterface()) {
       PsiMethod method = addMethodToClass(myTargetClass);
       fixVisibility(method, usages);
+      EditorHelper.openInEditor(method);
     }
     else {
       final PsiMethod interfaceMethod = addMethodToClass(myTargetClass);
@@ -239,6 +241,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
       modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
       RefactoringUtil.makeMethodAbstract(myTargetClass, interfaceMethod);
+
+      EditorHelper.openInEditor(interfaceMethod);
 
       for (final PsiClass psiClass : inheritors) {
         final PsiMethod newMethod = addMethodToClass(psiClass);

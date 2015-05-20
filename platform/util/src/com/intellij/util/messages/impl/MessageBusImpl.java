@@ -273,6 +273,7 @@ public class MessageBusImpl implements MessageBus {
     int count = countObject == null ? 0 : countObject;
     int newCount = count + delta;
     if (newCount > 0) {
+      checkNotDisposed();
       map.put(this, newCount);
     } else if (newCount == 0) {
       map.remove(this);
@@ -299,6 +300,12 @@ public class MessageBusImpl implements MessageBus {
         Set<MessageBusImpl> buses = map.keySet();
         if (!buses.isEmpty()) {
           for (MessageBusImpl bus : new ArrayList<MessageBusImpl>(buses)) {
+            if (bus.myDisposed) {
+              map.remove(bus);
+              LOG.error("Accessing disposed message bus " + bus);
+              continue;
+            }
+
             bus.doPumpMessages();
           }
         }

@@ -164,7 +164,7 @@ public class StdArrangementTokens {
     @NotNull public static final ArrangementSettingsToken PROPERTY        = invertible("PROPERTY", StdArrangementTokenType.ENTRY_TYPE);
     @NotNull public static final ArrangementSettingsToken EVENT_HANDLER   = invertible("EVENT_HANDLER", StdArrangementTokenType.ENTRY_TYPE);
     @NotNull public static final ArrangementSettingsToken STATIC_INIT     = invertible("STATIC_INIT", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken INIT_BLOCK      = invertible("INITIALIZER BLOCK", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken INIT_BLOCK      = invertible("INITIALIZER_BLOCK", StdArrangementTokenType.ENTRY_TYPE);
     @NotNull public static final ArrangementSettingsToken NAMESPACE       = invertible("NAMESPACE", StdArrangementTokenType.ENTRY_TYPE);
     @NotNull public static final ArrangementSettingsToken TRAIT           = invertible("TRAIT", StdArrangementTokenType.ENTRY_TYPE);
 

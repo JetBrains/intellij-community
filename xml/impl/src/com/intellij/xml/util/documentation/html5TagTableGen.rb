@@ -25,7 +25,7 @@ file = File.new("html5.html")
 content = file.read
 offset = 0
 # parse tags
-content.scan(/<tr><th><code><a href="([^"]+)">([^<]+).*<\/th>\s*<td>(?:<a href="[^"]+">)?([^<]+).*(<\/td>)?/) do |match|
+content.scan(/<tr><th><code(?:[^>]*)><a href="([^"]+)">([^<]+)(?:(?!<tr>).)*<\/th>\s*<td>(?:<a href="(?:[^"]+)"[^>]*>)?([^<]+)(?:(?!<tr>).)*(<\/td>)?/) do |match|
   next if known4Tags.include?($2)
   startTag = true
   endTag = true
@@ -46,7 +46,7 @@ content.scan(/<tr><th><code><a href="([^"]+)">([^<]+).*<\/th>\s*<td>(?:<a href="
 end
 
 generatedAttributes = Set.new
-content[offset..-1].scan(/<tr><th>\s?<code(?:[^>]*)>([^<]+)\s*<\/code>\s*<td>([^;\n]*(?:;\s*[^;\n]*)*)\s*<td>\s*(.*)\s*<td>(.*)/) do
+content[offset..-1].scan(/<tr><th(?:[^>]*)>\s?<code(?:[^>]*)>([^<]+)\s*<\/code>(?:\s*<\/td>)?\s*<\/th>\s*<td>([^;\n]*(?:;\s*[^;\n]*)*)(?:\s*<\/td>)\s*<td>\s*(.*)(?:\s*<\/td>)\s*<td>(.*)/) do
   next if known4Attributes.include?($1)
   name = $1
   field_and_link = $2

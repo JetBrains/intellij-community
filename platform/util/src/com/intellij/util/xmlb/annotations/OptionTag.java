@@ -24,6 +24,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Please consider to use annotation parameters only to achieve backward compatibility. Otherwise feel free to file issues about serialization cosmetics.
+ *
  * <p>Store value in tag like {@code <option name="optionName" value="optionValue"/>}</p>
  * <p>nameAttribute can be empty, in which case it is skipped: {@code <option value="optionValue" />}</p>
  *

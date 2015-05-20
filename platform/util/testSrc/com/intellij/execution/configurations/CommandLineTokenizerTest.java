@@ -24,8 +24,10 @@ public class CommandLineTokenizerTest extends TestCase {
     assertTokens("a\" b\"", "a b");
     assertTokens("\"a b", "a b");
     assertTokens("a b\"", "a", "b");
+    assertTokens("a b\\\"", "a", "b\"");
     assertTokens("a b\" c", "a", "b c");
     assertTokens("\"a b\" c \"d e\"", "a b", "c", "d e");
+    assertTokens("\"-Dquote=\\\\\"", "-Dquote=\\\\");
   }
 
   public void testEscape() throws Exception {
@@ -43,6 +45,11 @@ public class CommandLineTokenizerTest extends TestCase {
     assertTokens("\\\"a b\\\"", "\"a", "b\"");
     assertTokens("\\\"a\\ b\\\"", true, "\"a b\"");
     assertTokens("\\\"a\\ b\\\"", false, "\"a\\", "b\"");
+
+    // Check tail \" as Java does (most compatible way to go: doubling the tail backslash), see comment in
+    // http://cr.openjdk.java.net/~uta/openjdk-webrevs/JDK-8016046/webrev.01/src/windows/classes/java/lang/ProcessImpl.java.frames.html
+    // line L188/R199
+    assertTokens("\"-lib=c:\\My Lib\\\\\" \"-include=c:\\My Include\\\\\"", true, "-lib=c:\\My Lib\\\\", "-include=c:\\My Include\\\\");
   }
 
   private static void assertTokens(String cmd, String... tokens) {

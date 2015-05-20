@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.dvcs;
 
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -133,7 +132,7 @@ public abstract class DvcsPlatformFacadeImpl implements DvcsPlatformFacade {
   @NotNull
   @Override
   public SaveAndSyncHandler getSaveAndSyncHandler() {
-    return SaveAndSyncHandlerImpl.getInstance();
+    return SaveAndSyncHandler.getInstance();
   }
 
   @Override

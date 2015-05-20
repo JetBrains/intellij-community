@@ -45,7 +45,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V extends Streamable> extends 
                                         final CollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
     myMap = new PersistentHashMap<K, Collection<V>>(file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory));
-    myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE) {
+    myCache = new SLRUCache<K, Collection>(CACHE_SIZE, CACHE_SIZE, keyExternalizer) {
       @NotNull
       @Override
       public Collection createValue(K key) {

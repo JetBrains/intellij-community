@@ -22,12 +22,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.gson.GsonUtil;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.jira.rest.JiraRestApi;
 import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.ArrayUtil;
@@ -44,10 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -57,7 +54,7 @@ import java.util.regex.Pattern;
 @Tag("JIRA")
 public class JiraRepository extends BaseRepositoryImpl {
 
-  public static final Gson GSON = GsonUtil.createDefaultBuilder().create();
+  public static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
   private final static Logger LOG = Logger.getInstance(JiraRepository.class);
   public static final String REST_API_PATH = "/rest/api/latest";
 
@@ -352,8 +349,14 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
     myApiVersion.setTaskState(task, state);
+  }
+
+  @NotNull
+  @Override
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    return myApiVersion.getAvailableTaskStates(task);
   }
 
   public void setSearchQuery(String searchQuery) {
@@ -362,17 +365,17 @@ public class JiraRepository extends BaseRepositoryImpl {
 
   @Override
   public void setUrl(String url) {
+    // Compare only normalized URLs
+    final String oldUrl = getUrl();
+    super.setUrl(url);
     // reset remote API version, only if server URL was changed
-    if (!getUrl().equals(url)) {
+    if (!getUrl().equals(oldUrl)) {
       myApiVersion = null;
-      super.setUrl(url);
     }
   }
 
   /**
    * Used to preserve discovered API version for the next initialization.
-   *
-   * @return
    */
   @SuppressWarnings("UnusedDeclaration")
   @Nullable

@@ -58,8 +58,9 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
     final boolean needQualifier = match.getInstanceExpression() != null;
     final boolean needStaticQualifier = isExternal(match);
     final boolean nameConflicts = nameConflicts(match);
+    final String methodName = myMethod.isConstructor() ? "this" : myMethod.getName();
     @NonNls final String text = needQualifier || needStaticQualifier || nameConflicts
-                                ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";
+                                ?  "q." + methodName + "()": methodName + "()";
     PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, null);
     methodCallExpression = (PsiMethodCallExpression)CodeStyleManager.getInstance(myMethod.getManager()).reformat(methodCallExpression);
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
@@ -149,7 +150,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
   }
 
   @Override
-  public boolean hasDuplicates() {
+  public Boolean hasDuplicates() {
     return myDuplicates.isEmpty();
   }
 

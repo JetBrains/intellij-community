@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.util.registry;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.SortedMap;
@@ -26,9 +28,12 @@ import java.util.TreeMap;
 
 @State(
   name = "Registry",
-  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
+  storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/ide.general.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
-public class RegistryState implements BaseComponent, PersistentStateComponent<Element> {
+public class RegistryState implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(RegistryState.class);
 
   @Override
@@ -47,19 +52,5 @@ public class RegistryState implements BaseComponent, PersistentStateComponent<El
         LOG.info("  " + entry.getKey() + " = " + entry.getValue());
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "Registry";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 }

@@ -872,7 +872,7 @@ public class SvnInfoHandler extends DefaultHandler {
     @Nullable private final File myBase;
 
     private Entry(@Nullable final File base) {
-      super(new String[]{"url", "relative-url", "lock", "repository","wc-info","commit","conflict","tree-conflict"}, new String[]{});
+      super(new String[]{"url", "relative-url", "lock", "repository","wc-info","commit","tree-conflict"}, new String[]{"conflict"});
       myBase = base;
     }
 

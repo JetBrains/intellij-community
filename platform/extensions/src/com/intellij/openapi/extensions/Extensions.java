@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,19 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.Disposer;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
   private static LogProvider ourLogger = new SimpleLogProvider();
-  private static Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new THashMap<AreaInstance, ExtensionsAreaImpl>();
-  private static Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new THashMap<String, AreaClassConfiguration>();
+  private static final Map<AreaInstance, ExtensionsAreaImpl> ourAreaInstance2area = ContainerUtil.newConcurrentMap();
+  private static final Map<String, AreaClassConfiguration> ourAreaClass2Configuration = ContainerUtil.newConcurrentMap();
 
   @NotNull private static ExtensionsAreaImpl ourRootArea = createRootArea();
 
@@ -43,14 +42,6 @@ public class Extensions {
     ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
     rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
     return rootArea;
-  }
-
-  public static void setSynchronized() {
-    assert ourAreaInstance2area.isEmpty();
-    assert ourAreaClass2Configuration.isEmpty();
-
-    ourAreaInstance2area = new ConcurrentHashMap<AreaInstance, ExtensionsAreaImpl>();
-    ourAreaClass2Configuration = new ConcurrentHashMap<String, AreaClassConfiguration>();
   }
 
   @NotNull
@@ -91,13 +82,12 @@ public class Extensions {
   }
 
   @NotNull
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     return (T[])getExtensions(extensionPointName.getName(), null);
   }
 
   @NotNull
-  @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
     // keep it until 1.7 JDK
     return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
@@ -160,7 +150,7 @@ public class Extensions {
       // allow duplicate area class registrations if they are the same - fixing duplicate registration in tests is much more trouble
       AreaClassConfiguration configuration = ourAreaClass2Configuration.get(areaClass);
       if (!equals(configuration.getParentClassName(), parentAreaClass)) {
-        throw new RuntimeException("Area class already registered: " + areaClass + ", "+ ourAreaClass2Configuration.get(areaClass));
+        throw new RuntimeException("Area class already registered: " + areaClass + ", "+ configuration);
       }
       else {
         return;
@@ -199,7 +189,7 @@ public class Extensions {
     private final String myClassName;
     private final String myParentClassName;
 
-    AreaClassConfiguration(@NotNull String className, String parentClassName) {
+    private AreaClassConfiguration(@NotNull String className, String parentClassName) {
       myClassName = className;
       myParentClassName = parentClassName;
     }
@@ -211,6 +201,11 @@ public class Extensions {
 
     public String getParentClassName() {
       return myParentClassName;
+    }
+
+    @Override
+    public String toString() {
+      return "AreaClassConfiguration{myClassName='" + myClassName + '\'' + ", myParentClassName='" + myParentClassName + "'}";
     }
   }
 

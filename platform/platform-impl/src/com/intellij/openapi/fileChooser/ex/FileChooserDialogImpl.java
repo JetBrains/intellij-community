@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -46,6 +47,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -55,7 +57,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -286,7 +287,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     final JLabel label = new JLabel(description);
     label.setBorder(BorderFactory.createCompoundBorder(
       new SideBorder(UIUtil.getPanelBackground().darker(), SideBorder.BOTTOM),
-      BorderFactory.createEmptyBorder(0, 5, 10, 5)));
+      JBUI.Borders.empty(0, 5, 10, 5)));
     return label;
   }
 
@@ -297,7 +298,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     Disposer.register(myDisposable, myUiUpdater);
     new UiNotifyConnector(panel, myUiUpdater);
 
-    panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+    panel.setBorder(JBUI.Borders.empty());
 
     createTree();
 
@@ -316,7 +317,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     toolbarPanel.add(myTextFieldAction, BorderLayout.EAST);
 
     myPathTextFieldWrapper = new JPanel(new BorderLayout());
-    myPathTextFieldWrapper.setBorder(new EmptyBorder(0, 0, 2, 0));
+    myPathTextFieldWrapper.setBorder(JBUI.Borders.emptyBottom(2));
     myPathTextField = new FileTextFieldImpl.Vfs(
       FileChooserFactoryImpl.getMacroMap(), getDisposable(),
       new LocalFsFinder.FileChooserFilter(myChooserDescriptor, myFileSystemTree)) {
@@ -344,7 +345,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myFileSystemTree.getTree());
     //scrollPane.setBorder(BorderFactory.createLineBorder(new Color(148, 154, 156)));
     panel.add(scrollPane, BorderLayout.CENTER);
-    panel.setPreferredSize(new Dimension(400, 400));
+    panel.setPreferredSize(JBUI.size(400));
 
 
     panel.add(new JLabel(
@@ -356,7 +357,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       .subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
-          SaveAndSyncHandlerImpl.getInstance().maybeRefresh(ModalityState.current());
+          ((SaveAndSyncHandlerImpl)SaveAndSyncHandler.getInstance()).maybeRefresh(ModalityState.current());
         }
       });
 

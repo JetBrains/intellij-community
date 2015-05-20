@@ -19,9 +19,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class CharArrayCharSequence implements CharSequenceBackedByArray {
-  private final char[] myChars;
-  private final int myStart;
-  private final int myEnd;
+  protected final char[] myChars;
+  protected final int myStart;
+  protected final int myEnd;
 
   public CharArrayCharSequence(@NotNull char... chars) {
     this(chars, 0, chars.length);

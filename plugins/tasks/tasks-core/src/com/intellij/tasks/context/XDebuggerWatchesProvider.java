@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class XDebuggerWatchesProvider extends WorkingContextProvider {
     XDebuggerWatchesManager.WatchesManagerState state = myWatchesManager.getState();
     Element serialize = XmlSerializer.serialize(state, new SerializationFilter() {
       @Override
-      public boolean accepts(@NotNull Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         return accessor.read(bean) != null;
       }
     });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.help.impl;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
@@ -45,15 +47,17 @@ public class KeymapGenerator implements ApplicationStarter {
 
   @Override
   public void main(String[] args) {
+    ActionManager actionManager = ActionManager.getInstance();
     StringBuilder xml = new StringBuilder();
     xml.append("<Keymaps>\n");
 
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
-      
+
       xml.append("  <Keymap name=\"").append(keymap.getPresentableName()).append("\">\n");
       for (String id : keymap.getActionIds()) {
         String shortcuts = KeymapUtil.getShortcutsText(keymap.getShortcuts(id));
         if (!StringUtil.isEmpty(shortcuts)) {
+          AnAction action = actionManager.getAction(id);
           xml.append("    <Action id=\"").append(id).append("\">\n");
           Set<String> addedShortcuts = new THashSet<String>();
           for (Shortcut shortcut : keymap.getShortcuts(id)) {
@@ -62,6 +66,12 @@ public class KeymapGenerator implements ApplicationStarter {
             String shortcutText = KeymapUtil.getShortcutText(shortcut);
             if (addedShortcuts.add(shortcutText)) {
               xml.append("      <Shortcut>").append(shortcutText).append("</Shortcut>\n");
+            }
+          }
+          if (action != null) {
+            String text = action.getTemplatePresentation().getText();
+            if (text != null) {
+              xml.append("      <Text>").append(StringUtil.escapeXml(text)).append("</Text>\n");
             }
           }
           xml.append("    </Action>\n");

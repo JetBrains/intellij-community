@@ -31,7 +31,7 @@
     <localInspection shortName="HardCodedStringLiteral" bundle="messages.CodeInsightBundle" key="inspection.i18n.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.i18n.I18nInspection"/>
-    <localInspection language="JAVA" shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
+    <localInspection groupPath="Java"  language="JAVA" shortName="UnresolvedPropertyKey" bundle="messages.CodeInsightBundle"
                      key="inspection.unresolved.property.key.reference.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.properties.files" enabledByDefault="true"
                      level="ERROR" implementationClass="com.intellij.codeInspection.i18n.InvalidPropertyKeyInspection"/>
@@ -43,10 +43,29 @@
                      key="unused.message.format.parameter.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.lang.properties.UnusedMessageFormatParameterInspection"/>
-    <localInspection language="JAVA" shortName="DuplicateStringLiteralInspection" bundle="messages.InspectionsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="DuplicateStringLiteralInspection" bundle="messages.InspectionsBundle"
                      key="inspection.duplicates.display.name" groupName="Internationalization issues" enabledByDefault="false"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection"/>
+
+    <localInspection groupPath="Java"  language="JAVA" shortName="DialogTitleCapitalization"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
+                     displayName="Incorrect string capitalization"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="com.intellij.codeInspection.capitalization.TitleCapitalizationInspection"/>
+    <localInspection language="Properties" shortName="SuspiciousLocalesLanguages"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
+                     displayName="Suspicious resource bundle locale languages"
+                     enabledByDefault="false"
+                     level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SuspiciousLocalesLanguagesInspection"/>
+
+    <intentionAction>
+      <className>com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention</className>
+      <category>I18N</category>
+    </intentionAction>
+
   </extensions>
   <actions>
     <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction">

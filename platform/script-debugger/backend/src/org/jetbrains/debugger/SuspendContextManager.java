@@ -6,11 +6,10 @@ import org.jetbrains.concurrency.Promise;
 
 public interface SuspendContextManager<CALL_FRAME extends CallFrame> {
   /**
-   * Tries to suspend VM. If successful, {@link DebugEventListener#suspended(SuspendContext)}
-   * will be called.
+   * Tries to suspend VM. If successful, {@link DebugEventListener#suspended(SuspendContext)} will be called.
    */
   @NotNull
-  Promise<Void> suspend();
+  Promise<?> suspend();
 
   @Nullable
   SuspendContext getContext();
@@ -23,11 +22,12 @@ public interface SuspendContextManager<CALL_FRAME extends CallFrame> {
   void setOverlayMessage(@Nullable String message);
 
   /**
-   * Resumes the VM execution using a "continue" request. This context becomes invalid until another context is supplied through the
+   * Resumes the VM execution. This context becomes invalid until another context is supplied through the
    * {@link DebugEventListener#suspended(SuspendContext)} event.
    *  @param stepAction to perform
    * @param stepCount steps to perform (not used if {@code stepAction == CONTINUE})
    */
+  @NotNull
   Promise<Void> continueVm(@NotNull StepAction stepAction, int stepCount);
 
   boolean isRestartFrameSupported();

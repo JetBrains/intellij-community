@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,13 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.components.ex.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
@@ -59,7 +62,8 @@ public class ServiceManagerImpl implements BaseComponent {
   protected ServiceManagerImpl(boolean ignoreInit) {
   }
 
-  protected void installEP(final ExtensionPointName<ServiceDescriptor> pointName, final ComponentManager componentManager) {
+  protected void installEP(@NotNull ExtensionPointName<ServiceDescriptor> pointName, @NotNull final ComponentManager componentManager) {
+    LOG.assertTrue(myExtensionPointName == null, "Already called installEP with " + myExtensionPointName);
     myExtensionPointName = pointName;
     final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(pointName);
     final MutablePicoContainer picoContainer = (MutablePicoContainer)componentManager.getPicoContainer();
@@ -68,14 +72,17 @@ public class ServiceManagerImpl implements BaseComponent {
       @Override
       public void extensionAdded(@NotNull final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor) {
         if (descriptor.overrides) {
-          ComponentAdapter oldAdapter =
-            picoContainer.unregisterComponent(descriptor.getInterface());// Allow to re-define service implementations in plugins.
+          // Allow to re-define service implementations in plugins.
+          ComponentAdapter oldAdapter = picoContainer.unregisterComponent(descriptor.getInterface());
           if (oldAdapter == null) {
             throw new RuntimeException("Service: " + descriptor.getInterface() + " doesn't override anything");
           }
         }
 
-        picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));
+        // empty serviceImplementation means we want to unregister service
+        if (!StringUtil.isEmpty(descriptor.serviceImplementation)) {
+          picoContainer.registerComponent(new MyComponentAdapter(descriptor, pluginDescriptor, (ComponentManagerEx)componentManager));
+        }
       }
 
       @Override
@@ -114,7 +121,13 @@ public class ServiceManagerImpl implements BaseComponent {
           }
         }
         catch (Throwable e) {
-          LOG.error(e);
+          if (PlatformUtils.isIdeaUltimate()) {
+            LOG.error(e);
+          }
+          else {
+            // well, component registered, but required jar is not added to classpath (community edition or junior IDE)
+            LOG.warn(e);
+          }
           continue;
         }
 
@@ -122,7 +135,7 @@ public class ServiceManagerImpl implements BaseComponent {
           break;
         }
       }
-      else if (o instanceof ComponentAdapter) {
+      else if (o instanceof ComponentAdapter && !(o instanceof ExtensionComponentAdapter)) {
         try {
           aClass = ((ComponentAdapter)o).getComponentImplementation();
         }
@@ -229,8 +242,7 @@ public class ServiceManagerImpl implements BaseComponent {
 
     private synchronized ComponentAdapter getDelegate() {
       if (myDelegate == null) {
-        myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(
-          myDescriptor.getImplementation()), null, true));
+        myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), loadClass(myDescriptor.getImplementation()), null, true);
       }
 
       return myDelegate;
@@ -244,11 +256,6 @@ public class ServiceManagerImpl implements BaseComponent {
     @Override
     public void accept(final PicoVisitor visitor) {
       visitor.visitComponentAdapter(this);
-    }
-
-    @Override
-    public boolean isAssignableTo(Class aClass) {
-      return aClass.getName().equals(getComponentKey());
     }
 
     @Override

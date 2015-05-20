@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -43,27 +47,43 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    final Border border = c.getBorder();
-    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    final boolean square = isSquare(c);
-    if (c.isEnabled() && border != null) {
-      final Insets ins = border.getBorderInsets(c);
-      final int yOff = (ins.top + ins.bottom) / 4;
-      if (!square) {
-        if (c instanceof JButton && ((JButton)c).isDefaultButton()) {
-          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, c.getHeight(), getSelectedButtonColor2()));
+    int w = c.getWidth();
+    int h = c.getHeight();
+    if (isHelpButton(c)) {
+      ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
+      int off = JBUI.scale(22);
+      int x = (w - off) / 2;
+      int y = (h - off) / 2;
+      g.fillOval(x, y, off, off);
+      AllIcons.Actions.Help.paintIcon(c, g, x + JBUI.scale(3), y + JBUI.scale(3));
+    } else {
+      final Border border = c.getBorder();
+      final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+      final boolean square = isSquare(c);
+      if (c.isEnabled() && border != null) {
+        final Insets ins = border.getBorderInsets(c);
+        final int yOff = (ins.top + ins.bottom) / 4;
+        if (!square) {
+          if (c instanceof JButton && ((JButton)c).isDefaultButton()) {
+            ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()));
+          }
+          else {
+            ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
+          }
         }
-        else {
-          ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, c.getHeight(), getButtonColor2()));
-        }
+        int rad = JBUI.scale(square ? 3 : 5);
+        g.fillRoundRect(JBUI.scale(square ? 2 : 4), yOff, w - 2 * JBUI.scale(4), h - 2 * yOff, rad, rad);
       }
-      g.fillRoundRect(square ? 2 : 4, yOff, c.getWidth() - 2 * 4, c.getHeight() - 2 * yOff, square ? 3 : 5, square ? 3 : 5);
+      config.restore();
+      super.paint(g, c);
     }
-    config.restore();
-    super.paint(g, c);
   }
 
   protected void paintText(Graphics g, JComponent c, Rectangle textRect, String text) {
+    if (isHelpButton(c)) {
+      return;
+    }
+    
     AbstractButton button = (AbstractButton)c;
     ButtonModel model = button.getModel();
     Color fg = button.getForeground();
@@ -123,20 +143,26 @@ public class DarculaButtonUI extends BasicButtonUI {
       }
     }
   }
+  
+  public static boolean isHelpButton(JComponent button) {
+    return SystemInfo.isMac 
+           && button instanceof JButton 
+           && "help".equals(button.getClientProperty("JButton.buttonType"));
+  }
 
   protected Color getButtonColor1() {
-    return UIManager.getColor("Button.darcula.color1");
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.color1"), new ColorUIResource(0x555a5c));
   }
 
   protected Color getButtonColor2() {
-    return UIManager.getColor("Button.darcula.color2");
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.color2"), new ColorUIResource(0x414648));
   }
 
   protected Color getSelectedButtonColor1() {
-    return UIManager.getColor("Button.darcula.selection.color1");
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.selection.color1"), new ColorUIResource(0x384f6b));
   }
 
   protected Color getSelectedButtonColor2() {
-    return UIManager.getColor("Button.darcula.selection.color2");
+    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.selection.color2"), new ColorUIResource(0x233143));
   }
 }

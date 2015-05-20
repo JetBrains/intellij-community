@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +24,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -205,16 +206,17 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (element != null) {
         return;
       }
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
-      if (acceptFullyQualifiedNamesInJavadoc(reference, styleSettings)) {
-        return;
-      }
       final PsiFile containingFile = reference.getContainingFile();
       if (!(containingFile instanceof PsiJavaFile)) {
         return;
       }
       final PsiElement target = reference.resolve();
       if (!(target instanceof PsiClass)) {
+        return;
+      }
+      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
+      PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
+      if (containingComment != null && acceptFqnInJavadoc((PsiJavaFile)containingFile, reference.getQualifiedName(), styleSettings)) {
         return;
       }
       final PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
@@ -260,13 +262,14 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
   }
 
-  public static boolean acceptFullyQualifiedNamesInJavadoc(PsiJavaCodeReferenceElement reference, CodeStyleSettings styleSettings) {
-    final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
-    if (containingComment != null) {
-      if (styleSettings.USE_FQ_CLASS_NAMES_IN_JAVADOC || JavaDocUtil.isInsidePackageInfo(containingComment)) {
-        return true;
-      }
+  private static boolean acceptFqnInJavadoc(PsiJavaFile javaFile, String fullyQualifiedName, CodeStyleSettings styleSettings) {
+    if ("package-info.java".equals(javaFile.getName())) {
+      return true;
     }
-    return false;
+    JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+    if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
+      return !ImportHelper.isAlreadyImported(javaFile, fullyQualifiedName);
+    }
+    return javaSettings.useFqNamesInJavadocAlways();
   }
 }

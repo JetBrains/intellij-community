@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,12 @@ import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +62,7 @@ public class MockProjectStore implements IProjectStore {
     throw new UnsupportedOperationException("Method isReloadPossible is not yet implemented in " + getClass().getName());
   }
 
+  @NotNull
   @Override
   public TrackingPathMacroSubstitutor[] getSubstitutors() {
     return new TrackingPathMacroSubstitutor[0];
@@ -93,11 +91,6 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void loadProject() throws IOException, JDOMException, InvalidDataException {
-    throw new UnsupportedOperationException("Method loadProject is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
   @Nullable
   public VirtualFile getProjectFile() {
     throw new UnsupportedOperationException("Method getProjectFile is not yet implemented in " + getClass().getName());
@@ -107,6 +100,12 @@ public class MockProjectStore implements IProjectStore {
   @Nullable
   public VirtualFile getWorkspaceFile() {
     throw new UnsupportedOperationException("Method getWorkspaceFile is not yet implemented in " + getClass().getName());
+  }
+
+  @Nullable
+  @Override
+  public String getWorkspaceFilePath() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -126,7 +125,7 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void load() throws IOException {
+  public void load() {
     throw new UnsupportedOperationException("Method load is not yet implemented in " + getClass().getName());
   }
 

@@ -15,10 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.dsl;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Contract;
 
 public class GdslUtil {
   public static final Key<GroovyClassDescriptor> INITIAL_CONTEXT = Key.create("gdsl.initialContext");
+
+  public static final Condition<VirtualFile> GDSL_FILTER = new Condition<VirtualFile>() {
+    @Override
+    @Contract("null -> false")
+    public boolean value(VirtualFile file) {
+      return file != null && !file.isDirectory() && StringUtil.endsWith(file.getNameSequence(), ".gdsl");
+    }
+  };
   static volatile boolean ourGdslStopped = false;
 
   static void stopGdsl() {

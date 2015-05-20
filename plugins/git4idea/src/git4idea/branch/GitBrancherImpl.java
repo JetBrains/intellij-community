@@ -69,11 +69,13 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
-  public void checkout(@NotNull final String reference, @NotNull final List<GitRepository> repositories,
+  public void checkout(@NotNull final String reference,
+                       final boolean detach,
+                       @NotNull final List<GitRepository> repositories,
                        @Nullable Runnable callInAwtLater) {
     new CommonBackgroundTask(myProject, "Checking out " + reference, callInAwtLater) {
       @Override public void execute(@NotNull ProgressIndicator indicator) {
-        newWorker(indicator).checkout(reference, repositories);
+        newWorker(indicator).checkout(reference, detach, repositories);
       }
     }.runInBackground();
   }

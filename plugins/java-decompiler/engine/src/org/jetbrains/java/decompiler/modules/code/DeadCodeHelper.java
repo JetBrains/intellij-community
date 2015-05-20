@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,7 +252,7 @@ public class DeadCodeHelper {
       Instruction instr = block.getLastInstruction();
 
       if (instr != null && instr.opcode == CodeConstants.opc_goto) {
-        block.getSeq().removeInstruction(block.getSeq().length() - 1);
+        block.getSeq().removeLast();
       }
     }
 
@@ -416,6 +416,7 @@ public class DeadCodeHelper {
 
               if (sameRanges) {
                 seq.addSequence(next.getSeq());
+                block.getInstrOldOffsets().addAll(next.getInstrOldOffsets());
                 next.getSeq().clear();
 
                 removeEmptyBlock(graph, next, true);

@@ -38,11 +38,9 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,6 +140,17 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
                                        final Disposable parentDisposable, final boolean dumbAware) {
+    return doRegisterToolWindow(id, parentDisposable);
+  }
+
+  @NotNull
+  @Override
+  public ToolWindow registerToolWindow(@NotNull String id,
+                                       boolean canCloseContent,
+                                       @NotNull ToolWindowAnchor anchor,
+                                       Disposable parentDisposable,
+                                       boolean canWorkInDumbMode,
+                                       boolean secondary) {
     return doRegisterToolWindow(id, parentDisposable);
   }
 
@@ -480,6 +489,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   private static class MockContentManager implements ContentManager {
+    private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
     private final List<Content> myContents = new ArrayList<Content>();
     private Content mySelected;
 
@@ -492,13 +502,17 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     @Override
     public void addContent(@NotNull final Content content) {
       myContents.add(content);
-      if (mySelected == null) mySelected = content;
+      ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
+      myDispatcher.getMulticaster().contentAdded(e);
+      if (mySelected == null) setSelectedContent(content);
     }
 
     @Override
     public void addContent(@NotNull Content content, int order) {
       myContents.add(order, content);
-      if (mySelected == null) mySelected = content;
+      ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
+      myDispatcher.getMulticaster().contentAdded(e);
+      if (mySelected == null) setSelectedContent(content);
     }
 
     @Override
@@ -514,6 +528,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void addContentManagerListener(@NotNull final ContentManagerListener l) {
+      myDispatcher.getListeners().add(0, l);
     }
 
     @Override
@@ -625,20 +640,24 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void removeAllContents(final boolean dispose) {
-      for (int i = myContents.size() - 1; i >= 0; i--) {
-        Content content = myContents.get(i);
+      for (Content content : getContents()) {
         removeContent(content, dispose);
       }
-      mySelected = null;
     }
 
     @Override
     public boolean removeContent(@NotNull final Content content, final boolean dispose) {
-      if (dispose) Disposer.dispose(content);
-      boolean result = myContents.remove(content);
-      if (mySelected == content) {
-        mySelected = ContainerUtil.getFirstItem(myContents);
+      boolean wasSelected = mySelected == content;
+      int oldIndex = myContents.indexOf(content);
+      if (wasSelected) {
+        removeFromSelection(content);
       }
+      boolean result = myContents.remove(content);
+      if (dispose) Disposer.dispose(content);
+      ContentManagerEvent e = new ContentManagerEvent(this, content, oldIndex, ContentManagerEvent.ContentOperation.remove);
+      myDispatcher.getMulticaster().contentRemoved(e);
+      Content item = ContainerUtil.getFirstItem(myContents);
+      if (item != null) setSelectedContent(item);
       return result;
     }
 
@@ -651,10 +670,13 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void removeContentManagerListener(@NotNull final ContentManagerListener l) {
+      myDispatcher.removeListener(l);
     }
 
     @Override
     public void removeFromSelection(@NotNull final Content content) {
+      ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(mySelected), ContentManagerEvent.ContentOperation.remove);
+      myDispatcher.getMulticaster().selectionChanged(e);
     }
 
     @Override
@@ -669,7 +691,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void setSelectedContent(@NotNull final Content content) {
+      if (mySelected != null) {
+        removeFromSelection(mySelected);
+      }
       mySelected = content;
+      ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
+      myDispatcher.getMulticaster().selectionChanged(e);
     }
 
     @NotNull
@@ -715,7 +742,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void dispose() {
-      removeAllContents(true);
+      myContents.clear();
+      mySelected = null;
+      myDispatcher.getListeners().clear();
     }
 
     @Override

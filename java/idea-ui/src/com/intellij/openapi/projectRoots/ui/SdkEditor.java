@@ -331,7 +331,9 @@ public class SdkEditor implements Configurable, Place.Navigator {
       }
       sdkModificator = dummySdk.getSdkModificator();
       for (OrderRootType type : myPathEditors.keySet()) {
-        myPathEditors.get(type).addPaths(sdkModificator.getRoots(type));
+        SdkPathEditor pathEditor = myPathEditors.get(type);
+        pathEditor.setAddBaseDir(dummySdk.getHomeDirectory());
+        pathEditor.addPaths(sdkModificator.getRoots(type));
       }
       mySdkModel.getMulticaster().sdkHomeSelected(dummySdk, homePath);
     }

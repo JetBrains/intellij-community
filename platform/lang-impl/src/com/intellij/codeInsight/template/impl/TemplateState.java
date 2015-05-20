@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -54,6 +55,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -293,11 +295,14 @@ public class TemplateState implements Disposable {
                     @Nullable Map<String, String> predefinedVarValues) {
     LOG.assertTrue(!myStarted, "Already started");
     myStarted = true;
-    myTemplate = template;
+
+    final PsiFile file = getPsiFile();
+    myTemplate = substituteTemplate(file, myEditor.getCaretModel().getOffset(), template);
+
     myProcessor = processor;
 
-    DocumentReference[] refs = myDocument != null 
-                               ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)} 
+    DocumentReference[] refs = myDocument != null
+                               ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(myDocument)}
                                : null;
     UndoManager.getInstance(myProject).undoableActionPerformed(new BasicUndoableAction(refs) {
       @Override
@@ -320,22 +325,17 @@ public class TemplateState implements Disposable {
     myTemplateIndented = false;
     myCurrentVariableNumber = -1;
     mySegments = new TemplateSegments(myEditor);
+    myPrevTemplate = myTemplate;
 
     //myArgument = argument;
     myPredefinedVariableValues = predefinedVarValues;
 
-    if (template.isInline()) {
-      myPrevTemplate = myTemplate;
+    if (myTemplate.isInline()) {
       int caretOffset = myEditor.getCaretModel().getOffset();
-      myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + template.getTemplateText().length());
+      myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset + myTemplate.getTemplateText().length());
     }
     else {
-      PsiFile file = getPsiFile();
-      preprocessTemplate(file, myEditor.getCaretModel().getOffset());
-      myPrevTemplate = myTemplate;
-      LOG.assertTrue(!myTemplate.isInline(),
-                     "current template: " + presentTemplate(myTemplate) + ", previous template: " + presentTemplate(myPrevTemplate));
-
+      preprocessTemplate(file, myEditor.getCaretModel().getOffset(), myTemplate.getTemplateText());
       int caretOffset = myEditor.getCaretModel().getOffset();
       myTemplateRange = myDocument.createRangeMarker(caretOffset, caretOffset);
     }
@@ -353,9 +353,20 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void preprocessTemplate(final PsiFile file, int caretOffset) {
+  private static TemplateImpl substituteTemplate(final PsiFile file, int caretOffset, TemplateImpl template) {
+    for (TemplateSubstitutor substitutor : Extensions.getExtensions(TemplateSubstitutor.EP_NAME)) {
+      final TemplateImpl substituted = substitutor.substituteTemplate(file, caretOffset, template);
+      if (substituted != null) {
+        template = substituted;
+      }
+
+    }
+    return template;
+  }
+
+  private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
     for (TemplatePreprocessor preprocessor : Extensions.getExtensions(TemplatePreprocessor.EP_NAME)) {
-      myTemplate = preprocessor.preprocessTemplate(myEditor, file, caretOffset, myTemplate);
+      preprocessor.preprocessTemplate(myEditor, file, caretOffset, textToInsert, myTemplate.getTemplateText());
     }
   }
 
@@ -394,7 +405,7 @@ public class TemplateState implements Disposable {
           if (isMultiCaretMode()) {
             finishTemplateEditing(false);
           }
-        } 
+        }
       }
     });
   }
@@ -417,7 +428,7 @@ public class TemplateState implements Disposable {
       public void run() {
         IntArrayList indices = initEmptyVariables();
         mySegments.setSegmentsGreedy(false);
-        LOG.assertTrue(myTemplateRange.isValid(), 
+        LOG.assertTrue(myTemplateRange.isValid(),
                        "template key: " + myTemplate.getKey() + "; " +
                        "template text" + myTemplate.getTemplateText() + "; " +
                        "variable number: " + getCurrentVariableNumber());
@@ -654,12 +665,17 @@ public class TemplateState implements Disposable {
           calcedSegments.clear();
           for (int i = myCurrentVariableNumber + 1; i < myTemplate.getVariableCount(); i++) {
             String variableName = myTemplate.getVariableNameAt(i);
-            int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
+            final int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
             if (segmentNumber < 0) continue;
-            Expression expression = myTemplate.getExpressionAt(i);
-            Expression defaultValue = myTemplate.getDefaultValueAt(i);
+            final Expression expression = myTemplate.getExpressionAt(i);
+            final Expression defaultValue = myTemplate.getDefaultValueAt(i);
             String oldValue = getVariableValueText(variableName);
-            recalcSegment(segmentNumber, isQuick, expression, defaultValue);
+            DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+              @Override
+              public void run() {
+                recalcSegment(segmentNumber, isQuick, expression, defaultValue);
+              }
+            });
             final TextResult value = getVariableValue(variableName);
             assert value != null : "name=" + variableName + "\ntext=" + myTemplate.getTemplateText();
             String newValue = value.getText();
@@ -727,10 +743,10 @@ public class TemplateState implements Disposable {
 
     ExpressionContext context = createExpressionContext(start);
     Result result = isQuick ? expressionNode.calculateQuickResult(context) : expressionNode.calculateResult(context);
-    if (isQuick && isEmptyResult(result, element) && !oldValue.isEmpty()) {
+    if (isQuick && result == null && !oldValue.isEmpty()) {
       return;
     }
-    if (isEmptyResult(result, element) && defaultValue != null) {
+    if (defaultValue != null && (result == null || result.equalsToText("", element))) {
       result = defaultValue.calculateResult(context);
     }
     if (element != null) {
@@ -748,10 +764,6 @@ public class TemplateState implements Disposable {
         .handleRecalc(psiFile, myDocument, mySegments.getSegmentStart(segmentNumber), mySegments.getSegmentEnd(segmentNumber));
       restoreEmptyVariables(indices);
     }
-  }
-
-  private static boolean isEmptyResult(Result result, PsiElement context) {
-    return result == null || result.equalsToText("", context);
   }
 
   private void replaceString(String newValue, int start, int end, int segmentNumber) {
@@ -952,10 +964,10 @@ public class TemplateState implements Disposable {
   private void cleanupTemplateState(boolean brokenOff) {
     final Editor editor = myEditor;
     fireBeforeTemplateFinished();
-    int oldVar = myCurrentVariableNumber;
-    currentVariableChanged(oldVar);
     if (!isDisposed()) {
+      int oldVar = myCurrentVariableNumber;
       setCurrentVariableNumber(-1);
+      currentVariableChanged(oldVar);
       TemplateManagerImpl.clearTemplateState(editor);
       fireTemplateFinished(brokenOff);
     }
@@ -1095,15 +1107,20 @@ public class TemplateState implements Disposable {
     final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-      for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
-        optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
-      }
+      DumbService.getInstance(myProject).withAlternativeResolveEnabled(new Runnable() {
+        @Override
+        public void run() {
+          for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+            optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
+          }
+        }
+      });
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
       // for Python, we need to indent the template even if reformatting is enabled, because otherwise indents would be broken
       // and reformat wouldn't be able to fix them
       if (myTemplate.isToIndent()) {
         if (!myTemplateIndented) {
-          LOG.assertTrue(myTemplateRange.isValid());
+          LOG.assertTrue(myTemplateRange.isValid(), presentTemplate(myTemplate));
           smartIndent(myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
           myTemplateIndented = true;
         }
@@ -1233,7 +1250,7 @@ public class TemplateState implements Disposable {
     if (myFinished) return;
     myFinished = true;
     for (TemplateEditingListener listener : myListeners) {
-      listener.templateFinished(myTemplate, brokenOff);
+      listener.templateFinished(ObjectUtils.chooseNotNull(myTemplate, myPrevTemplate), brokenOff);
     }
   }
 

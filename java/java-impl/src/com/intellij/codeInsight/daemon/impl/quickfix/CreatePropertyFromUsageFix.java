@@ -37,7 +37,9 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -120,12 +122,17 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     private final String myDefaultFieldName;
     private final PsiField myField;
     private final PsiClass myClass;
-    private final PsiType[] myExpectedTypes;
+    private final List<SmartTypePointer> myExpectedTypes;
 
-    public FieldExpression(PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
+    public FieldExpression(final PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
       myField = field;
       myClass = aClass;
-      myExpectedTypes = expectedTypes;
+      myExpectedTypes = ContainerUtil.map(expectedTypes, new Function<PsiType, SmartTypePointer>() {
+        @Override
+        public SmartTypePointer fun(PsiType type) {
+          return SmartTypePointerManager.getInstance(field.getProject()).createSmartTypePointer(type);
+        }
+      });
       myDefaultFieldName = field.getName();
     }
 
@@ -143,12 +150,11 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     public LookupElement[] calculateLookupItems(ExpressionContext context) {
       Set<LookupElement> set = new LinkedHashSet<LookupElement>();
       set.add(JavaLookupElementBuilder.forField(myField).withTypeText(myField.getType().getPresentableText()));
-      PsiField[] fields = myClass.getFields();
-      for (PsiField otherField : fields) {
+      for (PsiField otherField : myClass.getFields()) {
         if (!myDefaultFieldName.equals(otherField.getName())) {
           PsiType otherType = otherField.getType();
-          for (PsiType type : myExpectedTypes) {
-            if (type.equals(otherType)) {
+          for (SmartTypePointer pointer : myExpectedTypes) {
+            if (otherType.equals(pointer.getType())) {
               set.add(JavaLookupElementBuilder.forField(otherField).withTypeText(otherType.getPresentableText()));
             }
           }
@@ -227,14 +233,14 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     PsiElement typeReference;
     PsiCodeBlock body;
     if (callText.startsWith(GET_PREFIX) || callText.startsWith(IS_PREFIX)) {
-      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateGetterPrototype(field));
+      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateSimpleGetterPrototype(field));
       body = accessor.getBody();
       LOG.assertTrue(body != null, accessor.getText());
       fieldReference = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
       typeReference = accessor.getReturnTypeElement();
     }
     else {
-      accessor = (PsiMethod)targetClass.add(PropertyUtil.generateSetterPrototype(field, targetClass));
+      accessor = (PsiMethod)targetClass.add(GenerateMembersUtil.generateSimpleSetterPrototype(field, targetClass));
       body = accessor.getBody();
       LOG.assertTrue(body != null, accessor.getText());
       PsiAssignmentExpression expr = (PsiAssignmentExpression)((PsiExpressionStatement)body.getStatements()[0]).getExpression();

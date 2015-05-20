@@ -15,14 +15,12 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -35,8 +33,8 @@ public class DisabledPluginsUsagesCollector extends UsagesCollector {
   }
 
   @NotNull
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) {
-    return ContainerUtil.map2Set(PluginManager.getDisabledPlugins(), new Function<String, UsageDescriptor>() {
+  public Set<UsageDescriptor> getUsages() {
+    return ContainerUtil.map2Set(PluginManagerCore.getDisabledPlugins(), new Function<String, UsageDescriptor>() {
       @Override
       public UsageDescriptor fun(String descriptor) {
         return new UsageDescriptor(descriptor, 1);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -28,9 +31,15 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
+
+  private boolean onlyWarnOnProtectedClone = true;
 
   @Override
   @NotNull
@@ -53,6 +62,32 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("only.warn.on.protected.clone.methods"),
+                                          this, "onlyWarnOnProtectedClone");
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    for (Element option : node.getChildren("option")) {
+      if ("onlyWarnOnProtectedClone".equals(option.getAttributeValue("name"))) {
+        onlyWarnOnProtectedClone = Boolean.parseBoolean(option.getAttributeValue("value"));
+      }
+    }
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    if (!onlyWarnOnProtectedClone) {
+      node.addContent(new Element("option").setAttribute("name", "onlyWarnOnProtectedClone")
+                        .setAttribute("value", String.valueOf(onlyWarnOnProtectedClone)));
+    }
   }
 
   @Override
@@ -86,7 +121,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
     return new CloneDeclaresCloneNotSupportedExceptionVisitor();
   }
 
-  private static class CloneDeclaresCloneNotSupportedExceptionVisitor extends BaseInspectionVisitor {
+  private class CloneDeclaresCloneNotSupportedExceptionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -94,6 +129,9 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
         return;
       }
       if (method.hasModifierProperty(PsiModifier.FINAL)) {
+        return;
+      }
+      if (onlyWarnOnProtectedClone && method.hasModifierProperty(PsiModifier.PUBLIC)) {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();

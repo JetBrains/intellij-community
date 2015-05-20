@@ -1,6 +1,6 @@
 import static I.*;
 
-// "Replace Implements with Static Import" "true"
+// "Replace implements with static import" "true"
 public class X {
   void foo() {
     System.out.println(FOO);

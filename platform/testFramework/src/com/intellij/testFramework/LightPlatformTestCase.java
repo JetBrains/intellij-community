@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,22 @@
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInspection.InspectionEP;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalInspectionEP;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.mock.MockApplication;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -81,7 +81,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -90,6 +93,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -109,7 +113,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
@@ -133,7 +141,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static LightProjectDescriptor ourProjectDescriptor;
   private static boolean ourHaveShutdownHook;
 
-  private final Map<String, InspectionToolWrapper> myAvailableInspectionTools = new THashMap<String, InspectionToolWrapper>();
   private ThreadTracker myThreadTracker;
 
   /**
@@ -181,6 +188,23 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static IdeaTestApplication getApplication() {
     return ourApplication;
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void reportTestExecutionStatistics() {
+    System.out.println("----- TEST STATISTICS -----");
+    UsefulTestCase.logSetupTeardownCosts();
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']",
+                                     MockApplication.INSTANCES_CREATED));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']",
+                                     ProjectManagerImpl.TEST_PROJECTS_CREATED));
+    long totalGcTime = 0;
+    for (GarbageCollectorMXBean mxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+      totalGcTime += mxBean.getCollectionTime();
+    }
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.gcTimeMs' value='%d']", totalGcTime));
+    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.classesLoaded' value='%d']",
+                                     ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount()));
   }
 
   protected void resetAllFields() {
@@ -296,7 +320,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         });
         connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
           @Override
-          public void moduleAdded(Project project, Module module) {
+          public void moduleAdded(@NotNull Project project, @NotNull Module module) {
             fail("Adding modules is not permitted in LightIdeaTestCase.");
           }
         });
@@ -348,8 +372,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest());
 
           ourApplication.setDataProvider(LightPlatformTestCase.this);
-          doSetup(new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK()), configureLocalInspectionTools(),
-                  myAvailableInspectionTools);
+          SimpleLightProjectDescriptor descriptor = new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
+          doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
           InjectedLanguageManagerImpl.pushInjectors(getProject());
 
           storeSettings();
@@ -371,7 +395,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static void doSetup(@NotNull LightProjectDescriptor descriptor,
                              @NotNull LocalInspectionTool[] localInspectionTools,
-                             @NotNull final Map<String, InspectionToolWrapper> availableInspectionTools) throws Exception {
+                             @NotNull Disposable parentDisposable) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -385,54 +409,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     clearUncommittedDocuments(getProject());
 
-    for (LocalInspectionTool tool : localInspectionTools) {
-      enableInspectionTool(availableInspectionTools, new LocalInspectionToolWrapper(tool));
-    }
-
-    final InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE) {
-      @Override
-      @NotNull
-      public InspectionToolWrapper[] getInspectionTools(PsiElement element) {
-        final Collection<InspectionToolWrapper> tools = availableInspectionTools.values();
-        return tools.toArray(new InspectionToolWrapper[tools.size()]);
-      }
-
-      @NotNull
-      @Override
-      public List<Tools> getAllEnabledInspectionTools(Project project) {
-        List<Tools> result = new ArrayList<Tools>();
-        for (InspectionToolWrapper toolWrapper : getInspectionTools(null)) {
-          result.add(new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true));
-        }
-        return result;
-      }
-
-      @Override
-      public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-        return key != null && availableInspectionTools.containsKey(key.toString());
-      }
-
-      @Override
-      public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
-        InspectionToolWrapper toolWrapper = availableInspectionTools.get(key.toString());
-        return toolWrapper == null ? HighlightDisplayLevel.WARNING : toolWrapper.getDefaultLevel();
-      }
-
-      @Override
-      public InspectionToolWrapper getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {
-        return availableInspectionTools.get(shortName);
-      }
-
-      @Override
-      public InspectionToolWrapper getToolById(@NotNull String id, @NotNull PsiElement element) {
-        return availableInspectionTools.get(id);
-      }
-    };
-    final InspectionProfileManager inspectionProfileManager = InspectionProfileManager.getInstance();
-    inspectionProfileManager.addProfile(profile);
-    inspectionProfileManager.setRootProfile(profile.getName());
-    InspectionProjectProfileManager.getInstance(getProject()).updateProfile(profile);
-    InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
+    CodeInsightTestFixtureImpl.configureInspections(localInspectionTools, getProject(),
+                                                    Collections.<String>emptyList(), parentDisposable);
 
     assertFalse(getPsiManager().isDisposed());
     Boolean passed = null;
@@ -496,24 +474,32 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void enableInspectionTool(@NotNull InspectionToolWrapper toolWrapper) {
-    enableInspectionTool(myAvailableInspectionTools, toolWrapper);
+    enableInspectionTool(getProject(), toolWrapper);
   }
   protected void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
     InspectionToolWrapper toolWrapper = InspectionToolRegistrar.wrapTool(tool);
-    enableInspectionTool(myAvailableInspectionTools, toolWrapper);
+    enableInspectionTool(getProject(), toolWrapper);
   }
 
-  public static void enableInspectionTool(@NotNull Map<String, InspectionToolWrapper> availableLocalTools,
-                                          @NotNull InspectionToolWrapper toolWrapper) {
+  public static void enableInspectionTool(@NotNull final Project project, @NotNull final InspectionToolWrapper toolWrapper) {
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
-      String id = toolWrapper instanceof LocalInspectionToolWrapper
-                  ? ((LocalInspectionToolWrapper)toolWrapper).getTool().getID()
-                  : toolWrapper.getShortName();
-      HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), id);
+      HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), toolWrapper.getID());
     }
-    availableLocalTools.put(shortName, toolWrapper);
+    InspectionProfileImpl.initAndDo(new Computable() {
+      @Override
+      public Object compute() {
+        InspectionProfileImpl impl = (InspectionProfileImpl)profile;
+        InspectionToolWrapper existingWrapper = impl.getInspectionTool(shortName, project);
+        if (existingWrapper == null || existingWrapper.isInitialized() != toolWrapper.isInitialized() || toolWrapper.isInitialized() && toolWrapper.getTool() != existingWrapper.getTool()) {
+          impl.addTool(project, toolWrapper, new THashMap<String, List<String>>());
+        }
+        impl.enableTool(shortName, project);
+        return null;
+      }
+    });
   }
 
   @NotNull

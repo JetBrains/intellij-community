@@ -52,4 +52,24 @@ public class UrlUtilTest {
     assertEquals(expected1, pair.first);
     assertEquals(expected2, pair.second);
   }
+
+  @Test
+  public void testParseHostFromSshUrl() {
+    String[] SSH_URL_VARIANTS = {
+      "git@github.com",
+      "git@github.com/project.git",
+      "ssh://git@github.com/project.git",
+      "ssh://github.com/project.git",
+      "git@github.com:project.git",
+      "ssh://git@github.com:project.git",
+      "ssh://github.com:project.git",
+      "user@name@github.com:project.git",
+      "git@github.com/company/user/project.git",
+      "git@github.com:company/user/project.git",
+      "git@github.com:3128:user/project.git"
+    };
+    for (String sshUrl : SSH_URL_VARIANTS) {
+      assertEquals("github.com", URLUtil.parseHostFromSshUrl(sshUrl));
+    }
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Provides items for Go To -> Related File action.
+ * Provides items for "Navigate -> Related Symbol" action.
  * <p>
  * If related items are represented as icons on the gutter use {@link com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider}
  * to provide both line markers and 'goto related' targets

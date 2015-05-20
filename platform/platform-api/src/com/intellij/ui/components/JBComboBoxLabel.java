@@ -34,6 +34,10 @@ public class JBComboBoxLabel extends JPanel {
     add(myIcon, BorderLayout.EAST);
   }
 
+  public void setTextFont(Font font) {
+    myText.setFont(font);
+  }
+
   public void setText(String text) {
     myText.setText(text);
   }

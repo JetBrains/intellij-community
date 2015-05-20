@@ -17,6 +17,7 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryUtil;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,8 +27,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDirectory;
@@ -56,6 +59,8 @@ import java.util.List;
 
 public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
   @NonNls private static final String RECENT_KEYS = "MoveFile.RECENT_KEYS";
+  @NonNls private static final String MOVE_FILES_OPEN_IN_EDITOR = "MoveFile.OpenInEditor";
+  
 
   public interface Callback {
     void run(MoveFilesOrDirectoriesDialog dialog);
@@ -68,6 +73,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
   private final Callback myCallback;
   private PsiDirectory myTargetDirectory;
   private JCheckBox myCbSearchForReferences;
+  private JCheckBox myOpenInEditorCb;
 
   public MoveFilesOrDirectoriesDialog(Project project, Callback callback) {
     super(project, true);
@@ -124,10 +130,15 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
     myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
 
+    myOpenInEditorCb = new NonFocusableCheckBox("Open moved files in editor");
+    myOpenInEditorCb.setSelected(isOpenInEditor());
+    
     return FormBuilder.createFormBuilder().addComponent(myNameLabel)
       .addLabeledComponent(RefactoringBundle.message("move.files.to.directory.label"), myTargetDirectoryField, UIUtil.LARGE_VGAP)
       .addTooltip(RefactoringBundle.message("path.completion.shortcut", shortcutText))
-      .addComponentToRightColumn(myCbSearchForReferences, UIUtil.LARGE_VGAP).getPanel();
+      .addComponentToRightColumn(myCbSearchForReferences, UIUtil.LARGE_VGAP)
+      .addComponentToRightColumn(myOpenInEditorCb, UIUtil.LARGE_VGAP)
+      .getPanel();
   }
 
   public void setData(PsiElement[] psiElements, PsiDirectory initialTargetDirectory, @NonNls String helpID) {
@@ -169,15 +180,29 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
 
+  public static boolean isOpenInEditor() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return false;
+    }
+    return PropertiesComponent.getInstance().getBoolean(MOVE_FILES_OPEN_IN_EDITOR, true);
+  } 
+
   private void validateOKButton() {
     setOKActionEnabled(myTargetDirectoryField.getChildComponent().getText().length() > 0);
   }
 
   @Override
   protected void doOKAction() {
+    PropertiesComponent.getInstance().setValue(MOVE_FILES_OPEN_IN_EDITOR, String.valueOf(myOpenInEditorCb.isSelected()));
     //myTargetDirectoryField.getChildComponent().addCurrentTextToHistory();
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, myTargetDirectoryField.getChildComponent().getText());
     RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
+
+    if (DumbService.isDumb(myProject)) {
+      Messages.showMessageDialog(myProject, "Move refactoring is not available while indexing is in progress", "Indexing", null);
+      return;
+    }
+    
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {

@@ -18,6 +18,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
@@ -38,7 +39,7 @@ public class MavenRunnerPanel {
   private JCheckBox myRunInBackgroundCheckbox;
   private RawCommandLineEditor myVMParametersEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
-  private MavenJdkComboBox myJdkCombo;
+  private ExternalSystemJdkComboBox myJdkCombo;
 
   private JCheckBox mySkipTestsCheckBox;
   private MavenPropertiesPanel myPropertiesPanel;
@@ -88,7 +89,7 @@ public class MavenRunnerPanel {
 
     JLabel jdkLabel = new JLabel("JRE:");
     jdkLabel.setDisplayedMnemonic('j');
-    jdkLabel.setLabelFor(myJdkCombo = new MavenJdkComboBox(myProject));
+    jdkLabel.setLabelFor(myJdkCombo = new ExternalSystemJdkComboBox(myProject));
     c.gridx = 0;
     c.gridy++;
     c.weightx = 0;

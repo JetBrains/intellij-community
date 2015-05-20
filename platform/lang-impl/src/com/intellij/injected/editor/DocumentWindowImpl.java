@@ -137,7 +137,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         int found = countNewLinesIn(shred.getPrefix(), pos, line);
         if (found != -1) return found;
 
-        String text = hostText.substring(hostRange.getStartOffset(), hostRange.getEndOffset());
+        CharSequence text = hostText.subSequence(hostRange.getStartOffset(), hostRange.getEndOffset());
         found = countNewLinesIn(text, pos, line);
         if (found != -1) return found;
 
@@ -150,9 +150,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   // returns startOffset found, or -1 if need to continue searching
-  private static int countNewLinesIn(String text, int[] pos, int line) {
+  private static int countNewLinesIn(CharSequence text, int[] pos, int line) {
     int offsetInside = 0;
-    for (int i = text.indexOf('\n'); i != -1; i = text.indexOf('\n', offsetInside)) {
+    for (int i = StringUtil.indexOf(text, '\n'); i != -1; i = StringUtil.indexOf(text,'\n', offsetInside)) {
       int curLine = ++pos[0];
       int lineLength = i + 1 - offsetInside;
       int offset = pos[1] += lineLength;
@@ -256,9 +256,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
         Segment currentRange = shred.getHostRangeMarker();
         if (currentRange == null) continue;
         int rangeLength = currentRange.getEndOffset() - currentRange.getStartOffset();
-        String rangeText = hostText.substring(currentRange.getStartOffset(), currentRange.getEndOffset());
+        CharSequence rangeText = hostText.subSequence(currentRange.getStartOffset(), currentRange.getEndOffset());
 
-        lineNumber += StringUtil.getLineBreakCount(rangeText.substring(0, Math.min(offset, rangeLength)));
+        lineNumber += StringUtil.getLineBreakCount(rangeText.subSequence(0, Math.min(offset, rangeLength)));
         if (offset < rangeLength) {
           return lineNumber;
         }

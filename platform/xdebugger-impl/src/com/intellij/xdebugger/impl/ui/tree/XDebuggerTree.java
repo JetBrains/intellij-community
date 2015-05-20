@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,11 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.XValueNode;
+import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,9 +56,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 
 /**
@@ -63,6 +64,13 @@ import java.util.List;
  */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
   private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator", 100);
+
+  private final ComponentListener myMoveListener = new ComponentAdapter() {
+    @Override
+    public void componentMoved(ComponentEvent e) {
+      repaint(); // needed to repaint links in cell renderer on horizontal scrolling
+    }
+  };
 
   private static final DataKey<XDebuggerTree> XDEBUGGER_TREE_KEY = DataKey.create("xdebugger.tree");
   private final SingleAlarm myAlarm = new SingleAlarm(new Runnable() {
@@ -157,6 +165,11 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     setCellRenderer(new XDebuggerTreeRenderer());
     new TreeLinkMouseListener(new XDebuggerTreeRenderer()) {
       @Override
+      protected boolean doCacheLastNode() {
+        return false;
+      }
+
+      @Override
       protected void handleTagClick(@Nullable Object tag, @NotNull MouseEvent event) {
         if (tag instanceof XDebuggerTreeNodeHyperlink) {
           ((XDebuggerTreeNodeHyperlink)tag).onClick(event);
@@ -201,6 +214,8 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     registerShortcuts();
 
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
+
+    addComponentListener(myMoveListener);
   }
 
   public void updateEditor() {
@@ -285,7 +300,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
       XValueNodeImpl[] selectedNodes = getSelectedNodes(XValueNodeImpl.class, null);
       if (selectedNodes.length == 1 && selectedNodes[0].getFullValueEvaluator() == null) {
-        return selectedNodes[0].getRawValue();
+        return DebuggerUIUtil.getNodeRawValue(selectedNodes[0]);
       }
     }
     return null;
@@ -295,6 +310,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     Object rootNode = myTreeModel.getRoot();
     if (rootNode instanceof XDebuggerTreeNode) {
       ((XDebuggerTreeNode)rootNode).clearChildren();
+      if (isRootVisible() && rootNode instanceof XValueNodeImpl) {
+        ((XValueNodeImpl)rootNode).getValueContainer().computePresentation((XValueNode)rootNode, XValuePlace.TREE);
+      }
       treeState.restoreState(this);
       repaint();
     }
@@ -336,6 +354,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     UIUtil.dispose(this);
     setLeadSelectionPath(null);
     setAnchorSelectionPath(null);
+    removeComponentListener(myMoveListener);
   }
 
   private void registerShortcuts() {
@@ -372,6 +391,20 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
 
   public TransferToEDTQueue<Runnable> getLaterInvocator() {
     return myLaterInvocator;
+  }
+
+  public void selectNodeOnLoad(final Condition<TreeNode> nodeFilter) {
+    addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+        if (nodeFilter.value(node)) {
+          setSelectionPath(node.getPath());
+        }
+      }
+
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {}
+    });
   }
 
   public void expandNodesOnLoad(final Condition<TreeNode> nodeFilter) {

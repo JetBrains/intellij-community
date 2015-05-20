@@ -10,5 +10,5 @@ public interface MessageProcessor {
   void closed();
 
   @NotNull
-  Promise<Void> send(@NotNull Request message);
+  <T> Promise<T> send(@NotNull Request<T> message);
 }

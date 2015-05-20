@@ -18,11 +18,13 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
+import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.TestFileType;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import org.jetbrains.annotations.NonNls;
@@ -48,6 +50,22 @@ import static org.junit.Assert.assertArrayEquals;
  * @since 11/18/10 7:43 PM
  */
 public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    FontLayoutService.setInstance(new MockFontLayoutService(10, 10, 2));
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    FontLayoutService.setInstance(null);
+  }
+
+  protected void initText(@NotNull @NonNls String fileText) throws IOException {
+    init(fileText, TestFileType.TEXT);
+  }
+  
   protected void init(@NotNull @NonNls String fileText, @NotNull TestFileType type) throws IOException {
     configureFromFileText(getFileName(type), fileText);
   }
@@ -100,7 +118,7 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
     myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       @Override
       public void run() {
-        while(matcher.find()) {
+        while (matcher.find()) {
           FoldRegion foldRegion = myEditor.getFoldingModel().addFoldRegion(matcher.start(), matcher.end(), placeholder);
           assertNotNull(foldRegion);
           foldRegion.setExpanded(false);
@@ -265,5 +283,9 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
       softWrapPositions.add(softWrap.getStart());
     }
     assertArrayEquals(positions, softWrapPositions.toArray());
+  }
+
+  protected static void configureSoftWraps(int charCountToWrapAt) {
+    EditorTestUtil.configureSoftWraps(myEditor, charCountToWrapAt);
   }
 }

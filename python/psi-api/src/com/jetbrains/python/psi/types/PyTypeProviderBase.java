@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.psi.*;
@@ -92,16 +93,17 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
-  public PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     return null;
   }
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     return null;
   }
 
+  @Nullable
   @Override
   public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     ReturnTypeDescriptor descriptor;
@@ -122,7 +124,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
 
   @Nullable
   @Override
-  public PyType getCallableType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+  public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     return null;
   }
 

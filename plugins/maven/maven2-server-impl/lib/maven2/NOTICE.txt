@@ -1,0 +1,20 @@
+   =========================================================================
+   ==  NOTICE file corresponding to the section 4 d of                    ==
+   ==  the Apache License, Version 2.0,                                   ==
+   ==  in this case for the Apache Maven distribution.                    ==
+   =========================================================================
+
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/).
+
+This product includes software (Plexus and Classworlds) developed by
+The Codehaus Foundation (http://www.codehaus.org/).
+
+This product includes software (JSCH) developed by 
+JCraft Inc. (http://www.jcraft.com/jsch/).
+
+This product includes software (JTidy) developed at
+SourceForge (http://sourceforge.net/projects/jtidy).
+
+This product includes software (NekoHTML) developed at
+SourceForge (http://sourceforge.net/projects/nekohtml).

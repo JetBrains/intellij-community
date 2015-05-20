@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class TestIntegrationUtils {
         return null;
       }
     };
-    private String myDefaultName;
+    private final String myDefaultName;
 
     MethodKind(String defaultName) {
       myDefaultName = defaultName;
@@ -199,7 +199,7 @@ public class TestIntegrationUtils {
                                                   Set<String> existingNames) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
     String templateName = templateDesc.getFileName();
-    FileTemplate fileTemplate = FileTemplateManager.getInstance().getCodeTemplate(templateName);
+    FileTemplate fileTemplate = FileTemplateManager.getInstance(targetClass.getProject()).getCodeTemplate(templateName);
     Template template = TemplateManager.getInstance(targetClass.getProject()).createTemplate("", "");
 
     String templateText;

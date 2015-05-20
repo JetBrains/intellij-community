@@ -15,13 +15,20 @@
  */
 package com.intellij.ide.commander;
 
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.actions.DocumentFragmentContent;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.ElementPresentation;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,25 +41,26 @@ public class PsiDiffContentFactory {
   }
 
   @Nullable
-  private static DiffContent fromPsiElement(PsiElement psiElement) {
+  private static DiffContent fromPsiElement(@NotNull PsiElement psiElement) {
     if (psiElement instanceof PsiFile) {
-      return DiffContent.fromFile(psiElement.getProject(), ((PsiFile)psiElement).getVirtualFile());
-    } else if (psiElement instanceof PsiDirectory) {
-      return DiffContent.fromFile(psiElement.getProject(), ((PsiDirectory)psiElement).getVirtualFile());
+      return DiffContentFactory.getInstance().create(psiElement.getProject(), ((PsiFile)psiElement).getVirtualFile());
+    }
+    else if (psiElement instanceof PsiDirectory) {
+      return DiffContentFactory.getInstance().create(psiElement.getProject(), ((PsiDirectory)psiElement).getVirtualFile());
     }
     PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) {
       String text = psiElement.getText();
-      return text != null ? new SimpleContent(text) : null;
+      if (text == null) return null;
+      return DiffContentFactory.getInstance().create(text, psiElement.getLanguage().getAssociatedFileType(), false);
     }
-    DiffContent wholeFileContent = DiffContent.fromFile(psiElement.getProject(), containingFile.getVirtualFile());
-    if (wholeFileContent == null || wholeFileContent.getDocument() == null) return null;
-    Project project = psiElement.getProject();
-    return new FragmentContent(wholeFileContent, psiElement.getTextRange(), project);
+    DocumentContent wholeFileContent = DiffContentFactory.getInstance().createDocument(psiElement.getProject(), containingFile.getVirtualFile());
+    if (wholeFileContent == null) return null;
+    return new DocumentFragmentContent(psiElement.getProject(), wholeFileContent, psiElement.getTextRange());
   }
 
   @Nullable
-  public static SimpleDiffRequest comparePsiElements(PsiElement psiElement1, PsiElement psiElement2) {
+  public static DiffRequest comparePsiElements(@NotNull PsiElement psiElement1, @NotNull PsiElement psiElement2) {
     if (!psiElement1.isValid() || !psiElement2.isValid()) return null;
     Project project = psiElement1.getProject();
     LOG.assertTrue(project == psiElement2.getProject());
@@ -61,11 +69,9 @@ public class PsiDiffContentFactory {
     if (content1 == null || content2 == null) return null;
     final ElementPresentation presentation1 = ElementPresentation.forElement(psiElement1);
     final ElementPresentation presentation2 = ElementPresentation.forElement(psiElement2);
-    String title = DiffBundle.message("diff.element.qualified.name.vs.element.qualified.name.dialog.title",
-                                      presentation1.getQualifiedName(), presentation2.getQualifiedName());
-    SimpleDiffRequest diffRequest = new SimpleDiffRequest(project, title);
-    diffRequest.setContents(content1, content2);
-    diffRequest.setContentTitles(presentation1.getQualifiedName(), presentation2.getQualifiedName());
-    return diffRequest;
+    String title = DiffBundle
+      .message("diff.element.qualified.name.vs.element.qualified.name.dialog.title",
+               presentation1.getQualifiedName(), presentation2.getQualifiedName());
+    return new SimpleDiffRequest(title, content1, content2, presentation1.getQualifiedName(), presentation2.getQualifiedName());
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.profile.codeInspection.SeverityProvider;
+import com.intellij.profile.codeInspection.ui.table.SeverityRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -65,8 +66,8 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     group.addSeparator();
     group.add(new DumbAwareAction("Edit severities...") {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
-        final SeverityEditorDialog dlg = new SeverityEditorDialog(anchor, myChosen, mySeverityRegistrar);
+      public void actionPerformed(@NotNull final AnActionEvent e) {
+        final SeverityEditorDialog dlg = new SeverityEditorDialog(anchor, myChosen, mySeverityRegistrar, true);
         if (dlg.showAndGet()) {
           final HighlightInfoType type = dlg.getSelectedType();
           if (type != null) {
@@ -98,7 +99,7 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     myChosen = severity;
     final Presentation templatePresentation = getTemplatePresentation();
     templatePresentation.setText(SingleInspectionProfilePanel.renderSeverity(severity));
-    templatePresentation.setIcon(HighlightDisplayLevel.find(severity).getIcon());
+    templatePresentation.setIcon(SeverityRenderer.getIcon(HighlightDisplayLevel.find(severity)));
   }
 
   private class HighlightSeverityAction extends DumbAwareAction {
@@ -112,11 +113,11 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
       mySeverity = severity;
       final Presentation presentation = getTemplatePresentation();
       presentation.setText(SingleInspectionProfilePanel.renderSeverity(severity));
-      presentation.setIcon(HighlightDisplayLevel.find(severity).getIcon());
+      presentation.setIcon(SeverityRenderer.getIcon(HighlightDisplayLevel.find(severity)));
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       final HighlightSeverity severity = getSeverity();
       setChosen(severity);
       onChosen(severity);

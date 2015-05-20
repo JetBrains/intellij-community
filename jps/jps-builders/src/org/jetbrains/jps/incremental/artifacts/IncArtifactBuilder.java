@@ -58,7 +58,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
   @Override
   public void build(@NotNull ArtifactBuildTarget target,
                     @NotNull DirtyFilesHolder<ArtifactRootDescriptor, ArtifactBuildTarget> holder,
-                    @NotNull BuildOutputConsumer outputConsumer, @NotNull CompileContext context) throws ProjectBuildException {
+                    @NotNull BuildOutputConsumer outputConsumer, @NotNull final CompileContext context) throws ProjectBuildException {
     JpsArtifact artifact = target.getArtifact();
     String outputFilePath = artifact.getOutputFilePath();
     if (StringUtil.isEmpty(outputFilePath)) {
@@ -89,23 +89,19 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
       final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<Set<String>>();
       final MultiMap<String, String> filesToDelete = new MultiMap<String, String>();
+      final Set<String> deletedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
       for (String sourcePath : deletedFiles) {
         final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
         if (outputPaths != null) {
           for (String outputPath : outputPaths) {
-            filesToDelete.putValue(outputPath, sourcePath);
-            final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
-            if (sources != null) {
-              for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-                addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
-              }
+            if (deletedOutputPaths.add(outputPath)) {
+              collectSourcesCorrespondingToOutput(outputPath, sourcePath, deletedFiles, outSrcMapping, filesToProcess, filesToDelete);
             }
           }
         }
       }
 
       final Set<String> changedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       holder.processDirtyFiles(new FileProcessor<ArtifactRootDescriptor, ArtifactBuildTarget>() {
         @Override
         public boolean apply(ArtifactBuildTarget target, File file, ArtifactRootDescriptor root) throws IOException {
@@ -114,14 +110,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
           addFileToProcess(filesToProcess, rootIndex, sourcePath, deletedFiles);
           final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
           if (outputPaths != null) {
-            changedOutputPaths.addAll(outputPaths);
             for (String outputPath : outputPaths) {
-              filesToDelete.putValue(outputPath, sourcePath);
-              final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
-              if (sources != null) {
-                for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
-                  addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
-                }
+              if (changedOutputPaths.add(outputPath)) {
+                collectSourcesCorrespondingToOutput(outputPath, sourcePath, deletedFiles, outSrcMapping, filesToProcess, filesToDelete);
               }
             }
           }
@@ -181,12 +172,29 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     }
   }
 
+  private static void collectSourcesCorrespondingToOutput(String outputPath, String sourcePath,
+                                                          Collection<String> deletedFiles,
+                                                          ArtifactOutputToSourceMapping outSrcMapping,
+                                                          TIntObjectHashMap<Set<String>> filesToProcess,
+                                                          MultiMap<String, String> filesToDelete) throws IOException {
+    filesToDelete.putValue(outputPath, sourcePath);
+    final List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(outputPath);
+    if (sources != null) {
+      for (ArtifactOutputToSourceMapping.SourcePathAndRootIndex source : sources) {
+        addFileToProcess(filesToProcess, source.getRootIndex(), source.getPath(), deletedFiles);
+      }
+    }
+  }
+
   private static void runArtifactTasks(CompileContext context, JpsArtifact artifact, ArtifactBuildTaskProvider.ArtifactBuildPhase phase)
     throws ProjectBuildException {
     for (ArtifactBuildTaskProvider provider : JpsServiceManager.getInstance().getExtensions(ArtifactBuildTaskProvider.class)) {
       List<? extends BuildTask> tasks = provider.createArtifactBuildTasks(artifact, phase);
-      for (BuildTask task : tasks) {
-        task.build(context);
+      if (!tasks.isEmpty()) {
+        context.processMessage(new ProgressMessage("Running " + phase.getPresentableName() + " tasks for '" + artifact.getName() + "' artifact..."));
+        for (BuildTask task : tasks) {
+          task.build(context);
+        }
       }
     }
   }

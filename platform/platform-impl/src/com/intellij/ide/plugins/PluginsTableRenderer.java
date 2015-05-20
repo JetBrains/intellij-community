@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.Set;
@@ -46,6 +47,8 @@ import java.util.Set;
 * @author Konstantin Bulenkov
 */
 public class PluginsTableRenderer extends DefaultTableCellRenderer {
+  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
+
   private SimpleColoredComponent myName;
   private JLabel myStatus;
   private RatesPanel myRating;
@@ -53,15 +56,18 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
   private JLabel myLastUpdated;
   private JPanel myPanel;
 
-  private JLabel myCategory;
+  private SimpleColoredComponent myCategory;
   private JPanel myRightPanel;
   private JPanel myBottomPanel;
   private JPanel myInfoPanel;
-  private final IdeaPluginDescriptor myPluginDescriptor;
 
+  private final IdeaPluginDescriptor myPluginDescriptor;
+  private final boolean myPluginsView;
+
+  // showFullInfo: true for Plugin Repository view, false for Installed Plugins view
   public PluginsTableRenderer(IdeaPluginDescriptor pluginDescriptor, boolean showFullInfo) {
     myPluginDescriptor = pluginDescriptor;
-    boolean myShowFullInfo = showFullInfo;
+    myPluginsView = !showFullInfo;
 
     final Font smallFont;
     if (SystemInfo.isMac) {
@@ -74,166 +80,172 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     myCategory.setFont(smallFont);
     myDownloads.setFont(smallFont);
     myStatus.setText("");
-    myCategory.setText("");
     myLastUpdated.setFont(smallFont);
-    if (!myShowFullInfo || !(pluginDescriptor instanceof PluginNode)) {
+
+    if (myPluginsView || pluginDescriptor.getDownloads() == null || !(pluginDescriptor instanceof PluginNode)) {
       myPanel.remove(myRightPanel);
     }
-
-    if (!myShowFullInfo) {
+    if (myPluginsView) {
       myInfoPanel.remove(myBottomPanel);
     }
 
-    myPanel.setBorder(UIUtil.isRetina() ? new EmptyBorder(4,3,4,3) : new EmptyBorder(2,3,2,3));
+    myPanel.setBorder(UIUtil.isRetina() ? new EmptyBorder(4, 3, 4, 3) : new EmptyBorder(2, 3, 2, 3));
+  }
+
+  private void createUIComponents() {
+    myRating = new RatesPanel();
   }
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (myPluginDescriptor != null) {
-      final PluginId pluginId = myPluginDescriptor.getPluginId();
+      Color fg = UIUtil.getTableForeground(isSelected);
+      Color bg = UIUtil.getTableBackground(isSelected);
+      Color grayedFg = isSelected ? fg : new JBColor(Gray._130, Gray._120);
+
+      myPanel.setBackground(bg);
+
+      myName.setForeground(fg);
+      myCategory.setForeground(grayedFg);
+      myStatus.setForeground(grayedFg);
+      myLastUpdated.setForeground(grayedFg);
+      myDownloads.setForeground(grayedFg);
+
       myName.clear();
       myName.setOpaque(false);
+      myCategory.clear();
+      myCategory.setOpaque(false);
       String pluginName = myPluginDescriptor.getName() + "  ";
       Object query = table.getClientProperty(SpeedSearchSupply.SEARCH_QUERY_KEY);
+      SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected),
+                                                           UIUtil.getListForeground(isSelected),
+                                                           JBColor.RED,
+                                                           SimpleTextAttributes.STYLE_PLAIN);
+      Matcher matcher = NameUtil.buildMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
       if (query instanceof String) {
-        String pattern = "*" + query;
-        Matcher matcher = NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
-        SimpleTextAttributes attr = new SimpleTextAttributes(UIUtil.getListBackground(isSelected),
-                                                             UIUtil.getListForeground(isSelected),
-                                                             JBColor.RED,
-                                                             SimpleTextAttributes.STYLE_PLAIN);
-
-        SpeedSearchUtil.appendColoredFragmentForMatcher(pluginName, myName, attr, matcher,
-                                                        UIUtil.getTableBackground(isSelected), true);
-      } else {
+        SpeedSearchUtil.appendColoredFragmentForMatcher(pluginName, myName, attr, matcher, UIUtil.getTableBackground(isSelected), true);
+      }
+      else {
         myName.append(pluginName);
       }
 
-      final Color fg = UIUtil.getTableForeground(isSelected);
-      final Color bg = UIUtil.getTableBackground(isSelected);
-      final Color grayedFg = isSelected ? fg : new JBColor(Gray._130, Gray._120);
-      myName.setForeground(fg);
-      myStatus.setForeground(grayedFg);
-      myStatus.setIcon(AllIcons.Nodes.Plugin);
-      String category = myPluginDescriptor.getCategory();
-      myCategory.setForeground(grayedFg);
+      String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory());
       if (category != null) {
-        myCategory.setText(category.toUpperCase() + " ");
+        if (query instanceof String) {
+          SpeedSearchUtil.appendColoredFragmentForMatcher(category, myCategory, attr, matcher, UIUtil.getTableBackground(isSelected), true);
+        }
+        else {
+          myCategory.append(category);
+        }
       }
+      else if (!myPluginsView) {
+        myCategory.append(AvailablePluginsManagerMain.N_A);
+      }
+
+      myStatus.setIcon(AllIcons.Nodes.Plugin);
       if (myPluginDescriptor.isBundled()) {
-        myCategory.setText(myCategory.getText() + "[Bundled]");
+        myCategory.append(" [Bundled]");
         myStatus.setIcon(AllIcons.Nodes.PluginJB);
       }
-      final String vendor = myPluginDescriptor.getVendor();
-      if (vendor != null && vendor.toLowerCase().contains("jetbrains")) {
+      String vendor = myPluginDescriptor.getVendor();
+      if (vendor != null && StringUtil.containsIgnoreCase(vendor, "jetbrains")) {
         myStatus.setIcon(AllIcons.Nodes.PluginJB);
       }
 
-      myPanel.setBackground(bg);
-      myLastUpdated.setForeground(grayedFg);
-      myLastUpdated.setText("");
-      myDownloads.setForeground(grayedFg);
-      myDownloads.setText("");
-
-      final PluginNode pluginNode = myPluginDescriptor instanceof PluginNode ? (PluginNode)myPluginDescriptor : null;
-      if (pluginNode != null && pluginNode.getRepositoryName() == null) {
-        String downloads = pluginNode.getDownloads();
-        if (downloads == null) downloads= "";
+      String downloads = myPluginDescriptor.getDownloads();
+      if (downloads != null && myPluginDescriptor instanceof PluginNode) {
         if (downloads.length() > 3) {
           downloads = new DecimalFormat("#,###").format(Integer.parseInt(downloads));
         }
-        //if (myDownloads.getFont().canDisplay('\u2193')) {
-        //  downloads += '\u2193';
-        //}
         myDownloads.setText(downloads);
 
-        myRating.setRate(pluginNode.getRating());
-        myLastUpdated.setText(DateFormatUtil.formatBetweenDates(pluginNode.getDate(), System.currentTimeMillis()));
+        myRating.setRate(((PluginNode)myPluginDescriptor).getRating());
+        myLastUpdated.setText(DateFormatUtil.formatBetweenDates(((PluginNode)myPluginDescriptor).getDate(), System.currentTimeMillis()));
       }
 
-      final IdeaPluginDescriptor installed = PluginManager.getPlugin(pluginId);
-      if ((pluginNode != null && PluginManagerColumnInfo.isDownloaded(pluginNode)) ||
-          (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))) {
-        if (!isSelected) myName.setForeground(FileStatus.ADDED.getColor());
-        //todo[kb] set proper icon
-        //myStatus.setText("[Downloaded]");
+      // plugin state-dependent rendering
+
+      PluginId pluginId = myPluginDescriptor.getPluginId();
+      IdeaPluginDescriptor installed = PluginManager.getPlugin(pluginId);
+
+      if (installed != null && ((IdeaPluginDescriptorImpl)installed).isDeleted()) {
+        // existing plugin uninstalled (both views)
         myStatus.setIcon(AllIcons.Nodes.PluginRestart);
-        if (installed != null) {
-          myPanel.setToolTipText("Plugin was updated to the newest version. Changes will be available after restart");
-        } else {
-          myPanel.setToolTipText("Plugin will be activated after restart.");
-        }
-        //myPanel.setToolTipText(IdeBundle.message("plugin.download.status.tooltip"));
-        //myStatus.setBorder(BorderFactory.createEmptyBorder(0, LEFT_MARGIN, 0, 0));
+        if (!isSelected) myName.setForeground(FileStatus.DELETED.getColor());
+        myPanel.setToolTipText(IdeBundle.message("plugin.manager.uninstalled.tooltip"));
       }
-      else if (pluginNode != null && pluginNode.getStatus() == PluginNode.STATUS_INSTALLED) {
-        final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(pluginId);
-        if (!isSelected) myName.setForeground(FileStatus.MODIFIED.getColor());
-        if (hasNewerVersion) {
-          if (!isSelected) {
-            myName.setForeground(FileStatus.MODIFIED.getColor());
-          }
-          myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
-        }
-        //todo[kb] set proper icon
-        //myStatus.setText("v." + pluginNode.getInstalledVersion() + (hasNewerVersion ? (" -> " + pluginNode.getVersion()) : ""));
+      else if (ourState.wasInstalled(pluginId)) {
+        // new plugin installed (both views)
+        myStatus.setIcon(AllIcons.Nodes.PluginRestart);
+        if (!isSelected) myName.setForeground(FileStatus.ADDED.getColor());
+        myPanel.setToolTipText(IdeBundle.message("plugin.manager.installed.tooltip"));
       }
-
-      if (InstalledPluginsTableModel.hasNewerVersion(pluginId)) {
+      else if (ourState.wasUpdated(pluginId)) {
+        // existing plugin updated (both views)
+        myStatus.setIcon(AllIcons.Nodes.PluginRestart);
+        if (!isSelected) myName.setForeground(FileStatus.ADDED.getColor());
+        myPanel.setToolTipText(IdeBundle.message("plugin.manager.updated.tooltip"));
+      }
+      else if (ourState.hasNewerVersion(pluginId)) {
+        // existing plugin has a newer version (both views)
         myStatus.setIcon(AllIcons.Nodes.Pluginobsolete);
-        if (!isSelected) {
-          myName.setForeground(FileStatus.MODIFIED.getColor());
+        if (!isSelected) myName.setForeground(FileStatus.MODIFIED.getColor());
+        if (!myPluginsView && installed != null) {
+          myPanel.setToolTipText(IdeBundle.message("plugin.manager.new.version.tooltip", installed.getVersion()));
+        }
+        else {
+          myPanel.setToolTipText(IdeBundle.message("plugin.manager.update.available.tooltip"));
         }
       }
-      if (!myPluginDescriptor.isEnabled()) {
+      else if (isIncompatible(myPluginDescriptor, table.getModel())) {
+        // a plugin is incompatible with current installation (both views)
+        if (!isSelected) myName.setForeground(JBColor.RED);
+        myPanel.setToolTipText(whyIncompatible(myPluginDescriptor, table.getModel()));
+      }
+      else if (!myPluginDescriptor.isEnabled() && myPluginsView) {
+        // a plugin is disabled (plugins view only)
         myStatus.setIcon(IconLoader.getDisabledIcon(myStatus.getIcon()));
-      }
-
-      if (table.getModel() instanceof InstalledPluginsTableModel) {
-        final InstalledPluginsTableModel installedPluginsTableModel = (InstalledPluginsTableModel)table.getModel();
-        final Set<PluginId> required = installedPluginsTableModel.getRequiredPlugins(pluginId);
-        if (required != null && required.size() > 0) {
-          final StringBuilder s = new StringBuilder();
-          if (!installedPluginsTableModel.isLoaded(pluginId)) {
-            s.append("Plugin was not loaded.\n");
-          }
-
-          if (required.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
-            s.append("The plugin requires IntelliJ IDEA Ultimate");
-          }
-          else {
-            s.append("Required plugin").append(required.size() == 1 ? " \"" : "s \"");
-            s.append(StringUtil.join(required, new Function<PluginId, String>() {
-              @Override
-              public String fun(final PluginId id) {
-                final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-                return plugin == null ? id.getIdString() : plugin.getName();
-              }
-            }, ","));
-
-            s.append(required.size() == 1 ? "\" is not enabled." : "\" are not enabled.");
-
-          }
-          myPanel.setToolTipText(s.toString());
-        } else if (PluginManagerCore.isIncompatible(myPluginDescriptor)) {
-          myPanel.setToolTipText(IdeBundle.message("plugin.manager.incompatible.tooltip.warning", ApplicationNamesInfo.getInstance().getFullProductName()));
-        }
-      }
-    }
-    if (!isSelected) {
-      if (PluginManagerCore.isIncompatible(myPluginDescriptor)) {
-        myName.setForeground(JBColor.RED);
-      } else if (myPluginDescriptor != null && table.getModel() instanceof InstalledPluginsTableModel) {
-        if (((InstalledPluginsTableModel)table.getModel()).hasProblematicDependencies(myPluginDescriptor.getPluginId())) {
-          myName.setForeground(JBColor.RED);
-        }
       }
     }
 
     return myPanel;
   }
 
-  private void createUIComponents() {
-    myRating = new RatesPanel();
+  private static boolean isIncompatible(IdeaPluginDescriptor descriptor, TableModel model) {
+    return PluginManagerCore.isIncompatible(descriptor) ||
+           model instanceof InstalledPluginsTableModel && ((InstalledPluginsTableModel)model).hasProblematicDependencies(descriptor.getPluginId());
+  }
+
+  private static String whyIncompatible(IdeaPluginDescriptor descriptor, TableModel model) {
+    if (model instanceof InstalledPluginsTableModel) {
+      InstalledPluginsTableModel installedModel = (InstalledPluginsTableModel)model;
+      Set<PluginId> required = installedModel.getRequiredPlugins(descriptor.getPluginId());
+
+      if (required != null && required.size() > 0) {
+        StringBuilder sb = new StringBuilder();
+
+        if (!installedModel.isLoaded(descriptor.getPluginId())) {
+          sb.append(IdeBundle.message("plugin.manager.incompatible.not.loaded.tooltip")).append('\n');
+        }
+
+        if (required.contains(PluginId.getId("com.intellij.modules.ultimate"))) {
+          sb.append(IdeBundle.message("plugin.manager.incompatible.ultimate.tooltip"));
+        }
+        else {
+          String deps = StringUtil.join(required, new Function<PluginId, String>() {
+            @Override
+            public String fun(PluginId id) {
+              IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+              return plugin != null ? plugin.getName() : id.getIdString();
+            }
+          }, ", ");
+          sb.append(IdeBundle.message("plugin.manager.incompatible.deps.tooltip", required.size(), deps));
+        }
+
+        return sb.toString();
+      }
+    }
+
+    return IdeBundle.message("plugin.manager.incompatible.tooltip", ApplicationNamesInfo.getInstance().getFullProductName());
   }
 }

@@ -15,13 +15,16 @@ public abstract class PatchAction {
   protected long myChecksum;
   private boolean isCritical;
   private boolean isOptional;
+  protected transient Patch myPatch;
 
-  public PatchAction(String path, long checksum) {
-    myPath = path;
+  public PatchAction(Patch patch, String path, long checksum) {
+    myPatch = patch;
     myChecksum = checksum;
+    myPath = path;
   }
 
-  public PatchAction(DataInputStream in) throws IOException {
+  public PatchAction(Patch patch, DataInputStream in) throws IOException {
+    myPatch = patch;
     myPath = in.readUTF();
     myChecksum = in.readLong();
     isCritical = in.readBoolean();
@@ -70,18 +73,14 @@ public abstract class PatchAction {
         process.terminate();
       }
     }
-    return shouldApplyOn(file);
+    return doShouldApply(toDir);
   }
 
-  protected boolean shouldApplyOn(File toFile) {
+  protected boolean doShouldApply(File toDir) {
     return true;
   }
 
-  public ValidationResult validate(File toDir) throws IOException {
-    return doValidate(getFile(toDir));
-  }
-
-  protected abstract ValidationResult doValidate(final File toFile) throws IOException;
+  protected abstract ValidationResult validate(File toDir) throws IOException;
 
   protected ValidationResult doValidateAccess(File toFile, ValidationResult.Action action) {
     if (!toFile.exists()) return null;
@@ -95,7 +94,7 @@ public abstract class PatchAction {
                                 myPath,
                                 action,
                                 ValidationResult.ACCESS_DENIED_MESSAGE,
-                                ValidationResult.Option.IGNORE);
+                                myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE);
   }
 
   private boolean isWritable(File toFile) {
@@ -144,11 +143,27 @@ public abstract class PatchAction {
     throws IOException {
     if (toFile.exists()) {
       if (isModified(toFile)) {
+        ValidationResult.Option[] options;
+        if (myPatch.isStrict()) {
+          if (isCritical) {
+            options = new ValidationResult.Option[]{ ValidationResult.Option.REPLACE };
+          }
+          else {
+            options = new ValidationResult.Option[]{ ValidationResult.Option.NONE };
+          }
+        } else {
+          if (isCritical) {
+            options = new ValidationResult.Option[]{ ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE };
+          }
+          else {
+            options = new ValidationResult.Option[]{ ValidationResult.Option.IGNORE };
+          }
+        }
         return new ValidationResult(kind,
                                     myPath,
                                     action,
                                     ValidationResult.MODIFIED_MESSAGE,
-                                    ValidationResult.Option.IGNORE);
+                                    options);
       }
     }
     else if (!isOptional) {
@@ -156,18 +171,20 @@ public abstract class PatchAction {
                                   myPath,
                                   action,
                                   ValidationResult.ABSENT_MESSAGE,
-                                  ValidationResult.Option.IGNORE);
+                                  myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE);
     }
     return null;
   }
 
-  abstract protected boolean isModified(File toFile) throws IOException;
-
-  public void apply(ZipFile patchFile, File toDir) throws IOException {
-    doApply(patchFile, getFile(toDir));
+  protected boolean isModified(File toFile) throws IOException {
+    return myChecksum == Digester.INVALID || myChecksum != myPatch.digestFile(toFile, myPatch.isNormalized());
   }
 
-  protected abstract void doApply(ZipFile patchFile, File toFile) throws IOException;
+  public void apply(ZipFile patchFile, File backupDir, File toDir) throws IOException {
+    doApply(patchFile, backupDir, getFile(toDir));
+  }
+
+  protected abstract void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException;
 
   public void backup(File toDir, File backupDir) throws IOException {
     doBackup(getFile(toDir), getFile(backupDir));
@@ -181,7 +198,7 @@ public abstract class PatchAction {
 
   protected abstract void doRevert(File toFile, File backupFile) throws IOException;
 
-  private File getFile(File baseDir) {
+  protected File getFile(File baseDir) {
     return new File(baseDir, myPath);
   }
 

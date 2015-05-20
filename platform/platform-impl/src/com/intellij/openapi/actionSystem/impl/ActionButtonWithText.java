@@ -18,15 +18,20 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class ActionButtonWithText extends ActionButton {
   private static final int ICON_TEXT_SPACE = 2;
+  private int myHorizontalTextPosition = SwingConstants.TRAILING;
+  private int myHorizontalTextAlignment = SwingConstants.CENTER;
 
   public ActionButtonWithText(final AnAction action,
                               final Presentation presentation,
@@ -38,29 +43,43 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   public Dimension getPreferredSize() {
-    final Dimension preferredSize = new Dimension(super.getPreferredSize());
-    final String text = getText();
-    final FontMetrics fontMetrics = getFontMetrics(getFont());
-    preferredSize.width += iconTextSpace();
-    preferredSize.width += fontMetrics.stringWidth(text);
-    return preferredSize;
+    Dimension basicSize = super.getPreferredSize();
+
+    Icon icon = getIcon();
+    FontMetrics fm = getFontMetrics(getFont());
+    Rectangle viewRect = new Rectangle(0, 0, Short.MAX_VALUE, Short.MAX_VALUE);
+    Insets insets = getInsets();
+    int dx = insets.left + insets.right;
+    int dy = insets.top + insets.bottom;
+
+    Rectangle iconR = new Rectangle();
+    Rectangle textR = new Rectangle();
+    SwingUtilities.layoutCompoundLabel(this, fm, getText(), icon,
+                                       SwingConstants.CENTER, horizontalTextAlignment(),
+                                       SwingConstants.CENTER, horizontalTextPosition(),
+                                       viewRect, iconR, textR, iconTextSpace());
+    int x1 = Math.min(iconR.x, textR.x);
+    int x2 = Math.max(iconR.x + iconR.width, textR.x + textR.width);
+    int y1 = Math.min(iconR.y, textR.y);
+    int y2 = Math.max(iconR.y + iconR.height, textR.y + textR.height);
+    Dimension rv = new Dimension(x2 - x1, y2 - y1);
+
+    rv.width = Math.max(rv.width += dx, basicSize.width);
+    rv.height = Math.max(rv.height += dy, basicSize.height);
+    return rv;
   }
 
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
-    FontMetrics fm = SwingUtilities2.getFontMetrics(this, g, getFont());
+    FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = new Rectangle(getSize());
-    Insets i = getInsets();
-    viewRect.x += i.left;
-    viewRect.y += i.top;
-    viewRect.width -= (i.right + viewRect.x);
-    viewRect.height -= (i.bottom + viewRect.y);
+    JBInsets.removeFrom(viewRect, getInsets());
 
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
     String text = SwingUtilities.layoutCompoundLabel(this, fm, getText(), icon,
                                                      SwingConstants.CENTER, horizontalTextAlignment(),
-                                                     SwingConstants.CENTER, SwingConstants.TRAILING,
+                                                     SwingConstants.CENTER, horizontalTextPosition(),
                                                      viewRect, iconRect, textRect, iconTextSpace());
     ActionButtonLook look = ActionButtonLook.IDEA_LOOK;
     look.paintBackground(g, this);
@@ -68,15 +87,31 @@ public class ActionButtonWithText extends ActionButton {
     look.paintBorder(g, this);
 
     UIUtil.applyRenderingHints(g);
-    g.setColor(isButtonEnabled() ? getForeground() : UIUtil.getInactiveTextColor());
+    g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
     SwingUtilities2.drawStringUnderlineCharAt(this, g, text,
                                               getMnemonicCharIndex(text),
                                               textRect.x,
                                               textRect.y + fm.getAscent());
   }
 
+  public Color getInactiveTextColor() {
+    return UIUtil.getInactiveTextColor();
+  }
+
+  public void setHorizontalTextPosition(@MagicConstant(valuesFromClass = SwingConstants.class) int position) {
+    myHorizontalTextPosition = position;
+  }
+
+  public void setHorizontalTextAlignment(@MagicConstant(flagsFromClass = SwingConstants.class) int alignment) {
+    myHorizontalTextAlignment = alignment;
+  }
+
+  protected int horizontalTextPosition() {
+    return myHorizontalTextPosition;
+  }
+
   protected int horizontalTextAlignment() {
-    return SwingConstants.CENTER;
+    return myHorizontalTextAlignment;
   }
 
   protected int iconTextSpace() {
@@ -90,16 +125,17 @@ public class ActionButtonWithText extends ActionButton {
     }
     final ShortcutSet shortcutSet = myAction.getShortcutSet();
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
-    for (int i = 0; i < shortcuts.length; i++) {
-      Shortcut shortcut = shortcuts[i];
-      if (shortcut instanceof KeyboardShortcut) {
-        KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-        if (keyboardShortcut.getSecondKeyStroke() == null) { // we are interested only in "mnemonic-like" shortcuts
-          final KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
-          final int modifiers = keyStroke.getModifiers();
-          if ((modifiers & KeyEvent.ALT_MASK) != 0) {
-            return (keyStroke.getKeyChar() != KeyEvent.CHAR_UNDEFINED)? text.indexOf(keyStroke.getKeyChar()) : text.indexOf(KeyEvent.getKeyText(keyStroke.getKeyCode()));
-          }
+    for (Shortcut shortcut : shortcuts) {
+      if (!(shortcut instanceof KeyboardShortcut)) continue;
+
+      KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+      if (keyboardShortcut.getSecondKeyStroke() == null) { // we are interested only in "mnemonic-like" shortcuts
+        final KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
+        final int modifiers = keyStroke.getModifiers();
+        if ((modifiers & InputEvent.ALT_MASK) != 0) {
+          return (keyStroke.getKeyChar() != KeyEvent.CHAR_UNDEFINED)
+                 ? text.indexOf(keyStroke.getKeyChar())
+                 : text.indexOf(KeyEvent.getKeyText(keyStroke.getKeyCode()));
         }
       }
     }

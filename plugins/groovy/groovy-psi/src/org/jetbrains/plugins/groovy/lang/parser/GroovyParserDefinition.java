@@ -26,10 +26,12 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
@@ -39,11 +41,16 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
 
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+
 /**
  * @author ilyas
  */
 public class GroovyParserDefinition implements ParserDefinition {
   public static final IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyLanguage.INSTANCE);
+  private static final IElementType[] STRINGS = new IElementType[]{
+    GSTRING, REGEX, GSTRING_INJECTION, GroovyTokenTypes.mREGEX_LITERAL, GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL
+  };
 
   @Override
   @NotNull
@@ -98,24 +105,20 @@ public class GroovyParserDefinition implements ParserDefinition {
     if (rType == GroovyTokenTypes.kIMPORT && lType != TokenType.WHITE_SPACE) {
       return SpaceRequirements.MUST_LINE_BREAK;
     }
-    else if (lType == GroovyElementTypes.MODIFIERS && rType == GroovyElementTypes.MODIFIERS) {
+    else if (lType == MODIFIERS && rType == MODIFIERS) {
       return SpaceRequirements.MUST;
     }
     if (lType == GroovyTokenTypes.mSEMI || lType == GroovyTokenTypes.mSL_COMMENT) {
       return SpaceRequirements.MUST_LINE_BREAK;
-    }    
+    }
     if (lType == GroovyTokenTypes.mNLS || lType == GroovyDocTokenTypes.mGDOC_COMMENT_START) {
       return SpaceRequirements.MAY;
     }
     if (lType == GroovyTokenTypes.mGT) return SpaceRequirements.MUST;
     if (rType == GroovyTokenTypes.mLT) return SpaceRequirements.MUST;
 
-    final IElementType parentType = left.getTreeParent().getElementType();
-    if (parentType == GroovyElementTypes.GSTRING ||
-        parentType == GroovyElementTypes.REGEX ||
-        parentType == GroovyElementTypes.GSTRING_INJECTION ||
-        parentType == GroovyTokenTypes.mREGEX_LITERAL ||
-        parentType == GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL) {
+    final ASTNode parent = TreeUtil.findCommonParent(left, right);
+    if (parent == null || ArrayUtil.contains(parent.getElementType(), STRINGS)) {
       return SpaceRequirements.MUST_NOT;
     }
 

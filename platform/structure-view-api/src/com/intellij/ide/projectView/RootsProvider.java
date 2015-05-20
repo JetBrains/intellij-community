@@ -16,15 +16,15 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 public interface RootsProvider {
 
-  Set<VirtualFile> EMPTY_ROOTS = new HashSet<VirtualFile>();
+  Set<VirtualFile> EMPTY_ROOTS = Collections.emptySet();
 
   @NotNull
   Collection<VirtualFile> getRoots();

@@ -16,7 +16,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.makeStatic.MakeMethodStaticProcessor;
@@ -185,20 +185,26 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
   }
 
   public void testPreserveTypeParams() throws Exception {
-    configureByFile("/refactoring/makeMethodStatic/beforePreserveTypeParams.java");
-    performWithFields();
-    checkResultByFile("/refactoring/makeMethodStatic/afterPreserveTypeParams.java");
+    doTestFields(false);
+  }
+
+  public void testFieldsAndDelegation() throws Exception {
+    doTestFields(true);
   }
 
   public void testInnerStaticClassUsed() throws Exception {
     configureByFile("/refactoring/makeMethodStatic/beforeInnerStaticClassUsed.java");
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     assertFalse(MakeStaticUtil.isParameterNeeded((PsiMethod)element));
   }
 
   public void testMethodReference() throws Exception {
     doTest(true);
+  }
+
+  public void testThisMethodReference() throws Exception {
+    doTest(false);
   }
 
   public void testPreserveParametersAlignment() throws Exception {
@@ -215,8 +221,16 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     checkResultByFile("/refactoring/makeMethodStatic/after" + getTestName(false) + ".java");
   }
 
+  private void doTestFields(boolean delegate) throws Exception {
+    final String testName = getTestName(false);
+    configureByFile("/refactoring/makeMethodStatic/before" + testName + ".java");
+    performWithFields(delegate);
+    checkResultByFile("/refactoring/makeMethodStatic/after" + testName + ".java");
+  }
+
+
   private static void perform(boolean addClassParameter) {
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
 
@@ -227,7 +241,11 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
   }
 
   private static void performWithFields() {
-    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    performWithFields(false);
+  }
+
+  private static void performWithFields(boolean delegate) {
+    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod) element;
     final ArrayList<VariableData> parametersForFields = new ArrayList<VariableData>();
@@ -238,6 +256,6 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
             method,
             new Settings(true, addClassParameter ? "anObject" : null,
                          parametersForFields.toArray(
-                           new VariableData[parametersForFields.size()]))).run();
+                           new VariableData[parametersForFields.size()]), delegate)).run();
   }
 }

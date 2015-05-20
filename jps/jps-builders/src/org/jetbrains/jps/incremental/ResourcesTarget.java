@@ -32,10 +32,7 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
@@ -101,10 +98,11 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     }
 
     JavaResourceRootType resourceType = isTests() ? JavaResourceRootType.TEST_RESOURCE : JavaResourceRootType.RESOURCE;
-    for (JpsModuleSourceRoot root : myModule.getSourceRoots(resourceType)) {
+    for (JpsTypedModuleSourceRoot<JavaResourceRootProperties> root : myModule.getSourceRoots(resourceType)) {
       if (!isExcludedFromCompilation(excludedRootProviders, root)) {
         File rootFile = root.getFile();
-        roots.add(new ResourceRootDescriptor(rootFile, this, "", computeRootExcludes(rootFile, index)));
+        String relativeOutputPath = root.getProperties().getRelativeOutputPath();
+        roots.add(new ResourceRootDescriptor(rootFile, this, relativeOutputPath.replace('/', '.'), computeRootExcludes(rootFile, index)));
       }
     }
     

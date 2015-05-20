@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -164,45 +164,32 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
     boolean markAsNeedsStrippingLater;
 
-    if (activeEditor != null && activeEditor.getCaretModel().supportsMultipleCarets()) {
-      final List<Caret> carets = activeEditor.getCaretModel().getAllCarets();
-      final List<VisualPosition> visualCarets = new ArrayList<VisualPosition>(carets.size());
-      int[] caretOffsets = new int[carets.size()];
-      for (int i = 0; i < carets.size(); i++) {
-        Caret caret = carets.get(i);
-        visualCarets.add(caret.getVisualPosition());
-        caretOffsets[i] = caret.getOffset();
-      }
+    final List<Caret> carets = activeEditor == null ? Collections.<Caret>emptyList() : activeEditor.getCaretModel().getAllCarets();
+    final List<VisualPosition> visualCarets = new ArrayList<VisualPosition>(carets.size());
+    int[] caretOffsets = new int[carets.size()];
+    for (int i = 0; i < carets.size(); i++) {
+      Caret caret = carets.get(i);
+      visualCarets.add(caret.getVisualPosition());
+      caretOffsets[i] = caret.getOffset();
+    }
 
-      markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(activeEditor.getProject(), inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
+    markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(activeEditor == null ? null : activeEditor.getProject(), 
+                                                                             inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
 
-      if (!ShutDownTracker.isShutdownHookRunning()) {
-        activeEditor.getCaretModel().runBatchCaretOperation(new Runnable() {
-          @Override
-          public void run() {
-            for (int i = 0; i < carets.size(); i++) {
-              Caret caret = carets.get(i);
-              if (caret.isValid()) {
-                caret.moveToVisualPosition(visualCarets.get(i));
-              }
+    if (activeEditor != null && !ShutDownTracker.isShutdownHookRunning()) {
+      activeEditor.getCaretModel().runBatchCaretOperation(new Runnable() {
+        @Override
+        public void run() {
+          for (int i = 0; i < carets.size(); i++) {
+            Caret caret = carets.get(i);
+            if (caret.isValid()) {
+              caret.moveToVisualPosition(visualCarets.get(i));
             }
           }
-        });
-      }
+        }
+      });
     }
-    else {
-      VisualPosition visualCaret = activeEditor == null ? null : activeEditor.getCaretModel().getVisualPosition();
-      int caretLine = activeEditor == null ? -1 : activeEditor.getCaretModel().getLogicalPosition().line;
-      int caretOffset = activeEditor == null ? -1 : activeEditor.getCaretModel().getOffset();
 
-      final Project project = activeEditor == null ? null : activeEditor.getProject();
-      markAsNeedsStrippingLater = ((DocumentImpl)document).stripTrailingSpaces(project, inChangedLinesOnly, isVirtualSpaceEnabled,
-                                                                               caretLine, caretOffset);
-
-      if (!ShutDownTracker.isShutdownHookRunning() && activeEditor != null) {
-        activeEditor.getCaretModel().moveToVisualPosition(visualCaret);
-      }
-    }
     return !markAsNeedsStrippingLater;
   }
 

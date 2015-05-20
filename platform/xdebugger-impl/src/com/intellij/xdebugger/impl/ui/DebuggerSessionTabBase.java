@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
@@ -89,9 +90,26 @@ public abstract class DebuggerSessionTabBase extends RunTab {
     return myEnvironment != null ? myEnvironment.getRunProfile() : null;
   }
 
-  public void toFront(boolean focus) {
+
+  public void toFront(boolean focus, @Nullable final Runnable onShowCallback) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ExecutionManager.getInstance(myProject).getContentManager().toFrontRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), myRunContentDescriptor);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (myRunContentDescriptor != null) {
+            ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
+              .getToolWindowByDescriptor(myRunContentDescriptor);
+            if (toolWindow != null) {
+              if (!toolWindow.isVisible()) {
+                toolWindow.show(onShowCallback);
+              }
+              //noinspection ConstantConditions
+              toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
+            }
+          }
+        }
+      });
+
       if (focus) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override

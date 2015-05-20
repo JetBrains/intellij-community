@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,12 +38,13 @@ public abstract class ArchiveHandler {
 
   protected static class EntryInfo {
     public final EntryInfo parent;
-    public final String shortName;
+    @NotNull
+    public final CharSequence shortName;
     public final boolean isDirectory;
     public final long length;
     public final long timestamp;
 
-    public EntryInfo(EntryInfo parent, @NotNull String shortName, boolean isDirectory, long length, long timestamp) {
+    public EntryInfo(EntryInfo parent, @NotNull CharSequence shortName, boolean isDirectory, long length, long timestamp) {
       this.parent = parent;
       this.shortName = shortName;
       this.isDirectory = isDirectory;
@@ -52,18 +53,19 @@ public abstract class ArchiveHandler {
     }
   }
 
-  private final String myPath;
+  @NotNull
+  private final File myPath;
   private final Object myLock = new Object();
   private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<Map<String, EntryInfo>>(null);
-  private boolean myCorrupted = false;
+  private boolean myCorrupted;
 
   protected ArchiveHandler(@NotNull String path) {
-    myPath = path;
+    myPath = new File(path);
   }
 
   @NotNull
   public File getFile() {
-    return new File(myPath);
+    return myPath;
   }
 
   @Nullable
@@ -86,10 +88,14 @@ public abstract class ArchiveHandler {
     Set<String> names = new HashSet<String>();
     for (EntryInfo info : getEntriesMap().values()) {
       if (info.parent == entry) {
-        names.add(info.shortName);
+        names.add(info.shortName.toString());
       }
     }
     return ArrayUtil.toStringArray(names);
+  }
+
+  public void dispose() {
+    myEntries.clear();
   }
 
   @Nullable
@@ -110,9 +116,9 @@ public abstract class ArchiveHandler {
           }
           else {
             try {
-              map = Collections.unmodifiableMap(createEntriesMap());
+              map = createEntriesMap();
             }
-            catch (IOException e) {
+            catch (Exception e) {
               myCorrupted = true;
               Logger.getInstance(getClass()).warn(e.getMessage() + ": " + myPath, e);
               map = Collections.emptyMap();

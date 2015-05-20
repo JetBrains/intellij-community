@@ -36,6 +36,11 @@ public @interface State {
 
   boolean reloadable() default true;
 
+  /**
+   * If true, default state will be loaded from resources (if exists)
+   */
+  boolean defaultStateAsResource() default false;
+
   String additionalExportFile() default "";
 
   Class<? extends NameGetter> presentableName() default NameGetter.class;

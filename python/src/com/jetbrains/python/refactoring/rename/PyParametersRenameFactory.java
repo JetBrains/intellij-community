@@ -85,7 +85,7 @@ public class PyParametersRenameFactory implements AutomaticRenamerFactory {
 
     @Override
     public String getDialogTitle() {
-      return "Rename parameters";
+      return "Rename Parameters";
     }
 
     @Override

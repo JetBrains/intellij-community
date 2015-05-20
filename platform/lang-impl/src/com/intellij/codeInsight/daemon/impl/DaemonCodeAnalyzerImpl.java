@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,10 +68,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Alarm;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -130,7 +127,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                 @SuppressWarnings("UnusedParameters") @NotNull final NamedScopeManager namedScopeManager,
                                 @SuppressWarnings("UnusedParameters") @NotNull final DependencyValidationManager dependencyValidationManager) {
     myProject = project;
-
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;
     myPsiDocumentManager = psiDocumentManager;
@@ -147,7 +143,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
     myInitialized = true;
     myDisposed = false;
-    myFileStatusMap.markAllFilesDirty();
+    myFileStatusMap.markAllFilesDirty("DCAI init");
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
@@ -252,7 +248,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
       Collections.sort(passes, new Comparator<TextEditorHighlightingPass>() {
         @Override
-        public int compare(TextEditorHighlightingPass o1, TextEditorHighlightingPass o2) {
+        public int compare(@NotNull TextEditorHighlightingPass o1, @NotNull TextEditorHighlightingPass o2) {
           if (o1 instanceof GeneralHighlightingPass) return -1;
           if (o2 instanceof GeneralHighlightingPass) return 1;
           return 0;
@@ -307,7 +303,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     UIUtil.dispatchAllInvocationEvents();
 
     Project project = file.getProject();
-    setUpdateByTimerEnabled(false);
     FileStatusMap.getAndClearLog();
     FileStatusMap fileStatusMap = getFileStatusMap();
     fileStatusMap.allowDirt(canChangeDocument);
@@ -324,6 +319,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
 
+    myAlarm.cancelAllRequests();
     final DaemonProgressIndicator progress = createUpdateProgress();
     myPassExecutorService.submitPasses(map, progress);
     try {
@@ -369,18 +365,15 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @TestOnly
   public void prepareForTest() {
-    //if (!myInitialized) {
-    //  projectOpened();
-    //}
     setUpdateByTimerEnabled(false);
     waitForTermination();
   }
 
   @TestOnly
   public void cleanupAfterTest() {
-    if (!myProject.isOpen()) return;
-    setUpdateByTimerEnabled(false);
-    waitForTermination();
+    if (myProject.isOpen()) {
+      prepareForTest();
+    }
   }
 
   void waitForTermination() {
@@ -484,7 +477,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @Override
   public void restart() {
-    myFileStatusMap.markAllFilesDirty();
+    myFileStatusMap.markAllFilesDirty("Global restart");
     stopProcess(true, "Global restart");
   }
 
@@ -492,8 +485,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public void restart(@NotNull PsiFile file) {
     Document document = myPsiDocumentManager.getCachedDocument(file);
     if (document == null) return;
-    myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), file.getTextLength());
-    stopProcess(true, "Psi file restart");
+    String reason = "Psi file restart: " + file.getName();
+    myFileStatusMap.markFileScopeDirty(document, new TextRange(0, document.getTextLength()), file.getTextLength(), reason);
+    stopProcess(true, reason);
   }
 
   @NotNull
@@ -545,7 +539,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
-          myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+          if (myAlarm.isEmpty()) {
+            myAlarm.addRequest(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY);
+          }
         }
       });
     }
@@ -636,11 +632,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return false;
   }
 
-  @Nullable
+  @NotNull
   public static List<LineMarkerInfo> getLineMarkers(@NotNull Document document, Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
-    return markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY);
+    return ObjectUtils.notNull(markup.getUserData(MARKERS_IN_EDITOR_DOCUMENT_KEY), Collections.<LineMarkerInfo>emptyList());
   }
 
   static void setLineMarkers(@NotNull Document document, List<LineMarkerInfo> lineMarkers, Project project) {
@@ -659,6 +655,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     hideLastIntentionHint();
+    
+    if (editor.getCaretModel().getCaretCount() > 1) return;
+    
     IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(project, file, editor, intentions, false);
     if (hasToRecreate) {
       hintComponent.recreate();
@@ -826,6 +825,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     }
   }
 
+  @TestOnly
   synchronized DaemonProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
   }

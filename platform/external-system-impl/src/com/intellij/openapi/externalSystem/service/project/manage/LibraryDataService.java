@@ -1,5 +1,6 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -8,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
-import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -37,7 +38,7 @@ import java.util.Set;
  * @since 2/15/12 11:32 AM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class LibraryDataService implements ProjectDataService<LibraryData, Library> {
+public class LibraryDataService implements ProjectDataServiceEx<LibraryData, Library> {
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());
   @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = new NotNullFunction<String, File>() {
@@ -48,16 +49,9 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     }
   };
 
-  @NotNull private final PlatformFacade                myPlatformFacade;
-  @NotNull private final ProjectStructureHelper        myProjectStructureHelper;
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
 
-  public LibraryDataService(@NotNull PlatformFacade platformFacade,
-                            @NotNull ProjectStructureHelper helper,
-                            @NotNull ExternalLibraryPathTypeMapper mapper)
-  {
-    myPlatformFacade = platformFacade;
-    myProjectStructureHelper = helper;
+  public LibraryDataService(@NotNull ExternalLibraryPathTypeMapper mapper) {
     myLibraryPathTypeMapper = mapper;
   }
 
@@ -67,22 +61,35 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     return ProjectKeys.LIBRARY;
   }
 
+  public void importData(@NotNull final Collection<DataNode<LibraryData>> toImport,
+                         @NotNull final Project project,
+                         final boolean synchronous) {
+    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    importData(toImport, project, platformFacade, synchronous);
+  }
+
   @Override
-  public void importData(@NotNull Collection<DataNode<LibraryData>> toImport, @NotNull Project project, boolean synchronous) {
+  public void importData(@NotNull final Collection<DataNode<LibraryData>> toImport,
+                         @NotNull final Project project,
+                         @NotNull final PlatformFacade platformFacade,
+                         final boolean synchronous) {
     for (DataNode<LibraryData> dataNode : toImport) {
-      importLibrary(dataNode.getData(), project, synchronous);
+      importLibrary(dataNode.getData(), project, platformFacade, synchronous);
     }
   }
 
-  public void importLibrary(@NotNull final LibraryData toImport, @NotNull final Project project, boolean synchronous) {
+  private void importLibrary(@NotNull final LibraryData toImport,
+                             @NotNull final Project project,
+                             @NotNull final PlatformFacade platformFacade,
+                             boolean synchronous) {
     Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(toImport);
 
-    Library library = myProjectStructureHelper.findIdeLibrary(toImport, project);
+    Library library = platformFacade.findIdeLibrary(toImport, project);
     if (library != null) {
       syncPaths(toImport, library, project, synchronous);
       return;
     }
-    importLibrary(toImport.getInternalName(), libraryFiles, project, synchronous);
+    importLibrary(toImport.getInternalName(), libraryFiles, project, platformFacade, synchronous);
   }
 
   @NotNull
@@ -98,16 +105,17 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     return result;
   }
 
-  public void importLibrary(@NotNull final String libraryName,
-                            @NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
-                            @NotNull final Project project,
-                            boolean synchronous)
+  private void importLibrary(@NotNull final String libraryName,
+                             @NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
+                             @NotNull final Project project,
+                             @NotNull final PlatformFacade platformFacade,
+                             boolean synchronous)
   {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
         // Is assumed to be called from the EDT.
-        final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
+        final LibraryTable libraryTable = platformFacade.getProjectLibraryTable(project);
         final LibraryTable.ModifiableModel projectLibraryModel = libraryTable.getModifiableModel();
         final Library intellijLibrary;
         try {
@@ -142,11 +150,18 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
             );
           }
           String url = VfsUtil.getUrlForLibraryRoot(file);
-          model.addRoot(url, entry.getKey());
+
+          final String[] urls = model.getUrls(entry.getKey());
+          if (!ArrayUtil.contains(url, urls)) {
+            model.addRoot(url, entry.getKey());
+          }
           continue;
         }
         if (virtualFile.isDirectory()) {
-          model.addRoot(virtualFile, entry.getKey());
+          final VirtualFile[] files = model.getFiles(entry.getKey());
+          if (!ArrayUtil.contains(virtualFile, files)) {
+            model.addRoot(virtualFile, entry.getKey());
+          }
         }
         else {
           VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(virtualFile);
@@ -156,20 +171,33 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
             ));
             continue;
           }
-          model.addRoot(jarRoot, entry.getKey());
+          final VirtualFile[] files = model.getFiles(entry.getKey());
+          if (!ArrayUtil.contains(jarRoot, files)) {
+            model.addRoot(jarRoot, entry.getKey());
+          }
         }
       }
     }
   }
 
+  @Override
   public void removeData(@NotNull final Collection<? extends Library> libraries, @NotNull final Project project, boolean synchronous) {
+    final PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+    removeData(libraries, project, platformFacade, synchronous);
+  }
+
+  @Override
+  public void removeData(@NotNull final Collection<? extends Library> libraries,
+                         @NotNull final Project project,
+                         @NotNull final PlatformFacade platformFacade,
+                         boolean synchronous) {
     if (libraries.isEmpty()) {
       return;
     }
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
-        final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
+        final LibraryTable libraryTable = platformFacade.getProjectLibraryTable(project);
         final LibraryTable.ModifiableModel model = libraryTable.getModifiableModel();
         try {
           for (Library library : libraries) {

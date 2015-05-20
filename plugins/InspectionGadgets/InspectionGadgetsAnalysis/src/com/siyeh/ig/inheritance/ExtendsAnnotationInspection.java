@@ -16,6 +16,7 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -66,7 +67,7 @@ public class ExtendsAnnotationInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isAnnotationType()) {
+      if (aClass.isAnnotationType() || InheritanceUtil.isInheritor(aClass, "javax.enterprise.util.AnnotationLiteral")) {
         return;
       }
       checkReferenceList(aClass.getExtendsList(), aClass);

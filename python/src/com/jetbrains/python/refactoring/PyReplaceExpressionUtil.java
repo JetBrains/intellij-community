@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.refactoring;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -275,9 +274,9 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     final int n = members.length;
     final int i = Math.min(n, Math.max(0, getPositionInRanges(PyStringFormatParser.substitutionsToRanges(substitutions), textRange)));
     final boolean last = i == n;
-    final ASTNode trailingComma = PyPsiUtils.getNextComma(members[n - 1].getNode());
+    final PsiElement trailingComma = PyPsiUtils.getNextComma(members[n - 1]);
     if (trailingComma != null) {
-      tupleFormatValue.getNode().removeChild(trailingComma);
+      trailingComma.delete();
     }
     final PyExpression before = last ? null : members[i];
     PyUtil.addListNode(tupleFormatValue, newExpression, before != null ? before.getNode() : null, i == 0 || !last, last, !last);
@@ -453,7 +452,7 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
     else if (expr instanceof PyBinaryExpression) {
       final IElementType opType = getOperationType(expr);
       if (opType == EXP) priority =  3;
-      if (opType == MULT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  4;
+      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  4;
       if (opType == PLUS || opType == MINUS) priority =  5;
       if (opType == LTLT || opType == GTGT) priority = 6;
       if (opType == AND) priority = 7;

@@ -22,8 +22,10 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
- * Use {@link BuilderService} to register implementations of this class
+ * Produced the output of a single build target. Use {@link BuilderService} to register implementations of this class.
+ *
  * @author nik
+ * @see BuilderService#createBuilders()
  */
 public abstract class TargetBuilder<R extends BuildRootDescriptor, T extends BuildTarget<R>> extends Builder {
   private final Collection<? extends BuildTargetType<? extends T>> myTargetTypes;
@@ -36,6 +38,17 @@ public abstract class TargetBuilder<R extends BuildRootDescriptor, T extends Bui
     return myTargetTypes;
   }
 
+  /**
+   * Builds a single build target.
+   *
+   * @param target         target to build.
+   * @param holder         can be used to enumerate the source files from the inputs of this target that have been modified
+   *                       or deleted since the previous compilation run.
+   * @param outputConsumer receives the output files produced by the build. (All output files produced by the build need
+   *                       to be reported here.)
+   * @param context        compilation context (can be used to report compiler errors/warnings and to check whether the build
+   *                       has been cancelled and needs to be stopped).
+   */
   public abstract void build(@NotNull T target, @NotNull DirtyFilesHolder<R, T> holder, @NotNull BuildOutputConsumer outputConsumer,
                              @NotNull CompileContext context) throws ProjectBuildException, IOException;
 

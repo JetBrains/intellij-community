@@ -249,7 +249,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 		meta.name.attrs.name =
 			attribute name {
-				w:meta-name
+				w:non-empty-string
 			}
 		meta.name.attrs.content =
 			attribute content {
@@ -314,6 +314,31 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.elem.metadata |= meta.http-equiv.default-style.elem # not quite right per spec
                                                                # if the definition is 
                                                                # reused in another language
+
+## "x-ua-compatible" pragma directive: <meta http-equiv='x-ua-compatible'>
+
+	meta.http-equiv.x-ua-compatible.elem =
+		element meta { meta.inner & meta.http-equiv.x-ua-compatible.attrs }
+	meta.http-equiv.x-ua-compatible.attrs =
+		(	common.attrs.basic
+		&	common.attrs.i18n
+		&	common.attrs.present
+		&	common.attrs.other
+		&	meta.http-equiv.attrs.http-equiv.x-ua-compatible
+		&	meta.http-equiv.attrs.content.x-ua-compatible
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
+		meta.http-equiv.attrs.http-equiv.x-ua-compatible =
+			attribute http-equiv {
+				w:string "x-ua-compatible"
+			}
+		meta.http-equiv.attrs.content.x-ua-compatible =
+			attribute content {
+				common.data.x-ua-compatible
+			}
+	common.elem.metadata |= meta.http-equiv.x-ua-compatible.elem
 
 ## Inline Character Encoding Statement for HTML: <meta charset>
 

@@ -66,7 +66,9 @@ import static org.apache.http.conn.ssl.SSLConnectionSocketFactory.BROWSER_COMPAT
   name = "CertificateManager",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml")
 )
-public class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
+public class CertificateManager implements ApplicationComponent, PersistentStateComponent<CertificateManager.Config> {
+
+  @NonNls public static final String COMPONENT_NAME = "Certificate Manager";
   @NonNls private static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
   @NonNls private static final String DEFAULT_PASSWORD = "changeit";
 
@@ -84,7 +86,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
   static final long DIALOG_VISIBILITY_TIMEOUT = 5000; // ms
 
   public static CertificateManager getInstance() {
-    return ServiceManager.getService(CertificateManager.class);
+    return (CertificateManager)ApplicationManager.getApplication().getComponent(COMPONENT_NAME);
   }
 
   private final String myCacertsPath;
@@ -106,9 +108,9 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     myPassword = DEFAULT_PASSWORD;
     myConfig = new Config();
     myTrustManager = ConfirmingTrustManager.createForStorage(myCacertsPath, myPassword);
-    initComponent();
   }
 
+  @Override
   public void initComponent() {
     try {
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
@@ -121,6 +123,17 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  @Override
+  public void disposeComponent() {
+    // empty
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return COMPONENT_NAME;
   }
 
   /**

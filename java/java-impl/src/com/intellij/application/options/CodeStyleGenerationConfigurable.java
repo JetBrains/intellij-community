@@ -25,6 +25,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
@@ -67,7 +68,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     mySettings = settings;
     myMembersOrderList = new MembersOrderList();
     myPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 2, 2, 2));
-    myJavaVisibilityPanel = new JavaVisibilityPanel(false, true);
+    myJavaVisibilityPanel = new JavaVisibilityPanel(false, true, RefactoringBundle.message("default.visibility.border.title"));
   }
 
   public JComponent createComponent() {

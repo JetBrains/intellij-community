@@ -26,6 +26,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -33,14 +35,15 @@ import com.intellij.openapi.vcs.annotate.LineNumberListener;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CacheOneStepIterator;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -112,7 +115,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
               VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Can not load data for show diff", MessageType.ERROR);
               return;
             }
-            targetPath[0] = pair.getSecond() == null ? new FilePathImpl(myFile) : pair.getSecond();
+            targetPath[0] = pair.getSecond() == null ? VcsUtil.getFilePath(myFile) : pair.getSecond();
             final CommittedChangeList cl = pair.getFirst();
             changes.addAll(cl.getChanges());
             Collections.sort(changes, ChangesComparator.getInstance(true));
@@ -130,10 +133,12 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
           }
           else if (!changes.isEmpty()) {
             int idx = findSelfInList(changes, targetPath[0]);
-            final ShowDiffUIContext context = new ShowDiffUIContext(true);
-            context.setDiffNavigationContext(createDiffNavigationContext(actualNumber));
+            final ShowDiffContext context = new ShowDiffContext(DiffDialogHints.FRAME);
+            if (idx != -1) {
+              context.putChangeContext(changes.get(idx), DiffUserDataKeysEx.NAVIGATION_CONTEXT, createDiffNavigationContext(actualNumber));
+            }
             if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
-            ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), idx, myVcs.getProject(), context);
+            ShowDiffAction.showDiffForChange(myVcs.getProject(), changes, idx, context);
           }
         }
       });

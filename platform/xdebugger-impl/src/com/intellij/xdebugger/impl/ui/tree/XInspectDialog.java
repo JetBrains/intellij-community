@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class XInspectDialog extends DialogWrapper {
                         @NotNull String name,
                         @NotNull XValue value,
                         XValueMarkers<?, ?> markers,
-                        @NotNull XDebugSession session,
+                        @Nullable XDebugSession session,
                         boolean rebuildOnSessionEvents) {
     super(project, false);
     myRebuildOnSessionEvents = rebuildOnSessionEvents;
@@ -58,7 +58,7 @@ public class XInspectDialog extends DialogWrapper {
     setModal(false);
 
     XInstanceEvaluator instanceEvaluator = value.getInstanceEvaluator();
-    if (instanceEvaluator != null && myRebuildOnSessionEvents) {
+    if (instanceEvaluator != null && myRebuildOnSessionEvents && session != null) {
       Pair<XInstanceEvaluator, String> initialItem = Pair.create(instanceEvaluator, name);
       XDebuggerInstanceTreeCreator creator = new XDebuggerInstanceTreeCreator(project, editorsProvider, sourcePosition, markers, session);
       myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XInstanceEvaluator, String>>(initialItem, creator, project, myDisposable);
@@ -69,24 +69,27 @@ public class XInspectDialog extends DialogWrapper {
       myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project, myDisposable);
     }
 
-    session.addSessionListener(new XDebugSessionAdapter() {
-      @Override
-      public void sessionPaused() {
-        if (myRebuildOnSessionEvents) {
-          myDebuggerTreePanel.rebuild();
-        }
-      }
-
-      @Override
-      public void sessionStopped() {
-        DebuggerUIUtil.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            close(OK_EXIT_CODE);
+    if (session != null) {
+      session.addSessionListener(new XDebugSessionAdapter() {
+        @Override
+        public void sessionPaused() {
+          if (myRebuildOnSessionEvents) {
+            myDebuggerTreePanel.rebuild();
           }
-        });
-      }
-    }, myDisposable);
+        }
+
+        // do not close on session end IDEA-132136
+        //@Override
+        //public void sessionStopped() {
+        //  DebuggerUIUtil.invokeLater(new Runnable() {
+        //    @Override
+        //    public void run() {
+        //      close(OK_EXIT_CODE);
+        //    }
+        //  });
+        //}
+      }, myDisposable);
+    }
 
     init();
   }
@@ -107,5 +110,11 @@ public class XInspectDialog extends DialogWrapper {
   @NonNls
   protected String getDimensionServiceKey() {
     return "#xdebugger.XInspectDialog";
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myDebuggerTreePanel.getTree();
   }
 }

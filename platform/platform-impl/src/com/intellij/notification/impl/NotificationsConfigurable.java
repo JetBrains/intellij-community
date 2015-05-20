@@ -18,7 +18,6 @@ package com.intellij.notification.impl;
 import com.intellij.notification.impl.ui.NotificationsConfigurablePanel;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.OptionalConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nls;
@@ -29,8 +28,9 @@ import javax.swing.*;
 /**
  * @author spleaner
  */
-public class NotificationsConfigurable implements Configurable, SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll {
+public class NotificationsConfigurable implements Configurable, SearchableConfigurable, Configurable.NoScroll {
   public static final String DISPLAY_NAME = "Notifications";
+  static final String ID = "reference.settings.ide.settings.notifications";
   private NotificationsConfigurablePanel myComponent;
 
   @Override
@@ -42,7 +42,7 @@ public class NotificationsConfigurable implements Configurable, SearchableConfig
   @Override
   @NotNull
   public String getHelpTopic() {
-    return "reference.settings.ide.settings.notifications";
+    return ID;
   }
 
   @Override
@@ -83,11 +83,11 @@ public class NotificationsConfigurable implements Configurable, SearchableConfig
 
   @Override
   public Runnable enableSearch(final String option) {
-    return null;
-  }
-
-  @Override
-  public boolean needDisplay() {
-    return NotificationsConfigurationImpl.getInstanceImpl().getAllSettings().length > 0;
+    return new Runnable() {
+      @Override
+      public void run() {
+        myComponent.selectGroup(option);
+      }
+    };
   }
 }

@@ -26,7 +26,7 @@ class Bar {
   void bar() {
     new Foo() {
       void foo() {
-        System.out.println(<warning descr="Access of field 'name' from superclass 'Foo' looks access of field from surrounding class">name</warning>);
+        System.out.println(<warning descr="Access of field 'name' from superclass 'Foo' looks like access of field from surrounding class">name</warning>);
       }
     };
   }

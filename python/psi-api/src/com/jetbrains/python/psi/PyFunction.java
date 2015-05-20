@@ -36,7 +36,7 @@ import java.util.List;
 public interface PyFunction
 extends
   PsiNamedElement, StubBasedPsiElement<PyFunctionStub>,
-  PsiNameIdentifierOwner, PyStatement, Callable, NameDefiner, PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement,
+  PsiNameIdentifierOwner, PyStatement, PyCallable, NameDefiner, PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement,
   PyStatementListContainer{
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
@@ -104,8 +104,6 @@ extends
   @Nullable
   PyAnnotation getAnnotation();
 
-  // TODO: Doc
-  //
 
   /**
    * Searches for function attributes.

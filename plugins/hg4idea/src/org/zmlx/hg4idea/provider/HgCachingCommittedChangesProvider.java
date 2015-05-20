@@ -310,7 +310,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     if (localVirtualFile == null) {
       return null;
     }
-    final FilePathImpl filePath = new FilePathImpl(localVirtualFile);
+    final FilePath filePath = VcsUtil.getFilePath(localVirtualFile);
     final CommittedChangeList list = getCommittedChangesForRevision(getLocationFor(filePath), number.asString());
     if (list != null) {
       return new Pair<CommittedChangeList, FilePath>(list, filePath);

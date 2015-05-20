@@ -15,7 +15,7 @@ import java.util.*;
  * Date: Mar 5, 2004
  * Time: 7:51:38 PM
  */
-public class ReplaceOptions implements JDOMExternalizable, Cloneable {
+public class ReplaceOptions implements JDOMExternalizable {
   private Map<String, ReplacementVariableDefinition> variableDefs;
   private String replacement = "";
   private boolean toShortenFQN;
@@ -151,17 +151,6 @@ public class ReplaceOptions implements JDOMExternalizable, Cloneable {
     result = 29 * result + (matchOptions != null ? matchOptions.hashCode() : 0);
     result = 29 * result + (variableDefs != null ? variableDefs.hashCode() : 0);
     return result;
-  }
-
-  public ReplaceOptions clone() {
-    try {
-      ReplaceOptions replaceOptions = (ReplaceOptions) super.clone();
-      replaceOptions.matchOptions = matchOptions.clone();
-      return replaceOptions;
-    } catch (CloneNotSupportedException e) {
-      e.printStackTrace();
-      return null;
-    }
   }
 
   public ReplacementVariableDefinition getVariableDefinition(String name) {

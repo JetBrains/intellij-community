@@ -14,14 +14,69 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight
-
+import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
+import com.intellij.lang.java.JavaDocumentationProvider
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-
 /**
  * @author peter
  */
 class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
+
+  public void testConstructorDoc() {
+    myFixture.configureByText 'a.java', '''
+class Foo { Foo() {} Foo(int param) {} }
+
+class Foo2 {{
+  new Foo<caret>
+}}
+'''
+    def originalElement = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
+    def doc = new JavaDocumentationProvider().generateDoc(
+      DocumentationManager.getInstance(project).findTargetElement(myFixture.editor, myFixture.file),
+      originalElement
+    )
+
+    assert doc == """<html>Candidates for new <b>Foo</b>() are:<br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo()">Foo()</a><br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo(int)">Foo(int param)</a><br></html>"""
+  }
+
+  public void testConstructorDoc2() {
+    myFixture.configureByText 'a.java', '''
+class Foo { Foo() {} Foo(int param) {} }
+
+class Foo2 {{
+  new Foo(<caret>)
+}}
+'''
+
+    def elementAt = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
+    def exprList = PsiTreeUtil.getParentOfType(elementAt, PsiExpressionList.class)
+    def doc = new JavaDocumentationProvider().generateDoc(
+      exprList,
+      elementAt
+    )
+
+    assert doc == """<html>Candidates for new <b>Foo</b>() are:<br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo()">Foo()</a><br>&nbsp;&nbsp;<a href="psi_element://Foo#Foo(int)">Foo(int param)</a><br></html>"""
+  }
+
+  public void testMethodDocWhenInArgList() {
+    myFixture.configureByText 'a.java', '''
+class Foo { void doFoo() {} }
+
+class Foo2 {{
+  new Foo().doFoo(<caret>)
+}}
+'''
+    def exprList = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiExpressionList.class)
+    def doc = new JavaDocumentationProvider().generateDoc(
+      exprList,
+      null
+    )
+
+    assert doc == """<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://Foo"><code>Foo</code></a></b></small><PRE>void&nbsp;<b>doFoo</b>()</PRE></body></html>"""
+  }
 
   public void testGenericMethod() {
     myFixture.configureByText 'a.java', '''

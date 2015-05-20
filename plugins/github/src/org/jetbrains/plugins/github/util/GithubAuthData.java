@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
@@ -151,7 +152,7 @@ public class GithubAuthData {
     @NotNull private final String myToken;
 
     private TokenAuth(@NotNull String token) {
-      myToken = token;
+      myToken = StringUtil.trim(token);
     }
 
     @NotNull

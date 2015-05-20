@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.List;
 
 /**
@@ -47,7 +46,7 @@ public class ProblemsHolder {
   private final InspectionManager myManager;
   private final PsiFile myFile;
   private final boolean myOnTheFly;
-  private MyList<ProblemDescriptor> myProblems = new MyList<ProblemDescriptor>();
+  private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
 
   public ProblemsHolder(@NotNull InspectionManager manager, @NotNull PsiFile file, boolean onTheFly) {
     myManager = manager;
@@ -55,12 +54,12 @@ public class ProblemsHolder {
     myOnTheFly = onTheFly;
   }
 
-  public void registerProblem(@NotNull PsiElement psiElement, @NotNull @Nls String descriptionTemplate, LocalQuickFix... fixes) {
+  public void registerProblem(@NotNull PsiElement psiElement, @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate, LocalQuickFix... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
-                              @NotNull String descriptionTemplate,
+                              @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                               ProblemHighlightType highlightType,
                               LocalQuickFix... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
@@ -126,8 +125,9 @@ public class ProblemsHolder {
                               ProblemHighlightType highlightType,
                               String descriptionTemplate,
                               LocalQuickFix... fixes) {
-    registerProblem(myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType,
-                                                      myOnTheFly, fixes));
+    ProblemDescriptor descriptor = myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(), descriptionTemplate, highlightType,
+                                        myOnTheFly, fixes);
+    registerProblem(descriptor);
   }
 
   public void registerProblem(@NotNull PsiReference reference) {
@@ -183,10 +183,7 @@ public class ProblemsHolder {
 
   @NotNull
   public List<ProblemDescriptor> getResults() {
-    MyList<ProblemDescriptor> problems = myProblems;
-    problems.allowModifications(false);
-    myProblems = new MyList<ProblemDescriptor>();
-    return problems;
+    return myProblems;
   }
 
   @NotNull
@@ -220,18 +217,5 @@ public class ProblemsHolder {
   @NotNull
   public final Project getProject() {
     return myManager.getProject();
-  }
-
-  private static class MyList<T> extends ArrayList<T> {
-    private volatile boolean readOnly;
-    @Override
-    public boolean add(T o) {
-      if (readOnly) throw new ConcurrentModificationException();
-      return super.add(o);
-    }
-
-    private void allowModifications(boolean v) {
-      readOnly = !v;
-    }
   }
 }

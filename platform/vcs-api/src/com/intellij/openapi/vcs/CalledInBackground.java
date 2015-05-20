@@ -23,7 +23,10 @@ import java.lang.annotation.ElementType;
 /**
  * Used to indicate that a method (for instance, of version control plugin provider interface)
  * would be called in background thread
+ *
+ * @deprecated use {@link org.jetbrains.annotations.CalledInBackground }
  */
+@Deprecated
 @Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.METHOD})
 public @interface CalledInBackground {

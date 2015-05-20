@@ -3,7 +3,7 @@ package com.siyeh.igtest.bugs.class_new_instance;
 public class ClassNewInstance {
 
     void good() throws IllegalAccessException, InstantiationException {
-        String.class.newInstance();
+        String.class.<warning descr="Call to 'newInstance()' may throw undeclared checked exceptions">newInstance</warning>();
     }
 
     Object newInstance() {
@@ -14,8 +14,9 @@ public class ClassNewInstance {
         newInstance();
     }
 
-    void alsoBad(XX xx) {
-        xx.newInstance();
+    void alsoBad(Class<XX> xx) throws IllegalAccessException {
+        xx.<warning descr="Call to 'newInstance()' may throw undeclared checked exceptions">newInstance</warning>();
     }
 
 }
+class XX {}

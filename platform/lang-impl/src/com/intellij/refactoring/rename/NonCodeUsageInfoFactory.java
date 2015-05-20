@@ -16,11 +16,11 @@
 
 package com.intellij.refactoring.rename;
 
-import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.usageView.UsageInfoFactory;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.usageView.UsageInfoFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ public class NonCodeUsageInfoFactory implements UsageInfoFactory {
   @Override
   @Nullable
   public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
-    final PsiElement namedElement = TargetElementUtilBase.getInstance().getNamedElement(usage, startOffset);
+    final PsiElement namedElement = TargetElementUtil.getInstance().getNamedElement(usage, startOffset);
     if (namedElement != null) {
       return null;
     }

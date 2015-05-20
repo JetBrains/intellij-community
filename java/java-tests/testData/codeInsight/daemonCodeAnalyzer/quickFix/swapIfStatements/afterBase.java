@@ -1,4 +1,4 @@
-// "Swap If Statements" "true"
+// "Swap 'if' statements" "true"
 class A {
 
   void m() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@ import java.util.Collection;
 import java.util.TreeSet;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
-  private GlobalInspectionContextImpl myGlobalInspectionContext = null;
-  protected InspectionProfile myExternalProfile = null;
+  private GlobalInspectionContextImpl myGlobalInspectionContext;
+  protected InspectionProfile myExternalProfile;
 
   public CodeInspectionAction() {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
@@ -120,7 +120,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       public void actionPerformed(ActionEvent e) {
         final IDEInspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profileManager);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
-        errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()).getName());
+        errorConfigurable.selectProfile(((Profile)profiles.getSelectedItem()));
         if (editor.showAndGet()) {
           reloadProfiles(profiles, profileManager, projectProfileManager, manager);
         }

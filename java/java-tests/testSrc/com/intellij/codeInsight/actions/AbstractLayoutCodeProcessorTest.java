@@ -139,10 +139,10 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
 
   protected void performReformatActionOnSelectedFile(PsiFile file) {
     final AnAction action = getReformatCodeAction();
-    action.actionPerformed(createEventFor(action, ContainerUtil.newArrayList(file), getProject(), new AdditionalEventInfo().setPsiElement(file)));
+    action.actionPerformed(createEventFor(action, ContainerUtil.newArrayList(file.getVirtualFile()), getProject(), new AdditionalEventInfo().setPsiElement(file)));
   }
 
-  protected void performReformatActionOnModule(Module module, List<PsiFile> files) {
+  protected void performReformatActionOnModule(Module module, List<VirtualFile> files) {
     final AnAction action = getReformatCodeAction();
     action.actionPerformed(createEventFor(action, files, getProject(), new AdditionalEventInfo().setModule(module)));
   }
@@ -156,7 +156,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     final AnAction action = getReformatCodeAction();
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     Editor editor = EditorFactory.getInstance().createEditor(document);
-    action.actionPerformed(createEventFor(action, ContainerUtil.newArrayList(file), getProject(), new AdditionalEventInfo().setEditor(editor)));
+    action.actionPerformed(createEventFor(action, ContainerUtil.newArrayList(file.getVirtualFile()), getProject(), new AdditionalEventInfo().setEditor(editor)));
     EditorFactory.getInstance().releaseEditor(editor);
   }
 
@@ -199,13 +199,12 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
     }, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
   }
 
-  protected AnActionEvent createEventFor(AnAction action, List<PsiFile> files, final Project project, @NotNull final AdditionalEventInfo eventInfo) {
-    final VirtualFile[] vFilesArray = getVirtualFileArrayFrom(files);
+  protected AnActionEvent createEventFor(AnAction action, final List<VirtualFile> files, final Project project, @NotNull final AdditionalEventInfo eventInfo) {
     return new AnActionEvent(null, new DataContext() {
       @Nullable
       @Override
       public Object getData(@NonNls String dataId) {
-        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return vFilesArray;
+        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files.toArray(new VirtualFile[files.size()]);
         if (CommonDataKeys.PROJECT.is(dataId)) return project;
         if (CommonDataKeys.EDITOR.is(dataId)) return eventInfo.getEditor();
         if (LangDataKeys.MODULE_CONTEXT.is(dataId)) return eventInfo.getModule();
@@ -317,14 +316,9 @@ class AdditionalEventInfo {
   }
 }
 
-class MockReformatFileSettings implements LayoutCodeOptions {
-  private boolean myProcessWholeFile;
-  private boolean myProcessDirectories;
-  private boolean myRearrange;
-  private boolean myIncludeSubdirs;
+class MockReformatFileSettings implements ReformatFilesOptions {
   private boolean myOptimizeImports;
-  private boolean myProcessOnlyChangedText;
-  private boolean myIsOK = true;
+  private boolean myIncludeSubdirs;
 
   @Nullable
   @Override
@@ -339,33 +333,13 @@ class MockReformatFileSettings implements LayoutCodeOptions {
   }
 
   @Override
-  public boolean isProcessWholeFile() {
-    return myProcessWholeFile;
-  }
-
-  MockReformatFileSettings setProcessWholeFile(boolean processWholeFile) {
-    myProcessWholeFile = processWholeFile;
-    return this;
+  public TextRangeType getTextRangeType() {
+    return TextRangeType.WHOLE_FILE;
   }
 
   @Override
-  public boolean isProcessDirectory() {
-    return myProcessDirectories;
-  }
-
-  MockReformatFileSettings setProcessDirectory(boolean processDirectories) {
-    myProcessDirectories = processDirectories;
-    return this;
-  }
-
-  @Override
-  public boolean isRearrangeEntries() {
-    return myRearrange;
-  }
-
-  @Override
-  public boolean isIncludeSubdirectories() {
-    return myIncludeSubdirs;
+  public boolean isRearrangeCode() {
+    return false;
   }
 
   @Override
@@ -376,23 +350,6 @@ class MockReformatFileSettings implements LayoutCodeOptions {
   @NotNull
   MockReformatFileSettings setOptimizeImports(boolean optimizeImports) {
     myOptimizeImports = optimizeImports;
-    return this;
-  }
-
-  @Override
-  public boolean isProcessOnlyChangedText() {
-    return myProcessOnlyChangedText;
-  }
-
-  @NotNull
-  MockReformatFileSettings setProcessOnlyChangedText(boolean processOnlyChangedText) {
-    myProcessOnlyChangedText = processOnlyChangedText;
-    return this;
-  }
-
-  @NotNull
-  MockReformatFileSettings setRearrange(boolean rearrange) {
-    myRearrange = rearrange;
     return this;
   }
 

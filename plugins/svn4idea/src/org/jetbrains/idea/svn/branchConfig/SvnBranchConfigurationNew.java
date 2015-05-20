@@ -20,9 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -156,22 +158,9 @@ public class SvnBranchConfigurationNew {
   }
 
   @Nullable
-  public SVNURL getWorkingBranch(final SVNURL someUrl) throws SVNException {
+  public SVNURL getWorkingBranch(@NotNull SVNURL someUrl) throws SvnBindException {
     String baseUrl = getBaseUrl(someUrl.toString());
-    return baseUrl == null ? null : SVNURL.parseURIEncoded(baseUrl);
-  }
-
-  // todo not checked
-  // todo +-
-  @Nullable
-  public String getGroupToLoadToReachUrl(final SVNURL url) throws SVNException {
-    final BranchSearcher branchSearcher = new BranchSearcher(url);
-    for (String group : myBranchMap.keySet()) {
-      if (branchSearcher.accept(group)) {
-        return group;
-      }
-    }
-    return null;
+    return baseUrl == null ? null : SvnUtil.createUrl(baseUrl);
   }
 
   private void iterateUrls(final UrlListener listener) throws SVNException {
@@ -245,33 +234,5 @@ public class SvnBranchConfigurationNew {
 
   private interface UrlListener {
     boolean accept(final String url) throws SVNException;
-  }
-
-  // todo not checked
-  private static class BranchSearcher implements UrlListener {
-    private final SVNURL mySomeUrl;
-    private SVNURL myResult;
-
-    private BranchSearcher(final SVNURL someUrl) {
-      mySomeUrl = someUrl;
-    }
-
-    public boolean accept(final String url) throws SVNException {
-      myResult = urlIsParent(url, mySomeUrl);
-      return myResult != null;
-    }
-
-    public SVNURL getResult() {
-      return myResult;
-    }
-  }
-
-  @Nullable
-  private static SVNURL urlIsParent(final String parentCandidate, final SVNURL child) throws SVNException {
-    final SVNURL parentUrl = SVNURL.parseURIEncoded(parentCandidate);
-    if(parentUrl.equals(SVNURLUtil.getCommonURLAncestor(parentUrl, child))) {
-      return parentUrl;
-    }
-    return null;
   }
 }

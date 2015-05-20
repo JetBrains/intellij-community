@@ -10,7 +10,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VisiblePack;
@@ -36,9 +39,10 @@ public class GraphTableModel extends AbstractTableModel {
   private static final String[] COLUMN_NAMES = {"", "Subject", "Author", "Date"};
 
   @NotNull protected final VcsLogUiImpl myUi;
-  @NotNull protected final VisiblePack myDataPack;
   @NotNull private final VcsLogDataHolder myDataHolder;
   @NotNull private final VcsLogDataHolder myLogDataHolder;
+
+  @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
@@ -114,9 +118,14 @@ public class GraphTableModel extends AbstractTableModel {
     return new GraphCommitCell(message, refs);
   }
 
+  @NotNull
+  public Integer getCommitIdAtRow(int row) {
+    return myDataPack.getVisibleGraph().getRowInfo(row).getCommit();
+  }
+
   @Nullable
   public Hash getHashAtRow(int row) {
-    return myDataHolder.getHash(myDataPack.getVisibleGraph().getRowInfo(row).getCommit());
+    return myDataHolder.getHash(getCommitIdAtRow(row));
   }
 
   public int getRowOfCommit(@NotNull final Hash hash) {
@@ -151,6 +160,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   /**
    * Requests the proper data provider to load more data from the log & recreate the model.
+   *
    * @param onLoaded will be called upon task completion on the EDT.
    */
   public void requestToLoadMore(@NotNull Runnable onLoaded) {
@@ -177,7 +187,9 @@ public class GraphTableModel extends AbstractTableModel {
           return "";
         }
         else {
-          return data.getAuthor().getName() + (data.getAuthor().equals(data.getCommitter()) ? "" : "*");
+          String authorString = data.getAuthor().getName();
+          if (authorString.isEmpty()) authorString = data.getAuthor().getEmail();
+          return authorString + (data.getAuthor().equals(data.getCommitter()) ? "" : "*");
         }
       case DATE_COLUMN:
         if (data == null || data.getAuthorTime() < 0) {
@@ -202,6 +214,7 @@ public class GraphTableModel extends AbstractTableModel {
    * Returns Changes for commits at selected rows.<br/>
    * Rows are given in the order as they appear in the table, i. e. in reverse chronological order. <br/>
    * Changes can be returned as-is, i.e. with duplicate changes for a single file.
+   *
    * @return Changes selected in all rows, or null if this data is not ready yet.
    */
   @Nullable
@@ -236,5 +249,15 @@ public class GraphTableModel extends AbstractTableModel {
   @Override
   public String getColumnName(int column) {
     return COLUMN_NAMES[column];
+  }
+
+  public void setVisiblePack(@NotNull VisiblePack visiblePack) {
+    myDataPack = visiblePack;
+    myMoreRequested = false;
+    fireTableDataChanged();
+  }
+
+  public VisiblePack getVisiblePack() {
+    return myDataPack;
   }
 }

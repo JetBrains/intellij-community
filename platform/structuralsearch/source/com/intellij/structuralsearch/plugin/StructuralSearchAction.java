@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.plugin;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.SearchDialog;
@@ -16,6 +17,12 @@ public class StructuralSearchAction extends AnAction {
   }
 
   public static void triggerAction(Configuration config, SearchContext searchContext) {
+    final Project project = searchContext.getProject();
+    if (project == null) {
+      return;
+    }
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     //StructuralSearchPlugin.getInstance(searchContext.getProject());
     final SearchDialog searchDialog = new SearchDialog(searchContext);
 

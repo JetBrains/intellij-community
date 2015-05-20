@@ -2,8 +2,8 @@ package com.intellij.tasks.jira.rest;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskState;
 import com.intellij.tasks.jira.JiraRemoteApi;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraVersion;
@@ -99,19 +99,16 @@ public abstract class JiraRestApi extends JiraRemoteApi {
   protected abstract JiraIssue parseIssue(String response);
 
   @Override
-  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
     String requestBody = getRequestForStateTransition(state);
     LOG.debug(String.format("Transition: %s -> %s, request: %s", task.getState(), state, requestBody));
-    if (requestBody == null) {
-      return;
-    }
     PostMethod method = new PostMethod(myRepository.getRestUrl("issue", task.getId(), "transitions"));
     method.setRequestEntity(createJsonEntity(requestBody));
     myRepository.executeMethod(method);
   }
 
   @Nullable
-  protected abstract String getRequestForStateTransition(@NotNull TaskState state);
+  protected abstract String getRequestForStateTransition(@NotNull CustomTaskState state);
 
   protected static RequestEntity createJsonEntity(String requestBody) {
     try {

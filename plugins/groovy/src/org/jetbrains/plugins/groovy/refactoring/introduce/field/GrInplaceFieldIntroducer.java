@@ -238,7 +238,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   }
 
   @Override
-  protected void restoreState(GrVariable psiField) {
+  protected void restoreState(@NotNull GrVariable psiField) {
     myIsStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
 
     super.restoreState(psiField);

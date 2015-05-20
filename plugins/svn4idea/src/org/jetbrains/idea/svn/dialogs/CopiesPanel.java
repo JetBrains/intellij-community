@@ -54,6 +54,7 @@ import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
@@ -290,7 +291,7 @@ public class CopiesPanel {
         .append(info.getErrorMessage()).append("</td></tr>");
     }
     else {
-      sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\">").append(info.getRootUrl()).append("</td></tr>");
+      sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\">").append(info.getUrl().toDecodedString()).append("</td></tr>");
     }
     if (upgradeFormats.size() > 1) {
       sb.append("<tr valign=\"top\"><td>Format:</td><td>").append(info.getFormat().getName()).append("</td><td><a href=\"").
@@ -359,10 +360,23 @@ public class CopiesPanel {
   private void mergeFrom(@NotNull final WCInfo wcInfo, @NotNull final VirtualFile root, @Nullable final Component mergeLabel) {
     SelectBranchPopup.showForBranchRoot(myProject, root, new SelectBranchPopup.BranchSelectedCallback() {
       @Override
-      public void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision) {
-        new QuickMerge(new MergeContext(myVcs, url, wcInfo, SVNPathUtil.tail(url), root)).execute(new QuickMergeInteractionImpl(myProject));
+      public void branchSelected(Project project,
+                                 @NotNull SvnBranchConfigurationNew configuration,
+                                 @NotNull String branchUrl,
+                                 long revision) {
+        String workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
+        MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, SVNPathUtil.tail(branchUrl), root);
+
+        new QuickMerge(mergeContext).execute(new QuickMergeInteractionImpl(myProject));
       }
     }, "Select branch", mergeLabel);
+  }
+
+  @NotNull
+  private static String getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
+                                                         @NotNull SVNURL url,
+                                                         @NotNull String otherBranchUrl) {
+    return SVNPathUtil.append(otherBranchUrl, configuration.getRelativeUrl(url.toDecodedString()));
   }
 
   @SuppressWarnings("MethodMayBeStatic")

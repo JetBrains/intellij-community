@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,7 +30,6 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
-import org.jdom.Namespace;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,6 @@ import java.util.zip.ZipInputStream;
  */
 @Tag("template")
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
-
   public static final String INPUT_FIELD = "input-field";
 
   protected final String myDisplayName;
@@ -110,22 +109,26 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     return null;
   }
 
-  public abstract ZipInputStream getStream() throws IOException;
+  public static abstract class StreamProcessor<T> {
+    public abstract T consume(@NotNull ZipInputStream stream) throws IOException;
+  }
+
+  public abstract <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException;
 
   @Nullable
   public String getCategory() {
     return myCategory;
   }
 
-  public void populateFromElement(@NotNull Element element, final Namespace ns) {
+  public void populateFromElement(@NotNull Element element) {
     XmlSerializer.deserializeInto(this, element);
-    myInputFields = getFields(element, ns);
+    myInputFields = getFields(element);
   }
 
-  private static List<WizardInputField> getFields(Element templateElement, final Namespace ns) {
+  private static List<WizardInputField> getFields(Element templateElement) {
     //noinspection unchecked
     return ContainerUtil
-      .mapNotNull(templateElement.getChildren(INPUT_FIELD, ns), new Function<Element, WizardInputField>() {
+      .mapNotNull(templateElement.getChildren(INPUT_FIELD), new Function<Element, WizardInputField>() {
         @Override
         public WizardInputField fun(Element element) {
           ProjectTemplateParameterFactory factory = WizardInputField.getFactoryById(element.getText());
@@ -134,4 +137,12 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
       });
   }
 
+  static <T> T consumeZipStream(@NotNull StreamProcessor<T> consumer, @NotNull ZipInputStream stream) throws IOException {
+    try {
+      return consumer.consume(stream);
+    }
+    finally {
+      StreamUtil.closeStream(stream);
+    }
+  }
 }

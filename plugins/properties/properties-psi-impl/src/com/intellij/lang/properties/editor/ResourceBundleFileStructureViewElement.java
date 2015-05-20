@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,19 +28,34 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public class ResourceBundleFileStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private final ResourceBundle myResourceBundle;
 
-  public ResourceBundleFileStructureViewElement(final ResourceBundle resourceBundle) {
+  private boolean myShowOnlyIncomplete;
+  private final PropertiesAnchorizer myAnchorizer;
+
+  public ResourceBundleFileStructureViewElement(final ResourceBundle resourceBundle, PropertiesAnchorizer anchorizer) {
     myResourceBundle = resourceBundle;
+    myAnchorizer = anchorizer;
+  }
+
+  public void setShowOnlyIncomplete(boolean showOnlyIncomplete) {
+    myShowOnlyIncomplete = showOnlyIncomplete;
+  }
+
+  public boolean isShowOnlyIncomplete() {
+    return myShowOnlyIncomplete;
   }
 
   @Override
@@ -50,23 +65,64 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
 
   @NotNull
   public StructureViewTreeElement[] getChildren() {
-    List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
-    Map<String, IProperty> propertyNames = new LinkedHashMap<String, IProperty>();
-    for (PropertiesFile propertiesFile : propertiesFiles) {
-      List<IProperty> properties = propertiesFile.getProperties();
-      for (IProperty property : properties) {
-        String name = property.getKey();
-        if (!propertyNames.containsKey(name)) {
-          propertyNames.put(name, property);
+    final MultiMap<String, IProperty> propertyNames = getPropertiesMap(myResourceBundle, myShowOnlyIncomplete);
+    List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(propertyNames.size());
+    for (Map.Entry<String, Collection<IProperty>> entry : propertyNames.entrySet()) {
+      final Collection<IProperty> properties = entry.getValue();
+      final PropertiesAnchorizer.PropertyAnchor anchor = myAnchorizer.createOrUpdate(properties);
+      result.add(new ResourceBundlePropertyStructureViewElement(myResourceBundle, anchor));
+    }
+    return result.toArray(new StructureViewTreeElement[result.size()]);
+  }
+
+  public static MultiMap<String, IProperty> getPropertiesMap(ResourceBundle resourceBundle, boolean onlyIncomplete) {
+    List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles();
+    final MultiMap<String, IProperty> propertyNames;
+    if (onlyIncomplete) {
+      propertyNames = getChildrenIdShowOnlyIncomplete(resourceBundle);
+    } else {
+      propertyNames = MultiMap.createLinked();
+      for (PropertiesFile propertiesFile : propertiesFiles) {
+        List<IProperty> properties = propertiesFile.getProperties();
+        for (IProperty property : properties) {
+          String name = property.getKey();
+          propertyNames.putValue(name, property);
         }
       }
     }
-    List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>(propertyNames.size());
-    for (Map.Entry<String, IProperty> propertyEntry : propertyNames.entrySet()) {
-      //result.add(new PropertiesStructureViewElement(propertyEntry));
-      result.add(new ResourceBundlePropertyStructureViewElement(myResourceBundle, propertyEntry.getValue()));
+    return propertyNames;
+  }
+
+  private static MultiMap<String, IProperty> getChildrenIdShowOnlyIncomplete(ResourceBundle resourceBundle) {
+    final MultiMap<String, IProperty> propertyNames = MultiMap.createLinked();
+    TObjectIntHashMap<String> occurrences = new TObjectIntHashMap<String>();
+    for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
+      MultiMap<String, IProperty> currentFilePropertyNames = MultiMap.createLinked();
+      for (IProperty property : file.getProperties()) {
+        String name = property.getKey();
+        currentFilePropertyNames.putValue(name, property);
+      }
+      propertyNames.putAllValues(currentFilePropertyNames);
+      for (String propertyName : currentFilePropertyNames.keySet()) {
+        if (occurrences.contains(propertyName)) {
+          occurrences.adjustValue(propertyName, 1);
+        }
+        else {
+          occurrences.put(propertyName, 1);
+        }
+      }
     }
-    return result.toArray(new StructureViewTreeElement[result.size()]);
+    final int targetOccurrences = resourceBundle.getPropertiesFiles().size();
+    occurrences.forEachEntry(new TObjectIntProcedure<String>() {
+      @Override
+      public boolean execute(String propertyName, int occurrences) {
+        if (occurrences == targetOccurrences) {
+          propertyNames.remove(propertyName);
+        }
+        return true;
+      }
+    });
+    return propertyNames;
   }
 
   @NotNull

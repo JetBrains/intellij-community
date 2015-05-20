@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
     }
     final RefClass refClass = (RefClass)refEntity;
     final PsiClass aClass = refClass.getElement();
-    if (aClass == null || aClass.getContainingClass() != null) {
+    if (aClass == null || aClass.getContainingClass() != null || aClass instanceof PsiAnonymousClass) {
       return null;
     }
     final Set<RefClass> dependencies = DependencyUtils.calculateTransitiveDependenciesForClass(refClass);
@@ -79,15 +79,8 @@ public class CyclicClassDependencyInspection extends BaseGlobalInspection {
       errorString = InspectionGadgetsBundle.message("cyclic.class.dependency.problem.descriptor",
                                                     refEntity.getName(), Integer.valueOf(numMutualDependents));
     }
-    final PsiElement anchor;
-    if (aClass instanceof PsiAnonymousClass) {
-      final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
-      anchor = anonymousClass.getBaseClassReference();
-    }
-    else {
-      anchor = aClass.getNameIdentifier();
-      if (anchor == null) return null;
-    }
+    final PsiElement anchor = aClass.getNameIdentifier();
+    if (anchor == null) return null;
     return new CommonProblemDescriptor[]{
       inspectionManager.createProblemDescriptor(anchor, errorString, (LocalQuickFix)null,
                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false)

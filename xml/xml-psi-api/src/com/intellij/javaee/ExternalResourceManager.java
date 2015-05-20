@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,30 +24,33 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * author: lesya
- */
 public abstract class ExternalResourceManager extends SimpleModificationTracker {
   public static ExternalResourceManager getInstance() {
     return ServiceManager.getService(ExternalResourceManager.class);
   }
 
-  public abstract void addResource(@NonNls String url, @NonNls String location);
-  public abstract void addResource(@NonNls String url, @NonNls String version, @NonNls String location);
+  public abstract void addResource(@NotNull @NonNls String url, @NonNls String location);
 
-  public abstract void removeResource(String url);
-  public abstract void removeResource(String url, String version);
+  public abstract void addResource(@NotNull @NonNls String url, @NonNls @Nullable String version, @NonNls String location);
 
-  /** @see #getResourceLocation(String, com.intellij.openapi.project.Project) */
+  public abstract void removeResource(@NotNull String url);
+
+  public abstract void removeResource(@NotNull String url, @Nullable String version);
+
+  /**
+   * @see #getResourceLocation(String, Project)
+   */
   @Deprecated
-  public abstract String getResourceLocation(@NonNls String url);
-  public abstract String getResourceLocation(@NonNls String url, String version);
+  public abstract String getResourceLocation(@NotNull @NonNls String url);
 
-  public abstract String getResourceLocation(@NonNls String url, @NotNull Project project);
+  public abstract String getResourceLocation(@NotNull @NonNls String url, @Nullable String version);
+
+  public abstract String getResourceLocation(@NotNull @NonNls String url, @NotNull Project project);
 
   @Nullable
-  public abstract PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, String version);
+  public abstract PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, @Nullable String version);
 
-  public abstract String[] getResourceUrls(@Nullable FileType fileType, final boolean includeStandard);
-  public abstract String[] getResourceUrls(@Nullable FileType fileType, @NonNls String version, final boolean includeStandard);
+  public abstract String[] getResourceUrls(@Nullable FileType fileType, boolean includeStandard);
+
+  public abstract String[] getResourceUrls(@Nullable FileType fileType, @NonNls @Nullable String version, boolean includeStandard);
 }

@@ -37,6 +37,7 @@ import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PyCustomMemberUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -190,8 +191,15 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     classMember = resolveByOverridingAncestorsMembersProviders(this, name, location);
     if (classMember != null) {
-      return ResolveResultList.to(classMember);
+      final ResolveResultList list = new ResolveResultList();
+      int rate = RatedResolveResult.RATE_NORMAL;
+      for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
+        rate += rater.getMemberRate(classMember, this, context);
+      }
+      list.poke(classMember, rate);
+      return list;
     }
+
 
     if (inherited) {
       for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
@@ -252,9 +260,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     Ref<ResolveResultList> resultRef = null;
     Property property = myClass.findProperty(name, inherited);
     if (property != null) {
-      Maybe<Callable> accessor = property.getByDirection(direction);
+      Maybe<PyCallable> accessor = property.getByDirection(direction);
       if (accessor.isDefined()) {
-        Callable accessor_code = accessor.value();
+        PyCallable accessor_code = accessor.value();
         ResolveResultList ret = new ResolveResultList();
         if (accessor_code != null) ret.poke(accessor_code, RatedResolveResult.RATE_NORMAL);
         PyTargetExpression site = property.getDefinitionSite();
@@ -418,7 +426,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                      CompletionUtil.getOriginalOrSelf(location)
                        .getContainingFile() :
                      null;
-    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myClass.getProject(), origin);
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(myClass.getProject(), origin);
     addInheritedMembers(prefix, location, namesAlready, context, ret, typeEvalContext);
 
     // from providers

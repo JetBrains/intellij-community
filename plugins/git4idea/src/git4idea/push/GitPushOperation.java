@@ -49,9 +49,10 @@ import git4idea.merge.MergeChangeCollector;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.settings.GitPushSettings;
+import git4idea.update.GitRebaseOverMergeProblem;
 import git4idea.update.GitUpdateProcess;
 import git4idea.update.GitUpdateResult;
+import git4idea.update.GitUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,28 +73,29 @@ public class GitPushOperation {
   private static final int MAX_PUSH_ATTEMPTS = 10;
 
   private final Project myProject;
+  @NotNull private final GitPushSupport myPushSupport;
   private final Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> myPushSpecs;
   @Nullable private final GitPushTagMode myTagMode;
   private final boolean myForce;
   private final Git myGit;
   private final ProgressIndicator myProgressIndicator;
   private final GitVcsSettings mySettings;
-  private final GitPushSettings myPushSettings;
   private final GitPlatformFacade myPlatformFacade;
   private final GitRepositoryManager myRepositoryManager;
 
   public GitPushOperation(@NotNull Project project,
+                          @NotNull GitPushSupport pushSupport,
                           @NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                           @Nullable GitPushTagMode tagMode,
                           boolean force) {
     myProject = project;
+    myPushSupport = pushSupport;
     myPushSpecs = pushSpecs;
     myTagMode = tagMode;
     myForce = force;
     myGit = ServiceManager.getService(Git.class);
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
     mySettings = GitVcsSettings.getInstance(myProject);
-    myPushSettings = GitPushSettings.getInstance(myProject);
     myPlatformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
     myRepositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
 
@@ -116,6 +118,7 @@ public class GitPushOperation {
     Label beforePushLabel = null;
     Label afterPushLabel = null;
     Map<GitRepository, String> preUpdatePositions = updateRootInfoAndRememberPositions();
+    Boolean rebaseOverMergeProblemDetected = null;
 
     final Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newHashMap();
     Map<GitRepository, GitUpdateResult> updatedRoots = ContainerUtil.newHashMap();
@@ -138,13 +141,18 @@ public class GitPushOperation {
         // propose to update if rejected
         if (!result.rejected.isEmpty()) {
           boolean shouldUpdate = true;
-          if (pushingToNotTrackedBranch(result.rejected)) {
+          if (myForce || pushingToNotTrackedBranch(result.rejected)) {
             shouldUpdate = false;
           }
           else if (pushAttempt == 0 && !mySettings.autoUpdateIfPushRejected()) {
-            updateSettings = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings);
+            // the dialog will be shown => check for rebase-over-merge problem in advance to avoid showing several dialogs in a row
+            rebaseOverMergeProblemDetected = !findRootsWithMergeCommits(getRootsToUpdate(updateSettings,
+                                                                                         result.rejected.keySet())).isEmpty();
+
+            updateSettings = showDialogAndGetExitCode(result.rejected.keySet(), updateSettings,
+                                                      rebaseOverMergeProblemDetected.booleanValue());
             if (updateSettings != null) {
-              savePushUpdateSettings(updateSettings);
+              savePushUpdateSettings(updateSettings, rebaseOverMergeProblemDetected.booleanValue());
             }
             else {
               shouldUpdate = false;
@@ -158,10 +166,8 @@ public class GitPushOperation {
           if (beforePushLabel == null) { // put the label only before the very first update
             beforePushLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before push");
           }
-          Collection<GitRepository> rootsToUpdate = updateSettings.shouldUpdateAllRoots() ?
-                                                    myRepositoryManager.getRepositories() :
-                                                    result.rejected.keySet();
-          GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod());
+          Collection<GitRepository> rootsToUpdate = getRootsToUpdate(updateSettings, result.rejected.keySet());
+          GitUpdateResult updateResult = update(rootsToUpdate, updateSettings.getUpdateMethod(), rebaseOverMergeProblemDetected == null);
           for (GitRepository repository : rootsToUpdate) {
             updatedRoots.put(repository, updateResult); // TODO update result in GitUpdateProcess is a single for several roots
           }
@@ -181,6 +187,33 @@ public class GitPushOperation {
       }
     }
     return prepareCombinedResult(results, updatedRoots, preUpdatePositions, beforePushLabel, afterPushLabel);
+  }
+
+  @NotNull
+  private Collection<GitRepository> getRootsToUpdate(@NotNull PushUpdateSettings updateSettings,
+                                                     @NotNull Set<GitRepository> rejectedRepositories) {
+    return updateSettings.shouldUpdateAllRoots() ? myRepositoryManager.getRepositories() : rejectedRepositories;
+  }
+
+  @NotNull
+  private Collection<VirtualFile> findRootsWithMergeCommits(@NotNull Collection<GitRepository> rootsToSearch) {
+    return ContainerUtil.mapNotNull(rootsToSearch, new Function<GitRepository, VirtualFile>() {
+      @Override
+      public VirtualFile fun(GitRepository repo) {
+        PushSpec<GitPushSource, GitPushTarget> pushSpec = myPushSpecs.get(repo);
+        if (pushSpec == null) { // repository is not selected to be pushed, but can be rebased
+          GitPushSource source = myPushSupport.getSource(repo);
+          GitPushTarget target = myPushSupport.getDefaultTarget(repo);
+          if (target == null) {
+            return null;
+          }
+          pushSpec = new PushSpec<GitPushSource, GitPushTarget>(source, target);
+        }
+        String baseRef = pushSpec.getTarget().getBranch().getFullName();
+        String currentRef = pushSpec.getSource().getBranch().getFullName();
+        return GitRebaseOverMergeProblem.hasProblem(myProject, repo.getRoot(), baseRef, currentRef) ? repo.getRoot() : null;
+      }
+    });
   }
 
   private static boolean pushingToNotTrackedBranch(@NotNull Map<GitRepository, GitPushRepoResult> rejected) {
@@ -246,20 +279,21 @@ public class GitPushOperation {
     Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newLinkedHashMap();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);
-      Pair<List<GitPushNativeResult>, String> resultOrError = doPush(repository, spec);
-      LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultOrError);
+      ResultWithOutput resultWithOutput = doPush(repository, spec);
+      LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
 
       GitLocalBranch source = spec.getSource().getBranch();
       GitPushTarget target = spec.getTarget();
       GitPushRepoResult repoResult;
-      if (resultOrError.second != null) {
-        repoResult = GitPushRepoResult.error(source, target.getBranch(), resultOrError.second);
+      if (resultWithOutput.isError()) {
+        repoResult = GitPushRepoResult.error(source, target.getBranch(), resultWithOutput.getErrorAsString());
       }
       else {
-        List<GitPushNativeResult> result = resultOrError.first;
+        List<GitPushNativeResult> result = resultWithOutput.parsedResults;
         final GitPushNativeResult branchResult = getBranchResult(result);
         if (branchResult == null) {
-          LOG.error("No result for branch among: [" + result + "]");
+          LOG.error("No result for branch among: [" + result + "]\n" +
+                    "Full result: " + resultWithOutput);
           continue;
         }
         List<GitPushNativeResult> tagResults = ContainerUtil.filter(result, new Condition<GitPushNativeResult>() {
@@ -297,13 +331,6 @@ public class GitPushOperation {
     });
   }
 
-  @NotNull
-  private static <T> List<T> without(@NotNull List<T> collection, @NotNull T toRemove) {
-    List<T> result = ContainerUtil.newArrayList(collection);
-    result.remove(toRemove);
-    return result;
-  }
-
   private int collectNumberOfPushedCommits(@NotNull VirtualFile root, @NotNull GitPushNativeResult result) {
     if (result.getType() != GitPushNativeResult.Type.SUCCESS) {
       return -1;
@@ -333,8 +360,7 @@ public class GitPushOperation {
   }
 
   @NotNull
-  private Pair<List<GitPushNativeResult>, String> doPush(@NotNull GitRepository repository,
-                                                         @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
+  private ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
     GitPushTarget target = pushSpec.getTarget();
     GitLocalBranch sourceBranch = pushSpec.getSource().getBranch();
     GitRemoteBranch targetBranch = target.getBranch();
@@ -342,13 +368,10 @@ public class GitPushOperation {
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
     boolean setUpstream = pushSpec.getTarget().isNewBranchCreated() && !branchTrackingInfoIsSet(repository, sourceBranch);
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();
-    GitCommandResult res = myGit.push(repository, sourceBranch, targetBranch, myForce, setUpstream, tagMode, progressListener);
 
-    List<GitPushNativeResult> result = GitPushNativeResultParser.parse(res.getOutput());
-    if (result.isEmpty()) {
-      return Pair.create(null, res.getErrorOutputAsJoinedString());
-    }
-    return Pair.create(result, null);
+    String spec = sourceBranch.getFullName() + ":" + targetBranch.getNameForRemoteOperations();
+    GitCommandResult res = myGit.push(repository, targetBranch.getRemote(), spec, myForce, setUpstream, tagMode, progressListener);
+    return new ResultWithOutput(res);
   }
 
   private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, @NotNull final GitLocalBranch source) {
@@ -360,27 +383,36 @@ public class GitPushOperation {
     });
   }
 
-  private void savePushUpdateSettings(@NotNull PushUpdateSettings settings) {
+  private void savePushUpdateSettings(@NotNull PushUpdateSettings settings, boolean rebaseOverMergeDetected) {
     UpdateMethod updateMethod = settings.getUpdateMethod();
-    myPushSettings.setUpdateAllRoots(settings.shouldUpdateAllRoots());
-    myPushSettings.setUpdateMethod(updateMethod);
+    mySettings.setUpdateAllRootsIfPushRejected(settings.shouldUpdateAllRoots());
+    if (!rebaseOverMergeDetected // don't overwrite explicit "rebase" with temporary "merge" caused by merge commits
+        && mySettings.getUpdateType() != updateMethod && mySettings.getUpdateType() != UpdateMethod.BRANCH_DEFAULT) { // don't overwrite "branch default" setting
+      mySettings.setUpdateType(updateMethod);
+    }
   }
 
   @NotNull
   private PushUpdateSettings readPushUpdateSettings() {
-    boolean updateAllRoots = myPushSettings.shouldUpdateAllRoots();
-    UpdateMethod updateMethod = myPushSettings.getUpdateMethod();
+    boolean updateAllRoots = mySettings.shouldUpdateAllRootsIfPushRejected();
+    UpdateMethod updateMethod = mySettings.getUpdateType();
+    if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
+      // deliberate limitation: we have only 2 buttons => choose method from the 1st repo if different
+      updateMethod = GitUpdater.resolveUpdateMethod(myProject, myPushSpecs.keySet().iterator().next().getRoot());
+    }
     return new PushUpdateSettings(updateAllRoots, updateMethod);
   }
 
   @Nullable
   private PushUpdateSettings showDialogAndGetExitCode(@NotNull final Set<GitRepository> repositories,
-                                                      @NotNull final PushUpdateSettings initialSettings) {
+                                                      @NotNull final PushUpdateSettings initialSettings,
+                                                      final boolean rebaseOverMergeProblemDetected) {
     final Ref<PushUpdateSettings> updateSettings = Ref.create();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, repositories, initialSettings);
+        GitRejectedPushUpdateDialog dialog = new GitRejectedPushUpdateDialog(myProject, repositories, initialSettings,
+                                                                             rebaseOverMergeProblemDetected);
         DialogManager.show(dialog);
         int exitCode = dialog.getExitCode();
         if (exitCode != DialogWrapper.CANCEL_EXIT_CODE) {
@@ -402,12 +434,12 @@ public class GitPushOperation {
   }
 
   @NotNull
-  protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate, @NotNull UpdateMethod updateMethod) {
-    GitUpdateProcess.UpdateMethod um = updateMethod == UpdateMethod.MERGE ?
-                                       GitUpdateProcess.UpdateMethod.MERGE :
-                                       GitUpdateProcess.UpdateMethod.REBASE;
+  protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate,
+                                   @NotNull UpdateMethod updateMethod,
+                                   boolean checkForRebaseOverMergeProblem) {
     GitUpdateResult updateResult = new GitUpdateProcess(myProject, myPlatformFacade, myProgressIndicator,
-                                                        new HashSet<GitRepository>(rootsToUpdate), UpdatedFiles.create()).update(um);
+                                                        new HashSet<GitRepository>(rootsToUpdate), UpdatedFiles.create(),
+                                                        checkForRebaseOverMergeProblem).update(updateMethod);
     for (GitRepository repository : rootsToUpdate) {
       repository.getRoot().refresh(true, true);
       repository.update();
@@ -415,4 +447,27 @@ public class GitPushOperation {
     return updateResult;
   }
 
+  private static class ResultWithOutput {
+    @NotNull private final List<GitPushNativeResult> parsedResults;
+    @NotNull private final GitCommandResult resultOutput;
+
+    ResultWithOutput(@NotNull GitCommandResult resultOutput) {
+      this.resultOutput = resultOutput;
+      this.parsedResults = GitPushNativeResultParser.parse(resultOutput.getOutput());
+    }
+
+    boolean isError() {
+      return parsedResults.isEmpty();
+    }
+
+    @NotNull
+    String getErrorAsString() {
+      return resultOutput.getErrorOutputAsJoinedString();
+    }
+
+    @Override
+    public String toString() {
+      return "Parsed results: " + parsedResults + "\nCommand output:" + resultOutput;
+    }
+  }
 }

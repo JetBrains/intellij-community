@@ -26,14 +26,12 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,12 +47,9 @@ import java.util.List;
  */
 public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
-
   private StatusBar myStatusBar;
-  private final Alarm myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public IdeNotificationArea() {
-    Disposer.register(this, myLogAlarm);
     UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
@@ -69,7 +64,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       }
     }.installOn(this);
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(LogModel.LOG_MODEL_CHANGED, new Runnable() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, new Runnable() {
       @Override
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {

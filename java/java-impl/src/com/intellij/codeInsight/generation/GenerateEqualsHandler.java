@@ -118,9 +118,10 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) throws IncorrectOperationException {
     Project project = aClass.getProject();
     final boolean useInstanceofToCheckParameterType = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
+    final boolean useAccessors = CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE;
 
     GenerateEqualsHelper helper = new GenerateEqualsHelper(project, aClass, myEqualsFields, myHashCodeFields, myNonNullFields,
-                                                           useInstanceofToCheckParameterType);
+                                                           useInstanceofToCheckParameterType, useAccessors);
     return OverrideImplementUtil.convert2GenerationInfos(helper.generateMembers());
   }
 

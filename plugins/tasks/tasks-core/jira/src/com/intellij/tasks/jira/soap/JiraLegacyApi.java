@@ -1,10 +1,10 @@
 package com.intellij.tasks.jira.soap;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
-import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.JiraRemoteApi;
 import com.intellij.tasks.jira.JiraRepository;
@@ -19,7 +19,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Legacy integration restored due to IDEA-120595.
@@ -102,8 +104,14 @@ public class JiraLegacyApi extends JiraRemoteApi {
     return ApiType.LEGACY;
   }
 
+  @NotNull
   @Override
-  public void setTaskState(@NotNull Task task, @NotNull TaskState state) throws Exception {
+  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
     throw new Exception(TaskBundle.message("jira.failure.no.state.update"));
   }
 

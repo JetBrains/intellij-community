@@ -20,6 +20,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +82,11 @@ public abstract class PsiClassType extends PsiType {
 
   public boolean equals(Object obj) {
     if (this == obj) return true;
-    if (!(obj instanceof PsiClassType)) return false;
+    if (!(obj instanceof PsiClassType)) {
+      return obj instanceof PsiCapturedWildcardType && 
+             ((PsiCapturedWildcardType)obj).getLowerBound().equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+             equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
+    }
     PsiClassType otherClassType = (PsiClassType)obj;
 
     String className = getClassName();
@@ -233,6 +238,7 @@ public abstract class PsiClassType extends PsiType {
    * @return type with requested language level
    */
   @NotNull
+  @Contract(pure = true)
   public abstract PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
   /**

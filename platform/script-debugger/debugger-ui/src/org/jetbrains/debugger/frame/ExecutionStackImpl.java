@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.debugger.frame;
 
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -10,7 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExecutionStackImpl extends XExecutionStack {
+class ExecutionStackImpl extends XExecutionStack {
   private final SuspendContext suspendContext;
   private final Script topFrameScript;
   private CallFrameView topCallFrameView;
@@ -42,7 +57,7 @@ public class ExecutionStackImpl extends XExecutionStack {
       return;
     }
 
-    suspendContext.getCallFrames().done(new ContextDependentAsyncResultConsumer<CallFrame[]>(suspendContext) {
+    suspendContext.getFrames().done(new ContextDependentAsyncResultConsumer<CallFrame[]>(suspendContext) {
       @Override
       protected void consume(CallFrame[] frames, @NotNull Vm vm) {
         int count = frames.length - firstFrameIndex;
@@ -53,6 +68,11 @@ public class ExecutionStackImpl extends XExecutionStack {
         else {
           result = new ArrayList<XStackFrame>(count);
           for (int i = firstFrameIndex; i < frames.length; i++) {
+            if (i == 0) {
+              result.add(topCallFrameView);
+              continue;
+            }
+
             CallFrame frame = frames[i];
             // if script is null, it is native function (Object.forEach for example), so, skip it
             Script script = vm.getScriptManager().getScript(frame);

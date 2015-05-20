@@ -19,6 +19,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -30,7 +31,6 @@ import com.intellij.util.*;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -414,6 +414,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
     ProgressManager.checkCanceled();
 
+    UpdateData<Key, Value> optimizedUpdateData = null;
     final NotNullComputable<Collection<Key>> oldKeysGetter;
     final int savedInputId;
     if (myHasSnapshotMapping) {
@@ -449,6 +450,35 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
             savedInputId = NULL_MAPPING;
           }
           oldKeysGetter = keysForGivenInputId;
+
+          if (MapDiffUpdateData.ourDiffUpdateEnabled) {
+            final Map<Key, Value> newValue = data;
+            optimizedUpdateData = new MapDiffUpdateData<Key, Value>(myIndexId) {
+              @Override
+              protected Map<Key, Value> getNewValue() {
+                return newValue;
+              }
+
+              @Override
+              protected Map<Key, Value> getCurrentValue() throws IOException {
+                Integer currentHashId = myInputsSnapshotMapping.get(inputId);
+                Map<Key, Value> currentValue;
+                if (currentHashId != null) {
+                  ByteSequence byteSequence = myContents.get(currentHashId);
+                  currentValue = byteSequence != null ? deserializeSavedPersistentData(byteSequence) : Collections.<Key, Value>emptyMap();
+                }
+                else {
+                  currentValue = Collections.emptyMap();
+                }
+                return currentValue;
+              }
+
+              @Override
+              public void save(int inputId) throws IOException {
+                myInputsSnapshotMapping.put(inputId, savedInputId);
+              }
+            };
+          }
         } else {
           oldKeysGetter = new NotNullComputable<Collection<Key>>() {
             @NotNull
@@ -489,7 +519,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
 
     // do not depend on content!
-    final Map<Key, Value> finalData = data;
+    final UpdateData<Key, Value> updateData = optimizedUpdateData != null ? optimizedUpdateData : new SimpleUpdateData(myIndexId, savedInputId, data, oldKeysGetter);
     return new Computable<Boolean>() {
       @Override
       public Boolean compute() {
@@ -498,7 +528,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
           @Override
           public void run() {
             try {
-              updateWithMap(inputId, savedInputId, finalData, oldKeysGetter);
+              updateWithMap(inputId, updateData);
             }
             catch (StorageException ex) {
               exRef.set(ex);
@@ -507,9 +537,10 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         });
 
         //noinspection ThrowableResultOfMethodCallIgnored
-        if (exRef.get() != null) {
-          LOG.info(exRef.get());
-          FileBasedIndex.getInstance().requestRebuild(myIndexId);
+        StorageException nestedException = exRef.get();
+        if (nestedException != null) {
+          LOG.info("Exception during updateWithMap:" + nestedException);
+          FileBasedIndex.getInstance().requestRebuild(myIndexId, nestedException);
           return Boolean.FALSE;
         }
         return Boolean.TRUE;
@@ -570,17 +601,17 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       // psi backed index should use existing psi to build index value (FileContentImpl.getPsiFileForPsiDependentIndex())
       // so we should use different bytes to calculate hash(Id)
       Integer previouslyCalculatedUncommittedHashId = content.getUserData(ourSavedUncommittedHashIdKey);
-      
+
       if (previouslyCalculatedUncommittedHashId == null) {
         Document document = FileDocumentManager.getInstance().getCachedDocument(content.getFile());
-        
+
         if (document != null) {  // if document is not committed
           PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(content.getProject());
-          
+
           if (psiDocumentManager.isUncommited(document)) {
             PsiFile file = psiDocumentManager.getCachedPsiFile(document);
             Charset charset = ((FileContentImpl)content).getCharset();
-            
+
             if (file != null) {
               previouslyCalculatedUncommittedHashId = ContentHashesSupport
                 .calcContentHashIdWithFileType(file.getText().getBytes(charset), charset,
@@ -592,7 +623,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
       if (previouslyCalculatedUncommittedHashId != null) return previouslyCalculatedUncommittedHashId;
     }
-      
+
     Integer previouslyCalculatedContentHashId = content.getUserData(ourSavedContentHashIdKey);
     if (previouslyCalculatedContentHashId == null) {
       byte[] hash = content instanceof FileContentImpl ? ((FileContentImpl)content).getHash():null;
@@ -653,62 +684,79 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private static final com.intellij.openapi.util.Key<Integer> ourSavedContentHashIdKey = com.intellij.openapi.util.Key.create("saved.content.hash.id");
   private static final com.intellij.openapi.util.Key<Integer> ourSavedUncommittedHashIdKey = com.intellij.openapi.util.Key.create("saved.uncommitted.hash.id");
 
+  public class SimpleUpdateData extends UpdateData<Key, Value> {
+    private final int savedInputId;
+    private final @NotNull Map<Key, Value> newData;
+    private final @NotNull NotNullComputable<Collection<Key>> oldKeysGetter;
+
+    public SimpleUpdateData(ID<Key,Value> indexId, int id, @NotNull Map<Key, Value> data, @NotNull NotNullComputable<Collection<Key>> getter) {
+      super(indexId);
+      savedInputId = id;
+      newData = data;
+      oldKeysGetter = getter;
+    }
+
+    public void iterateRemovedOrUpdatedKeys(int inputId, RemovedOrUpdatedKeyProcessor<Key> consumer) throws StorageException {
+      MapDiffUpdateData.iterateRemovedKeys(oldKeysGetter.compute(), inputId, consumer);
+    }
+
+    public void iterateAddedKeys(final int inputId, final AddedKeyProcessor<Key, Value> consumer) throws StorageException {
+      MapDiffUpdateData.iterateAddedKeyAndValues(inputId, consumer, newData);
+    }
+
+    @Override
+    public void save(int inputId) throws IOException {
+      if (myHasSnapshotMapping && !((MemoryIndexStorage)getStorage()).isBufferingEnabled()) {
+        myInputsSnapshotMapping.put(inputId, savedInputId);
+      } else if (myInputsIndex != null) {
+        final Set<Key> newKeys = newData.keySet();
+        if (newKeys.size() > 0) {
+          myInputsIndex.put(inputId, newKeys);
+        }
+        else {
+          myInputsIndex.remove(inputId);
+        }
+      }
+    }
+
+    public @NotNull Map<Key, Value> getNewData() {
+      return newData;
+    }
+  }
+
+  private final MapDiffUpdateData.RemovedOrUpdatedKeyProcessor<Key>
+    myRemoveStaleKeyOperation = new MapDiffUpdateData.RemovedOrUpdatedKeyProcessor<Key>() {
+    @Override
+    public void process(Key key, int inputId) throws StorageException {
+      myStorage.removeAllValues(key, inputId);
+    }
+  };
+
+  private final MapDiffUpdateData.AddedKeyProcessor<Key, Value> myAddedKeyProcessor = new MapDiffUpdateData.AddedKeyProcessor<Key, Value>() {
+    @Override
+    public void process(Key key, Value value, int inputId) throws StorageException {
+      myStorage.addValue(key, inputId, value);
+    }
+  };
+
   protected void updateWithMap(final int inputId,
-                               int savedInputId, @NotNull Map<Key, Value> newData,
-                               @NotNull NotNullComputable<Collection<Key>> oldKeysGetter) throws StorageException {
+                               @NotNull UpdateData<Key, Value> updateData) throws StorageException {
     getWriteLock().lock();
     try {
       try {
         ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
-        for (Key key : oldKeysGetter.compute()) {
-          myStorage.removeAllValues(key, inputId);
-        }
+        updateData.iterateRemovedOrUpdatedKeys(inputId, myRemoveStaleKeyOperation);
+        updateData.iterateAddedKeys(inputId, myAddedKeyProcessor);
+        updateData.save(inputId);
       }
-      catch (Exception e) {
+      catch (ProcessCanceledException pce) {
+        throw pce; // extra care
+      }
+      catch (Throwable e) { // e.g. IOException, AssertionError
         throw new StorageException(e);
-      } finally {
+      }
+      finally {
         ValueContainerImpl.ourDebugIndexInfo.set(null);
-      }
-      // add new values
-      if (newData instanceof THashMap) {
-        // such map often (from IdIndex) contain 100x (avg ~240) of entries, also THashMap have no Entry inside so we optimize for gc too
-        final Ref<StorageException> exceptionRef = new Ref<StorageException>();
-        final boolean b = ((THashMap<Key, Value>)newData).forEachEntry(new TObjectObjectProcedure<Key, Value>() {
-          @Override
-          public boolean execute(Key key, Value value) {
-            try {
-              myStorage.addValue(key, inputId, value);
-            }
-            catch (StorageException ex) {
-              exceptionRef.set(ex);
-              return false;
-            }
-            return true;
-          }
-        });
-        if (!b) throw exceptionRef.get();
-      }
-      else {
-        for (Map.Entry<Key, Value> entry : newData.entrySet()) {
-          myStorage.addValue(entry.getKey(), inputId, entry.getValue());
-        }
-      }
-
-      try {
-        if (myHasSnapshotMapping && !((MemoryIndexStorage)getStorage()).isBufferingEnabled()) {
-          myInputsSnapshotMapping.put(inputId, savedInputId);
-        } else if (myInputsIndex != null) {
-          final Set<Key> newKeys = newData.keySet();
-          if (newKeys.size() > 0) {
-            myInputsIndex.put(inputId, newKeys);
-          }
-          else {
-            myInputsIndex.remove(inputId);
-          }
-        }
-      }
-      catch (IOException e) {
-        throw new StorageException(e);
       }
     }
     finally {

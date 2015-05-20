@@ -1,4 +1,4 @@
-// "Replace Implements with Static Import" "false"
+// "Replace implements with static import" "false"
 public class X implements <caret>I {
   void bar() {}
 }

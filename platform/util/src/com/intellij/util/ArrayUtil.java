@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -99,6 +100,22 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   @Contract(pure=true)
+  public static long[] realloc(@NotNull long[] array, int newSize) {
+    if (newSize == 0) {
+      return EMPTY_LONG_ARRAY;
+    }
+
+    final int oldSize = array.length;
+    if (oldSize == newSize) {
+      return array;
+    }
+
+    long[] result = new long[newSize];
+    System.arraycopy(array, 0, result, 0, Math.min(oldSize, newSize));
+    return result;
+  }
+  @NotNull
+  @Contract(pure=true)
   public static int[] realloc(@NotNull int[] array, final int newSize) {
     if (newSize == 0) {
       return EMPTY_INT_ARRAY;
@@ -130,6 +147,13 @@ public class ArrayUtil extends ArrayUtilRt {
     return result;
   }
 
+  @NotNull
+  @Contract(pure=true)
+  public static long[] append(@NotNull long[] array, long value) {
+    array = realloc(array, array.length + 1);
+    array[array.length - 1] = value;
+    return array;
+  }
   @NotNull
   @Contract(pure=true)
   public static int[] append(@NotNull int[] array, int value) {
@@ -390,6 +414,7 @@ public class ArrayUtil extends ArrayUtilRt {
     return result;
   }
 
+  @NotNull
   @Contract(pure=true)
   public static <T> T[] append(@NotNull final T[] src, final T element, @NotNull ArrayFactory<T> factory) {
     int length = src.length;
@@ -720,6 +745,14 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
+  public static int indexOf(@NotNull long[] ints, long value) {
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
+    }
+
+    return -1;
+  }
+  @Contract(pure=true)
   public static int indexOf(@NotNull int[] ints, int value) {
     for (int i = 0; i < ints.length; i++) {
       if (ints[i] == value) return i;
@@ -831,14 +864,14 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Nullable
   @Contract(pure=true)
-  public static <T> T getFirstElement(@NotNull T[] array) {
-    return array.length > 0 ? array[0] : null;
+  public static <T> T getFirstElement(@Nullable T[] array) {
+    return array != null && array.length > 0 ? array[0] : null;
   }
 
   @Nullable
   @Contract(pure=true)
-  public static <T> T getLastElement(@NotNull T[] array) {
-    return array.length > 0 ? array[array.length - 1] : null;
+  public static <T> T getLastElement(@Nullable T[] array) {
+    return array != null && array.length > 0 ? array[array.length - 1] : null;
   }
 
   @NotNull
@@ -852,5 +885,19 @@ public class ArrayUtil extends ArrayUtilRt {
     for (T t : src) {
       dst[i++] = t;
     }
+  }
+
+  @NotNull
+  public static <T> T[] stripTrailingNulls(@NotNull T[] array) {
+    return array.length != 0 && array[array.length-1] == null ? Arrays.copyOf(array, trailingNullsIndex(array)) : array;
+  }
+
+  private static <T> int trailingNullsIndex(@NotNull T[] array) {
+    for (int i = array.length - 1; i >= 0; i--) {
+      if (array[i] != null) {
+        return i + 1;
+      }
+    }
+    return 0;
   }
 }

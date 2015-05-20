@@ -109,6 +109,18 @@ public class NormalizeTextTest extends TestCase {
            "at org.apache.velocity.Template.merge(Template.java:256)");
   }
 
+  public void testWithoutAt() {
+    doTest(" java.util.concurrent.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1407)\n" +
+           " java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:289)\n" +
+           " java.util.concurrent.ForkJoinTask.doInvoke(ForkJoinTask.java:400)\n" +
+           " java.util.concurrent.ForkJoinTask.invokeAll(ForkJoinTask.java:837)\n",
+
+           " java.util.concurrent.ForkJoinTask$AdaptedRunnableAction.exec(ForkJoinTask.java:1407)\n" +
+           " java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:289)\n" +
+           " java.util.concurrent.ForkJoinTask.doInvoke(ForkJoinTask.java:400)\n" +
+           " java.util.concurrent.ForkJoinTask.invokeAll(ForkJoinTask.java:837)");
+  }
+
   private static void doTest(@NonNls String stackTrace, @NonNls String expected) {
     String normalized = UnscrambleDialog.normalizeText(stackTrace);
     assertEquals(expected, normalized);

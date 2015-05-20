@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
@@ -105,6 +106,7 @@ public final class RequestFocusInEditorComponentCmd extends FinalizableCommand{
         final boolean forced = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == null;
         myFocusManager.requestFocus(myComponent, myForced || forced).notifyWhenDone(myDoneCallback).doWhenDone(new Runnable() {
           public void run() {
+            if (SystemInfo.isLinux && Registry.is("suppress.focus.stealing")) return;
             // if owner is active window or it has active child window which isn't floating decorator then
             // don't bring owner window to font. If we will make toFront every time then it's possible
             // the following situation:

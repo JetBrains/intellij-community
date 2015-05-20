@@ -17,6 +17,7 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
 
@@ -105,5 +106,10 @@ public class SpeedSearch {
     catch (Exception e) {
       myMatcher = null;
     }
+  }
+
+  @Nullable
+  public Matcher getMatcher() {
+    return myMatcher;
   }
 }

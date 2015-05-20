@@ -40,7 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
@@ -182,7 +182,7 @@ public class ExecutionHelper {
             else {
               // both stdout and stderr available, show as groups
               if (file == null) {
-                errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, stdOutTitle, new FakeNavigatable(), null, null, null);
+                errorTreeView.addMessage(MessageCategory.SIMPLE, stdoutLines, stdOutTitle, NonNavigatable.INSTANCE, null, null, null);
               }
               else {
                 errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stdOutTitle}, file, -1, -1, null);
@@ -196,7 +196,7 @@ public class ExecutionHelper {
           final String[] stderrLines = StringUtil.splitByLines(stderr);
           if (stderrLines.length > 0) {
             if (file == null) {
-              errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, stderrTitle, new FakeNavigatable(), null, null, null);
+              errorTreeView.addMessage(MessageCategory.SIMPLE, stderrLines, stderrTitle, NonNavigatable.INSTANCE, null, null, null);
             }
             else {
               errorTreeView.addMessage(MessageCategory.SIMPLE, new String[]{stderrTitle}, file, -1, -1, null);
@@ -512,22 +512,5 @@ public class ExecutionHelper {
         mySemaphore.waitFor();
       }
     };
-  }
-
-  public static class FakeNavigatable implements Navigatable {
-    @Override
-    public void navigate(boolean requestFocus) {
-      // Do nothing
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
   }
 }

@@ -94,11 +94,11 @@ public class ReturnOfCollectionFieldInspection extends ReturnOfCollectionFieldIn
     }
 
     private void fixContainingMethodReturnType(PsiReferenceExpression referenceExpression) {
-      final PsiElement element = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethod.class, PsiLambdaExpression.class);
-      if (!(element instanceof PsiMethod)) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethod.class, true, PsiLambdaExpression.class);
+      if (method == null) {
         return;
       }
-      final PsiTypeElement returnTypeElement = ((PsiMethod)element).getReturnTypeElement();
+      final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
       if (returnTypeElement == null) {
         return;
       }

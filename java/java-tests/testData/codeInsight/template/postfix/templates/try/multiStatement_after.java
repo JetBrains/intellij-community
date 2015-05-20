@@ -1,11 +1,13 @@
 public class Foo {
     void m() {
         try {
-            somevalue<caret>
+            doAct()
         } catch (Exception e) {
             e.printStackTrace();
         }
         int i=0;
 
     }
+
+    void doAct() {}
 }

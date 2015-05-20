@@ -25,6 +25,7 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.ScrollPaneFactory;
@@ -38,7 +39,7 @@ import java.awt.*;
 /**
  * @author dsl
  */
-public abstract class MoveInstanceMethodDialogBase extends RefactoringDialog {
+public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected final PsiMethod myMethod;
   protected final PsiVariable[] myVariables;
 

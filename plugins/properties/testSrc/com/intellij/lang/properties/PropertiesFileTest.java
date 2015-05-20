@@ -18,10 +18,13 @@ package com.intellij.lang.properties;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
+import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
@@ -30,16 +33,13 @@ import java.util.List;
 /**
  * @author max
  */
-public class PropertiesFileTest extends LightPlatformTestCase {
+public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase {
   private Property myPropertyToAdd;
-
-  public PropertiesFileTest() {
-    PlatformTestCase.initPlatformLangPrefix();    
-  }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    PlatformTestCase.initPlatformLangPrefix();
     myPropertyToAdd = (Property)PropertiesElementFactory.createProperty(getProject(), "kkk", "vvv");
   }
 
@@ -73,8 +73,8 @@ public class PropertiesFileTest extends LightPlatformTestCase {
 
     List<IProperty> properties = propertiesFile.getProperties();
     assertEquals(2, properties.size());
-    assertPropertyEquals(properties.get(0), "xxx", "yyy");
-    assertPropertyEquals(properties.get(1), myPropertyToAdd.getName(), myPropertyToAdd.getValue());
+    assertPropertyEquals(properties.get(1), "xxx", "yyy");
+    assertPropertyEquals(properties.get(0), myPropertyToAdd.getName(), myPropertyToAdd.getValue());
   }
   public void testDeleteProperty() throws Exception {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\n#s\nzzz=ttt\n\n");
@@ -99,8 +99,9 @@ public class PropertiesFileTest extends LightPlatformTestCase {
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx2");
-    WriteCommandAction.runWriteCommandAction(null, new Runnable(){public void run() {
-      property.delete();
+    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
+      public void run() {
+        property.delete();
       }
     });
 
@@ -178,5 +179,16 @@ public class PropertiesFileTest extends LightPlatformTestCase {
     assertEquals("c d", properties.get(1).getUnescapedKey());
     assertEquals(" e=f", properties.get(2).getUnescapedKey());
     assertEquals("\u1234\\uxyzt", properties.get(3).getUnescapedKey());
+  }
+
+  public void testNonDefaultKeyValueDelimiter() {
+    final PropertiesCodeStyleSettings codeStyleSettings = PropertiesCodeStyleSettings.getInstance(getProject());
+    codeStyleSettings.KEY_VALUE_DELIMITER = ':';
+    final PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", "yyy");
+    final Character delimiter = property.getKeyValueDelimiter();
+    assertNotNull(delimiter);
+    assertEquals(':', (char)delimiter);
+    assertEquals("xxx:yyy", property.getPsiElement().getText());
+    codeStyleSettings.KEY_VALUE_DELIMITER = PropertiesCodeStyleSettings.DEFAULT_KEY_VALUE_DELIMITER;
   }
 }

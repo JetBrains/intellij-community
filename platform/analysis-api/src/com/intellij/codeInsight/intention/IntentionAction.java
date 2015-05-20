@@ -15,10 +15,13 @@
  */
 package com.intellij.codeInsight.intention;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,13 +29,15 @@ import org.jetbrains.annotations.NotNull;
  * Alt-Enter in the code editor at the location where an intention is available,
  * and can be enabled or disabled in the "Intentions" settings dialog.
  * <p/>
- * Implement {@link com.intellij.openapi.util.Iconable Iconable} interface to
+ * Implement {@link Iconable Iconable} interface to
  * change icon in intention popup menu.
  * <p/>
- * Implement {@link com.intellij.codeInsight.intention.HighPriorityAction HighPriorityAction} or
- * {@link com.intellij.codeInsight.intention.LowPriorityAction LowPriorityAction} to change ordering.
+ * Implement {@link HighPriorityAction HighPriorityAction} or
+ * {@link LowPriorityAction LowPriorityAction} to change ordering.
+ * <p/>
+ * Can be {@link com.intellij.openapi.project.DumbAware}.
  *
- * @see IntentionManager#registerIntentionAndMetaData(com.intellij.codeInsight.intention.IntentionAction, java.lang.String...)
+ * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
  */
 public interface IntentionAction {
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
@@ -43,18 +48,20 @@ public interface IntentionAction {
    * @see #isAvailable(Project,Editor,PsiFile)
    * @return the text to show in the intention popup.
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull String getText();
 
   /**
-   * Returns the identifier of the family of intentions. This id is used to externalize
+   * Returns the name of the family of intentions. It is used to externalize
    * "auto-show" state of intentions. When user clicks on a lightbulb in intention list,
-   * all intentions with the same family name get enabled/disabled. The identifier
-   * is also used to locate the description and preview text for the intention.
+   * all intentions with the same family name get enabled/disabled.
+   * The name is also shown in settings tree.
    *
-   * @return the intention family ID.
-   * @see IntentionManager#registerIntentionAndMetaData(com.intellij.codeInsight.intention.IntentionAction, java.lang.String...)
+   * @return the intention family name.
+   * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
    */
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getFamilyName();
 
   /**
@@ -83,7 +90,7 @@ public interface IntentionAction {
    * Indicate whether this action should be invoked inside write action.
    * Should return false if e.g. modal dialog is shown inside the action.
    * If false is returned the action itself is responsible for starting write action
-   * when needed, by calling {@link com.intellij.openapi.application.Application#runWriteAction(Runnable)}.
+   * when needed, by calling {@link Application#runWriteAction(Runnable)}.
    *
    * @return true if the intention requires a write action, false otherwise.
    */

@@ -18,7 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.options.newEditor.IdeSettingsDialog;
+import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -40,10 +40,11 @@ import java.awt.event.ActionListener;
  * @author Konstantin Bulenkov
  */
 public class PluginHeaderPanel {
-  private IdeaPluginDescriptor myPlugin;
-  @Nullable
+  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
+
   private final PluginManagerMain myManager;
-  private final JTable myPluginTable;
+
+  private IdeaPluginDescriptor myPlugin;
   private JBLabel myCategory;
   private JBLabel myName;
   private JBLabel myDownloads;
@@ -59,9 +60,8 @@ public class PluginHeaderPanel {
   enum ACTION_ID {UPDATE, INSTALL, UNINSTALL, RESTART}
   private ACTION_ID myActionId = ACTION_ID.INSTALL;
 
-  public PluginHeaderPanel(@Nullable PluginManagerMain manager, JTable pluginTable) {
+  public PluginHeaderPanel(@Nullable PluginManagerMain manager) {
     myManager = manager;
-    myPluginTable = pluginTable;
     final Font font = myName.getFont();
     myName.setFont(new Font(font.getFontName(), font.getStyle(), font.getSize() + 2));
     final JBColor greyed = new JBColor(Gray._130, Gray._200);
@@ -90,7 +90,7 @@ public class PluginHeaderPanel {
     //data
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
     myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : plugin.getCategory().toUpperCase());
-    final boolean hasNewerVersion = InstalledPluginsTableModel.hasNewerVersion(plugin.getPluginId());
+    final boolean hasNewerVersion = ourState.hasNewerVersion(plugin.getPluginId());
     if (plugin instanceof PluginNode) {
       final PluginNode node = (PluginNode)plugin;
       myRating.setRate(node.getRating());
@@ -114,12 +114,13 @@ public class PluginHeaderPanel {
       }
 
       final IdeaPluginDescriptor installed = PluginManager.getPlugin(plugin.getPluginId());
-       if ((PluginManagerColumnInfo.isDownloaded(node))
-         || (installed != null && InstalledPluginsTableModel.wasUpdated(installed.getPluginId()))
-         || (installed instanceof IdeaPluginDescriptorImpl && !plugin.isBundled() && ((IdeaPluginDescriptorImpl)installed).isDeleted())) {
-         myActionId = ACTION_ID.RESTART;
-       }
-    } else {
+      if ((PluginManagerColumnInfo.isDownloaded(node)) ||
+          (installed != null && ourState.wasUpdated(installed.getPluginId())) ||
+          (installed instanceof IdeaPluginDescriptorImpl && !plugin.isBundled() && ((IdeaPluginDescriptorImpl)installed).isDeleted())) {
+        myActionId = ACTION_ID.RESTART;
+      }
+    }
+    else {
       myActionId = null;
       myVersionInfoPanel.remove(myUpdated);
       myCategory.setVisible(false);
@@ -140,11 +141,15 @@ public class PluginHeaderPanel {
         myActionId = null;
       }
     }
+    UIUtil.setEnabled(myButtonPanel, true, true);
     if (myManager == null || myActionId == null || (myManager.getInstalled() != myManager.getAvailable() && myActionId == ACTION_ID.UNINSTALL)) {
       myActionId = ACTION_ID.INSTALL;
       myButtonPanel.setVisible(false);
     }
-  myRoot.revalidate();
+    else if (InstallPluginAction.isInstalling(plugin)) {
+      UIUtil.setEnabled(myButtonPanel, false, true);
+    }
+    myRoot.revalidate();
     ((JComponent)myInstallButton.getParent()).revalidate();
     myInstallButton.revalidate();
     ((JComponent)myVersion.getParent()).revalidate();
@@ -251,7 +256,7 @@ public class PluginHeaderPanel {
         switch (myActionId) {
           case UPDATE:
           case INSTALL:
-            new ActionInstallPlugin(myManager.getAvailable(), myManager.getInstalled()).install(new Runnable() {
+            new InstallPluginAction(myManager.getAvailable(), myManager.getInstalled()).install(new Runnable() {
               @Override
               public void run() {
                 setPlugin(myPlugin);
@@ -281,8 +286,9 @@ public class PluginHeaderPanel {
               public void run() {
                 final DialogWrapper settings =
                   DialogWrapper.findInstance(IdeFocusManager.findInstance().getFocusOwner());
-                if (settings instanceof IdeSettingsDialog) {
-                  ((IdeSettingsDialog)settings).doOKAction();
+                if (settings instanceof SettingsDialog) {
+                  ((SettingsDialog)settings).doOKAction();
+                  ApplicationManager.getApplication().restart();
                 } else {
                   ApplicationManager.getApplication().restart();
                 }

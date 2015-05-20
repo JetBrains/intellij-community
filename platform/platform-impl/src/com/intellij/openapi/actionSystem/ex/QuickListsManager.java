@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,78 +20,73 @@ import com.intellij.ide.actions.QuickSwitchSchemeAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.PathUtilRt;
+import com.intellij.util.ThrowableConvertor;
+import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Set;
 
-/**
- * @author max
- */
-public class QuickListsManager implements ExportableApplicationComponent, NamedJDOMExternalizable {
-  @NonNls private static final String LIST_TAG = "list";
+public class QuickListsManager implements ExportableApplicationComponent {
+  static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/quicklists";
+
+  private static final String LIST_TAG = "list";
+
   private final ActionManager myActionManager;
   private final SchemesManager<QuickList, QuickList> mySchemesManager;
 
-  private static final Logger LOG = Logger.getInstance(QuickListsManager.class);
+  public QuickListsManager(@NotNull ActionManager actionManager, @NotNull SchemesManagerFactory schemesManagerFactory) {
+    myActionManager = actionManager;
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC,
+                                                                  new BaseSchemeProcessor<QuickList>() {
+                                                                    @NotNull
+                                                                    @Override
+                                                                    public QuickList readScheme(@NotNull Element element) {
+                                                                      return createItem(element);
+                                                                    }
+
+                                                                    @Override
+                                                                    public Element writeScheme(@NotNull QuickList scheme) {
+                                                                      Element element = new Element(LIST_TAG);
+                                                                      scheme.writeExternal(element);
+                                                                      return element;
+                                                                    }
+                                                                  },
+                                                                  RoamingType.PER_USER);
+  }
 
   public static QuickListsManager getInstance() {
     return ApplicationManager.getApplication().getComponent(QuickListsManager.class);
   }
 
-  public QuickListsManager(ActionManagerEx actionManagerEx, SchemesManagerFactory schemesManagerFactory) {
-    myActionManager = actionManagerEx;
-    mySchemesManager = schemesManagerFactory.createSchemesManager(StoragePathMacros.ROOT_CONFIG + "/quicklists",
-                                                                  new BaseSchemeProcessor<QuickList>() {
-                                                                    @NotNull
-                                                                    @Override
-                                                                    public QuickList readScheme(@NotNull Element element) {
-                                                                      return loadListFromDocument(element);
-                                                                    }
-
-                                                                    @Override
-                                                                    public Element writeScheme(@NotNull final QuickList scheme) {
-                                                                      Element element = new Element(LIST_TAG);
-                                                                      scheme.writeExternal(element);
-                                                                      return element;
-                                                                    }
-
-                                                                    @Override
-                                                                    public boolean shouldBeSaved(@NotNull final QuickList scheme) {
-                                                                      return true;
-                                                                    }
-                                                                  },
-                                                                  RoamingType.PER_USER);
-
-    loadAdditionalDefaultSchemes();
-
-    registerActions();
+  @Override
+  @NotNull
+  public File[] getExportFiles() {
+    return new File[]{mySchemesManager.getRootDirectory()};
   }
 
   @NotNull
-  private static QuickList loadListFromDocument(@NotNull Element element) {
-    QuickList list = new QuickList();
-    list.readExternal(element);
-    return list;
+  @Override
+  public String getPresentableName() {
+    return IdeBundle.message("quick.lists.presentable.name");
+  }
+
+  @NotNull
+  private static QuickList createItem(@NotNull Element element) {
+    QuickList item = new QuickList();
+    item.readExternal(element);
+    return item;
   }
 
   @Override
@@ -101,19 +96,21 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
   }
 
   @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{mySchemesManager.getRootDirectory(), PathManager.getOptionsFile(this)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return IdeBundle.message("quick.lists.presentable.name");
-  }
-
-  @Override
   public void initComponent() {
+    for (BundledQuickListsProvider provider : BundledQuickListsProvider.EP_NAME.getExtensions()) {
+      for (final String path : provider.getBundledListsRelativePaths()) {
+        mySchemesManager.loadBundledScheme(path, provider, new ThrowableConvertor<Element, QuickList, Throwable>() {
+          @Override
+          public QuickList convert(Element element) throws Throwable {
+            QuickList item = createItem(element);
+            item.getExternalInfo().setHash(JDOMUtil.getTreeHash(element, true));
+            item.getExternalInfo().setPreviouslySavedName(item.getName());
+            item.getExternalInfo().setCurrentFileName(PathUtilRt.getFileName(path));
+            return item;
+          }
+        });
+      }
+    }
     mySchemesManager.loadSchemes();
     registerActions();
   }
@@ -122,117 +119,46 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
   public void disposeComponent() {
   }
 
-  @Override
-  public String getExternalFileName() {
-    return "quicklists";
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    for (Object group : element.getChildren(LIST_TAG)) {
-      Element groupElement = (Element)group;
-      QuickList list = new QuickList();
-      list.readExternal(groupElement);
-      mySchemesManager.addNewScheme(list, true);
-    }
-    mySchemesManager.loadSchemes();
-    registerActions();
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-
-  }
-
+  @NotNull
   public QuickList[] getAllQuickLists() {
     Collection<QuickList> lists = mySchemesManager.getAllSchemes();
     return lists.toArray(new QuickList[lists.size()]);
   }
 
-  public void removeAllQuickLists() {
-    mySchemesManager.clearAllSchemes();
-  }
-
-  public void registerActions() {
-    unregisterActions();
-    HashSet<String> registeredIds = new HashSet<String>(); // to prevent exception if 2 or more targets have the same name
-
-    ActionManager actionManager = myActionManager;
+  private void registerActions() {
+    // to prevent exception if 2 or more targets have the same name
+    Set<String> registeredIds = new THashSet<String>();
     for (QuickList list : mySchemesManager.getAllSchemes()) {
       String actionId = list.getActionId();
-
-      if (!registeredIds.contains(actionId)) {
-        registeredIds.add(actionId);
-        actionManager.registerAction(actionId, new InvokeQuickListAction(list));
+      if (registeredIds.add(actionId)) {
+        myActionManager.registerAction(actionId, new InvokeQuickListAction(list));
       }
     }
   }
 
   private void unregisterActions() {
-    ActionManagerEx actionManager = (ActionManagerEx)myActionManager;
-
-    for (String oldId : actionManager.getActionIds(QuickList.QUICK_LIST_PREFIX)) {
-      actionManager.unregisterAction(oldId);
+    for (String oldId : myActionManager.getActionIds(QuickList.QUICK_LIST_PREFIX)) {
+      myActionManager.unregisterAction(oldId);
     }
   }
 
-  public void registerQuickList(final QuickList quickList) {
-    mySchemesManager.addNewScheme(quickList, true);
-  }
-
-  public SchemesManager<QuickList, QuickList> getSchemesManager() {
-    return mySchemesManager;
-  }
-
-  private void loadAdditionalDefaultSchemes() {
-    //Get color schemes from EPs
-    for (BundledQuickListsProvider provider : BundledQuickListsProvider.EP_NAME.getExtensions()) {
-      final String[] paths = provider.getBundledListsRelativePaths();
-
-      for (final String path : paths) {
-        try {
-          final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, path);
-          if (inputStream == null) {
-            // Error shouldn't occur during this operation
-            // thus we report error instead of info
-            LOG.error("Cannot read quick list from " +  path);
-            continue;
-          }
-
-          Element element;
-          try {
-            element = JDOMUtil.load(inputStream);
-          }
-          catch (JDOMException e) {
-            LOG.info("Error reading quick list from  " + path + ": " + e.getLocalizedMessage());
-            throw e;
-          }
-          mySchemesManager.addNewScheme(loadListFromDocument(element), false);
-        }
-        catch (final Exception e) {
-          ApplicationManager.getApplication().invokeLater(
-            new Runnable(){
-              @Override
-              public void run() {
-                // Error shouldn't occur during this operation
-                // thus we report error instead of info
-                LOG.error("Cannot read quick list from " + path + ": " + e.getLocalizedMessage(), e);
-              }
-            }
-          );
-        }
-      }
+  public void setQuickLists(@NotNull QuickList[] quickLists) {
+    mySchemesManager.clearAllSchemes();
+    unregisterActions();
+    for (QuickList quickList : quickLists) {
+      mySchemesManager.addNewScheme(quickList, true);
     }
+    registerActions();
   }
 
   private static class InvokeQuickListAction extends QuickSwitchSchemeAction {
     private final QuickList myQuickList;
 
-    public InvokeQuickListAction(QuickList quickList) {
+    public InvokeQuickListAction(@NotNull QuickList quickList) {
       myQuickList = quickList;
       myActionPlace = ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION;
       getTemplatePresentation().setDescription(myQuickList.getDescription());
-      getTemplatePresentation().setText(myQuickList.getDisplayName(), false);
+      getTemplatePresentation().setText(myQuickList.getName(), false);
     }
 
     @Override

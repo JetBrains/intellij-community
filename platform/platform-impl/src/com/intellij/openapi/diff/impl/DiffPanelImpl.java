@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,17 +180,16 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myDataProvider = new MyGenericDataProvider(this);
     myPanel.setDataProvider(myDataProvider);
 
-    final ComparisonPolicy comparisonPolicy = getComparisonPolicy();
-    final ComparisonPolicy defaultComparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
-    final HighlightMode highlightMode = getHighlightMode();
-    final HighlightMode defaultHighlightMode = DiffManagerImpl.getInstanceEx().getHighlightMode();
+    ComparisonPolicy comparisonPolicy = getComparisonPolicy();
+    if (comparisonPolicy != DiffManagerImpl.getInstanceEx().getComparisonPolicy()) {
+      setComparisonPolicy(comparisonPolicy);
+    }
 
-    if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
-      setComparisonPolicy(defaultComparisonPolicy);
+    HighlightMode highlightMode = getHighlightMode();
+    if (highlightMode != DiffManagerImpl.getInstanceEx().getHighlightMode()) {
+      setHighlightMode(highlightMode);
     }
-    if (defaultHighlightMode != null && highlightMode != defaultHighlightMode) {
-      setHighlightMode(defaultHighlightMode);
-    }
+
     myVisibleAreaListener = new VisibleAreaListener() {
       @Override
       public void visibleAreaChanged(VisibleAreaEvent e) {
@@ -504,11 +503,11 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myData.getComparisonPolicy();
   }
 
-  public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
+  public void setComparisonPolicy(@NotNull ComparisonPolicy comparisonPolicy) {
     setComparisonPolicy(comparisonPolicy, true);
   }
 
-  private void setComparisonPolicy(ComparisonPolicy policy, boolean notifyManager) {
+  private void setComparisonPolicy(@NotNull ComparisonPolicy policy, boolean notifyManager) {
     myData.setComparisonPolicy(policy);
     rediff();
 
@@ -957,9 +956,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
         if (currentSide != null) {
           return new DiffNavigatable(currentSide);
         }
-      }
-      if (PlatformDataKeys.HELP_ID.is(dataId)) {
-        return "reference.dialogs.diff.file";
       }
 
       return super.getData(dataId);

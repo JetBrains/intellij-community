@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class RecursiveCallLineMarkerProvider implements LineMarkerProvider {
       return false;
     }
 
-    final PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
+    final PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiLambdaExpression.class, PsiClass.class);
     if (method == null || !method.getName().equals(methodCall.getMethodExpression().getReferenceName())) {
       return false;
     }

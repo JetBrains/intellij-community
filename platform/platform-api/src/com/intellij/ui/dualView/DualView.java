@@ -508,4 +508,9 @@ public class DualView extends JPanel {
   public void setZipByHeight(boolean zipByHeight) {
     myZipByHeight = zipByHeight;
   }
+
+  public void setEmptyText(@NotNull String text) {
+    myTreeView.getEmptyText().setText(text);
+    myFlatView.getEmptyText().setText(text);
+  }
 }

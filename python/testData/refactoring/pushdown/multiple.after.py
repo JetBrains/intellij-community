@@ -1,7 +1,6 @@
 class Foo:
     pass
 
-
 class Zope(Foo):
     def _mine(self):
        print "zope"

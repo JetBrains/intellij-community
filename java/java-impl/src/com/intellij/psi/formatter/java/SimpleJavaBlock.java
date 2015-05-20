@@ -63,19 +63,37 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     myCurrentIndent = null;
     processHeadCommentsAndWhiteSpaces(result);
 
-    myReservedAlignment = createChildAlignment();
-    myReservedAlignment2 = createChildAlignment2(myReservedAlignment);
+    calculateReservedAlignments();
+
     Wrap childWrap = createChildWrap();
     processRemainingChildren(result, childWrap);
 
     return result;
   }
 
+  private void calculateReservedAlignments() {
+    myReservedAlignment = createChildAlignment();
+
+    IElementType nodeType = myNode.getElementType();
+    if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION && mySettings.ALIGN_MULTILINE_TERNARY_OPERATION) {
+      myReservedAlignment2 = myReservedAlignment != null ? Alignment.createChildAlignment(myReservedAlignment)
+                                                         : Alignment.createAlignment();
+    }
+  }
+
   private void processRemainingChildren(List<Block> result, Wrap childWrap) {
     while (myCurrentChild != null) {
       if (isNotEmptyNode(myCurrentChild)) {
         final ASTNode astNode = myCurrentChild;
-        AlignmentStrategy alignmentStrategyToUse = getAlignmentStrategy(myCurrentChild);
+        AlignmentStrategy alignmentStrategyToUse = AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, myCurrentChild));
+
+        if (myNode.getElementType() == JavaElementType.FIELD
+            || myNode.getElementType() == JavaElementType.DECLARATION_STATEMENT
+            || myNode.getElementType() == JavaElementType.LOCAL_VARIABLE)
+        {
+          alignmentStrategyToUse = myAlignmentStrategy;
+        }
+
         myCurrentChild = processChild(result, astNode, alignmentStrategyToUse, childWrap, myCurrentIndent, myCurrentOffset);
         if (astNode != myCurrentChild && myCurrentChild != null) {
           myCurrentOffset = myCurrentChild.getTextRange().getStartOffset();
@@ -114,13 +132,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
     }
   }
 
-  private AlignmentStrategy getAlignmentStrategy(ASTNode child) {
-    return ALIGN_IN_COLUMNS_ELEMENT_TYPES.contains(myNode.getElementType())
-           ? myAlignmentStrategy
-           : AlignmentStrategy.wrap(chooseAlignment(myReservedAlignment, myReservedAlignment2, child));
-  }
-
-  private boolean isNotEmptyNode(@NotNull ASTNode child) {
+  private static boolean isNotEmptyNode(@NotNull ASTNode child) {
     return !FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0;
   }
 

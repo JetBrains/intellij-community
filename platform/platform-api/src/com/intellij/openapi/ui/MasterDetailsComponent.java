@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -131,7 +132,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected MasterDetailsComponent(MasterDetailsState state) {
     myState = state;
 
-    mySplitter = isNewProjectSettings() || isNewSettingsView() ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
+    mySplitter = isNewProjectSettings() ? new OnePixelSplitter(false, .2f) : new JBSplitter(false, .2f);
     mySplitter.setSplitterProportionKey("ProjectStructure.SecondLevelElements");
     mySplitter.setHonorComponentsMinimumSize(true);
 
@@ -151,10 +152,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     catch (ClassNotFoundException ignored) {
       return false;
     }
-  }
-
-  private boolean isNewSettingsView() {
-    return Registry.is("ide.new.settings.view");
   }
 
   protected void reInitWholePanelIfNeeded() {
@@ -188,7 +185,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     };
 
-    if (isNewProjectSettings() || isNewSettingsView()) {
+    if (isNewProjectSettings()) {
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree);
       DefaultActionGroup group = createToolbarActionGroup();
       if (group != null) {
@@ -206,8 +203,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     final JPanel right = new JPanel(new BorderLayout());
     right.add(myDetails.getComponent(), BorderLayout.CENTER);
-    if (!isNewProjectSettings() && isNewSettingsView()) {
-      right.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    if (!isNewProjectSettings()) {
+      myWholePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     }
 
     mySplitter.setSecondComponent(right);
@@ -302,7 +299,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   private void initToolbar() {
-    if (isNewProjectSettings() || isNewSettingsView()) return;
+    if (isNewProjectSettings()) return;
     DefaultActionGroup group = createToolbarActionGroup();
     if (group != null) {
       final JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
@@ -315,7 +312,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected Dimension getPanelPreferredSize() {
-    return new Dimension(800, 600);
+    return JBUI.size(800, 600);
   }
 
   @NotNull 
@@ -737,12 +734,31 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myInitializedConfigurables.add(configurable);
   }
 
+  /**
+   * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class} instead
+   */
   protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
     for (MyNode rootNode : rootNodes) {
-      final Set<String> names = new HashSet<String>();
-      for (int i = 0; i < rootNode.getChildCount(); i++) {
-        final MyNode node = (MyNode)rootNode.getChildAt(i);
-        final NamedConfigurable scopeConfigurable = node.getConfigurable();
+      checkForEmptyAndDuplicatedNames(rootNode, prefix, title, NamedConfigurable.class, false);
+    }
+  }
+
+  protected final void checkForEmptyAndDuplicatedNames(String prefix, String title,
+                                                       Class<? extends NamedConfigurable> configurableClass) throws ConfigurationException {
+    checkForEmptyAndDuplicatedNames(myRoot, prefix, title, configurableClass, true);
+  }
+
+  private void checkForEmptyAndDuplicatedNames(MyNode rootNode,
+                                               String prefix,
+                                               String title,
+                                               Class<? extends NamedConfigurable> configurableClass,
+                                               boolean recursively) throws ConfigurationException {
+    final Set<String> names = new HashSet<String>();
+    for (int i = 0; i < rootNode.getChildCount(); i++) {
+      final MyNode node = (MyNode)rootNode.getChildAt(i);
+      final NamedConfigurable scopeConfigurable = node.getConfigurable();
+
+      if (configurableClass.isInstance(scopeConfigurable)) {
         final String name = scopeConfigurable.getDisplayName();
         if (name.trim().length() == 0) {
           selectNodeInTree(node);
@@ -756,6 +772,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
           throw new ConfigurationException(CommonBundle.message("smth.already.exist.error.message", prefix, name), title);
         }
         names.add(name);
+      }
+
+      if (recursively) {
+        checkForEmptyAndDuplicatedNames(node, prefix, title, configurableClass, true);
       }
     }
   }

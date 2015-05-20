@@ -10,8 +10,8 @@ public class Test {
         final Test test = (Test) o;
 
         if (f != test.f) return false;
-        if (h != test.h) return false;
         if (j != test.j) return false;
+        if (h != test.h) return false;
 
         return true;
     }

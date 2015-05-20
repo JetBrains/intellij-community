@@ -56,6 +56,7 @@ project("withIntegrationTests") {
 
 project("withIdeaPluginCustomization1") {
   apply plugin: 'java'
+  apply plugin: 'idea'
 
   idea {
     module {
@@ -66,21 +67,20 @@ project("withIdeaPluginCustomization1") {
   }
 }
 
-// see http://youtrack.jetbrains.com/issue/IDEA-119365
+// see https://youtrack.jetbrains.com/issue/IDEA-119365
 project("withIdeaPluginCustomization2") {
   apply plugin: 'java'
+  apply plugin: 'idea'
 
   idea {
     module {
       sourceDirs += testSourceDirs
       testSourceDirs = []
-      ext.resourceDirs += file('some-extra-resource-folder')
-      ext.testResourceDirs += file('some-extra-test-resource-folder')
     }
   }
 }
 
-// see http://youtrack.jetbrains.com/issue/IDEA-120562
+// see https://youtrack.jetbrains.com/issue/IDEA-120562
 project("withIdeaPluginCustomization3") {
   apply plugin: 'java'
   apply plugin: 'idea'
@@ -89,8 +89,6 @@ project("withIdeaPluginCustomization3") {
     module {
       sourceDirs += file('src/main/java')
       testSourceDirs += file('src/awesome-test/java')
-      testSourceDirs += file('src/awesome-with-resource-test/java')
-      ext.testResourceDirs += file('src/awesome-with-resource-test/resources')
     }
   }
 
@@ -100,11 +98,6 @@ project("withIdeaPluginCustomization3") {
         srcDir 'src/awesome-test/java'
       }
       compileClasspath += sourceSets.main.runtimeClasspath
-    }
-    'awesome-with-resource-test' {
-      java {
-        srcDir 'src/awesome-with-resource-test/java'
-      }
     }
   }
 }

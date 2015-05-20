@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
@@ -26,6 +27,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -34,21 +36,34 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.imgscalr.Scalr;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author yole
+ * @author Konstantin Bulenkov
  */
 public abstract class RecentProjectsManagerBase extends RecentProjectsManager implements ProjectManagerListener, PersistentStateComponent<RecentProjectsManagerBase.State> {
+  private static final Map<String, MyIcon> ourProjectIcons = new HashMap<String, MyIcon>();
+
   public static RecentProjectsManagerBase getInstanceEx() {
     return (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
   }
@@ -57,6 +72,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public List<String> recentPaths = new SmartList<String>();
     public List<String> openPaths = new SmartList<String>();
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
+    public List<ProjectGroup> groups = new SmartList<ProjectGroup>();
     public String lastPath;
 
     public String lastProjectLocation;
@@ -174,6 +190,87 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return "";
   }
 
+  @Nullable
+  public static Icon getProjectIcon(String path, boolean isDark) {
+    File file = isDark ? new File(path + "/.idea/icon_dark.png") : new File(path + "/.idea/icon.png");
+    if (file.exists()) {
+      final long timestamp = file.lastModified();
+      MyIcon icon = ourProjectIcons.get(path);
+      if (icon != null && icon.getTimestamp() == timestamp) {
+        return icon.getIcon();
+      }
+      try {
+        Icon ico = createIcon(file);
+        icon = new MyIcon(ico, timestamp);
+        ourProjectIcons.put(path, icon);
+        return icon.getIcon();
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static Icon createIcon(File file) {
+    final BufferedImage image = loadAndScaleImage(file);
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        if (UIUtil.isRetina()) {
+          final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
+          newG.scale(0.5, 0.5);
+          newG.drawImage(image, x/2, y/2, null);
+          newG.scale(1, 1);
+          newG.dispose();
+        }
+        else {
+          g.drawImage(image, x, y, null);
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return UIUtil.isRetina() ? image.getWidth() / 2 : image.getWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return UIUtil.isRetina() ? image.getHeight() / 2 : image.getHeight();
+      }
+    };
+  }
+
+  private static BufferedImage loadAndScaleImage(File file) {
+    try {
+      Image img = ImageLoader.loadFromUrl(file.toURL());
+      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16), null);
+    }
+    catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public static Icon getProjectOrAppIcon(String path) {
+    Icon icon = getProjectIcon(path, UIUtil.isUnderDarcula());
+    if (icon != null) {
+      return icon;
+    }
+
+    if (UIUtil.isUnderDarcula()) {
+      //No dark icon for this project
+      icon = getProjectIcon(path, false);
+      if (icon != null) {
+        return icon;
+      }
+    }
+
+
+    return AllIcons.Nodes.IdeaProject;
+  }
+
   private Set<String> getDuplicateProjectNames(Set<String> openedPaths, Set<String> recentPaths) {
     Set<String> names = ContainerUtil.newHashSet();
     Set<String> duplicates = ContainerUtil.newHashSet();
@@ -187,6 +284,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public AnAction[] getRecentProjectsActions(boolean addClearListItem) {
+    return getRecentProjectsActions(addClearListItem, false);
+  }
+
+  @Override
+  public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
     final Set<String> paths;
     synchronized (myStateLock) {
       myState.validateRecentProjects();
@@ -203,21 +305,54 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     List<AnAction> actions = new SmartList<AnAction>();
     Set<String> duplicates = getDuplicateProjectNames(openedPaths, paths);
-    for (final String path : paths) {
-      String projectName = getProjectName(path);
-      String displayName;
-      synchronized (myStateLock) {
-        displayName = myState.names.get(path);
-      }
-      if (StringUtil.isEmptyOrSpaces(displayName)) {
-        displayName = duplicates.contains(path) ? path : projectName;
+    if (useGroups) {
+      final List<ProjectGroup> groups = new ArrayList<ProjectGroup>(new ArrayList<ProjectGroup>(myState.groups));
+      final List<String> projectPaths = new ArrayList<String>(paths);
+      Collections.sort(groups, new Comparator<ProjectGroup>() {
+        @Override
+        public int compare(ProjectGroup o1, ProjectGroup o2) {
+          int ind1 = getGroupIndex(o1);
+          int ind2 = getGroupIndex(o2);
+          return ind1 == ind2 ? StringUtil.naturalCompare(o1.getName(), o2.getName()) : ind1 - ind2;
+        }
+
+        private int getGroupIndex(ProjectGroup group) {
+          int index = -1;
+          for (String path : group.getProjects()) {
+            final int i = projectPaths.indexOf(path);
+            if (index >= 0 && index > i) {
+              index = i;
+            }
+          }
+          return index;
+        }
+      });
+
+      for (ProjectGroup group : groups) {
+        paths.removeAll(group.getProjects());
       }
 
-      // It's better don't to remove non-existent projects. Sometimes projects stored
-      // on USB-sticks or flash-cards, and it will be nice to have them in the list
-      // when USB device or SD-card is mounted
-      if (new File(path).exists()) {
-        actions.add(new ReopenProjectAction(path, projectName, displayName));
+      for (ProjectGroup group : groups) {
+        final List<AnAction> children = new ArrayList<AnAction>();
+        for (String path : group.getProjects()) {
+          final AnAction action = createOpenAction(path, duplicates);
+          if (action != null) {
+            children.add(action);
+          }
+        }
+        actions.add(new ProjectGroupActionGroup(group, children));
+        if (group.isExpanded()) {
+          for (AnAction child : children) {
+            actions.add(child);
+          }
+        }
+      }
+    }
+
+    for (final String path : paths) {
+      final AnAction action = createOpenAction(path, duplicates);
+      if (action != null) {
+        actions.add(action);
       }
     }
 
@@ -245,6 +380,25 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
 
     return actions.toArray(new AnAction[actions.size()]);
+  }
+
+  private AnAction createOpenAction(String path, Set<String> duplicates) {
+    String projectName = getProjectName(path);
+    String displayName;
+    synchronized (myStateLock) {
+      displayName = myState.names.get(path);
+    }
+    if (StringUtil.isEmptyOrSpaces(displayName)) {
+      displayName = duplicates.contains(path) ? path : projectName;
+    }
+
+    // It's better don't to remove non-existent projects. Sometimes projects stored
+    // on USB-sticks or flash-cards, and it will be nice to have them in the list
+    // when USB device or SD-card is mounted
+    if (new File(path).exists()) {
+      return new ReopenProjectAction(path, projectName, displayName);
+    }
+    return null;
   }
 
   private void markPathRecent(String path) {
@@ -367,6 +521,23 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     }
   }
 
+  @Override
+  public List<ProjectGroup> getGroups() {
+    return Collections.unmodifiableList(myState.groups);
+  }
+
+  @Override
+  public void addGroup(ProjectGroup group) {
+    if (!myState.groups.contains(group)) {
+      myState.groups.add(group);
+    }
+  }
+
+  @Override
+  public void removeGroup(ProjectGroup group) {
+    myState.groups.remove(group);
+  }
+
   private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
     @Override
     public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
@@ -397,6 +568,20 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     @Override
     public void appClosing() {
       updateLastProjectPath();
+    }
+  }
+
+  private static class MyIcon extends Pair<Icon, Long> {
+    public MyIcon(Icon icon, Long timestamp) {
+      super(icon, timestamp);
+    }
+
+    public Icon getIcon() {
+      return first;
+    }
+
+    public long getTimestamp() {
+      return second;
     }
   }
 }

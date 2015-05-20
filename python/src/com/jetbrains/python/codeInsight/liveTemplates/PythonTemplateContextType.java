@@ -43,11 +43,14 @@ public class PythonTemplateContextType extends FileTypeBasedContextType {
     if (super.isInContext(file, offset)) {
       final PsiElement element = file.findElementAt(offset);
       if (element != null) {
-        return !(isAfterDot(element) || element instanceof PsiComment || element instanceof PyStringLiteralExpression ||
-                 isInsideParameterList(element));
+        return !(isAfterDot(element) || element instanceof PsiComment || isInsideStringLiteral(element) || isInsideParameterList(element));
       }
     }
     return false;
+  }
+
+  private static boolean isInsideStringLiteral(@NotNull PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class, false) != null;
   }
 
   private static boolean isInsideParameterList(@NotNull PsiElement element) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.Convertor;
@@ -62,18 +60,18 @@ public class AntInstallation {
   }
 
   public static final Externalizer<AntInstallation> EXTERNALIZER = new Externalizer<AntInstallation>() {
-    public AntInstallation readValue(Element dataElement) throws InvalidDataException {
+    public AntInstallation readValue(Element dataElement) {
       AntInstallation antInstallation = new AntInstallation();
       antInstallation.readExternal(dataElement);
       return antInstallation;
     }
 
-    public void writeValue(Element dataElement, AntInstallation antInstallation) throws WriteExternalException {
+    public void writeValue(Element dataElement, AntInstallation antInstallation) {
       antInstallation.myProperties.writeExternal(dataElement);
     }
   };
 
-  private void readExternal(Element dataElement) throws InvalidDataException {
+  private void readExternal(Element dataElement) {
     myProperties.readExternal(dataElement);
     File antJar = new File(HOME_DIR.get(myProperties), PATH_TO_ANT_JAR);
     updateVersion(antJar);

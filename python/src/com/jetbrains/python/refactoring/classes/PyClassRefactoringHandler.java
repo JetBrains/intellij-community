@@ -17,8 +17,6 @@ package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -79,7 +77,7 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
     if (!inClass(clazz, project, editor, "refactoring.pull.up.error.cannot.perform.refactoring.not.inside.class")) return;
     assert clazz != null;
 
-    final PyMemberInfoStorage infoStorage = PyClassMembersRefactoringSupport.getSelectedMemberInfos(clazz, element1, element2);
+    final PyMemberInfoStorage infoStorage = PyMembersRefactoringSupport.getSelectedMemberInfos(clazz, element1, element2);
 
     doRefactorImpl(project, clazz, infoStorage, editor);
   }

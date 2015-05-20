@@ -39,7 +39,7 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
     LanguageConsoleView consoleView = (LanguageConsoleView)event.getData(LangDataKeys.CONSOLE_VIEW);
     assert consoleView != null;
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
-    PsiFile file = consoleView.getConsole().getFile();
+    PsiFile file = consoleView.getFile();
     daemonCodeAnalyzer.setHighlightingEnabled(file, state);
     daemonCodeAnalyzer.restart(file);
     if (state) {
@@ -49,7 +49,7 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
       PropertiesComponent.getInstance().setValue(processInputStateKey, "true");
     }
 
-    List<AnAction> actions = ActionUtil.getActions(consoleView.getConsole().getConsoleEditor().getComponent());
+    List<AnAction> actions = ActionUtil.getActions(consoleView.getConsoleEditor().getComponent());
     ConsoleExecuteAction action = ContainerUtil.findInstance(actions, ConsoleExecuteAction.class);
     action.myExecuteActionHandler.myUseProcessStdIn = !state;
   }

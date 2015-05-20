@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLinkedMap;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +51,7 @@ public class FileNameCache {
       throw new RuntimeException("VFS name enumerator corrupted");
     }
 
-    CharSequence rawName = convertToBytesIfAsciiString(name);
+    CharSequence rawName = ByteArrayCharSequence.convertToBytesIfAsciiString(name);
     IntObjectLinkedMap.MapEntry<CharSequence> entry = new IntObjectLinkedMap.MapEntry<CharSequence>(id, rawName);
     IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -71,22 +70,6 @@ public class FileNameCache {
     h ^= (h<<10);
     h ^= (h>>15);
     return h % ourNameCache.length;
-  }
-
-  @NotNull
-  private static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
-    int length = name.length();
-    if (length == 0) return "";
-
-    if (!IOUtil.isAscii(name)) {
-      return new String(name); // So we don't hold whole char[] buffer of a lengthy path on JDK 6
-    }
-
-    byte[] bytes = new byte[length];
-    for (int i = 0; i < length; i++) {
-      bytes[i] = (byte)name.charAt(i);
-    }
-    return new ByteArrayCharSequence(bytes);
   }
 
   @NotNull

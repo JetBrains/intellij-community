@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -518,7 +519,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       FormBuilder builder = FormBuilder.createFormBuilder().setVertical(true);
       builder.addLabeledComponent("&Name:", myNameField);
       builder.addLabeledComponent(getSplitDialogChooseFilesPrompt(), myChooser);
-      myChooser.setPreferredSize(new Dimension(450, 300));
+      myChooser.setPreferredSize(JBUI.size(450, 300));
       return builder.getPanel();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,7 @@ public class DeclarationParser {
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
     refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
 
+    //noinspection Duplicates
     if (builder.getTokenType() != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
       while (BEFORE_LBRACE_ELEMENTS_SET.contains(builder.getTokenType())) {
@@ -321,7 +322,12 @@ public class DeclarationParser {
           emptyElement(builder, JavaElementType.TYPE_PARAMETER_LIST);
         }
         parseAnnotations(builder);
-        builder.advanceLexer();
+
+        if (!expect(builder, JavaTokenType.IDENTIFIER)) {
+          PsiBuilder.Marker primitive = builder.mark();
+          builder.advanceLexer();
+          primitive.error(JavaErrorMessages.message("expected.identifier"));
+        }
 
         if (builder.getTokenType() == JavaTokenType.LPARENTH) {
           return parseMethodFromLeftParenth(builder, declaration, false, true);
@@ -767,7 +773,10 @@ public class DeclarationParser {
     final PsiBuilder.Marker anno = builder.mark();
     builder.advanceLexer();
 
-    final PsiBuilder.Marker classRef = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
+    PsiBuilder.Marker classRef = null;
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER) {
+      classRef = myParser.getReferenceParser().parseJavaCodeReference(builder, true, false, false, false);
+    }
     if (classRef == null) {
       error(builder, JavaErrorMessages.message("expected.class.reference"));
     }

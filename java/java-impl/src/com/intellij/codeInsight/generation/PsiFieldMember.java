@@ -52,7 +52,7 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
   @Nullable
   @Override
   public GenerationInfo[] generateGetters(PsiClass aClass) throws IncorrectOperationException {
-    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(getElement(), true));
+    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(getElement(), true, false));
   }
 
   @Nullable
@@ -69,7 +69,7 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
     if (GetterSetterPrototypeProvider.isReadOnlyProperty(field)) {
       return null;
     }
-    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
+    return createGenerateInfos(aClass, GetterSetterPrototypeProvider.generateGetterSetters(field, false, false));
   }
 
   private static GenerationInfo[] createGenerateInfos(PsiClass aClass, PsiMethod[] prototypes) {

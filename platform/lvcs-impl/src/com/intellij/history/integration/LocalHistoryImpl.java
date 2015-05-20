@@ -137,12 +137,12 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
 
 
     validateStorage();
-    LocalHistoryLog.LOG.info("Purging local history...");
+    LocalHistoryLog.LOG.debug("Purging local history...");
     myChangeList.purgeObsolete(period);
     validateStorage();
 
     myChangeList.close();
-    LocalHistoryLog.LOG.info("Local history storage successfully closed.");
+    LocalHistoryLog.LOG.debug("Local history storage successfully closed.");
 
     ShutDownTracker.getInstance().unregisterShutdownTask(myShutdownTask);
   }

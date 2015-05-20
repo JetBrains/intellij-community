@@ -26,25 +26,26 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.8.2</version>
+    <version>1.9.4</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
+  <url>http://ant.apache.org/</url>  
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-junit</artifactId>
-  <version>1.8.2</version>
+  <version>1.9.4</version>
   <name>Apache Ant + JUnit</name>
   <description>contains the junit and junirreport tasks</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.8.2</version>
+      <version>1.9.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.2</version>
+      <version>4.11</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -78,13 +79,12 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.4</source>
-          <target>1.4</target>
           <includes>
             <include>org/apache/tools/ant/taskdefs/optional/junit/*</include>
           </includes>
           <excludes>
-            <exclude>org/apache/tools/ant/taskdefs/optional/junit/JUnit4TestMethodAdapter*</exclude>
+              <exclude>org/apache/tools/ant/taskdefs/optional/junit/JUnit4TestMethodAdapter*</exclude>
+              <exclude>org/apache/tools/ant/taskdefs/optional/junit/CustomJUnit4TestAdapterCache*</exclude>
           </excludes>
           <testIncludes>
             <include>org/apache/tools/ant/taskdefs/optional/junit/</include>

@@ -16,6 +16,7 @@
 package org.zmlx.hg4idea.status.ui;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
@@ -136,32 +136,32 @@ public class HgStatusWidget extends EditorBasedWidget
 
   @Override
   public void update(final Project project, @Nullable VirtualFile root) {
-    update();
-  }
-
-  public void update(final Project project) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        if ((project == null) || project.isDisposed()) {
-          emptyTextAndTooltip();
-          return;
-        }
-
-        final HgRepository repo = HgUtil.getCurrentRepository(project);
-        if (repo == null) { // the file is not under version control => display nothing
-          emptyTextAndTooltip();
-          return;
-        }
-        myTooltip = HgUtil.getDisplayableBranchOrBookmarkText(repo);
-        myText = StringUtil.shortenTextWithEllipsis(myTooltip, MAX_STRING.length(), 5);
-        if (!isDisposed() && myStatusBar != null) {
-          myStatusBar.updateWidget(ID());
-        }
+        update();
       }
     });
   }
 
+  private void update() {
+    Project project = getProject();
+    if ((project == null) || project.isDisposed()) {
+      emptyTextAndTooltip();
+      return;
+    }
+
+    final HgRepository repo = HgUtil.getCurrentRepository(project);
+    if (repo == null) { // the file is not under version control => display nothing
+      emptyTextAndTooltip();
+      return;
+    }
+    myTooltip = HgUtil.getDisplayableBranchOrBookmarkText(repo);
+    myText = StringUtil.shortenTextWithEllipsis(myTooltip, MAX_STRING.length(), 5);
+    if (!isDisposed() && myStatusBar != null) {
+      myStatusBar.updateWidget(ID());
+    }
+  }
 
   public void activate() {
     Project project = getProject();
@@ -171,7 +171,6 @@ public class HgStatusWidget extends EditorBasedWidget
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
     busConnection.subscribe(HgVcs.STATUS_TOPIC, this);
-    busConnection.subscribe(HgVcs.BRANCH_TOPIC,this);
 
     DvcsUtil.installStatusBarWidget(myProject, this);
   }
@@ -179,10 +178,6 @@ public class HgStatusWidget extends EditorBasedWidget
   public void deactivate() {
     if (isDisposed()) return;
     DvcsUtil.removeStatusBarWidget(myProject, this);
-  }
-
-  private void update() {
-    update(getProject());
   }
 
   public void dispose() {

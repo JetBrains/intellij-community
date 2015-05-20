@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
@@ -41,10 +40,18 @@ public class ApplyNonConflicts extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    DataContext dataContext = e.getDataContext();
-    List<Change> notConflicts = ContainerUtil.collect(getNotConflicts(dataContext));
-    for (Change change : notConflicts) {
-      Change.apply(change, MergeList.BRANCH_SIDE);
+    MergeList mergeList = MergeList.fromDataContext(e.getDataContext());
+    assert mergeList != null;
+
+    List<Change> notConflicts = ContainerUtil.collect(getNotConflicts(mergeList));
+    mergeList.startBulkUpdate();
+    try {
+      for (Change change : notConflicts) {
+        Change.apply(change, MergeList.BRANCH_SIDE);
+      }
+    }
+    finally {
+      mergeList.finishBulkUpdate();
     }
     if (myDiffPanel != null) {
       myDiffPanel.requestScrollEditors();
@@ -52,11 +59,11 @@ public class ApplyNonConflicts extends AnAction implements DumbAware {
   }
 
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(getNotConflicts(e.getDataContext()).hasNext());
+    MergeList mergeList = MergeList.fromDataContext(e.getDataContext());
+    e.getPresentation().setEnabled(getNotConflicts(mergeList).hasNext());
   }
 
-  private static Iterator<Change> getNotConflicts(DataContext dataContext) {
-    MergeList mergeList = MergeList.fromDataContext(dataContext);
+  private static Iterator<Change> getNotConflicts(MergeList mergeList) {
     if (mergeList == null) return new ArrayList<Change>(1).iterator();
     return FilteringIterator.create(mergeList.getAllChanges(), MergeList.NOT_CONFLICTS);
   }

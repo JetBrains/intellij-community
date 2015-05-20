@@ -30,6 +30,8 @@ public abstract class ProjectSetProcessor {
 
   public static final ExtensionPointName<ProjectSetProcessor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.projectSetProcessor");
 
+  public static final String PROJECT = "project";
+
   public abstract String getId();
 
   public abstract void processEntries(@NotNull List<Pair<String, String>> entries, @NotNull Context context, @NotNull Runnable runNext);

@@ -2,6 +2,7 @@ package com.intellij.json.psi;
 
 import com.intellij.json.JsonElementTypes;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
@@ -117,5 +118,65 @@ public class JsonPsiUtil {
    */
   public static boolean hasElementType(@NotNull PsiElement element, IElementType... types) {
     return element.getNode() != null && hasElementType(element.getNode(), types);
+  }
+
+  /**
+   * Returns text of the given PSI element. Unlike obvious {@link PsiElement#getText()} this method unescapes text of the element if latter
+   * belongs to injected code fragment using {@link InjectedLanguageManager#getUnescapedText(PsiElement)}.
+   *
+   * @param element PSI element which text is needed
+   * @return text of the element with any host escaping removed
+   */
+  @NotNull
+  public static String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
+    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(element.getProject());
+    if (manager.isInjectedFragment(element.getContainingFile())) {
+      return manager.getUnescapedText(element);
+    }
+    else {
+      return element.getText();
+    }
+  }
+
+  /**
+   * Returns content of the string literal (without escaping) striving to preserve as much of user data as possible.
+   * <ul>
+   * <li>If literal length is greater than one and it starts and ends with the same quote and the last quote is not escaped, returns
+   * text without first and last characters.</li>
+   * <li>Otherwise if literal still begins with a quote, returns text without first character only.</li>
+   * <li>Returns unmodified text in all other cases.</li>
+   * </ul>
+   *
+   * @param text presumably result of {@link JsonStringLiteral#getText()}
+   * @return
+   */
+  @NotNull
+  public static String stripQuotes(@NotNull String text) {
+    if (text.length() > 0) {
+      final char firstChar = text.charAt(0);
+      final char lastChar = text.charAt(text.length() - 1);
+      if (firstChar == '\'' || firstChar == '"') {
+        if (text.length() > 1 && firstChar == lastChar && !isEscapedChar(text, text.length() - 1)) {
+          return text.substring(1, text.length() - 1);
+        }
+        return text.substring(1);
+      }
+    }
+    return text;
+  }
+
+  /**
+   * Checks that character in given position is escaped with backslashes.
+   *
+   * @param text     text character belongs to
+   * @param position position of the character
+   * @return whether character at given position is escaped, i.e. preceded by odd number of backslashes
+   */
+  public static boolean isEscapedChar(@NotNull String text, int position) {
+    int count = 0;
+    for (int i = position - 1; i >= 0 && text.charAt(i) == '\\'; i--) {
+      count++;
+    }
+    return count % 2 != 0;
   }
 }

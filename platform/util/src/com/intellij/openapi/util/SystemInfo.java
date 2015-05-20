@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isAppleJvm = isAppleJvm();
   public static final boolean isOracleJvm = isOracleJvm();
   public static final boolean isSunJvm = isSunJvm();
+  public static final boolean isJetbrainsJvm = isJetbrainsJvm();
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
@@ -129,9 +130,6 @@ public class SystemInfo extends SystemInfoRt {
   public static boolean hasXdgMime() {
     return ourHasXdgOpen.getValue();
   }
-
-  /** @deprecated useless (to remove in IDEA 14) */
-  public static final boolean isIntelMac = isMac && "i386".equals(OS_ARCH);
 
   public static final boolean isMacOSTiger = isMac && isOsVersionAtLeast("10.4");
   public static final boolean isMacOSLeopard = isMac && isOsVersionAtLeast("10.5");
@@ -222,5 +220,10 @@ public class SystemInfo extends SystemInfoRt {
   private static boolean isAppleJvm() {
     final String vendor = SystemProperties.getJavaVmVendor();
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple");
+  }
+
+  private static boolean isJetbrainsJvm() {
+    final String vendor = SystemProperties.getJavaVendor();
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, "jetbrains");
   }
 }

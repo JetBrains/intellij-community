@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,19 @@ import java.util.Map.Entry;
 public class FlattenStatementsHelper {
 
   // statement.id, node.id(direct), node.id(continue)
-  private Map<Integer, String[]> mapDestinationNodes = new HashMap<Integer, String[]>();
+  private final Map<Integer, String[]> mapDestinationNodes = new HashMap<Integer, String[]>();
 
   // node.id(source), statement.id(destination), edge type
-  private List<Edge> listEdges = new ArrayList<Edge>();
+  private final List<Edge> listEdges = new ArrayList<Edge>();
 
   // node.id(exit), [node.id(source), statement.id(destination)]
-  private Map<String, List<String[]>> mapShortRangeFinallyPathIds = new HashMap<String, List<String[]>>();
+  private final Map<String, List<String[]>> mapShortRangeFinallyPathIds = new HashMap<String, List<String[]>>();
 
   // node.id(exit), [node.id(source), statement.id(destination)]
-  private Map<String, List<String[]>> mapLongRangeFinallyPathIds = new HashMap<String, List<String[]>>();
+  private final Map<String, List<String[]>> mapLongRangeFinallyPathIds = new HashMap<String, List<String[]>>();
 
   // positive if branches
-  private Map<String, Integer> mapPosIfBranch = new HashMap<String, Integer>();
+  private final Map<String, Integer> mapPosIfBranch = new HashMap<String, Integer>();
 
   private DirectGraph graph;
 
@@ -489,9 +489,9 @@ public class FlattenStatementsHelper {
   }
 
   public static class FinallyPathWrapper {
-    public String source;
-    public String destination;
-    public String entry;
+    public final String source;
+    public final String destination;
+    public final String entry;
 
     private FinallyPathWrapper(String source, String destination, String entry) {
       this.source = source;
@@ -522,16 +522,16 @@ public class FlattenStatementsHelper {
 
   private static class StackEntry {
 
-    public CatchAllStatement catchstatement;
-    public boolean state;
-    public int edgetype;
-    public boolean isFinallyExceptionPath;
+    public final CatchAllStatement catchstatement;
+    public final boolean state;
+    public final int edgetype;
+    public final boolean isFinallyExceptionPath;
 
-    public Statement destination;
-    public Statement finallyShortRangeEntry;
-    public Statement finallyLongRangeEntry;
-    public DirectNode finallyShortRangeSource;
-    public DirectNode finallyLongRangeSource;
+    public final Statement destination;
+    public final Statement finallyShortRangeEntry;
+    public final Statement finallyLongRangeEntry;
+    public final DirectNode finallyShortRangeSource;
+    public final DirectNode finallyLongRangeSource;
 
     public StackEntry(CatchAllStatement catchstatement,
                       boolean state,
@@ -561,9 +561,9 @@ public class FlattenStatementsHelper {
   }
 
   private static class Edge {
-    public String sourceid;
-    public Integer statid;
-    public int edgetype;
+    public final String sourceid;
+    public final Integer statid;
+    public final int edgetype;
 
     public Edge(String sourceid, Integer statid, int edgetype) {
       this.sourceid = sourceid;

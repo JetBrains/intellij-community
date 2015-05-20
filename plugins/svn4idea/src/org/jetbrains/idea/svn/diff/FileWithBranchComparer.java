@@ -15,16 +15,16 @@
  */
 package org.jetbrains.idea.svn.diff;
 
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.FileContent;
-import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.diff.SimpleDiffRequest;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -33,9 +33,11 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
+import java.io.IOException;
+
 /**
-* @author Konstantin Kolosovsky.
-*/
+ * @author Konstantin Kolosovsky.
+ */
 public class FileWithBranchComparer extends ElementWithBranchComparer {
 
   @NotNull private final Ref<byte[]> content = new Ref<byte[]>();
@@ -67,11 +69,22 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
   @Override
   protected void showResult() {
     if (!success.isNull()) {
-      SimpleDiffRequest req = new SimpleDiffRequest(myProject, SvnBundle.message("compare.with.branch.diff.title"));
-      req.setContents(new SimpleContent(CharsetToolkit.bytesToString(content.get(), myVirtualFile.getCharset())),
-                      new FileContent(myProject, myVirtualFile));
-      req.setContentTitles(remoteTitleBuilder.toString(), myVirtualFile.getPresentableUrl());
-      DiffManager.getInstance().getDiffTool().show(req);
+      String title = SvnBundle.message("compare.with.branch.diff.title");
+
+      String title1 = remoteTitleBuilder.toString();
+      String title2 = myVirtualFile.getPresentableUrl();
+
+      try {
+        DiffContent content1 = DiffContentFactory.getInstance().createFromBytes(myProject, myVirtualFile, content.get());
+        DiffContent content2 = DiffContentFactory.getInstance().create(myProject, myVirtualFile);
+
+        DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+
+        DiffManager.getInstance().showDiff(myProject, request);
+      }
+      catch (IOException e) {
+        reportGeneralException(e);
+      }
     }
   }
 

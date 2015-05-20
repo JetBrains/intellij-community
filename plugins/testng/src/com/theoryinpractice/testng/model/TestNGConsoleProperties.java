@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,48 @@
 package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.execution.testframework.JavaTestLocator;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.config.Storage;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties {
-    @NonNls private static final String PREFIX = "TestNGSupport.";
-    private final TestNGConfiguration myConfiguration;
+import javax.swing.*;
 
-    public TestNGConsoleProperties(TestNGConfiguration config, Executor executor)
-    {
-      super(new Storage.PropertiesComponentStorage(PREFIX, PropertiesComponent.getInstance()), config.getProject(), executor);
-      myConfiguration = config;
-    }
+public class TestNGConsoleProperties extends JavaAwareTestConsoleProperties<TestNGConfiguration> {
+  private final TestNGConfiguration myConfiguration;
 
-    public TestNGConfiguration getConfiguration()
-    {
-        return myConfiguration;
-    }
+  public TestNGConsoleProperties(TestNGConfiguration config, Executor executor) {
+    super("TestNG", config, executor);
+    myConfiguration = config;
+  }
 
+  @NotNull
   @Override
   protected GlobalSearchScope initScope() {
-    return myConfiguration.getPersistantData().getScope().getSourceScope(myConfiguration).getGlobalSearchScope();
+    final String testObject = myConfiguration.getPersistantData().TEST_OBJECT;
+    if (TestType.CLASS.getType().equals(testObject) ||
+        TestType.METHOD.getType().equals(testObject)) {
+      return super.initScope();
+    }
+    else {
+      return myConfiguration.getPersistantData().getScope().getSourceScope(myConfiguration).getGlobalSearchScope();
+    }
+  }
+
+  @Override
+  protected void appendAdditionalActions(DefaultActionGroup actionGroup, ExecutionEnvironment environment, JComponent parent) {
+    super.appendAdditionalActions(actionGroup, environment, parent);
+    actionGroup.add(createIncludeNonStartedInRerun());
+  }
+
+  @Nullable
+  @Override
+  public SMTestLocator getTestLocator() {
+    return JavaTestLocator.INSTANCE;
   }
 }

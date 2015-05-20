@@ -254,8 +254,13 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   public static final PsiElementPattern.Capture<PsiElement> IN_FROM_IMPORT_AFTER_REF =
     psiElement().afterLeaf(
       or(psiElement().withElementType(PyTokenTypes.IDENTIFIER).inside(PyReferenceExpression.class),
-         psiElement().withElementType(PyTokenTypes.DOT))
-      ).inside(PyFromImportStatement.class);
+         psiElement().with(new PatternCondition<PsiElement>("dotFollowedByWhitespace") {
+           @Override
+           public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
+             return element.getNode().getElementType() == PyTokenTypes.DOT && element.getNextSibling() instanceof PsiWhiteSpace;
+           }
+         }))
+    ).inside(PyFromImportStatement.class);
 
   public static final ElementPattern<PsiElement> IN_WITH_AFTER_REF =
     psiElement().afterLeaf(psiElement().inside(psiElement(PyWithItem.class).with(new PatternCondition<PyWithItem>("withoutAsKeyword") {

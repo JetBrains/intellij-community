@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.DocumentCommitProcessor;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -203,9 +204,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
         addToResults(new Place(shreds), null);
         return;
       }
-      PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
-      //todo restore
-      //assert !documentManager.getUncommittedDocumentsUnsafe().contains(myHostDocument) : "document is uncommitted: "+myHostDocument;
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
 
       Place place = new Place(shreds);
       DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, place);
@@ -232,7 +231,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
         viewProvider.setPatchingLeaves(true);
         try {
-          patchLeafs(parsedNode, escapers, place);
+          patchLeaves(parsedNode, escapers, place);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -244,8 +243,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
           viewProvider.setPatchingLeaves(false);
         }
         if (!parsedNode.getText().equals(documentText)) {
-          throw new AssertionError(exceptionContext(
-            "After patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'" + outChars + "'"));
+          throw new AssertionError(exceptionContext("After patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText() + "'\n---chars:\n'" + outChars + "'"));
         }
 
         virtualFile.setContent(null, documentWindow.getText(), false);
@@ -316,7 +314,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     viewProvider.forceCachedPsi(psiFile);
 
     psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
-    PsiDocumentManagerImpl.cachePsi(documentWindow, psiFile);
+    PsiDocumentManagerBase.cachePsi(documentWindow, psiFile);
 
     keepTreeFromChameleoningBack(psiFile);
 
@@ -328,13 +326,16 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   private String exceptionContext(@NonNls String msg) {
     return msg + ".\n" +
            myLanguage+";\n "+
-           "Host file: "+myHostPsiFile+" in '" + myHostVirtualFile.getPresentableUrl() + "'\n" +
+           "Host file: "+myHostPsiFile+" in '" + myHostVirtualFile.getPresentableUrl() + "'" +
+           (PsiDocumentManager.getInstance(myProject).isUncommited(myHostDocument) ? " (uncommitted)": "")+ "\n" +
            "Context element "+myContextElement.getTextRange() + ": '" + myContextElement +"'; "+
            "Ranges: "+shreds;
   }
 
   private static final Key<ASTNode> TREE_HARD_REF = Key.create("TREE_HARD_REF");
   private static ASTNode keepTreeFromChameleoningBack(PsiFile psiFile) {
+    // expand chameleons
+    //noinspection ResultOfMethodCallIgnored
     psiFile.getFirstChild();
     // need to keep tree reacheable to avoid being garbage-collected (via WeakReference in PsiFileImpl)
     // and then being reparsed from wrong (escaped) document content
@@ -361,7 +362,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                                                                                   psiFile.getVirtualFile() +
                                                                                                   "; " +
                                                                                                   injectedFileViewProvider.getVirtualFile();
-    PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
+    PsiDocumentManagerBase.checkConsistency(psiFile, documentWindow);
   }
 
   void addToResults(Place place, PsiFile psiFile, MultiHostRegistrarImpl from) {
@@ -377,7 +378,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   }
 
 
-  private static void patchLeafs(ASTNode parsedNode, List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers, Place shreds) {
+  private static void patchLeaves(@NotNull ASTNode parsedNode,
+                                  @NotNull List<LiteralTextEscaper<? extends PsiLanguageInjectionHost>> escapers,
+                                  @NotNull Place shreds) {
     LeafPatcher patcher = new LeafPatcher(shreds, escapers);
     ((TreeElement)parsedNode).acceptTree(patcher);
 
@@ -431,7 +434,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
       final ASTNode injectedNode = injectedPsi.getNode();
       final ASTNode oldFileNode = oldFile.getNode();
       assert injectedNode != null : "New node is null";
-      assert oldFileNode != null : "Old node is null";
       if (oldDocument.areRangesEqual(documentWindow)) {
         if (oldFile.getFileType() != injectedPsi.getFileType() || oldFile.getLanguage() != injectedPsi.getLanguage()) {
           injected.remove(i);
@@ -538,11 +540,11 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   }
 
   @NotNull
-  public PsiFile getHostPsiFile() {
+  PsiFile getHostPsiFile() {
     return myHostPsiFile;
   }
 
-  public ReferenceInjector getReferenceInjector() {
+  ReferenceInjector getReferenceInjector() {
     return myReferenceInjector;
   }
 }

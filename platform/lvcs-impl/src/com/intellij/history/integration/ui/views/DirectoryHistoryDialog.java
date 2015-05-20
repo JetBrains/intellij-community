@@ -25,9 +25,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
@@ -86,7 +88,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
       toolBarPanel.add(search, BorderLayout.EAST);
       traversalPolicy.exclude(search.getTextEditor());
     }
-    
+
     p.add(toolBarPanel, BorderLayout.NORTH);
     p.add(myChangesTree, BorderLayout.CENTER);
 
@@ -115,7 +117,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
         });
       }
     });
-    
+
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -206,11 +208,15 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
     @Override
     protected void doPerform(DirectoryHistoryDialogModel model, List<DirectoryChange> selected) {
       final Set<DirectoryChange> selectedSet = new THashSet<DirectoryChange>(selected);
-      ShowDiffAction.showDiffForChange((Iterable)iterFileChanges(), new Condition<Change>() {
-        public boolean value(Change change) {
-          return selectedSet.contains(change);
-        }
-      }, myProject, new ShowDiffUIContext(true));
+
+      int index = 0;
+      List<Change> changes = new ArrayList<Change>();
+      for (DirectoryChange change : iterFileChanges()) {
+        if (selectedSet.contains(change)) index = changes.size();
+        changes.add(change);
+      }
+
+      ShowDiffAction.showDiffForChange(myProject, changes, index, new ShowDiffContext(DiffDialogHints.FRAME));
     }
 
     private Iterable<DirectoryChange> iterFileChanges() {

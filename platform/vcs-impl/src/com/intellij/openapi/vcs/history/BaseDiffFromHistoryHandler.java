@@ -146,6 +146,7 @@ public abstract class BaseDiffFromHistoryHandler<T extends VcsFileRevision> impl
       new ChangesBrowser(myProject, null, changes, null, false, true, null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
     changesBrowser.setChangesToDisplay(changes);
     dialogBuilder.setCenterPanel(changesBrowser);
+    dialogBuilder.setPreferredFocusComponent(changesBrowser.getPreferredFocusedComponent());
     dialogBuilder.showNotModal();
   }
 

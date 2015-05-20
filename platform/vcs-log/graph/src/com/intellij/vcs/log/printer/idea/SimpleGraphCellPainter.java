@@ -32,42 +32,48 @@ import java.util.Collection;
 public class SimpleGraphCellPainter implements GraphCellPainter {
 
   private static final Color MARK_COLOR = JBColor.BLACK;
+  private static final int ROW_HEIGHT = 24;
 
   private final Stroke usual = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke hide = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
+  private final Stroke hide =
+    new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
   private final Stroke selectUsual = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke selectHide = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
+  private final Stroke selectHide =
+    new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
 
   private Graphics2D g2;
 
-  @NotNull
-  private final ColorGenerator myColorGenerator;
+  @NotNull private final ColorGenerator myColorGenerator;
 
   public SimpleGraphCellPainter(@NotNull ColorGenerator colorGenerator) {
     myColorGenerator = colorGenerator;
   }
 
+  protected int getRowHeight() {
+    return ROW_HEIGHT;
+  }
+
   private void paintUpLine(int from, int to, Color color) {
     int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
-    int y1 = PrintParameters.HEIGHT_CELL / 2;
+    int y1 = getRowHeight() / 2;
     int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
-    int y2 = -PrintParameters.HEIGHT_CELL / 2;
+    int y2 = -getRowHeight() / 2;
     g2.setColor(color);
     g2.drawLine(x2, y2, x1, y1);
   }
 
   private void paintDownLine(int from, int to, Color color) {
     int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
-    int y1 = PrintParameters.HEIGHT_CELL / 2;
+    int y1 = getRowHeight() / 2;
     int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
-    int y2 = PrintParameters.HEIGHT_CELL + PrintParameters.HEIGHT_CELL / 2;
+    int y2 = getRowHeight() + getRowHeight() / 2;
     g2.setColor(color);
     g2.drawLine(x1, y1, x2, y2);
   }
 
   private void paintCircle(int position, Color color, boolean select) {
     int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
-    int y0 = PrintParameters.HEIGHT_CELL / 2;
+    int y0 = getRowHeight() / 2;
     int r = PrintParameters.CIRCLE_RADIUS;
     if (select) {
       r = PrintParameters.SELECT_CIRCLE_RADIUS;
@@ -80,9 +86,9 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   private void paintDownArrow(int position, Color color) {
     int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
     int r = PrintParameters.CIRCLE_RADIUS;
-    int y0 = PrintParameters.HEIGHT_CELL - r - 2;
+    int y0 = getRowHeight() - r - 2;
     g2.setColor(color);
-    g2.drawLine(x0, PrintParameters.HEIGHT_CELL / 2, x0, y0 + r);
+    g2.drawLine(x0, getRowHeight() / 2, x0, y0 + r);
     g2.drawLine(x0, y0 + r, x0 + r, y0);
     g2.drawLine(x0, y0 + r, x0 - r, y0);
   }
@@ -92,7 +98,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
     int r = PrintParameters.CIRCLE_RADIUS;
     int y0 = r + 2;
     g2.setColor(color);
-    g2.drawLine(x0, PrintParameters.HEIGHT_CELL / 2, x0, y0 - r);
+    g2.drawLine(x0, getRowHeight() / 2, x0, y0 - r);
     g2.drawLine(x0, y0 - r, x0 + r, y0);
     g2.drawLine(x0, y0 - r, x0 - r, y0);
   }
@@ -126,7 +132,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       printer.print(MARK_COLOR);
       setStroke(isUsual, false);
       printer.print(usualColor);
-    } else {
+    }
+    else {
       setStroke(isUsual, false);
       printer.print(usualColor);
     }
@@ -138,14 +145,13 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private static boolean isUsual(PrintElement printElement) {
-    if (!(printElement instanceof EdgePrintElement))
-      return true;
+    if (!(printElement instanceof EdgePrintElement)) return true;
     EdgePrintElement.LineStyle lineStyle = ((EdgePrintElement)printElement).getLineStyle();
     return lineStyle == EdgePrintElement.LineStyle.SOLID;
   }
 
   @Override
-  public void draw(@NotNull Graphics2D g2, @NotNull Collection<PrintElement> printElements) {
+  public void draw(@NotNull Graphics2D g2, @NotNull Collection<? extends PrintElement> printElements) {
     this.g2 = g2;
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -161,7 +167,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
             if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
               paintDownLine(from, to, color);
-            } else {
+            }
+            else {
               paintUpLine(from, to, color);
             }
           }
@@ -175,7 +182,8 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
             if (printElement.isSelected()) {
               paintCircle(position, MARK_COLOR, true);
               paintCircle(position, getColor(printElement), false);
-            } else {
+            }
+            else {
               paintCircle(position, getColor(printElement), false);
             }
             break;
@@ -198,17 +206,16 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
         }
       }
 
-      if (printer != null)
-        drawLogic(printElement.isSelected(), isUsual(printElement), getColor(printElement), printer);
+      if (printer != null) drawLogic(printElement.isSelected(), isUsual(printElement), getColor(printElement), printer);
     }
   }
 
   @Nullable
   @Override
-  public PrintElement mouseOver(@NotNull Collection<PrintElement> printElements, int x, int y) {
+  public PrintElement mouseOver(@NotNull Collection<? extends PrintElement> printElements, int x, int y) {
     for (PrintElement printElement : printElements) {
       if (printElement instanceof SimplePrintElement) {
-        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, ((SimplePrintElement)printElement).getType())) {
+        if (PositionUtil.overNode(printElement.getPositionInCurrentRow(), x, y, ((SimplePrintElement)printElement).getType(), getRowHeight())) {
           return printElement;
         }
       }
@@ -218,11 +225,12 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
       if (printElement instanceof EdgePrintElement) {
         EdgePrintElement edgePrintElement = (EdgePrintElement)printElement;
         if (edgePrintElement.getType() == EdgePrintElement.Type.DOWN) {
-          if (PositionUtil.overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y)) {
+          if (PositionUtil.overDownEdge(edgePrintElement.getPositionInCurrentRow(), edgePrintElement.getPositionInOtherRow(), x, y, getRowHeight())) {
             return printElement;
           }
-        } else {
-          if (PositionUtil.overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(), x, y)) {
+        }
+        else {
+          if (PositionUtil.overUpEdge(edgePrintElement.getPositionInOtherRow(), edgePrintElement.getPositionInCurrentRow(), x, y, getRowHeight())) {
             return printElement;
           }
         }

@@ -99,6 +99,16 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     return null;
   }
 
+  @NotNull
+  public PsiFile getContextFile(@NotNull PsiElement element) {
+    return element.getContainingFile();
+  }
+
+  @Nullable
+  public PsiClass getContextClass(@NotNull PsiElement element) {
+    return null;
+  }
+
   @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -87,12 +87,7 @@ public class BoxingEvaluator implements Evaluator{
     if (methods.size() == 0) {
       throw new EvaluateException("Cannot construct wrapper object for value of type " + value.type() + ": Unable to find either valueOf() or constructor method");
     }
-    
-    final Method factoryMethod = methods.get(0);
 
-    final ArrayList args = new ArrayList();
-    args.add(value);
-    
-    return process.invokeMethod(context, wrapperClass, factoryMethod, args);
+    return process.invokeMethod(context, wrapperClass, methods.get(0), Collections.singletonList(value));
   }
 }

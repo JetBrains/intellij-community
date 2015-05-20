@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private Reference<E> myElement;
@@ -49,9 +51,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
                              @NotNull SmartPointerElementInfo elementInfo,
                              @NotNull Class<? extends PsiElement> elementClass) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    cacheElement(element);
     myElementClass = elementClass;
     myElementInfo = elementInfo;
+    cacheElement(element);
   }
 
   @Override
@@ -91,7 +93,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   private void cacheElement(E element) {
-    myElement = element == null ? null : new SoftReference<E>(element);
+    myElement = element == null ? null : 
+                ((PsiManagerEx)PsiManager.getInstance(getProject())).isBatchFilesProcessingMode() ? new WeakReference<E>(element) : 
+                new SoftReference<E>(element);
   }
 
   @Override
@@ -126,7 +130,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @NotNull
-  static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
+  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project,
+                                                                                  @NotNull E element,
+                                                                                  PsiFile containingFile) {
     if (element instanceof PsiDirectory) {
       return new DirElementInfo((PsiDirectory)element);
     }
@@ -146,9 +152,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof FreeThreadedFileViewProvider) {
       PsiLanguageInjectionHost hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-      if (hostContext != null) {
+      TextRange elementRange = element.getTextRange();
+      if (hostContext != null && elementRange != null) {
         SmartPsiElementPointer<PsiLanguageInjectionHost> hostPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(hostContext);
-        return new InjectedSelfElementInfo(project, element, element.getTextRange(), containingFile, hostPointer);
+        return new InjectedSelfElementInfo(project, element, elementRange, containingFile, hostPointer);
       }
     }
 
@@ -185,7 +192,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return myElementInfo;
   }
 
-  protected static boolean pointsToTheSameElementAs(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
+  static boolean pointsToTheSameElementAs(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {
     if (pointer1 == pointer2) return true;
     if (pointer1 instanceof SmartPsiElementPointerImpl && pointer2 instanceof SmartPsiElementPointerImpl) {
       SmartPsiElementPointerImpl impl1 = (SmartPsiElementPointerImpl)pointer1;

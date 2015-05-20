@@ -75,4 +75,9 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
   protected String getHelpId() {
     return "python.reference.introduceConstant";
   }
+
+  @Override
+  protected String getRefactoringId() {
+    return "refactoring.python.introduce.constant";
+  }
 }

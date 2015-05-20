@@ -199,17 +199,10 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     File configFile = new File(VfsUtilCore.virtualToIoFile(getGitDir()), "config");
     GitConfig config = GitConfig.read(myPlatformFacade, configFile);
     Collection<GitRemote> remotes = config.parseRemotes();
-    TempState tempState = readRepository(remotes);
-    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(tempState.myBranches.getLocalBranches(),
-                                                                       tempState.myBranches.getRemoteBranches());
-    return new GitRepoInfo(tempState.myCurrentBranch, tempState.myCurrentRevision, tempState.myState,
-                           remotes, tempState.myBranches.getLocalBranches(),
-                           tempState.myBranches.getRemoteBranches(), trackInfos);
-  }
-
-  private TempState readRepository(@NotNull Collection<GitRemote> remotes) {
-    return new TempState(myReader.readState(), myReader.readCurrentRevision(), myReader.readCurrentBranch(),
-                         myReader.readBranches(remotes));
+    GitBranchState state = myReader.readState(remotes);
+    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches(), state.getRemoteBranches());
+    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
+                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos);
   }
 
   // previous info can be null before the first update
@@ -226,20 +219,5 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @Override
   public String toLogString() {
     return String.format("GitRepository " + getRoot() + " : " + myInfo);
-  }
-
-  private static class TempState {
-    private final State myState;
-    private final String myCurrentRevision;
-    private final GitLocalBranch myCurrentBranch;
-    private final GitBranchesCollection myBranches;
-
-    public TempState(@NotNull State state, @Nullable String currentRevision, @Nullable GitLocalBranch currentBranch,
-                     @NotNull GitBranchesCollection branches) {
-      myState = state;
-      myCurrentRevision = currentRevision;
-      myCurrentBranch = currentBranch;
-      myBranches = branches;
-    }
   }
 }

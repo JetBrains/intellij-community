@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,14 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.components.ExtensionAreas;
-import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -54,19 +50,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
-import com.intellij.util.Function;
 import com.intellij.util.TimedReference;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.*;
-import org.picocontainer.defaults.CachingComponentAdapter;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -77,15 +69,17 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public static final String NAME_FILE = ".name";
   public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
-  private ProjectManager myManager;
-  private volatile IProjectStore myComponentStore;
+  private ProjectManager myProjectManager;
   private MyProjectManagerListener myProjectManagerListener;
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   public boolean myOptimiseTestLoadSpeed;
   private String myName;
   private String myOldName;
 
-  protected ProjectImpl(@NotNull ProjectManager manager, @NotNull String filePath, boolean optimiseTestLoadSpeed, @Nullable String projectName) {
+  protected ProjectImpl(@NotNull ProjectManager projectManager,
+                        @NotNull String filePath,
+                        boolean optimiseTestLoadSpeed,
+                        @Nullable String projectName) {
     super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
 
     putUserData(CREATION_TIME, System.nanoTime());
@@ -97,7 +91,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     myOptimiseTestLoadSpeed = optimiseTestLoadSpeed;
-    myManager = manager;
+    myProjectManager = projectManager;
 
     myName = projectName == null ? getStateStore().getProjectName() : projectName;
     if (!isDefault() && projectName != null && getStateStore().getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
@@ -136,12 +130,12 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     picoContainer.registerComponentImplementation(ProjectPathMacroManager.class);
     picoContainer.registerComponent(new ComponentAdapter() {
-      ComponentAdapter myDelegate;
+      private ComponentAdapter myDelegate;
 
-      public ComponentAdapter getDelegate() {
+      private ComponentAdapter getDelegate() {
         if (myDelegate == null) {
           final Class storeClass = projectStoreClassProvider.getProjectStoreClass(isDefault());
-          myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true));
+          myDelegate = new ConstructorInjectionComponentAdapter(storeClass, storeClass, null, true);
         }
 
         return myDelegate;
@@ -178,17 +172,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NotNull
   @Override
   public IProjectStore getStateStore() {
-    IProjectStore componentStore = myComponentStore;
-    if (componentStore != null) return componentStore;
-
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      componentStore = myComponentStore;
-      if (componentStore == null) {
-        myComponentStore = componentStore = (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
-      }
-      return componentStore;
-    }
+    return (IProjectStore)getPicoContainer().getComponentInstance(IComponentStore.class);
   }
 
   @Override
@@ -215,12 +199,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return !isDisposed() && isOpen() && StartupManagerEx.getInstanceEx(this).startupActivityPassed();
   }
 
-  public void loadProjectComponents() {
-    final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
-    for (IdeaPluginDescriptor plugin : plugins) {
-      if (PluginManagerCore.shouldSkipPlugin(plugin)) continue;
-      loadComponentsConfiguration(plugin.getProjectComponents(), plugin, isDefault());
-    }
+  @NotNull
+  @Override
+  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+    return plugin.getProjectComponents();
   }
 
   @Override
@@ -239,6 +221,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return getStateStore().getProjectBaseDir();
   }
 
+  @Nullable
   @Override
   public String getBasePath() {
     return getStateStore().getProjectBasePath();
@@ -292,6 +275,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (progressIndicator != null) {
       progressIndicator.pushState();
     }
+    loadComponents();
     super.init();
     if (progressIndicator != null) {
       progressIndicator.popState();
@@ -305,11 +289,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     //noinspection SynchronizeOnThis
     synchronized (this) {
       myProjectManagerListener = new MyProjectManagerListener();
-      myManager.addProjectManagerListener(this, myProjectManagerListener);
+      myProjectManager.addProjectManagerListener(this, myProjectManagerListener);
     }
   }
 
-  public boolean isToSaveProjectName() {
+  private boolean isToSaveProjectName() {
     if (!isDefault()) {
       final IProjectStore stateStore = getStateStore();
       if (stateStore.getStorageScheme().equals(StorageScheme.DIRECTORY_BASED)) {
@@ -351,7 +335,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
           }
         }
         catch (Throwable e) {
-          LOG.error("Unable to store project name");
+          LOG.error("Unable to store project name", e);
         }
       }
 
@@ -373,15 +357,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     LOG.assertTrue(!isDisposed());
     if (myProjectManagerListener != null) {
-      myManager.removeProjectManagerListener(this, myProjectManagerListener);
+      myProjectManager.removeProjectManagerListener(this, myProjectManagerListener);
     }
 
     disposeComponents();
     Extensions.disposeArea(this);
-    myManager = null;
+    myProjectManager = null;
     myProjectManagerListener = null;
-
-    myComponentStore = null;
 
     super.dispose();
 
@@ -460,7 +442,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       unknownMacros.addAll(substitutor.getUnknownMacros(null));
     }
 
-    if (unknownMacros.isEmpty() || (showDialog && !ProjectMacrosUtil.checkMacros(this, new THashSet<String>(unknownMacros)))) {
+    if (unknownMacros.isEmpty() || showDialog && !ProjectMacrosUtil.checkMacros(this, new THashSet<String>(unknownMacros))) {
       return;
     }
 
@@ -519,60 +501,5 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   protected boolean logSlowComponents() {
     return super.logSlowComponents() || ApplicationInfoImpl.getShadowInstance().isEAP();
-  }
-
-  public static void dropUnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
-    final UnableToSaveProjectNotification[] notifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
-    if (notifications.length == 0) {
-      Notifications.Bus.notify(new UnableToSaveProjectNotification(project, readOnlyFiles), project);
-    }
-  }
-
-  public static class UnableToSaveProjectNotification extends Notification {
-    private Project myProject;
-    private final String[] myFileNames;
-
-    private UnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
-      super("Project Settings", "Could not save project!", buildMessage(), NotificationType.ERROR, new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
-          final Project _project = unableToSaveProjectNotification.getProject();
-          notification.expire();
-
-          if (_project != null && !_project.isDisposed()) {
-            _project.save();
-          }
-        }
-      });
-
-      myProject = project;
-      myFileNames = ContainerUtil.map(readOnlyFiles, new Function<VirtualFile, String>() {
-        @Override
-        public String fun(VirtualFile file) {
-          return file.getPresentableUrl();
-        }
-      }, new String[readOnlyFiles.length]);
-    }
-
-    public String[] getFileNames() {
-      return myFileNames;
-    }
-
-    private static String buildMessage() {
-      return "<p>Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
-             " <a href=\"\">Try to save project again</a>.</p>";
-    }
-
-    public Project getProject() {
-      return myProject;
-    }
-
-    @Override
-    public void expire() {
-      myProject = null;
-      super.expire();
-    }
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -108,15 +109,14 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
     myFixture.type 'foo {}\n'
     PsiDocumentManager.getInstance(project).commitAllDocuments()
+    
+    PlatformTestUtil.startPerformanceTest("Reparse is not incremental", 10000, {
+      story.toCharArray().each {
+        myFixture.type it
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
 
-    def start = System.currentTimeMillis()
-
-    story.toCharArray().each {
-      myFixture.type it
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
-
-    IdeaTestUtil.assertTiming "slow", 10000, (System.currentTimeMillis() - start)
+    } as ThrowableRunnable).assertTiming()
   }
 
   public void testManyAnnotatedFields() {
@@ -449,7 +449,7 @@ class AwsService {
 
   private def addGdsl(String text) {
     final PsiFile file = myFixture.addFileToProject("Enhancer.gdsl", text)
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    GroovyDslFileIndex.activate(file.virtualFile)
   }
 
 }

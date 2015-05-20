@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,9 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
    * or null if the file does not host this file system.
    */
   @Nullable
-  public abstract VirtualFile getRootByLocal(@NotNull VirtualFile file);
+  public VirtualFile getRootByLocal(@NotNull VirtualFile file) {
+    return findFileByPath(composeRootPath(file.getPath()));
+  }
 
   /**
    * Returns a root entry of an archive which hosts a given entry file
@@ -73,8 +75,11 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   @NotNull
   protected abstract String extractLocalPath(@NotNull String rootPath);
 
+  /**
+   * A reverse to {@link #extractLocalPath(String)} - i.e. dresses a local file path to make it a suitable root path for this filesystem.
+   */
   @NotNull
-  protected abstract String convertLocalToRootPath(@NotNull String localPath);
+  protected abstract String composeRootPath(@NotNull String localPath);
 
   @NotNull
   protected abstract ArchiveHandler getHandler(@NotNull VirtualFile entryFile);

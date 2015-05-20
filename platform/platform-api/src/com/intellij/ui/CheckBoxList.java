@@ -179,29 +179,66 @@ public class CheckBoxList<T> extends JBList {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       JCheckBox checkbox = (JCheckBox)value;
-      if (!UIUtil.isUnderNimbusLookAndFeel()) {
-        checkbox.setBackground(getBackground(isSelected, checkbox));
-        checkbox.setForeground(getForeground(isSelected, checkbox));
+
+      Color textColor = getForeground(isSelected);
+      Color backgroundColor = getBackground(isSelected);
+      Font font = getFont();
+
+      boolean shouldAdjustColors = !UIUtil.isUnderNimbusLookAndFeel();
+
+      if (shouldAdjustColors) {
+        checkbox.setBackground(backgroundColor);
+        checkbox.setForeground(textColor);
       }
+
       checkbox.setEnabled(isEnabled());
-      checkbox.setFont(getFont(checkbox));
+      checkbox.setFont(font);
       checkbox.setFocusPainted(false);
-      checkbox.setBorderPainted(true);
-      checkbox.setBorder(isSelected ? mySelectedBorder : myBorder);
+
+      String auxText = getSecondaryText(index);
+
+      JComponent rootComponent;
+      if (auxText != null) {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        checkbox.setBorderPainted(false);
+        panel.add(checkbox, BorderLayout.LINE_START);
+
+        JLabel infoLabel = new JLabel(auxText, SwingConstants.RIGHT);
+        infoLabel.setBorder(new EmptyBorder(0, 0, 0, checkbox.getInsets().left));
+        infoLabel.setFont(font);
+        panel.add(infoLabel, BorderLayout.CENTER);
+
+        if (shouldAdjustColors) {
+          panel.setBackground(backgroundColor);
+          infoLabel.setForeground(isSelected ? textColor : JBColor.GRAY);
+          infoLabel.setBackground(backgroundColor);
+        }
+
+        rootComponent = panel;
+      }
+      else {
+        checkbox.setBorderPainted(true);
+        rootComponent = checkbox;
+      }
+
+      rootComponent.setBorder(isSelected ? mySelectedBorder : myBorder);
+
       adjustRendering(checkbox, isSelected, cellHasFocus);
-      return checkbox;
+      return rootComponent;
     }
   }
 
-  protected Font getFont(final JCheckBox checkbox) {
-    return getFont();
+  @Nullable
+  protected String getSecondaryText(int index) {
+    return null;
   }
 
-  protected Color getBackground(final boolean isSelected, final JCheckBox checkbox) {
+  protected Color getBackground(final boolean isSelected) {
       return isSelected ? getSelectionBackground() : getBackground();
     }
 
-  protected Color getForeground(final boolean isSelected, final JCheckBox checkbox) {
+  protected Color getForeground(final boolean isSelected) {
     return isSelected ? getSelectionForeground() : getForeground();
   }
 }

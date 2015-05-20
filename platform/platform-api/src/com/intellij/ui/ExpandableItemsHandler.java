@@ -15,11 +15,15 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public interface ExpandableItemsHandler<T> {
+  Key<Boolean> EXPANDED_RENDERER = Key.create("ExpandedRenderer") ;
+  Key<Boolean> USE_RENDERER_BOUNDS = Key.create("UseRendererBounds") ;
+
   void setEnabled(boolean enabled);
   
   boolean isEnabled();

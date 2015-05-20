@@ -16,8 +16,8 @@
 package com.intellij.codeInsight;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorActionTestCase;
@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 @TestDataPath("$CONTENT_ROOT/testData")
 public class CompleteStatementTest extends EditorActionTestCase {
   public void testAddMissingSemicolon() throws Exception { doTest(); }
+  
+  public void testAddMissingSemicolonToPackageStatement() { doTest(); }
 
   public void testAddMissingParen() throws Exception { doTest(); }
 
@@ -52,7 +54,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testCompleteCatchLParen() throws Exception { doTest(); }
 
   public void testAlreadyCompleteCatch() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     int old = settings.BRACE_STYLE;
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     try {
@@ -166,14 +168,14 @@ public class CompleteStatementTest extends EditorActionTestCase {
   }
 
   public void testCompleteIfNextLineBraceStyle() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
     settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
   }
 
   public void testCompleteIfNextLineBraceStyle2() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
     settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
@@ -246,7 +248,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   }
 
   public void testNoSpaceAfterSemicolon() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).SPACE_AFTER_SEMICOLON = false;
+    CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_SEMICOLON = false;
     doTest();
   }
   
@@ -267,13 +269,17 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testCompleteMethodCallAtReturn() throws Exception { doTest(); }
   
   public void testGenericMethodBody() throws Exception { doTest(); }
-  
+
+  public void testDefaultMethodBody() { doTest(); }
+  public void testStaticInterfaceMethodBody() { doTest(); }
+  public void testPrivateInterfaceMethodBody() { doTest(); }
+
   public void testArrayInitializerRBracket() throws Exception { doTest(); }
   
   public void testReturnInLambda() { doTest(); }
   
   private void doTestBracesNextLineStyle() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

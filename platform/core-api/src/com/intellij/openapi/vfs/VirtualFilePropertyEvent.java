@@ -43,6 +43,8 @@ public class VirtualFilePropertyEvent extends VirtualFileEvent {
    * @return the name of the changed property.
    * @see VirtualFile#PROP_NAME
    * @see VirtualFile#PROP_WRITABLE
+   * @see VirtualFile#PROP_HIDDEN
+   * @see VirtualFile#PROP_SYMLINK_TARGET
    */
   @NotNull
   public String getPropertyName() {

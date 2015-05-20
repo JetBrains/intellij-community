@@ -114,6 +114,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	scripting.attr.oncanplaythrough?
 		&	scripting.attr.onchange?
 		&	scripting.attr.onclick?
+		&	scripting.attr.onclose?
 		&	scripting.attr.oncontextmenu?
 		&	scripting.attr.ondblclick?
 		&	scripting.attr.ondrag?
@@ -176,6 +177,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		attribute onchange { common.data.functionbody }
 	scripting.attr.onclick =
 		attribute onclick { common.data.functionbody }
+	scripting.attr.onclose =
+		attribute onclose { common.data.functionbody }
 	scripting.attr.oncontextmenu =
 		attribute oncontextmenu { common.data.functionbody }
 	scripting.attr.ondblclick =

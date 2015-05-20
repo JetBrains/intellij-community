@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NonNls;
 public class GradleEnvironment {
 
   @NonNls public static final boolean DEBUG_GRADLE_HOME_PROCESSING = Boolean.getBoolean("gradle.debug.home.processing");
-  @NonNls public static final boolean DISABLE_ENHANCED_TOOLING_API = Boolean.getBoolean("gradle.disable.enhanced.tooling.api");
   @NonNls public static final boolean ADJUST_USER_DIR = Boolean.getBoolean("gradle.adjust.userdir");
+  @NonNls public static final boolean PREFER_IDEA_TEST_RUNNER = Boolean.getBoolean("idea.gradle.prefer.idea_test_runner");
 
   public static class Headless {
     @NonNls public static final String GRADLE_DISTRIBUTION_TYPE = System.getProperty("idea.gradle.distributionType");

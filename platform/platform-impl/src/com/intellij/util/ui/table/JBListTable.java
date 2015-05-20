@@ -15,25 +15,33 @@
  */
 package com.intellij.util.ui.table;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.ui.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.DottedBorder;
+import com.intellij.ui.EditorSettingsProvider;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 
 import static java.awt.event.KeyEvent.*;
@@ -41,16 +49,23 @@ import static java.awt.event.KeyEvent.*;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class JBListTable extends JPanel {
+public abstract class JBListTable {
   protected final JTable myInternalTable;
   private final JBTable mainTable;
-  private final Ref<Integer> myLastEditorIndex = Ref.create(null);
+  private final RowResizeAnimator myRowResizeAnimator;
+  private final Disposable myOnRemoveDisposable;
   private MouseEvent myMouseEvent;
   private MyCellEditor myCellEditor;
+  private int myLastFocusedEditorComponentIdx = -1;
 
-  public JBListTable(@NotNull final JTable t) {
-    super(new BorderLayout());
+  public JBListTable(@NotNull JTable t) {
+    this(t, Disposer.get("ui"));
+  }
+
+  public JBListTable(@NotNull final JTable t, @NotNull Disposable parent) {
     myInternalTable = t;
+    myOnRemoveDisposable = Disposer.newDisposable();
+    Disposer.register(parent, myOnRemoveDisposable);
     final JBListTableModel model = new JBListTableModel(t.getModel()) {
       @Override
       public JBTableRow getRow(int index) {
@@ -64,7 +79,7 @@ public abstract class JBListTable extends JPanel {
 
       @Override
       public void addRow() {
-        myLastEditorIndex.set(null);
+        myLastFocusedEditorComponentIdx = -1;
         super.addRow();
       }
     };
@@ -114,10 +129,11 @@ public abstract class JBListTable extends JPanel {
 
       @Override
       public TableCellRenderer getCellRenderer(int row, int column) {
-        return new DefaultTableCellRenderer() {
+        final JBTableRowRenderer rowRenderer = getRowRenderer(row);
+        return new TableCellRenderer() {
           @Override
-          public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean hasFocus, int row, int col) {
-            return getRowRenderer(t, row, selected, hasFocus);
+          public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focused, int row, int col) {
+            return rowRenderer.getRowRendererComponent(t, row, selected, focused);
           }
         };
       }
@@ -200,6 +216,16 @@ public abstract class JBListTable extends JPanel {
       }
 
       @Override
+      public void columnMarginChanged(ChangeEvent e) {
+        // we don't stop editing (it prevents editor removal when scrollbar is added)
+        TableColumn resizingColumn = tableHeader != null ? tableHeader.getResizingColumn() : null;
+        if (resizingColumn != null && autoResizeMode == AUTO_RESIZE_OFF) {
+          resizingColumn.setPreferredWidth(resizingColumn.getWidth());
+        }
+        resizeAndRepaint();
+      }
+
+      @Override
       public TableCellEditor getCellEditor(final int row, int column) {
         final JBTableRowEditor editor = getRowEditor(row);
         if (editor != null) {
@@ -224,12 +250,29 @@ public abstract class JBListTable extends JPanel {
         boolean isSelected = isCellSelected(row, column);
         return editor.getTableCellEditorComponent(this, value, isSelected, row, column);
       }
+
+      @Override
+      public void addNotify() {
+        super.addNotify();
+        Disposer.register(myOnRemoveDisposable, myRowResizeAnimator);
+      }
+
+      @Override
+      public void removeNotify() {
+        super.removeNotify();
+        Disposer.dispose(myOnRemoveDisposable);
+      }
     };
     mainTable.setStriped(true);
+    myRowResizeAnimator = new RowResizeAnimator(mainTable);
   }
 
   public void stopEditing() {
     TableUtil.stopEditing(mainTable);
+  }
+
+  public Disposable getOnRemoveDisposable() {
+    return myOnRemoveDisposable;
   }
 
   private static void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
@@ -244,7 +287,7 @@ public abstract class JBListTable extends JPanel {
     return mainTable;
   }
 
-  protected abstract JComponent getRowRenderer(JTable table, int row, boolean selected, boolean focused);
+  protected abstract JBTableRowRenderer getRowRenderer(int row);
 
   protected abstract JBTableRowEditor getRowEditor(int row);
 
@@ -296,118 +339,49 @@ public abstract class JBListTable extends JPanel {
     return panel;
   }
 
-  private static class RowResizeAnimator extends Thread {
-    private final JTable myTable;
-    private final int myRow;
-    private final JScrollPane myScrollPane;
-    private int neededHeight;
-    private final JBTableRowEditor myEditor;
-    private final Ref<Integer> myIndex;
-    private int step = 5;
-    private int currentHeight;
-
-    private RowResizeAnimator(JTable table, int row, int height, JBTableRowEditor editor, @NotNull Ref<Integer> index) {
-      super("Row Animator");
-      myTable = table;
-      myRow = row;
-      neededHeight = height;
-      myEditor = editor;
-      myIndex = index;
-      currentHeight = myTable.getRowHeight(myRow);
-      myScrollPane = UIUtil.getParentOfType(JScrollPane.class, myTable);
-    }
-
-    @Override
-    public void run() {
-      final boolean exitEditing = currentHeight > neededHeight;
-      try {
-        sleep(50);
-        final JScrollBar bar = myScrollPane.getVerticalScrollBar();
-        if (bar == null || !bar.isVisible()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-            }
-          });
-          sleep(15);
-        }
-        while (currentHeight != neededHeight) {
-          if (Math.abs(currentHeight - neededHeight) < step) {
-            currentHeight = neededHeight;
-          }
-          else {
-            currentHeight += currentHeight < neededHeight ? step : -step;
-          }
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              myTable.setRowHeight(myRow, currentHeight);
-            }
-          });
-          sleep(15);
-        }
-        if (myEditor != null) {
-          JComponent[] components = myEditor.getFocusableComponents();
-          JComponent focus = null;
-          if (myIndex.get() != null) {
-            int index = myIndex.get().intValue();
-            if (0 <= index && index < components.length) {
-              focus = components[index];
-            }
-          }
-          if (focus == null) {
-            focus = myEditor.getPreferredFocusedComponent();
-          }
-          if (focus != null) {
-            focus.requestFocus();
-          }
-        }
-      }
-      catch (InterruptedException ignore) {
-      } finally {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            TableUtil.scrollSelectionToVisible(myTable);
-            if (exitEditing && !myTable.isEditing()) {
-              myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            }
-          }
-        });
-      }
-    }
-  }
-
-  private class MyCellEditor extends AbstractTableCellEditor implements Animated {
-    JTable curTable;
+  private class MyCellEditor extends AbstractTableCellEditor {
     private final JBTableRowEditor myEditor;
 
     public MyCellEditor(JBTableRowEditor editor) {
       myEditor = editor;
-      curTable = null;
     }
 
     @Override
     public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, final int row, int column) {
-      curTable = table;
       final JPanel p = new JPanel(new BorderLayout()) {
         @Override
         public void addNotify() {
           super.addNotify();
-          final int height = (int)getPreferredSize().getHeight();
+          int height = getPreferredSize().height;
           if (height > table.getRowHeight(row)) {
-            new RowResizeAnimator(table, row, height, myEditor, myMouseEvent == null ? myLastEditorIndex : Ref.<Integer>create(null)).start();
+            myRowResizeAnimator.resize(row, height);
           }
         }
 
         public void removeNotify() {
           if (myCellEditor != null) myCellEditor.saveFocusIndex();
           super.removeNotify();
-          new RowResizeAnimator(table, row, table.getRowHeight(), null, myMouseEvent == null ? myLastEditorIndex : Ref.<Integer>create(null)).start();
+          myRowResizeAnimator.resize(row, table.getRowHeight());
         }
       };
+      p.addFocusListener(new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(p);
+          focusManager.requestFocus(getComponentToFocus(), true);
+        }
+
+        private Component getComponentToFocus() {
+          if (myLastFocusedEditorComponentIdx >= 0) {
+            JComponent[] focusableComponents = myEditor.getFocusableComponents();
+            if (myLastFocusedEditorComponentIdx < focusableComponents.length) {
+              return focusableComponents[myLastFocusedEditorComponentIdx];
+            }
+          }
+          return myEditor.getPreferredFocusedComponent();
+        }
+      });
       p.add(myEditor, BorderLayout.CENTER);
-      p.setFocusable(false);
       return p;
     }
 
@@ -422,31 +396,109 @@ public abstract class JBListTable extends JPanel {
       return super.stopCellEditing();
     }
 
-    private void removeEmptyRow() {
-      final int row = curTable.getSelectedRow();
-      if (row != -1 && isRowEmpty(row)) {
-        final JBListTableModel model = (JBListTableModel)curTable.getModel();
-        final int count = model.getRowCount();
-        model.removeRow(row);
-        int newRow = count == row + 1 ? row - 1 : row;
-        curTable.setRowSelectionInterval(newRow, newRow);
-      }
-    }
-
-    public void saveFocusIndex() {
-      JComponent[] components = myEditor.getFocusableComponents();
-      for (int i = 0; i < components.length; i++) {
-        if (components[i].hasFocus()) {
-          JBListTable.this.myLastEditorIndex.set(i);
-          break;
-        }
-      }
-    }
-
     @Override
     public void cancelCellEditing() {
       saveFocusIndex();
       super.cancelCellEditing();
+    }
+
+    private void saveFocusIndex() {
+      JComponent[] components = myEditor.getFocusableComponents();
+      for (int i = 0; i < components.length; i++) {
+        if (components[i].hasFocus()) {
+          myLastFocusedEditorComponentIdx = i;
+          break;
+        }
+      }
+    }
+  }
+
+  private static class RowResizeAnimator implements ActionListener, Disposable {
+    private static final int ANIMATION_STEP_MILLIS = 15;
+    private static final int RESIZE_AMOUNT_PER_STEP = 5;
+
+    private final TIntObjectHashMap<RowAnimationState> myRowAnimationStates = new TIntObjectHashMap<RowAnimationState>();
+    private final Timer myAnimationTimer = new Timer(ANIMATION_STEP_MILLIS, this);
+    private final JTable myTable;
+
+    public RowResizeAnimator(JTable table) {
+      myTable = table;
+    }
+
+    public void resize(int row, int targetHeight) {
+      myRowAnimationStates.put(row, new RowAnimationState(row, targetHeight));
+      startAnimation();
+    }
+
+    @Override
+    public void actionPerformed(final ActionEvent e) {
+      doAnimationStep(e.getWhen());
+    }
+
+    @Override
+    public void dispose() {
+      stopAnimation();
+    }
+
+    private void startAnimation() {
+      if (!myAnimationTimer.isRunning()) {
+        myAnimationTimer.start();
+      }
+    }
+
+    private void stopAnimation() {
+      myAnimationTimer.stop();
+    }
+
+    private void doAnimationStep(final long updateTime) {
+      final TIntArrayList completeRows = new TIntArrayList(myRowAnimationStates.size());
+      myRowAnimationStates.forEachEntry(new TIntObjectProcedure<RowAnimationState>() {
+        @Override
+        public boolean execute(int row, RowAnimationState animationState) {
+          if (animationState.doAnimationStep(updateTime)) {
+            completeRows.add(row);
+          }
+          return true;
+        }
+      });
+      completeRows.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int row) {
+          myRowAnimationStates.remove(row);
+          return true;
+        }
+      });
+      if (myRowAnimationStates.isEmpty()) {
+        stopAnimation();
+      }
+    }
+
+    private class RowAnimationState {
+      private final int myRow;
+      private final int myTargetHeight;
+      private long myLastUpdateTime;
+
+      public RowAnimationState(int row, int targetHeight) {
+        myRow = row;
+        myTargetHeight = targetHeight;
+        myLastUpdateTime = System.currentTimeMillis();
+      }
+
+      /**
+       * @return whether this row animation is complete
+       */
+      public boolean doAnimationStep(long currentTime) {
+        if (myRow >= myTable.getRowCount()) return true;
+
+        int currentRowHeight = myTable.getRowHeight(myRow);
+        int resizeAbs = (int) (RESIZE_AMOUNT_PER_STEP * ((currentTime - myLastUpdateTime) / (double)ANIMATION_STEP_MILLIS));
+        int leftToAnimate = myTargetHeight - currentRowHeight;
+        int newHeight = Math.abs(leftToAnimate) <= resizeAbs ? myTargetHeight :
+                        currentRowHeight + (leftToAnimate < 0 ? -resizeAbs : resizeAbs);
+        myTable.setRowHeight(myRow, newHeight);
+        myLastUpdateTime = currentTime;
+        return myTargetHeight == newHeight;
+      }
     }
   }
 }

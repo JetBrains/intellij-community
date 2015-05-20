@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -33,7 +34,37 @@ import java.util.Set;
 import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
-public class SymlinkHandlingTest extends SymlinkTestCase {
+public class SymlinkHandlingTest extends LightPlatformTestCase {
+  protected LocalFileSystem myFileSystem;
+  protected File myTempDir;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFileSystem = LocalFileSystem.getInstance();
+    myTempDir = createTestDir("temp");
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      super.tearDown();
+    }
+    finally {
+      delete(myTempDir);
+    }
+  }
+
+  @Override
+  protected void runTest() throws Throwable {
+    if (SystemInfo.areSymLinksSupported) {
+      super.runTest();
+    }
+    else {
+      System.err.println("Skipped: " + getName());
+    }
+  }
+
   public void testMissingLink() throws Exception {
     File missingFile = new File(myTempDir, "missing_file");
     assertTrue(missingFile.getPath(), !missingFile.exists() || missingFile.delete());
@@ -114,6 +145,16 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     assertVisitedPaths(mainDir,
                        subDir.getPath(), link2Home.getPath(), link2.getPath(), link2.getPath() + "/" + link1Home.getName(),
                        link2.getPath() + "/" + link1Home.getName() + "/" + link1.getName());
+  }
+
+  public void testVisitAllNonRecursiveLinks() throws Exception {
+    File target = createTestDir(myTempDir, "target");
+    File child = createTestDir(target, "child");
+    File link1 = createSymLink(target.getPath(), myTempDir.getPath() + "/link1");
+    File link2 = createSymLink(target.getPath(), myTempDir.getPath() + "/link2");
+    assertVisitedPaths(target.getPath(), child.getPath(),
+                       link1.getPath(), link1.getPath() + "/child",
+                       link2.getPath(), link2.getPath() + "/child");
   }
 
   public void testTargetIsWritable() throws Exception {
@@ -352,6 +393,17 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     return myFileSystem.findFileByPath(ioFile.getPath());
   }
 
+  protected void refresh() {
+    assertTrue(myTempDir.getPath(), myTempDir.isDirectory() || myTempDir.mkdirs());
+
+    VirtualFile tempDir = myFileSystem.refreshAndFindFileByIoFile(myTempDir);
+    assertNotNull(myTempDir.getPath(), tempDir);
+
+    tempDir.getChildren();
+    tempDir.refresh(false, true);
+    VfsUtilCore.visitChildrenRecursively(tempDir, new VirtualFileVisitor() { });
+  }
+
   private static void assertBrokenLink(@NotNull VirtualFile link) {
     assertTrue(link.is(VFileProperty.SYMLINK));
     assertEquals(0, link.getLength());
@@ -366,14 +418,13 @@ public class SymlinkHandlingTest extends SymlinkTestCase {
     VirtualFile vDir = refreshAndFind(from);
     assertNotNull(vDir);
 
-    Set<String> expectedSet = new HashSet<String>(expected.length + 1, 1);
-    ContainerUtil.addAll(expectedSet, vDir.getPath());
-    ContainerUtil.addAll(expectedSet, ContainerUtil.map(expected, new Function<String, String>() {
+    Set<String> expectedSet = ContainerUtil.map2Set(expected, new Function<String, String>() {
       @Override
       public String fun(String path) {
         return FileUtil.toSystemIndependentName(path);
       }
-    }));
+    });
+    expectedSet.add(vDir.getPath());
 
     final Set<String> actualSet = new HashSet<String>();
     VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor() {

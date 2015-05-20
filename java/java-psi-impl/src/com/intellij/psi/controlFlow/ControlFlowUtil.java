@@ -726,9 +726,35 @@ public class ControlFlowUtil {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
         if (offset > endOffset) return;
         int throwToOffset = instruction.offset;
-        boolean isNormal;
+        boolean isNormal = false;
         if (throwToOffset == nextOffset) {
-          isNormal = throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
+
+          if (nextOffset == endOffset) {
+            int lastOffset = endOffset - 1;
+            Instruction lastInstruction = flow.getInstructions().get(lastOffset);
+            while (lastInstruction instanceof GoToInstruction &&
+                ((GoToInstruction)lastInstruction).role == BranchingInstruction.Role.END &&
+                !((GoToInstruction)lastInstruction).isReturn) {
+              if (((GoToInstruction)lastInstruction).offset == startOffset) {
+                lastOffset = -1;
+                break;
+              } 
+              else {
+                lastOffset--;
+                if (lastOffset < 0) {
+                  break;
+                }
+                lastInstruction = flow.getInstructions().get(lastOffset);
+              }
+            }
+
+            if (lastOffset >= 0) {
+              isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn) &&
+                         !(lastInstruction instanceof ThrowToInstruction);
+            }
+          }
+
+          isNormal |= throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
         }
         else {
           isNormal = canCompleteNormally[nextOffset];
@@ -835,6 +861,7 @@ public class ControlFlowUtil {
 
   private static PsiReferenceExpression findReferenceTo(PsiElement element, PsiVariable variable) {
     if (element instanceof PsiReferenceExpression
+        && !((PsiReferenceExpression)element).isQualified()
         && ((PsiReferenceExpression)element).resolve() == variable) {
       return (PsiReferenceExpression)element;
     }

@@ -15,4 +15,8 @@ public class SubtractionInCompareTo implements java.util.Comparator<SubtractionI
     public int compare(SubtractionInCompareTo o1, SubtractionInCompareTo o2) {
         return o1.m_foo - o2.m_foo;
     }
+
+    {
+        java.util.Comparator<String> c = (s1, s2) -> s1.length() - s2.length();
+    }
 }

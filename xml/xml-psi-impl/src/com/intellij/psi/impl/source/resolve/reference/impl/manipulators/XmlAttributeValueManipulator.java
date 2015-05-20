@@ -80,17 +80,18 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
   @Override
   @NotNull
   public TextRange getRangeInElement(@NotNull final XmlAttributeValue xmlAttributeValue) {
-    final PsiElement child = xmlAttributeValue.getFirstChild();
-    if (child == null) {
+    final PsiElement first = xmlAttributeValue.getFirstChild();
+    if (first == null) {
       return TextRange.EMPTY_RANGE;
     }
-    final ASTNode node = child.getNode();
-    assert node != null;
+    final ASTNode firstNode = first.getNode();
+    assert firstNode != null;
+    final PsiElement last = xmlAttributeValue.getLastChild();
+    final ASTNode lastNode = last != null && last != first ? last.getNode() : null;
+
     final int textLength = xmlAttributeValue.getTextLength();
-    if (node.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
-      return new TextRange(1, textLength <= 1 ? 1 : textLength - 1);
-    } else {
-      return new TextRange(0, textLength);
-    }
+    final int start = firstNode.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ? first.getTextLength() : 0;
+    final int end = lastNode != null && lastNode.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER ? last.getTextLength() : 0;
+    return new TextRange(start, textLength - end);
   }
 }

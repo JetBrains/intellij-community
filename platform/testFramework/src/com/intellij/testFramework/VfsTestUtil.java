@@ -67,16 +67,18 @@ public class VfsTestUtil {
           }
           parent = child;
         }
-        final VirtualFile file;
+
+        VirtualFile file;
         parent.getChildren();//need this to ensure that fileCreated event is fired
         if (dir) {
           file = parent.createChildDirectory(VfsTestUtil.class, PathUtil.getFileName(relativePath));
         }
         else {
-          file = parent.createChildData(VfsTestUtil.class, PathUtil.getFileName(relativePath));
-          if (!text.isEmpty()) {
-            VfsUtil.saveText(file, text);
+          file = parent.findFileByRelativePath(relativePath);
+          if (file == null) {
+            file = parent.createChildData(VfsTestUtil.class, PathUtil.getFileName(relativePath));
           }
+          VfsUtil.saveText(file, text);
         }
         return file;
       }

@@ -29,10 +29,10 @@
                         serviceImplementation="com.intellij.packageDependencies.DependenciesVisitorFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
-    <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtilBase"
-                        serviceImplementation="com.intellij.codeInsight.TargetElementUtilBase"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
+                        serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
-                        serviceImplementation="com.intellij.profile.codeInspection.InspectionProfileManagerImpl"/>
+                        serviceImplementation="com.intellij.codeInspection.ex.InspectionProfileManagerImpl"/>
 
     <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
 
@@ -71,14 +71,12 @@
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>
-    <applicationService serviceInterface="com.intellij.codeEditor.printing.FileSeparatorProvider"
-                        serviceImplementation="com.intellij.codeEditor.printing.FileSeparatorProvider"/>
 
     <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>
 
     <programRunner implementation="com.intellij.execution.runners.BasicProgramRunner" order="last"/>
 
-    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider" order="before preferences.intentionPowerPack"/>
+    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors" provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider" order="before preferences.intentionPowerPack"/>
     <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
 
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener" id="PlatformProjectCheckoutListener"/>
@@ -102,4 +100,5 @@
     <xi:fallback/>
   </xi:include>
 
+  <xi:include href="built-in-server.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

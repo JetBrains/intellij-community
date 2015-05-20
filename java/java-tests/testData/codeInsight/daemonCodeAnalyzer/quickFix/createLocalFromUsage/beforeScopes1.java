@@ -1,4 +1,4 @@
-// "Create Local Variable 'local'" "true"
+// "Create local variable 'local'" "true"
 class A {
     public void foo() {
         System.out.println(local);

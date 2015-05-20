@@ -190,7 +190,7 @@ contribute(currentType("java.lang.String")) { property name:"foo" }
 
   private def addDsld(String dsl) {
     def file = myFixture.addFileToProject('a.gdsl', dsl)
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    GroovyDslFileIndex.activate(file.virtualFile)
   }
 
   private def checkHighlighting(String text) {

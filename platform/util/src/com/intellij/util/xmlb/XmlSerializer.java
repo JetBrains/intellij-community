@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.Set;
 public class XmlSerializer {
   private static final SerializationFilter TRUE_FILTER = new SerializationFilter() {
     @Override
-    public boolean accepts(@NotNull Accessor accessor, Object bean) {
+    public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
       return true;
     }
   };

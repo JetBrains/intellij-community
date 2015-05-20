@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 Bas Leijdekkers
+ * Copyright 2007-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.exceptions;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,8 +37,18 @@ public class ConvertCatchToThrowsIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiCatchSection catchSection = (PsiCatchSection)element.getParent();
-    final PsiMethod method = PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class);
-    if (method == null) {
+    final NavigatablePsiElement owner = PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class, PsiLambdaExpression.class);
+    final PsiMethod method;
+    if (owner instanceof PsiMethod) {
+      method = (PsiMethod)owner;
+    }
+    else if (owner instanceof PsiLambdaExpression) {
+      method = LambdaUtil.getFunctionalInterfaceMethod(owner);
+      if (method == null || !FileModificationService.getInstance().preparePsiElementsForWrite(method)) {
+        return;
+      }
+    }
+    else {
       return;
     }
     // todo warn if method implements or overrides some base method

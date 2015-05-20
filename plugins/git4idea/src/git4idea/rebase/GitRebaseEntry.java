@@ -16,6 +16,8 @@
 package git4idea.rebase;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The entry for rebase editor
@@ -36,17 +38,19 @@ class GitRebaseEntry {
   /**
    * The action associated with the entry
    */
-  private Action myAction = Action.pick;
+  private Action myAction;
 
   /**
    * The constructor
    *
+   * @param action
    * @param commit  the commit hash
    * @param subject the commit subject
    */
-  public GitRebaseEntry(final String commit, final String subject) {
+  public GitRebaseEntry(String action, final String commit, final String subject) {
     myCommit = commit;
     mySubject = subject;
+    myAction = Action.fromString(action);
   }
 
   /**
@@ -86,7 +90,7 @@ class GitRebaseEntry {
   /**
    * The action associated with the commit
    */
-  static public enum Action {
+  public enum Action {
     /**
      * the pick action
      */
@@ -103,5 +107,20 @@ class GitRebaseEntry {
      * the squash action (for two or more commits)
      */
     squash,
+
+    reword,
+
+    fixup;
+
+    @NotNull
+    static Action fromString(@NonNls @NotNull String actionName) {
+      try {
+        return valueOf(actionName.toLowerCase());
+      }
+      catch (IllegalArgumentException e) {
+        log.error(e);
+        return pick;
+      }
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,32 +60,22 @@ public class CloneUtils {
                                      HardcodedMethodConstants.CLONE, PsiType.EMPTY_ARRAY);
   }
 
-  public static boolean onlyThrowsCloneNotSupportedException(
-    @NotNull PsiMethod method) {
+  public static boolean onlyThrowsException(@NotNull PsiMethod method) {
+    if (!method.hasModifierProperty(PsiModifier.FINAL)) {
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
+        return false;
+      }
+    }
     final PsiCodeBlock body = method.getBody();
     if (body == null) {
       return false;
     }
     final PsiStatement[] statements = body.getStatements();
-    if (statements.length != 1) {
+    if (statements.length == 0) {
       return false;
     }
-    final PsiStatement statement = statements[0];
-    if (!(statement instanceof PsiThrowStatement)) {
-      return false;
-    }
-    final PsiThrowStatement throwStatement = (PsiThrowStatement)statement;
-    final PsiExpression exception = ParenthesesUtils.stripParentheses(throwStatement.getException());
-    if (!(exception instanceof PsiNewExpression)) {
-      return false;
-    }
-    final PsiNewExpression newExpression = (PsiNewExpression)exception;
-    final PsiJavaCodeReferenceElement classReference =
-      newExpression.getClassReference();
-    if (classReference == null) {
-      return false;
-    }
-    final String qualifiedName = classReference.getQualifiedName();
-    return qualifiedName.equals("java.lang.CloneNotSupportedException");
+    final PsiStatement statement = statements[statements.length - 1];
+    return statement instanceof PsiThrowStatement;
   }
 }

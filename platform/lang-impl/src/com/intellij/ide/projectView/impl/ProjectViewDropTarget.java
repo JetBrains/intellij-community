@@ -24,7 +24,9 @@ import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -307,6 +309,12 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     private void doDrop(TreeNode targetNode, PsiElement[] sourceElements, final boolean externalDrop) {
       final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
+
+      if (DumbService.isDumb(myProject)) {
+        Messages.showMessageDialog(myProject, "Move refactoring is not available while indexing is in progress", "Indexing", null);
+        return;
+      }
+      
       final Module module = getModule(targetNode);
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       getActionHandler().invoke(myProject, sourceElements, new DataContext() {

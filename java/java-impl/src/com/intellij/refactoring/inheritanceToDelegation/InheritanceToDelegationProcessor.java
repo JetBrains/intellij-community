@@ -118,7 +118,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     myFieldName = fieldName;
     final String propertyName = JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(myFieldName, VariableKind.FIELD);
-    myGetterName = PropertyUtil.suggestGetterName(propertyName, myBaseClassType);
+    myGetterName = GenerateMembersUtil.suggestGetterName(propertyName, myBaseClassType, myProject);
     myGenerateGetter = generateGetter;
 
     myDelegatedInterfaces = new LinkedHashSet<PsiClass>();

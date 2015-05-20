@@ -80,6 +80,18 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 ## Shared attributes for <input>
 		
+	shared-input.attrs =
+		(	input.attrs.autocomplete?
+		&	shared-form.attrs.autofocus?
+		&	input.attrs.list?
+		&	shared-form.attrs.maxlength?
+		&	shared-form.attrs.pattern?
+		&	shared-form.attrs.placeholder?
+		&	shared-form.attrs.readonly?
+		&	shared-form.attrs.required?
+		&	shared-form.attrs.size?
+		)
+
 	input.attrs.autocomplete = 
 		attribute autocomplete {
 			w:string "on" | w:string "off"
@@ -108,77 +120,73 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Text Field: <input type='text'>, Extensions
 
 	input.text.attrs &=
-		(	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	shared-form.attrs.pattern? 
-		&	shared-form.attrs.required? 
-		&	shared-form.attrs.placeholder?
+		(	input.attrs.autocomplete?
+		&	shared-form.attrs.autofocus?
 		&	shared-form.attrs.dirname?
+		&	input.attrs.list?
+		&	shared-form.attrs.pattern?
+		&	shared-form.attrs.required?
+		&	shared-form.attrs.placeholder?
 		)
 
 ## Password Field: <input type='password'>, Extensions
 
 	input.password.attrs &=
-		(	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	shared-form.attrs.pattern? 
-		&	shared-form.attrs.required? 
+		(	input.attrs.autocomplete?
+		&	shared-form.attrs.autofocus?
+		&	input.attrs.list?
+		&	shared-form.attrs.pattern?
 		&	shared-form.attrs.placeholder?
+		&	shared-form.attrs.required?
 		)
 
 ## Checkbox <input type='checkbox'>, Extensions
 
 	input.checkbox.attrs &=
-		(	shared-form.attrs.autofocus? 
-		&	shared-form.attrs.required? 
-		)
+		(	shared-input.attrs	)
 
 ## Radiobutton: <input type='radio'>, Extensions
 
 	input.radio.attrs &=
-		(	shared-form.attrs.autofocus? 
-		&	shared-form.attrs.required? 
-		)
+		(	shared-input.attrs	)
 
 ## Scripting Hook Button: <input type='button'>, Extensions
 
 	input.button.attrs &=
-		( shared-form.attrs.autofocus? )
+		(	shared-input.attrs	)
 
 ## Submit Button: <input type='submit'>, Extensions
 
 	input.submit.attrs &=
-		(	shared-form.attrs.formaction? 
-		&	shared-form.attrs.autofocus? 
-		&	shared-form.attrs.formenctype? 
-		&	shared-form.attrs.formmethod? 
-		&	shared-form.attrs.formtarget? 
-		&	shared-form.attrs.formnovalidate? 
+		(	shared-input.attrs
+		&	shared-form.attrs.formaction?
+		&	shared-form.attrs.formenctype?
+		&	shared-form.attrs.formmethod?
+		&	shared-form.attrs.formtarget?
+		&	shared-form.attrs.formnovalidate?
 		)
 
 ## Reset Button: <input type='reset'>, Extensions
 
 	input.reset.attrs &=
-		( shared-form.attrs.autofocus? )
+		(	shared-input.attrs	)
 
 ## File Upload: <input type='file'>, Extensions
 
 	input.file.attrs &=
-		(	shared-form.attrs.autofocus? 
-		&	shared-form.attrs.required? 
-		&	input.attrs.multiple? 
+		(	shared-input.attrs
+		&	input.attrs.multiple?
 		)
 
 ## Image Submit Button: <input type='image'>, Extensions
 
 	input.image.attrs &=
-		(	shared-form.attrs.formaction? 
-		&	shared-form.attrs.autofocus? 
-		&	shared-form.attrs.formenctype? 
-		&	shared-form.attrs.formmethod? 
-		&	shared-form.attrs.formtarget? 
-		&	shared-form.attrs.formnovalidate? 
+		(	shared-input.attrs
+		&	shared-form.attrs.formaction?
+		&	shared-form.attrs.formenctype?
+		&	shared-form.attrs.formmethod?
+		&	shared-form.attrs.formtarget?
+		&	shared-form.attrs.formnovalidate?
 		&	input.image.attrs.height?
 		&	input.image.attrs.width?
 		)	
@@ -198,16 +206,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.datetime.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.datetime.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	input.datetime.attrs.min? 
-		&	input.datetime.attrs.max? 
-		&	input.attrs.step.float? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	input.datetime.attrs.value? 
+		&	input.datetime.attrs.min?
+		&	input.datetime.attrs.max?
+		&	input.attrs.step.float?
+		&	input.datetime.attrs.value?
 		&	common.attrs.aria?
 		)	
 		input.datetime.attrs.type = 
@@ -236,16 +240,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.datetime-local.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.datetime-local.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	input.datetime-local.attrs.min? 
-		&	input.datetime-local.attrs.max? 
-		&	input.attrs.step.float? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	input.datetime-local.attrs.value? 
+		&	input.datetime-local.attrs.min?
+		&	input.datetime-local.attrs.max?
+		&	input.attrs.step.float?
+		&	input.datetime-local.attrs.value?
 		&	common.attrs.aria?
 		)	
 		input.datetime-local.attrs.type = 
@@ -274,16 +274,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.date.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.date.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	input.date.attrs.min? 
-		&	input.date.attrs.max? 
-		&	input.attrs.step.integer? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	input.date.attrs.value? 
+		&	input.date.attrs.min?
+		&	input.date.attrs.max?
+		&	input.attrs.step.integer?
+		&	input.date.attrs.value?
 		&	common.attrs.aria?
 		)	
 		input.date.attrs.type = 
@@ -312,16 +308,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.month.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.month.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	input.month.attrs.min? 
-		&	input.month.attrs.max? 
-		&	input.attrs.step.integer? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	input.month.attrs.value? 
+		&	input.month.attrs.min?
+		&	input.month.attrs.max?
+		&	input.attrs.step.integer?
+		&	input.month.attrs.value?
 		&	common.attrs.aria?
 		)	
 		input.month.attrs.type = 
@@ -350,16 +342,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.time.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.time.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	input.time.attrs.min? 
-		&	input.time.attrs.max? 
-		&	input.attrs.step.float? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	input.time.attrs.value? 
+		&	input.time.attrs.min?
+		&	input.time.attrs.max?
+		&	input.attrs.step.float?
+		&	input.time.attrs.value?
 		&	common.attrs.aria?
 		)	
 		input.time.attrs.type = 
@@ -388,16 +376,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.week.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.week.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	input.week.attrs.min? 
-		&	input.week.attrs.max? 
-		&	input.attrs.step.integer? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	input.week.attrs.value? 
+		&	input.week.attrs.min?
+		&	input.week.attrs.max?
+		&	input.attrs.step.integer?
+		&	input.week.attrs.value?
 		&	common.attrs.aria?
 		)	
 		input.week.attrs.type = 
@@ -426,17 +410,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.number.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.number.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	input.number.attrs.min? 
-		&	input.number.attrs.max? 
-		&	input.attrs.step.float? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	shared-form.attrs.placeholder?
-		&	input.number.attrs.value? 
+		&	input.number.attrs.min?
+		&	input.number.attrs.max?
+		&	input.attrs.step.float?
+		&	input.number.attrs.value?
 		&	(	common.attrs.aria.implicit.spinbutton
 			|	common.attrs.aria.role.spinbutton
 			)?
@@ -467,14 +446,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.range.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.range.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	input.range.attrs.min? 
-		&	input.range.attrs.max? 
-		&	input.attrs.step.float? 
-		&	input.range.attrs.value? 
+		&	input.range.attrs.min?
+		&	input.range.attrs.max?
+		&	input.attrs.step.float?
+		&	input.range.attrs.value?
 		&	(	common.attrs.aria.implicit.slider
 			|	common.attrs.aria.role.slider
 			)?
@@ -505,16 +482,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.email.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.email.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	shared-form.attrs.maxlength? 
-		&	shared-form.attrs.pattern? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	shared-form.attrs.size?
-		&	shared-form.attrs.placeholder?
 		&	(	(	input.attrs.multiple
 				&	input.email.attrs.value.multiple?
 				)
@@ -548,17 +517,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.url.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.url.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	shared-form.attrs.maxlength? 
-		&	shared-form.attrs.pattern? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	shared-form.attrs.size?
-		&	shared-form.attrs.placeholder?
-		&	input.url.attrs.value? 
+		&	input.url.attrs.value?
 		&	(	common.attrs.aria.implicit.textbox
 			|	common.attrs.aria.implicit.combobox
 			|	common.attrs.aria.role.textbox
@@ -583,18 +544,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.search.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.search.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	shared-form.attrs.maxlength? 
-		&	shared-form.attrs.pattern? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	shared-form.attrs.size?
-		&	shared-form.attrs.placeholder?
+		&	input.search.attrs.value?
 		&	shared-form.attrs.dirname?
-		&	input.search.attrs.value? 
 		&	(	common.attrs.aria.implicit.textbox
 			|	common.attrs.aria.implicit.combobox
 			|	common.attrs.aria.role.textbox
@@ -619,17 +572,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 	input.tel.attrs = 
 		(	common.attrs
 		&	common-form.attrs
+		&	shared-input.attrs
 		&	input.tel.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	shared-form.attrs.maxlength? 
-		&	shared-form.attrs.pattern? 
-		&	shared-form.attrs.readonly? 
-		&	shared-form.attrs.required? 
-		&	shared-form.attrs.size?
-		&	shared-form.attrs.placeholder?
-		&	input.tel.attrs.value? 
+		&	input.tel.attrs.value?
 		&	(	common.attrs.aria.implicit.textbox
 			|	common.attrs.aria.implicit.combobox
 			|	common.attrs.aria.role.textbox
@@ -655,10 +600,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	common-form.attrs
 		&	input.color.attrs.type
-		&	input.attrs.autocomplete? 
-		&	shared-form.attrs.autofocus? 
-		&	input.attrs.list? 
-		&	input.color.attrs.value? 
+		&	input.color.attrs.value?
+		&	shared-input.attrs
 		&	common.attrs.aria?
 		)	
 		input.color.attrs.type = 

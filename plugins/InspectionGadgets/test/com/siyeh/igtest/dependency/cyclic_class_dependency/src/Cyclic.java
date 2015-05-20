@@ -27,3 +27,18 @@ interface FiveOClock {
 
 }
 interface Coffee extends FiveOClock {}
+enum MyEnum {
+  ONE {
+    public int value() {
+      return 0;
+    }
+  },
+
+  TWO {
+    public int value() {
+      return ONE.value();
+    }
+  };
+
+  abstract int value();
+}

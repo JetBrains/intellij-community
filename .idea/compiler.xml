@@ -12,14 +12,17 @@
       <file url="file://$PROJECT_DIR$/java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala" />
     </excludeFromCompile>
     <resourceExtensions>
-      <entry name=".+\.(properties|xml|html|dtd|tld)" />
-      <entry name=".+\.(gif|png|jpeg|jpg)" />
+      <entry name=".+\.(properties|gif|png|jpeg|jpg|xml|dtd|tld|xsd|ft|html|template)" />
     </resourceExtensions>
     <wildcardResourcePatterns>
       <entry name="!*.form" />
       <entry name="!*.java" />
       <entry name="!*.class" />
       <entry name="!*.groovy" />
+      <entry name="!*.flex" />
+      <entry name="!*.kt" />
+      <entry name="!*.iml" />
+      <entry name="!*.gant" />
     </wildcardResourcePatterns>
     <annotationProcessing>
       <profile default="true" name="Default" enabled="false">

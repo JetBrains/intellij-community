@@ -25,6 +25,7 @@ import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,13 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
     }), onClose);
   }
 
+  public static Icon getIcon(@NotNull HighlightDisplayLevel level) {
+    Icon icon = level.getIcon();
+    return icon instanceof HighlightDisplayLevel.ColoredIcon
+                 ? new ColorIcon(icon.getIconWidth(), ((HighlightDisplayLevel.ColoredIcon)icon).getColor())
+                 : icon;
+  }
+
   @Override
   protected void customizeComponent(SeverityState value, JTable table, boolean isSelected) {
     super.customizeComponent(value, table, isSelected);
@@ -73,7 +81,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
 
   @Override
   protected Icon getIconFor(@NotNull final SeverityState value) {
-    return HighlightDisplayLevel.find(value.getSeverity()).getIcon();
+    return getIcon(HighlightDisplayLevel.find(value.getSeverity()));
   }
 
   @Override

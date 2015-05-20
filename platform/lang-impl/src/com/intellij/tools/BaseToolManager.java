@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,6 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class BaseToolManager<T extends Tool> implements ExportableApplicationComponent {
-
   @NotNull private final ActionManagerEx myActionManager;
   private final SchemesManager<ToolsGroup<T>, ToolsGroup<T>> mySchemesManager;
 
@@ -51,8 +51,7 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
 
   @Nullable
   public static String convertString(String s) {
-    if (s != null && s.trim().length() == 0) return null;
-    return s;
+    return StringUtil.nullize(s, true);
   }
 
   @Override
@@ -130,7 +129,8 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
     }
   }
 
-  protected ToolAction createToolAction(T tool) {
+  @NotNull
+  protected ToolAction createToolAction(@NotNull T tool) {
     return new ToolAction(tool);
   }
 
@@ -138,9 +138,7 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
 
   private void unregisterActions() {
     // unregister Tool actions
-    String[] oldIds = myActionManager.getActionIds(getActionIdPrefix());
-    for (int i = 0; i < oldIds.length; i++) {
-      String oldId = oldIds[i];
+    for (String oldId : myActionManager.getActionIds(getActionIdPrefix())) {
       myActionManager.unregisterAction(oldId);
     }
   }

@@ -10,7 +10,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../maven2-server-impl/lib/maven-2.2.1-uber.jar!/" />
+          <root url="jar://$MODULE_DIR$/../maven2-server-impl/lib/maven2/lib/maven-2.2.1-uber.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

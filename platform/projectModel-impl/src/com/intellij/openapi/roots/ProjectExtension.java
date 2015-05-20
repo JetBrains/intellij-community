@@ -21,8 +21,12 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ProjectExtension implements JDOMExternalizable{
   public static final ExtensionPointName<ProjectExtension> EP_NAME = ExtensionPointName.create("com.intellij.projectExtension");
+
+  public void projectSdkChanged(@Nullable Sdk sdk) {}
 }

@@ -43,6 +43,7 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     } else {
       hideNotify();
     }
+    if (isDisposed()) return;
     component.addHierarchyListener(this);
   }
 
@@ -127,14 +128,21 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
   }
 
   public static void doWhenFirstShown(@NotNull JComponent c, @NotNull final Runnable runnable) {
-    new Once(c, new Activatable() {
+    Activatable activatable = new Activatable() {
       public void showNotify() {
-        runnable.run();        
+        runnable.run();
       }
 
       public void hideNotify() {
       }
-    });
-  }
+    };
 
+    new UiNotifyConnector(c, activatable) {
+      @Override
+      protected void showNotify() {
+        super.showNotify();
+        Disposer.dispose(this);
+      }
+    };
+  }
 }

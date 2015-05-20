@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion.scope;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.SuppressManager;
@@ -48,6 +47,7 @@ import java.util.*;
  */
 public class JavaCompletionProcessor extends BaseScopeProcessor implements ElementClassHint {
 
+  private final boolean myInJavaDoc;
   private boolean myStatic = false;
   private PsiElement myDeclarationHolder = null;
   private final Set<Object> myResultNames = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
@@ -87,14 +87,12 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     myMatcher = nameCondition;
     myFilter = filter;
     PsiElement scope = element;
-    if (JavaResolveUtil.isInJavaDoc(myElement)) myMembersFlag = true;
+    myInJavaDoc = JavaResolveUtil.isInJavaDoc(myElement);
+    if (myInJavaDoc) myMembersFlag = true;
     while(scope != null && !(scope instanceof PsiFile) && !(scope instanceof PsiClass)){
       scope = scope.getContext();
     }
     myScope = scope;
-    if (!(element.getContainingFile() instanceof PsiJavaFile)) {
-      myMembersFlag = true;
-    }
 
     PsiElement elementParent = element.getContext();
     if (elementParent instanceof PsiReferenceExpression) {
@@ -129,7 +127,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       myNonInitializedFields.addAll(getNonInitializedFields(element));
     }
 
-    myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance || CodeInsightSettings.getInstance().SHOW_STATIC_AFTER_INSTANCE ||
+    myAllowStaticWithInstanceQualifier = !options.filterStaticAfterInstance ||
                                          SuppressManager.getInstance()
                                            .isSuppressedFor(element, AccessStaticViaInstanceBase.ACCESS_STATIC_VIA_INSTANCE);
 
@@ -308,13 +306,18 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   }
 
   public boolean isAccessible(@Nullable final PsiElement element) {
-    if (!myOptions.checkAccess) return true;
+    // if checkAccess is false, we only show inaccessible source elements because their access modifiers can be changed later by the user.
+    // compiled element can't be changed so we don't pollute the completion with them. In Javadoc, everything is allowed.
+    if (!myOptions.checkAccess && myInJavaDoc) return true;
     if (!(element instanceof PsiMember)) return true;
 
     PsiMember member = (PsiMember)element;
     PsiClass accessObjectClass = myQualified ? myQualifierClass : null;
-    return JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible(member, member.getModifierList(), myElement,
-                                                                                           accessObjectClass, myDeclarationHolder);
+    if (JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible(member, member.getModifierList(), myElement,
+                                                                                        accessObjectClass, myDeclarationHolder)) {
+      return true;
+    }
+    return !myOptions.checkAccess && !(element instanceof PsiCompiledElement);
   }
 
   public void setCompletionElements(@NotNull Object[] elements) {

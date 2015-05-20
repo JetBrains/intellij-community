@@ -62,15 +62,14 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
   @Override
   public void reset() {
     myQuickListsModel.removeAllElements();
-    QuickList[] allQuickLists = QuickListsManager.getInstance().getAllQuickLists();
-    for (QuickList list : allQuickLists) {
+    for (QuickList list : QuickListsManager.getInstance().getAllQuickLists()) {
       myQuickListsModel.addElement(list);
     }
 
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (myQuickListsModel.size() > 0) {
+        if (!myQuickListsModel.isEmpty()) {
           myQuickListsList.setSelectedIndex(0);
         }
       }
@@ -86,12 +85,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
 
   @Override
   public void apply() {
-    QuickListsManager.getInstance().removeAllQuickLists();
-    final QuickList[] currentQuickLists = getCurrentQuickListIds();
-    for (QuickList quickList : currentQuickLists) {
-      QuickListsManager.getInstance().registerQuickList(quickList);
-    }
-    QuickListsManager.getInstance().registerActions();
+    QuickListsManager.getInstance().setQuickLists(getCurrentQuickListIds());
   }
 
   private JPanel createQuickListsPanel() {
@@ -149,7 +143,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     String str = KeyMapBundle.message("unnamed.list.display.name");
     final ArrayList<String> names = new ArrayList<String>();
     for (int i = 0; i < myQuickListsModel.getSize(); i++) {
-      names.add(((QuickList)myQuickListsModel.getElementAt(i)).getDisplayName());
+      names.add(((QuickList)myQuickListsModel.getElementAt(i)).getName());
     }
     if (!names.contains(str)) return str;
     int i = 1;
@@ -205,7 +199,8 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     return new QuickList(myQuickListPanel.getDisplayName(), myQuickListPanel.getDescription(), ids, false);
   }
 
-  public QuickList[] getCurrentQuickListIds() {
+  @NotNull
+  private QuickList[] getCurrentQuickListIds() {
     if (myCurrentIndex > -1 && myQuickListsModel.getSize() > myCurrentIndex) {
       updateList(myCurrentIndex);
     }
@@ -233,7 +228,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       setBackground(UIUtil.getListBackground(selected));
       QuickList quickList = (QuickList)value;
-      append(quickList.getDisplayName());
+      append(quickList.getName());
     }
   }
 
@@ -244,6 +239,7 @@ public class QuickListsPanel extends JPanel implements SearchableConfigurable, C
   }
 
   @Override
+  @NotNull
   public String getHelpTopic() {
     return "reference.idesettings.quicklists";
   }

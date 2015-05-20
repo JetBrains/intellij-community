@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,11 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+@SkipSlowTestLocally
 public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
@@ -48,12 +50,12 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     VirtualFile vDir = myFixture.getTempDirFixture().findOrCreateDir("dir");
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    assertTrue(file instanceof PsiPlainTextFile);
+    assertInstanceOf(file, PsiPlainTextFile.class);
     PsiDirectory dir = getPsiManager().findDirectory(vDir);
     PsiFile fileCopy = (PsiFile)file.copy();
     fileCopy = (PsiFile) fileCopy.setName("NewTest.txt");
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
-    assertTrue(newFile instanceof PsiPlainTextFile);
+    assertInstanceOf(newFile, PsiPlainTextFile.class);
 
     assertEquals(text, new String(newFile.getVirtualFile().contentsToByteArray()));
     assertEquals(newFile.getVirtualFile().getModificationStamp(), newFile.getViewProvider().getModificationStamp());
@@ -70,12 +72,13 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiFile file = getPsiManager().findFile(vFile);
-    assertTrue(file instanceof PsiBinaryFile);
+    assertInstanceOf(file, PsiBinaryFile.class);
     PsiDirectory dir = getPsiManager().findDirectory(vDir);
+
     PsiFile fileCopy = (PsiFile)file.copy();
     fileCopy = (PsiFile) fileCopy.setName("NewTest.xxx");
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
-    assertTrue(newFile instanceof PsiBinaryFile);
+    assertInstanceOf(newFile, PsiBinaryFile.class);
 
     assertOrderedEquals(newFile.getVirtualFile().contentsToByteArray(), bytes);
   }
@@ -92,7 +95,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PsiFile fileCopy = (PsiFile)file.copy();
     fileCopy = (PsiFile) fileCopy.setName("NewTest.txt");
     PsiFile newFile = (PsiFile)dir.add(fileCopy);
-    assertTrue(newFile instanceof PsiPlainTextFile);
+    assertInstanceOf(newFile, PsiPlainTextFile.class);
 
     assertEquals(text, VfsUtil.loadText(newFile.getVirtualFile()));
     assertEquals(newFile.getVirtualFile().getModificationStamp(), newFile.getViewProvider().getModificationStamp());

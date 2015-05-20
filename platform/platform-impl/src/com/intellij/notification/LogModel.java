@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ public class LogModel implements Disposable {
   public static final Topic<Runnable> LOG_MODEL_CHANGED = Topic.create("LOG_MODEL_CHANGED", Runnable.class, Topic.BroadcastDirection.NONE);
 
   private final List<Notification> myNotifications = new ArrayList<Notification>();
-  private final Map<Notification, Long> myStamps = Collections.synchronizedMap(new WeakHashMap<Notification, Long>());
   private final Map<Notification, String> myStatuses = Collections.synchronizedMap(new WeakHashMap<Notification, String>());
   private Trinity<Notification, String, Long> myStatusMessage;
   private final Project myProject;
@@ -53,13 +52,12 @@ public class LogModel implements Disposable {
   void addNotification(Notification notification) {
     long stamp = System.currentTimeMillis();
     NotificationDisplayType type = NotificationsConfigurationImpl.getSettings(notification.getGroupId()).getDisplayType();
+    myStatuses.put(notification, EventLog.formatForLog(notification, "").status);
     if (notification.isImportant() || (type != NotificationDisplayType.NONE && type != NotificationDisplayType.TOOL_WINDOW)) {
       synchronized (myNotifications) {
         myNotifications.add(notification);
       }
     }
-    myStamps.put(notification, stamp);
-    myStatuses.put(notification, EventLog.formatForLog(notification, "").status);
     setStatusMessage(notification, stamp);
     fireModelChanged();
   }
@@ -109,13 +107,7 @@ public class LogModel implements Disposable {
       return new ArrayList<Notification>(myNotifications);
     }
   }
-
-  @Nullable
-  public Long getNotificationTime(Notification notification) {
-    return myStamps.get(notification);
-  }
-
-  void removeNotification(Notification notification) {
+  public void removeNotification(Notification notification) {
     synchronized (myNotifications) {
       myNotifications.remove(notification);
     }
@@ -145,9 +137,7 @@ public class LogModel implements Disposable {
       setStatusMessage(null, 0);
     }
     else {
-      Long notificationTime = getNotificationTime(message);
-      assert notificationTime != null;
-      setStatusMessage(message, notificationTime);
+      setStatusMessage(message, message.getTimestamp());
     }
   }
 

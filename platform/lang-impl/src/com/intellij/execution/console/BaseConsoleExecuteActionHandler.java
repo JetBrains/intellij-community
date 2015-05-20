@@ -16,48 +16,18 @@
 package com.intellij.execution.console;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseConsoleExecuteActionHandler extends ConsoleExecuteAction.ConsoleExecuteActionHandler {
   public BaseConsoleExecuteActionHandler(boolean preserveMarkup) {
     super(preserveMarkup);
   }
 
-  public void runExecuteAction(@NotNull LanguageConsoleView consoleView) {
-    runExecuteAction(consoleView.getConsole(), consoleView);
-  }
-
   @Override
-  final void doExecute(@NotNull String text, @NotNull LanguageConsole console, @Nullable LanguageConsoleView consoleView) {
-    if (consoleView == null) {
-      //noinspection deprecation
-      execute(text);
-    }
-    else {
-      execute(text, consoleView);
-    }
+  final void doExecute(@NotNull String text, @NotNull LanguageConsoleView consoleView) {
+    execute(text, consoleView);
   }
 
   protected void execute(@NotNull String text, @NotNull LanguageConsoleView console) {
-    //noinspection deprecation
-    execute(text);
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  public void runExecuteAction(@NotNull LanguageConsoleImpl languageConsole) {
-    runExecuteAction(languageConsole, null);
-  }
-
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  protected void execute(@NotNull String text) {
-    throw new AbstractMethodError();
   }
 
   public String getEmptyExecuteAction() {

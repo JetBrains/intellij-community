@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -103,7 +102,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public VirtualDirectoryImpl getParent() {
-    VirtualDirectoryImpl changedParent = VfsData.getChangedParent(this);
+    VirtualDirectoryImpl changedParent = VfsData.getChangedParent(myId);
     return changedParent != null ? changedParent : myParent;
   }
 
@@ -295,15 +294,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   private static void validateName(@NotNull String name) throws IOException {
-    if (name.isEmpty()) throw new IOException("File name cannot be empty");
-    if (name.indexOf('/') >= 0 || name.indexOf(File.separatorChar) >= 0) {
-      throw new IOException("File name cannot contain file path separators: '" + name + "'");
+    if (!isValidName(name)) {
+      throw new IOException(VfsBundle.message("file.invalid.name.error", name));
     }
   }
 
   @Override
   public boolean exists() {
-    return ourPersistence.exists(this);
+    return VfsData.isFileValid(myId);
   }
 
   @Override
@@ -315,23 +313,23 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getUrl();
   }
 
-  public void setNewName(@NotNull final String newName) {
-    if (newName.isEmpty()) {
-      throw new IllegalArgumentException("Name of the virtual file cannot be set to empty string");
+  public void setNewName(@NotNull String newName) {
+    if (!isValidName(newName)) {
+      throw new IllegalArgumentException(VfsBundle.message("file.invalid.name.error", newName));
     }
 
-    VirtualDirectoryImpl parent = (VirtualDirectoryImpl)getParent();
+    VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
     mySegment.setNameId(myId, FileNameCache.storeName(newName));
     parent.addChild(this);
   }
 
-  public void setParent(@NotNull final VirtualFile newParent) {
-    VirtualDirectoryImpl parent = (VirtualDirectoryImpl)getParent();
+  public void setParent(@NotNull VirtualFile newParent) {
+    VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
 
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
-    VfsData.changeParent(this, directory);
+    VfsData.changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus();
   }

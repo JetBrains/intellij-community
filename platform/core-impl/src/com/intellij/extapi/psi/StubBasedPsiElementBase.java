@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,23 +80,23 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
 
       FileElement treeElement = file.getTreeElement();
-      StubTree stubTree = file.getStubTree();
       if (treeElement != null && myNode == null) {
-        return notBoundInExistingAst(file, treeElement, stubTree);
+        return notBoundInExistingAst(file, treeElement);
       }
 
-      final FileElement fileElement = file.calcTreeElement();
+      treeElement = file.calcTreeElement();
       node = myNode;
       if (node == null) {
-        return failedToBindStubToAst(file, stubTree, fileElement);
+        return failedToBindStubToAst(file, treeElement);
       }
     }
 
     return node;
   }
 
-  private ASTNode failedToBindStubToAst(PsiFileImpl file, StubTree stubTree, FileElement fileElement) {
+  private ASTNode failedToBindStubToAst(PsiFileImpl file, FileElement fileElement) {
     VirtualFile vFile = file.getVirtualFile();
+    StubTree stubTree = file.getStubTree();
     String stubString = stubTree != null ? ((PsiFileStubImpl)stubTree.getRoot()).printTree() : "is null";
     String astString = DebugUtil.treeToString(fileElement, true);
     if (!ourTraceStubAstBinding) {
@@ -106,7 +106,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
     @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +
                              (vFile == null ? "<unknown file>" : vFile.getPath()) +
-                             "\nFile:\n" + file.toString() + "@" + System.identityHashCode(file) +
+                             "\nFile:\n" + file + "@" + System.identityHashCode(file) +
                              "\nFile stub tree:\n" + stubString +
                              "\nLoaded file AST:\n" + astString;
     if (ourTraceStubAstBinding) {
@@ -124,7 +124,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
       public void visitComposite(CompositeElement composite) {
         PsiElement psi = composite.getPsi();
         if (psi != null) {
-          traces.append(psi.toString()).append("@").append(System.identityHashCode(psi)).append("\n");
+          traces.append(psi).append("@").append(System.identityHashCode(psi)).append("\n");
           String trace = psi.getUserData(CREATION_TRACE);
           if (trace != null) {
             traces.append(trace).append("\n");
@@ -136,16 +136,18 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return traces.toString();
   }
 
-  private ASTNode notBoundInExistingAst(PsiFileImpl file, FileElement treeElement, StubTree stubTree) {
-    @NonNls String message = "this=" + this.getClass() + "; file.isPhysical=" + file.isPhysical() + "; node=" + myNode + "; file=" + file +
-                             "; tree=" + treeElement + "; stubTree=" + stubTree;
+  private ASTNode notBoundInExistingAst(PsiFileImpl file, FileElement treeElement) {
+    String message = "file=" + file + "; tree=" + treeElement;
     PsiElement each = this;
     while (each != null) {
-      message += "\n each of class " + each.getClass();
+      message += "\n each of class " + each.getClass() + "; valid=" + each.isValid();
       if (each instanceof StubBasedPsiElementBase) {
         message += "; node=" + ((StubBasedPsiElementBase)each).myNode + "; stub=" + ((StubBasedPsiElementBase)each).myStub;
         each = ((StubBasedPsiElementBase)each).getParentByStub();
       } else {
+        if (each instanceof PsiFile) {
+          message += "; same file=" + (each == file) + "; current tree= " + file.getTreeElement() + "; stubTree=" + file.getStubTree() + "; physical=" + file.isPhysical();
+        }
         break;
       }
     }

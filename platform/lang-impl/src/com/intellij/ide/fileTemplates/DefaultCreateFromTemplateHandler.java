@@ -48,7 +48,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     fileName = checkAppendExtension(fileName, template);
 
     if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
-      throw new IncorrectOperationException("This filename is ignored (Settings | File Types | Ignore files and folders)");
+      throw new IncorrectOperationException("This filename is ignored (Settings | Editor | File Types | Ignore files and folders)");
     }
 
     directory.checkCreateFile(fileName);

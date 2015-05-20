@@ -24,6 +24,7 @@ public class JavaCompiledPattern extends CompiledPattern {
   }
 
   public boolean isTypedVar(final String str) {
+    if (str.isEmpty()) return false;
     if (str.charAt(0)=='@') {
       return str.regionMatches(1,TYPED_VAR_PREFIX,0,TYPED_VAR_PREFIX.length());
     } else {

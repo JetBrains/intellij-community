@@ -29,10 +29,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Use {@link BuilderService} to register implementations of this class
+ * Allows to extend the compilation process for Java modules compiled to .class files. Use {@link BuilderService} to register
+ * implementations of this class. The order of execution of different module-level builders is determined by their category
+ * (they're executed in the order of constants in the {@code BuilderCategory}; the order of executing different builders of
+ * the same category is not determined).
  *
  * @author Eugene Zhuravlev
- *         Date: 9/17/11
+ * @since 9/17/11
+ * @see BuilderService#createModuleLevelBuilders()
  */
 public abstract class ModuleLevelBuilder extends Builder {
   private final BuilderCategory myCategory;
@@ -59,6 +63,17 @@ public abstract class ModuleLevelBuilder extends Builder {
     BinaryContent lookupClassBytes(String className);
   }
 
+  /**
+   * Performs the compilation actions for a single module or a chunk of cyclically dependent modules.
+   *
+   * @param context          compilation context (can be used to report compiler errors/warnings and to check whether the build
+   *                         has been cancelled and needs to be stopped).
+   * @param chunk            target to build.
+   * @param dirtyFilesHolder can be used to enumerate the source files from the inputs of this target that have been modified
+   *                         or deleted since the previous compilation run.
+   * @param outputConsumer   receives the output files and classes produced by the build. (All output files produced by the build
+   *                         need to be reported here.)
+   */
   public abstract ExitCode build(CompileContext context,
                                  ModuleChunk chunk,
                                  DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,

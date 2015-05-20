@@ -20,7 +20,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -32,7 +31,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -63,8 +61,6 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   @NonNls private static final String SELECTION_END_LINE_ATTR         = "selection-end-line";
   @NonNls private static final String SELECTION_END_COLUMN_ATTR       = "selection-end-column";
   @NonNls private static final String VERTICAL_SCROLL_PROPORTION_ATTR = "vertical-scroll-proportion";
-  @NonNls private static final String VERTICAL_OFFSET_ATTR            = "vertical-offset";
-  @NonNls private static final String MAX_VERTICAL_OFFSET_ATTR        = "max-vertical-offset";
   @NonNls private static final String CARET_ELEMENT                   = "caret";
 
   public static TextEditorProvider getInstance() {
@@ -115,12 +111,6 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
       String verticalScrollProportion = element.getAttributeValue(VERTICAL_SCROLL_PROPORTION_ATTR);
       state.VERTICAL_SCROLL_PROPORTION = verticalScrollProportion == null ? 0 : Float.parseFloat(verticalScrollProportion);
-      String verticalOffset = element.getAttributeValue(VERTICAL_OFFSET_ATTR);
-      String maxVerticalOffset = element.getAttributeValue(MAX_VERTICAL_OFFSET_ATTR);
-      if (!StringUtil.isEmpty(verticalOffset) && !StringUtil.isEmpty(maxVerticalOffset)) {
-        state.VERTICAL_SCROLL_OFFSET = Integer.parseInt(verticalOffset);
-        state.MAX_VERTICAL_SCROLL_OFFSET = Integer.parseInt(maxVerticalOffset);
-      }
     }
     catch (NumberFormatException ignored) {
     }
@@ -149,8 +139,6 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     TextEditorState state = (TextEditorState)_state;
 
     element.setAttribute(VERTICAL_SCROLL_PROPORTION_ATTR, Float.toString(state.VERTICAL_SCROLL_PROPORTION));
-    element.setAttribute(VERTICAL_OFFSET_ATTR, Integer.toString(state.VERTICAL_SCROLL_OFFSET));
-    element.setAttribute(MAX_VERTICAL_OFFSET_ATTR, Integer.toString(state.MAX_VERTICAL_SCROLL_OFFSET));
     if (state.CARETS != null) {
       for (TextEditorState.CaretState caretState : state.CARETS) {
         Element e = new Element(CARET_ELEMENT);
@@ -249,11 +237,6 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
     // scrolling proportion restored slightly differs from what have been saved.
     state.VERTICAL_SCROLL_PROPORTION = level == FileEditorStateLevel.UNDO ? -1 : EditorUtil.calcVerticalScrollProportion(editor);
-    if (editor instanceof EditorEx) {
-      state.VERTICAL_SCROLL_OFFSET = editor.getScrollingModel().getVerticalScrollOffset();
-      JScrollBar scrollBar = ((EditorEx)editor).getScrollPane().getVerticalScrollBar();
-      state.MAX_VERTICAL_SCROLL_OFFSET = scrollBar == null ? 0 : scrollBar.getMaximum();
-    }
 
     return state;
   }
@@ -295,21 +278,9 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         editor.getSelectionModel().removeSelection();
       }
     }
-    EditorEx editorEx = editor instanceof EditorEx ? (EditorEx)editor : null;
-    boolean preciselyScrollVertically =
-      state.VERTICAL_SCROLL_OFFSET > 0
-      && editorEx != null
-      && editorEx.getScrollPane().getVerticalScrollBar() != null
-      && editorEx.getScrollPane().getVerticalScrollBar().getMaximum() == state.MAX_VERTICAL_SCROLL_OFFSET;
-    if (preciselyScrollVertically) {
-      editor.getScrollingModel().scrollVertically(state.VERTICAL_SCROLL_OFFSET);
-    }
-    else {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
-      if (state.VERTICAL_SCROLL_PROPORTION != -1) {
-        EditorUtil.setVerticalScrollProportion(editor, state.VERTICAL_SCROLL_PROPORTION);
-      }
+    if (state.VERTICAL_SCROLL_PROPORTION != -1) {
+      EditorUtil.setVerticalScrollProportion(editor, state.VERTICAL_SCROLL_PROPORTION);
     }
 
     if (!editor.getCaretModel().supportsMultipleCarets()) {
@@ -323,9 +294,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         editor.getSelectionModel().setSelection(startOffset, endOffset);
       }
     }
-    if (!preciselyScrollVertically) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {

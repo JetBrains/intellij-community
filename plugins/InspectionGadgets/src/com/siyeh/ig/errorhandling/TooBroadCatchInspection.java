@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,17 +41,19 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<PsiClass> maskedTypes = (List<PsiClass>)infos[0];
-    final List<InspectionGadgetsFix> fixes = new ArrayList();
-    for (PsiClass thrown : maskedTypes) {
-      if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(maskedTypes.get(0).getQualifiedName())) {
+    final PsiElement context = (PsiElement)infos[1];
+    final SmartTypePointerManager pointerManager = SmartTypePointerManager.getInstance(context.getProject());
+    final List<PsiType> maskedTypes = (List<PsiType>)infos[0];
+    final List<InspectionGadgetsFix> fixes = new ArrayList<InspectionGadgetsFix>();
+    for (PsiType thrown : maskedTypes) {
+      final String typeText = thrown.getCanonicalText();
+      if (CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION.equals(typeText)) {
         fixes.add(new ReplaceWithRuntimeExceptionFix());
       }
       else {
-        fixes.add(new AddCatchSectionFix(thrown));
+        fixes.add(new AddCatchSectionFix(pointerManager.createSmartTypePointer(thrown), typeText));
       }
     }
-    final PsiElement context = (PsiElement)infos[1];
     final InspectionGadgetsFix fix = SuppressForTestsScopeFix.build(this, context);
     if (fix != null) {
       fixes.add(fix);
@@ -96,12 +98,12 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
 
   private static class AddCatchSectionFix extends InspectionGadgetsFix {
 
-    private final SmartPsiElementPointer<PsiClass> myThrown;
+    private final SmartTypePointer myThrown;
     private final String myText;
 
-    AddCatchSectionFix(PsiClass thrown) {
-      myThrown = SmartPointerManager.getInstance(thrown.getProject()).createSmartPsiElementPointer(thrown);
-      myText = thrown.getName();
+    AddCatchSectionFix(SmartTypePointer thrown, String typeText) {
+      myThrown = thrown;
+      myText = typeText;
     }
 
     @Override
@@ -118,6 +120,10 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiType thrownType = myThrown.getType();
+      if (thrownType == null) {
+        return;
+      }
       final PsiElement typeElement = descriptor.getPsiElement();
       if (typeElement == null) {
         return;
@@ -135,11 +141,7 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final String name = codeStyleManager.suggestUniqueVariableName("e", myTryStatement.getTryBlock(), false);
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      final PsiClass aClass = myThrown.getElement();
-      if (aClass == null) {
-        return;
-      }
-      final PsiCatchSection section = factory.createCatchSection(factory.createType(aClass), name, myTryStatement);
+      final PsiCatchSection section = factory.createCatchSection(thrownType, name, myTryStatement);
       final PsiCatchSection element = (PsiCatchSection)myTryStatement.addBefore(section, myBeforeCatchSection);
       codeStyleManager.shortenClassReferences(element);
 

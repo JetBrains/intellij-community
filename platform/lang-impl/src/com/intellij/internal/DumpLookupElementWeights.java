@@ -66,7 +66,8 @@ public class DumpLookupElementWeights extends AnAction implements DumbAware {
     final Map<LookupElement,StringBuilder> strings = lookup.getRelevanceStrings();
     List<String> sb = new ArrayList<String>();
     for (LookupElement item : lookup.getItems()) {
-      String weight = strings.get(item).toString();
+      StringBuilder builder = strings.get(item);
+      String weight = builder == null ? "null" : builder.toString();
       final String s = item.getLookupString() + "\t" + weight;
       sb.add(s);
     }

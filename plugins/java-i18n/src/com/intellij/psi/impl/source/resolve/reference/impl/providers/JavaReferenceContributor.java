@@ -16,11 +16,13 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.documentation.ArbitraryPlaceUrlReferenceProvider;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.psi.javadoc.PsiDocToken;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -52,5 +54,8 @@ public class JavaReferenceContributor extends PsiReferenceContributor{
         return true;
       }
     })), filePathReferenceProvider);
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiDocToken.class), ArbitraryPlaceUrlReferenceProvider.INSTANCE);
+    // todo register for all ?
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiComment.class), ArbitraryPlaceUrlReferenceProvider.INSTANCE);
   }
 }

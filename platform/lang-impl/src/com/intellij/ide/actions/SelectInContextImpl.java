@@ -16,7 +16,7 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureView;
@@ -63,9 +63,7 @@ public abstract class SelectInContextImpl implements SelectInContext {
   @Override
   @NotNull
   public VirtualFile getVirtualFile() {
-    final VirtualFile vFile = myPsiFile.getVirtualFile();
-    assert vFile != null;
-    return vFile;
+    return myPsiFile.getViewProvider().getVirtualFile();
   }
 
   @Override
@@ -209,7 +207,7 @@ public abstract class SelectInContextImpl implements SelectInContext {
         return super.getSelectorInFile();
       }
       Editor editor = myEditor.getEditor();
-      int offset = TargetElementUtilBase.adjustOffset(myPsiFile, editor.getDocument(), editor.getCaretModel().getOffset());
+      int offset = TargetElementUtil.adjustOffset(myPsiFile, editor.getDocument(), editor.getCaretModel().getOffset());
       PsiElement element = myPsiFile.findElementAt(offset);
       return element != null ? element : super.getSelectorInFile();
     }

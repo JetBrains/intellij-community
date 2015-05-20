@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
+class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private boolean myIsExpanded;
   private final Editor myEditor;
   private final String myPlaceholderText;
@@ -94,7 +94,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     return super.isValid() && intervalStart() < intervalEnd();
   }
 
-  public void setExpandedInternal(boolean toExpand) {
+  void setExpandedInternal(boolean toExpand) {
     myIsExpanded = toExpand;
   }
 
@@ -120,6 +120,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     return myShouldNeverExpand;
   }
 
+  @Override
   public String toString() {
     return "FoldRegion " + (myIsExpanded ? "-" : "+") + "(" + getStartOffset() + ":" + getEndOffset() + ")"
            + (isValid() ? "" : "(invalid)") + ", placeholder='" + myPlaceholderText + "'";

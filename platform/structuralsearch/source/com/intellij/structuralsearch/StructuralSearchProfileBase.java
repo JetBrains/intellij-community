@@ -21,7 +21,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.impl.matcher.*;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
+import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
@@ -192,12 +195,6 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   }
 
   @Override
-  public boolean canProcess(@NotNull FileType fileType) {
-    return fileType instanceof LanguageFileType &&
-           isMyLanguage(((LanguageFileType)fileType).getLanguage());
-  }
-
-  @Override
   public boolean isMyLanguage(@NotNull Language language) {
     return language.isKindOf(getFileType().getLanguage());
   }
@@ -331,7 +328,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return element != null;
   }
 
-  private static boolean isLiteral(PsiElement element) {
+  protected boolean isStringLiteral(PsiElement element) {
     if (element == null) return false;
     final ASTNode astNode = element.getNode();
     if (astNode == null) {
@@ -420,7 +417,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   // todo: support expression patterns
   // todo: support {statement;} = statement; (node has only non-lexical child)
 
-  private static class MyCompilingVisitor extends PsiRecursiveElementVisitor {
+  private class MyCompilingVisitor extends PsiRecursiveElementVisitor {
     private final GlobalCompilingVisitor myGlobalVisitor;
     private final PsiElement myTopElement;
 
@@ -435,7 +432,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     public void visitElement(PsiElement element) {
       doVisitElement(element);
 
-      if (isLiteral(element)) {
+      if (isStringLiteral(element)) {
         visitLiteral(element);
       }
     }
@@ -499,11 +496,11 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       }
     }
 
-    private static Pattern[] createPatterns(String[] prefixes) {
+    private Pattern[] createPatterns(String[] prefixes) {
       final Pattern[] patterns = new Pattern[prefixes.length];
 
       for (int i = 0; i < prefixes.length; i++) {
-        final String s = StructuralSearchUtil.shieldSpecialChars(prefixes[0]);
+        final String s = StructuralSearchUtil.shieldSpecialChars(prefixes[i]);
         patterns[i] = Pattern.compile("\\b(" + s + "\\w+)\\b");
       }
       return patterns;
@@ -551,7 +548,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
   }
 
-  private static class MyMatchingVisitor extends PsiElementVisitor {
+  private class MyMatchingVisitor extends PsiElementVisitor {
     private final GlobalMatchingVisitor myGlobalVisitor;
 
     private MyMatchingVisitor(GlobalMatchingVisitor globalVisitor) {
@@ -584,7 +581,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         }
       }
 
-      if (isLiteral(element)) {
+      if (isStringLiteral(element)) {
         visitLiteral(element);
         return;
       }
@@ -620,7 +617,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       }
     }
 
-    public void visitLiteral(PsiElement literal) {
+    private void visitLiteral(PsiElement literal) {
       final PsiElement l2 = myGlobalVisitor.getElement();
 
       MatchingHandler handler = (MatchingHandler)literal.getUserData(CompiledPattern.HANDLER_KEY);
@@ -630,11 +627,17 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         int length = l2.getTextLength();
         final String text = l2.getText();
 
-        if (length > 2 &&
-            (text.charAt(0) == '"' && text.charAt(length - 1) == '"') ||
-            (text.charAt(0) == '\'' && text.charAt(length - 1) == '\'')) {
-          length--;
-          offset++;
+        if (length > 2) {
+          final char c = text.charAt(0);
+          if ((c == '"' || c == '\'') && text.charAt(length - 1) == c) {
+            final boolean looseMatching = myGlobalVisitor.getMatchContext().getOptions().isLooseMatching();
+            if (!looseMatching && c != literal.getText().charAt(0)) {
+              myGlobalVisitor.setResult(false);
+              return;
+            }
+            length--;
+            offset++;
+          }
         }
         myGlobalVisitor.setResult(((SubstitutionHandler)handler).handle(l2, offset, length, myGlobalVisitor.getMatchContext()));
       }

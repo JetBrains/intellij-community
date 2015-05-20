@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +31,7 @@ import java.awt.*;
 public abstract class TextAttributesDescription extends ColorAndFontDescription {
   private final TextAttributes myAttributes;
 
-  public TextAttributesDescription(String name,
+  public TextAttributesDescription(@NotNull String name,
                                    String group,
                                    TextAttributes attributes,
                                    TextAttributesKey type,

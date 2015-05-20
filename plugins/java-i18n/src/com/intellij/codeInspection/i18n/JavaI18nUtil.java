@@ -17,8 +17,8 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.template.macro.MacroUtil;
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.references.I18nUtil;
@@ -69,7 +69,7 @@ public class JavaI18nUtil extends I18nUtil {
   }
 
   public static boolean mustBePropertyKey(@NotNull Project project,
-                                          @NotNull PsiLiteralExpression expression,
+                                          @NotNull PsiExpression expression,
                                           @NotNull Map<String, Object> annotationAttributeValues) {
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiVariable) {
@@ -228,7 +228,7 @@ public class JavaI18nUtil extends I18nUtil {
   }
 
   public static boolean isValidPropertyReference(@NotNull Project project,
-                                                 @NotNull PsiLiteralExpression expression,
+                                                 @NotNull PsiExpression expression,
                                                  @NotNull String key,
                                                  @NotNull Ref<String> outResourceBundle) {
     final HashMap<String, Object> annotationAttributeValues = new HashMap<String, Object>();
@@ -239,9 +239,30 @@ public class JavaI18nUtil extends I18nUtil {
         return false;
       }
       PsiExpression expr = (PsiExpression)resourceBundleName;
-      final Object value = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr);
+      final PsiConstantEvaluationHelper constantEvaluationHelper = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
+      Object value = constantEvaluationHelper.computeConstantExpression(expr);
       if (value == null) {
-        return false;
+        if (expr instanceof PsiReferenceExpression) {
+          final PsiElement resolve = ((PsiReferenceExpression)expr).resolve();
+          if (resolve instanceof PsiField && ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL)) {
+            value = constantEvaluationHelper.computeConstantExpression(((PsiField)resolve).getInitializer());
+            if (value == null) {
+              return false;
+            }
+          }
+        }
+        if (value == null) {
+          final ResourceBundle resourceBundle = resolveResourceBundleByKey(key, project);
+          if (resourceBundle == null) {
+            return false;
+          }
+          final PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile();
+          final String bundleName = BundleNameEvaluator.DEFAULT.evaluateBundleName(defaultPropertiesFile.getContainingFile());
+          if (bundleName == null) {
+            return false;
+          }
+          value = bundleName;
+        }
       }
       String bundleName = value.toString();
       outResourceBundle.set(bundleName);
@@ -250,7 +271,29 @@ public class JavaI18nUtil extends I18nUtil {
     return true;
   }
 
-  public static boolean isPropertyRef(final PsiLiteralExpression expression, final String key, final String resourceBundleName) {
+  @Nullable
+  public static ResourceBundle resolveResourceBundleByKey(final @NotNull String key, final @NotNull Project project) {
+    final Ref<ResourceBundle> bundleRef = Ref.create();
+    final boolean r = PropertiesReferenceManager.getInstance(project).processAllPropertiesFiles(new PropertiesFileProcessor() {
+      @Override
+      public boolean process(String baseName, PropertiesFile propertiesFile) {
+        if (propertiesFile.findPropertyByKey(key) != null) {
+          if (bundleRef.get() == null) {
+            bundleRef.set(propertiesFile.getResourceBundle());
+          }
+          else {
+            if (!bundleRef.get().equals(propertiesFile.getResourceBundle())) {
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+    });
+    return r ? bundleRef.get() : null;
+  }
+
+  public static boolean isPropertyRef(final PsiExpression expression, final String key, final String resourceBundleName) {
     if (resourceBundleName == null) {
       return !PropertiesImplUtil.findPropertiesByKey(expression.getProject(), key).isEmpty();
     }
@@ -339,19 +382,54 @@ public class JavaI18nUtil extends I18nUtil {
    * @param expression i18n literal
    * @return number of parameters
    */
-  public static int getPropertyValueParamsMaxCount(final @NotNull PsiLiteralExpression expression) {
-    int maxCount = -1;
-    for (PsiReference reference : expression.getReferences()) {
+  public static int getPropertyValueParamsMaxCount(final @NotNull PsiExpression expression) {
+    return getPropertyValueParamsMaxCount(expression, null);
+  }
+
+  public static int getPropertyValueParamsMaxCount(final @NotNull PsiExpression expression, final @Nullable String resourceBundleName) {
+    final SortedSet<Integer> paramsCount = getPropertyValueParamsCount(expression, resourceBundleName);
+    if (paramsCount.isEmpty()) {
+      return -1;
+    }
+    return paramsCount.last();
+  }
+
+  @NotNull
+  public static SortedSet<Integer> getPropertyValueParamsCount(final @NotNull PsiExpression expression, final @Nullable String resourceBundleName) {
+    final PsiLiteralExpression literalExpression;
+    if (expression instanceof PsiLiteralExpression) {
+      literalExpression = (PsiLiteralExpression)expression;
+    } else if (expression instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
+      final PsiField field = resolved == null ? null : (PsiField)resolved;
+      literalExpression =
+        field != null && field.hasModifierProperty(PsiModifier.FINAL) && field.getInitializer() instanceof PsiLiteralExpression
+        ? (PsiLiteralExpression)field.getInitializer()
+        : null;
+    } else {
+      literalExpression = null;
+    }
+    final TreeSet<Integer> paramsCount = new TreeSet<Integer>();
+    if (literalExpression == null) {
+      return paramsCount;
+    }
+    for (PsiReference reference : literalExpression.getReferences()) {
       if (reference instanceof PsiPolyVariantReference) {
         for (ResolveResult result : ((PsiPolyVariantReference)reference).multiResolve(false)) {
           if (result.isValidResult() && result.getElement() instanceof IProperty) {
             try {
               final IProperty property = (IProperty)result.getElement();
+              if (resourceBundleName != null) {
+                final PsiFile file = property.getPropertiesFile().getContainingFile();
+                if (!resourceBundleName.equals(BundleNameEvaluator.DEFAULT.evaluateBundleName(file))) {
+                  continue;
+                }
+              }
               final String propertyValue = property.getValue();
               if (propertyValue == null) {
                 continue;
               }
-              maxCount = Math.max(maxCount, getPropertyValuePlaceholdersCount(propertyValue));
+              paramsCount.add(getPropertyValuePlaceholdersCount(propertyValue));
             }
             catch (IllegalArgumentException ignored) {
             }
@@ -359,6 +437,6 @@ public class JavaI18nUtil extends I18nUtil {
         }
       }
     }
-    return maxCount;
+    return paramsCount;
   }
 }

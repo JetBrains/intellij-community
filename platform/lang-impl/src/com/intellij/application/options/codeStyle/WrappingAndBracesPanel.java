@@ -18,8 +18,19 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
+  private MultiMap<String, String> myGroupToFields = new MultiMap<String, String>();
+  private Map<String, SettingsGroup> myFieldNameToGroup;
+
   public WrappingAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
     init();
@@ -28,6 +39,23 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   @Override
   public LanguageCodeStyleSettingsProvider.SettingsType getSettingsType() {
     return LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
+  }
+
+  @Override
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName) {
+    super.addOption(fieldName, title, groupName);
+    if (groupName != null) {
+      myGroupToFields.putValue(groupName, fieldName);
+    }
+  }
+
+  @Override
+  protected void addOption(@NotNull String fieldName, @NotNull String title, @Nullable String groupName,
+                           @NotNull String[] options, @NotNull int[] values) {
+    super.addOption(fieldName, title, groupName, options, values);
+    if (groupName == null) {
+      myGroupToFields.putValue(title, fieldName);
+    }
   }
 
   @Override
@@ -73,9 +101,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("ALIGN_MULTILINE_METHOD_BRACKETS", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_METHOD_PARENTHESES);
 
     addOption("METHOD_CALL_CHAIN_WRAP", WRAPPING_CALL_CHAIN, WRAP_OPTIONS, WRAP_VALUES);
+    addOption("WRAP_FIRST_METHOD_IN_CALL_CHAIN", ApplicationBundle.message("wrapping.chained.method.call.first.on.new.line"), WRAPPING_CALL_CHAIN);
     addOption("ALIGN_MULTILINE_CHAINED_METHODS", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_CALL_CHAIN);
-
-    addOption("ALIGN_GROUP_FIELD_DECLARATIONS", ApplicationBundle.message("wrapping.align.in.columns"), WRAPPING_FIELDS_VARIABLES_GROUPS);
 
     addOption("IF_BRACE_FORCE", ApplicationBundle.message("wrapping.force.braces"), WRAPPING_IF_STATEMENT, BRACE_OPTIONS, BRACE_VALUES);
     addOption("ELSE_ON_NEW_LINE", ApplicationBundle.message("wrapping.else.on.new.line"), WRAPPING_IF_STATEMENT);
@@ -92,6 +119,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("WHILE_ON_NEW_LINE", ApplicationBundle.message("wrapping.while.on.new.line"), WRAPPING_DOWHILE_STATEMENT);
 
     addOption("INDENT_CASE_FROM_SWITCH", ApplicationBundle.message("wrapping.indent.case.from.switch"), WRAPPING_SWITCH_STATEMENT);
+    addOption("INDENT_BREAK_FROM_CASE", ApplicationBundle.message("wrapping.indent.break.from.case"), WRAPPING_SWITCH_STATEMENT);
 
     addOption("RESOURCE_LIST_WRAP", WRAPPING_TRY_RESOURCE_LIST, WRAP_OPTIONS, WRAP_VALUES);
     addOption("ALIGN_MULTILINE_RESOURCES", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_TRY_RESOURCE_LIST);
@@ -111,6 +139,9 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("ASSIGNMENT_WRAP", WRAPPING_ASSIGNMENT, WRAP_OPTIONS, WRAP_VALUES);
     addOption("ALIGN_MULTILINE_ASSIGNMENT", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_ASSIGNMENT);
     addOption("PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE", ApplicationBundle.message("wrapping.assignment.sign.on.next.line"), WRAPPING_ASSIGNMENT);
+
+    addOption("ALIGN_GROUP_FIELD_DECLARATIONS", ApplicationBundle.message("wrapping.align.fields.in.columns"), WRAPPING_FIELDS_VARIABLES_GROUPS);
+    addOption("ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS", ApplicationBundle.message("wrapping.align.variables.in.columns"), WRAPPING_FIELDS_VARIABLES_GROUPS);
 
     addOption("TERNARY_OPERATION_WRAP", WRAPPING_TERNARY_OPERATION, WRAP_OPTIONS, WRAP_VALUES);
     addOption("ALIGN_MULTILINE_TERNARY_OPERATION", ApplicationBundle.message("wrapping.align.when.multiline"), WRAPPING_TERNARY_OPERATION);
@@ -134,8 +165,34 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     addOption("VARIABLE_ANNOTATION_WRAP", ApplicationBundle.message("wrapping.local.variables.annotation"), WRAP_OPTIONS, WRAP_VALUES);
   }
 
+  protected SettingsGroup getAssociatedSettingsGroup(String fieldName) {
+    if (myFieldNameToGroup == null) {
+      myFieldNameToGroup = ContainerUtil.newHashMap();
+      Set<String> groups = myGroupToFields.keySet();
+      for (String group : groups) {
+        Collection<String> fields = myGroupToFields.get(group);
+        SettingsGroup settingsGroup = new SettingsGroup(group, fields);
+        for (String field : fields) {
+          myFieldNameToGroup.put(field, settingsGroup);
+        }
+      }
+    }
+    return myFieldNameToGroup.get(fieldName);
+  }
+
   @Override
   protected String getTabTitle() {
     return ApplicationBundle.message("wrapping.and.braces");
+  }
+
+  protected static class SettingsGroup {
+    public final String title;
+    public final Collection<String> commonCodeStyleSettingFieldNames;
+
+    public SettingsGroup(@NotNull String title,
+                         @NotNull Collection<String> commonCodeStyleSettingFieldNames) {
+      this.title = title;
+      this.commonCodeStyleSettingFieldNames = commonCodeStyleSettingFieldNames;
+    }
   }
 }

@@ -40,6 +40,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -1235,7 +1236,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   private class MyRefreshPropertiesRequest implements Runnable {
     public void run() {
-      if (!getModule().isDisposed() && !getProject().isDisposed()) {
+      if (!getModule().isDisposed() && !getProject().isDisposed() && !DumbService.isDumb(getProject())) {
         refreshProperties();
       }
     }

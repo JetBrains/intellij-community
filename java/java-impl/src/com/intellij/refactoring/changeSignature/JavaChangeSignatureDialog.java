@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -56,9 +57,10 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.table.JBListTable;
+import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
+import com.intellij.util.ui.table.JBTableRowRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +74,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.intellij.refactoring.changeSignature.ChangeSignatureHandler.REFACTORING_NAME;
@@ -171,7 +174,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, PlatformIcons.NEW_EXCEPTION) {
+    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Caller) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<JavaCallerChooser>();
@@ -220,32 +223,170 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   @Override
-  protected boolean isEmptyRow(ParameterTableModelItemBase<ParameterInfoImpl> row) {
-    if (!StringUtil.isEmpty(row.parameter.getName())) return false;
-    if (!StringUtil.isEmpty(row.parameter.getTypeText())) return false;
-    return true;
-  }
+  protected ParametersListTable createParametersListTable() {
+    return new ParametersListTable() {
+      private final EditorTextFieldJBTableRowRenderer myRowRenderer =
+        new EditorTextFieldJBTableRowRenderer(getProject(), JavaChangeSignatureDialog.this.getFileType(), myDisposable) {
+        @Override
+        protected String getText(JTable table, int row) {
+          ParameterTableModelItemBase<ParameterInfoImpl> item = getRowItem(row);
+          final String typeText = item.typeCodeFragment.getText();
+          final String separator = StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
+          String text = typeText + separator + item.parameter.getName();
+          final String defaultValue = item.defaultValueCodeFragment.getText();
+          String tail = "";
+          if (StringUtil.isNotEmpty(defaultValue)) {
+            tail += " default value = " + defaultValue;
+          }
+          if (item.parameter.isUseAnySingleVariable()) {
+            if (StringUtil.isNotEmpty(defaultValue)) {
+              tail += ";";
+            }
+            tail += " Use any var.";
+          }
+          if (!StringUtil.isEmpty(tail)) {
+            text += " //" + tail;
+          }
+          return " " + text;
+        }
+      };
 
-  @Override
-  protected JComponent getRowPresentation(ParameterTableModelItemBase<ParameterInfoImpl> item, boolean selected, final boolean focused) {
-    final String typeText = item.typeCodeFragment.getText();
-    final String separator = StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
-    String text = typeText + separator + item.parameter.getName();
-    final String defaultValue = item.defaultValueCodeFragment.getText();
-    String tail = "";
-    if (StringUtil.isNotEmpty(defaultValue)) {
-      tail += " default value = " + defaultValue;
-    }
-    if (item.parameter.isUseAnySingleVariable()) {
-      if (StringUtil.isNotEmpty(defaultValue)) {
-        tail += ";";
+      @Override
+      protected JBTableRowRenderer getRowRenderer(int row) {
+        return myRowRenderer;
       }
-      tail += " Use any var.";
-    }
-    if (!StringUtil.isEmpty(tail)) {
-      text += " //" + tail;
-    }
-    return JBListTable.createEditorTextFieldPresentation(getProject(), getFileType(), " " + text, selected, focused);
+
+      @NotNull
+      @Override
+      protected JBTableRowEditor getRowEditor(final ParameterTableModelItemBase<ParameterInfoImpl> item) {
+        return new JBTableRowEditor() {
+          private EditorTextField myTypeEditor;
+          private EditorTextField myNameEditor;
+          private EditorTextField myDefaultValueEditor;
+          private JCheckBox myAnyVar;
+
+          @Override
+          public void prepareEditor(JTable table, int row) {
+            setLayout(new BorderLayout());
+            final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(item.typeCodeFragment);
+            myTypeEditor = new EditorTextField(document, getProject(), getFileType());
+            myTypeEditor.addDocumentListener(mySignatureUpdater);
+            myTypeEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myTypeEditor.addDocumentListener(new RowEditorChangeListener(0));
+            add(createLabeledPanel("Type:", myTypeEditor), BorderLayout.WEST);
+
+            myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
+            myNameEditor.addDocumentListener(mySignatureUpdater);
+            myNameEditor.addDocumentListener(new RowEditorChangeListener(1));
+            add(createLabeledPanel("Name:", myNameEditor), BorderLayout.CENTER);
+            new TextFieldCompletionProvider() {
+
+              @Override
+              protected void addCompletionVariants(@NotNull String text,
+                                                   int offset,
+                                                   @NotNull String prefix,
+                                                   @NotNull CompletionResultSet result) {
+                final PsiCodeFragment fragment = item.typeCodeFragment;
+                if (fragment instanceof PsiTypeCodeFragment) {
+                  final PsiType type;
+                  try {
+                    type = ((PsiTypeCodeFragment)fragment).getType();
+                  }
+                  catch (Exception e) {
+                    return;
+                  }
+                  final SuggestedNameInfo info = JavaCodeStyleManager.getInstance(myProject)
+                    .suggestVariableName(VariableKind.PARAMETER, null, null, type);
+
+                  for (String completionVariant : info.names) {
+                    final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
+                    result.addElement(element.withLookupString(completionVariant.toLowerCase(Locale.ENGLISH)));
+                  }
+                }
+              }
+            }.apply(myNameEditor, item.parameter.getName());
+
+            if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
+              final JPanel additionalPanel = new JPanel(new BorderLayout());
+              final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
+              myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
+              ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
+              myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
+              myDefaultValueEditor.addDocumentListener(new RowEditorChangeListener(2));
+              additionalPanel.add(createLabeledPanel("Default value:", myDefaultValueEditor), BorderLayout.WEST);
+
+              if (!isGenerateDelegate()) {
+                myAnyVar = new JCheckBox("&Use Any Var");
+                UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myAnyVar);
+                DialogUtil.registerMnemonic(myAnyVar, '&');
+                myAnyVar.addActionListener(new ActionListener() {
+                  @Override
+                  public void actionPerformed(ActionEvent e) {
+                    item.parameter.setUseAnySingleVariable(myAnyVar.isSelected());
+                  }
+                });
+                final JPanel anyVarPanel = new JPanel(new BorderLayout());
+                anyVarPanel.add(myAnyVar, BorderLayout.SOUTH);
+                UIUtil.addInsets(anyVarPanel, new Insets(0,0,8,0));
+                additionalPanel.add(anyVarPanel, BorderLayout.CENTER);
+                //additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
+              }
+              add(additionalPanel, BorderLayout.SOUTH);
+            }
+          }
+
+          @Override
+          public JBTableRow getValue() {
+            return new JBTableRow() {
+              @Override
+              public Object getValueAt(int column) {
+                switch (column) {
+                  case 0: return item.typeCodeFragment;
+                  case 1: return myNameEditor.getText().trim();
+                  case 2: return item.defaultValueCodeFragment;
+                  case 3: return myAnyVar != null && myAnyVar.isSelected();
+                }
+                return null;
+              }
+            };
+          }
+
+          @Override
+          public JComponent getPreferredFocusedComponent() {
+            final MouseEvent me = getMouseEvent();
+            if (me == null) {
+              return myTypeEditor.getFocusTarget();
+            }
+            final double x = me.getPoint().getX();
+            return x <= getTypesColumnWidth()
+                   ? myTypeEditor.getFocusTarget()
+                   : myDefaultValueEditor == null || x <= getNamesColumnWidth()
+                     ? myNameEditor.getFocusTarget()
+                     : myDefaultValueEditor.getFocusTarget();
+          }
+
+          @Override
+          public JComponent[] getFocusableComponents() {
+            final List<JComponent> focusable = new ArrayList<JComponent>();
+            focusable.add(myTypeEditor.getFocusTarget());
+            focusable.add(myNameEditor.getFocusTarget());
+            if (myDefaultValueEditor != null) {
+              focusable.add(myDefaultValueEditor.getFocusTarget());
+            }
+            if (myAnyVar != null) {
+              focusable.add(myAnyVar);
+            }
+            return focusable.toArray(new JComponent[focusable.size()]);
+          }
+        };
+      }
+
+      @Override
+      protected boolean isRowEmpty(int row) {
+        ParameterInfoImpl parameter = getRowItem(row).parameter;
+        return StringUtil.isEmpty(parameter.getName()) && StringUtil.isEmpty(parameter.getTypeText());
+      }
+    };
   }
 
   private int getTypesMaxLength() {
@@ -281,130 +422,6 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return getColumnWidth(1);
   }
 
-  @Override
-  protected JBTableRowEditor getTableEditor(final JTable t, final ParameterTableModelItemBase<ParameterInfoImpl> item) {
-    return new JBTableRowEditor() {
-      private EditorTextField myTypeEditor;
-      private EditorTextField myNameEditor;
-      private EditorTextField myDefaultValueEditor;      
-      private JCheckBox myAnyVar;
-
-      @Override
-      public void prepareEditor(JTable table, int row) {
-        setLayout(new BorderLayout());
-        final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(item.typeCodeFragment);
-        myTypeEditor = new EditorTextField(document, getProject(), getFileType());
-        myTypeEditor.addDocumentListener(mySignatureUpdater);
-        myTypeEditor.setPreferredWidth(t.getWidth() / 2);
-        myTypeEditor.addDocumentListener(new RowEditorChangeListener(0));
-        add(createLabeledPanel("Type:", myTypeEditor), BorderLayout.WEST);
-
-        myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
-        myNameEditor.addDocumentListener(mySignatureUpdater);
-        myNameEditor.addDocumentListener(new RowEditorChangeListener(1));
-        add(createLabeledPanel("Name:", myNameEditor), BorderLayout.CENTER);
-        new TextFieldCompletionProvider() {
-
-          @Override
-          protected void addCompletionVariants(@NotNull String text,
-                                               int offset,
-                                               @NotNull String prefix,
-                                               @NotNull CompletionResultSet result) {
-            final PsiCodeFragment fragment = item.typeCodeFragment;
-            if (fragment instanceof PsiTypeCodeFragment) {
-              final PsiType type;
-              try {
-                type = ((PsiTypeCodeFragment)fragment).getType();
-              }
-              catch (Exception e) {
-                return;
-              }
-              final SuggestedNameInfo info = JavaCodeStyleManager.getInstance(myProject)
-                .suggestVariableName(VariableKind.PARAMETER, null, null, type);
-
-              for (String completionVariant : info.names) {
-                final LookupElementBuilder element = LookupElementBuilder.create(completionVariant);
-                result.addElement(element.withLookupString(completionVariant.toLowerCase()));
-              }
-            }
-          }
-        }.apply(myNameEditor, item.parameter.getName());
-
-        if (!item.isEllipsisType() && item.parameter.getOldIndex() == -1) {
-          final JPanel additionalPanel = new JPanel(new BorderLayout());
-          final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
-          myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
-          ((PsiExpressionCodeFragment)item.defaultValueCodeFragment).setExpectedType(getRowType(item));
-          myDefaultValueEditor.setPreferredWidth(t.getWidth() / 2);
-          myDefaultValueEditor.addDocumentListener(new RowEditorChangeListener(2));
-          additionalPanel.add(createLabeledPanel("Default value:", myDefaultValueEditor), BorderLayout.WEST);
-
-          if (!isGenerateDelegate()) {
-            myAnyVar = new JCheckBox("&Use Any Var");
-            UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myAnyVar);
-            DialogUtil.registerMnemonic(myAnyVar, '&');
-            myAnyVar.addActionListener(new ActionListener() {
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                item.parameter.setUseAnySingleVariable(myAnyVar.isSelected());
-              }
-            });
-            final JPanel anyVarPanel = new JPanel(new BorderLayout());
-            anyVarPanel.add(myAnyVar, BorderLayout.SOUTH);
-            UIUtil.addInsets(anyVarPanel, new Insets(0,0,8,0));
-            additionalPanel.add(anyVarPanel, BorderLayout.CENTER);
-            //additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
-          }
-          add(additionalPanel, BorderLayout.SOUTH);
-        }
-      }
-
-      @Override
-      public JBTableRow getValue() {
-        return new JBTableRow() {
-          @Override
-          public Object getValueAt(int column) {
-            switch (column) {
-              case 0: return item.typeCodeFragment;
-              case 1: return myNameEditor.getText().trim();
-              case 2: return item.defaultValueCodeFragment;
-              case 3: return myAnyVar != null && myAnyVar.isSelected();
-            }
-            return null;
-          }
-        };
-      }
-
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        final MouseEvent me = getMouseEvent();
-        if (me == null) {
-          return myTypeEditor.getFocusTarget();
-        }
-        final double x = me.getPoint().getX();
-        return x <= getTypesColumnWidth()
-               ? myTypeEditor.getFocusTarget()
-               : myDefaultValueEditor == null || x <= getNamesColumnWidth()
-                 ? myNameEditor.getFocusTarget()
-                 : myDefaultValueEditor.getFocusTarget();
-      }
-
-      @Override
-      public JComponent[] getFocusableComponents() {
-        final List<JComponent> focusable = new ArrayList<JComponent>();
-        focusable.add(myTypeEditor.getFocusTarget());
-        focusable.add(myNameEditor.getFocusTarget());
-        if (myDefaultValueEditor != null) {
-          focusable.add(myDefaultValueEditor.getFocusTarget());
-        }
-        if (myAnyVar != null) {
-          focusable.add(myAnyVar);
-        }
-        return focusable.toArray(new JComponent[focusable.size()]);
-      }
-    };
-  }
-  
   @Nullable
   private static PsiType getRowType(ParameterTableModelItemBase<ParameterInfoImpl> item) {
     try {

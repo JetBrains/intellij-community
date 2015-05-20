@@ -46,9 +46,9 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
-import com.intellij.util.net.NetUtils;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -56,10 +56,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.*;
-import java.net.HttpURLConnection;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -148,10 +148,6 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     throws IncorrectOperationException {
     final String url = findUrl(file, offset, uri);
     final Project project = file.getProject();
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, XmlBundle.message("fetching.resource.title")) {
       @Override
@@ -515,30 +511,17 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   }
 
   @Nullable
-  private static FetchResult fetchData(final Project project, final String dtdUrl, ProgressIndicator indicator) throws IOException {
-
+  private static FetchResult fetchData(final Project project, final String dtdUrl, final ProgressIndicator indicator) throws IOException {
     try {
-      URL url = new URL(dtdUrl);
-      HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
-      urlConnection.addRequestProperty("accept", "text/xml,application/xml,text/html,*/*");
-      int contentLength = urlConnection.getContentLength();
-
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      InputStream in = urlConnection.getInputStream();
-      String contentType;
-      try {
-        contentType = urlConnection.getContentType();
-        NetUtils.copyStreamContent(indicator, in, out, contentLength);
-      }
-      finally {
-        in.close();
-      }
-
-      FetchResult result = new FetchResult();
-      result.bytes = out.toByteArray();
-      result.contentType = contentType;
-
-      return result;
+      return HttpRequests.request(dtdUrl).accept("text/xml,application/xml,text/html,*/*").connect(new HttpRequests.RequestProcessor<FetchResult>() {
+        @Override
+        public FetchResult process(@NotNull HttpRequests.Request request) throws IOException {
+          FetchResult result = new FetchResult();
+          result.bytes = request.readBytes(indicator);
+          result.contentType = request.getConnection().getContentType();
+          return result;
+        }
+      });
     }
     catch (MalformedURLException e) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {

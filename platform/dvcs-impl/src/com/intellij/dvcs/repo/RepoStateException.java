@@ -15,10 +15,7 @@
  */
 package com.intellij.dvcs.repo;
 
-/**
- * @author Nadya Zabrodina
- */
-public class RepoStateException extends RuntimeException {
+public class RepoStateException extends Exception {
 
   public RepoStateException(String message) {
     super(message);

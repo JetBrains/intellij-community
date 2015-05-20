@@ -33,6 +33,8 @@ public class EditorDocumentPriorities {
   public static final int RANGE_MARKER = 40;
 
   public static final int FOLD_MODEL = 60;
+  public static final int EDITOR_TEXT_LAYOUT_CACHE = 70;
+  public static final int EDITOR_TEXT_WIDTH_CACHE = 75;
   public static final int LEXER_EDITOR = 80;
   public static final int SOFT_WRAP_MODEL = 100;
   public static final int CARET_MODEL = 120;

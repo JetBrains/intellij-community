@@ -30,6 +30,7 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.Nullable;
 
 public class AssignInstruction extends Instruction {
@@ -46,8 +47,13 @@ public class AssignInstruction extends Instruction {
     return visitor.visitAssign(this, runner, stateBefore);
   }
 
+  @Nullable
   public PsiExpression getRExpression() {
     return myRExpression;
+  }
+
+  public boolean isVariableInitializer() {
+    return myRExpression != null && myRExpression.getParent() instanceof PsiVariable;
   }
 
   @Nullable

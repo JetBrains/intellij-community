@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
 import sun.awt.SunToolkit;
 import sun.swing.SwingUtilities2;
 
@@ -173,34 +176,38 @@ public class DarculaTitlePane extends JComponent {
         myActiveShadow = UIManager.getColor("activeCaptionBorder");
         break;
       case JRootPane.ERROR_DIALOG:
-        myActiveBackground = UIManager.getColor("OptionPane.errorDialog.titlePane.background");
+        myActiveBackground = new Color(43, 43, 43);//UIManager.getColor("OptionPane.errorDialog.titlePane.background");
         myActiveForeground = UIManager.getColor("OptionPane.errorDialog.titlePane.foreground");
         myActiveShadow = UIManager.getColor("OptionPane.errorDialog.titlePane.shadow");
         break;
       case JRootPane.QUESTION_DIALOG:
       case JRootPane.COLOR_CHOOSER_DIALOG:
       case JRootPane.FILE_CHOOSER_DIALOG:
-        myActiveBackground = UIManager.getColor("OptionPane.questionDialog.titlePane.background");
+        myActiveBackground = new Color(43, 43, 43);//UIManager.getColor("OptionPane.questionDialog.titlePane.background");
         myActiveForeground = UIManager.getColor("OptionPane.questionDialog.titlePane.foreground");
         myActiveShadow = UIManager.getColor("OptionPane.questionDialog.titlePane.shadow");
         break;
       case JRootPane.WARNING_DIALOG:
-        myActiveBackground = UIManager.getColor("OptionPane.warningDialog.titlePane.background");
+        myActiveBackground = new Color(43, 43, 43);//UIManager.getColor("OptionPane.warningDialog.titlePane.background");
         myActiveForeground = UIManager.getColor("OptionPane.warningDialog.titlePane.foreground");
         myActiveShadow = UIManager.getColor("OptionPane.warningDialog.titlePane.shadow");
         break;
       case JRootPane.PLAIN_DIALOG:
       case JRootPane.INFORMATION_DIALOG:
       default:
-        myActiveBackground = UIManager.getColor("activeCaption");
+        myActiveBackground = new Color(43, 43, 43);//UIManager.getColor("activeCaption");
         myActiveForeground = UIManager.getColor("activeCaptionText");
         myActiveShadow = UIManager.getColor("activeCaptionBorder");
         break;
     }
+
+    myActiveBackground = new Color(43, 43, 43);//UIManager.getColor("activeCaption");
+    myActiveForeground = JBColor.foreground();//UIManager.getColor("activeCaptionText");
+    myActiveShadow = UIManager.getColor("activeCaptionBorder");
   }
 
   private void installDefaults() {
-    setFont(UIManager.getFont("InternalFrame.titleFont", getLocale()));
+    setFont(JBUI.Fonts.label().asBold());
   }
 
 
@@ -280,10 +287,17 @@ public class DarculaTitlePane extends JComponent {
   }
 
   private static JButton createButton(String accessibleName, Icon icon, Action action) {
-    JButton button = new JButton();
+    JButton button = new JButton() {
+      @Override
+      protected void paintComponent(Graphics g) {
+        //g.setColor(Gray._43);
+        //g.fillRect(0,0,getWidth(), getHeight());
+        getIcon().paintIcon(this, g, 0, 0);
+      }
+    };
     button.setFocusPainted(false);
     button.setFocusable(false);
-    button.setOpaque(true);
+    button.setOpaque(false);
     button.putClientProperty("paintActive", Boolean.TRUE);
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName);
     button.setBorder(new EmptyBorder(0, 0, 0, 0));
@@ -441,12 +455,12 @@ public class DarculaTitlePane extends JComponent {
     Color darkShadow;
 
     if (isSelected) {
-      background = myActiveBackground;
+      background = Gray._73;//myActiveBackground;
       foreground = myActiveForeground;
-      darkShadow = myActiveShadow;
+      darkShadow = Gray._73;//myActiveShadow;
     }
     else {
-      background = myInactiveBackground;
+      background = Gray._43; //myInactiveBackground;
       foreground = myInactiveForeground;
       darkShadow = myInactiveShadow;
     }
@@ -454,10 +468,10 @@ public class DarculaTitlePane extends JComponent {
     g.setColor(background);
     g.fillRect(0, 0, width, height);
 
-    g.setColor(darkShadow);
-    g.drawLine(0, height - 1, width, height - 1);
-    g.drawLine(0, 0, 0, 0);
-    g.drawLine(width - 1, 0, width - 1, 0);
+    //g.setColor(darkShadow);
+    //g.drawLine(0, height - 1, width, height - 1);
+    //g.drawLine(0, 0, 0, 0);
+    //g.drawLine(width - 1, 0, width - 1, 0);
 
     int xOffset = leftToRight ? 5 : width - 5;
 

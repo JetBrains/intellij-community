@@ -23,13 +23,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class GraphLayoutImpl implements GraphLayout {
-  @NotNull
-  private final IntList myLayoutIndex;
+  @NotNull private final IntList myLayoutIndex;
 
-  @NotNull
-  private final List<Integer> myHeadNodeIndex;
-  @NotNull
-  private final int[] myStartLayoutIndexForHead;
+  @NotNull private final List<Integer> myHeadNodeIndex;
+  @NotNull private final int[] myStartLayoutIndexForHead;
 
   GraphLayoutImpl(@NotNull int[] layoutIndex, @NotNull List<Integer> headNodeIndex, @NotNull int[] startLayoutIndexForHead) {
     myLayoutIndex = CompressedIntList.newInstance(layoutIndex);
@@ -61,10 +58,12 @@ public class GraphLayoutImpl implements GraphLayout {
     int b = myStartLayoutIndexForHead.length - 1;
     while (b > a) {
       int middle = (a + b + 1) / 2;
-      if (myStartLayoutIndexForHead[middle] <= layoutIndex)
+      if (myStartLayoutIndexForHead[middle] <= layoutIndex) {
         a = middle;
-      else
+      }
+      else {
         b = middle - 1;
+      }
     }
     return a;
   }

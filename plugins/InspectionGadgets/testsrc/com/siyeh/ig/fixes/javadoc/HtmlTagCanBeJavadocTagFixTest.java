@@ -15,6 +15,7 @@ public class HtmlTagCanBeJavadocTagFixTest extends IGQuickFixesTestCase {
   }
 
   public void testBraces() { doTest(); }
+  public void testBraces2() { doTest(); }
   public void testSecond() { doTest(); }
   public void testMultiline() { doTest(); }
 }

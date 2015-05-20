@@ -18,7 +18,7 @@ package com.intellij.remoteServer.agent.util;
 import com.intellij.remoteServer.agent.annotation.ChildCall;
 import com.intellij.remoteServer.agent.annotation.FinalCall;
 
-public interface CloudAgentBase<Config extends CloudAgentConfig> extends CloudAgent {
+public interface CloudAgentBase<Config extends CloudAgentConfig, AppIdentity extends CloudRemoteApplication> extends CloudAgent {
 
   void connect(Config config, CloudAgentCallback callback, CloudAgentLogger logger, CloudAgentErrorHandler errorHandler);
 
@@ -26,5 +26,5 @@ public interface CloudAgentBase<Config extends CloudAgentConfig> extends CloudAg
   void disconnect();
 
   @ChildCall
-  CloudAgentApplication createApplication(String applicationName);
+  CloudAgentApplication createApplication(AppIdentity applicationIdentity);
 }

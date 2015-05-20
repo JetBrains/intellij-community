@@ -46,6 +46,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -72,14 +73,19 @@ public class SeverityEditorDialog extends DialogWrapper {
   private SeverityBasedTextAttributes myCurrentSelection;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.SeverityEditorDialog");
   private final SeverityRegistrar mySeverityRegistrar;
+  private final boolean myCloseDialogWhenSettingsShown;
   private final CardLayout myCard;
   private final JPanel myRightPanel;
   @NonNls private static final String DEFAULT = "DEFAULT";
   @NonNls private static final String EDITABLE = "EDITABLE";
 
-  public SeverityEditorDialog(final JComponent parent, final HighlightSeverity severity, final SeverityRegistrar severityRegistrar) {
+  public SeverityEditorDialog(final JComponent parent,
+                              final @Nullable HighlightSeverity selectedSeverity,
+                              final @NotNull SeverityRegistrar severityRegistrar,
+                              final boolean closeDialogWhenSettingsShown) {
     super(parent, true);
     mySeverityRegistrar = severityRegistrar;
+    myCloseDialogWhenSettingsShown = closeDialogWhenSettingsShown;
     myOptionsList.setCellRenderer(new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -218,7 +224,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     myRightPanel.add(EDITABLE, myOptionsPanel);
     myCard.show(myRightPanel, EDITABLE);
     myPanel.add(myRightPanel, BorderLayout.EAST);
-    fillList(severity);
+    fillList(selectedSeverity);
     init();
     setTitle(InspectionsBundle.message("severities.editor.dialog.title"));
     reset((SeverityBasedTextAttributes)myOptionsList.getSelectedValue());
@@ -226,7 +232,9 @@ public class SeverityEditorDialog extends DialogWrapper {
 
   private void editColorsAndFonts() {
     final String toConfigure = getSelectedType().getSeverity(null).myName;
-    doOKAction();
+    if (myCloseDialogWhenSettingsShown) {
+      doOKAction();
+    }
     myOptionsList.clearSelection();
     final DataContext dataContext = DataManager.getInstance().getDataContext(myPanel);
     Settings settings = Settings.KEY.getData(dataContext);
@@ -262,7 +270,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     }
   }
 
-  private void fillList(final HighlightSeverity severity) {
+  private void fillList(final @Nullable HighlightSeverity severity) {
     DefaultListModel model = new DefaultListModel();
     model.removeAllElements();
     final List<SeverityBasedTextAttributes> infoTypes = new ArrayList<SeverityBasedTextAttributes>();
@@ -281,12 +289,18 @@ public class SeverityEditorDialog extends DialogWrapper {
         preselection = type;
       }
     }
+    if (preselection == null && !infoTypes.isEmpty()) {
+      preselection = infoTypes.get(0);
+    }
     myOptionsList.setModel(model);
     myOptionsList.setSelectedValue(preselection, true);
   }
 
 
   private void apply(SeverityBasedTextAttributes info) {
+    if (info == null) {
+      return;
+    }
     final MyTextAttributesDescription description =
       new MyTextAttributesDescription(info.getType().toString(), null, new TextAttributes(), info.getType().getAttributesKey());
     myOptionsPanel.apply(description, null);
@@ -325,12 +339,24 @@ public class SeverityEditorDialog extends DialogWrapper {
     final ListModel listModel = myOptionsList.getModel();
     final List<HighlightSeverity> order = new ArrayList<HighlightSeverity>();
     for (int i = listModel.getSize() - 1; i >= 0; i--) {
-      final SeverityBasedTextAttributes info =
-        (SeverityBasedTextAttributes)listModel.getElementAt(i);
+      SeverityBasedTextAttributes info = (SeverityBasedTextAttributes)listModel.getElementAt(i);
       order.add(info.getSeverity());
       if (!mySeverityRegistrar.isDefaultSeverity(info.getSeverity())) {
         infoTypes.remove(info);
         final Color stripeColor = info.getAttributes().getErrorStripeColor();
+        final boolean exists = mySeverityRegistrar.getSeverity(info.getSeverity().getName()) != null;
+        if (exists) {
+          info.getType().getAttributesKey().getDefaultAttributes().setErrorStripeColor(stripeColor);
+        } else {
+          HighlightInfoType.HighlightInfoTypeImpl type = info.getType();
+          TextAttributesKey key = type.getAttributesKey();
+          final TextAttributes defaultAttributes = key.getDefaultAttributes().clone();
+          defaultAttributes.setErrorStripeColor(stripeColor);
+          key = TextAttributesKey.createTextAttributesKey(key.getExternalName(), defaultAttributes);
+          type = new HighlightInfoType.HighlightInfoTypeImpl(type.getSeverity(null), key);
+          info = new SeverityBasedTextAttributes(info.getAttributes(), type);
+        }
+
         mySeverityRegistrar.registerSeverity(info, stripeColor != null ? stripeColor : LightColors.YELLOW);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
  * @see Editor#getGutter()
  */
 public interface EditorGutter {
+  DataKey<EditorGutter> KEY = DataKey.create("EditorGutter");
+
   /**
    * Adds a provider for drawing custom text annotations in the editor gutter.
    *

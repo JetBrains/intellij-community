@@ -59,7 +59,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
 
   private def addGdsl(String text) {
     final PsiFile file = myFixture.addFileToProject(getTestName(false) + "Enhancer.gdsl", text);
-    GroovyDslFileIndex.activateUntilModification(file.virtualFile)
+    GroovyDslFileIndex.activate(file.virtualFile)
   }
 
   public void doTest() throws Throwable {

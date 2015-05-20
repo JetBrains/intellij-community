@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,10 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import javax.swing.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 11.05.12
- * Time: 21:55
- * To change this template use File | Settings | File Templates.
+ * @author zajac
+ * @since 11.05.2012
  */
 public class SplitterItem extends ItemWrapper {
-
   private final String myText;
 
   public SplitterItem(String text) {
@@ -41,19 +37,13 @@ public class SplitterItem extends ItemWrapper {
   }
 
   @Override
-  public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
+  public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) { }
 
   @Override
-  public void setupRenderer(ColoredTreeCellRenderer renderer, Project project, boolean selected) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
+  public void setupRenderer(ColoredTreeCellRenderer renderer, Project project, boolean selected) { }
 
   @Override
-  public void updateAccessoryView(JComponent label) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
+  public void updateAccessoryView(JComponent label) { }
 
   @Override
   public String speedSearchText() {
@@ -62,21 +52,17 @@ public class SplitterItem extends ItemWrapper {
 
   @Override
   public String footerText() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override
-  protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
+  protected void doUpdateDetailView(DetailView panel, boolean editorOnly) { }
 
   @Override
   public boolean allowedToRemove() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
-  public void removed(Project project) {
-    //To change body of implemented methods use File | Settings | File Templates.
-  }
+  public void removed(Project project) { }
 }

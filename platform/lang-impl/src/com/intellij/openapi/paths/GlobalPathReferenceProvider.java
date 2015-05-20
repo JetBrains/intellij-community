@@ -31,7 +31,7 @@ import java.util.List;
 public class GlobalPathReferenceProvider implements PathReferenceProvider {
 
   @NonNls private static final String[] PREFIXES = {
-    "mailto:", "tel:", "sms:", "skype:", "data:", "xmpp:"
+    "tel:", "sms:", "skype:", "data:", "xmpp:"
   };
 
   public static boolean startsWithAllowedPrefix(String s) {
@@ -49,21 +49,30 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
     if (manipulator == null) {
       return false;
     }
-    final TextRange range = manipulator.getRangeInElement(psiElement);
-    final String s = range.substring(psiElement.getText());
-    if (isWebReferenceUrl(s)) {
-      references.add(new WebReference(psiElement, range));
+    return createUrlReference(
+      psiElement,
+      manipulator.getRangeInElement(psiElement).substring(psiElement.getText()),
+      manipulator.getRangeInElement(psiElement),
+      references
+    );
+  }
+
+  public boolean createUrlReference(@NotNull PsiElement psiElement,
+                                    String url,
+                                    TextRange rangeInElement, @NotNull List<PsiReference> references) {
+    if (isWebReferenceUrl(url)) {
+      references.add(new WebReference(psiElement, rangeInElement));
+      return true;
     }
-    else if (s.contains("://") || s.startsWith("//") || startsWithAllowedPrefix(s)) {
-      final PsiReference reference = PsiReferenceBase.createSelfReference(psiElement, psiElement);
-      references.add(reference);
+    else if (url.contains("://") || url.startsWith("//") || startsWithAllowedPrefix(url)) {
+      references.add(PsiReferenceBase.createSelfReference(psiElement, rangeInElement, psiElement));
       return true;
     }
     return false;
   }
 
   public static boolean isWebReferenceUrl(String url) {
-    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("about:");
+    return url.startsWith("http://") || url.startsWith("https://") || url.startsWith("about:") || url.startsWith("mailto:");
   }
 
   @Override

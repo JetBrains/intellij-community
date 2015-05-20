@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -746,7 +747,7 @@ public class ExpectedTypesProvider {
         }
         else {
           if (type != null) {
-            info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, PsiType.INT, tailType);
+            info = createInfoImpl(type, type instanceof PsiPrimitiveType ? ExpectedTypeInfo.TYPE_OR_SUPERTYPE : ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, tailType);
           }
           else {
             info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, tailType);
@@ -772,7 +773,7 @@ public class ExpectedTypesProvider {
       }
       else {
         if (type != null) {
-          info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, PsiType.INT, TailType.NONE);
+          info = createInfoImpl(type, type instanceof PsiPrimitiveType ? ExpectedTypeInfo.TYPE_OR_SUPERTYPE : ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, TailType.NONE);
         }
         else {
           info = createInfoImpl(PsiType.LONG, PsiType.INT);
@@ -880,10 +881,16 @@ public class ExpectedTypesProvider {
       if (statement.getException() == myExpr) {
         PsiManager manager = statement.getManager();
         PsiType throwableType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
-        PsiMember container = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiClass.class);
+        PsiElement container = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class, PsiClass.class);
         PsiType[] throwsTypes = PsiType.EMPTY_ARRAY;
         if (container instanceof PsiMethod) {
           throwsTypes = ((PsiMethod)container).getThrowsList().getReferencedTypes();
+        }
+        else if (container instanceof PsiLambdaExpression) {
+          final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(container);
+          if (method != null) {
+            throwsTypes = method.getThrowsList().getReferencedTypes();
+          }
         }
 
         if (throwsTypes.length == 0) {

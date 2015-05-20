@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ public class RedundantCastUtil {
     }
 
     @Override public void visitReturnStatement(PsiReturnStatement statement) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiLambdaExpression.class);
       if (method != null) {
         final PsiType returnType = method.getReturnType();
         final PsiExpression returnValue = statement.getReturnValue();
@@ -204,7 +204,14 @@ public class RedundantCastUtil {
       if (rExpr instanceof PsiTypeCastExpression) {
         PsiExpression castOperand = ((PsiTypeCastExpression)rExpr).getOperand();
         if (castOperand != null) {
-          PsiType operandType = castOperand.getType();
+          PsiType operandType;
+          if (castOperand instanceof PsiTypeCastExpression) {
+            final PsiExpression nestedCastOperand = ((PsiTypeCastExpression)castOperand).getOperand();
+            operandType = nestedCastOperand != null ? nestedCastOperand.getType() : null;
+          }
+          else {
+            operandType = castOperand.getType();
+          }
           if (operandType != null) {
             if (lType != null && TypeConversionUtil.isAssignable(lType, operandType, false)) {
               addToResults((PsiTypeCastExpression)rExpr);
@@ -323,7 +330,8 @@ public class RedundantCastUtil {
             PsiTypeCastExpression castExpression = (PsiTypeCastExpression) deparenthesizeExpression(newArgs[i]);
             PsiExpression castOperand = castExpression.getOperand();
             if (castOperand == null) return;
-            castExpression.replace(castOperand);
+            final PsiMethod oldFunctionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(castOperand);
+            newArgs[i] = (PsiExpression)castExpression.replace(castOperand);
             if (newCall instanceof PsiEnumConstant) {
               // do this manually, because PsiEnumConstantImpl.resolveMethodGenerics() will assert (no containing class for the copy)
               final PsiEnumConstant enumConstant = (PsiEnumConstant)expression;
@@ -337,8 +345,13 @@ public class RedundantCastUtil {
             } else {
               final JavaResolveResult newResult = newCall.resolveMethodGenerics();
               if (oldMethod.equals(newResult.getElement()) && newResult.isValidResult() &&
-                Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) {
-                addToResults(cast);
+                  Comparing.equal(((PsiCallExpression)newCall).getType(), ((PsiCallExpression)expression).getType())) {
+                final PsiMethod newFunctionalInterfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(newArgs[i]);
+                if (oldFunctionalInterfaceMethod == null ||
+                    newFunctionalInterfaceMethod != null && (newFunctionalInterfaceMethod == oldFunctionalInterfaceMethod || 
+                                                             MethodSignatureUtil.isSuperMethod(newFunctionalInterfaceMethod, oldFunctionalInterfaceMethod))) {
+                  addToResults(cast);
+                }
               }
             }
           }
@@ -418,10 +431,14 @@ public class RedundantCastUtil {
       PsiTypeCastExpression castExpression = computeCastExpression.fun(newReturnExpression);
       PsiExpression castOperand = castExpression.getOperand();
       if (castOperand == null) return;
-      castExpression.replace(castOperand);
+      castOperand = (PsiExpression)castExpression.replace(castOperand);
       final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
       if (interfaceType.equals(functionalInterfaceType)) {
-        addToResults(returnExpression);
+        final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(interfaceType);
+        final PsiType castExprType = castOperand.getType();
+        if (interfaceReturnType != null && castExprType != null && interfaceReturnType.isAssignableFrom(castExprType)) {
+          addToResults(returnExpression);
+        }
       }
     }
 
@@ -549,6 +566,14 @@ public class RedundantCastUtil {
           final PsiExpression initializer = ((PsiLocalVariable)declarationStatement.getDeclaredElements()[0]).getInitializer();
           LOG.assertTrue(initializer != null, operand.getText());
           opType = initializer.getType();
+
+          if (opType != null) {
+            final PsiExpression expr = PsiUtil.skipParenthesizedExprDown(operand);
+            if (expr instanceof PsiConditionalExpression) {
+              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)expr).getThenExpression())) return;
+              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)expr).getElseExpression())) return;
+            }
+          }
         }
         catch (IncorrectOperationException ignore) {}
       }
@@ -631,6 +656,16 @@ public class RedundantCastUtil {
       }
     }
 
+    private static boolean isApplicableForConditionalBranch(PsiType opType, PsiExpression thenExpression) {
+      if (thenExpression != null) {
+        final PsiType thenType = thenExpression.getType();
+        if (thenType != null && !TypeConversionUtil.isAssignable(opType, thenType)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     private static boolean arrayAccessAtTheLeftSideOfAssignment(PsiElement element) {
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(element, PsiAssignmentExpression.class, false, PsiMember.class);
       if (assignment == null) return false;
@@ -663,12 +698,6 @@ public class RedundantCastUtil {
     return result.get().booleanValue();
   }
 
-  /** @deprecated use {@link #isTypeCastSemantic(PsiTypeCastExpression)} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
-  public static boolean isTypeCastSemantical(PsiTypeCastExpression typeCast) {
-    return isTypeCastSemantic(typeCast);
-  }
-
   public static boolean isTypeCastSemantic(PsiTypeCastExpression typeCast) {
     PsiExpression operand = typeCast.getOperand();
     if (operand == null) return false;
@@ -698,18 +727,7 @@ public class RedundantCastUtil {
     if (operand instanceof PsiLambdaExpression || operand instanceof PsiMethodReferenceExpression) {
       if (castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE)) return true;
       if (castType instanceof PsiIntersectionType) {
-        boolean redundant = false;
-        final PsiType[] conjuncts = ((PsiIntersectionType)castType).getConjuncts();
-        for (int i = 1; i < conjuncts.length; i++) {
-          PsiType conjunct = conjuncts[i];
-          if (TypeConversionUtil.isAssignable(conjuncts[0], conjunct)) {
-            redundant = true;
-            break;
-          }
-        }
-        if (!redundant) {
-          return true;
-        }
+        return true;
       }
     }
 

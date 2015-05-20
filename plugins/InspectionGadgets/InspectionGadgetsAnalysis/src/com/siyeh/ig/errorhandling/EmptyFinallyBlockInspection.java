@@ -48,8 +48,8 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final Integer count = (Integer)infos[0];
-    if (count.intValue() == 0) {
+    final Boolean canDeleteTry = (Boolean)infos[0];
+    if (canDeleteTry) {
       return new RemoveTryFinallyBlockFix();
     }
     else {
@@ -63,6 +63,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
     public String getFamilyName() {
       return getName();
     }
+
     @Override
     @NotNull
     public String getName() {
@@ -105,23 +106,22 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
   }
 
   private static class RemoveFinallyBlockFix extends InspectionGadgetsFix {
-     @Override
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
-   @Override
+
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("remove.finally.block.quickfix");
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiTryStatement tryStatement =
-        PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
+      final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
       if (tryStatement == null) {
         return;
       }
@@ -153,12 +153,9 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
     return new EmptyFinallyBlockVisitor();
   }
 
-  private static class EmptyFinallyBlockVisitor
-    extends BaseInspectionVisitor {
-
+  private static class EmptyFinallyBlockVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitTryStatement(
-      @NotNull PsiTryStatement statement) {
+    public void visitTryStatement(@NotNull PsiTryStatement statement) {
       super.visitTryStatement(statement);
       if (FileTypeUtils.isInServerPageFile(statement.getContainingFile())) {
         return;
@@ -170,12 +167,12 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
       if (finallyBlock.getStatements().length != 0) {
         return;
       }
-      final PsiCodeBlock[] catchBlocks = statement.getCatchBlocks();
       final PsiElement[] children = statement.getChildren();
       for (final PsiElement child : children) {
         final String childText = child.getText();
         if (PsiKeyword.FINALLY.equals(childText)) {
-          registerError(child, Integer.valueOf(catchBlocks.length));
+          final boolean canDeleteTry = statement.getCatchBlocks().length == 0 && statement.getResourceList() == null;
+          registerError(child, Boolean.valueOf(canDeleteTry));
           return;
         }
       }

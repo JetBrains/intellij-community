@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -47,10 +48,10 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRowEditor;
+import com.intellij.util.ui.table.JBTableRowRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -344,7 +345,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
 
     myPropagateParamChangesButton =
-      new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, PlatformIcons.NEW_PARAMETER) {
+      new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, AllIcons.Hierarchy.Caller) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           final Ref<CallerChooserBase<Method>> chooser = new Ref<CallerChooserBase<Method>>();
@@ -458,37 +459,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     myPropagateParamChangesButton.setShortcut(CustomShortcutSet.fromString("alt G"));
 
     if (isListTableViewSupported() && Registry.is("change.signature.awesome.mode")) {
-      myParametersList = new JBListTable(myParametersTable) {
-        @Override
-        protected JComponent getRowRenderer(JTable table, int row, boolean selected, boolean focused) {
-          final List<ParameterTableModelItem> items = myParametersTable.getItems();
-          return getRowPresentation(items.get(row), selected, focused);
-        }
-
-        @Override
-        protected boolean isRowEmpty(int row) {
-          final List<ParameterTableModelItem> items = myParametersTable.getItems();
-          return isEmptyRow(items.get(row));
-        }
-
-        @Override
-        protected JBTableRowEditor getRowEditor(final int row) {
-          final List<ParameterTableModelItem> items = myParametersTable.getItems();
-          JBTableRowEditor editor = getTableEditor(myParametersList.getTable(), items.get(row));
-          LOG.assertTrue(editor != null);
-          editor.addDocumentListener(new JBTableRowEditor.RowDocumentListener() {
-            @Override
-            public void documentChanged(DocumentEvent e, int column) {
-              if (myParametersTableModel.getColumnClass(column).equals(String.class)) {
-                myParametersTableModel.setValueAtWithoutUpdate(e.getDocument().getText(), row, column);
-              }
-
-              updateSignature();
-            }
-          });
-          return editor;
-        }
-      };
+      myParametersList = createParametersListTable();
       final JPanel buttonsPanel = ToolbarDecorator.createDecorator(myParametersList.getTable())
         .addExtraAction(myPropagateParamChangesButton)
         .createPanel();
@@ -512,15 +483,56 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
   }
 
+  protected ParametersListTable createParametersListTable() {
+    return new ParametersListTable() {
+      @Override
+      protected JBTableRowRenderer getRowRenderer(int row) {
+        return new JBTableRowRenderer() {
+          @Override
+          public JComponent getRowRendererComponent(JTable table, int row, boolean selected, boolean focused) {
+            JComponent presentation = getRowPresentation(getRowItem(row), selected, focused);
+            LOG.assertTrue(presentation != null);
+            return presentation;
+          }
+        };
+      }
+
+      @NotNull
+      @Override
+      protected JBTableRowEditor getRowEditor(ParameterTableModelItemBase<ParamInfo> item) {
+        JBTableRowEditor editor = ChangeSignatureDialogBase.this.getTableEditor(getTable(), item);
+        LOG.assertTrue(editor != null);
+        return editor;
+      }
+
+      @Override
+      protected boolean isRowEmpty(int row) {
+        return ChangeSignatureDialogBase.this.isEmptyRow(getRowItem(row));
+      }
+    };
+  }
+
+  /**
+   * @deprecated override {@link #createParametersListTable} instead.
+   */
+  @Deprecated
   @Nullable
   protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<ParamInfo> item) {
     return null;
   }
 
+  /**
+   * @deprecated override {@link #createParametersListTable} instead.
+   */
+  @Deprecated
   protected boolean isEmptyRow(ParameterTableModelItemBase<ParamInfo> row) {
     return false;
   }
 
+  /**
+   * @deprecated override {@link #createParametersListTable} instead.
+   */
+  @Deprecated
   @Nullable
   protected JComponent getRowPresentation(ParameterTableModelItemBase<ParamInfo> item, boolean selected, boolean focused) {
     return null;
@@ -671,6 +683,37 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     //---ignored
     @Override
     public void beforeDocumentChange(DocumentEvent event) {
+    }
+  }
+
+  protected abstract class ParametersListTable extends JBListTable {
+    public ParametersListTable() {
+      super(myParametersTable, ChangeSignatureDialogBase.this.getDisposable());
+    }
+
+    @Override
+    protected final JBTableRowEditor getRowEditor(final int row) {
+      JBTableRowEditor editor = getRowEditor(getRowItem(row));
+      editor.addDocumentListener(new JBTableRowEditor.RowDocumentListener() {
+        @Override
+        public void documentChanged(DocumentEvent e, int column) {
+          if (String.class.equals(myParametersTableModel.getColumnClass(column))) {
+            myParametersTableModel.setValueAtWithoutUpdate(e.getDocument().getText(), row, column);
+          }
+          updateSignature();
+        }
+      });
+      return editor;
+    }
+
+    @NotNull
+    protected abstract JBTableRowEditor getRowEditor(ParameterTableModelItemBase<ParamInfo> item);
+
+    @Override
+    protected abstract boolean isRowEmpty(int row);
+
+    protected ParameterTableModelItem getRowItem(int row) {
+      return myParametersTable.getItems().get(row);
     }
   }
 }

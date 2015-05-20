@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -30,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -38,8 +40,10 @@ import java.awt.event.WindowEvent;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class FloatingDecorator extends JDialog{
+public final class FloatingDecorator extends JDialog {
   private static final Logger LOG=Logger.getInstance("#com.intellij.openapi.wm.impl.FloatingDecorator");
+
+  static final int DIVIDER_WIDTH = 3;
 
   private static final int ANCHOR_TOP=1;
   private static final int ANCHOR_LEFT=2;
@@ -53,6 +57,7 @@ public final class FloatingDecorator extends JDialog{
   private final MyUISettingsListener myUISettingsListener;
   private WindowInfoImpl myInfo;
 
+  private final Disposable myDisposable;
   private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
@@ -63,7 +68,7 @@ public final class FloatingDecorator extends JDialog{
 
   FloatingDecorator(final IdeFrameImpl owner,final WindowInfoImpl info,final InternalDecorator internalDecorator){
     super(owner,internalDecorator.getToolWindow().getId());
-    new MnemonicHelper().register(getContentPane());
+    MnemonicHelper.init(getContentPane());
     myInternalDecorator=internalDecorator;
 
     setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
@@ -102,7 +107,16 @@ public final class FloatingDecorator extends JDialog{
 
     //
 
-    getRootPane().setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+    IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane());
+    getRootPane().setGlassPane(ideGlassPane);
+
+    //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
+    ideGlassPane.addMousePreprocessor(new MouseAdapter() {
+    }, myDisposable = new Disposable() {
+      @Override
+      public void dispose() {
+      }
+    });
 
     apply(info);
   }
@@ -129,9 +143,10 @@ public final class FloatingDecorator extends JDialog{
   }
 
   public final void dispose(){
-    if (ScreenUtil.isStandardAddRemoveNotify(getParent()))
+    if (ScreenUtil.isStandardAddRemoveNotify(getParent())) {
       Disposer.dispose(myDelayAlarm);
-    else {
+      Disposer.dispose(myDisposable);
+    } else {
       if (isShowing()) {
         SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -188,7 +203,6 @@ public final class FloatingDecorator extends JDialog{
   }
 
   private final class BorderItem extends JPanel{
-    private static final int DIVIDER_WIDTH=3;
     private static final int RESIZER_WIDTH=10;
 
     private final int myAnchor;

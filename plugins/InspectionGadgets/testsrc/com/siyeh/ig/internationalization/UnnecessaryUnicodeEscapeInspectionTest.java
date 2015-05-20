@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.LightInspectionTestCase;
 
 import java.nio.charset.Charset;
@@ -33,6 +34,7 @@ public class UnnecessaryUnicodeEscapeInspectionTest extends LightInspectionTestC
     final VirtualFile vFile = myFixture.getFile().getVirtualFile();
     Charset ascii = CharsetToolkit.forName("US-ASCII");
     EncodingManager.getInstance().setEncoding(vFile, ascii);
+    UIUtil.dispatchAllInvocationEvents(); // reload in invokeLater
     assertEquals(ascii, vFile.getCharset());
     myFixture.testHighlighting(true, false, false);
   }

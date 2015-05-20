@@ -106,8 +106,9 @@ public class EventLog {
     Map<RangeMarker, HyperlinkInfo> links = new LinkedHashMap<RangeMarker, HyperlinkInfo>();
     List<RangeMarker> lineSeparators = new ArrayList<RangeMarker>();
 
-    String title = notification.getTitle();
-    String content = notification.getContent();
+    String title = truncateLongString(showMore, notification.getTitle());
+    String content = truncateLongString(showMore, notification.getContent());
+
     RangeMarker afterTitle = null;
     boolean hasHtml = parseHtmlContent(title, notification, logDoc, showMore, links, lineSeparators);
     if (StringUtil.isNotEmpty(title)) {
@@ -142,6 +143,15 @@ public class EventLog {
     }
 
     return new LogEntry(logDoc.getText(), status, list);
+  }
+
+  @NotNull
+  private static String truncateLongString(AtomicBoolean showMore, String title) {
+    if (title.length() > 1000) {
+      showMore.set(true);
+      return title.substring(0, 1000) + "...";
+    }
+    return title;
   }
 
   private static void indentNewLines(DocumentImpl logDoc, List<RangeMarker> lineSeparators, RangeMarker afterTitle, boolean hasHtml, String indent) {

@@ -15,8 +15,11 @@
  */
 package com.intellij.psi.impl.source.javadoc;
 
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
@@ -40,6 +43,15 @@ public class PsiDocTokenImpl extends LeafPsiElement implements PsiDocToken{
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @NotNull
+  @Override
+  public PsiReference[] getReferences() {
+    if (getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+      return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiDocToken.class);
+    }
+    return super.getReferences();
   }
 
   public String toString(){

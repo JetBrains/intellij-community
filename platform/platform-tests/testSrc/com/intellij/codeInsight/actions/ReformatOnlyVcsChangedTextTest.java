@@ -19,7 +19,7 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -31,6 +31,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.vcs.MockChangeListManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.MutablePicoContainer;
 
@@ -364,7 +365,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
     @NotNull
     private Change createChange(@NotNull String committed, @NotNull PsiFile file) {
-      FilePathImpl filePath = new FilePathImpl(file.getVirtualFile());
+      FilePath filePath = VcsUtil.getFilePath(file.getVirtualFile());
       ContentRevision before = new SimpleContentRevision(committed, filePath, "");
       ContentRevision after = new SimpleContentRevision("", filePath, "");
       return new Change(before, after);

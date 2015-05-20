@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.xdebugger;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -30,6 +29,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.event.HyperlinkListener;
 
@@ -131,7 +131,15 @@ public abstract class XDebugProcess {
    * Stop debugging and dispose resources.
    * Do not call this method directly. Use {@link XDebugSession#stop} instead
    */
-  public abstract void stop();
+  public void stop() {
+    throw new AbstractMethodError();
+  }
+
+  @NotNull
+  public Promise<Void> stopAsync() {
+    stop();
+    return Promise.DONE;
+  }
 
   /**
    * Resume execution.
@@ -193,29 +201,9 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * @deprecated Override {@link #createTabLayouter()} and {@link com.intellij.xdebugger.ui.XDebugTabLayouter#registerAdditionalContent} instead
-   * to remove in IDEA 15
-   */
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated
-  public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
-  }
-
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated
-  /**
-   * @deprecated Override {@link #registerAdditionalActions(com.intellij.openapi.actionSystem.ActionGroup, com.intellij.openapi.actionSystem.ActionGroup, com.intellij.openapi.actionSystem.ActionGroup)} instead
-   * to remove in IDEA 15
-   */
-  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar) {
-  }
-
-  /**
    * Override this method to provide additional actions in 'Debug' tool window
    */
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
-    //noinspection deprecation
-    registerAdditionalActions(leftToolbar, topToolbar);
   }
 
   /**
@@ -236,11 +224,6 @@ public abstract class XDebugProcess {
   @NotNull
   public XDebugTabLayouter createTabLayouter() {
     return new XDebugTabLayouter() {
-      @Override
-      public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
-        //noinspection deprecation
-        XDebugProcess.this.registerAdditionalContent(ui);
-      }
     };
   }
 

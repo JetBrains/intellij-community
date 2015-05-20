@@ -18,12 +18,12 @@ package com.intellij.xml.util;
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
 import com.intellij.html.impl.providers.MicrodataReferenceProvider;
 import com.intellij.html.impl.util.MicrodataUtil;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
-import com.intellij.psi.impl.UrlPsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
@@ -116,7 +116,7 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
                                           @Override
                                           public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
                                                                                        @NotNull ProcessingContext context) {
-                                            return new PsiReference[] { new UrlPsiReference(element) };
+                                            return new PsiReference[] { new WebReference(element) };
                                           }
                                         });
   }

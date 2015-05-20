@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@ package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.psiutils.ExceptionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.psiutils.ErrorUtil;
 
-import java.util.HashSet;
 import java.util.Set;
 
 class DetailExceptionsPredicate implements PsiElementPredicate {
@@ -42,16 +41,9 @@ class DetailExceptionsPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiTryStatement tryStatement = (PsiTryStatement)parent;
-    if (ErrorUtil.containsError(tryStatement)) {
-      return false;
-    }
-    final Set<PsiType> exceptionsThrown = new HashSet<PsiType>(10);
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-    final PsiResourceList resourceList = tryStatement.getResourceList();
-    if (resourceList != null) {
-      ExceptionUtils.calculateExceptionsThrownForResourceList(resourceList, exceptionsThrown);
-    }
-    ExceptionUtils.calculateExceptionsThrownForCodeBlock(tryBlock, exceptionsThrown);
+    final Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(tryBlock);
+    ExceptionUtils.calculateExceptionsThrown(tryStatement.getResourceList(), exceptionsThrown);
     final Set<PsiType> exceptionsCaught = ExceptionUtils.getExceptionTypesHandled(tryStatement);
     for (PsiType typeThrown : exceptionsThrown) {
       if (exceptionsCaught.contains(typeThrown)) {

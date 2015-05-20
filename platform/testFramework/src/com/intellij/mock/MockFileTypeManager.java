@@ -17,8 +17,6 @@ package com.intellij.mock;
 
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
-import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -39,11 +37,11 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  public void registerFileType(FileType fileType) {
+  public void registerFileType(@NotNull FileType fileType) {
   }
 
   @Override
-  public void unregisterFileType(FileType fileType) {
+  public void unregisterFileType(@NotNull FileType fileType) {
   }
 
   @Override
@@ -57,7 +55,7 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   }
 
   @Override
-  public boolean isIgnoredFilesListEqualToCurrent(String list) {
+  public boolean isIgnoredFilesListEqualToCurrent(@NotNull String list) {
     return false;
   }
 
@@ -66,7 +64,7 @@ public class MockFileTypeManager extends FileTypeManagerEx {
 
   @Override
   @NotNull
-  public String getExtension(String fileName) {
+  public String getExtension(@NotNull String fileName) {
     return "";
   }
 
@@ -178,11 +176,6 @@ public class MockFileTypeManager extends FileTypeManagerEx {
     catch (Exception ignored) {
       return new MockLanguageFileType(PlainTextLanguage.INSTANCE, fileTypeName.toLowerCase(Locale.ENGLISH));
     }
-  }
-
-  @Override
-  public SchemesManager<FileType, AbstractFileType> getSchemesManager() {
-    return SchemesManager.EMPTY;
   }
 
   @Override

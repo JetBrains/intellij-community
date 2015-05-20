@@ -231,7 +231,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
             new AnActionEvent(null, DataManager.getInstance().getDataContext(myComponent), actualActionPlace, presentation,
                               ActionManager.getInstance(), 0);
           actionEvent.setInjectedContext(action.isInInjectedContext());
-          action.update(actionEvent);
+          ActionUtil.performDumbAwareUpdate(action, actionEvent, false);
           ActionMenu.showDescriptionInStatusBar(true, myComponent, presentation.getDescription());
         }
       });
@@ -419,6 +419,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
+  public ListPopup createListPopup(@NotNull ListPopupStep step, int maxRowCount) {
+    return new ListPopupImpl(step, maxRowCount);
+  }
+
+  @NotNull
+  @Override
   public TreePopup createTree(JBPopup parent, @NotNull TreePopupStep aStep, Object parentValue) {
     return new TreePopupImpl(parent, aStep, parentValue);
   }
@@ -552,7 +558,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     Point p = getVisibleBestPopupLocation(editor);
     if (p == null) {
       final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-      p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
+      p = new Point(visibleArea.x + visibleArea.width / 3, visibleArea.y + visibleArea.height / 2);
     }
     return new RelativePoint(editor.getContentComponent(), p);
   }
@@ -736,7 +742,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
             final AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
                                                           ActionManager.getInstance(), eventModifiers);
             event.setInjectedContext(action.isInInjectedContext());
-            action.actionPerformed(event);
+            if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+              action.actionPerformed(event);
+            }
           }
         };
         return FINAL_CHOICE;

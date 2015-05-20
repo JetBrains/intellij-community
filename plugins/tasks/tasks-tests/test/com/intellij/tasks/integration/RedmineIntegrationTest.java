@@ -17,11 +17,11 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class RedmineIntegrationTest extends TaskManagerTestCase {
-  private static final String REDMINE_2_0_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8072/";
+  private static final String REDMINE_2_0_TEST_SERVER_URL = "http://trackers-tests.labs.intellij.net:8072";
 
   private RedmineRepository myRepository;
 
-  public void testIssueFiltering() throws Exception {
+  public void testIssueFilteringByStatus() throws Exception {
     // TODO: so far supplied query is unused, investigate
 
     // with closed issues
@@ -35,6 +35,17 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     // unique summary
     //found = myRepository.getIssues("baz", 0, 25, true);
     //assertEquals(1, found.length);
+  }
+
+  // IDEA-132015
+  public void testIssueFilteringByAssignee() throws Exception {
+    myRepository.setAssignedToMe(true);
+    Task[] found = myRepository.getIssues(null, 0, 25, false);
+    assertEquals(5, found.length);
+
+    myRepository.setAssignedToMe(false);
+    found = myRepository.getIssues(null, 0, 25, false);
+    assertTrue(found.length > 5);
   }
 
   public void testIssueSearch() throws Exception {
@@ -62,16 +73,28 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     assertEquals("prj-1 7 7 Summary contains 'baz'", TaskUtil.getChangeListComment(localTask));
   }
 
-  /**
-   * Redmine doesn't send 401 or 403 errors, when issues are downloaded with wrong credentials, so current user information is
-   * fetched instead.
-   */
+  // IDEA-122845
+  // Redmine doesn't send 401 or 403 errors, when issues are downloaded with wrong credentials (and anonymous access is allowed),
+  // so current user information is fetched instead.
   public void testCredentialsCheck() throws Exception {
     myRepository.setPassword("wrong-password");
     try {
       //noinspection ConstantConditions
       final Exception exception = myRepository.createCancellableConnection().call();
-      assertNotNull("Test connection must fail when wrong credentials specified", exception);
+      assertNotNull("Test connection must fail when wrong credentials are specified", exception);
+    }
+    catch (Exception e) {
+      assertEquals(TaskBundle.message("failure.login"), e.getMessage());
+    }
+  }
+
+  // IDEA-138740
+  public void testProjectSpecificUrlCheck() throws Exception {
+    myRepository.setUrl(REDMINE_2_0_TEST_SERVER_URL + "/projects/prj-1");
+    try {
+      //noinspection ConstantConditions
+      final Exception exception = myRepository.createCancellableConnection().call();
+      assertNotNull("Test connection must fail when project-specific URL is specified", exception);
     }
     catch (Exception e) {
       assertEquals(TaskBundle.message("failure.login"), e.getMessage());
@@ -86,7 +109,7 @@ public class RedmineIntegrationTest extends TaskManagerTestCase {
     assertEquals(issue.getSummary(), "Artificial issue with no description created via REST API. Do not update it!");
   }
 
-  public void testProjectFiltering() throws Exception {
+  public void testIssueFilteringByProject() throws Exception {
     final List<RedmineProject> allProjects = myRepository.fetchProjects();
     final RedmineProject project = ContainerUtil.find(allProjects, new Condition<RedmineProject>() {
       @Override

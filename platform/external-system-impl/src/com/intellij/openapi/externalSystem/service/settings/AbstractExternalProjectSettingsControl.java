@@ -20,8 +20,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Templates class for managing single external project settings (single ide project might contain multiple bindings to external
@@ -34,14 +36,27 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   implements ExternalSystemSettingsControl<S>
 {
 
+  @Nullable private Project myProject;
+
   @NotNull private S myInitialSettings;
 
+  @Nullable
   private JBCheckBox myUseAutoImportBox;
+  @Nullable
   private JBCheckBox myCreateEmptyContentRootDirectoriesBox;
-  private boolean myHideUseAutoImportBox;
+  @NotNull
+  private ExternalSystemSettingsControlCustomizer myCustomizer;
 
   protected AbstractExternalProjectSettingsControl(@NotNull S initialSettings) {
+    this(null, initialSettings, null);
+  }
+
+  protected AbstractExternalProjectSettingsControl(@Nullable Project project,
+                                                   @NotNull S initialSettings,
+                                                   @Nullable ExternalSystemSettingsControlCustomizer controlCustomizer) {
+    myProject = project;
     myInitialSettings = initialSettings;
+    myCustomizer = controlCustomizer == null ? new ExternalSystemSettingsControlCustomizer() : controlCustomizer;
   }
 
   @NotNull
@@ -49,27 +64,31 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     return myInitialSettings;
   }
 
-  public void hideUseAutoImportBox() {
-    myHideUseAutoImportBox = true;
-  }
-
   @Override
   public void fillUi(@NotNull PaintAwarePanel canvas, int indentLevel) {
-    myUseAutoImportBox = new JBCheckBox(ExternalSystemBundle.message("settings.label.use.auto.import"));
-    myUseAutoImportBox.setVisible(!myHideUseAutoImportBox);
-    canvas.add(myUseAutoImportBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
-    myCreateEmptyContentRootDirectoriesBox =
-      new JBCheckBox(ExternalSystemBundle.message("settings.label.create.empty.content.root.directories"));
-    canvas.add(myCreateEmptyContentRootDirectoriesBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    if (!myCustomizer.isUseAutoImportBoxHidden()) {
+      myUseAutoImportBox = new JBCheckBox(ExternalSystemBundle.message("settings.label.use.auto.import"));
+      canvas.add(myUseAutoImportBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    }
+    if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden()) {
+      myCreateEmptyContentRootDirectoriesBox =
+        new JBCheckBox(ExternalSystemBundle.message("settings.label.create.empty.content.root.directories"));
+      canvas.add(myCreateEmptyContentRootDirectoriesBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    }
     fillExtraControls(canvas, indentLevel); 
   }
   
   protected abstract void fillExtraControls(@NotNull PaintAwarePanel content, int indentLevel);
 
   public boolean isModified() {
-    return myUseAutoImportBox.isSelected() != getInitialSettings().isUseAutoImport()
-           || myCreateEmptyContentRootDirectoriesBox.isSelected() != getInitialSettings().isCreateEmptyContentRootDirectories()
-           || isExtraSettingModified();
+    boolean result = false;
+    if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
+      result = myUseAutoImportBox.isSelected() != getInitialSettings().isUseAutoImport();
+    }
+    if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
+      result = result || myCreateEmptyContentRootDirectoriesBox.isSelected() != getInitialSettings().isCreateEmptyContentRootDirectories();
+    }
+    return result || isExtraSettingModified();
   }
 
   protected abstract boolean isExtraSettingModified();
@@ -79,8 +98,12 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   }
 
   public void reset(boolean isDefaultModuleCreation) {
-    myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
-    myCreateEmptyContentRootDirectoriesBox.setSelected(getInitialSettings().isCreateEmptyContentRootDirectories());
+    if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
+      myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
+    }
+    if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
+      myCreateEmptyContentRootDirectoriesBox.setSelected(getInitialSettings().isCreateEmptyContentRootDirectories());
+    }
     resetExtraSettings(isDefaultModuleCreation);
   }
 
@@ -88,8 +111,13 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
 
   @Override
   public void apply(@NotNull S settings) {
-    settings.setUseAutoImport(myUseAutoImportBox.isSelected());
-    settings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
+    if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
+      settings.setUseAutoImport(myUseAutoImportBox.isSelected());
+    }
+
+    if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
+      settings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
+    }
     if (myInitialSettings.getExternalProjectPath() != null) {
       settings.setExternalProjectPath(myInitialSettings.getExternalProjectPath());
     }
@@ -108,10 +136,27 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   }
 
   public void updateInitialSettings() {
-    myInitialSettings.setUseAutoImport(myUseAutoImportBox.isSelected());
-    myInitialSettings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
+    if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
+      myInitialSettings.setUseAutoImport(myUseAutoImportBox.isSelected());
+    }
+
+    if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
+      myInitialSettings.setCreateEmptyContentRootDirectories(myCreateEmptyContentRootDirectoriesBox.isSelected());
+    }
     updateInitialExtraSettings();
   }
 
   protected void updateInitialExtraSettings(){}
+
+  /**
+   * see {@linkplain AbstractImportFromExternalSystemControl#setCurrentProject(Project)}
+   */
+  public void setCurrentProject(@Nullable Project project) {
+    myProject = project;
+  }
+
+  @Nullable
+  public Project getProject() {
+    return myProject;
+  }
 }

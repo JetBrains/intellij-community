@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class CompletionLookupArranger extends LookupArranger {
       return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
     }
   };
-  private static final int MAX_PREFERRED_COUNT = 5;
+  static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<WeighingContext> WEIGHING_CONTEXT = Key.create("WEIGHING_CONTEXT");
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
@@ -179,7 +179,7 @@ public class CompletionLookupArranger extends LookupArranger {
     LookupImpl lookupImpl = (LookupImpl)lookup;
     List<LookupElement> listModel = isAlphaSorted() ?
                                     sortByPresentation(items, lookupImpl) :
-                                    fillModelByRelevance(lookupImpl, items, itemsBySorter, relevantSelection);
+                                    fillModelByRelevance(lookupImpl, ContainerUtil.newIdentityTroveSet(items), itemsBySorter, relevantSelection);
 
     int toSelect = getItemToSelect(lookupImpl, listModel, onExplicitAction, relevantSelection);
     LOG.assertTrue(toSelect >= 0);
@@ -197,7 +197,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private List<LookupElement> fillModelByRelevance(LookupImpl lookup,
-                                                   List<LookupElement> items,
+                                                   Set<LookupElement> items,
                                                    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter,
                                                    @Nullable LookupElement relevantSelection) {
     Iterator<LookupElement> byRelevance = sortByRelevance(inputBySorter).iterator();
@@ -235,10 +235,10 @@ public class CompletionLookupArranger extends LookupArranger {
     });
   }
 
-  private static void ensureItemAdded(List<LookupElement> items,
+  private static void ensureItemAdded(Set<LookupElement> items,
                                       LinkedHashSet<LookupElement> model,
                                       Iterator<LookupElement> byRelevance, @Nullable final LookupElement item) {
-    if (item != null && ContainerUtil.indexOfIdentity(items, item) >= 0 && !model.contains(item)) {
+    if (item != null && items.contains(item) && !model.contains(item)) {
       addSomeItems(model, byRelevance, new Condition<LookupElement>() {
         @Override
         public boolean value(LookupElement lastAdded) {
@@ -255,7 +255,7 @@ public class CompletionLookupArranger extends LookupArranger {
     }
   }
 
-  private void addFrozenItems(List<LookupElement> items, LinkedHashSet<LookupElement> model) {
+  private void addFrozenItems(Set<LookupElement> items, LinkedHashSet<LookupElement> model) {
     myFrozenItems.retainAll(items);
     model.addAll(myFrozenItems);
   }
@@ -265,10 +265,10 @@ public class CompletionLookupArranger extends LookupArranger {
     ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(false))));
   }
 
-  private static void addCurrentlySelectedItemToTop(Lookup lookup, List<LookupElement> items, LinkedHashSet<LookupElement> model) {
+  private static void addCurrentlySelectedItemToTop(Lookup lookup, Set<LookupElement> items, LinkedHashSet<LookupElement> model) {
     if (!lookup.isSelectionTouched()) {
       LookupElement lastSelection = lookup.getCurrentItem();
-      if (ContainerUtil.indexOfIdentity(items, lastSelection) >= 0) {
+      if (items.contains(lastSelection)) {
         model.add(lastSelection);
       }
     }
@@ -339,16 +339,24 @@ public class CompletionLookupArranger extends LookupArranger {
     }
 
     String selectedText = lookup.getEditor().getSelectionModel().getSelectedText();
+    int exactMatchIndex = -1;
     for (int i = 0; i < items.size(); i++) {
       LookupElement item = items.get(i);
-      boolean isTemplate = isLiveTemplate(item);
-      if (isPrefixItem(lookup, item, true) && !isTemplate ||
+      boolean isSuddenLiveTemplate = isSuddenLiveTemplate(item);
+      if (isPrefixItem(lookup, item, true) && !isSuddenLiveTemplate ||
           item.getLookupString().equals(selectedText)) {
-        return i;
+        
+        if (exactMatchIndex == -1 || item instanceof LiveTemplateLookupElement) {
+          // prefer most recent item or LiveTemplate item
+          exactMatchIndex = i;
+        }
       }
-      if (i == 0 && isTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), lookup)) {
+      else if (i == 0 && isSuddenLiveTemplate && items.size() > 1 && !CompletionServiceImpl.isStartMatch(items.get(1), lookup)) {
         return 0;
       }
+    }
+    if (exactMatchIndex >= 0) {
+      return exactMatchIndex;
     }
 
     return Math.max(0, ContainerUtil.indexOfIdentity(items, mostRelevant));
@@ -370,7 +378,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
 
-  private static boolean isLiveTemplate(LookupElement element) {
+  private static boolean isSuddenLiveTemplate(LookupElement element) {
     return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
   }
 

@@ -1,0 +1,14 @@
+<root>
+  <item name='io.netty.channel.ChannelInboundHandlerAdapter void channelInactive(io.netty.channel.ChannelHandlerContext) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='io.netty.channel.ChannelInitializer void channelRegistered(io.netty.channel.ChannelHandlerContext) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='io.netty.channel.ChannelInitializer void initChannel(C) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='io.netty.channel.ChannelPipeline io.netty.channel.ChannelPipeline addLast(io.netty.channel.ChannelHandler...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+</root>

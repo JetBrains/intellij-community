@@ -338,6 +338,70 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testSiteSubstitutionOfNonReceiverReference() throws Exception {
+    doTest();
+  }
+
+  public void testRawReferenceTypeWithReceiver() throws Exception {
+    doTest();
+  }
+
+  public void testMethodReferenceTypeArgumentsApplicability() throws Exception {
+    doTest();
+  }
+
+  public void testTypeNameInterfaceSuperMethodReferenceApplicability() throws Exception {
+    doTest();
+  }
+
+  public void testNewParameterizedReferenceOnRawType() throws Exception {
+    doTest();
+  }
+
+  public void testArrayTypeNewReifiable() throws Exception {
+    doTest();
+  }
+
+  public void testReturnTypeApplocabilityIfCapturedWildcardInferred() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA133935() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA132379() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA136581() throws Exception {
+    doTest();
+  }
+
+  public void testSuperSubstitutorInNormalCase() throws Exception {
+    doTest(false);
+  }
+
+  public void testSecondSearchIfFirstParameterIsASubtypeOfReferenceTypeFromExpressionDeclaration() throws Exception {
+    doTest();
+  }
+
+  public void testEnsureNotResolvedMethodRefsAreNotMarkedAsExact() throws Exception {
+    doTest();
+  }
+
+  public void testReceiverSubstitutorForExactReferenceInMethodReferenceConstraint() throws Exception {
+    doTest();
+  }
+
+  public void testSkipCheckedExceptionsHandledByInterfaceMethod() throws Exception {
+    doTest();
+  }
+
+  public void testConstraintsFromNonRawReceiverType() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

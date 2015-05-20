@@ -156,24 +156,27 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         final String erasedText = TypeConversionUtil.erasure(psiType).getCanonicalText();
         String canonicalText = psiType.getCanonicalText();
         if (canonicalText.contains("?extends") || canonicalText.contains("?super")) {
-          LOG.error("Malformed canonical text: " + psiType + " of " + psiType.getClass() + "; " +
+          LOG.error("Malformed canonical text: " + canonicalText + "; presentable text: " + psiType + " of " + psiType.getClass() + "; " +
                     (psiType instanceof PsiClassReferenceType ? ((PsiClassReferenceType)psiType).getReference().getClass() : ""));
           return null;
         }
-        final PsiStatement statement = elementFactory
-          .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getOriginalFile());
-        final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
-        final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
-        final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass) ||
-                                                             !PsiDiamondTypeImpl.haveConstructorsGenericsParameters(psiClass);
-        if (hasDefaultConstructorOrNoGenericsOne) {
-          final PsiDiamondTypeImpl.DiamondInferenceResult inferenceResult = PsiDiamondTypeImpl.resolveInferredTypes(initializer);
-          if (inferenceResult.getErrorMessage() == null &&
-              !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-              areInferredTypesApplicable(inferenceResult.getTypes(), parameters.getPosition())) {
-            psiType = initializer.getType();
+        try {
+          final PsiStatement statement = elementFactory
+            .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getOriginalFile());
+          final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
+          final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
+          final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass) ||
+                                                               !PsiDiamondTypeImpl.haveConstructorsGenericsParameters(psiClass);
+          if (hasDefaultConstructorOrNoGenericsOne) {
+            final PsiDiamondTypeImpl.DiamondInferenceResult inferenceResult = PsiDiamondTypeImpl.resolveInferredTypes(initializer);
+            if (inferenceResult.getErrorMessage() == null &&
+                !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                areInferredTypesApplicable(inferenceResult.getTypes(), parameters.getPosition())) {
+              psiType = initializer.getType();
+            }
           }
         }
+        catch (IncorrectOperationException ignore) {}
       }
     }
     final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, position);

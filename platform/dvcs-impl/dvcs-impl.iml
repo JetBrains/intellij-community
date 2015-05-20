@@ -5,6 +5,7 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -18,6 +19,6 @@
     <orderEntry type="module" module-name="images" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="dvcs-api" />
-    <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
   </component>
 </module>

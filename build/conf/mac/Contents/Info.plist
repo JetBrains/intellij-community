@@ -31,11 +31,11 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>@@bundle_name@@</string>
+    <string>@@bundle_name@@@@product_state@@</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIdentifier</key>
-    <string>@@bundle_identifier@@</string>
+    <string>@@bundle_identifier@@@@product_state@@</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleGetInfoString</key>
@@ -68,7 +68,7 @@
       <string>@@class_path@@</string>
 
       <key>JVMVersion</key>
-      <string>1.6*</string>
+      <string>1.6*,1.7+</string>
 
       <key>MainClass</key>
       <string>com.intellij.idea.Main</string>

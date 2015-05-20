@@ -39,9 +39,7 @@ public class AfterSemicolonEnterProcessor implements EnterProcessor {
         psiElement instanceof PsiAssertStatement ||
         psiElement instanceof PsiField ||
         psiElement instanceof PsiImportStatementBase ||
-        psiElement instanceof PsiMethod && (((PsiMethod) psiElement).getContainingClass().isInterface() ||
-                                            ((PsiMethod) psiElement).hasModifierProperty(PsiModifier.ABSTRACT) ||
-                                            ((PsiMethod) psiElement).hasModifierProperty(PsiModifier.NATIVE))) {
+        psiElement instanceof PsiMethod && !MissingMethodBodyFixer.shouldHaveBody((PsiMethod)psiElement)) {
       int errorOffset = getErrorElementOffset(psiElement);
       int elementEndOffset = psiElement.getTextRange().getEndOffset();
       if (psiElement instanceof PsiEnumConstant) {

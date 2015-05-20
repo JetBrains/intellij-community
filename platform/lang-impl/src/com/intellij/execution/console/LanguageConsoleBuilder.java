@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -47,7 +46,7 @@ public final class LanguageConsoleBuilder {
   @Nullable
   private LanguageConsoleView consoleView;
   @Nullable
-  private Condition<LanguageConsole> executionEnabled = Conditions.alwaysTrue();
+  private Condition<LanguageConsoleView> executionEnabled = Conditions.alwaysTrue();
 
   @Nullable
   private PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
@@ -72,17 +71,17 @@ public final class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder processHandler(@NotNull final ProcessHandler processHandler) {
-    executionEnabled = new Condition<LanguageConsole>() {
+    executionEnabled = new Condition<LanguageConsoleView>() {
 
       @Override
-      public boolean value(LanguageConsole console) {
+      public boolean value(LanguageConsoleView console) {
         return !processHandler.isProcessTerminated();
       }
     };
     return this;
   }
 
-  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<LanguageConsole> condition) {
+  public LanguageConsoleBuilder executionEnabled(@NotNull Condition<LanguageConsoleView> condition) {
     executionEnabled = condition;
     return this;
   }
@@ -107,34 +106,31 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
-  private void doInitAction(@NotNull LanguageConsoleView consoleView, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
-    ConsoleExecuteAction action = new ConsoleExecuteAction(consoleView, executeActionHandler, executionEnabled);
-    action.registerCustomShortcutSet(action.getShortcutSet(), consoleView.getConsole().getConsoleEditor().getComponent());
-
-    new ConsoleHistoryController(historyType, null, consoleView.getConsole(), executeActionHandler.getConsoleHistoryModel()).install();
+  private void doInitAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
+    ConsoleExecuteAction action = new ConsoleExecuteAction(console, executeActionHandler, executionEnabled);
+    action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
+    new ConsoleHistoryController(historyType, null, console).install();
   }
 
   /**
    * todo This API doesn't look good, but it is much better than force client to know low-level details
    */
-  public static Pair<AnAction, ConsoleHistoryController> registerExecuteAction(@NotNull LanguageConsole console,
-                                                                               @NotNull final Consumer<String> executeActionHandler,
-                                                                               @NotNull String historyType,
-                                                                               @Nullable String historyPersistenceId,
-                                                                               @Nullable Condition<LanguageConsole> enabledCondition) {
+  public static AnAction registerExecuteAction(@NotNull LanguageConsoleView console,
+                                               @NotNull final Consumer<String> executeActionHandler,
+                                               @NotNull String historyType,
+                                               @Nullable String historyPersistenceId,
+                                               @Nullable Condition<LanguageConsoleView> enabledCondition) {
     ConsoleExecuteAction.ConsoleExecuteActionHandler handler = new ConsoleExecuteAction.ConsoleExecuteActionHandler(true) {
       @Override
-      void doExecute(@NotNull String text, @NotNull LanguageConsole console, @Nullable LanguageConsoleView consoleView) {
+      void doExecute(@NotNull String text, @NotNull LanguageConsoleView consoleView) {
         executeActionHandler.consume(text);
       }
     };
 
     ConsoleExecuteAction action = new ConsoleExecuteAction(console, handler, enabledCondition);
     action.registerCustomShortcutSet(action.getShortcutSet(), console.getConsoleEditor().getComponent());
-
-    ConsoleHistoryController historyController = new ConsoleHistoryController(historyType, historyPersistenceId, console, handler.getConsoleHistoryModel());
-    historyController.install();
-    return new Pair<AnAction, ConsoleHistoryController>(action, historyController);
+    new ConsoleHistoryController(historyType, historyPersistenceId, console).install();
+    return action;
   }
 
   public LanguageConsoleBuilder gutterContentProvider(@Nullable GutterContentProvider value) {
@@ -167,11 +163,10 @@ public final class LanguageConsoleBuilder {
 
   @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole console = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
+    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(language.getDisplayName() + " Console", project, language, gutterContentProvider, psiFileFactory);
     if (oneLineInput) {
-      console.getConsoleEditor().setOneLineMode(true);
+      consoleView.getConsoleEditor().setOneLineMode(true);
     }
-    LanguageConsoleViewImpl consoleView = new LanguageConsoleViewImpl(console, true);
     if (executeActionHandler != null) {
       assert historyType != null;
       doInitAction(consoleView, executeActionHandler, historyType);
@@ -182,12 +177,10 @@ public final class LanguageConsoleBuilder {
       if (PropertiesComponent.getInstance().getBoolean(processInputStateKey, false)) {
         executeActionHandler.myUseProcessStdIn = true;
         DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(consoleView.getProject());
-        daemonCodeAnalyzer.setHighlightingEnabled(consoleView.getConsole().getFile(), false);
+        daemonCodeAnalyzer.setHighlightingEnabled(consoleView.getFile(), false);
       }
       consoleView.addCustomConsoleAction(new UseConsoleInputAction(processInputStateKey));
     }
-
-    console.initComponents();
     return consoleView;
   }
 
@@ -201,9 +194,7 @@ public final class LanguageConsoleBuilder {
                                    @NotNull Language language,
                                    @Nullable GutterContentProvider gutterContentProvider,
                                    @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(project, title, new LightVirtualFile(title, language, ""), false, psiFileFactory);
-
-      setShowSeparatorLine(false);
+      super(project, title, new LightVirtualFile(title, language, ""), psiFileFactory);
 
       this.gutterContentProvider = gutterContentProvider == null ? new BasicGutterContentProvider() : gutterContentProvider;
       this.psiFileFactory = psiFileFactory;
@@ -221,9 +212,10 @@ public final class LanguageConsoleBuilder {
 
     @NotNull
     @Override
-    protected PsiFile createFile(@NotNull LightVirtualFile virtualFile, @NotNull Document document, @NotNull Project project) {
+    protected PsiFile createFile(@NotNull Project project,
+                                 @NotNull VirtualFile virtualFile) {
       if (psiFileFactory == null) {
-        return super.createFile(virtualFile, document, project);
+        return super.createFile(project, virtualFile);
       }
       else {
         return psiFileFactory.fun(virtualFile, project);
@@ -420,6 +412,7 @@ public final class LanguageConsoleBuilder {
         }
 
         gutterSizeUpdater = new Task(start, end);
+        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(gutterSizeUpdater);
       }
 

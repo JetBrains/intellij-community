@@ -168,7 +168,7 @@ public class SliceLeafAnalyzer {
           if (leaves == null) return;  //cancelled
 
           if (leaves.isEmpty()) {
-            Messages.showErrorDialog("Unable to find leaf expressions to group by", "Cannot group");
+            Messages.showErrorDialog("Unable to find leaf expressions to group by", "Cannot Group");
             return;
           }
 

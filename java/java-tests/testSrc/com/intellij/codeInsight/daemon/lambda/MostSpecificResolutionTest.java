@@ -118,6 +118,14 @@ public class MostSpecificResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testFunctionalTypeComparisonWhenMethodsAreNotGeneric() throws Exception {
+    doTest(false);
+  }
+
+  public void testInferSpecificForGenericMethodWhenCallProvidesExplicitTypeArguments() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }

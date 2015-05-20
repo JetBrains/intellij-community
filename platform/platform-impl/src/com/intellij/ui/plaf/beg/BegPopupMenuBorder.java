@@ -48,6 +48,6 @@ public class BegPopupMenuBorder extends AbstractBorder implements UIResource {
   }
 
   public Insets getBorderInsets(Component c) {
-    return borderInsets;
+    return (Insets)borderInsets.clone();
   }
 }

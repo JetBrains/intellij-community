@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.ZipperUpdater;
 import com.intellij.util.Alarm;
 
 /**

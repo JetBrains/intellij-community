@@ -134,6 +134,20 @@ public class DocumentTest extends LightPlatformTestCase {
 
 
   }
+  
+  public void testEmptyDocumentLineCount() {
+    WriteCommandAction.runWriteCommandAction(ourProject, new Runnable() {
+      @Override
+      public void run() {
+        DocumentImpl document = new DocumentImpl("");
+        assertEquals(0, document.getLineCount());
+        document.insertString(0, "a");
+        assertEquals(1, document.getLineCount());
+        document.deleteString(0, 1);
+        assertEquals(0, document.getLineCount());
+      }
+    });
+  }
 
   private static void mustThrow(Runnable runnable) {
     try {

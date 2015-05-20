@@ -18,10 +18,7 @@ package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
@@ -31,12 +28,10 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
 import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
@@ -56,7 +51,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.codeStyle.DisplayPriority;
@@ -261,24 +255,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
           DarculaInstaller.install();
         }
       }
-      applyChangesToEditors();
 
       reset();
     }
     finally {
       myApplyCompleted = true;
-    }
-  }
-
-  private static void applyChangesToEditors() {
-    EditorFactory.getInstance().refreshAllEditors();
-
-    TodoConfiguration.getInstance().colorSettingsChanged();
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (Project openProject : openProjects) {
-      FileStatusManager.getInstance(openProject).fileStatusesChanged();
-      DaemonCodeAnalyzer.getInstance(openProject).restart();
-      BookmarkManager.getInstance(openProject).colorsChanged();
     }
   }
 
@@ -603,34 +584,34 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     }
   }
 
-  private static void addEditorSettingDescription(@NotNull List<EditorSchemeAttributeDescriptor> array,
+  @Nullable
+  private static String calcType(@Nullable ColorKey backgroundKey, @Nullable ColorKey foregroundKey) {
+    if (foregroundKey != null) {
+      return foregroundKey.getExternalName();
+    }
+    else if (backgroundKey != null) {
+      return backgroundKey.getExternalName();
+    }
+    return null;
+  }
+
+  private static void addEditorSettingDescription(@NotNull List<EditorSchemeAttributeDescriptor> list,
                                                   String name,
                                                   String group,
                                                   @Nullable ColorKey backgroundKey,
                                                   @Nullable ColorKey foregroundKey,
-                                                  EditorColorsScheme scheme) {
-    String type = null;
-    if (foregroundKey != null) {
-      type = foregroundKey.getExternalName();
-    }
-    else {
-      if (backgroundKey != null) {
-        type = backgroundKey.getExternalName();
-      }
-    }
-    ColorAndFontDescription descr = new EditorSettingColorDescription(name, group, backgroundKey, foregroundKey, type, scheme);
-    array.add(descr);
+                                                  @NotNull EditorColorsScheme scheme) {
+    list.add(new EditorSettingColorDescription(name, group, backgroundKey, foregroundKey, calcType(backgroundKey, foregroundKey), scheme));
   }
 
-  private static void addSchemedDescription(@NotNull List<EditorSchemeAttributeDescriptor> array,
+  private static void addSchemedDescription(@NotNull List<EditorSchemeAttributeDescriptor> list,
                                             String name,
                                             String group,
                                             @NotNull TextAttributesKey key,
                                             @NotNull MyColorScheme scheme,
                                             Icon icon,
                                             String toolTip) {
-    ColorAndFontDescription descr = new SchemeTextAttributesDescription(name, group, key, scheme, icon, toolTip);
-    array.add(descr);
+    list.add(new SchemeTextAttributesDescription(name, group, key, scheme, icon, toolTip));
   }
 
   @Override
@@ -728,9 +709,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         try {
           super.disposeUIResources();
           Disposer.dispose(myDisposable);
-          if (myRootSchemesPanel != null) {
-            myRootSchemesPanel.disposeUIResources();
-          }
         }
         finally {
           myDisposeCompleted = true;
@@ -1011,7 +989,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     private boolean myIsNew = false;
 
     private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {
-      super(parentScheme, DefaultColorSchemesManager.getInstance());
+      super(parentScheme);
+
       parentScheme.getFontPreferences().copyTo(getFontPreferences());
       setLineSpacing(parentScheme.getLineSpacing());
 
@@ -1129,7 +1108,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   @Nullable
-  public InnerSearchableConfigurable findSubConfigurable(@NotNull final Class pageClass) {
+  public SearchableConfigurable findSubConfigurable(@NotNull Class pageClass) {
     if (mySubPanelFactories == null) {
       buildConfigurables();
     }
@@ -1142,16 +1121,22 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   }
 
   @Nullable
-  public NewColorAndFontPanel findPage(String pageName) {
+  public SearchableConfigurable findSubConfigurable(String pageName) {
     if (mySubPanelFactories == null) {
       buildConfigurables();
     }
     for (InnerSearchableConfigurable configurable : mySubPanelFactories.values()) {
       if (configurable.getDisplayName().equals(pageName)) {
-        return configurable.createPanel();
+        return configurable;
       }
     }
     return null;
+  }
+
+  @Nullable
+  public NewColorAndFontPanel findPage(String pageName) {
+    InnerSearchableConfigurable child = (InnerSearchableConfigurable)findSubConfigurable(pageName);
+    return child == null ? null : child.createPanel();
   }
 
   private class InnerSearchableConfigurable implements SearchableConfigurable, OptionsContainingConfigurable, NoScroll {

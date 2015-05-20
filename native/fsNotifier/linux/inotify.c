@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@
 #include <syslog.h>
 #include <unistd.h>
 
-#ifdef __amd64__
-__asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
-#else
+#if defined __i386__
 __asm__(".symver memcpy,memcpy@GLIBC_2.0");
+#elif defined __amd64__
+__asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
 #endif
 
 
@@ -270,13 +270,26 @@ static int walk_tree(int path_len, watch_node* parent, bool recursive, array* mo
 
   struct dirent* entry;
   while ((entry = readdir(dir)) != NULL) {
-    if (entry->d_type != DT_DIR ||
-        strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+      continue;
+    }
+    if (entry->d_type != DT_UNKNOWN && entry->d_type != DT_DIR) {
       continue;
     }
 
     int name_len = strlen(entry->d_name);
     memcpy(path_buf + path_len + 1, entry->d_name, name_len + 1);
+
+    if (entry->d_type == DT_UNKNOWN) {
+      struct stat st;
+      if (stat(path_buf, &st) != 0) {
+        userlog(LOG_DEBUG, "(DT_UNKNOWN) stat(%s): %d", path_buf, errno);
+        continue;
+      }
+      if (!S_ISDIR(st.st_mode)) {
+        continue;
+      }
+    }
 
     int subdir_id = walk_tree(path_len + 1 + name_len, table_get(watches, id), recursive, mounts);
     if (subdir_id < 0 && subdir_id != ERR_IGNORE) {

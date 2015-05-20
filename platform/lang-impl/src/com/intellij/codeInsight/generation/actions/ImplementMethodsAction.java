@@ -17,40 +17,22 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.ImplementMethodsHandler;
 import com.intellij.lang.CodeInsightActions;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.NotNull;
 
-public class ImplementMethodsAction extends BaseCodeInsightAction {
+public class ImplementMethodsAction extends PresentableActionHandlerBasedAction {
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new ImplementMethodsHandler();
   }
 
+  @NotNull
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
-    final Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
-    final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.IMPLEMENT_METHOD.forLanguage(language);
-    return codeInsightActionHandler != null && codeInsightActionHandler.isValidFor(editor, file);
-  }
-
-  @Override
-  public void update(final AnActionEvent event) {
-    if (CodeInsightActions.IMPLEMENT_METHOD.hasAnyExtensions()) {
-      event.getPresentation().setVisible(true);
-      super.update(event);
-    }
-    else {
-      event.getPresentation().setVisible(false);
-    }
+  protected LanguageExtension<LanguageCodeInsightActionHandler> getLanguageExtension() {
+    return CodeInsightActions.IMPLEMENT_METHOD;
   }
 }

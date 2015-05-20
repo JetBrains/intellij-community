@@ -1,12 +1,15 @@
 accessor
 aggregator
 ajax
+akka
 alloc
 anyschema
 aopalliance
 appender
 archivelog
+argc
 args
+argv
 arial
 arity
 asensitive
@@ -66,11 +69,13 @@ checksum
 chmod
 classpath
 clazz
+clion
 clob
 clojure
 cloneable
 closable
 closeable
+cmake
 cmdline
 codebase
 codeinsight
@@ -86,6 +91,7 @@ configs
 configurator
 configurators
 const
+constexpr
 contravariant
 controlfile
 covariant
@@ -93,6 +99,7 @@ cron
 ctrl
 customizer
 cyclomatic
+cygwin
 datafile
 datafiles
 datetime
@@ -115,6 +122,7 @@ dereference
 dereferences
 desc
 deserializable
+deserialization
 deserialize
 deserializer
 deserializers
@@ -132,6 +140,7 @@ ehcache
 elseif
 elsif
 endregion
+endif
 enqueue
 enum
 enums
@@ -177,9 +186,12 @@ giud
 globals
 google
 gruntfile
+gruntfiles
 gulpfile
+gulpfiles
 gzip
 gzipped
+hadoop
 hamcrest
 hardcoded
 hardlink
@@ -265,7 +277,6 @@ llvm
 localhost
 localtime
 localtimestamp
-locator
 logfile
 login
 logoff
@@ -273,6 +284,7 @@ logon
 logout
 longblob
 longtext
+lookahead
 lookup
 lucene
 lvalue
@@ -297,6 +309,7 @@ middleint
 middleware
 millis
 minextents
+mingw
 minimizable
 minvalue
 miny
@@ -355,6 +368,7 @@ nowrap
 nullabilities
 nullability
 nullif
+nullptr
 nvarchar
 oauth
 objc
@@ -514,6 +528,7 @@ sigwaiting
 sigwinch
 sigxcpu
 sigxfsz
+sizeof
 slru
 smallfile
 smallint
@@ -527,6 +542,7 @@ sqlerror
 sqlexception
 sqlstate
 sqlwarning
+stacktrace
 startup
 stateful
 stdarg
@@ -581,6 +597,7 @@ tuple
 twitter
 typedef
 typedefs
+typename
 typeof
 ubuntu
 unary
@@ -588,6 +605,7 @@ unboxing
 unbuffered
 uncomment
 uncommented
+uncommenting
 undef
 underwave
 undoable
@@ -600,6 +618,7 @@ unpivot
 unprotect
 unwatch
 uploader
+upsource
 urlencoded
 urowid
 username
@@ -623,6 +642,7 @@ viewport
 viewports
 vtlvariable
 watchlist
+wchar
 webpack
 webservice
 whitespace
@@ -637,6 +657,8 @@ writeln
 wsdl
 xcode
 xcodeproj
+xctest
+xcworkspace
 xhtml
 xmlbeans
 xmlschema

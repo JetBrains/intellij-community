@@ -50,7 +50,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
       if (LambdaUtil.isFunctionalType(type)) {
         final PsiType functionType =
           psiExpression instanceof PsiLambdaExpression
-          ? FunctionalInterfaceParameterizationUtil.getGroundTargetType(type, (PsiLambdaExpression)psiExpression)
+          ? FunctionalInterfaceParameterizationUtil.getGroundTargetType(type, (PsiLambdaExpression)psiExpression, false)
           : type;
         final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionType);
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);

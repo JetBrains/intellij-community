@@ -100,7 +100,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
 
     public State() {
       addEntry("PyQt4", "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}");
-      addEntry("PySide", "http://srinikom.github.com/pyside-docs/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
+      addEntry("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
       addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
       addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/{}generated/{module.name}.{element.name}.html");

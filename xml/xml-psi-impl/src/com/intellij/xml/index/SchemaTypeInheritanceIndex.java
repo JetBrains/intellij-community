@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -106,7 +108,7 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   @NotNull
@@ -139,10 +141,10 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
     return new DataExternalizer<Set<SchemaTypeInfo>>() {
       @Override
       public void save(@NotNull DataOutput out, Set<SchemaTypeInfo> value) throws IOException {
-        out.writeInt(value.size());
+        DataInputOutputUtil.writeINT(out, value.size());
         for (SchemaTypeInfo key : value) {
-          out.writeUTF(key.getNamespaceUri());
-          out.writeUTF(key.getTagName());
+          IOUtil.writeUTF(out, key.getNamespaceUri());
+          IOUtil.writeUTF(out, key.getTagName());
           out.writeBoolean(key.isIsTypeName());
         }
       }
@@ -150,10 +152,10 @@ public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
       @Override
       public Set<SchemaTypeInfo> read(@NotNull DataInput in) throws IOException {
         final Set<SchemaTypeInfo> set = new HashSet<SchemaTypeInfo>();
-        final int size = in.readInt();
+        final int size = DataInputOutputUtil.readINT(in);
         for (int i = 0; i < size; i++) {
-          final String nsUri = in.readUTF();
-          final String tagName = in.readUTF();
+          final String nsUri = IOUtil.readUTF(in);
+          final String tagName = IOUtil.readUTF(in);
           final boolean isType = in.readBoolean();
           set.add(new SchemaTypeInfo(tagName, isType, nsUri));
         }

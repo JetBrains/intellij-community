@@ -51,7 +51,8 @@ class GitPushResultNotification extends Notification {
                                                               "Check that conflicts were resolved correctly, and invoke push again.";
   public static final String INCOMPLETE_UPDATE = "push has been cancelled, because not all conflicts were resolved during update.<br/>" +
                                                  "Resolve the conflicts and invoke push again.";
-  public static final String UPDATE_WITH_ERRORS = "push was rejected, and update failed with error";
+  public static final String UPDATE_WITH_ERRORS = "push was rejected, and update failed with error.";
+  public static final String UPDATE_CANCELLED = "push was rejected, and update was cancelled.";
 
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
@@ -206,6 +207,9 @@ class GitPushResultNotification extends Notification {
     }
     else if (updateResult == GitUpdateResult.INCOMPLETE) {
       return INCOMPLETE_UPDATE;
+    }
+    else if (updateResult == GitUpdateResult.CANCEL) {
+      return UPDATE_CANCELLED;
     }
     else {
       return UPDATE_WITH_ERRORS;

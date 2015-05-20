@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import java.util.List;
 
 public class ClassWrapperNode {
 
-  private StructClass classStruct;
+  private final StructClass classStruct;
 
   private ClassWrapperNode superclass;
 
-  private List<ClassWrapperNode> subclasses = new ArrayList<ClassWrapperNode>();
+  private final List<ClassWrapperNode> subclasses = new ArrayList<ClassWrapperNode>();
 
   public ClassWrapperNode(StructClass cl) {
     this.classStruct = cl;

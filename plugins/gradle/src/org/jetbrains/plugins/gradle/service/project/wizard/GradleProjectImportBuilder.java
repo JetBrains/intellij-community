@@ -19,12 +19,14 @@ import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportBuilder;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -67,7 +69,13 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     if (file != null && file.isDirectory()) {
       pathToUse = new File(pathToUse, GradleConstants.DEFAULT_SCRIPT_NAME).getAbsolutePath();
     }
-    getControl(context.getProject()).setLinkedProjectPath(pathToUse);
+
+    final ImportFromGradleControl importFromGradleControl = getControl(context.getProject());
+    importFromGradleControl.setLinkedProjectPath(pathToUse);
+    final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(context.getProject());
+    if (sdkPair != null && !ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
+      importFromGradleControl.getProjectSettings().setGradleJvm(sdkPair.first);
+    }
   }
 
   @Override

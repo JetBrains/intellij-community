@@ -60,21 +60,25 @@ public abstract class MatchingHandler extends MatchPredicate {
   }
 
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
-    PsiElement patternElement;
-    MatchingHandler handler;
-    MatchingStrategy strategy = context.getPattern().getStrategy();
+    final MatchingStrategy strategy = context.getPattern().getStrategy();
 
     skipIfNecessary(nodes, nodes2, strategy);
     skipIfNecessary(nodes2, nodes, strategy);
 
-    if (nodes2.hasNext() &&
-        (handler = context.getPattern().getHandler(nodes.current())).match(patternElement = nodes.current(),nodes2.current(),context)) {
+    final PsiElement patternElement = nodes.current();
+    final MatchingHandler handler = context.getPattern().getHandler(patternElement);
+    if (nodes2.hasNext() && handler.match(patternElement, nodes2.current(), context)) {
 
       nodes.advance();
 
+      final boolean shouldRewindOnMatchFailure;
       if (shouldAdvanceTheMatchFor(patternElement, nodes2.current())) {
         nodes2.advance();
         skipIfNecessary(nodes, nodes2, strategy);
+        shouldRewindOnMatchFailure = true;
+      }
+      else {
+        shouldRewindOnMatchFailure = false;
       }
       skipIfNecessary(nodes2, nodes, strategy);
 
@@ -87,7 +91,7 @@ public abstract class MatchingHandler extends MatchPredicate {
         } else {
           // rewind, we was not able to match descendants
           nodes.rewind();
-          nodes2.rewind();
+          if (shouldRewindOnMatchFailure) nodes2.rewind();
         }
       } else {
         // match was found

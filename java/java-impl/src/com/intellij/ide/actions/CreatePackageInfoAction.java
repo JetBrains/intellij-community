@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.generate.tostring.util.StringUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 /**
@@ -99,7 +98,7 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
         final PsiPackage aPackage = directoryService.getPackage(directory);
         if (aPackage != null) {
           final String qualifiedName = aPackage.getQualifiedName();
-          if (StringUtil.isEmpty(qualifiedName) || nameHelper.isQualifiedName(qualifiedName)) {
+          if (com.intellij.openapi.util.text.StringUtil.isEmpty(qualifiedName) || nameHelper.isQualifiedName(qualifiedName)) {
             return true;
           }
         }
@@ -123,6 +122,6 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
 
   @Override
   protected FileTemplate getTemplate(Project project, PsiDirectory dir) {
-    return FileTemplateManager.getInstance().getInternalTemplate(FileTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME);
+    return FileTemplateManager.getInstance(project).getInternalTemplate(FileTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME);
   }
 }

@@ -174,7 +174,7 @@ public class MavenConsoleImpl extends MavenConsole {
           if (!myTitle.equals(console.myTitle)) continue;
 
           if (console.isFinished()) {
-            messageView.getContentManager().removeContent(each, false);
+            messageView.getContentManager().removeContent(each, true);
           }
         }
 

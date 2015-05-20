@@ -1,12 +1,7 @@
 package org.editorconfig.plugincomponents;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageAnnotators;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -18,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import org.editorconfig.Utils;
-import org.editorconfig.annotations.EditorConfigAnnotator;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfig.OutPair;
 import org.editorconfig.core.EditorConfigException;
@@ -30,25 +24,8 @@ import java.util.*;
 public class SettingsProviderComponent implements ApplicationComponent {
   private EditorConfig editorConfig;
 
-  public SettingsProviderComponent(FileTypeManager manager) {
+  public SettingsProviderComponent() {
     editorConfig = new EditorConfig();
-    registerAnnotator(manager);
-  }
-
-  public void registerAnnotator(FileTypeManager manager) {
-    final Set<String> languages = new HashSet<String>();
-    final EditorConfigAnnotator annotator = new EditorConfigAnnotator();
-    for (FileType type : manager.getRegisteredFileTypes()) {
-      if (type instanceof LanguageFileType) {
-        final Language lang = ((LanguageFileType)type).getLanguage();
-        final String id = lang.getID();
-        // don't add annotator for language twice
-        // don't add annotator for languages not having own annotators - they may rely on parent annotators
-        if (languages.contains(id) || (lang.getBaseLanguage() != null/* && LanguageAnnotators.INSTANCE.forKey(lang).isEmpty()*/)) continue;
-        LanguageAnnotators.INSTANCE.addExplicitExtension(lang, annotator);
-        languages.add(id);
-      }
-    }
   }
 
   public static SettingsProviderComponent getInstance() {
@@ -79,11 +56,13 @@ public class SettingsProviderComponent implements ApplicationComponent {
       public Result<Set<String>> compute() {
         final Set<String> dirs = new HashSet<String>();
         final VirtualFile projectBase = project.getBaseDir();
-        dirs.add(project.getBasePath());
-        for (Module module : ModuleManager.getInstance(project).getModules()) {
-          for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
-            if (!VfsUtilCore.isAncestor(projectBase, root, false)) {
-              dirs.add(root.getPath());
+        if (projectBase != null) {
+          dirs.add(project.getBasePath());
+          for (Module module : ModuleManager.getInstance(project).getModules()) {
+            for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+              if (!VfsUtilCore.isAncestor(projectBase, root, false)) {
+                dirs.add(root.getPath());
+              }
             }
           }
         }

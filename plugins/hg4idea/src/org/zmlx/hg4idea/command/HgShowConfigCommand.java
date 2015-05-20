@@ -20,10 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HgShowConfigCommand {
 
@@ -41,7 +38,8 @@ public class HgShowConfigCommand {
 
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setSilent(true);
-    HgCommandResult result = executor.executeInCurrentThread(repo, "showconfig", null);
+    //force override debug option while initialize hg configs
+    HgCommandResult result = executor.executeInCurrentThread(repo, "showconfig", Arrays.asList("--config", "ui.debug=false"));
 
     if (result == null) {
       return Collections.emptyMap();

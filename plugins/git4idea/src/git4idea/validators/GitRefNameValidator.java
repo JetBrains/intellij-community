@@ -59,7 +59,9 @@ public final class GitRefNameValidator implements InputValidator {
 
   @Override
   public boolean checkInput(String inputString) {
-    return !StringUtil.isEmptyOrSpaces(inputString) && !ILLEGAL.matcher(inputString).find();
+    return !StringUtil.isEmptyOrSpaces(inputString) &&
+           !ILLEGAL.matcher(inputString).find() &&
+           !inputString.startsWith("-");
   }
 
   @Override

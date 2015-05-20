@@ -19,6 +19,7 @@ import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
@@ -40,7 +41,7 @@ public final class PyTestSdkTools {
   }
 
   /**
-   * Creates SDK by its path and associates it with module.
+   * Creates SDK by its path and associates it with module (if module provided)
    *
    * @param sdkHome         path to sdk
    * @param sdkCreationType SDK creation strategy (see {@link SdkCreationType} doc)
@@ -49,7 +50,7 @@ public final class PyTestSdkTools {
   @NotNull
   public static Sdk createTempSdk(@NotNull final VirtualFile sdkHome,
                                   @NotNull final SdkCreationType sdkCreationType,
-                                  @NotNull final Module module
+                                  @Nullable final Module module
   )
     throws InvalidSdkException, IOException {
     final Ref<Sdk> ref = Ref.create();
@@ -81,28 +82,32 @@ public final class PyTestSdkTools {
    *
    * @param sdk          sdk to process
    * @param addSkeletons add skeletons or only packages
-   * @param module       module to associate with
+   * @param module       module to associate with (if provided)
    * @throws InvalidSdkException bas sdk
    * @throws IOException         failed to read eggs
    */
   private static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
                                                       final boolean addSkeletons,
-                                                      @NotNull final Module module)
+                                                      @Nullable final Module module)
     throws InvalidSdkException, IOException {
-    final Project project = module.getProject();
-    ModuleRootModificationUtil.setModuleSdk(module, sdk);
 
-    UsefulTestCase.edt(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ProjectRootManager.getInstance(project).setProjectSdk(sdk);
-          }
-        });
-      }
-    });
+    if (module != null) {
+      // Associate with module
+      final Project project = module.getProject();
+      ModuleRootModificationUtil.setModuleSdk(module, sdk);
+
+      UsefulTestCase.edt(new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+            }
+          });
+        }
+      });
+    }
 
 
     final SdkModificator modificator = sdk.getSdkModificator();
@@ -135,7 +140,8 @@ public final class PyTestSdkTools {
     });
 
     final SkeletonVersionChecker checker = new SkeletonVersionChecker(0);
-    final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, sdk, skeletonsPath, null, null);
+
+    final PySkeletonRefresher refresher = new PySkeletonRefresher(null, null, sdk, skeletonsPath, null, null);
     final List<String> errors = refresher.regenerateSkeletons(checker);
     Assert.assertThat("Errors found", errors, Matchers.empty());
   }

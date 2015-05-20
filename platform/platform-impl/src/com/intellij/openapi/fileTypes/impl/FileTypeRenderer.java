@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package com.intellij.openapi.fileTypes.impl;
 
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,18 +45,6 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
     myFileTypeListProvider = fileTypeListProvider;
   }
 
-  /** @deprecated use {@link #FileTypeRenderer()} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public FileTypeRenderer(final ListCellRenderer renderer) {
-    this();
-  }
-
-  /** @deprecated use {@link #FileTypeRenderer(FileTypeListProvider)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public FileTypeRenderer(final ListCellRenderer renderer, final FileTypeListProvider fileTypeListProvider) {
-    this(fileTypeListProvider);
-  }
-
   @Override
   public void customize(JList list, FileType type, int index, boolean selected, boolean hasFocus) {
     LayeredIcon layeredIcon = new LayeredIcon(2);
@@ -67,12 +56,14 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
 
     setIcon(layeredIcon);
 
-    if (isDuplicated(type.getDescription())) {
-      setText(type.getDescription() + " (" + type.getName() + ")");
+    String description = type.getDescription();
+    String trimmedDescription = StringUtil.capitalizeWords(description.replaceAll("(?i)\\s*file(?:s)?$", ""), true);
+    if (isDuplicated(description)) {
+      setText(trimmedDescription + " (" + type.getName() + ")");
 
     }
     else {
-      setText(type.getDescription());
+      setText(trimmedDescription);
     }
   }
 

@@ -25,6 +25,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -33,6 +35,7 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,11 +45,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
@@ -65,8 +64,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.io.*;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -88,11 +85,11 @@ public class PlatformTestUtil {
   private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
-  public static <T> void registerExtension(final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
+  public static <T> void registerExtension(@NotNull ExtensionPointName<T> name, @NotNull T t, @NotNull Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
 
-  public static <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
+  public static <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull final T t, @NotNull Disposable parentDisposable) {
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
     extensionPoint.registerExtension(t);
     Disposer.register(parentDisposable, new Disposable() {
@@ -467,6 +464,18 @@ public class PlatformTestUtil {
     return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
   }
 
+  public static void saveProject(Project project) {
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    boolean oldValue = application.isDoNotSave();
+    try {
+      application.doNotSave(false);
+      project.save();
+    }
+    finally {
+      application.doNotSave(oldValue);
+    }
+  }
+
   public static class TestInfo {
     private final ThrowableRunnable test; // runnable to measure
     private final int expectedMs;           // millis the test is expected to run
@@ -799,6 +808,11 @@ public class PlatformTestUtil {
     return homePath;
   }
 
+  public static String getPlatformTestDataPath() {
+    return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
+  }
+
+
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
     return new Comparator<AbstractTreeNode>() {
       @Override
@@ -822,20 +836,7 @@ public class PlatformTestUtil {
   }
 
   public static void tryGcSoftlyReachableObjects() {
-    ReferenceQueue<Object> q = new ReferenceQueue<Object>();
-    SoftReference<Object> ref = new SoftReference<Object>(new Object(), q);
-    List<Object> list = ContainerUtil.newArrayListWithCapacity(100 + useReference(ref));
-    for (int i = 0; i < 100; i++) {
-      if (q.poll() != null) {
-        break;
-      }
-      list.add(new SoftReference<byte[]>(new byte[(int)Runtime.getRuntime().freeMemory() / 2]));
-    }
-  }
-
-  private static int useReference(SoftReference<Object> ref) {
-    Object o = ref.get();
-    return o == null ? 0 : Math.abs(o.hashCode()) % 10;
+    GCUtil.tryGcSoftlyReachableObjects();
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {

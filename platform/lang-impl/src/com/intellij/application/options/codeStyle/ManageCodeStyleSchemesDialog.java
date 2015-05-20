@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.application.options.ImportSchemeChooserDialog;
 import com.intellij.application.options.ImportSourceChooserDialog;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
@@ -23,6 +22,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.options.SchemeImporterEP;
@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -51,9 +52,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -147,13 +146,16 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
         }.show(myModel.getSchemes());
       }
       else {
-        String selectedImporterName = importSourceChooserDialog.getSelectedSourceName();
+        final String selectedImporterName = importSourceChooserDialog.getSelectedSourceName();
         if (selectedImporterName != null) {
+          final SchemeImporter<CodeStyleScheme> importer = SchemeImporterEP.getImporter(selectedImporterName, CodeStyleScheme.class);
+          if (importer == null) return;
           try {
-            String schemeName = importExternalCodeStyle(selectedImporterName);
-            if (schemeName != null) {
+            final CodeStyleScheme scheme = importExternalCodeStyle(importer);
+            if (scheme != null) {
+              final String additionalImportInfo = StringUtil.notNullize(importer.getAdditionalImportInfo(scheme));
               showStatus(myImportButton,
-                         ApplicationBundle.message("message.code.style.scheme.import.success", selectedImporterName, schemeName),
+                         ApplicationBundle.message("message.code.style.scheme.import.success", selectedImporterName, scheme.getName(), additionalImportInfo),
                          MessageType.INFO);
             }
           }
@@ -181,84 +183,40 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
   }  
   
   @Nullable
-  private String importExternalCodeStyle(String importerName) throws SchemeImportException {
-    final SchemeImporter<CodeStyleScheme> importer = SchemeImporterEP.getImporter(importerName, CodeStyleScheme.class);
-    if (importer != null) {
-      FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-        .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
-          @Override
-          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-            return file.isDirectory() || importer.getSourceExtension().equals(file.getExtension());
-          }
-          @Override
-          public boolean isFileSelectable(VirtualFile file) {
-            return !file.isDirectory() && importer.getSourceExtension().equals(file.getExtension());
-          }
-        }, null, myContentPane);
-      VirtualFile[] selection = fileChooser.choose(null, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
-      if (selection.length == 1) {
-        VirtualFile selectedFile = selection[0];
-        selectedFile.refresh(false, false);
-        CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
-        try {
-          InputStream nameInputStream = selectedFile.getInputStream();
-          String[] schemeNames;
-          try {
-            schemeNames = importer.readSchemeNames(nameInputStream);
-          }
-          finally {
-            nameInputStream.close();
-          }
-          CodeStyleScheme currScheme = myModel.getSelectedScheme();
-          ImportSchemeChooserDialog schemeChooserDialog =
-            new ImportSchemeChooserDialog(myContentPane, schemeNames, !currScheme.isDefault() ? currScheme.getName() : null);
-          if (schemeChooserDialog.showAndGet()) {
-            String schemeName = schemeChooserDialog.getSelectedName();
-            String targetName = schemeChooserDialog.getTargetName();
-            CodeStyleScheme targetScheme = null;
-            if (schemeChooserDialog.isUseCurrentScheme()) {
-              targetScheme = myModel.getSelectedScheme();
-            }
-            else {
-              if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
-              for (CodeStyleScheme scheme : myModel.getSchemes()) {
-                if (targetName.equals(scheme.getName())) {
-                  targetScheme = scheme;
-                  break;
-                }
-              }
-              if (targetScheme == null) {
-                int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), targetName);
-                mySchemesTable.getSelectionModel().setSelectionInterval(row, row);
-                targetScheme = mySchemesTableModel.getSchemeAt(row);
-              }
-              else {
-                int result = Messages.showYesNoDialog(myContentPane,
-                                                      ApplicationBundle.message("message.code.style.scheme.already.exists", targetName),
-                                                      ApplicationBundle.message("title.code.style.settings.import"),
-                                                      Messages.getQuestionIcon());
-                if (result != Messages.YES) {
-                  return null;
-                }
-              }
-            }
-            InputStream dataInputStream = selectedFile.getInputStream();
-            try {
-              importer.importScheme(dataInputStream, schemeName, targetScheme);
-              myModel.fireSchemeChanged(targetScheme);
-            }
-            finally {
-              dataInputStream.close();
-            }
-            return targetScheme.getName();
-          }
-        }
-        catch (IOException e) {
-          throw new SchemeImportException(e);
-        } 
+  private CodeStyleScheme importExternalCodeStyle(final SchemeImporter<CodeStyleScheme> importer) throws SchemeImportException {
+    final VirtualFile selectedFile = selectImportSource(importer.getSourceExtensions());
+    if (selectedFile != null) {
+      CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
+      final SchemeCreator schemeCreator = new SchemeCreator();
+      final CodeStyleScheme
+        schemeImported = importer.importScheme(myModel.getProject(), selectedFile, myModel.getSelectedScheme(), schemeCreator);
+      if (schemeImported != null) {
+        myModel.fireSchemeChanged(schemeImported);
+        return schemeImported;
       }
     }
     return null;
+  }
+
+  @Nullable
+  private VirtualFile selectImportSource(final String[] sourceExtensions) {
+    final Set<String> extensions = new HashSet<String>(Arrays.asList(sourceExtensions));
+    FileChooserDialog fileChooser = FileChooserFactory.getInstance()
+      .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
+        @Override
+        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+          return file.isDirectory() || extensions.contains(file.getExtension());
+        }
+
+        @Override
+        public boolean isFileSelectable(VirtualFile file) {
+          return !file.isDirectory() && extensions.contains(file.getExtension());
+        }
+      }, null, myContentPane);
+    final VirtualFile[] virtualFiles = fileChooser.choose(null, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
+    if (virtualFiles.length != 1) return null;
+    virtualFiles[0].refresh(false, false);
+    return virtualFiles[0];
   }
 
   private void updateActions() {
@@ -299,6 +257,16 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
 
   private void createUIComponents() {
     mySchemesTable = new MySchemesTable();
+  }
+
+  private class SchemeCreator implements SchemeFactory<CodeStyleScheme> {
+    @Override
+    public CodeStyleScheme createNewScheme(@Nullable String targetName) {
+      if (targetName == null) targetName = ApplicationBundle.message("code.style.scheme.import.unnamed");
+      final int row = mySchemesTableModel.createNewScheme(getSelectedScheme(), targetName);
+      mySchemesTable.getSelectionModel().setSelectionInterval(row, row);
+      return mySchemesTableModel.getSchemeAt(row);
+    }
   }
 
   private class MySchemesTable extends JBTable {

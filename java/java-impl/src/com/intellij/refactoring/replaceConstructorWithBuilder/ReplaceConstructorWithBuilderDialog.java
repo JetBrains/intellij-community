@@ -20,16 +20,24 @@
  */
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidatorEx;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
@@ -37,9 +45,10 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
-import com.intellij.util.ui.Table;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -68,16 +77,20 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#" + ReplaceConstructorWithBuilderDialog.class.getName());
   private final LinkedHashMap<String, ParameterData> myParametersMap;
   private MyTableModel myTableModel;
-  private Table myTable;
+  private JBTable myTable;
+  private String mySetterPrefix;
+
   private static final String RECENT_KEYS = "ReplaceConstructorWithBuilder.RECENT_KEYS";
+  private static final String SETTER_PREFIX_KEY = "ConstructorWithBuilder.SetterPrefix";
 
 
   protected ReplaceConstructorWithBuilderDialog(@NotNull Project project, PsiMethod[] constructors) {
     super(project, false);
     myConstructors = constructors;
     myParametersMap = new LinkedHashMap<String, ParameterData>();
+    mySetterPrefix = PropertiesComponent.getInstance(project).getValue(SETTER_PREFIX_KEY, "set");
     for (PsiMethod constructor : constructors) {
-      ParameterData.createFromConstructor(constructor, myParametersMap);
+      ParameterData.createFromConstructor(constructor, mySetterPrefix, myParametersMap);
     }
     init();
     setTitle(ReplaceConstructorWithBuilderProcessor.REFACTORING_NAME);
@@ -109,6 +122,44 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   }
 
 
+  @Nullable
+  @Override
+  protected JComponent createNorthPanel() {
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new JLabel("Parameters to Pass to the Builder"), BorderLayout.CENTER);
+
+    final DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
+    actionGroup.addAction(new AnAction("Rename Setters Prefix") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        applyNewSetterPrefix();
+      }
+    }).setAsSecondary(true);
+
+    panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent(), BorderLayout.EAST);
+    final Box box = Box.createHorizontalBox();
+    box.add(panel);
+    box.add(Box.createHorizontalGlue());
+    return box;
+  }
+
+  private void applyNewSetterPrefix() {
+    final String setterPrefix = Messages.showInputDialog(myTable, "New setter prefix:", "Rename Setters Prefix", null,
+                                                         mySetterPrefix, new MySetterPrefixInputValidator());
+    if (setterPrefix != null) {
+      mySetterPrefix = setterPrefix;
+      PropertiesComponent.getInstance(myProject).setValue(SETTER_PREFIX_KEY, setterPrefix);
+      final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
+      for (String paramName : myParametersMap.keySet()) {
+        final ParameterData data = myParametersMap.get(paramName);
+        paramName = data.getParamName();
+        final String propertyName = javaCodeStyleManager.variableNameToPropertyName(paramName, VariableKind.PARAMETER);
+        data.setSetterName(PropertyUtil.suggestSetterName(propertyName, setterPrefix));
+      }
+      myTable.revalidate();
+      myTable.repaint();
+    }
+  }
 
   protected JComponent createCenterPanel() {
     final Splitter splitter = new Splitter(true);
@@ -171,7 +222,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
   private JScrollPane createTablePanel() {
     myTableModel = new MyTableModel();
-    myTable = new Table(myTableModel);
+    myTable = new JBTable(myTableModel);
     myTable.setSurrendersFocusOnKeystroke(true);
     myTable.getTableHeader().setReorderingAllowed(false);
 
@@ -198,13 +249,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     myTable.setPreferredScrollableViewportSize(new Dimension(550, myTable.getRowHeight() * 12));
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
-    //final Border titledBorder = IdeBorderFactory.createBoldTitledBorder("Parameters to Pass to the Builder");
-    //final Border emptyBorder = BorderFactory.createEmptyBorder(0, 5, 5, 5);
-    //final Border border = BorderFactory.createCompoundBorder(titledBorder, emptyBorder);
-    //scrollPane.setBorder(border);
-
-    return scrollPane;
+    return ScrollPaneFactory.createScrollPane(myTable);
   }
 
   private static final int PARAM = 0;
@@ -336,6 +381,28 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       }
       assert false: "unknown column " + column;
       return null;
+    }
+  }
+
+  private class MySetterPrefixInputValidator implements InputValidatorEx {
+    @Override
+    public boolean checkInput(String inputString) {
+      return getErrorText(inputString) == null;
+    }
+
+    @Override
+    public boolean canClose(String inputString) {
+      return checkInput(inputString);
+    }
+
+    @Nullable
+    @Override
+    public String getErrorText(String inputString) {
+      if (StringUtil.isEmpty(inputString)) {
+        return null;
+      }
+      return !PsiNameHelper.getInstance(myProject).isIdentifier(inputString)
+             ? "Identifier \'" + inputString + "\' is invalid" : null;
     }
   }
 }

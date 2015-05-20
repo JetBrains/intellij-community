@@ -53,6 +53,10 @@
     <option name="ENABLED" value="true" />
   </filter>
   <filter>
+    <option name="PATTERN" value="jdk.internal.*" />
+    <option name="ENABLED" value="true" />
+  </filter>
+  <filter>
     <option name="PATTERN" value="junit.*" />
     <option name="ENABLED" value="true" />
   </filter>
@@ -70,6 +74,18 @@
   </filter>
   <filter>
     <option name="PATTERN" value="org.springsource.loaded.*" />
+    <option name="ENABLED" value="true" />
+  </filter>
+  <filter>
+    <option name="PATTERN" value="javassist.*" />
+    <option name="ENABLED" value="true" />
+  </filter>
+  <filter>
+    <option name="PATTERN" value="org.apache.webbeans.*" />
+    <option name="ENABLED" value="true" />
+  </filter>
+  <filter>
+    <option name="PATTERN" value="com.ibm.ws.*" />
     <option name="ENABLED" value="true" />
   </filter>
 </component>

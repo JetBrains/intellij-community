@@ -21,21 +21,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provides services for selecting text in the IDEA text editor and retrieving information
- * about the selection. The editor supports two modes of selection: range selection (where
- * a sequential range of text from one offset to another is selected) and block selection
- * (where a rectangular block of text is selected). Different functions exist for handling
- * these two types of selection, but only one type of selection can exist in a document at
- * any given time.
- *
- * When caret model supports multiple carets, block selection mode is not supported.
- * Instead, each caret can have its own selected region. Most of the methods querying or
- * updating selection operate on the current caret (see {@link com.intellij.openapi.editor.CaretModel#runForEachCaret(Runnable)},
- * or 'primary' caret if current caret is not defined. The exception is {@link #copySelectionToClipboard()},
- * which copies contents of all selected regions to clipboard as one piece of text.
+ * Provides services for selecting text in the IDEA text editor and retrieving information about the selection. 
+ * Most of the methods here exist for compatibility reasons, corresponding functionality is also provided by {@link CaretModel} now.
+ * <p>
+ * In editor supporting multiple carets, each caret has its own associated selection range. Unless mentioned explicitly, methods of this 
+ * interface operate on the current caret (see {@link CaretModel#runForEachCaret(CaretAction)}), or 'primary' caret if current caret 
+ * is not defined. 
  *
  * @see Editor#getSelectionModel()
- * @see com.intellij.openapi.editor.CaretModel
+ * @see CaretModel
  */
 public interface SelectionModel {
   /**
@@ -67,8 +61,7 @@ public interface SelectionModel {
   VisualPosition getSelectionEndPosition();
 
   /**
-   * Returns the text selected in the editor (or the concatenation of text ranges selected
-   * in each line, if block selection mode is used).
+   * Returns the text selected in the editor.
    *
    * @return the selected text, or null if there is currently no selection.
    */
@@ -99,10 +92,9 @@ public interface SelectionModel {
   VisualPosition getLeadSelectionPosition();
 
   /**
-   * Checks if a range of text is currently selected in regular (non-block) selection mode.
+   * Checks if a range of text is currently selected.
    *
    * @return true if a range of text is selected, false otherwise.
-   * @see #hasBlockSelection()
    */
   boolean hasSelection();
 
@@ -111,16 +103,14 @@ public interface SelectionModel {
    * the document, and returns <code>true</code> if any of them has selection, otherwise checks only the current caret.
    *
    * @return true if a range of text is selected, false otherwise.
-   * @see #hasBlockSelection()
    */
   boolean hasSelection(boolean anyCaret);
 
   /**
-   * Selects the specified range of text in regular (non-block) selection mode.
+   * Selects the specified range of text.
    *
    * @param startOffset the start offset of the text range to select.
    * @param endOffset   the end offset of the text range to select.
-   * @see #setBlockSelection(LogicalPosition, LogicalPosition)
    */
   void setSelection(int startOffset, int endOffset);
 
@@ -157,7 +147,7 @@ public interface SelectionModel {
 
   /**
    * Removes the selection in the editor. If <code>allCarets</code> is <code>true</code>, removes selections from all carets in the
-   * document, otherwise, does this just for the current caret.
+   * editor, otherwise, does this just for the current caret.
    */
   void removeSelection(boolean allCarets);
 
@@ -198,9 +188,7 @@ public interface SelectionModel {
   void copySelectionToClipboard();
 
   /**
-   * Selects the specified rectangle of text in block selection mode. When multiple carets are supported by editor, this creates an
-   * equivalent multi-caret selection (note, that in this case {@link #hasBlockSelection()} will still return <code>false</code>
-   * afterwards!).
+   * Creates a multi-caret selection for the rectangular block of text with specified start and end positions.
    *
    * @param blockStart the start of the rectangle to select.
    * @param blockEnd   the end of the rectangle to select.
@@ -209,70 +197,64 @@ public interface SelectionModel {
   void setBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd);
 
   /**
-   * Removes the block selection from the document. Does nothing if multiple carets are supported by editor.
+   * Does nothing.
    *
-   * @see #removeSelection()
-   * @see #removeSelection(boolean)
+   * @deprecated To be removed in IDEA 16.
    */
   void removeBlockSelection();
 
   /**
-   * Checks if a rectangular block of text is currently selected in the document. Does not apply to multiple-caret selections.
+   * Always returns <code>false</code>.
    *
-   * @return true if a block selection currently exists, false otherwise.
-   * @see #hasSelection()
+   * @deprecated To be removed in IDEA 16.
    */
   boolean hasBlockSelection();
 
   /**
-   * Returns an array of start offsets in the document for line parts selected in the document currently. Works both in single-caret state,
-   * multiple-caret selection and block-mode selection (for carets not having a selection, caret position is returned).
+   * Returns an array of start offsets in the document for ranges selected in the document currently. Works both for a single-caret and
+   * a multiple-caret selection (for carets not having a selection, caret position is returned).
    *
-   * @return the array of start offsets, or an array of 1 element if a range selection
-   * currently exists, or an empty array if no selection exists.
+   * @return an array of start offsets, array size is equal to the number of carets existing in the editor currently.
    */
   @NotNull
   int[] getBlockSelectionStarts();
 
   /**
-   * Returns an array of end offsets in the document for line parts selected in the document currently. Works both in single-caret state,
-   * multiple-caret selection and block-mode selection (for carets not having a selection, caret position is returned).
+   * Returns an array of end offsets in the document for ranges selected in the document currently. Works both for a single-caret and
+   * a multiple-caret selection (for carets not having a selection, caret position is returned).
    *
-   * @return the array of end offsets, or an array of 1 element if a range selection
-   * currently exists, or an empty array if no selection exists.
+   * @return an array of start offsets, array size is equal to the number of carets existing in the editor currently.
    */
   @NotNull
   int[] getBlockSelectionEnds();
 
   /**
-   * Returns the start position of the current block selection.
+   * Always returns <code>null</code>.
    *
-   * @return the block selection start, or null if no block selection currently exists.
+   * @deprecated To be removed in IDEA 16.
    */
   @Nullable
   LogicalPosition getBlockStart();
 
   /**
-   * Returns the end position of the current block selection.
+   * Always returns <code>null</code>.
    *
-   * @return the block selection end, or null if no block selection currently exists.
+   * @deprecated To be removed in IDEA 16.
    */
   @Nullable
   LogicalPosition getBlockEnd();
 
   /**
-   * Checks if any read-only markers intersect the current block selection.
+   * Always returns <code>false</code>.
    *
-   * @return true if part of the block selection is read-only, false otherwise.
-   * @see Document#createGuardedBlock(int, int)
+   * @deprecated To be removed in IDEA 16.
    */
   boolean isBlockSelectionGuarded();
 
   /**
-   * Returns a read-only marker intersecting the current block selection.
+   * Always returns <code>null</code>.
    *
-   * @return the marker instance, or null if there is no block selection or no read-only marker
-   * intersects it.
+   * @deprecated To be removed in IDEA 16.
    */
   @Nullable
   RangeMarker getBlockSelectionGuard();

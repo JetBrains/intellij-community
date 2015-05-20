@@ -93,6 +93,16 @@
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
     </action>
 
+    <action id="CopyAsRichText" class="com.intellij.openapi.editor.richcopy.CopyAsRichTextAction">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+    </action>
+
+    <action id="CopyAsPlainText" class="com.intellij.openapi.editor.richcopy.CopyAsPlainTextAction">
+      <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="$Copy"/>
+    </action>
+
     <group id="EditSelectWordGroup">
       <reference ref="EditorSelectWord"/>
       <reference ref="EditorUnSelectWord"/>
@@ -330,15 +340,15 @@
       <separator/>
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
+
+      <action id="NewScratchFile" class="com.intellij.ide.scratch.NewScratchFileAction" />
+      <action id="IdeScriptingConsole" class="com.intellij.execution.console.RunIdeConsoleAction"/>
     </group>
 
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <action id="NewScratchFile" class="com.intellij.ide.scratch.NewScratchFileAction">
-      <add-to-group group-id="ToolsBasicGroup" anchor="first"/>
-    </action>
 
     <group id="NewGroup" popup="true">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
@@ -391,27 +401,27 @@
       <reference ref="GotoNextBookmark"/>
       <reference ref="GotoPreviousBookmark"/>
 
-      <action id="GotoBookmark0" class="com.intellij.ide.bookmarks.actions.GotoBookmark0Action"/>
-      <action id="GotoBookmark1" class="com.intellij.ide.bookmarks.actions.GotoBookmark1Action"/>
-      <action id="GotoBookmark2" class="com.intellij.ide.bookmarks.actions.GotoBookmark2Action"/>
-      <action id="GotoBookmark3" class="com.intellij.ide.bookmarks.actions.GotoBookmark3Action"/>
-      <action id="GotoBookmark4" class="com.intellij.ide.bookmarks.actions.GotoBookmark4Action"/>
-      <action id="GotoBookmark5" class="com.intellij.ide.bookmarks.actions.GotoBookmark5Action"/>
-      <action id="GotoBookmark6" class="com.intellij.ide.bookmarks.actions.GotoBookmark6Action"/>
-      <action id="GotoBookmark7" class="com.intellij.ide.bookmarks.actions.GotoBookmark7Action"/>
-      <action id="GotoBookmark8" class="com.intellij.ide.bookmarks.actions.GotoBookmark8Action"/>
-      <action id="GotoBookmark9" class="com.intellij.ide.bookmarks.actions.GotoBookmark9Action"/>
+      <action id="GotoBookmark0" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark0Action"/>
+      <action id="GotoBookmark1" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark1Action"/>
+      <action id="GotoBookmark2" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark2Action"/>
+      <action id="GotoBookmark3" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark3Action"/>
+      <action id="GotoBookmark4" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark4Action"/>
+      <action id="GotoBookmark5" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark5Action"/>
+      <action id="GotoBookmark6" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark6Action"/>
+      <action id="GotoBookmark7" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark7Action"/>
+      <action id="GotoBookmark8" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark8Action"/>
+      <action id="GotoBookmark9" class="com.intellij.ide.bookmarks.actions.GoToMnemonicBookmarkActionBase$GotoBookmark9Action"/>
 
-      <action id="ToggleBookmark0" class="com.intellij.ide.bookmarks.actions.ToggleBookmark0Action"/>
-      <action id="ToggleBookmark1" class="com.intellij.ide.bookmarks.actions.ToggleBookmark1Action"/>
-      <action id="ToggleBookmark2" class="com.intellij.ide.bookmarks.actions.ToggleBookmark2Action"/>
-      <action id="ToggleBookmark3" class="com.intellij.ide.bookmarks.actions.ToggleBookmark3Action"/>
-      <action id="ToggleBookmark4" class="com.intellij.ide.bookmarks.actions.ToggleBookmark4Action"/>
-      <action id="ToggleBookmark5" class="com.intellij.ide.bookmarks.actions.ToggleBookmark5Action"/>
-      <action id="ToggleBookmark6" class="com.intellij.ide.bookmarks.actions.ToggleBookmark6Action"/>
-      <action id="ToggleBookmark7" class="com.intellij.ide.bookmarks.actions.ToggleBookmark7Action"/>
-      <action id="ToggleBookmark8" class="com.intellij.ide.bookmarks.actions.ToggleBookmark8Action"/>
-      <action id="ToggleBookmark9" class="com.intellij.ide.bookmarks.actions.ToggleBookmark9Action"/>
+      <action id="ToggleBookmark0" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark0Action"/>
+      <action id="ToggleBookmark1" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark1Action"/>
+      <action id="ToggleBookmark2" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark2Action"/>
+      <action id="ToggleBookmark3" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark3Action"/>
+      <action id="ToggleBookmark4" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark4Action"/>
+      <action id="ToggleBookmark5" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark5Action"/>
+      <action id="ToggleBookmark6" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark6Action"/>
+      <action id="ToggleBookmark7" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark7Action"/>
+      <action id="ToggleBookmark8" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark8Action"/>
+      <action id="ToggleBookmark9" class="com.intellij.ide.bookmarks.actions.ToggleNumberedBookmarkActionBase$ToggleBookmark9Action"/>
 
     </group>
 
@@ -465,8 +475,6 @@
       <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
-      <reference ref="CompareDirs"/>
-      <reference ref="CompareJars"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
       <separator/>
@@ -632,6 +640,10 @@
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeColorScheme"/>
     </action>
 
+    <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction">
+      <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
+    </action>
+
     <action id="TypeHierarchyBase.BaseOnThisType" text="Base on This Type" class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction"/>
     <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
     <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
@@ -644,7 +656,7 @@
       <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="AllIcons.Debugger.Actions.Force_step_over"/>
       <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="AllIcons.Actions.TraceInto"/>
       <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="AllIcons.Debugger.Actions.Force_step_into"/>
-      <action id="SmartStepInto" class="com.intellij.xdebugger.impl.actions.SmartStepIntoAction" icon="AllIcons.Actions.TraceInto"/>
+      <action id="SmartStepInto" class="com.intellij.xdebugger.impl.actions.SmartStepIntoAction" icon="AllIcons.Debugger.SmartStepInto"/>
       <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="AllIcons.Actions.StepOut"/>
       <action id="RunToCursor" class="com.intellij.xdebugger.impl.actions.RunToCursorAction" icon="AllIcons.Actions.RunToCursor"/>
       <action id="ForceRunToCursor" class="com.intellij.xdebugger.impl.actions.ForceRunToCursorAction" icon="AllIcons.Debugger.Actions.Force_run_to_cursor"/>
@@ -719,6 +731,7 @@
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
+      <separator/>
       <reference ref="Resume"/>
       <reference ref="Pause"/>
       <reference ref="Stop"/>
@@ -781,10 +794,13 @@
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.SecondaryGroup" popup="true">
-      <action id="Debugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction"/>
       <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
-      <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
-      <action id="XDebugger.AutoTooltipOnSelection" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowOnSelectionAction"/>
+      <separator/>
+      <reference ref="XDebugger.ToggleSortValues"/>
+      <!--<action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>-->
+      <!--<action id="XDebugger.AutoTooltipOnSelection" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowOnSelectionAction"/>-->
+      <separator/>
+      <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction" />
     </group>
 
     <group id="RunnerLayoutActions">
@@ -841,7 +857,7 @@
 
     <group>
       <action class="com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction"
-              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="CompareDirs"/>
+              text="View assertEquals Difference" id="openAssertEqualsDiff" use-shortcut-of="Diff.ShowDiff"/>
       <separator/>
       <add-to-group anchor="first" group-id="TestTreePopupMenu"/>
     </group>
@@ -929,5 +945,8 @@
       <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
     </group>
 
+    <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>
+
+    <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
   </actions>
 </component>

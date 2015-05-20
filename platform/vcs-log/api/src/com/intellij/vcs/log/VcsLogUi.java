@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsLogUi {
@@ -33,7 +34,17 @@ public interface VcsLogUi {
 
   void setBranchesPanelVisible(boolean visible);
 
+  boolean areGraphActionsEnabled();
+
   boolean isMultipleRoots();
   boolean isShowRootNames();
+
+  void setBekType(@NotNull PermanentGraph.SortType bekType);
+  @NotNull PermanentGraph.SortType getBekType();
+
   void setShowRootNames(boolean showRootNames);
+
+  boolean isHighlightMyCommits();
+
+  void setHighlightMyCommits(boolean state);
 }

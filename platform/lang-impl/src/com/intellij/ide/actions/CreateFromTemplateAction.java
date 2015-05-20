@@ -127,7 +127,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   }
 
   //todo append $END variable to templates?
-  protected static void moveCaretAfterNameIdentifier(PsiNameIdentifierOwner createdElement) {
+  public static void moveCaretAfterNameIdentifier(PsiNameIdentifierOwner createdElement) {
     final Project project = createdElement.getProject();
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor != null) {

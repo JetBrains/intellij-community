@@ -23,10 +23,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Collects incoming requests into a list, and provides them to an underlying background task via {@link #popRequests()}. <br/>
+ * Collects incoming requests into a list, and provides them to the underlying background task via {@link #popRequests()}. <br/>
  * Such task is started immediately after the first request arrives, if no other task is currently running. <br/>
- * A task indicates its completion by calling {@link #taskCompleted(Object)} and providing a result which is immediately passed to the
- * result handler.
+ * A task reports its completion by calling {@link #taskCompleted(Object)} and providing a result which is immediately passed to the
+ * result handler (unless it is null in which case the task is stopped but the result is not passed to the handler).
  * <p/>
  * The purpose of this class is to provide a single thread, which processes incoming requests in the background and continues to process
  * new ones if they arrive while the previous ones were processed. An alternative would be a long living thread which always checks some

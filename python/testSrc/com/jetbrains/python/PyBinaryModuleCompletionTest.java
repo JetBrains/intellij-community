@@ -16,6 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.jetbrains.python.fixtures.PyLightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**

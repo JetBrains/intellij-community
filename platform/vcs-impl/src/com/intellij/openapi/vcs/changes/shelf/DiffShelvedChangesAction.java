@@ -120,7 +120,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       diffRequestPresentables.add(new DiffRequestPresentableProxy() {
         @NotNull
         @Override
-        protected DiffRequestPresentable init() throws VcsException {
+        public DiffRequestPresentable init() throws VcsException {
           return new ChangeDiffRequestPresentable(project, file.createChange(project));
         }
 
@@ -155,7 +155,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
         diffRequestPresentables.add(new DiffRequestPresentableProxy() {
           @NotNull
           @Override
-          protected DiffRequestPresentable init() throws VcsException {
+          public DiffRequestPresentable init() throws VcsException {
             if (shelvedChange.isConflictingChange(project)) {
               final CommitContext commitContext = new CommitContext();
               final TextFilePatch patch = preloader.getPatch(shelvedChange, commitContext);

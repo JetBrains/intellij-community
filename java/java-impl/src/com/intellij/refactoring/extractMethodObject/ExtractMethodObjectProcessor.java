@@ -646,6 +646,10 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public PsiClass getInnerClass() {
     return myInnerClass;
   }
+  
+  protected boolean isFoldingApplicable() {
+    return true;
+  }
 
   public class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
@@ -662,11 +666,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     @Override
     protected boolean insertNotNullCheckIfPossible() {
-      return false;
-    }
-
-    @Override
-    protected boolean isNullabilityCheckApplicable() {
       return false;
     }
 
@@ -786,8 +785,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           PsiStatement st = null;
           final String pureName = getPureName(variable);
           final int varIdxInOutput = ArrayUtil.find(myOutputVariables, variable);
-          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null ? PropertyUtil.suggestGetterName(
-            myOutputFields[varIdxInOutput]) : PropertyUtil.suggestGetterName(pureName, variable.getType());
+          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null 
+                                    ? GenerateMembersUtil.suggestGetterName(myOutputFields[varIdxInOutput]) 
+                                    : GenerateMembersUtil.suggestGetterName(pureName, variable.getType(), myProject);
           if (isDeclaredInside(variable)) {
             st = myElementFactory.createStatementFromText(
               variable.getType().getCanonicalText() + " " + name + " = " + object + "." + getterName + "();",
@@ -821,6 +821,11 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    @Override
+    protected boolean isFoldingApplicable() {
+      return ExtractMethodObjectProcessor.this.isFoldingApplicable();
+    }
+
     private void rebindExitStatement(final String objectName) {
       final PsiStatement exitStatementCopy = myExtractProcessor.myFirstExitStatementCopy;
       if (exitStatementCopy != null) {
@@ -837,7 +842,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
             if (expression.resolve() == null) {
               final PsiVariable variable = outVarsNames.get(expression.getReferenceName());
               if (variable != null) {
-                final String call2Getter = objectName + "." + PropertyUtil.suggestGetterName(getPureName(variable), variable.getType()) + "()";
+                final String call2Getter = objectName + "." + GenerateMembersUtil.suggestGetterName(getPureName(variable), variable.getType(),
+                                                                                                    myProject) + "()";
                 final PsiExpression callToGetter = myElementFactory.createExpressionFromText(call2Getter, variable);
                 replaceMap.put(expression, callToGetter);
               }

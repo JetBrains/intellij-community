@@ -21,14 +21,11 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 
 public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable {
-  private String myCurrentSelection;
 
   public IDEInspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
     super(projectProfileManager, profileManager);
@@ -40,22 +37,7 @@ public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable 
   }
 
   @Override
-  public void reset() {
-    super.reset();
-    myCurrentSelection = getSelectedObject().getName();
-  }
-
-  @Override
-  public void selectProfile(String name) {
-    super.selectProfile(name);
-    myCurrentSelection = name;
-  }
-
-  @Override
-  public void apply() throws ConfigurationException {
-    super.apply();
-    final String rootProfile = getSelectedObject().getName();
-    myProfileManager.setRootProfile(rootProfile);
-    myCurrentSelection = rootProfile;
+  protected void applyRootProfile(String name, boolean isShared) {
+    myProfileManager.setRootProfile(name);
   }
 }

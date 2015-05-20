@@ -7,6 +7,7 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 
 import java.util.ArrayList;
@@ -15,18 +16,24 @@ import java.util.List;
 import java.util.Map;
 
 public final class JsonReaders {
+  public static final ObjectFactory<String> STRING_OBJECT_FACTORY = new ObjectFactory<String>() {
+    @Override
+    public String read(JsonReaderEx reader) {
+      return reader.nextString();
+    }
+  };
+
   private JsonReaders() {
+  }
+
+  public static <T> ObjectFactory<Map<String, T>> mapFactory(@NotNull ObjectFactory<T> valueFactory) {
+    return new MapFactory<T>(valueFactory);
   }
 
   private static void checkIsNull(JsonReaderEx reader, String fieldName) {
     if (reader.peek() == JsonToken.NULL) {
       throw new RuntimeException("Field is not nullable" + (fieldName == null ? "" : (": " + fieldName)));
     }
-  }
-
-  public static String readString(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextString();
   }
 
   public static String readRawString(JsonReaderEx reader) {
@@ -42,72 +49,12 @@ public final class JsonReaders {
     }
   }
 
-  public static String readNullableString(JsonReaderEx reader) {
-    if (reader.peek() == JsonToken.NULL) {
-      reader.skipValue();
-      return null;
-    }
-    return reader.nextString();
-  }
-
-  public static boolean readBoolean(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextBoolean();
-  }
-
-  public static boolean readNullableBoolean(JsonReaderEx reader) {
-    if (reader.peek() == JsonToken.NULL) {
-      reader.skipValue();
-      return false;
-    }
-    return reader.nextBoolean();
-  }
-
-  public static int readInt(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextInt();
-  }
-
-  public static int readNullableInt(JsonReaderEx reader) {
-    if (reader.peek() == JsonToken.NULL) {
-      reader.skipValue();
-      return -1;
-    }
-    return reader.nextInt();
-  }
-
-  public static long readLong(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextLong();
-  }
-
-  public static double readDouble(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
-    return reader.nextDouble();
-  }
-
-  public static long readNullableLong(JsonReaderEx reader) {
-    if (reader.peek() == JsonToken.NULL) {
-      reader.skipValue();
-      return -1;
-    }
-    return reader.nextLong();
-  }
-
-  public static <T extends Enum<T>> T readEnum(JsonReaderEx reader, String fieldName, Class<T> enumClass) {
-    checkIsNull(reader, fieldName);
-    try {
-      return Enum.valueOf(enumClass, readEnumName(reader));
-    }
-    catch (IllegalArgumentException ignored) {
-      return Enum.valueOf(enumClass, "NO_ENUM_CONST");
-    }
-  }
-
+  // Don't use Guava CaseFormat.*! ObjectWithURL must be converted to OBJECT_WITH_URL
   public static String convertRawEnumName(@NotNull String enumValue) {
-    StringBuilder builder = new StringBuilder(enumValue.length() + 4);
+    int n = enumValue.length();
+    StringBuilder builder = new StringBuilder(n + 4);
     boolean prevIsLowerCase = false;
-    for (int i = 0; i < enumValue.length(); i++) {
+    for (int i = 0; i < n; i++) {
       char c = enumValue.charAt(i);
       if (c == '-' || c == ' ') {
         builder.append('_');
@@ -116,10 +63,11 @@ public final class JsonReaders {
 
       if (Character.isUpperCase(c)) {
         // second check handle "CSPViolation" (transform to CSP_VIOLATION)
-        if (prevIsLowerCase || ((i + 1) < enumValue.length() && Character.isLowerCase(enumValue.charAt(i + 1)))) {
+        if (prevIsLowerCase || (i != 0 && (i + 1) < n && Character.isLowerCase(enumValue.charAt(i + 1)))) {
           builder.append('_');
         }
         builder.append(c);
+        prevIsLowerCase = false;
       }
       else {
         builder.append(Character.toUpperCase(c));
@@ -129,38 +77,30 @@ public final class JsonReaders {
     return builder.toString();
   }
 
-  private static String readEnumName(JsonReaderEx reader) {
-    return convertRawEnumName(reader.nextString());
-  }
-
-  public static <T extends Enum<T>> T readNullableEnum(JsonReaderEx reader, Class<T> enumClass) {
+  public static <T extends Enum<T>> T readEnum(@NotNull JsonReaderEx reader, @NotNull Class<T> enumClass) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();
       return null;
     }
-    return Enum.valueOf(enumClass, readEnumName(reader));
+
+    try {
+      return Enum.valueOf(enumClass, convertRawEnumName(reader.nextString()));
+    }
+    catch (IllegalArgumentException ignored) {
+      return Enum.valueOf(enumClass, "NO_ENUM_CONST");
+    }
   }
 
-  public static <T> List<T> readObjectArray(JsonReaderEx reader, String fieldName, ObjectFactory<T> factory, boolean nullable) {
+  public static <T> List<T> readObjectArray(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<T> factory) {
     if (reader.peek() == JsonToken.NULL) {
-      if (nullable) {
-        reader.skipValue();
-        return null;
-      }
-      else {
-        checkIsNull(reader, fieldName);
-      }
+      reader.skipValue();
+      return null;
     }
 
     reader.beginArray();
     if (!reader.hasNext()) {
       reader.endArray();
-      if (nullable) {
-        return null;
-      }
-      else {
-        return Collections.emptyList();
-      }
+      return Collections.emptyList();
     }
 
     List<T> result = new ArrayList<T>();
@@ -172,14 +112,30 @@ public final class JsonReaders {
     return result;
   }
 
-  public static Map<?, ?> readMap(JsonReaderEx reader, String fieldName) {
-    checkIsNull(reader, fieldName);
+  public static <T> Map<String, T> readMap(@NotNull JsonReaderEx reader, @Nullable ObjectFactory<T> factory) {
+    if (reader.peek() == JsonToken.NULL) {
+      reader.skipValue();
+      return null;
+    }
+
     reader.beginObject();
     if (!reader.hasNext()) {
       reader.endObject();
       return Collections.emptyMap();
     }
-    return nextObject(reader);
+
+    Map<String, T> map = new THashMap<String, T>();
+    while (reader.hasNext()) {
+      if (factory == null) {
+        //noinspection unchecked
+        map.put(reader.nextName(), (T)read(reader));
+      }
+      else {
+        map.put(reader.nextName(), factory.read(reader));
+      }
+    }
+    reader.endObject();
+    return map;
   }
 
   public static Object read(JsonReaderEx reader) {
@@ -319,10 +275,6 @@ public final class JsonReaders {
     while (reader.hasNext());
     reader.endArray();
     return result;
-  }
-
-  public static JsonReaderEx createReader(CharSequence string) {
-    return new JsonReaderEx(string);
   }
 
   public static boolean findBooleanField(String name, JsonReaderEx reader) {

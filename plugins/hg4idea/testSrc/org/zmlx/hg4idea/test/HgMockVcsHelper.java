@@ -69,6 +69,10 @@ public class HgMockVcsHelper extends AbstractVcsHelper {
   }
 
   @Override
+  public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
+  }
+
+  @Override
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs) {
   }
 

@@ -135,7 +135,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     final CallArgumentsMapping argumentsMapping = argList.analyzeCall(resolveContext);
     final PyMarkedCallee marked = argumentsMapping.getMarkedCallee();
     if (marked == null) return; // resolution failed
-    final Callable callable = marked.getCallable();
+    final PyCallable callable = marked.getCallable();
 
     final List<PyParameter> parameterList = PyUtil.getParameters(callable, typeEvalContext);
     final List<PyNamedParameter> namedParameters = new ArrayList<PyNamedParameter>(parameterList.size());

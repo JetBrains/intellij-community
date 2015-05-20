@@ -20,16 +20,22 @@ package org.jetbrains.jps.incremental.messages;
  */
 public class BuilderStatisticsMessage extends BuildMessage {
   private final String myBuilderName;
+  private final int myNumberOfProcessedSources;
   private final long myElapsedTimeMs;
 
-  public BuilderStatisticsMessage(String builderName, long elapsedTimeMs) {
+  public BuilderStatisticsMessage(String builderName, int numberOfProcessedSources, long elapsedTimeMs) {
     super("", Kind.INFO);
     myBuilderName = builderName;
+    myNumberOfProcessedSources = numberOfProcessedSources;
     myElapsedTimeMs = elapsedTimeMs;
   }
 
   public String getBuilderName() {
     return myBuilderName;
+  }
+
+  public int getNumberOfProcessedSources() {
+    return myNumberOfProcessedSources;
   }
 
   public long getElapsedTimeMs() {

@@ -17,6 +17,7 @@ package com.intellij.vcs.log.graph;
 
 import com.intellij.vcs.log.graph.actions.ActionController;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A part of {@link PermanentGraph} which should be drawn on screen (e.g. with applied filters). <br/>
@@ -30,7 +31,8 @@ public interface VisibleGraph<CommitId> {
   @NotNull
   RowInfo<CommitId> getRowInfo(int visibleRow);
 
-  int getVisibleRowIndex(@NotNull CommitId commitId);
+  @Nullable
+  Integer getVisibleRowIndex(@NotNull CommitId commitId);
 
   @NotNull
   ActionController<CommitId> getActionController();

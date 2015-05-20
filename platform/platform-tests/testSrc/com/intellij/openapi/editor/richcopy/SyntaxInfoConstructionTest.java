@@ -16,18 +16,21 @@
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.richcopy.model.ColorRegistry;
 import com.intellij.openapi.editor.richcopy.model.MarkupHandler;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.ui.JBColor;
-import junit.framework.TestCase;
 
 /**
  * @author Denis Zhdanov
@@ -164,13 +167,13 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
                       "\n" +
                       "text=}\n";
 
-    TestCase.assertEquals(expected, getSyntaxInfo());
+    verifySyntaxInfo(expected);
     
     selectionModel.setSelection(selectionStart - 2, selectionEnd);
-    TestCase.assertEquals(expected, getSyntaxInfo());
+    verifySyntaxInfo(expected);
 
     selectionModel.setSelection(selectionStart - 4, selectionEnd);
-    TestCase.assertEquals(expected, getSyntaxInfo());
+    verifySyntaxInfo(expected);
   }
 
   public void testIncorrectFirstLineCalculationOffset() {
@@ -291,11 +294,35 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
                      "\n" +
                      "text=}\n");
   }
+  
+  public void testNonPhysicalFile() throws Exception {
+    String fileName = "Test.java";
+    FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(fileName);
+    PsiFile psiFile = PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, "class Test {}", 0, false);
+    VirtualFile virtualFile = psiFile.getViewProvider().getVirtualFile();
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+    assertNotNull(document);
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    Editor editor = editorFactory.createViewer(document, getProject());
+    try {
+      editor.getSelectionModel().setSelection(0, document.getTextLength());
+      String syntaxInfo = getSyntaxInfo(editor, psiFile);
+      assertEquals("foreground=java.awt.Color[r=0,g=0,b=128],fontStyle=1,text=class \n" +
+                   "foreground=java.awt.Color[r=0,g=0,b=0],fontStyle=0,text=Test {}\n", syntaxInfo);
+    }
+    finally {
+      editorFactory.releaseEditor(editor);
+    }
+  }
 
   private String getSyntaxInfo() {
+    return getSyntaxInfo(myFixture.getEditor(), myFixture.getFile());
+  }
+  
+  private static String getSyntaxInfo(Editor editor, PsiFile psiFile) {
     final StringBuilder builder = new StringBuilder();
-    final Editor editor = myFixture.getEditor();
-    String selectedText = editor.getSelectionModel().getSelectedText(true);
+    SelectionModel selectionModel = editor.getSelectionModel();
+    String selectedText = selectionModel.getSelectedText(true);
     assertNotNull(selectedText);
     final String text = StringUtil.convertLineSeparators(selectedText);
 
@@ -305,7 +332,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
         final ColorRegistry colorRegistry = syntaxInfo.getColorRegistry();
         assertEquals(JBColor.BLACK, colorRegistry.dataById(syntaxInfo.getDefaultForeground()));
         assertEquals(JBColor.WHITE, colorRegistry.dataById(syntaxInfo.getDefaultBackground()));
-        assertEquals(getFontSize(), syntaxInfo.getFontSize());
+        assertEquals((float)editor.getColorsScheme().getEditorFontSize(), syntaxInfo.getFontSize(), 0.01f);
         syntaxInfo.processOutputInfo(new MarkupHandler() {
           @Override
           public void handleText(int startOffset, int endOffset) throws Exception {
@@ -339,8 +366,7 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
         });
       }
     };
-    SelectionModel selectionModel = editor.getSelectionModel();
-    processor.collectTransferableData(myFixture.getFile(), editor, selectionModel.getBlockSelectionStarts(), selectionModel.getBlockSelectionEnds());
+    processor.collectTransferableData(psiFile, editor, selectionModel.getBlockSelectionStarts(), selectionModel.getBlockSelectionEnds());
 
     return builder.toString();
   }
@@ -365,10 +391,6 @@ public class SyntaxInfoConstructionTest extends LightPlatformCodeInsightFixtureT
 
   private void verifySyntaxInfo(String info) {
     assertEquals(info, getSyntaxInfo());
-  }
-
-  private int getFontSize() {
-    return myFixture.getEditor().getColorsScheme().getEditorFontSize();
   }
 
   @Override

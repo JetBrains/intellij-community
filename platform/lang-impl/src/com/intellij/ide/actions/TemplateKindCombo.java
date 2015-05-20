@@ -99,8 +99,8 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
   }
 
   private void scrollBy(int delta) {
-    if (delta == 0) return;
     final int size = getComboBox().getModel().getSize();
+    if (delta == 0 || size == 0) return;
     int next = getComboBox().getSelectedIndex() + delta;
     if (next < 0 || next >= size) {
       if (!UISettings.getInstance().CYCLE_SCROLLING) {

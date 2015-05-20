@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public abstract class LeafElement extends TreeElement {
     myText = text;
   }
 
+  @NotNull
   @Override
   public LeafElement clone() {
     LeafElement clone = (LeafElement)super.clone();
@@ -54,11 +55,13 @@ public abstract class LeafElement extends TreeElement {
     return myText.length();
   }
 
+  @NotNull
   @Override
   public CharSequence getChars() {
     return myText;
   }
 
+  @NotNull
   @Override
   public String getText() {
     if (myText.length() > 1000 && !(myText instanceof String)) { // e.g. a large text file
@@ -239,6 +242,7 @@ public abstract class LeafElement extends TreeElement {
     return getNotCachedLength();
   }
 
+  @NotNull
   @Override
   public ASTNode[] getChildren(TokenSet filter) {
     return EMPTY_ARRAY;

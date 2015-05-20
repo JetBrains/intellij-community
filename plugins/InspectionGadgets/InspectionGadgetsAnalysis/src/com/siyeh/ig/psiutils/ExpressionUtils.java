@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2014 Bas Leijdekkers
+ * Copyright 2005-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -486,7 +486,7 @@ public class ExpressionUtils {
     return hasType(expression, CommonClassNames.JAVA_LANG_STRING);
   }
 
-  public static boolean isConversionToStringNecessary(PsiExpression expression) {
+  public static boolean isConversionToStringNecessary(PsiExpression expression, boolean throwable) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
     if (parent instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
@@ -498,8 +498,9 @@ public class ExpressionUtils {
       int index = -1;
       for (int i = 0, length = operands.length; i < length; i++) {
         final PsiExpression operand = operands[i];
-        if (expression.equals(operand)) {
+        if (PsiTreeUtil.isAncestor(operand, expression, false)) {
           index = i;
+          break;
         }
       }
       if (index > 0) {
@@ -551,8 +552,10 @@ public class ExpressionUtils {
           if (i == 0 && TypeUtils.expressionHasTypeOrSubtype(expression1, "org.slf4j.Marker")) {
             l = 2;
           }
-          if (expression1 == expression && i < l) {
-            return true;
+          if (expression1 == expression) {
+            if (i < l || (throwable && i == expressions.length - 1)) {
+              return true;
+            }
           }
         }
       } else {
@@ -590,5 +593,58 @@ public class ExpressionUtils {
     final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parent;
     final IElementType tokenType = prefixExpression.getOperationTokenType();
     return JavaTokenType.MINUS.equals(tokenType);
+  }
+
+  @Nullable
+  public static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (!(expression instanceof PsiPolyadicExpression)) {
+      return null;
+    }
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    final IElementType tokenType = polyadicExpression.getOperationTokenType();
+    if (equals) {
+      if (!JavaTokenType.EQEQ.equals(tokenType)) {
+        return null;
+      }
+    }
+    else {
+      if (!JavaTokenType.NE.equals(tokenType)) {
+        return null;
+      }
+    }
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    if (operands.length != 2) {
+      return null;
+    }
+    if (PsiType.NULL.equals(operands[0].getType())) {
+      return getVariable(operands[1]);
+    }
+    else if (PsiType.NULL.equals(operands[1].getType())) {
+      return getVariable(operands[0]);
+    }
+    return null;
+  }
+
+  public static PsiVariable getVariable(PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (!(expression instanceof PsiReferenceExpression)) {
+      return null;
+    }
+    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+    final PsiElement target = referenceExpression.resolve();
+    if (!(target instanceof PsiVariable)) {
+      return null;
+    }
+    return (PsiVariable)target;
+  }
+
+  public static boolean isConcatenation(PsiElement element) {
+    if (!(element instanceof PsiPolyadicExpression)) {
+      return false;
+    }
+    final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
+    final PsiType type = expression.getType();
+    return type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ import java.util.Map.Entry;
 
 public class ClassReference14Processor {
 
-  public ExitExprent bodyexprent;
+  public final ExitExprent bodyexprent;
 
-  public ExitExprent handlerexprent;
+  public final ExitExprent handlerexprent;
 
 
   public ClassReference14Processor() {
@@ -58,7 +58,7 @@ public class ClassReference14Processor {
                                   VarType.VARTYPE_CLASS, null);
 
     InvocationExprent constr = new InvocationExprent();
-    constr.setName("<init>");
+    constr.setName(CodeConstants.INIT_NAME);
     constr.setClassname("java/lang/NoClassDefFoundError");
     constr.setStringDescriptor("()V");
     constr.setFunctype(InvocationExprent.TYP_INIT);
@@ -85,7 +85,7 @@ public class ClassReference14Processor {
 
   public void processClassReferences(ClassNode node) {
 
-    ClassWrapper wrapper = node.wrapper;
+    ClassWrapper wrapper = node.getWrapper();
 
     //		int major_version = wrapper.getClassStruct().major_version;
     //		int minor_version = wrapper.getClassStruct().minor_version;
@@ -123,7 +123,7 @@ public class ClassReference14Processor {
                                       final HashMap<ClassWrapper, MethodWrapper> mapClassMeths,
                                       final HashSet<ClassWrapper> setFound) {
 
-    final ClassWrapper wrapper = node.wrapper;
+    final ClassWrapper wrapper = node.getWrapper();
 
     // search code
     for (MethodWrapper meth : wrapper.getMethods()) {
@@ -176,7 +176,7 @@ public class ClassReference14Processor {
   private void mapClassMethods(ClassNode node, Map<ClassWrapper, MethodWrapper> map) {
     boolean noSynthFlag = DecompilerContext.getOption(IFernflowerPreferences.SYNTHETIC_NOT_SET);
 
-    ClassWrapper wrapper = node.wrapper;
+    ClassWrapper wrapper = node.getWrapper();
 
     for (MethodWrapper method : wrapper.getMethods()) {
       StructMethod mt = method.methodStruct;

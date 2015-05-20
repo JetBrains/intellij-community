@@ -273,6 +273,20 @@ public class ForCanBeForEach {
       }
     }
   }
+
+  static class WithMethodRefs {
+      private static final List<String> STRINGS = new ArrayList<>(Arrays.asList("Hello", "World"));
+
+      public void test3() {
+          for (ListIterator<String> stringListIterator = STRINGS.listIterator(); stringListIterator.hasNext(); ) {
+              System.out.println(stringListIterator.next());
+
+              List<String> strings2 = new ArrayList<>(Collections.singletonList("!"));
+
+              strings2.forEach(stringListIterator::add);
+          }
+      }
+  }
 }
 class OuterClass
 {

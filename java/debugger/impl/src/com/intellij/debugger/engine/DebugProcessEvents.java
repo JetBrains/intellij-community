@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.configurations.RemoteConnection;
@@ -384,7 +383,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       final int nextStepDepth = hint.getNextStepDepth(suspendContext);
       if (nextStepDepth != RequestHint.STOP) {
         final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
-        doStep(suspendContext, threadProxy, nextStepDepth, hint);
+        doStep(suspendContext, threadProxy, hint.getSize(), nextStepDepth, hint);
         shouldResume = true;
       }
 
@@ -452,7 +451,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
           DebuggerInvocationUtil.invokeAndWait(getProject(), new Runnable() {
             @Override
             public void run() {
-              DebuggerPanelsManager.getInstance(getProject()).toFront(mySession);
               final String displayName = requestor instanceof Breakpoint? ((Breakpoint)requestor).getDisplayName() : requestor.getClass().getSimpleName();
               final String message = DebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
               considerRequestHit[0] = Messages.showYesNoDialog(getProject(), message, ex.getTitle(), Messages.getQuestionIcon()) == Messages.YES;

@@ -18,12 +18,12 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
 import com.intellij.psi.impl.source.PsiClassImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
@@ -45,7 +45,7 @@ public class PsiSuperMethodImplUtil {
       @NotNull
       @Override
       public Map<MethodSignature, HierarchicalMethodSignature> fun(PsiClass dom) {
-        return buildMethodHierarchy(dom, null, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false);
+        return buildMethodHierarchy(dom, null, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, dom.getResolveScope());
       }
     });
   private static final PsiCacheKey<FactoryMap<String, Map<MethodSignature, HierarchicalMethodSignature>>, PsiClass> SIGNATURES_BY_NAME_KEY = PsiCacheKey
@@ -56,7 +56,7 @@ public class PsiSuperMethodImplUtil {
           @Nullable
           @Override
           protected Map<MethodSignature, HierarchicalMethodSignature> create(String methodName) {
-            return buildMethodHierarchy(psiClass, methodName, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false);
+            return buildMethodHierarchy(psiClass, methodName, PsiSubstitutor.EMPTY, true, new THashSet<PsiClass>(), false, psiClass.getResolveScope());
           }
         };
       }
@@ -131,7 +131,8 @@ public class PsiSuperMethodImplUtil {
                                                                                         @NotNull PsiSubstitutor substitutor,
                                                                                         final boolean includePrivates,
                                                                                         @NotNull final Set<PsiClass> visited,
-                                                                                        boolean isInRawContext) {
+                                                                                        boolean isInRawContext,
+                                                                                        GlobalSearchScope resolveScope) {
     ProgressManager.checkCanceled();
     Map<MethodSignature, HierarchicalMethodSignature> result = new LinkedHashMap<MethodSignature, HierarchicalMethodSignature>();
     final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods = new THashMap<MethodSignature, List<PsiMethod>>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
@@ -189,6 +190,8 @@ public class PsiSuperMethodImplUtil {
     }
 
     for (PsiClassType superType : aClass.getSuperTypes()) {
+      superType = PsiClassImplUtil.correctType(superType, resolveScope);
+      if (superType == null) continue; //super class doesn't belong to resolve scope
       PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
@@ -197,7 +200,7 @@ public class PsiSuperMethodImplUtil {
       PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superSubstitutor, substitutor, isInRawContext);
 
       final boolean isInRawContextSuper = (isInRawContext || PsiUtil.isRawSubstitutor(superClass, superSubstitutor)) && superClass.getTypeParameters().length != 0;
-      Map<MethodSignature, HierarchicalMethodSignature> superResult = buildMethodHierarchy(superClass, nameHint, finalSubstitutor, false, visited, isInRawContextSuper);
+      Map<MethodSignature, HierarchicalMethodSignature> superResult = buildMethodHierarchy(superClass, nameHint, finalSubstitutor, false, visited, isInRawContextSuper, resolveScope);
       visited.remove(superClass);
 
       List<Pair<MethodSignature, HierarchicalMethodSignature>> flattened = new ArrayList<Pair<MethodSignature, HierarchicalMethodSignature>>();
@@ -303,9 +306,11 @@ public class PsiSuperMethodImplUtil {
             if (superClass != null) {
               if (superClass.isInterface() ||
                   CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-                if (superMethod.hasModifierProperty(PsiModifier.STATIC)) {
+                if (superMethod.hasModifierProperty(PsiModifier.STATIC) ||
+                    superMethod.hasModifierProperty(PsiModifier.DEFAULT) && hierarchicalMethodSignature.getMethod().hasModifierProperty(PsiModifier.STATIC) && !InheritanceUtil.isInheritorOrSelf(containingClass, superClass, true)) {
                   return false;
                 }
+
                 if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) ||
                     hierarchicalMethodSignature.getMethod().hasModifierProperty(PsiModifier.DEFAULT)) {
                   return !InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true);
@@ -389,12 +394,10 @@ public class PsiSuperMethodImplUtil {
           result = new HierarchicalMethodSignatureImpl((MethodSignatureBackedByPsiMethod)method.getSignature(PsiSubstitutor.EMPTY));
         }
 
-        Project project = aClass == null ? method.getProject() : aClass.getProject();
-        // cache Cls method hierarchy until root changed
-        Object dependency = method instanceof PsiCompiledElement ? ProjectRootModificationTracker.getInstance(project) :
-                            !method.isPhysical() ? method :
-                            PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
-        return CachedValueProvider.Result.create(result, dependency);
+        if (!method.isPhysical()) {
+          return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, method);
+        }
+        return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
     };
 

@@ -15,18 +15,32 @@
  */
 package org.jetbrains.plugins.github.exceptions;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubErrorMessage;
+
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubStatusCodeException extends GithubConfusingException {
   private final int myStatusCode;
+  private final GithubErrorMessage myError;
 
   public GithubStatusCodeException(String message, int statusCode) {
+    this(message, null, statusCode);
+  }
+
+  public GithubStatusCodeException(String message, GithubErrorMessage error, int statusCode) {
     super(message);
     myStatusCode = statusCode;
+    myError = error;
   }
 
   public int getStatusCode() {
     return myStatusCode;
+  }
+
+  @Nullable
+  public GithubErrorMessage getError() {
+    return myError;
   }
 }

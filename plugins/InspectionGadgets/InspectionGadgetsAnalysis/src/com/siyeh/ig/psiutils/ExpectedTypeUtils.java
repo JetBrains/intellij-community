@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class ExpectedTypeUtils {
@@ -56,13 +57,13 @@ public class ExpectedTypeUtils {
     /**
      * @noinspection StaticCollection
      */
-    private static final Set<IElementType> arithmeticOps = new HashSet<IElementType>(5);
+    private static final Set<IElementType> arithmeticOps = new THashSet<IElementType>(5);
 
-    private static final Set<IElementType> booleanOps = new HashSet<IElementType>(5);
+    private static final Set<IElementType> booleanOps = new THashSet<IElementType>(5);
 
-    private static final Set<IElementType> shiftOps = new HashSet<IElementType>(3);
+    private static final Set<IElementType> shiftOps = new THashSet<IElementType>(3);
 
-    private static final Set<IElementType> operatorAssignmentOps = new HashSet<IElementType>(11);
+    private static final Set<IElementType> operatorAssignmentOps = new THashSet<IElementType>(11);
 
     static {
       arithmeticOps.add(JavaTokenType.PLUS);
@@ -403,6 +404,14 @@ public class ExpectedTypeUtils {
       if (method instanceof PsiMethod) {
         expectedType = ((PsiMethod)method).getReturnType();
       }
+      else if (method instanceof PsiLambdaExpression) {
+        expectedType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)method);
+      }
+    }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+      expectedType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
     }
 
     @Override
@@ -611,13 +620,7 @@ public class ExpectedTypeUtils {
     }
 
     private static int getParameterPosition(@NotNull PsiExpressionList expressionList, PsiExpression expression) {
-      final PsiExpression[] expressions = expressionList.getExpressions();
-      for (int i = 0; i < expressions.length; i++) {
-        if (expressions[i].equals(expression)) {
-          return i;
-        }
-      }
-      return -1;
+      return ArrayUtil.indexOf(expressionList.getExpressions(), expression);
     }
 
     @Nullable

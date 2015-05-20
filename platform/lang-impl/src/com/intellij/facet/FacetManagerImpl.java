@@ -60,16 +60,14 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   @NonNls public static final String COMPONENT_NAME = "FacetManager";
 
   private final Module myModule;
-  private final FacetTypeRegistry myFacetTypeRegistry;
   private final FacetManagerModel myModel = new FacetManagerModel();
   private boolean myInsideCommit = false;
   private final MessageBus myMessageBus;
   private boolean myModuleAdded;
 
-  public FacetManagerImpl(final Module module, MessageBus messageBus, final FacetTypeRegistry facetTypeRegistry) {
+  public FacetManagerImpl(final Module module, MessageBus messageBus) {
     myModule = module;
     myMessageBus = messageBus;
-    myFacetTypeRegistry = facetTypeRegistry;
   }
 
   @Override
@@ -167,6 +165,8 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   }
 
   private void addFacets(final List<FacetState> facetStates, final Facet underlyingFacet, ModifiableFacetModel model) {
+
+    FacetTypeRegistry registry = FacetTypeRegistry.getInstance();
     for (FacetState child : facetStates) {
       final String typeId = child.getFacetType();
       if (typeId == null) {
@@ -174,7 +174,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         continue;
       }
 
-      final FacetType<?,?> type = myFacetTypeRegistry.findFacetType(typeId);
+      final FacetType<?,?> type = registry.findFacetType(typeId);
       if (type == null) {
         addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId), typeId);
         continue;
@@ -190,7 +190,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       FacetType<?,?> expectedUnderlyingType = null;
       FacetTypeId<?> underlyingTypeId = type.getUnderlyingFacetType();
       if (underlyingTypeId != null) {
-        expectedUnderlyingType = myFacetTypeRegistry.findFacetType(underlyingTypeId);
+        expectedUnderlyingType = registry.findFacetType(underlyingTypeId);
       }
       FacetType actualUnderlyingType = underlyingFacet != null ? underlyingFacet.getType() : null;
       if (expectedUnderlyingType != null) {
@@ -238,7 +238,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
       ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
       if (typeId != null) {
-        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
+        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId, "Facet");
       }
     }
   }

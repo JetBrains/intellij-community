@@ -160,4 +160,11 @@ public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
     return true;
   }
+
+  @Override
+  public String toString() {
+    return (myTaskNames == null ? "" : StringUtil.join(myTaskNames, " ")) +
+           (StringUtil.isEmpty(myScriptParameters) ? "" : " " + myScriptParameters) +
+           (StringUtil.isEmpty(myVmOptions) ? "" : " " + myVmOptions);
+  }
 }

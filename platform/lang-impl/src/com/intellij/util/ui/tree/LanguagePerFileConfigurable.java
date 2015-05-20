@@ -25,6 +25,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -134,7 +135,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
   private class MyTreeTable extends AbstractFileTreeTable<T> {
     public MyTreeTable() {
       super(myProject, myValueClass, myTreeTableTitle, VirtualFileFilter.ALL, true);
-      getValueColumn().setCellEditor(new DefaultCellEditor(new JComboBox()) {
+      getValueColumn().setCellEditor(new DefaultCellEditor(new ComboBox()) {
         private VirtualFile myVirtualFile;
 
         {
@@ -180,8 +181,7 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
 
           DataContext dataContext = SimpleDataContext
             .getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), myVirtualFile, SimpleDataContext.getProjectContext(getProject()));
-          AnActionEvent event =
-            new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
+          AnActionEvent event = AnActionEvent.createFromAnAction(changeAction, null, ActionPlaces.UNKNOWN, dataContext);
           changeAction.update(event);
           editorComponent = comboComponent;
           comboComponent.addComponentListener(new ComponentAdapter() {

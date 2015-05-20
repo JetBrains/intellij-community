@@ -15,8 +15,9 @@
  */
 package com.intellij.tasks;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.tasks.actions.SwitchTaskCombo;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.testFramework.IdeaTestCase;
@@ -31,19 +32,32 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
 
   public void testTaskComboVisible() throws Exception {
 
-    TaskManager manager = TaskManager.getManager(getProject());
-    SwitchTaskCombo combo = new SwitchTaskCombo();
+    SwitchTaskCombo combo = null;
+    ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true);
+    AnAction[] children = group.getChildren(new TestActionEvent());
+    for (AnAction child : children) {
+      if (child instanceof ActionGroup) {
+        AnAction[] actions = ((ActionGroup)child).getChildren(new TestActionEvent());
+        for (AnAction action : actions) {
+          if (action instanceof SwitchTaskCombo) {
+            combo = (SwitchTaskCombo)action;
+          }
+        }
+      }
+    }
 
+    TaskManager manager = TaskManager.getManager(getProject());
     LocalTask defaultTask = manager.getActiveTask();
     assertTrue(defaultTask.isDefault());
     assertEquals(defaultTask.getCreated(), defaultTask.getUpdated());
 
-    Presentation presentation = doTest(combo);
+    Presentation presentation = doTest(combo, toolbar);
     assertFalse(presentation.isVisible());
 
     try {
       TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = true;
-      presentation = doTest(combo);
+      presentation = doTest(combo, toolbar);
       assertTrue(presentation.isVisible());
     }
     finally {
@@ -53,14 +67,14 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     LocalTask task = manager.createLocalTask("test");
     manager.activateTask(task, false);
 
-    presentation = doTest(combo);
+    presentation = doTest(combo, toolbar);
     assertTrue(presentation.isVisible());
 
     manager.activateTask(defaultTask, false);
     task = manager.getActiveTask();
     assertTrue(task.isDefault());
 
-    presentation = doTest(combo);
+    presentation = doTest(combo, toolbar);
     if (!presentation.isVisible()) {
       LocalTask activeTask = manager.getActiveTask();
       System.out.println(activeTask);
@@ -70,8 +84,8 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     }
   }
 
-  private static Presentation doTest(AnAction action) {
-    TestActionEvent event = new TestActionEvent(action);
+  private static Presentation doTest(AnAction action, ActionToolbarImpl toolbar) {
+    TestActionEvent event = new TestActionEvent(toolbar.getPresentation(action));
     action.update(event);
     return event.getPresentation();
   }

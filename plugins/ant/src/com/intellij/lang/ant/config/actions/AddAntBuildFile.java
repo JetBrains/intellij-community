@@ -16,6 +16,7 @@
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.AntNoFileException;
@@ -30,72 +31,94 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class AddAntBuildFile extends AnAction {
-  public void actionPerformed(AnActionEvent event) {
-    DataContext dataContext = event.getDataContext();
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
-    try {
-      antConfiguration.addBuildFile(file);
-      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD).activate(null);
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final DataContext dataContext = event.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) {
+      return;
     }
-    catch (AntNoFileException e) {
-      String message = e.getMessage();
-      if (message == null || message.length() == 0) {
-        message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", e.getFile().getPresentableUrl());
-      }
+    final VirtualFile[] contextFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    if (contextFiles == null || contextFiles.length == 0) {
+      return;
+    }
+    final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
 
-      Messages.showWarningDialog(project, message, AntBundle.message("cannot.add.build.file.dialog.title"));
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    files.addAll(Arrays.asList(contextFiles));
+    for (AntBuildFile buildFile : antConfiguration.getBuildFiles()) {
+      files.remove(buildFile.getVirtualFile());
+    }
+    
+    int filesAdded = 0;
+    final StringBuilder errors = new StringBuilder();
+
+    for (VirtualFile file : files) {
+      try {
+        antConfiguration.addBuildFile(file);
+        filesAdded++;
+      }
+      catch (AntNoFileException e) {
+        String message = e.getMessage();
+        if (message == null || message.length() == 0) {
+          message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", e.getFile().getPresentableUrl());
+        }
+        if (errors.length() > 0) {
+          errors.append("\n");
+        }
+        errors.append(message);
+      }
+    }
+
+    if (errors.length() > 0) {
+      Messages.showWarningDialog(project, errors.toString(), AntBundle.message("cannot.add.build.file.dialog.title"));
+    }
+    if (filesAdded > 0) {
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD).activate(null);
     }
   }
 
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      disable(presentation);
-      return;
+    if (project != null) {
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      if (files != null && files.length > 0) {
+        for (VirtualFile file : files) {
+          final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+          if (!(psiFile instanceof XmlFile)) {
+            continue;
+          }
+          final XmlFile xmlFile = (XmlFile)psiFile;
+          final XmlDocument document = xmlFile.getDocument();
+          if (document == null) {
+            continue;
+          }
+          final XmlTag rootTag = document.getRootTag();
+          if (rootTag == null) {
+            continue;
+          }
+          if (!"project".equals(rootTag.getName())) {
+            continue;
+          }
+          if (AntConfigurationBase.getInstance(project).getAntBuildFile(psiFile) != null) {
+            continue;
+          }
+          // found at least one candidate file
+          enable(presentation);
+          return;
+        }
+      }
     }
 
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    if (file == null) {
-      disable(presentation);
-      return;
-    }
-
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (!(psiFile instanceof XmlFile)) {
-      disable(presentation);
-      return;
-    }
-
-    final XmlFile xmlFile = (XmlFile)psiFile;
-    final XmlDocument document = xmlFile.getDocument();
-    if (document == null) {
-      disable(presentation);
-      return;
-    }
-
-    final XmlTag rootTag = document.getRootTag();
-    if (rootTag == null) {
-      disable(presentation);
-      return;
-    }
-
-    if (!"project".equals(rootTag.getName())) {
-      disable(presentation);
-      return;
-    }
-
-    if (AntConfigurationBase.getInstance(project).getAntBuildFile(psiFile) != null) {
-      disable(presentation);
-      return;
-    }
-
-    enable(presentation);
+    disable(presentation);
   }
 
   private static void enable(Presentation presentation) {

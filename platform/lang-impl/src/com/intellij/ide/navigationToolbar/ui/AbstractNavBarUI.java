@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -49,12 +50,12 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getElementIpad(boolean isPopupElement) {
-    return isPopupElement ? new Insets(1, 2, 1, 2) : JBInsets.NONE;
+    return isPopupElement ? JBUI.insets(1, 2) : JBUI.emptyInsets();
   }
 
   @Override
   public JBInsets getElementPadding() {
-    return new JBInsets(3, 3, 3, 3);
+    return JBUI.insets(3);
   }
 
   @Override
@@ -269,11 +270,11 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   }
 
   private int getDecorationOffset() {
-     return 8;
+     return JBUI.scale(8);
    }
 
    private int getFirstElementLeftOffset() {
-     return 6;
+     return JBUI.scale(6);
    }
 
   @Override
@@ -288,7 +289,11 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Insets getWrapperPanelInsets(Insets insets) {
-    return new Insets(insets.top + (shouldPaintWrapperPanel() ? 1 : 0), insets.left, insets.bottom, insets.right);
+    final JBInsets result = JBUI.insets(insets);
+    if (shouldPaintWrapperPanel()) {
+      result.top += JBUI.scale(1);
+    }
+    return result;
   }
 
   private static boolean shouldPaintWrapperPanel() {
@@ -314,6 +319,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public int getPopupOffset(@NotNull NavBarItem item) {
-    return item.isFirstElement() ? 0 : 5;
+    return item.isFirstElement() ? 0 : JBUI.scale(5);
   }
 }

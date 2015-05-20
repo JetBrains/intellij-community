@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package com.intellij.util.ui;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -104,5 +105,15 @@ public class EmptyIcon implements Icon {
   public int hashCode() {
     int sum = width + height;
     return sum * (sum + 1)/2 + width;
+  }
+
+  public EmptyIconUIResource asUIResource() {
+    return new EmptyIconUIResource(this);
+  }
+
+  public static class EmptyIconUIResource extends EmptyIcon implements UIResource {
+    public EmptyIconUIResource(EmptyIcon icon) {
+      super(icon.width, icon.height);
+    }
   }
 }

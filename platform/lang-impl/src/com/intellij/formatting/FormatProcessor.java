@@ -20,16 +20,20 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.BulkChangesMerger;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +129,7 @@ class FormatProcessor {
    * region' and value is dependent spacing object.
    * <p/>
    * Every time we detect that formatter changes 'has line feeds' status of such dependent region, we
-   * {@link DependantSpacingImpl#setDependentRegionChanged() mark} the dependent spacing as changed and schedule one more
+   * {@link DependantSpacingImpl#setDependentRegionLinefeedStatusChanged() mark} the dependent spacing as changed and schedule one more
    * formatting iteration.
    */
   private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
@@ -349,9 +353,7 @@ class FormatProcessor {
   {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
-    if (document == null) {
-      return false;
-    }
+    CaretOffsetUpdater caretOffsetUpdater = new CaretOffsetUpdater(document);
 
     List<TextChange> changes = new ArrayList<TextChange>();
     int shift = 0;
@@ -363,6 +365,7 @@ class FormatProcessor {
         whiteSpace.getEndOffset(), block.getNode(), false
       );
       if (changes.size() > 10000) {
+        caretOffsetUpdater.update(changes);
         CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
         document.replaceString(0, document.getTextLength(), mergeResult);
         shift += currentIterationShift;
@@ -373,8 +376,10 @@ class FormatProcessor {
       currentIterationShift += change.getDiff();
       changes.add(change);
     }
+    caretOffsetUpdater.update(changes);
     CharSequence mergeResult = BulkChangesMerger.INSTANCE.mergeToCharSequence(document.getChars(), document.getTextLength(), changes);
     document.replaceString(0, document.getTextLength(), mergeResult);
+    caretOffsetUpdater.restoreCaretLocations();
     cleanupBlocks(blocksToModify);
     return true;
   }
@@ -496,11 +501,13 @@ class FormatProcessor {
       onCurrentLineChanged();
     }
 
-    if (shouldSaveDependency(spaceProperty, whiteSpace)) {
-      saveDependency(spaceProperty);
+
+    final List<TextRange> ranges = getDependentRegionRangesAfterCurrentWhiteSpace(spaceProperty, whiteSpace);
+    if (!ranges.isEmpty()) {
+      registerUnresolvedDependentSpacingRanges(spaceProperty, ranges);
     }
 
-    if (!whiteSpace.isIsReadOnly() && shouldReformatBecauseOfBackwardDependency(whiteSpace.getTextRange())) {
+    if (!whiteSpace.isIsReadOnly() && shouldReformatPreviouslyLocatedDependentSpacing(whiteSpace)) {
       myAlignAgain.add(whiteSpace);
     }
     else if (!myAlignAgain.isEmpty()) {
@@ -510,43 +517,55 @@ class FormatProcessor {
     myCurrentBlock = myCurrentBlock.getNextBlock();
   }
 
-  private boolean shouldReformatBecauseOfBackwardDependency(TextRange changed) {
+  private boolean shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace space) {
+    final TextRange changed = space.getTextRange();
     final SortedMap<TextRange, DependantSpacingImpl> sortedHeadMap = myPreviousDependencies.tailMap(changed);
 
-    boolean result = false;
     for (final Map.Entry<TextRange, DependantSpacingImpl> entry : sortedHeadMap.entrySet()) {
       final TextRange textRange = entry.getKey();
 
       if (textRange.contains(changed)) {
-        final DependantSpacingImpl dependentSpacing = entry.getValue();
-        final boolean containedLineFeeds = dependentSpacing.getMinLineFeeds() > 0;
+        final DependantSpacingImpl spacing = entry.getValue();
+        if (spacing.isDependentRegionLinefeedStatusChanged()) {
+          continue;
+        }
+
+        final boolean containedLineFeeds = spacing.getMinLineFeeds() > 0;
         final boolean containsLineFeeds = containsLineFeeds(textRange);
 
         if (containedLineFeeds != containsLineFeeds) {
-          dependentSpacing.setDependentRegionChanged();
-          result = true;
+          spacing.setDependentRegionLinefeedStatusChanged();
+          return true;
         }
       }
     }
-    return result;
+
+    return false;
   }
 
-  private void saveDependency(final SpacingImpl spaceProperty) {
+  private void registerUnresolvedDependentSpacingRanges(final SpacingImpl spaceProperty, List<TextRange> unprocessedRanges) {
     final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
-    final TextRange dependency = dependantSpaceProperty.getDependency();
-    if (dependantSpaceProperty.isDependentRegionChanged()) {
-      return;
+    if (dependantSpaceProperty.isDependentRegionLinefeedStatusChanged()) return;
+
+    for (TextRange range: unprocessedRanges) {
+      myPreviousDependencies.put(range, dependantSpaceProperty);
     }
-    myPreviousDependencies.put(dependency, dependantSpaceProperty);
   }
 
-  private static boolean shouldSaveDependency(final SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
-    if (!(spaceProperty instanceof DependantSpacingImpl)) return false;
+  private static List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
+                                                                                final WhiteSpace whiteSpace)
+  {
+    if (!(spaceProperty instanceof DependantSpacingImpl)) return ContainerUtil.emptyList();
 
-    if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return false;
+    if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return ContainerUtil.emptyList();
 
-    final TextRange dependency = ((DependantSpacingImpl)spaceProperty).getDependency();
-    return whiteSpace.getStartOffset() < dependency.getEndOffset();
+    DependantSpacingImpl spacing = (DependantSpacingImpl)spaceProperty;
+    return ContainerUtil.filter(spacing.getDependentRegionRanges(), new Condition<TextRange>() {
+      @Override
+      public boolean value(TextRange dependencyRange) {
+        return whiteSpace.getStartOffset() < dependencyRange.getEndOffset();
+      }
+    });
   }
 
   /**
@@ -907,7 +926,7 @@ class FormatProcessor {
   }
 
   @Nullable
-  public LeafBlockWrapper getBlockAfter(final int startOffset) {
+  public LeafBlockWrapper getBlockAtOrAfter(final int startOffset) {
     int current = startOffset;
     LeafBlockWrapper result = null;
     while (current < myLastWhiteSpace.getStartOffset()) {
@@ -1484,6 +1503,30 @@ class FormatProcessor {
             myModel.commitChanges();
           }
         });
+      }
+    }
+  }
+  
+  private static class CaretOffsetUpdater {
+    private final Map<Editor, Integer> myCaretOffsets = new HashMap<Editor, Integer>();
+    
+    private CaretOffsetUpdater(@NotNull Document document) {
+      Editor[] editors = EditorFactory.getInstance().getEditors(document);
+      for (Editor editor : editors) {
+        myCaretOffsets.put(editor, editor.getCaretModel().getOffset());
+      }
+    }
+    
+    private void update(@NotNull List<? extends TextChange> changes) {
+      BulkChangesMerger merger = BulkChangesMerger.INSTANCE;
+      for (Map.Entry<Editor, Integer> entry : myCaretOffsets.entrySet()) {
+        entry.setValue(merger.updateOffset(entry.getValue(), changes));
+      }
+    }
+    
+    private void restoreCaretLocations() {
+      for (Map.Entry<Editor, Integer> entry : myCaretOffsets.entrySet()) {
+        entry.getKey().getCaretModel().moveToOffset(entry.getValue());
       }
     }
   }

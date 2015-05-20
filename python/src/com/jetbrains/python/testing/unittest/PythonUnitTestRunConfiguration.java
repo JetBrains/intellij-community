@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,6 @@ public class PythonUnitTestRunConfiguration extends
     JDOMExternalizerUtil.writeField(element, "PUREUNITTEST", String.valueOf(myIsPureUnittest));
     JDOMExternalizerUtil.writeField(element, "PARAMS", myParams);
     JDOMExternalizerUtil.writeField(element, "USE_PARAM", String.valueOf(useParam));
-    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 
 import java.awt.*;
@@ -139,7 +141,7 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
 
   @Override
   public Dimension minimumLayoutSize(Container container) {
-    Dimension dimension = new Dimension(0, 0);
+    Dimension dimension = JBUI.emptySize();
     for(int i = 0; i < container.getComponentCount(); i++){
       Component component = container.getComponent(i);
       if (!component.isVisible()) continue;
@@ -150,15 +152,13 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
       }
       dimension.height += dimension1.height;
     }
-    Insets insets = container.getInsets();
-    dimension.width += insets.left + insets.right + hGap * 2;
-    dimension.height += insets.top + insets.bottom + vGap * 2;
+    addInsets(dimension, container);
     return dimension;
   }
 
   @Override
   public Dimension preferredLayoutSize(Container container) {
-    Dimension dimension = new Dimension(0, 0);
+    Dimension dimension = JBUI.emptySize();
     for(int i = 0; i < container.getComponentCount(); i++){
       Component component = container.getComponent(i);
       if (!component.isVisible()) continue;
@@ -169,9 +169,13 @@ public class VerticalFlowLayout extends FlowLayout implements Serializable {
       }
       dimension.height += dimension1.height;
     }
-    Insets insets = container.getInsets();
-    dimension.width += insets.left + insets.right + hGap * 2;
-    dimension.height += insets.top + insets.bottom + vGap * 2;
+    addInsets(dimension, container);
     return dimension;
+  }
+
+  private void addInsets(Dimension dimension, Container container) {
+    JBInsets.addTo(dimension, container.getInsets());
+    dimension.width += hGap + hGap;
+    dimension.height += vGap + vGap;
   }
 }

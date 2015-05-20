@@ -19,6 +19,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,9 +47,8 @@ public class ContextComputationProcessor {
     final ArrayList<Object> result = new ArrayList<Object>();
     final ContextComputationProcessor processor = new ContextComputationProcessor(operands[0].getProject());
     addStringFragment(prefix, result);
-    for (PsiElement operand : operands) {
-      processor.collectOperands(operand, result, unparsable);
-    }
+    PsiElement topParent = ObjectUtils.assertNotNull(PsiTreeUtil.findCommonParent(operands));
+    processor.collectOperands(getTopLevelInjectionTarget(topParent), result, unparsable);
     addStringFragment(suffix, result);
     return result;
   }

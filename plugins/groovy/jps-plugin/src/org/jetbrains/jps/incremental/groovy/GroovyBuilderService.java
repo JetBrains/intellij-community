@@ -15,16 +15,10 @@
  */
 package org.jetbrains.jps.incremental.groovy;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BuilderService;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 
-import java.io.File;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,38 +26,10 @@ import java.util.List;
  * @author peter
  */
 public class GroovyBuilderService extends BuilderService {
-  /**
-   * All Groovy-Eclipse stuff is contained in a separate classLoader to avoid clashes with ecj.jar being in the classpath of the builder process
-   */
-  @Nullable
-  private static final ClassLoader ourGreclipseLoader = createGreclipseLoader();
-
-  @Nullable
-  private static ClassLoader createGreclipseLoader() {
-    String jar = System.getProperty("groovy.eclipse.batch.jar");
-    if (jar == null) return null;
-
-    try {
-      URL[] urls = {
-        new File(jar).toURI().toURL(),
-        new File(ObjectUtils.assertNotNull(PathManager.getJarPathForClass(GreclipseMain.class))).toURI().toURL()
-      };
-      ClassLoader loader = new URLClassLoader(urls, null);
-      Class.forName("org.eclipse.jdt.internal.compiler.batch.Main", false, loader);
-      return loader;
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   @NotNull
   @Override
   public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    if (ourGreclipseLoader != null) {
-      return Arrays.asList(new GreclipseBuilder(ourGreclipseLoader));
-    }
-    return Arrays.asList(new GroovyBuilder(true), new GroovyBuilder(false));
+    return Arrays.asList(new GroovyBuilder(true), new GroovyBuilder(false), new GreclipseBuilder());
   }
 
 }

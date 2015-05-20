@@ -100,11 +100,6 @@ public class JavaReferringObjectsValue extends JavaValue {
                 }
 
                 @Override
-                public String calcValueName() {
-                  return "Ref";
-                }
-
-                @Override
                 public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
                   return null;
                 }

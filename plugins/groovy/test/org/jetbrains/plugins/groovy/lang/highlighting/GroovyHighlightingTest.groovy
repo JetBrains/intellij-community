@@ -981,7 +981,7 @@ class A {
 }
 ''')
 
-    assertNotNull(myFixture.findSingleIntention("Create Method 'abc'"))
+    assertNotNull(myFixture.findSingleIntention("Create method 'abc'"))
   }
 
   void testTypeParameterIsCorrect() {
@@ -1796,7 +1796,7 @@ class A {
 foo(<caret>)
 ''')
 
-    myFixture.getAvailableIntention("Static Import Method 'A.foo'")
+    myFixture.getAvailableIntention("Static import method 'A.foo'")
   }
 
   void testInaccessibleWithCompileStatic() {

@@ -135,7 +135,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     Selector idSelector = getSelector(ID);
     if (StringUtil.isEmpty(idSelector.getPath())) return false;
     Selector summarySelector = getSelector(SUMMARY);
-    if (StringUtil.isEmpty(summarySelector.getPath())) return false;
+    if (StringUtil.isEmpty(summarySelector.getPath()) && !myRepository.getDownloadTasksInSeparateRequests()) return false;
     return true;
   }
 
@@ -161,7 +161,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   public final Task[] parseIssues(@NotNull String response, int max) throws Exception {
     if (StringUtil.isEmpty(getSelectorPath(TASKS)) ||
         StringUtil.isEmpty(getSelectorPath(ID)) ||
-        StringUtil.isEmpty(getSelectorPath(SUMMARY))) {
+        (StringUtil.isEmpty(getSelectorPath(SUMMARY)) && !myRepository.getDownloadTasksInSeparateRequests())) {
       throw new Exception("Selectors 'tasks', 'id' and 'summary' are mandatory");
     }
     List<Object> tasks = selectTasksList(response, max);
@@ -169,10 +169,14 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     List<Task> result = new ArrayList<Task>(tasks.size());
     for (Object context : tasks) {
       String id = selectString(getSelector(ID), context);
-      String summary = selectString(getSelector(SUMMARY), context);
-      assert id != null && summary != null;
-      GenericTask task = new GenericTask(id, summary, myRepository);
-      if (!myRepository.getDownloadTasksInSeparateRequests()) {
+      GenericTask task;
+      if (myRepository.getDownloadTasksInSeparateRequests()) {
+        task = new GenericTask(id, "", myRepository);
+      }
+      else {
+        String summary = selectString(getSelector(SUMMARY), context);
+        assert id != null && summary != null;
+        task = new GenericTask(id, summary, myRepository);
         String description = selectString(getSelector(DESCRIPTION), context);
         if (description != null) {
           task.setDescription(description);

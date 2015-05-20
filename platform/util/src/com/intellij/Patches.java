@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,59 +22,16 @@ import java.awt.*;
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor"})
 public class Patches {
   /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4503845.
-   * When JTable loses focus it cancel cell editing. It should stop cell editing instead.
-   * Actually SUN-boys told they have fixed the bug, but they cancel editing instead of stopping it.
-   */
-  public static final boolean SUN_BUG_ID_4503845 = !SystemInfo.isJavaVersionAtLeast("1.4.1");
-
-  /**
-   * Debugger hangs on any attempt to attach/listen Connector when attach hanged once.
-   */
-  public static final boolean SUN_JDI_CONNECTOR_HANGUP_BUG = !SystemInfo.isJavaVersionAtLeast("1.5");
-
-  /**
    * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6322854.
    * java.lang.NullPointerException: Failed to retrieve atom name.
    */
   public static final boolean SUN_BUG_ID_6322854 = SystemInfo.isXWindow;
 
   /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4218084.
-   * If you invoke popup menu, then click on a different window (JFrame, JDialog. It doesn't matter),
-   * the JPopupMenu in the previous window still has focus, as does the new window.
-   * Seems like focus in two locations at the same time.
-   */
-  public static final boolean SUN_BUG_ID_4218084 = !SystemInfo.isJavaVersionAtLeast("1.5");
-
-  /**
-   * JDK 1.3.x and 1.4.x has the following error: when we close a dialog and its content pane is being inserted
-   * into another dialog and mouse WAS INSIDE of dialog's content pane then the AWT doesn't change
-   * some internal references on focused component. It cause crash of dispatching of MOUSE_EXIT event.
-   */
-  public static final boolean SPECIAL_INPUT_METHOD_PROCESSING = !SystemInfo.isJavaVersionAtLeast("1.5");
-
-  /**
-   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4738042.
-   * BasicMenuUI$MenuKeyHandler.menuKeyPressed() incorrect for dynamic menus.
-   */
-  public static final boolean SUN_BUG_ID_4738042 = !SystemInfo.isJavaVersionAtLeast("1.4.2");
-
-  /**
    * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4893787.
    * BasicTreeUI.FocusHandler doesn't properly repaint JTree on focus changes.
    */
   public static final boolean SUN_BUG_ID_4893787 = true;
-
-  /**
-   * Every typing produces InputMethodEvent instead of KeyEvent with keyTyped event code. Fixed in JRE higher than 1.4.2_03-117.1
-   */
-  public static final boolean APPLE_BUG_ID_3337563 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.4.2.3.117.1");
-
-  /**
-   * Incorrect repaint of the components wrapped with JScrollPane.
-   */
-  public static final boolean APPLE_BUG_ID_3716835 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.4.2.5");
 
   /**
    * Minimizing and restoring application via View | Minimize leads to visual artifacts.
@@ -151,4 +108,10 @@ public class Patches {
    * fixed in JDK8
    */
   public static final boolean JDK_BUG_ID_7103570 = true;
+
+  /**
+   * Support default methods in JDI
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
+   */
+  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_40");
 }

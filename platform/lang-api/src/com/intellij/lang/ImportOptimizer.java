@@ -18,6 +18,7 @@ package com.intellij.lang;
 
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Implementers of the interface encapsulate optimize imports process for the language.
@@ -50,4 +51,11 @@ public interface ImportOptimizer {
   @NotNull
   Runnable processFile(PsiFile file);
 
+  /**
+   * In order to customize notification popup after reformat code action just return it from {@link #processFile} with proper information,
+   * by default "imports optimized" is shown.
+   */
+  interface CollectingInfoRunnable extends Runnable {
+    @Nullable String getUserNotificationInfo();
+  }
 }

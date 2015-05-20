@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
+import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.*;
@@ -316,7 +317,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       @Override
       public PomModelEvent runInner() {
         final PomModelEvent event = new PomModelEvent(model);
-        final XmlAspectChangeSetImpl xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, (XmlFile)getContainingFile());
+        XmlChangeSet xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, (XmlFile)getContainingFile());
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), oldName, null));
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, getValue()));
         event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
@@ -338,7 +339,6 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   @NotNull
   public PsiReference[] getReferences() {
     final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this);
-    if (referencesFromProviders == null) return new PsiReference[]{new XmlAttributeReference(this)};
     PsiReference[] refs;
     if (isNamespaceDeclaration()) {
       refs = new PsiReference[referencesFromProviders.length + 1];

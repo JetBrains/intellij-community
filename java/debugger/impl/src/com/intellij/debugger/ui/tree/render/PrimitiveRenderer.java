@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,19 @@ package com.intellij.debugger.ui.tree.render;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -36,6 +41,8 @@ import org.jetbrains.annotations.NonNls;
 public class PrimitiveRenderer extends NodeRendererImpl {
   public static final @NonNls String UNIQUE_ID = "PrimitiveRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.PrimitiveRenderer");
+
+  public boolean SHOW_HEX_VALUE = false;
 
   public PrimitiveRenderer() {
     super("Primitive");
@@ -63,38 +70,50 @@ public class PrimitiveRenderer extends NodeRendererImpl {
 
   public String calcLabel(ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener) {
     Value value = valueDescriptor.getValue();
-    if(value == null) {
+    if (value == null) {
       //noinspection HardCodedStringLiteral
       return "null";
     }
     else if (value instanceof PrimitiveValue) {
-      StringBuilder buf = new StringBuilder(16);
       if (value instanceof CharValue) {
-        buf.append("'");
-        buf.append(DebuggerUtils.translateStringValue(value.toString()));
-        buf.append("' ");
-        long longValue = ((PrimitiveValue)value).longValue();
-        buf.append(Long.toString(longValue));
-      }
-      else if (value instanceof ByteValue) {
-        buf.append(value.toString());
-      }
-      else if (value instanceof ShortValue) {
-        buf.append(value.toString());
-      }
-      else if (value instanceof IntegerValue) {
-        buf.append(value.toString());
-      }
-      else if (value instanceof LongValue) {
-        buf.append(value.toString());
+        StringBuilder buf = new StringBuilder();
+        appendCharValue((CharValue)value, buf);
+        if (SHOW_HEX_VALUE) {
+          appendHexValue((CharValue)value, buf);
+        } else {
+          buf.append(' ').append(((PrimitiveValue)value).longValue());
+        }
+        return buf.toString();
       }
       else {
-        buf.append(value.toString());
+        if (SHOW_HEX_VALUE) {
+          StringBuilder buf = new StringBuilder();
+          buf.append(value.toString());
+          appendHexValue((PrimitiveValue)value, buf);
+          return buf.toString();
+        }
+        else {
+          return value.toString();
+        }
       }
-      return buf.toString();
     }
     else {
       return DebuggerBundle.message("label.undefined");
+    }
+  }
+
+  static void appendCharValue(CharValue value, StringBuilder buf) {
+    buf.append('\'');
+    String s = value.toString();
+    StringUtil.escapeStringCharacters(s.length(), s, "\'", buf);
+    buf.append('\'');
+  }
+
+  private static void appendHexValue(PrimitiveValue value, StringBuilder buf) {
+    if (NodeRendererSettings.getInstance().getHexRenderer().isApplicable(value.type())) {
+      buf.append(" (");
+      HexRenderer.appendHexValue(value, buf);
+      buf.append(')');
     }
   }
 
@@ -109,5 +128,25 @@ public class PrimitiveRenderer extends NodeRendererImpl {
 
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
     return false;
+  }
+
+  public boolean isShowHexValue() {
+    return SHOW_HEX_VALUE;
+  }
+
+  public void setShowHexValue(boolean show) {
+    this.SHOW_HEX_VALUE = show;
+  }
+
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    super.readExternal(element);
+    DefaultJDOMExternalizer.readExternal(this, element);
+  }
+
+  @Override
+  public void writeExternal(Element element) throws WriteExternalException {
+    super.writeExternal(element);
+    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 }

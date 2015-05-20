@@ -69,7 +69,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
         final boolean internalTemplate = AllFileTemplatesConfigurable.isInternalTemplate(template.getName(), getTitle());
         if (internalTemplate) {
           setFont(getFont().deriveFont(Font.BOLD));
-          setText(FileTemplateManagerImpl.getInstanceImpl().localizeInternalTemplateName(template));
+          setText(template.getName());
         }
         else {
           setFont(getFont().deriveFont(Font.PLAIN));

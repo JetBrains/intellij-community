@@ -23,9 +23,14 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
+import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 public class ConstExprent extends Exprent {
   private static final Map<Integer, String> ESCAPES = new HashMap<Integer, String>() {{
@@ -395,4 +400,37 @@ public class ConstExprent extends Exprent {
   public boolean isBoolPermitted() {
     return boolPermitted;
   }
+  
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+
+    if(!super.match(matchNode, engine)) {
+      return false;
+    }
+    
+    for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+      RuleValue rule_value = rule.getValue();
+      
+      switch(rule.getKey()) {
+      case EXPRENT_CONSTTYPE:
+        if(!rule_value.value.equals(this.constType)) {
+          return false;
+        }
+        break;
+      case EXPRENT_CONSTVALUE:
+        if(rule_value.isVariable()) {
+          if(!engine.checkAndSetVariableValue(rule_value.value.toString(), this.value)) {
+            return false;
+          }
+        } 
+        break;
+      }
+    }
+    
+    return true;
+  }
+  
 }

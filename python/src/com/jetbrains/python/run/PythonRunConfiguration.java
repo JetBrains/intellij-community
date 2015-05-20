@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, SCRIPT_NAME, myScriptName);
     JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
     JDOMExternalizerUtil.writeField(element, SHOW_COMMAND_LINE, Boolean.toString(myShowCommandLineAfterwards));
-    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {

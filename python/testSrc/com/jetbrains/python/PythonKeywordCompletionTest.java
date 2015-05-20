@@ -227,4 +227,13 @@ public class PythonKeywordCompletionTest extends PyTestCase {
                                         "finally:\n" +
                                         "    pass\n<caret>"), "except");
   }
+
+  // PY-15075
+  public void testImportAfterWhitespaceInRelativeImport() {
+    List<String> variants = doTestByText("from ...<caret>");
+    assertDoesntContain(variants, "import");
+
+    variants = doTestByText("from ... <caret>");
+    assertContainsElements(variants, "import");
+  }
 }

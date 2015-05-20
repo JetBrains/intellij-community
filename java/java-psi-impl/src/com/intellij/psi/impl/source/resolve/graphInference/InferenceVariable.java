@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -25,7 +26,7 @@ import java.util.*;
  * User: anna
  */
 public class InferenceVariable extends LightTypeParameter {
-  private PsiElement myContext;
+  private final PsiElement myContext;
 
   public PsiTypeParameter getParameter() {
     return getDelegate();
@@ -47,6 +48,18 @@ public class InferenceVariable extends LightTypeParameter {
 
   public void setInstantiation(PsiType instantiation) {
     myInstantiation = instantiation;
+  }
+
+  @NotNull
+  @Override
+  public PsiClassType[] getExtendsListTypes() {
+    final List<PsiClassType> result = new ArrayList<PsiClassType>();
+    for (PsiType type : getBounds(InferenceBound.UPPER)) {
+      if (type instanceof PsiClassType) {
+        result.add((PsiClassType)type);
+      }
+    }
+    return result.toArray(new PsiClassType[result.size()]);
   }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound) {
@@ -86,23 +99,6 @@ public class InferenceVariable extends LightTypeParameter {
       return dependencies;
     }
 
-    next:
-    for (InferenceVariable variable : session.getInferenceVariables()) {
-      if (!dependencies.contains(variable) && variable != this) {
-        for (List<PsiType> bounds : variable.myBounds.values()) { //todo
-          if (bounds != null) {
-            for (PsiType bound : bounds) {
-              final InferenceVariable inferenceVariable = session.getInferenceVariable(bound);
-              if (inferenceVariable == this) {
-                dependencies.add(variable);
-                continue next;
-              }
-            }
-          }
-        }
-      }
-    }
-
     if (!session.hasCapture(this)) {
       return dependencies;
     }
@@ -132,6 +128,19 @@ public class InferenceVariable extends LightTypeParameter {
 
   public void setThrownBound() {
     myThrownBound = true;
+  }
+
+  @Override
+  public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
+    for (PsiType type : getBounds(InferenceBound.UPPER)) {
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      if (psiClass != null) {
+        if (getManager().areElementsEquivalent(baseClass, psiClass)) return true;
+        if (checkDeep && psiClass.isInheritor(baseClass, true)) return true;
+      }
+    }
+    
+    return super.isInheritor(baseClass, checkDeep);
   }
 
   @Override

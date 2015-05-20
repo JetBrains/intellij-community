@@ -31,10 +31,10 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
 
   @Override
   public Result beforeCharTyped(char c, Project project, Editor editor, PsiFile file, FileType fileType) {
-
-    if (WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
-      boolean inXml = file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
-      if (c == '=' && inXml) {
+    if (c == '=' && WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
+      if (file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage) {
+        TypedHandler.commitDocumentIfCurrentCaretIsNotTheFirstOne(editor, project);
+        
         PsiElement at = file.findElementAt(editor.getCaretModel().getOffset() - 1);
         PsiElement atParent = at != null ? at.getParent() : null;
         if(atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null) {

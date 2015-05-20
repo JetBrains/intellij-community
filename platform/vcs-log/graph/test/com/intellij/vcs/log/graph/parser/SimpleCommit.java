@@ -48,10 +48,8 @@ public class SimpleCommit<CommitId> implements com.intellij.vcs.log.graph.GraphC
     return new SimpleCommit<String>(commitHash, parents, timestamp);
   }
 
-  @NotNull
-  private final CommitId myId;
-  @NotNull
-  private final List<CommitId> myParents;
+  @NotNull private final CommitId myId;
+  @NotNull private final List<CommitId> myParents;
   private final long myTimestamp;
 
   public SimpleCommit(@NotNull CommitId id, @NotNull List<CommitId> parents, long timestamp) {

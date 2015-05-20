@@ -304,7 +304,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   protected boolean shouldShowBusyIconIfNeeded() {
-    // http://youtrack.jetbrains.com/issue/IDEA-101422 "Rotating wait symbol in Project list whenever typing"
+    // https://youtrack.jetbrains.com/issue/IDEA-101422 "Rotating wait symbol in Project list whenever typing"
     return hasFocus();
   }
 

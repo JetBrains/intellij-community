@@ -31,6 +31,9 @@ import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.ContinuationFinalTasksInserter;
 import com.intellij.util.continuation.TaskDescriptor;
@@ -42,6 +45,7 @@ import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
+import git4idea.config.UpdateMethod;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
@@ -70,6 +74,7 @@ public class GitUpdateProcess {
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final Collection<GitRepository> myRepositories;
+  private final boolean myCheckRebaseOverMergeProblem;
   private final UpdatedFiles myUpdatedFiles;
   private final ProgressIndicator myProgressIndicator;
   private final GitMerger myMerger;
@@ -79,16 +84,15 @@ public class GitUpdateProcess {
   private GitUpdateResult myResult;
   private final Collection<VirtualFile> myRootsToSave;
 
-  public enum UpdateMethod {
-    MERGE,
-    REBASE,
-    READ_FROM_SETTINGS
-  }
-
-  public GitUpdateProcess(@NotNull Project project, @NotNull GitPlatformFacade platformFacade, @Nullable ProgressIndicator progressIndicator,
-                          @NotNull Collection<GitRepository> repositories, @NotNull UpdatedFiles updatedFiles) {
+  public GitUpdateProcess(@NotNull Project project,
+                          @NotNull GitPlatformFacade platformFacade,
+                          @Nullable ProgressIndicator progressIndicator,
+                          @NotNull Collection<GitRepository> repositories,
+                          @NotNull UpdatedFiles updatedFiles,
+                          boolean checkRebaseOverMergeProblem) {
     myProject = project;
     myRepositories = repositories;
+    myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
     myGit = ServiceManager.getService(Git.class);
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
@@ -172,6 +176,21 @@ public class GitUpdateProcess {
       return GitUpdateResult.SUCCESS;
     }
 
+    if (myCheckRebaseOverMergeProblem) {
+      Collection<VirtualFile> problematicRoots = findRootsRebasingOverMerge(updaters);
+      if (!problematicRoots.isEmpty()) {
+        GitRebaseOverMergeProblem.Decision decision = GitRebaseOverMergeProblem.showDialog();
+        if (decision == GitRebaseOverMergeProblem.Decision.MERGE_INSTEAD) {
+          for (VirtualFile root : problematicRoots) {
+            updaters.put(root, new GitMergeUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles));
+          }
+        }
+        else if (decision == GitRebaseOverMergeProblem.Decision.CANCEL_OPERATION) {
+          return GitUpdateResult.CANCEL;
+        }
+      }
+    }
+
     // save local changes if needed (update via merge may perform without saving).
     LOG.info("updateImpl: identifying if save is needed...");
     for (Map.Entry<VirtualFile, GitUpdater> entry : updaters.entrySet()) {
@@ -230,6 +249,22 @@ public class GitUpdateProcess {
     return compoundResult;
   }
 
+  @NotNull 
+  private Collection<VirtualFile> findRootsRebasingOverMerge(@NotNull final Map<VirtualFile, GitUpdater> updaters) {
+    return ContainerUtil.mapNotNull(updaters.keySet(), new Function<VirtualFile, VirtualFile>() {
+      @Override
+      public VirtualFile fun(VirtualFile root) {
+        GitUpdater updater = updaters.get(root);
+        if (updater instanceof GitRebaseUpdater) {
+          String currentRef = updater.getSourceAndTarget().getBranch().getFullName();
+          String baseRef = ObjectUtils.assertNotNull(updater.getSourceAndTarget().getDest()).getFullName();
+          return GitRebaseOverMergeProblem.hasProblem(myProject, root, baseRef, currentRef) ? root : null;
+        }
+        return null;
+      }
+    });
+  }
+
   @NotNull
   private Map<VirtualFile, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<VirtualFile, GitUpdater> updaters) {
     Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<VirtualFile, GitUpdater>();
@@ -258,15 +293,8 @@ public class GitUpdateProcess {
     LOG.info("updateImpl: defining updaters...");
     for (GitRepository repository : myRepositories) {
       VirtualFile root = repository.getRoot();
-      final GitUpdater updater;
-      if (updateMethod == UpdateMethod.MERGE) {
-        updater = new GitMergeUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
-      } else if (updateMethod == UpdateMethod.REBASE) {
-        updater = new GitRebaseUpdater(myProject, myGit, root, myTrackedBranches, myProgressIndicator, myUpdatedFiles);
-      } else {
-        updater = GitUpdater.getUpdater(myProject, myGit, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles);
-      }
-
+      GitUpdater updater = GitUpdater.getUpdater(myProject, myGit, myTrackedBranches, root, myProgressIndicator, myUpdatedFiles,
+                                                 updateMethod);
       if (updater.isUpdateNeeded()) {
         updaters.put(root, updater);
       }

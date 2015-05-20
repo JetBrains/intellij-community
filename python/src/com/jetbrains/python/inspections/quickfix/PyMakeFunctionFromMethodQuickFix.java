@@ -66,22 +66,18 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     PyUtil.deleteParameter(problemFunction, 0);
 
     PsiElement copy = problemFunction.copy();
-    final PyStatementList classStatementList = containingClass.getStatementList();
-    classStatementList.deleteChildRange(problemFunction, problemFunction);
-    if (classStatementList.getStatements().length < 1) {
-      classStatementList.add(PyElementGenerator.getInstance(project).createPassStatement());
-    }
-    final PsiFile file = containingClass.getContainingFile();
+    problemFunction.delete();
+    final PsiElement parent = containingClass.getParent();
     PyClass aClass = PsiTreeUtil.getTopmostParentOfType(containingClass, PyClass.class);
     if (aClass == null)
       aClass = containingClass;
-    copy = file.addBefore(copy, aClass);
+    copy = parent.addBefore(copy, aClass);
 
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
       if (usageElement instanceof PyReferenceExpression) {
         final PsiFile usageFile = usageElement.getContainingFile();
-        updateUsage(copy, (PyReferenceExpression)usageElement, usageFile, !usageFile.equals(file));
+        updateUsage(copy, (PyReferenceExpression)usageElement, usageFile, !usageFile.equals(parent));
       }
     }
   }

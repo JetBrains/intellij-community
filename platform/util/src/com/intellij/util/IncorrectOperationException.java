@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public class IncorrectOperationException extends RuntimeException {
     super(message, t);
   }
 
-  /** @deprecated use {@link #IncorrectOperationException(String, Throwable)} (to be removed in IDEA 15) */
+  /** @deprecated use {@link #IncorrectOperationException(String, Throwable)} (to be removed in IDEA 16) */
   public IncorrectOperationException(@NonNls String message, Exception e) {
     super(message, e);
   }

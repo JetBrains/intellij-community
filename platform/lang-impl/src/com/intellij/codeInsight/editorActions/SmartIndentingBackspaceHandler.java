@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
@@ -42,7 +41,7 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
   private int myStartOffset;
 
   public SmartIndentingBackspaceHandler() {
-    super(CodeInsightSettings.AUTOINDENT);
+    super(SmartBackspaceMode.AUTOINDENT);
   }
 
   @Override

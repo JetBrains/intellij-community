@@ -116,7 +116,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     for (Object aFeaturesList : featuresList) {
       Element featureElement = (Element)aFeaturesList;
       FeatureDescriptor descriptor =
-        ((ProductivityFeaturesRegistryImpl)myRegistry).getFeatureDescriptorEx(featureElement.getAttributeValue(ATT_ID));
+        myRegistry.getFeatureDescriptor(featureElement.getAttributeValue(ATT_ID));
       if (descriptor != null) {
         descriptor.readStatistics(featureElement);
       }

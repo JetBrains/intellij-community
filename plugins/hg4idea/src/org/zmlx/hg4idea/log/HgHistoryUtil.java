@@ -80,8 +80,7 @@ public class HgHistoryUtil {
                                                  @NotNull String email,
                                                  @NotNull List<String> attributes) {
         String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
-        int subjectIndex = message.indexOf('\n');
-        String subject = subjectIndex == -1 ? message : message.substring(0, subjectIndex);
+        String subject = extractSubject(message);
         List<Hash> parentsHash = new SmartList<Hash>();
         for (HgRevisionNumber parent : parents) {
           parentsHash.add(factory.createHash(parent.getChangeset()));
@@ -91,6 +90,14 @@ public class HgHistoryUtil {
       }
     };
     return getCommitRecords(project, result, baseParser);
+  }
+
+  @NotNull
+  public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project,
+                                                             @NotNull final VirtualFile root,
+                                                             int limit,
+                                                             @NotNull List<String> parameters) throws VcsException {
+    return history(project, root, limit, parameters, false);
   }
 
   /**
@@ -104,13 +111,14 @@ public class HgHistoryUtil {
   public static List<? extends VcsFullCommitDetails> history(@NotNull final Project project,
                                                              @NotNull final VirtualFile root,
                                                              int limit,
-                                                             @NotNull List<String> parameters) throws VcsException {
+                                                             @NotNull List<String> parameters,
+                                                             boolean silent) throws VcsException {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     final HgVersion version = hgvcs.getVersion();
     String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
     HgCommandResult result = getLogResult(project, root, version, limit, parameters, HgChangesetUtil.makeTemplate(templates));
-    return createFullCommitsFromResult(project, root, result, version, false);
+    return createFullCommitsFromResult(project, root, result, version, silent);
   }
 
   public static List<? extends VcsFullCommitDetails> createFullCommitsFromResult(@NotNull Project project,
@@ -210,7 +218,7 @@ public class HgHistoryUtil {
     if (errors != null && !errors.isEmpty()) {
       if (result.getExitValue() != 0) {
         if (silent) {
-          LOG.warn(errors.toString());
+          LOG.debug(errors.toString());
         }
         else {
           VcsNotifier.getInstance(project).notifyError(HgVcsMessages.message("hg4idea.error.log.command.execution"), errors.toString());
@@ -250,8 +258,7 @@ public class HgHistoryUtil {
                                                      @NotNull String email,
                                                      @NotNull List<String> attributes) {
         String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
-        int subjectIndex = message.indexOf('\n');
-        String subject = subjectIndex == -1 ? message : message.substring(0, subjectIndex);
+        String subject = extractSubject(message);
         List<Hash> parentsHash = new SmartList<Hash>();
         for (HgRevisionNumber parent : parents) {
           parentsHash.add(factory.createHash(parent.getChangeset()));

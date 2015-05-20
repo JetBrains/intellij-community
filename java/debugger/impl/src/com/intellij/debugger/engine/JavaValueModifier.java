@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,29 +22,18 @@ import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.*;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.*;
+import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.ui.DebuggerExpressionComboBox;
-import com.intellij.debugger.ui.EditorEvaluationCommand;
-import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -59,17 +48,35 @@ public class JavaValueModifier extends XValueModifier {
     myJavaValue = javaValue;
   }
 
-  @Nullable
   @Override
-  public String getInitialValueEditorText() {
-    Value value = myJavaValue.getDescriptor().getValue();
+  public void calculateInitialValueEditorText(final XInitialValueCallback callback) {
+    final Value value = myJavaValue.getDescriptor().getValue();
     if (value instanceof PrimitiveValue) {
-      return myJavaValue.getValueString();
+      String valueString = myJavaValue.getValueString();
+      int pos = valueString.lastIndexOf('('); //skip hex presentation if any
+      if (pos > 1) {
+        valueString = valueString.substring(0, pos).trim();
+      }
+      callback.setValue(valueString);
     }
     else if (value instanceof StringReference) {
-      return StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myJavaValue.getValueString()));
+      final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
+      evaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(evaluationContext.getSuspendContext()) {
+        @Override
+        public Priority getPriority() {
+          return Priority.NORMAL;
+        }
+
+        @Override
+        public void contextAction() throws Exception {
+          callback.setValue(
+            StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(DebuggerUtils.getValueAsString(evaluationContext, value))));
+        }
+      });
     }
-    return null;
+    else {
+      callback.setValue(null);
+    }
   }
 
   //public void update(AnActionEvent e) {
@@ -238,14 +245,14 @@ public class JavaValueModifier extends XValueModifier {
     }
   }
 
-  private Value preprocessValue(EvaluationContextImpl context, Value value, Type varType) throws EvaluateException {
+  private static Value preprocessValue(EvaluationContextImpl context, Value value, Type varType) throws EvaluateException {
     if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
-      String v = DebuggerUtilsEx.getValueAsString(context, value);
+      String v = DebuggerUtils.getValueAsString(context, value);
       if (v != null) {
         value = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf(v);
       }
     }
-    if(value instanceof DoubleValue) {
+    if (value instanceof DoubleValue) {
       double dValue = ((DoubleValue) value).doubleValue();
       if(varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE){
         value = context.getSuspendContext().getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
@@ -257,8 +264,7 @@ public class JavaValueModifier extends XValueModifier {
           value = (Value)new UnBoxingEvaluator(new IdentityEvaluator(value)).evaluate(context);
         }
       }
-      else if (UnBoxingEvaluator.isTypeUnboxable(varType.name())) {
-        // variable is not primitive and boxing/unboxing is applicable
+      else if (varType instanceof ReferenceType) {
         if (value instanceof PrimitiveValue) {
           value = (Value)new BoxingEvaluator(new IdentityEvaluator(value)).evaluate(context);
         }
@@ -398,166 +404,166 @@ public class JavaValueModifier extends XValueModifier {
     debuggerContext.getDebugProcess().getManagerThread().startProgress(askSetAction, progressWindow);
   }
 
-  private void showEditor(final TextWithImports initialString,
-                          final DebuggerTreeNodeImpl node,
-                          final DebuggerContextImpl debuggerContext,
-                          final SetValueRunnable setValueRunnable) {
-    final JPanel editorPanel = new JPanel();
-    editorPanel.setLayout(new BoxLayout(editorPanel, BoxLayout.X_AXIS));
-    SimpleColoredComponent label = new SimpleColoredComponent();
-    label.setIcon(node.getIcon());
-    DebuggerTreeRenderer.getDescriptorTitle(debuggerContext, node.getDescriptor()).appendToComponent(label);
-    editorPanel.add(label);
-
-    final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(
-      debuggerContext.getProject(),
-      PositionUtil.getContextElement(debuggerContext),
-      "setValue", DefaultCodeFragmentFactory.getInstance());
-    comboBox.setText(initialString);
-    comboBox.selectAll();
-    editorPanel.add(comboBox);
-
-    final DebuggerTreeInplaceEditor editor = new DebuggerTreeInplaceEditor(node) {
-      public JComponent createInplaceEditorComponent() {
-        return editorPanel;
-      }
-
-      public JComponent getPreferredFocusedComponent() {
-        return comboBox;
-      }
-
-      public Editor getEditor() {
-        return comboBox.getEditor();
-      }
-
-      public JComponent getEditorComponent() {
-        return comboBox.getEditorComponent();
-      }
-
-      private void flushValue() {
-        if (comboBox.isPopupVisible()) {
-          comboBox.selectPopupValue();
-        }
-
-        Editor editor = getEditor();
-        if(editor == null) {
-          return;
-        }
-
-        final TextWithImports text = comboBox.getText();
-
-        PsiFile psiFile = PsiDocumentManager.getInstance(debuggerContext.getProject()).getPsiFile(editor.getDocument());
-
-        final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, getProject());
-        EditorEvaluationCommand evaluationCommand = new EditorEvaluationCommand(getEditor(), psiFile, debuggerContext, progressWindow) {
-          public void threadAction() {
-            try {
-              evaluate();
-            }
-            catch(EvaluateException e) {
-              progressWindow.cancel();
-            }
-            catch(ProcessCanceledException e) {
-              progressWindow.cancel();
-            }
-            finally{
-              if (!progressWindow.isCanceled()) {
-                DebuggerInvocationUtil.swingInvokeLater(debuggerContext.getProject(), new Runnable() {
-                  public void run() {
-                    comboBox.addRecent(text);
-                    cancelEditing();
-                  }
-                });
-              }
-            }
-          }
-
-          protected Object evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
-            ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(evaluationContext.getProject(), new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
-              public ExpressionEvaluator compute() throws EvaluateException {
-                return EvaluatorBuilderImpl.build(text, ContextUtil.getContextElement(evaluationContext), ContextUtil.getSourcePosition(evaluationContext));
-              }
-            });
-
-            setValue(text.getText(), evaluator, evaluationContext, new SetValueRunnable() {
-              public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
-                                                                                                   InvalidTypeException,
-                                                                                                   EvaluateException,
-                                                                                                   IncompatibleThreadStateException {
-                if (!progressWindow.isCanceled()) {
-                  setValueRunnable.setValue(evaluationContext, newValue);
-                  node.calcValue();
-                }
-              }
-
-              public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
-                                                                                                        InvocationException,
-                                                                                                        ClassNotLoadedException,
-                                                                                                        EvaluateException,
-                                                                                                        IncompatibleThreadStateException,
-                                                                                                        InvalidTypeException {
-                return setValueRunnable.loadClass(evaluationContext, className);
-              }
-            });
-
-            return null;
-          }
-        };
-
-        progressWindow.addListener(new ProgressIndicatorListenerAdapter() {
-          //should return whether to stop processing
-          public void stopped() {
-            if(!progressWindow.isCanceled()) {
-              IJSwingUtilities.invoke(new Runnable() {
-                public void run() {
-                  cancelEditing();
-                }
-              });
-            }
-          }
-
-
-        });
-
-        progressWindow.setTitle(DebuggerBundle.message("progress.set.value"));
-        debuggerContext.getDebugProcess().getManagerThread().startProgress(evaluationCommand, progressWindow);
-      }
-
-      public void cancelEditing() {
-        try {
-          super.cancelEditing();
-        }
-        finally {
-          comboBox.dispose();
-        }
-      }
-
-      public void doOKAction() {
-        try {
-          flushValue();
-        }
-        finally {
-          comboBox.dispose();
-        }
-      }
-
-    };
-
-    final DebuggerStateManager stateManager = DebuggerManagerEx.getInstanceEx(debuggerContext.getProject()).getContextManager();
-
-    stateManager.addListener(new DebuggerContextListener() {
-      public void changeEvent(DebuggerContextImpl newContext, int event) {
-        if (event != DebuggerSession.EVENT_THREADS_REFRESH) {
-          stateManager.removeListener(this);
-          editor.cancelEditing();
-        }
-      }
-    });
-
-    node.getTree().hideTooltip();
-
-    editor.show();
-  }
+  //private void showEditor(final TextWithImports initialString,
+  //                        final DebuggerTreeNodeImpl node,
+  //                        final DebuggerContextImpl debuggerContext,
+  //                        final SetValueRunnable setValueRunnable) {
+  //  final JPanel editorPanel = new JPanel();
+  //  editorPanel.setLayout(new BoxLayout(editorPanel, BoxLayout.X_AXIS));
+  //  SimpleColoredComponent label = new SimpleColoredComponent();
+  //  label.setIcon(node.getIcon());
+  //  DebuggerTreeRenderer.getDescriptorTitle(debuggerContext, node.getDescriptor()).appendToComponent(label);
+  //  editorPanel.add(label);
+  //
+  //  final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(
+  //    debuggerContext.getProject(),
+  //    PositionUtil.getContextElement(debuggerContext),
+  //    "setValue", DefaultCodeFragmentFactory.getInstance());
+  //  comboBox.setText(initialString);
+  //  comboBox.selectAll();
+  //  editorPanel.add(comboBox);
+  //
+  //  final DebuggerTreeInplaceEditor editor = new DebuggerTreeInplaceEditor(node) {
+  //    public JComponent createInplaceEditorComponent() {
+  //      return editorPanel;
+  //    }
+  //
+  //    public JComponent getPreferredFocusedComponent() {
+  //      return comboBox;
+  //    }
+  //
+  //    public Editor getEditor() {
+  //      return comboBox.getEditor();
+  //    }
+  //
+  //    public JComponent getEditorComponent() {
+  //      return comboBox.getEditorComponent();
+  //    }
+  //
+  //    private void flushValue() {
+  //      if (comboBox.isPopupVisible()) {
+  //        comboBox.selectPopupValue();
+  //      }
+  //
+  //      Editor editor = getEditor();
+  //      if(editor == null) {
+  //        return;
+  //      }
+  //
+  //      final TextWithImports text = comboBox.getText();
+  //
+  //      PsiFile psiFile = PsiDocumentManager.getInstance(debuggerContext.getProject()).getPsiFile(editor.getDocument());
+  //
+  //      final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, getProject());
+  //      EditorEvaluationCommand evaluationCommand = new EditorEvaluationCommand(getEditor(), psiFile, debuggerContext, progressWindow) {
+  //        public void threadAction() {
+  //          try {
+  //            evaluate();
+  //          }
+  //          catch(EvaluateException e) {
+  //            progressWindow.cancel();
+  //          }
+  //          catch(ProcessCanceledException e) {
+  //            progressWindow.cancel();
+  //          }
+  //          finally{
+  //            if (!progressWindow.isCanceled()) {
+  //              DebuggerInvocationUtil.swingInvokeLater(debuggerContext.getProject(), new Runnable() {
+  //                public void run() {
+  //                  comboBox.addRecent(text);
+  //                  cancelEditing();
+  //                }
+  //              });
+  //            }
+  //          }
+  //        }
+  //
+  //        protected Object evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
+  //          ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(evaluationContext.getProject(), new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
+  //            public ExpressionEvaluator compute() throws EvaluateException {
+  //              return EvaluatorBuilderImpl.build(text, ContextUtil.getContextElement(evaluationContext), ContextUtil.getSourcePosition(evaluationContext));
+  //            }
+  //          });
+  //
+  //          setValue(text.getText(), evaluator, evaluationContext, new SetValueRunnable() {
+  //            public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
+  //                                                                                                 InvalidTypeException,
+  //                                                                                                 EvaluateException,
+  //                                                                                                 IncompatibleThreadStateException {
+  //              if (!progressWindow.isCanceled()) {
+  //                setValueRunnable.setValue(evaluationContext, newValue);
+  //                node.calcValue();
+  //              }
+  //            }
+  //
+  //            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
+  //                                                                                                      InvocationException,
+  //                                                                                                      ClassNotLoadedException,
+  //                                                                                                      EvaluateException,
+  //                                                                                                      IncompatibleThreadStateException,
+  //                                                                                                      InvalidTypeException {
+  //              return setValueRunnable.loadClass(evaluationContext, className);
+  //            }
+  //          });
+  //
+  //          return null;
+  //        }
+  //      };
+  //
+  //      progressWindow.addListener(new ProgressIndicatorListenerAdapter() {
+  //        //should return whether to stop processing
+  //        public void stopped() {
+  //          if(!progressWindow.isCanceled()) {
+  //            IJSwingUtilities.invoke(new Runnable() {
+  //              public void run() {
+  //                cancelEditing();
+  //              }
+  //            });
+  //          }
+  //        }
+  //
+  //
+  //      });
+  //
+  //      progressWindow.setTitle(DebuggerBundle.message("progress.set.value"));
+  //      debuggerContext.getDebugProcess().getManagerThread().startProgress(evaluationCommand, progressWindow);
+  //    }
+  //
+  //    public void cancelEditing() {
+  //      try {
+  //        super.cancelEditing();
+  //      }
+  //      finally {
+  //        comboBox.dispose();
+  //      }
+  //    }
+  //
+  //    public void doOKAction() {
+  //      try {
+  //        flushValue();
+  //      }
+  //      finally {
+  //        comboBox.dispose();
+  //      }
+  //    }
+  //
+  //  };
+  //
+  //  final DebuggerStateManager stateManager = DebuggerManagerEx.getInstanceEx(debuggerContext.getProject()).getContextManager();
+  //
+  //  stateManager.addListener(new DebuggerContextListener() {
+  //    public void changeEvent(DebuggerContextImpl newContext, int event) {
+  //      if (event != DebuggerSession.EVENT_THREADS_REFRESH) {
+  //        stateManager.removeListener(this);
+  //        editor.cancelEditing();
+  //      }
+  //    }
+  //  });
+  //
+  //  node.getTree().hideTooltip();
+  //
+  //  editor.show();
+  //}
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static String getDisplayableString(PrimitiveValue value, boolean showAsHex) {

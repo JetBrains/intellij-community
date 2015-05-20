@@ -47,5 +47,9 @@ public abstract class BuildProcessParametersProvider {
   public @NotNull List<String> getVMArguments() {
     return Collections.emptyList();
   }
-  
+
+  public boolean isProcessPreloadingEnabled() {
+    return true;
+  }
+
 }

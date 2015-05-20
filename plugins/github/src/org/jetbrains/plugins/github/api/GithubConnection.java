@@ -332,46 +332,47 @@ public class GithubConnection {
       case HttpStatus.SC_UNAUTHORIZED:
       case HttpStatus.SC_PAYMENT_REQUIRED:
       case HttpStatus.SC_FORBIDDEN:
-        String message = getErrorMessage(response);
+        //noinspection ThrowableResultOfMethodCallIgnored
+        GithubStatusCodeException error = getStatusCodeException(response);
 
         Header headerOTP = response.getFirstHeader("X-GitHub-OTP");
         if (headerOTP != null) {
           for (HeaderElement element : headerOTP.getElements()) {
             if ("required".equals(element.getName())) {
-              throw new GithubTwoFactorAuthenticationException(message);
+              throw new GithubTwoFactorAuthenticationException(error.getMessage());
             }
           }
         }
 
-        if (message.contains("API rate limit exceeded")) {
-          throw new GithubRateLimitExceededException(message);
+        if (error.getError() != null && error.getError().containsReasonMessage("API rate limit exceeded")) {
+          throw new GithubRateLimitExceededException(error.getMessage());
         }
 
-        throw new GithubAuthenticationException("Request response: " + message);
+        throw new GithubAuthenticationException("Request response: " + error.getMessage());
       case HttpStatus.SC_BAD_REQUEST:
       case HttpStatus.SC_UNPROCESSABLE_ENTITY:
-        if (body != null) {
-          LOG.info(body);
-        }
-        throw new GithubStatusCodeException(code + ": " + getErrorMessage(response), code);
+        LOG.info("body message:" + body);
+        throw getStatusCodeException(response);
       default:
-        throw new GithubStatusCodeException(code + ": " + getErrorMessage(response), code);
+        throw getStatusCodeException(response);
     }
   }
 
   @NotNull
-  private static String getErrorMessage(@NotNull CloseableHttpResponse response) {
+  private static GithubStatusCodeException getStatusCodeException(@NotNull CloseableHttpResponse response) {
+    StatusLine statusLine = response.getStatusLine();
     try {
       HttpEntity entity = response.getEntity();
       if (entity != null) {
-        GithubErrorMessageRaw error = fromJson(parseResponse(entity.getContent()), GithubErrorMessageRaw.class);
-        return response.getStatusLine().getReasonPhrase() + " - " + error.getMessage();
+        GithubErrorMessage error = fromJson(parseResponse(entity.getContent()), GithubErrorMessage.class);
+        String message = statusLine.getReasonPhrase() + " - " + error.getMessage();
+        return new GithubStatusCodeException(message, error, statusLine.getStatusCode());
       }
     }
     catch (IOException e) {
       LOG.info(e);
     }
-    return response.getStatusLine().getReasonPhrase();
+    return new GithubStatusCodeException(statusLine.getReasonPhrase(), statusLine.getStatusCode());
   }
 
   @NotNull

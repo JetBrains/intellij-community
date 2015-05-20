@@ -31,7 +31,7 @@ public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
                              @NotNull VirtualFile projectFile,
                              @Nullable MavenParentDesc parentDesc) {
     VirtualFile superPom = generalSettings.getEffectiveSuperPom();
-    if (projectFile.equals(superPom)) return null;
+    if (superPom == null || projectFile.equals(superPom)) return null;
 
     RESULT_TYPE result = null;
 

@@ -104,10 +104,8 @@ public class TypeUtils {
     if (expression == null) {
       return null;
     }
-    PsiType type = expression.getType();
-    if (type instanceof PsiLambdaExpressionType) {
-      type = ((PsiLambdaExpressionType)type).getExpression().getFunctionalInterfaceType();
-    }
+    PsiType type = expression instanceof PsiFunctionalExpression ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType() 
+                                                                 : expression.getType();
     if (type == null) {
       return null;
     }
@@ -181,6 +179,9 @@ public class TypeUtils {
   }
 
   public static boolean areConvertible(PsiType type1, PsiType type2) {
+    if (TypeConversionUtil.areTypesConvertible(type1, type2)) {
+      return true;
+    }
     final PsiType comparedTypeErasure = TypeConversionUtil.erasure(type1);
     final PsiType comparisonTypeErasure = TypeConversionUtil.erasure(type2);
     if (comparedTypeErasure == null || comparisonTypeErasure == null ||
@@ -191,7 +192,7 @@ public class TypeUtils {
         final PsiType[] parameters1 = classType1.getParameters();
         final PsiType[] parameters2 = classType2.getParameters();
         if (parameters1.length != parameters2.length) {
-          return false;
+          return ((PsiClassType)type1).isRaw() || ((PsiClassType)type2).isRaw();
         }
         for (int i = 0; i < parameters1.length; i++) {
           if (!areConvertible(parameters1[i], parameters2[i])) {

@@ -18,16 +18,12 @@ package com.intellij.refactoring;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
-/**
- * @author yole
- */
 @State(
   name = "BaseRefactoringSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/baseRefactoring.xml")
-  },
-  storageChooser = LastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/baseRefactoring.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class RefactoringSettings implements PersistentStateComponent<RefactoringSettings> {
   public static RefactoringSettings getInstance() {

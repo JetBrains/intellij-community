@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -43,10 +45,10 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogHashMap myHashMap;
+  @NotNull private final VcsLogHashMapImpl myHashMap;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
-  @NotNull private final Map<Hash, VcsCommitMetadata> myTopCommitsDetailsCache;
+  @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache;
   @NotNull private final Consumer<Exception> myExceptionHandler;
   private final int myRecentCommitCount;
 
@@ -55,10 +57,10 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull private DataPack myDataPack = DataPack.EMPTY;
 
   public VcsLogRefresherImpl(@NotNull final Project project,
-                             @NotNull VcsLogHashMap hashMap,
+                             @NotNull VcsLogHashMapImpl hashMap,
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
                              @NotNull final VcsUserRegistryImpl userRegistry,
-                             @NotNull Map<Hash, VcsCommitMetadata> topCommitsDetailsCache,
+                             @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
                              @NotNull final Consumer<DataPack> dataPackUpdateHandler,
                              @NotNull Consumer<Exception> exceptionHandler,
                              int recentCommitsCount) {
@@ -83,7 +85,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            ProgressManagerImpl.runProcessWithProgressAsynchronously(new MyRefreshTask(myDataPack));
+            ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(new MyRefreshTask(myDataPack));
           }
         });
       }
@@ -171,15 +173,21 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @NotNull
   private GraphCommitImpl<Integer> compactCommit(@NotNull TimedVcsCommit commit) {
-    return new GraphCommitImpl<Integer>(myHashMap.getCommitIndex(commit.getId()),
-                                        ContainerUtil.map(commit.getParents(), myHashMap.asIndexGetter()), commit.getTimestamp());
+    List<Integer> parents = ContainerUtil.map(commit.getParents(), new NotNullFunction<Hash, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(Hash hash) {
+        return myHashMap.getCommitIndex(hash);
+      }
+    });
+    return new GraphCommitImpl<Integer>(myHashMap.getCommitIndex(commit.getId()), parents, commit.getTimestamp());
   }
 
   private void storeUsersAndDetails(@NotNull Collection<? extends VcsCommitMetadata> metadatas) {
     for (VcsCommitMetadata detail : metadatas) {
       myUserRegistry.addUser(detail.getAuthor());
       myUserRegistry.addUser(detail.getCommitter());
-      myTopCommitsDetailsCache.put(detail.getId(), detail);
+      myTopCommitsDetailsCache.put(myHashMap.getCommitIndex(detail.getId()), detail);
     }
   }
 
@@ -190,12 +198,13 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     @NotNull private final LogInfo myLoadedInfo = new LogInfo();
 
     MyRefreshTask(@NotNull DataPack currentDataPack) {
-      super(VcsLogRefresherImpl.this.myProject, "Refreshing history...", false);
+      super(VcsLogRefresherImpl.this.myProject, "Refreshing History...", false);
       myCurrentDataPack = currentDataPack;
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(true);
       DataPack dataPack = myCurrentDataPack;
       while (true) {
         List<RefreshRequest> requests = mySingleTaskController.popRequests();

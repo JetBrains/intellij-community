@@ -71,7 +71,7 @@ public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQ
 
   @Override
   protected String getHint(String tagName) {
-    return "Create Field '" + tagName + "'";
+    return "Create field '" + tagName + "'";
   }
 
   @NotNull

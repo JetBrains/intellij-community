@@ -73,8 +73,8 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     final List<PyType> members = new ArrayList<PyType>();
     for (PsiElement resolved : PyUtil.multiResolveTopPriority(reference)) {
       PyType res = null;
-      if (resolved instanceof Callable) {
-        res = ((Callable)resolved).getCallType(context, this);
+      if (resolved instanceof PyCallable) {
+        res = ((PyCallable)resolved).getCallType(context, this);
       }
       if (PyTypeChecker.isUnknown(res) || res instanceof PyNoneType) {
         final PyExpression indexExpression = getIndexExpression();

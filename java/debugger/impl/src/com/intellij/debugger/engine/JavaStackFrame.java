@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author egor
@@ -150,7 +147,8 @@ public class JavaStackFrame extends XStackFrame {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     DebuggerContextImpl context = myDebugProcess.getDebuggerContext();
     if (context.getFrameProxy() != getStackFrameProxy()) {
-      SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(), getStackFrameProxy().threadProxy());
+      SuspendContextImpl threadSuspendContext = SuspendManagerUtil.getSuspendContextForThread(context.getSuspendContext(),
+                                                                                              getStackFrameProxy().threadProxy());
       context = DebuggerContextImpl.createDebuggerContext(
         myDebugProcess.mySession,
         threadSuspendContext,
@@ -175,15 +173,14 @@ public class JavaStackFrame extends XStackFrame {
       }
 
       final Location location = myDescriptor.getLocation();
-      LOG.assertTrue(location != null);
 
       final ObjectReference thisObjectReference = myDescriptor.getThisObject();
       if (thisObjectReference != null) {
-        ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(myDescriptor, thisObjectReference);
+        ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(null, thisObjectReference);
         children.add(JavaValue.create(thisDescriptor, evaluationContext, myNodeManager));
       }
-      else {
-        StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(myDescriptor, location.method().declaringType());
+      else if (location != null) {
+        StaticDescriptorImpl staticDecriptor = myNodeManager.getStaticDescriptor(myDescriptor, location.declaringType());
         if (staticDecriptor.isExpandable()) {
           children.addTopGroup(new JavaStaticGroup(staticDecriptor, evaluationContext, myNodeManager));
         }
@@ -216,12 +213,11 @@ public class JavaStackFrame extends XStackFrame {
       if (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES) {
         if (thisObjectReference != null && debugProcess.getVirtualMachineProxy().canGetSyntheticAttribute())  {
           final ReferenceType thisRefType = thisObjectReference.referenceType();
-          if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
+          if (thisRefType instanceof ClassType && location != null
+              && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
             final ClassType clsType = (ClassType)thisRefType;
-            final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
             for (Field field : clsType.fields()) {
-              if ((!vm.canGetSyntheticAttribute() || field.isSynthetic()) && StringUtil
-                .startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+              if (DebuggerUtils.isSynthetic(field) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
                 final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(myDescriptor, thisObjectReference, field);
                 children.add(JavaValue.create(fieldDescriptor, evaluationContext, myNodeManager));
               }
@@ -294,13 +290,16 @@ public class JavaStackFrame extends XStackFrame {
         else {
           superBuildVariables(evaluationContext, children);
         }
-        // add expressions
         final EvaluationContextImpl evalContextCopy = evaluationContext.createEvaluationContext(evaluationContext.getThisObject());
         evalContextCopy.setAutoLoadClasses(false);
-        for (TextWithImports text : usedVars.second) {
-          WatchItemDescriptor descriptor = myNodeManager.getWatchItemDescriptor(null, text, null);
-          children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
-        }
+
+        final Set<TextWithImports> extraVars = computeExtraVars(usedVars, sourcePosition, evalContext);
+
+        // add extra vars
+        addToChildrenFrom(extraVars, children, evaluationContext);
+
+        // add expressions
+        addToChildrenFrom(usedVars.second, children, evalContextCopy);
       }
     }
     catch (EvaluateException e) {
@@ -333,6 +332,29 @@ public class JavaStackFrame extends XStackFrame {
       else {
         throw e;
       }
+    }
+  }
+
+  private static Set<TextWithImports> computeExtraVars(Pair<Set<String>, Set<TextWithImports>> usedVars,
+                                                       SourcePosition sourcePosition,
+                                                       EvaluationContextImpl evalContext) {
+    Set<String> alreadyCollected = new HashSet<String>(usedVars.first);
+    for (TextWithImports text : usedVars.second) {
+      alreadyCollected.add(text.getText());
+    }
+    Set<TextWithImports> extra = new HashSet<TextWithImports>();
+    for (FrameExtraVariablesProvider provider : FrameExtraVariablesProvider.EP_NAME.getExtensions()) {
+      if (provider.isAvailable(sourcePosition, evalContext)) {
+        extra.addAll(provider.collectVariables(sourcePosition, evalContext, alreadyCollected));
+      }
+    }
+    return extra;
+  }
+
+  private void addToChildrenFrom(Set<TextWithImports> expressions, XValueChildrenList children, EvaluationContextImpl evaluationContext) {
+    for (TextWithImports text : expressions) {
+      WatchItemDescriptor descriptor = myNodeManager.getWatchItemDescriptor(null, text, null);
+      children.add(JavaValue.create(descriptor, evaluationContext, myNodeManager));
     }
   }
 

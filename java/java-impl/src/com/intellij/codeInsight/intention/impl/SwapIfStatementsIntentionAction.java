@@ -64,7 +64,7 @@ public class SwapIfStatementsIntentionAction extends PsiElementBaseIntentionActi
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Swap If Statements";
+    return "Swap 'if' statements";
   }
 
   @NotNull

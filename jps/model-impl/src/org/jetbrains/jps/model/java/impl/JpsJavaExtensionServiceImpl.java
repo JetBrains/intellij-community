@@ -188,6 +188,12 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
     return createSourceRootProperties(packagePrefix, false);
   }
 
+  @NotNull
+  @Override
+  public JavaResourceRootProperties createResourceRootProperties(@NotNull String relativeOutputPath, boolean forGeneratedResource) {
+    return new JavaResourceRootProperties(relativeOutputPath, forGeneratedResource);
+  }
+
   @Override
   @NotNull
   public JpsProductionModuleOutputPackagingElement createProductionModuleOutput(@NotNull JpsModuleReference moduleReference) {

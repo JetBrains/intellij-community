@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class IfExprent extends Exprent {
       condition = stack.pop();
     }
     else {
-      condition = new FunctionExprent(FUNC_TYPES[ifType], stack, null);
+      condition = new FunctionExprent(FUNC_TYPES[ifType], stack, bytecodeOffsets);
     }
   }
 
@@ -135,7 +135,7 @@ public class IfExprent extends Exprent {
   }
 
   public IfExprent negateIf() {
-    condition = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, Collections.singletonList(condition), condition.bytecode);
+    condition = new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, condition, condition.bytecode);
     return this;
   }
 

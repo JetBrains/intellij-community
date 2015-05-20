@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package com.intellij.ide.highlighter;
 
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
 /**
  * Highlighting text attributes for Java language.
- * 
+ *
  * @author Rustam Vishnyakov
  */
 @SuppressWarnings("deprecation")
@@ -40,10 +41,8 @@ public class JavaHighlightingColors {
   public static final TextAttributesKey JAVA_SEMICOLON = SyntaxHighlighterColors.JAVA_SEMICOLON;
   public static final TextAttributesKey DOC_COMMENT_TAG = SyntaxHighlighterColors.DOC_COMMENT_TAG;
   public static final TextAttributesKey DOC_COMMENT_MARKUP = SyntaxHighlighterColors.DOC_COMMENT_MARKUP;
+  public static final TextAttributesKey DOC_COMMENT_TAG_VALUE = TextAttributesKey.createTextAttributesKey(
+    "DOC_COMMENT_TAG_VALUE", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE);
   public static final TextAttributesKey VALID_STRING_ESCAPE = SyntaxHighlighterColors.VALID_STRING_ESCAPE;
   public static final TextAttributesKey INVALID_STRING_ESCAPE = SyntaxHighlighterColors.INVALID_STRING_ESCAPE;
-
-  /** @deprecated use {@link #PARENTHESES} (to remove in IDEA 14) */
-  @SuppressWarnings("SpellCheckingInspection")
-  public static final TextAttributesKey PARENTHS = PARENTHESES;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,19 +39,20 @@ import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
-import com.intellij.testFramework.PlatformLangTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.jar.JarFile;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertPathsEqual;
 
-public class JarFileSystemTest extends PlatformLangTestCase {
+public class JarFileSystemTest extends PlatformTestCase {
   public void testFindFile() throws IOException {
     String rtJarPath = PlatformTestUtil.getRtJarPath();
 
@@ -70,6 +71,7 @@ public class JarFileSystemTest extends PlatformLangTestCase {
     byte[] bytes = file4.contentsToByteArray();
     assertNotNull(bytes);
     assertTrue(bytes.length > 10);
+    assertEquals(0xCAFEBABE, ByteBuffer.wrap(bytes).getInt());
   }
 
   public void testMetaInf() {

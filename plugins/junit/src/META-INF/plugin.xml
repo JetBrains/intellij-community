@@ -55,7 +55,11 @@
     <stacktrace.fold substring="at org.junit.Assert.assert"/>
     <stacktrace.fold substring="at com.intellij.junit3."/>
     <stacktrace.fold substring="at com.intellij.junit4."/>
+    <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
+    <stacktrace.fold substring="at junit.framework.TestCase.run"/>
+    <stacktrace.fold substring="at junit.framework.TestResult"/>
 
+    <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
   </extensions>
 
   <extensionPoints>
@@ -64,17 +68,12 @@
 
   <actions>
     <group>
-      <action class="com.intellij.execution.junit.ExcludeFromRunAction" text="Exclude from suite" id="excludeFromSuite"/>
+      <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" text="Exclude from suite" id="excludeFromSuite"/>
       <separator/>
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
     </group>
     <group>
-      <separator/>
-      <action id="JUnitTesting.SelectInTree" class="com.intellij.execution.junit2.ui.actions.SelectInTreeAction" text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
-      <add-to-group anchor="last" group-id="TestStatisticsTablePopupMenu"/>
-    </group>
-    <group>
-      <action class="com.intellij.execution.junit.AddToTestsPatternAction" id="AddToISuite" text="Add to temp suite"/>
+      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to pattern suite"/>
       <add-to-group anchor="first" group-id="RunContextGroup"/>
     </group>
   </actions>

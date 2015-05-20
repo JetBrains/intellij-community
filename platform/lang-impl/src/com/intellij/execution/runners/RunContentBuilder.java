@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.ui.actions.CloseAction;
@@ -32,11 +31,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,34 +41,10 @@ import java.util.Collection;
 import java.util.List;
 
 public class RunContentBuilder extends RunTab {
-  @NonNls private static final String JAVA_RUNNER = "JavaRunner";
+  private static final String JAVA_RUNNER = "JavaRunner";
 
   private final List<AnAction> myRunnerActions = new SmartList<AnAction>();
   private final ExecutionResult myExecutionResult;
-
-  /**
-   * @deprecated use {@link #RunContentBuilder(com.intellij.execution.ExecutionResult, ExecutionEnvironment)}
-   * to remove in IDEA 14
-   */
-  @SuppressWarnings("UnusedParameters")
-  public RunContentBuilder(@NotNull Project project,
-                           ProgramRunner runner,
-                           Executor executor,
-                           ExecutionResult executionResult,
-                           @NotNull ExecutionEnvironment environment) {
-    //noinspection deprecation
-    this(runner, executionResult, environment);
-  }
-
-  /**
-   * @deprecated use {@link #RunContentBuilder(com.intellij.execution.ExecutionResult, ExecutionEnvironment)}
-   * to remove in IDEA 15
-   */
-  public RunContentBuilder(ProgramRunner runner,
-                           ExecutionResult executionResult,
-                           @NotNull ExecutionEnvironment environment) {
-    this(executionResult, fix(environment, runner));
-  }
 
   public RunContentBuilder(@NotNull ExecutionResult executionResult, @NotNull ExecutionEnvironment environment) {
     super(environment, getRunnerType(executionResult.getExecutionConsole()));
@@ -88,16 +61,6 @@ public class RunContentBuilder extends RunTab {
     else {
       return new ExecutionEnvironmentBuilder(environment).runner(runner).build();
     }
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  @NotNull
-  /**
-   * @deprecated to remove in IDEA 15
-   */
-  public static GlobalSearchScope createSearchScope(Project project, RunProfile runProfile) {
-    return SearchScopeProvider.createSearchScope(project, runProfile);
   }
 
   public void addAction(@NotNull final AnAction action) {

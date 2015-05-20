@@ -100,7 +100,7 @@ public class GradleProjectImportNotificationListener extends ExternalSystemTaskN
     public void navigate(boolean requestFocus) {
       OpenFileDescriptor fileDescriptor = openFileDescriptor;
       if (fileDescriptor == null) {
-        final VirtualFile virtualFile = ExternalSystemUtil.waitForTheFile(myFile.getPath());
+        final VirtualFile virtualFile = ExternalSystemUtil.findLocalFileByPath(myFile.getPath());
         if (virtualFile != null) {
           openFileDescriptor = fileDescriptor = new OpenFileDescriptor(myProject, virtualFile);
         }

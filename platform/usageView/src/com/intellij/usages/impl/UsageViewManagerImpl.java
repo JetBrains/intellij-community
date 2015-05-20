@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
-import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
@@ -122,16 +121,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                     @NotNull final UsageViewPresentation presentation,
                                     @NotNull final FindUsagesProcessPresentation processPresentation,
                                     @Nullable final UsageViewStateListener listener) {
-    final SearchScope searchScope = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
-    return doSearchAndShow(searchFor, searcherFactory, presentation, processPresentation, listener, searchScope);
-  }
-
-  private UsageView doSearchAndShow(@NotNull final UsageTarget[] searchFor,
-                                    @NotNull final Factory<UsageSearcher> searcherFactory,
-                                    @NotNull final UsageViewPresentation presentation,
-                                    @NotNull final FindUsagesProcessPresentation processPresentation,
-                                    @Nullable final UsageViewStateListener listener,
-                                    @NotNull final SearchScope searchScopeToWarnOfFallingOutOf) {
+    final SearchScope searchScopeToWarnOfFallingOutOf = getMaxSearchScopeToWarnOfFallingOutOf(searchFor);
     final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<UsageViewImpl>();
 
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
@@ -139,12 +129,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
       public void run(@NotNull final ProgressIndicator indicator) {
         new SearchForUsagesRunnable(UsageViewManagerImpl.this, UsageViewManagerImpl.this.myProject, usageViewRef, presentation, searchFor, searcherFactory,
                                     processPresentation, searchScopeToWarnOfFallingOutOf, listener).run();
-      }
-
-      @NotNull
-      @Override
-      public DumbModeAction getDumbModeAction() {
-        return DumbModeAction.CANCEL;
       }
 
       @Override
@@ -159,7 +143,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @NotNull
-  private SearchScope getMaxSearchScopeToWarnOfFallingOutOf(@NotNull UsageTarget[] searchFor) {
+  SearchScope getMaxSearchScopeToWarnOfFallingOutOf(@NotNull UsageTarget[] searchFor) {
     UsageTarget target = searchFor[0];
     if (target instanceof TypeSafeDataProvider) {
       final SearchScope[] scope = new SearchScope[1];
@@ -220,20 +204,22 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
 
-  static void showTooManyUsagesWarning(@NotNull final Project project,
-                                       @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
-                                       @NotNull final ProgressIndicator indicator,
-                                       @NotNull final UsageViewPresentation presentation,
-                                       final int usageCount,
-                                       final UsageViewImpl usageView) {
+  public static void showTooManyUsagesWarning(@NotNull final Project project,
+                                              @NotNull final TooManyUsagesStatus tooManyUsagesStatus,
+                                              @NotNull final ProgressIndicator indicator,
+                                              @NotNull final UsageViewPresentation presentation,
+                                              final int usageCount,
+                                              @Nullable final UsageViewImpl usageView) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
         String message = UsageViewBundle.message("find.excessive.usage.count.prompt", usageCount, StringUtil.pluralize(presentation.getUsagesWord()));
         UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, message, presentation);
-        if (ret == UsageLimitUtil.Result.ABORT && usageView != null) {
-          usageView.cancelCurrentSearch();
+        if (ret == UsageLimitUtil.Result.ABORT) {
+          if (usageView != null) {
+            usageView.cancelCurrentSearch();
+          }
           indicator.cancel();
         }
         tooManyUsagesStatus.userResponded();

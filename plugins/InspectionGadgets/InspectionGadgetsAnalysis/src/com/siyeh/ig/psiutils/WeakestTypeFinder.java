@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Bas Leijdekkers
+ * Copyright 2008-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,11 +155,17 @@ public class WeakestTypeFinder {
         checkClass(javaLangIterableClass, weakestTypeClasses);
       }
       else if (referenceParent instanceof PsiReturnStatement) {
-        final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(referenceParent, PsiMethod.class);
-        if (containingMethod == null) {
+        final PsiElement owner = PsiTreeUtil.getParentOfType(referenceParent, PsiMethod.class, PsiLambdaExpression.class);
+        final PsiType type;
+        if (owner instanceof PsiMethod) {
+          type = ((PsiMethod)owner).getReturnType();
+        }
+        else if (owner instanceof PsiLambdaExpression) {
+          type = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)owner);
+        }
+        else {
           return Collections.emptyList();
         }
-        final PsiType type = containingMethod.getReturnType();
         if (!checkType(type, weakestTypeClasses)) {
           return Collections.emptyList();
         }

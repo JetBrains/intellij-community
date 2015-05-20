@@ -24,9 +24,12 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.RefsModel;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 public class GraphColorManagerImpl implements GraphColorManager<Integer> {
 
@@ -58,7 +61,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     if (isEmptyRefs(refs, headCommit)) {
       return DEFAULT_COLOR;
     }
-    VcsRef firstRef = Collections.min(refs, myRefManagers.get(getFirstRoot(refs)).getComparator());
+    VcsRef firstRef = Collections.min(refs, myRefManagers.get(getFirstRoot(refs)).getBranchLayoutComparator());
     // TODO dark variant
     return firstRef.getName().hashCode();
   }
@@ -95,7 +98,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     boolean firstEmpty = isEmptyRefs(refs1, head1);
     boolean secondEmpty = isEmptyRefs(refs2, head2);
     if (firstEmpty && secondEmpty) {
-      return 0;
+      return head1 - head2;
     }
     if (firstEmpty) {
       return 1;
@@ -109,27 +112,10 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
     VcsLogRefManager refManager1 = myRefManagers.get(root1);
     VcsLogRefManager refManager2 = myRefManagers.get(root2);
     if (!refManager1.equals(refManager2)) {
-      return root1.getPresentableUrl().compareTo(root2.getPresentableUrl());
+      return VcsLogUtil.compareRoots(root1, root2);
     }
 
-    Comparator<VcsRef> comparator = refManager1.getComparator();
-    Iterator<VcsRef> it1 = ContainerUtil.sorted(refs1, comparator).iterator();
-    Iterator<VcsRef> it2 = ContainerUtil.sorted(refs2, comparator).iterator();
-    while (it1.hasNext() && it2.hasNext()) {
-      VcsRef ref1 = it1.next();
-      VcsRef ref2 = it2.next();
-      int compare = comparator.compare(ref1, ref2);
-      if (compare != 0) {
-        return compare;
-      }
-    }
-    if (it1.hasNext()) {
-      return -1;
-    }
-    if (it2.hasNext()) {
-      return 1;
-    }
-    return 0;
+    VcsRef bestRef = ContainerUtil.sorted(ContainerUtil.concat(refs1, refs2), refManager1.getBranchLayoutComparator()).get(0);
+    return refs1.contains(bestRef) ? -1 : 1;
   }
-
 }

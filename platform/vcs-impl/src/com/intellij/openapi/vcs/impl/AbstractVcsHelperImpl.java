@@ -76,6 +76,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,8 +130,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider, final FilePath path,
                               final String repositoryPath, final AbstractVcs vcs) {
-    final FileHistoryRefresherI refresherI = new FileHistoryRefresher(vcsHistoryProvider, annotationProvider, path, repositoryPath, vcs);
-    refresherI.run(false, true);
+    FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(vcsHistoryProvider, annotationProvider, path, vcs);
+    refresher.run(false, true);
   }
 
   public void showRollbackChangesDialog(List<Change> changes) {
@@ -375,7 +376,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs) {
-    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file);
+    showAnnotation(annotation, file, vcs, 0);
+  }
+
+  public void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line) {
+    OpenFileDescriptor openFileDescriptor = new OpenFileDescriptor(myProject, file, line, 0);
     Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(openFileDescriptor, true);
     if (editor == null) {
       Messages.showMessageDialog(VcsBundle.message("message.text.cannot.open.editor", file.getPresentableUrl()),
@@ -595,8 +600,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                       final ChangeBrowserSettings settings,
                                       final int maxCount,
                                       String title) {
-    final RepositoryLocation location = CommittedChangesCache.getInstance(myProject).getLocationCache().getLocation(vcs, new FilePathImpl(root),
-                                                                                                                    false);
+    RepositoryLocationCache cache = CommittedChangesCache.getInstance(myProject).getLocationCache();
+    RepositoryLocation location = cache.getLocation(vcs, VcsUtil.getFilePath(root), false);
     openCommittedChangesTab(vcs.getCommittedChangesProvider(), location, settings, maxCount, title);
   }
 

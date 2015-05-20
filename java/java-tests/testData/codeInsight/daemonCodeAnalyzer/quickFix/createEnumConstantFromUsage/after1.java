@@ -1,4 +1,4 @@
-// "Create Enum Constant 'EEE'" "true"
+// "Create enum constant 'EEE'" "true"
 
 enum E {
     EEE;

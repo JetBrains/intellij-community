@@ -136,18 +136,16 @@ public class MoveFilesOrDirectoriesUtil {
             LOG.assertTrue(targetDirectory != null);
             targetElement[0] = targetDirectory;
 
-            PsiManager manager = PsiManager.getInstance(project);
             try {
               final int[] choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
               final List<PsiElement> els = new ArrayList<PsiElement>();
-              for (int i = 0, newElementsLength = newElements.length; i < newElementsLength; i++) {
-                final PsiElement psiElement = newElements[i];
+              for (final PsiElement psiElement : newElements) {
                 if (psiElement instanceof PsiFile) {
                   final PsiFile file = (PsiFile)psiElement;
                   final boolean fileExist = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
                     @Override
                     public Boolean compute() {
-                     return CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(), "Move");
+                      return CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(), "Move");
                     }
                   });
                   if (fileExist) continue;

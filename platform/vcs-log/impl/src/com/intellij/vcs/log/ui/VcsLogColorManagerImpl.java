@@ -2,6 +2,7 @@ package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -21,8 +22,9 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Logger LOG = Logger.getInstance(VcsLogColorManagerImpl.class);
 
   private static Color[] ROOT_COLORS = {
-    JBColor.RED, JBColor.YELLOW, JBColor.LIGHT_GRAY, JBColor.BLUE, JBColor.MAGENTA,
-    JBColor.CYAN, JBColor.GREEN, JBColor.ORANGE, JBColor.PINK};
+    JBColor.RED, JBColor.GREEN, JBColor.BLUE,
+    JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW,
+    JBColor.MAGENTA, JBColor.PINK};
 
   @NotNull private final List<VirtualFile> myRoots;
 
@@ -41,12 +43,15 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
     for (VirtualFile root : myRoots) {
       Color color;
       if (i >= ROOT_COLORS.length) {
-        color = getDefaultRootColor();
+        double balance = ((double)(i / ROOT_COLORS.length)) / (roots.size() / ROOT_COLORS.length);
+        Color mix = ColorUtil.mix(ROOT_COLORS[i % ROOT_COLORS.length], ROOT_COLORS[(i + 1) % ROOT_COLORS.length], balance);
+        int tones = (int)(Math.abs(balance - 0.5) * 2 * (roots.size() / ROOT_COLORS.length) + 1);
+        color = new JBColor(ColorUtil.darker(mix, tones), ColorUtil.brighter(mix, 2 * tones));
       }
       else {
         color = ROOT_COLORS[i];
-        i++;
       }
+      i++;
       myRoots2Colors.put(root, color);
     }
   }

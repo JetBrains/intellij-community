@@ -57,9 +57,11 @@ public class RunConfigurationModule implements JDOMExternalizable {
   @Override
   @SuppressWarnings({"unchecked"})
   public void readExternal(@NotNull Element element) {
-    final List<Element> modules = element.getChildren(ELEMENT);
-    LOG.assertTrue(modules.size() <= 1);
-    if (modules.size() == 1) {
+    List<Element> modules = element.getChildren(ELEMENT);
+    if (!modules.isEmpty()) {
+      if (modules.size() > 1) {
+        LOG.warn("Module serialized more than one time");
+      }
       // we are unable to set 'null' module from 'not null' one
       String moduleName = modules.get(0).getAttributeValue(ATTRIBUTE);
       if (!StringUtil.isEmpty(moduleName)) {
@@ -70,7 +72,12 @@ public class RunConfigurationModule implements JDOMExternalizable {
 
   @Override
   public void writeExternal(@NotNull Element parent) {
-    parent.addContent(new Element(ELEMENT).setAttribute(ATTRIBUTE, getModuleName()));
+    Element prev = parent.getChild(ELEMENT);
+    if (prev == null) {
+      prev = new Element(ELEMENT);
+      parent.addContent(prev);
+    }
+    prev.setAttribute(ATTRIBUTE, getModuleName());
   }
 
   public void init() {
@@ -120,7 +127,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   }
 
   public String getModuleName() {
-    return myModuleName != null ? myModuleName : "";
+    return StringUtil.notNullize(myModuleName);
   }
 
   private ModuleManager getModuleManager() {

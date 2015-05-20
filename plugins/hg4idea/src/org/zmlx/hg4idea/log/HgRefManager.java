@@ -23,10 +23,13 @@ import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.SingletonRefGroup;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 public class HgRefManager implements VcsLogRefManager {
@@ -38,6 +41,7 @@ public class HgRefManager implements VcsLogRefManager {
   private static final Color BOOKMARK_COLOR = new JBColor(new Color(0xbcbcfc), new Color(0xbcbcfc).darker().darker());
   private static final Color TAG_COLOR = JBColor.WHITE;
   private static final Color LOCAL_TAG_COLOR = JBColor.CYAN;
+  private static final Color MQ_TAG_COLOR = new JBColor(new Color(0x1764ff), new Color(0x1764ff).darker());
 
   public static final VcsRefType TIP = new SimpleRefType(true, TIP_COLOR);
   public static final VcsRefType HEAD = new SimpleRefType(true, HEAD_COLOR);
@@ -46,6 +50,7 @@ public class HgRefManager implements VcsLogRefManager {
   public static final VcsRefType BOOKMARK = new SimpleRefType(true, BOOKMARK_COLOR);
   public static final VcsRefType TAG = new SimpleRefType(false, TAG_COLOR);
   public static final VcsRefType LOCAL_TAG = new SimpleRefType(false, LOCAL_TAG_COLOR);
+  public static final VcsRefType MQ_APPLIED_TAG = new SimpleRefType(false, MQ_TAG_COLOR);
 
   // first has the highest priority
   private static final List<VcsRefType> REF_TYPE_PRIORITIES = Arrays.asList(TIP, HEAD, BRANCH, BOOKMARK, TAG);
@@ -75,24 +80,25 @@ public class HgRefManager implements VcsLogRefManager {
         return typeComparison;
       }
 
-      //noinspection UnnecessaryLocalVariable
-      VcsRefType type = type1; // common type
-      if (type == BRANCH) {
+      if (type1 == BRANCH) {
         if (ref1.getName().equals(DEFAULT)) {
           return -1;
         }
         if (ref2.getName().equals(DEFAULT)) {
           return 1;
         }
-        return ref1.getName().compareTo(ref2.getName());
       }
-      return ref1.getName().compareTo(ref2.getName());
+      int nameComparison = ref1.getName().compareTo(ref2.getName());
+      if (nameComparison != 0) {
+        return nameComparison;
+      }
+      return VcsLogUtil.compareRoots(ref1.getRoot(), ref2.getRoot());
     }
   };
 
   @NotNull
   @Override
-  public Comparator<VcsRef> getComparator() {
+  public Comparator<VcsRef> getLabelsOrderComparator() {
     return REF_COMPARATOR;
   }
 
@@ -108,8 +114,14 @@ public class HgRefManager implements VcsLogRefManager {
   }
 
   @NotNull
+  @Override
+  public Comparator<VcsRef> getBranchLayoutComparator() {
+    return REF_COMPARATOR;
+  }
+
+  @NotNull
   private Collection<VcsRef> sort(@NotNull Collection<VcsRef> refs) {
-    return ContainerUtil.sorted(refs, getComparator());
+    return ContainerUtil.sorted(refs, getLabelsOrderComparator());
   }
 
   private static class SimpleRefType implements VcsRefType {

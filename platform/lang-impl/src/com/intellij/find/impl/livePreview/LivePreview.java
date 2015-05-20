@@ -230,7 +230,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
     final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
-    if (cursor != null) {
+    if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
       Set<RangeHighlighter> dummy = new HashSet<RangeHighlighter>();
       Color color = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
       highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, 0), dummy);
@@ -308,6 +308,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     if (mySearchResults.getMatchesCount() >= mySearchResults.getMatchesLimit())
       return;
     for (FindResult range : mySearchResults.getOccurrences()) {
+      if (range.getEndOffset() > mySearchResults.getEditor().getDocument().getTextLength()) continue;
       TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
       if (range.getLength() == 0) {
         attributes = attributes.clone();
@@ -337,6 +338,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     final HashSet<RangeHighlighter> toRemove = new HashSet<RangeHighlighter>();
     Set<RangeHighlighter> toAdd = new HashSet<RangeHighlighter>();
     for (RangeHighlighter highlighter : myHighlighters) {
+      if (!highlighter.isValid()) continue;
       boolean intersectsWithSelection = false;
       for (int i = 0; i < starts.length; ++i) {
         TextRange selectionRange = new TextRange(starts[i], ends[i]);
@@ -405,7 +407,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     balloonBuilder.setCloseButtonEnabled(true);
     myReplacementBalloon = balloonBuilder.createBalloon();
 
-    myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.above);
+    myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.below);
   }
 
   private void hideBalloon() {
@@ -504,7 +506,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
       int startOffset = cur.getStartOffset();
       int endOffset = cur.getEndOffset();
 
-      if (startOffset >= myEditor.getDocument().getTextLength()) {
+      if (endOffset > myEditor.getDocument().getTextLength()) {
         if (!object.isDisposed()) {
           requestBalloonHiding(object);
         }
@@ -533,7 +535,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
       Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
       Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
-      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y);
+      Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y + myEditor.getLineHeight());
 
       return new RelativePoint(myEditor.getContentComponent(), point);
     }

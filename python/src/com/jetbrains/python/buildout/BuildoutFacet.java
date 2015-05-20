@@ -24,6 +24,9 @@ import com.intellij.facet.FacetType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -109,6 +112,25 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static List<VirtualFile> getExtraPathForAllOpenModules() {
+    final List<VirtualFile> results = new ArrayList<VirtualFile>();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        final BuildoutFacet buildoutFacet = getInstance(module);
+        if (buildoutFacet != null) {
+          for (String path : buildoutFacet.getConfiguration().getPaths()) {
+            final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+            if (file != null) {
+              results.add(file);
+            }
+          }
+        }
+      }
+    }
+    return results;
   }
 
   /**

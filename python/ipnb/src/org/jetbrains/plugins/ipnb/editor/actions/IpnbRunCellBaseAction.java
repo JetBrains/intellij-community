@@ -26,11 +26,14 @@ public abstract class IpnbRunCellBaseAction extends AnAction {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 ipnbFilePanel.saveToFile();
-                ipnbFilePanel.selectNext(cell);
+
               }
             });
           }
         }, "Ipnb.runCell", new Object());
+      }
+      else {
+        ipnbFilePanel.selectNext(cell);
       }
     }
     ipnbFilePanel.revalidate();

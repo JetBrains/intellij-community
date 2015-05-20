@@ -1,6 +1,7 @@
 package com.intellij.remoteServer.agent.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.agent.annotation.AsyncCall;
 import com.intellij.remoteServer.agent.annotation.ChildCall;
 import com.intellij.remoteServer.agent.annotation.FinalCall;
@@ -94,7 +95,7 @@ public class ThreadInvocationHandler implements InvocationHandler {
         return result;
       }
 
-      if (immediateCall) {
+      if (immediateCall || StringUtil.equals(method.getName(), "toString")) {
         return taskCallable.call();
       }
 

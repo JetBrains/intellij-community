@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.mac;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -37,6 +38,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,52 +61,68 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
   private final Project myProject;
   private Consumer<List<VirtualFile>> myCallback;
 
-  private static boolean checkFile(@NotNull ID self, ID url, boolean checkDirectories) {
-      MacFileChooserDialogImpl dialog = ourImplMap.get(self);
-      if (dialog == null) {
-        // Since it has already been removed from the map, the file is likely to be valid if the user was able to select it
-        return true;
-      }
-
-      if (url == null || url.intValue() == 0) {
-        return false;
-      }
-
-      ID filename = Foundation.invoke(url, "path");
-      String fileName = Foundation.toStringViaUTF8(filename);
-      if (fileName == null) {
-        return false;
-      }
-
-    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fileName);
-    return file == null || (!checkDirectories && file.isDirectory()) || dialog.myChooserDescriptor.isFileSelectable(file);
-  }
-
   private static final Callback SHOULD_ENABLE_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public boolean callback(ID self, String selector, ID panel, ID url) {
-      // allow any directory - ability to select nested directories
-      return checkFile(self, url, false);
+      try {
+        return checkFile(self, url, true);  // allow any directory - ability to select nested directories
+      }
+      catch (Exception e) {
+        return false;
+      }
     }
   };
 
   private static final Callback VALIDATE_URL_CALLBACK = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
     public boolean callback(ID self, String selector, ID panel, ID url, ID outError) {
-      if (checkFile(self, url, true)) {
-        return true;
+      try {
+        return checkFile(self, url, false);
       }
-
-      /*
-      if (!outError.equals(ID.NIL)) {
-        ID error = Foundation.invoke("NSError", "errorWithDomain:code:userInfo:", Foundation.nsString("org.jetbrains"),
-                                     Foundation.createDict(new String[]{"NSLocalizedDescriptionKey"}, new Object[]{"Not allowed"}));
-        // todo "*outError = error"
+      catch (Exception e) {
+        if (!ID.NIL.equals(outError)) {
+          ID domain = Foundation.nsString(ApplicationNamesInfo.getInstance().getProductName());
+          ID dict = Foundation.createDict(new String[]{"NSLocalizedDescription"}, new Object[]{e.getMessage()});
+          ID error = Foundation.invoke("NSError", "errorWithDomain:code:userInfo:", domain, 100, dict);
+          new Pointer(outError.longValue()).setLong(0, error.longValue());
+        }
+        return false;
       }
-      */
-      return false;
     }
   };
+
+  private static boolean checkFile(@NotNull ID self, ID url, boolean quickCheck) throws Exception {
+    MacFileChooserDialogImpl impl = ourImplMap.get(self);
+    if (impl == null) {
+      return true;  // already removed from the map: the file is likely to be valid since the user was able to select it
+    }
+
+    if (url == null || url.intValue() == 0) {
+      return false;
+    }
+
+    ID filename = Foundation.invoke(url, "path");
+    String path = Foundation.toStringViaUTF8(filename);
+    if (path == null) {
+      return false;
+    }
+
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    if (file == null || quickCheck && file.isDirectory()) {
+      return true;
+    }
+
+    if (!impl.myChooserDescriptor.isFileSelectable(file)) {
+      return false;
+    }
+
+    if (!quickCheck) {
+      VirtualFile[] files = {file};
+      impl.myChooserDescriptor.validateSelectedFiles(files);
+    }
+
+    return true;
+  }
 
   private static final Callback OPEN_PANEL_DID_END = new Callback() {
     @SuppressWarnings("UnusedDeclaration")
@@ -226,10 +244,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
         invoke(chooser, "_setIncludeNewFolderButton:", true);
       }
 
-      @SuppressWarnings("deprecation") boolean showHidden =
-        chooserDescriptor.isShowHiddenFiles() ||
-        chooserDescriptor.getUserData(PathChooserDialog.NATIVE_MAC_CHOOSER_SHOW_HIDDEN_FILES) == Boolean.TRUE ||
-        Registry.is("ide.mac.file.chooser.show.hidden.files");
+      boolean showHidden = chooserDescriptor.isShowHiddenFiles() || Registry.is("ide.mac.file.chooser.show.hidden.files");
       if (showHidden) {
         if (Foundation.isClassRespondsToSelector(nsOpenPanel, Foundation.createSelector("setShowsHiddenFiles:"))) {
           invoke(chooser, "setShowsHiddenFiles:", true);
@@ -300,7 +315,6 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
   @Override
   public void choose(@Nullable final VirtualFile toSelect, @NotNull final Consumer<List<VirtualFile>> callback) {
-
     ExtensionsInitializer.initialize();
 
     myCallback = callback;
@@ -356,12 +370,11 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     return Foundation.invoke(id, Foundation.createSelector(selector), args);
   }
 
-  /** This class is intended to force extensions initialization on EDT thread (IDEA-107271)
-   */
+  /** This class is intended to force extensions initialization on EDT thread (IDEA-107271) */
   private static class ExtensionsInitializer {
     private ExtensionsInitializer() {}
     private static boolean initialized;
-    private static void initialize () {
+    private static void initialize() {
       if (initialized) return;
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
@@ -372,5 +385,4 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
       initialized = true;
     }
   }
-
 }

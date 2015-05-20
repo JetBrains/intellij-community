@@ -33,11 +33,13 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction.*;
+
 /**
  * @author yole
  */
 public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
-  public ShowDiffWithLocalAction() {          
+  public ShowDiffWithLocalAction() {
     super(VcsBundle.message("show.diff.with.local.action.text"),
           VcsBundle.message("show.diff.with.local.action.description"),
           AllIcons.Actions.DiffWithCurrent);
@@ -56,8 +58,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
       }
     }
     if (!changesToLocal.isEmpty()) {
-      Change[] changeArray = changesToLocal.toArray(new Change[changesToLocal.size()]);
-      ShowDiffAction.showDiffForChange(changeArray, 0, project);
+      showDiffForChange(project, changesToLocal, 0);
     }
   }
 
@@ -66,7 +67,8 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
 
     e.getPresentation().setEnabled(project != null && changes != null &&
-                                   (! CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()))) &&
+                                   (! CommittedChangesBrowserUseCase.IN_AIR
+                                     .equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()))) &&
                                    anyHasAfterRevision(changes));
   }
 

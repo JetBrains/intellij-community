@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
@@ -34,6 +32,7 @@ import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.Nullable;
 
 public class SynchronizeCurrentFileAction extends AnAction implements DumbAware {
+  @Override
   public void update(AnActionEvent e) {
     VirtualFile[] files = getFiles(e);
 
@@ -44,7 +43,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
 
     String message = getMessage(files);
     e.getPresentation().setEnabledAndVisible(true);
-    e.getPresentation().setText(message.replace("_", "__").replace("&", "&&"));
+    e.getPresentation().setText(StringUtil.escapeMnemonics(message));
   }
 
   private static String getMessage(VirtualFile[] files) {
@@ -52,46 +51,46 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
                              : IdeBundle.message("action.synchronize.selected.files");
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     final VirtualFile[] files = getFiles(e);
     if (project == null || files == null || files.length == 0) return;
 
-    final AccessToken token = WriteAction.start(getClass());
-    try {
-      for (VirtualFile file : files) {
-        final VirtualFileSystem fs = file.getFileSystem();
-        if (fs instanceof LocalFileSystem && file instanceof NewVirtualFile) {
-          ((NewVirtualFile)file).markDirtyRecursively();
-        }
-      }
-    }
-    finally {
-      token.finish();
-    }
-
-    final Runnable postRefreshAction = new Runnable() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-        for (VirtualFile f : files) {
-          if (f.isDirectory()) {
-            dirtyScopeManager.dirDirtyRecursively(f);
+        for (VirtualFile file : files) {
+          if (file instanceof NewVirtualFile) {
+            ((NewVirtualFile)file).markDirtyRecursively();
           }
-          else {
-            dirtyScopeManager.fileDirty(f);
-          }
-        }
-
-        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        if (statusBar != null) {
-          final String message = IdeBundle.message("action.sync.completed.successfully", getMessage(files));
-          statusBar.setInfo(message);
         }
       }
-    };
+    });
 
-    RefreshQueue.getInstance().refresh(true, true, postRefreshAction, files);
+    RefreshQueue.getInstance().refresh(true, true, new Runnable() {
+      @Override
+      public void run() {
+        postRefresh(project, files);
+      }
+    }, files);
+  }
+
+  private static void postRefresh(Project project, VirtualFile[] files) {
+    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+    for (VirtualFile f : files) {
+      if (f.isDirectory()) {
+        dirtyScopeManager.dirDirtyRecursively(f);
+      }
+      else {
+        dirtyScopeManager.fileDirty(f);
+      }
+    }
+
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    if (statusBar != null) {
+      statusBar.setInfo(IdeBundle.message("action.sync.completed.successfully", getMessage(files)));
+    }
   }
 
   @Nullable

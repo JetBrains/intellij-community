@@ -8,8 +8,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -44,14 +44,14 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -59,7 +59,7 @@ import java.util.List;
  *  Class to show the user the request for search
  */
 @SuppressWarnings({"RefusedBequest", "AssignmentToStaticFieldFromInstanceMethod"})
-public class SearchDialog extends DialogWrapper implements ConfigurationCreator {
+public class SearchDialog extends DialogWrapper {
   protected SearchContext searchContext;
 
   // text for search
@@ -108,7 +108,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     if (showScope) setModal(false);
     myShowScopePanel = showScope;
     myRunFindActionOnClose = runFindActionOnClose;
-    this.searchContext = (SearchContext)searchContext.clone();
+    this.searchContext = searchContext;
     setTitle(getDefaultTitle());
 
     if (runFindActionOnClose) {
@@ -125,7 +125,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     this.useLastConfiguration = useLastConfiguration;
   }
 
-  public void setSearchPattern(final Configuration config) {
+  private void setSearchPattern(final Configuration config) {
     model.setShadowConfig(config);
     setValuesFromConfig(config);
     initiateValidation();
@@ -172,18 +172,24 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       @Override
       public void run() {
         try {
-          new WriteAction(){
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
             @Override
-            protected void run(Result result) {
-              if (!isValid()) {
-                getOKAction().setEnabled(false);
-              }
-              else {
-                getOKAction().setEnabled(true);
-                reportMessage(null, null);
-              }
+            public void run() {
+              final boolean valid = isValid();
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  if (!valid) {
+                    getOKAction().setEnabled(false);
+                  }
+                  else {
+                    getOKAction().setEnabled(true);
+                    reportMessage(null, null);
+                  }
+                }
+              });
             }
-          }.execute();
+          });
         }
         catch (RuntimeException e) {
           Logger.getInstance(SearchDialog.class).error(e);
@@ -430,11 +436,9 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
 
     model.getConfig().getMatchOptions().clearVariableConstraints();
-    if (matchOptions.hasVariableConstraints()) {
-      for (Iterator<String> i = matchOptions.getVariableConstraintNames(); i.hasNext(); ) {
-        final MatchVariableConstraint constraint = (MatchVariableConstraint)matchOptions.getVariableConstraint(i.next()).clone();
-        model.getConfig().getMatchOptions().addVariableConstraint(constraint);
-      }
+    for (String name : matchOptions.getVariableConstraintNames()) {
+      final MatchVariableConstraint constraint = (MatchVariableConstraint)matchOptions.getVariableConstraint(name).clone();
+      model.getConfig().getMatchOptions().addVariableConstraint(constraint);
     }
 
     MatchOptions options = configuration.getMatchOptions();
@@ -451,7 +455,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     setTitle(getDefaultTitle() + " - " + configuration.getName());
   }
 
-  @Override
   public Configuration createConfiguration() {
     SearchConfiguration configuration = new SearchConfiguration();
     configuration.setName(USER_DEFINED);
@@ -488,12 +491,23 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   }
 
   protected JComponent createEditorContent() {
-    JPanel result = new JPanel(new BorderLayout());
+    final JPanel result = new JPanel(new BorderLayout());
 
-    result.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("search.template")));
     searchCriteriaEdit = createEditor(searchContext, mySavedEditorText != null ? mySavedEditorText : "");
     result.add(BorderLayout.CENTER, searchCriteriaEdit.getComponent());
     result.setMinimumSize(new Dimension(150, 100));
+
+    final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+    labelPanel.add(new JLabel(SSRBundle.message("search.template")));
+
+    labelPanel.add(UIUtil.createCompleteMatchInfo(new Producer<Configuration>() {
+      @Nullable
+      @Override
+      public Configuration produce() {
+        return model.getConfig();
+      }
+    }));
+    result.add(BorderLayout.NORTH, labelPanel);
 
     return result;
   }
@@ -611,26 +625,22 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
               if (name == null) return;
             }
 
-            model.getConfig().setName(name);
-            setValuesToConfig(model.getConfig());
-            setDialogTitle(model.getConfig());
+            final Configuration configuration = model.getConfig();
+            model = new SearchModel(createConfiguration());
+            model.setShadowConfig(configuration);
+            configuration.setName(name);
+            setValuesToConfig(configuration);
+            setDialogTitle(configuration);
 
-            if (model.getShadowConfig() == null ||
-                model.getShadowConfig().isPredefined()) {
-              existingTemplatesComponent.addConfigurationToUserTemplates(model.getConfig());
-            }
-            else {  // ???
-              setValuesToConfig(model.getShadowConfig());
-              model.getShadowConfig().setName(name);
-            }
+            filterOutUnusedVariableConstraints(configuration);
+            configurationManager.addConfiguration(configuration);
+            existingTemplatesComponent.setUserTemplates(configurationManager);
           }
         }
       })
     );
 
-    panel.add(
-      Box.createHorizontalStrut(8)
-    );
+    panel.add(Box.createHorizontalStrut(8));
 
     panel.add(
       createJButtonForAction(
@@ -644,8 +654,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
             EditVarConstraintsDialog.setProject(searchContext.getProject());
             new EditVarConstraintsDialog(
               searchContext.getProject(),
-              model, getVariablesFromListeners(),
-              isReplaceDialog(),
+              model.getConfig(), getVariablesFromListeners(),
               (FileType)fileTypes.getSelectedItem()
             ).show();
             initiateValidation();
@@ -737,7 +746,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   @Override
   public void show() {
     StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
-    Configuration.setActiveCreator(this);
     searchCriteriaEdit.putUserData(
       SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY,
       model.getConfig()
@@ -761,9 +769,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       if (!setSomeText) {
         int selection = existingTemplatesComponent.getHistoryList().getSelectedIndex();
         if (selection != -1) {
-          setValuesFromConfig(
-            (Configuration)existingTemplatesComponent.getHistoryList().getSelectedValue()
-          );
+          setValuesFromConfig((Configuration)existingTemplatesComponent.getHistoryList().getSelectedValue());
         }
       }
     }
@@ -798,23 +804,34 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
+      final Configuration configuration = model.getConfig();
       if (model.getShadowConfig() != null) {
         if (model.getShadowConfig().isPredefined()) {
-          model.getConfig().setName(
-            model.getShadowConfig().getName()
+          configuration.setName(model.getShadowConfig().getName()
           );
         } //else {
         //  // user template, save it
         //  setValuesToConfig(model.getShadowConfig());
         //}
       }
-      existingTemplatesComponent.addConfigurationToHistory(model.getConfig());
+      filterOutUnusedVariableConstraints(configuration);
+      existingTemplatesComponent.addConfigurationToHistory(configuration);
 
       startSearching();
     }
     catch (MalformedPatternException ex) {
       reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, ex.getMessage());
     }
+  }
+
+  private void filterOutUnusedVariableConstraints(Configuration configuration) {
+    final List<Variable> variables = getVariablesFromListeners();
+    final List<String> variableNames = new ArrayList<String>();
+    for (Variable variable : variables) {
+      variableNames.add(variable.getName());
+    }
+    variableNames.add(Configuration.CONTEXT_VAR_NAME);
+    configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 
   public Configuration getConfiguration() {
@@ -834,11 +851,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }
     catch (MalformedPatternException ex) {
       if (myRunFindActionOnClose) {
-        reportMessage(
-          "this.pattern.is.malformed.message",
-          searchCriteriaEdit,
-          ex.getMessage() != null ? ex.getMessage() : ""
-        );
+        reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, (ex.getMessage() != null) ? ex.getMessage() : "");
         result = false;
       }
     }
@@ -847,16 +860,20 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
       result = false;
     }
 
-    //getOKAction().setEnabled(result);
     return result;
   }
 
-  protected void reportMessage(@NonNls String messageId, Editor editor, Object... params) {
-    final String message = messageId != null ? SSRBundle.message(messageId, params) : "";
-    status.setText(message);
-    status.setToolTipText(message);
-    status.revalidate();
-    statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
+  protected void reportMessage(@NonNls final String messageId, final Editor editor, final Object... params) {
+    com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        final String message = messageId != null ? SSRBundle.message(messageId, params) : "";
+        status.setText(message);
+        status.setToolTipText(message);
+        status.revalidate();
+        statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
+      }
+    });
   }
 
   protected void setValuesToConfig(Configuration config) {
@@ -889,7 +906,6 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   @Override
   public void dispose() {
-    Configuration.setActiveCreator(null);
     disposeEditorContent();
 
     myAlarm.cancelAllRequests();

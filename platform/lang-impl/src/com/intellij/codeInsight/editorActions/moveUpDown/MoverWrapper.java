@@ -17,7 +17,9 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class MoverWrapper {
+  private static final Logger LOGGER = Logger.getInstance(MoverWrapper.class);
+  
   protected final boolean myIsDown;
   private final StatementUpDownMover myMover;
   private final StatementUpDownMover.MoveInfo myInfo;
@@ -49,10 +53,9 @@ class MoverWrapper {
     assert myInfo.toMove2 != null;
     myMover.beforeMove(editor, myInfo, myIsDown);
     final Document document = editor.getDocument();
+
     final int start = StatementUpDownMover.getLineStartSafeOffset(document, myInfo.toMove.startLine);
     final int end = StatementUpDownMover.getLineStartSafeOffset(document, myInfo.toMove.endLine);
-    myInfo.range1 = document.createRangeMarker(start, end);
-
     String textToInsert = document.getCharsSequence().subSequence(start, end).toString();
     if (!StringUtil.endsWithChar(textToInsert,'\n')) textToInsert += '\n';
 
@@ -60,6 +63,16 @@ class MoverWrapper {
     final int end2 = StatementUpDownMover.getLineStartSafeOffset(document,myInfo.toMove2.endLine);
     String textToInsert2 = document.getCharsSequence().subSequence(start2, end2).toString();
     if (!StringUtil.endsWithChar(textToInsert2,'\n')) textToInsert2 += '\n';
+
+    TextRange range = new TextRange(start, end);
+    TextRange range2 = new TextRange(start2, end2);
+    if (range.intersectsStrict(range2) && !range.equals(range2)) {
+      LOGGER.error("Wrong move ranges: " + 
+                   start + ":" + end + "(" + textToInsert + "), " + start2 + ":" + end2 + "(" + textToInsert2 + "), mover: " + myMover);
+      return;
+    }
+    
+    myInfo.range1 = document.createRangeMarker(start, end);
     myInfo.range2 = document.createRangeMarker(start2, end2);
     if (myInfo.range1.getStartOffset() < myInfo.range2.getStartOffset()) {
       myInfo.range1.setGreedyToLeft(true);
@@ -206,6 +219,6 @@ class MoverWrapper {
     final int selectionRelativeOffset = selectionStart - moveOffset;
     int newSelectionStart = insOffset + selectionRelativeOffset;
     int newSelectionEnd = newSelectionStart + selectionEnd - selectionStart;
-    editor.getSelectionModel().setSelection(newSelectionStart, newSelectionEnd);
+    EditorUtil.setSelectionExpandingFoldedRegionsIfNeeded(editor, newSelectionStart, newSelectionEnd);
   }
 }

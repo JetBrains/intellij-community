@@ -44,7 +44,7 @@ public class CompressedIntList implements IntList {
 
   @NotNull
   public static IntList newInstance(final IntList delegateList, final int blockSize) {
-    if (blockSize  < 1) throw new IllegalArgumentException("Unsupported blockSize:" + blockSize);
+    if (blockSize < 1) throw new IllegalArgumentException("Unsupported blockSize:" + blockSize);
 
     if (delegateList.size() == 0) return new FullIntList(new int[0]);
 
@@ -61,19 +61,18 @@ public class CompressedIntList implements IntList {
     });
 
     int[] strongValues = new int[(delegateList.size() - 1) / blockSize + 1];
-    for (int i = 0; i < strongValues.length; i++)
+    for (int i = 0; i < strongValues.length; i++) {
       strongValues[i] = delegateList.get(i * blockSize);
+    }
 
     return new CompressedIntList(blockSize, strongValues, intDeltaCompressor);
   }
 
   private final int myBlockSize;
 
-  @NotNull
-  private final int[] myStrongValues;
+  @NotNull private final int[] myStrongValues;
 
-  @NotNull
-  private final IntList myCompressedDeltas;
+  @NotNull private final IntList myCompressedDeltas;
 
   private CompressedIntList(int blockSize, @NotNull int[] strongValues, @NotNull final IntList compressedDeltas) {
     myBlockSize = blockSize;

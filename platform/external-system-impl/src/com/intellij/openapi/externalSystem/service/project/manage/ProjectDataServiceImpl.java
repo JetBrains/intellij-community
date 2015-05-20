@@ -47,7 +47,7 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, P
     }
     DataNode<ProjectData> node = toImport.iterator().next();
     ProjectData projectData = node.getData();
-    
+
     if (!ExternalSystemApiUtil.isNewProjectConstruction() && !ExternalSystemUtil.isOneToOneMapping(project, node)) {
       return;
     }

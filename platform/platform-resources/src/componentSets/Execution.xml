@@ -4,10 +4,6 @@
       <interface-class>com.intellij.execution.ExecutorRegistry</interface-class>
       <implementation-class>com.intellij.execution.ExecutorRegistryImpl</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.execution.RunnerRegistry</interface-class>
-      <implementation-class>com.intellij.execution.impl.RunnerRegistryImpl</implementation-class>
-    </component>
   </application-components>
 
   <project-components>

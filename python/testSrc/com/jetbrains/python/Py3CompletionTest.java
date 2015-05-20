@@ -141,4 +141,19 @@ public class Py3CompletionTest extends PyTestCase {
   public void testNotImportedSubmodulesOfNamespacePackage() {
     doMultiFileTest();
   }
+
+  // PY-15390
+  public void testMatMul() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
+  }
+
+  // PY-11214
+  public void testDunderNext() {
+    doTest();
+  }
 }

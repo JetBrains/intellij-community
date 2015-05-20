@@ -1,6 +1,14 @@
 class SerializableStoresNonSerializable {
 
-  void f(B b, C c) {
+  void f(final B b, final C c) {
+    new Object() {
+      @Override
+      public String toString() {
+        System.out.println(c);
+        System.out.println(b);
+        return super.toString();
+      }
+    };
     new A() {
       @Override
       public void m() {
@@ -21,7 +29,7 @@ class SerializableStoresNonSerializable {
     }
   }
 }
-interface A {
+interface A extends java.io.Serializable {
   void m();
 }
 class B {}

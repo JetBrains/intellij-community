@@ -39,7 +39,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
-import com.intellij.util.containers.HashMap;
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.Options;
@@ -50,10 +49,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @State(name = "CopyrightManager",
        storages = {@Storage(file = StoragePathMacros.PROJECT_FILE),
@@ -64,7 +60,7 @@ public class CopyrightManager extends AbstractProjectComponent implements Persis
   @Nullable
   private CopyrightProfile myDefaultCopyright = null;
   private final LinkedHashMap<String, String> myModuleToCopyrights = new LinkedHashMap<String, String>();
-  private final Map<String, CopyrightProfile> myCopyrights = new HashMap<String, CopyrightProfile>();
+  private final Map<String, CopyrightProfile> myCopyrights = new TreeMap<String, CopyrightProfile>();
   private final Options myOptions = new Options();
 
   public CopyrightManager(@NotNull Project project,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.Equality;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -62,7 +63,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @NotNull
   private final GlobalInspectionContextImpl myContext;
   protected static String ourOutputPath;
-  protected InspectionNode myToolNode;
+  private InspectionNode myToolNode;
 
   private static final Object lock = new Object();
   private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>());
@@ -76,6 +77,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private Map<RefEntity, CommonProblemDescriptor[]> myOldProblemElements = null;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
   private boolean isDisposed;
+
+  private final Object myToolLock = new Object();
 
   public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     myToolWrapper = toolWrapper;
@@ -193,7 +196,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @Override
-  public void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptors) {
+  public void addProblemElement(final RefEntity refElement, boolean filterSuppressed, @NotNull final CommonProblemDescriptor... descriptors) {
     if (refElement == null) return;
     if (descriptors.length == 0) return;
     if (filterSuppressed) {
@@ -201,7 +204,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         synchronized (lock) {
           Map<RefEntity, CommonProblemDescriptor[]> problemElements = getProblemElements();
           CommonProblemDescriptor[] problems = problemElements.get(refElement);
-          problems = problems == null ? descriptors : ArrayUtil.mergeArrays(problems, descriptors, CommonProblemDescriptor.ARRAY_FACTORY);
+          problems = problems == null ? descriptors : mergeDescriptors(problems, descriptors);
           problemElements.put(refElement, problems);
         }
         for (CommonProblemDescriptor description : descriptors) {
@@ -225,32 +228,34 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       if (view == null || !(refElement instanceof RefElement)) {
         return;
       }
-      final InspectionNode toolNode;
-      if (myToolNode == null) {
-        final HighlightSeverity currentSeverity = getSeverity((RefElement)refElement);
-        toolNode = view.addTool(myToolWrapper, HighlightDisplayLevel.find(currentSeverity), context.getUIOptions().GROUP_BY_SEVERITY);
-      }
-      else {
-        toolNode = myToolNode;
-        if (toolNode.isTooBigForOnlineRefresh()) {
-          return;
-        }
-      }
-      final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
-      problems.put(refElement, descriptors);
-      final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
-      final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
-      Set<RefEntity> content = contents.get(groupName);
-      if (content == null) {
-        content = new HashSet<RefEntity>();
-        contents.put(groupName, content);
-      }
-      content.add(refElement);
-
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
           if (!isDisposed()) {
+            final InspectionNode toolNode;
+            synchronized (myToolLock) {
+              if (myToolNode == null) {
+                final HighlightSeverity currentSeverity = getSeverity((RefElement)refElement);
+                toolNode = view.addTool(myToolWrapper, HighlightDisplayLevel.find(currentSeverity), context.getUIOptions().GROUP_BY_SEVERITY);
+              }
+              else {
+                toolNode = myToolNode;
+                if (toolNode.isTooBigForOnlineRefresh()) {
+                  return;
+                }
+              }
+            }
+            final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<RefEntity, CommonProblemDescriptor[]>();
+            problems.put(refElement, descriptors);
+            final Map<String, Set<RefEntity>> contents = new HashMap<String, Set<RefEntity>>();
+            final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
+            Set<RefEntity> content = contents.get(groupName);
+            if (content == null) {
+              content = new HashSet<RefEntity>();
+              contents.put(groupName, content);
+            }
+            content.add(refElement);
+
             view.getProvider().appendToolNodeContent(context, toolNode,
                                                      (InspectionTreeNode)toolNode.getParent(), context.getUIOptions().SHOW_STRUCTURE,
                                                      contents, problems, (DefaultTreeModel)view.getTree().getModel());
@@ -258,10 +263,49 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
           }
         }
       });
-
     }
   }
 
+  @NotNull
+  private static CommonProblemDescriptor[] mergeDescriptors(@NotNull CommonProblemDescriptor[] problems1,
+                                                            @NotNull CommonProblemDescriptor[] problems2) {
+    CommonProblemDescriptor[] out = new CommonProblemDescriptor[problems1.length + problems2.length];
+    int o = problems1.length;
+    Equality<CommonProblemDescriptor> equality = new Equality<CommonProblemDescriptor>() {
+      @Override
+      public boolean equals(CommonProblemDescriptor o1, CommonProblemDescriptor o2) {
+        if (o1 instanceof ProblemDescriptor) {
+          ProblemDescriptorBase p1 = (ProblemDescriptorBase)o1;
+          ProblemDescriptorBase p2 = (ProblemDescriptorBase)o2;
+          if (!Comparing.equal(p1.getDescriptionTemplate(), p2.getDescriptionTemplate())) return false;
+          if (!Comparing.equal(p1.getTextRange(), p2.getTextRange())) return false;
+          if (!Comparing.equal(p1.getHighlightType(), p2.getHighlightType())) return false;
+          if (!Comparing.equal(p1.getProblemGroup(), p2.getProblemGroup())) return false;
+          if (!Comparing.equal(p1.getStartElement(), p2.getStartElement())) return false;
+          if (!Comparing.equal(p1.getEndElement(), p2.getEndElement())) return false;
+        }
+        else {
+          if (!o1.toString().equals(o2.toString())) return false;
+        }
+        return true;
+      }
+    };
+    for (CommonProblemDescriptor descriptor : problems2) {
+      if (ArrayUtil.indexOf(problems1, descriptor, equality) == -1) {
+        out[o++] = descriptor;
+      }
+    }
+    System.arraycopy(problems1, 0, out, 0, problems1.length);
+    return Arrays.copyOfRange(out, 0, o);
+  }
+
+
+  public void setToolNode(InspectionNode toolNode) {
+    synchronized (myToolLock) {
+      myToolNode = toolNode;
+    }
+  }
+  
   protected boolean isDisposed() {
     return isDisposed;
   }

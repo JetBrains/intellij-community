@@ -28,6 +28,10 @@ public class NewInferenceCollectingAdditionalConstraintsTest extends LightDaemon
     doTest();
   }
 
+  public void testStopCollectingAdditionalConstraintsWhenLambdaReturnTypeIsProper() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(true);
   }

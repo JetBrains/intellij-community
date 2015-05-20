@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,9 +59,14 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
     }
   }
 
+  public ThreeState isShouldBeAppliedToInjectionHost() {
+    return myFix instanceof InjectionAwareSuppressQuickFix
+           ? ((InjectionAwareSuppressQuickFix)myFix).isShouldBeAppliedToInjectionHost()
+           : ThreeState.UNSURE;
+  }
+
   public PsiElement getContainer(PsiElement element) {
-    return myFix instanceof AbstractBatchSuppressByNoInspectionCommentFix
-                           ? ((AbstractBatchSuppressByNoInspectionCommentFix )myFix).getContainer(element) : null;
+    return myFix instanceof ContainerBasedSuppressQuickFix ? ((ContainerBasedSuppressQuickFix)myFix).getContainer(element) : null;
   }
 
   @Override
@@ -72,7 +77,7 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return myFix.getName();
+    return myFix.getName() + (isShouldBeAppliedToInjectionHost() == ThreeState.NO ? " in injection" : "");
   }
 
   @NotNull

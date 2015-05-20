@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.WellFormednessUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentToStaticFieldFromInstanceMethodInspection
@@ -50,11 +49,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression expression) {
-      if (!WellFormednessUtils.isWellFormed(expression)) {
-        return;
-      }
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       final PsiExpression lhs = expression.getLExpression();
       checkForStaticFieldAccess(lhs);
     }
@@ -68,9 +63,6 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
         return;
       }
       final PsiExpression operand = expression.getOperand();
-      if (operand == null) {
-        return;
-      }
       checkForStaticFieldAccess(operand);
     }
 

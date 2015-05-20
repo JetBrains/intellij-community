@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -55,7 +56,8 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
   }
 
   @Nullable
-  private static PsiElement getContextElement(final Project project, XSourcePosition sourcePosition) {
+  @VisibleForTesting
+  public static PsiElement getContextElement(final Project project, XSourcePosition sourcePosition) {
     if (sourcePosition != null) {
       final Document document = FileDocumentManager.getInstance().getDocument(sourcePosition.getFile());
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -68,7 +70,7 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
             if (element != null && !(element instanceof PsiWhiteSpace || element instanceof PsiComment)) {
               return PyPsiUtils.getStatement(element);
             }
-            offset = element.getTextRange().getEndOffset() + 1;
+            offset = element.getTextRange().getEndOffset();
           }
           while (offset < lineEndOffset);
         }

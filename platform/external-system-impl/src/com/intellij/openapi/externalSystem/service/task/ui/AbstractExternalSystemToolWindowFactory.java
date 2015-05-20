@@ -15,20 +15,18 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
-import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Locale;
 
 /**
  * @author Denis Zhdanov
@@ -36,24 +34,19 @@ import java.util.Locale;
  */
 public abstract class AbstractExternalSystemToolWindowFactory implements ToolWindowFactory, DumbAware {
 
-  @NotNull private final ProjectSystemId   myExternalSystemId;
-  @NotNull private final NotificationGroup myNotificationGroup;
+  @NotNull private final ProjectSystemId myExternalSystemId;
 
   protected AbstractExternalSystemToolWindowFactory(@NotNull ProjectSystemId id) {
     myExternalSystemId = id;
-    myNotificationGroup = NotificationGroup.toolWindowGroup("notification.group.id." + id.toString().toLowerCase(Locale.ENGLISH),
-                                                            myExternalSystemId.getReadableName());
   }
 
   @Override
   public void createToolWindowContent(@NotNull final Project project, @NotNull final ToolWindow toolWindow) {
     toolWindow.setTitle(myExternalSystemId.getReadableName());
     ContentManager contentManager = toolWindow.getContentManager();
-    String tasksTitle = ExternalSystemBundle.message("tool.window.title.tasks");
-    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
-    assert manager != null;
-    ExternalSystemTasksPanel panel = new ExternalSystemTasksPanel(project, myExternalSystemId, myNotificationGroup);
-    ContentImpl tasksContent = new ContentImpl(panel, tasksTitle, true);
+    final ExternalProjectsViewImpl projectsView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, myExternalSystemId);
+    ExternalProjectsManager.getInstance(project).registerView(projectsView);
+    ContentImpl tasksContent = new ContentImpl(projectsView, ExternalSystemBundle.message("tool.window.title.projects"), true);
     contentManager.addContent(tasksContent);
   }
 }

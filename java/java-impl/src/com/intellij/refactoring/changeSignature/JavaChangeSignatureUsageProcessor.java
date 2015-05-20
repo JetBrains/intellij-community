@@ -636,10 +636,13 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
            !((JavaChangeInfoImpl)changeInfo).propagateParametersMethods.contains(method);
   }
 
-  private static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
+  public static void generateDelegate(JavaChangeInfo changeInfo) throws IncorrectOperationException {
     final PsiMethod delegate = (PsiMethod)changeInfo.getMethod().copy();
     final PsiClass targetClass = changeInfo.getMethod().getContainingClass();
-    LOG.assertTrue(!targetClass.isInterface());
+    LOG.assertTrue(targetClass != null);
+    if (targetClass.isInterface() && delegate.getBody() == null) {
+      delegate.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
+    }
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(targetClass.getProject());
     ChangeSignatureProcessor.makeEmptyBody(factory, delegate);
     final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, changeInfo.getNewName());

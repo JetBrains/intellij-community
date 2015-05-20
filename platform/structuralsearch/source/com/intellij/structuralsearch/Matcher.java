@@ -4,7 +4,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -75,10 +75,10 @@ public class Matcher extends MatcherImpl {
    * @throws MalformedPatternException
    * @throws UnsupportedPatternException
    */
-  @Nullable
-  public MatchResult isMatchedByDownUp(PsiElement element,MatchOptions options) throws
+  @NotNull
+  public List<MatchResult> matchByDownUp(PsiElement element, MatchOptions options) throws
     MalformedPatternException, UnsupportedPatternException
   {
-    return super.isMatchedByDownUp(element, options);
+    return super.matchByDownUp(element, options);
   }
 }

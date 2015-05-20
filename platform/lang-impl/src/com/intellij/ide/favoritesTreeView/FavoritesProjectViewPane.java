@@ -43,14 +43,15 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   private FavoritesTreeViewPanel myViewPanel;
   private final ProjectView myProjectView;
   private final FavoritesManager myFavoritesManager;
-  private final FavoritesListener myFavoritesListener;
   private static final Logger LOG = Logger.getInstance("#" + FavoritesProjectViewPane.class.getName());
 
   protected FavoritesProjectViewPane(final Project project, ProjectView projectView, FavoritesManager favoritesManager) {
     super(project);
     myProjectView = projectView;
     myFavoritesManager = favoritesManager;
-    myFavoritesListener = new FavoritesListener() {
+    FavoritesListener favoritesListener = new FavoritesListener() {
+      private boolean enabled = true;
+
       @Override
       public void rootsChanged() {
       }
@@ -67,18 +68,23 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
       }
 
       private void refreshMySubIdsAndSelect(String listName) {
-        myFavoritesManager.removeFavoritesListener(myFavoritesListener);
-        myProjectView.removeProjectPane(FavoritesProjectViewPane.this);
-        myProjectView.addProjectPane(FavoritesProjectViewPane.this);
-        myFavoritesManager.addFavoritesListener(myFavoritesListener);
-
-        if (!myFavoritesManager.getAvailableFavoritesListNames().contains(listName)) {
-          listName = null;
+        if (enabled) {
+          try {
+            enabled = false;
+            myProjectView.removeProjectPane(FavoritesProjectViewPane.this);
+            myProjectView.addProjectPane(FavoritesProjectViewPane.this);
+            if (!myFavoritesManager.getAvailableFavoritesListNames().contains(listName)) {
+              listName = null;
+            }
+            myProjectView.changeView(ID, listName);
+          }
+          finally {
+            enabled = true;
+          }
         }
-        myProjectView.changeView(ID, listName);
       }
     };
-    myFavoritesManager.addFavoritesListener(myFavoritesListener);
+    myFavoritesManager.addFavoritesListener(favoritesListener, this);
   }
 
   @Override
@@ -115,7 +121,6 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   @Override
   public void dispose() {
     myViewPanel = null;
-    myFavoritesManager.removeFavoritesListener(myFavoritesListener);
     super.dispose();
   }
 

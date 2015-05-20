@@ -318,7 +318,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (requiredAttributes != null) {
       for (final String attrName : requiredAttributes) {
-        if (tag.getAttributeValue(attrName) == null &&
+        if (!hasAttribute(tag, attrName) &&
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           IntentionAction insertRequiredAttributeIntention = XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName);
@@ -340,6 +340,15 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         }
       }
     }
+  }
+
+  private static boolean hasAttribute(XmlTag tag, String attrName) {
+    final XmlAttribute attribute = tag.getAttribute(attrName);
+    if (attribute == null) return false;
+    if (attribute.getValueElement() != null) return true;
+    if (!(tag instanceof HtmlTag)) return false;
+    final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+    return descriptor != null && HtmlUtil.isBooleanAttribute(descriptor, tag);
   }
 
   private void reportOneTagProblem(final XmlTag tag,
@@ -469,14 +478,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     else {
       checkDuplicateAttribute(tag, attribute);
 
-      if (tag instanceof HtmlTag &&
-          attribute.getValueElement() == null &&
-          !HtmlUtil.isSingleHtmlAttribute(name)
-         ) {
-        final String localizedMessage = XmlErrorMessages.message("empty.attribute.is.not.allowed", name);
-        reportAttributeProblem(tag, name, attribute, localizedMessage);
-      }
-
       // we skip resolve of attribute references since there is separate check when taking attribute descriptors
       PsiReference[] attrRefs = attribute.getReferences();
       doCheckRefs(attribute, attrRefs, !attribute.getNamespacePrefix().isEmpty() ? 2 : 1);
@@ -527,8 +528,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
         if (extension.canBeDuplicated(tagAttribute)) continue; // multiple import attributes are allowed in jsp directive
 
+        final ASTNode attributeNode = SourceTreeToPsiMap.psiElementToTree(attribute);
+        assert attributeNode != null;
+        final ASTNode attributeNameNode = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(attributeNode);
+        assert attributeNameNode != null;
         HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(getTagProblemInfoType(tag))
-          .range(XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)))
+          .range(attributeNameNode)
           .descriptionAndTooltip(XmlErrorMessages.message("duplicate.attribute", localName)).create();
         addToResults(highlightInfo);
 

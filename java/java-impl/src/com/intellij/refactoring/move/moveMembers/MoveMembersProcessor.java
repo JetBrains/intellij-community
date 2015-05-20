@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveMembers;
 
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -56,6 +57,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private PsiClass myTargetClass;
   private final Set<PsiMember> myMembersToMove = new LinkedHashSet<PsiMember>();
   private final MoveCallback myMoveCallback;
+  private final boolean myOpenInEditor;
   private String myNewVisibility; // "null" means "as is"
   private String myCommandName = MoveMembersImpl.REFACTORING_NAME;
   private MoveMembersOptions myOptions;
@@ -65,8 +67,13 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   public MoveMembersProcessor(Project project, @Nullable MoveCallback moveCallback, MoveMembersOptions options) {
+    this(project, moveCallback, options, false);
+  }
+
+  public MoveMembersProcessor(Project project, @Nullable MoveCallback moveCallback, MoveMembersOptions options, boolean openInEditor) {
     super(project);
     myMoveCallback = moveCallback;
+    myOpenInEditor = openInEditor;
     setOptions(options);
   }
 
@@ -230,6 +237,13 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       myMembersToMove.clear();
       if (myMoveCallback != null) {
         myMoveCallback.refactoringCompleted();
+      }
+
+      if (myOpenInEditor && !movedMembers.isEmpty()) {
+        final PsiMember item = ContainerUtil.getFirstItem(movedMembers.values());
+        if (item != null) {
+          EditorHelper.openInEditor(item);
+        }
       }
     }
     catch (IncorrectOperationException e) {

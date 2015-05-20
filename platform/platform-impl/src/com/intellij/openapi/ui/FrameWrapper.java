@@ -17,14 +17,14 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
@@ -228,7 +228,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private void addCloseOnEsc(final RootPaneContainer frame) {
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         MenuSelectionManager menuSelectionManager = MenuSelectionManager.defaultManager();
@@ -311,8 +311,8 @@ public class FrameWrapper implements Disposable, DataProvider {
       extendedState = -1;
     }
     else {
-      location = dimensionService.getLocation(myDimensionKey);
-      size = dimensionService.getSize(myDimensionKey);
+      location = dimensionService.getLocationOn(null, myDimensionKey);
+      size = dimensionService.getSizeOn(null, myDimensionKey);
       extendedState = dimensionService.getExtendedState(myDimensionKey);
     }
 
@@ -337,8 +337,8 @@ public class FrameWrapper implements Disposable, DataProvider {
   private static void saveFrameState(String dimensionKey, Component frame) {
     DimensionService dimensionService = DimensionService.getInstance();
     if (dimensionKey == null || dimensionService == null) return;
-    dimensionService.setLocation(dimensionKey, frame.getLocation());
-    dimensionService.setSize(dimensionKey, frame.getSize());
+    dimensionService.setLocationOn(null, dimensionKey, frame.getLocation());
+    dimensionService.setSizeOn(null, dimensionKey, frame.getSize());
     if (frame instanceof JFrame) {
       dimensionService.setExtendedState(dimensionKey, ((JFrame)frame).getExtendedState());
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public class StructGeneralAttribute {
   public static final String ATTRIBUTE_SYNTHETIC = "Synthetic";
   public static final String ATTRIBUTE_DEPRECATED = "Deprecated";
   public static final String ATTRIBUTE_LINE_NUMBER_TABLE = "LineNumberTable";
+  public static final String ATTRIBUTE_SOURCE_FILE = "SourceFile";
 
   private String name;
   private byte[] info;
@@ -96,6 +97,9 @@ public class StructGeneralAttribute {
     }
     else if (ATTRIBUTE_LINE_NUMBER_TABLE.equals(name)) {
       attr = new StructLineNumberTableAttribute();
+    }
+    else if (ATTRIBUTE_SOURCE_FILE.equals(name)) {
+      attr = new StructSourceFileAttribute();
     }
     else {
       // unsupported attribute

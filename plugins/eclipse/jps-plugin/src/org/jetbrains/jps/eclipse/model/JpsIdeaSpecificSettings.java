@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package org.jetbrains.jps.eclipse.model;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.AbstractIdeaSpecificSettings;
@@ -34,7 +34,6 @@ import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -49,13 +48,12 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
   }
 
   @Override
-  protected void readLibraryLevels(Element root, Map<String, String> levels) {
+  protected void readLibraryLevels(Element root, @NotNull Map<String, String> levels) {
     final Element levelsElement = root.getChild("levels");
     if (levelsElement != null) {
-      for (Object child : levelsElement.getChildren("level")) {
-        final Element element = (Element)child;
-        final String libName = element.getAttributeValue("name");
-        final String libLevel = element.getAttributeValue("value");
+      for (Element element : levelsElement.getChildren("level")) {
+        String libName = element.getAttributeValue("name");
+        String libLevel = element.getAttributeValue("value");
         if (libName != null && libLevel != null) {
           levels.put(libName, libLevel);
         }
@@ -65,8 +63,7 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
 
   @Override
   protected String[] getEntries(JpsModule model) {
-    final List<String> urls = model.getContentRootsList().getUrls();
-    return ArrayUtil.toStringArray(urls);
+    return ArrayUtil.toStringArray(model.getContentRootsList().getUrls());
   }
 
   @Override
@@ -121,7 +118,7 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
   }
 
   @Override
-  protected void readLanguageLevel(Element root, JpsModule model) throws InvalidDataException {
+  protected void readLanguageLevel(Element root, JpsModule model) {
     final String languageLevel = root.getAttributeValue("LANGUAGE_LEVEL");
     final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(model);
     if (languageLevel != null) {

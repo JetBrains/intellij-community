@@ -1,9 +1,10 @@
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,15 +15,17 @@ import java.util.Map;
 /**
  * The CommitDetailsGetter is responsible for getting {@link VcsFullCommitDetails complete commit details} from the cache or from the VCS.
  */
-public class CommitDetailsGetter extends DataGetter<VcsFullCommitDetails> {
+public class CommitDetailsGetter extends AbstractDataGetter<VcsFullCommitDetails> {
 
-  CommitDetailsGetter(VcsLogDataHolder dataHolder, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
-    super(dataHolder, logProviders, new VcsCommitCache<VcsFullCommitDetails>());
+  CommitDetailsGetter(@NotNull VcsLogHashMap hashMap,
+                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                      @NotNull Disposable parentDisposable) {
+    super(hashMap, logProviders, new VcsCommitCache<Integer, VcsFullCommitDetails>(), parentDisposable);
   }
 
   @Nullable
   @Override
-  protected VcsFullCommitDetails getFromAdditionalCache(@NotNull Hash hash) {
+  protected VcsFullCommitDetails getFromAdditionalCache(int commitId) {
     return null;
   }
 

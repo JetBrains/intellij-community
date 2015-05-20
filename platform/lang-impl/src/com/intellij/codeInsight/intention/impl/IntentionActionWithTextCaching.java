@@ -18,6 +18,8 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,7 @@ import java.util.ArrayList;
 /**
 * @author cdr
 */
-class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching> {
+class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching");
   private final List<IntentionAction> myOptionIntentions = new ArrayList<IntentionAction>();
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<IntentionAction>();
@@ -108,5 +110,10 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
 
   public Icon getIcon() {
     return myIcon;
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return DumbService.isDumbAware(myAction);
   }
 }

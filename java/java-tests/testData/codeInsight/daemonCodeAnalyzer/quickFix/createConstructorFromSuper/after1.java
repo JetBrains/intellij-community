@@ -1,4 +1,4 @@
-// "Create Constructor In 'Base'" "true"
+// "Create constructor in 'Base'" "true"
 class Base {
     public Base(int i, Object o) {
         

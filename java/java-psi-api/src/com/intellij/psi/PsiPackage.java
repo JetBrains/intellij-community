@@ -84,6 +84,15 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   PsiClass[] getClasses(@NotNull GlobalSearchScope scope);
 
   /**
+   * Returns the list of all files in the package, restricted by the specified scope. (This is
+   * normally the list of all files in all directories corresponding to the package, but it can
+   * be modified by custom language plugins which have a different notion of packages.)
+   *
+   * @since 14.1
+   */
+  PsiFile[] getFiles(@NotNull GlobalSearchScope scope);
+
+  /**
    * Returns the list of package-level annotations for the package.
    *
    * @return the list of annotations, or null if the package does not have any package-level annotations.

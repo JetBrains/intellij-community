@@ -54,13 +54,16 @@ public abstract class AbstractImportFromExternalSystemControl<
   @NotNull private final PaintAwarePanel           myComponent              = new PaintAwarePanel(new GridBagLayout());
   @NotNull private final TextFieldWithBrowseButton myLinkedProjectPathField = new TextFieldWithBrowseButton();
   @Nullable private final HideableTitledPanel hideableSystemSettingsPanel;
-  @Nullable private final ProjectFormatPanel myProjectFormatPanel;
+  @NotNull private final ProjectFormatPanel myProjectFormatPanel;
 
   @NotNull private final  ExternalSystemSettingsControl<ProjectSettings> myProjectSettingsControl;
   @NotNull private final  ProjectSystemId                                myExternalSystemId;
   @Nullable private final ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
 
   @Nullable Project myCurrentProject;
+
+  private boolean myShowProjectFormatPanel;
+  private final JLabel myProjectFormatLabel;
 
   protected AbstractImportFromExternalSystemControl(@NotNull ProjectSystemId externalSystemId,
                                                     @NotNull SystemSettings systemSettings,
@@ -80,6 +83,7 @@ public abstract class AbstractImportFromExternalSystemControl<
     myProjectSettings = projectSettings;
     myProjectSettingsControl = createProjectSettingsControl(projectSettings);
     mySystemSettingsControl = createSystemSettingsControl(systemSettings);
+    myShowProjectFormatPanel = showProjectFormatPanel;
 
     JLabel linkedProjectPathLabel =
       new JLabel(ExternalSystemBundle.message("settings.label.select.project", externalSystemId.getReadableName()));
@@ -115,14 +119,10 @@ public abstract class AbstractImportFromExternalSystemControl<
     myComponent.add(myLinkedProjectPathField, ExternalSystemUiUtil.getFillLineConstraints(0));
     myProjectSettingsControl.fillUi(myComponent, 0);
 
-    if(showProjectFormatPanel) {
-      myProjectFormatPanel = new ProjectFormatPanel();
-      JLabel myProjectFormatLabel = new JLabel(ExternalSystemBundle.message("settings.label.project.format"));
-      myComponent.add(myProjectFormatLabel, ExternalSystemUiUtil.getLabelConstraints(0));
-      myComponent.add(myProjectFormatPanel.getStorageFormatComboBox(), ExternalSystemUiUtil.getFillLineConstraints(0));
-    } else {
-      myProjectFormatPanel = null;
-    }
+    myProjectFormatPanel = new ProjectFormatPanel();
+    myProjectFormatLabel = new JLabel(ExternalSystemBundle.message("settings.label.project.format"));
+    myComponent.add(myProjectFormatLabel, ExternalSystemUiUtil.getLabelConstraints(0));
+    myComponent.add(myProjectFormatPanel.getStorageFormatComboBox(), ExternalSystemUiUtil.getFillLineConstraints(0));
 
     if (mySystemSettingsControl != null) {
       final PaintAwarePanel mySystemSettingsControlPanel = new PaintAwarePanel();
@@ -213,6 +213,10 @@ public abstract class AbstractImportFromExternalSystemControl<
     return myProjectSettings;
   }
 
+  public void setShowProjectFormatPanel(boolean showProjectFormatPanel) {
+    myShowProjectFormatPanel = showProjectFormatPanel;
+  }
+
   public void reset() {
     myLinkedProjectPathField.setText("");
     myProjectSettingsControl.reset();
@@ -222,6 +226,10 @@ public abstract class AbstractImportFromExternalSystemControl<
     if (hideableSystemSettingsPanel != null) {
       hideableSystemSettingsPanel.setOn(false);
     }
+    myProjectFormatLabel.setVisible(myShowProjectFormatPanel);
+    myProjectFormatPanel.setVisible(myShowProjectFormatPanel);
+    myProjectFormatPanel.getPanel().setVisible(myShowProjectFormatPanel);
+    myProjectFormatPanel.getStorageFormatComboBox().setVisible(myShowProjectFormatPanel);
   }
 
   public void apply() throws ConfigurationException {
@@ -252,6 +260,6 @@ public abstract class AbstractImportFromExternalSystemControl<
 
   @Nullable
   public ProjectFormatPanel getProjectFormatPanel() {
-    return myProjectFormatPanel;
+    return myShowProjectFormatPanel ? myProjectFormatPanel : null;
   }
 }

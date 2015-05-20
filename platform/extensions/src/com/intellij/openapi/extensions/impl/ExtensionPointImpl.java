@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -262,6 +261,19 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
+  @SuppressWarnings("unused") // upsource
+  public synchronized void removeUnloadableExtensions() {
+    ExtensionComponentAdapter[] adapters = myExtensionAdapters.toArray(new ExtensionComponentAdapter[myExtensionAdapters.size()]);
+    for (ExtensionComponentAdapter adapter : adapters) {
+      try {
+        adapter.getComponentImplementation();
+      }
+      catch (Throwable e) {
+        unregisterExtensionAdapter(adapter);
+      }
+    }
+  }
+
   @Override
   @Nullable
   public T getExtension() {
@@ -281,10 +293,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     final ExtensionComponentAdapter adapter = myLoadedAdapters.get(index);
 
     Object key = adapter.getComponentKey();
-    myOwner.getMutablePicoContainer().unregisterComponent(key);
-    for (MutablePicoContainer pluginContainer : myOwner.getPluginContainers()) {
-      pluginContainer.unregisterComponent(key);
-    }
+    myOwner.getPicoContainer().unregisterComponent(key);
 
     processAdapters();
     unregisterExtension(extension, null);
@@ -427,17 +436,14 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     myExtensionsCache = null;
   }
 
-  synchronized boolean unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
+  public synchronized boolean unregisterExtensionAdapter(@NotNull ExtensionComponentAdapter adapter) {
     try {
       if (myExtensionAdapters.remove(adapter)) {
         return true;
       }
       if (myLoadedAdapters.contains(adapter)) {
         Object key = adapter.getComponentKey();
-        myOwner.getMutablePicoContainer().unregisterComponent(key);
-        for (MutablePicoContainer pluginContainer : myOwner.getPluginContainers()) {
-          pluginContainer.unregisterComponent(key);
-        }
+        myOwner.getPicoContainer().unregisterComponent(key);
 
         @SuppressWarnings("unchecked") T extension = (T)adapter.getExtension();
         unregisterExtension(extension, adapter.getPluginDescriptor());

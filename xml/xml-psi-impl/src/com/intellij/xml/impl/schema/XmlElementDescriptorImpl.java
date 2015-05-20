@@ -195,7 +195,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
                                  myDescriptorTag.getNamespaceByPrefix(namespacePrefix);
         final String local = XmlUtil.findLocalNameByQualifiedName(substAttr);
         final XmlElementDescriptorImpl originalElement = (XmlElementDescriptorImpl)((XmlNSDescriptorImpl)getNSDescriptor()).getElementDescriptor(local, namespace);
-        if (originalElement != null) {
+        if (originalElement != null && originalElement != this) {
           type = originalElement.getType(context);
         }
       }
@@ -229,7 +229,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
       if (context != null &&
           descriptor.canContainTag(context.getLocalName(), contextNs = context.getNamespace(), context) &&
           (!contextNs.equals(getNamespace()) || descriptor.hasAnyInContentModel()) &&
-          containingFile instanceof XmlFile) { // JSXmlLiteralExpressionImpl is crazy
+          containingFile instanceof XmlFile) { // JSXmlLiteralExpressionImpl, being an xml element itself, may be contained in non-XML file
         final XmlNSDescriptor nsDescriptor = getNSDescriptor();
 
         if (nsDescriptor != null) {

@@ -43,6 +43,8 @@ import com.intellij.vcs.log.util.StopWatch;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
+import git4idea.config.GitVersion;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.browser.SymbolicRefs;
@@ -284,9 +286,11 @@ public class GitHistoryUtils {
       }
     };
 
+    GitVcs vcs = GitVcs.getInstance(project);
+    GitVersion version = vcs != null ? vcs.getVersion() : GitVersion.NULL;
     final AtomicBoolean criticalFailure = new AtomicBoolean();
     while (currentPath.get() != null && firstCommitParent.get() != null) {
-      logHandler.set(getLogHandler(project, finalRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters));
+      logHandler.set(getLogHandler(project, version, finalRoot, logParser, currentPath.get(), firstCommitParent.get(), parameters));
       final MyTokenAccumulator accumulator = new MyTokenAccumulator(logParser);
       final Semaphore semaphore = new Semaphore();
 
@@ -337,9 +341,10 @@ public class GitHistoryUtils {
       }
 
       try {
-        FilePath firstCommitRenamePath;
-        firstCommitRenamePath = getFirstCommitRenamePath(project, finalRoot, firstCommit.get(), currentPath.get());
-        currentPath.set(firstCommitRenamePath);
+        Pair<String, FilePath> firstCommitParentAndPath = getFirstCommitParentAndPathIfRename(project, finalRoot, firstCommit.get(),
+                                                                                              currentPath.get(), version);
+        currentPath.set(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.second);
+        firstCommitParent.set(firstCommitParentAndPath == null ? null : firstCommitParentAndPath.first);
         skipFurtherOutput.set(false);
       }
       catch (VcsException e) {
@@ -351,10 +356,19 @@ public class GitHistoryUtils {
 
   }
 
-  private static GitLineHandler getLogHandler(Project project, VirtualFile root, GitLogParser parser, FilePath path, String lastCommit, String... parameters) {
+  private static GitLineHandler getLogHandler(Project project,
+                                              @NotNull GitVersion version,
+                                              VirtualFile root,
+                                              GitLogParser parser,
+                                              FilePath path,
+                                              String lastCommit,
+                                              String... parameters) {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
+    if (GitVersionSpecialty.FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY.existsIn(version)) {
+      h.addParameters("--full-history", "--simplify-merges");
+    }
     if (parameters != null && parameters.length > 0) {
       h.addParameters(parameters);
     }
@@ -369,23 +383,37 @@ public class GitHistoryUtils {
    * If it's not a rename, returns null.
    */
   @Nullable
-  private static FilePath getFirstCommitRenamePath(Project project, VirtualFile root, String commit, FilePath filePath) throws VcsException {
+  private static Pair<String, FilePath> getFirstCommitParentAndPathIfRename(Project project,
+                                                                            VirtualFile root,
+                                                                            String commit,
+                                                                            FilePath filePath,
+                                                                            @NotNull GitVersion version) throws VcsException {
     // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
     // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
     final GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     final GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
-    h.endOptions();
+    if (!GitVersionSpecialty.FOLLOW_IS_BUGGY_IN_THE_LOG.existsIn(version)) {
+      h.addParameters("--follow");
+      h.endOptions();
+      h.addRelativePaths(filePath);
+    }
+    else {
+      h.endOptions();
+    }
     final String output = h.run();
     final List<GitLogRecord> records = parser.parse(output);
 
     if (records.isEmpty()) return null;
     // we have information about all changed files of the commit. Extracting information about the file we need.
-    final List<Change> changes = records.get(0).parseChanges(project, root);
+    GitLogRecord record = records.get(0);
+    final List<Change> changes = record.parseChanges(project, root);
     for (Change change : changes) {
       if ((change.isMoved() || change.isRenamed()) && filePath.equals(change.getAfterRevision().getFile())) {
-        return change.getBeforeRevision().getFile();
+        final String[] parents = record.getParentsHashes();
+        String parent = parents.length > 0 ? parents[0] : null;
+        return Pair.create(parent, change.getBeforeRevision().getFile());
       }
     }
     return null;
@@ -405,6 +433,7 @@ public class GitHistoryUtils {
     h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(hashes));
+    h.endOptions();
 
     String output = h.run();
     List<GitLogRecord> records = parser.parse(output);
@@ -442,6 +471,7 @@ public class GitHistoryUtils {
     h.addParameters("--no-walk");
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(refs);
+    h.endOptions();
 
     String output = h.run();
     List<GitLogRecord> records = parser.parse(output);
@@ -724,7 +754,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return LogDataImpl.empty();
     }
-    final Set<VcsRef> refs = new OpenTHashSet<VcsRef>(GitLogProvider.REF_ONLY_NAME_STRATEGY);
+    final Set<VcsRef> refs = new OpenTHashSet<VcsRef>(GitLogProvider.DONT_CONSIDER_SHA);
     final List<VcsCommitMetadata> commits =
       loadDetails(project, root, withRefs, false, new NullableFunction<GitLogRecord, VcsCommitMetadata>() {
         @Nullable

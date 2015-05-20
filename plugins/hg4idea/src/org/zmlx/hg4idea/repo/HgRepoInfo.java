@@ -34,7 +34,9 @@ public class HgRepoInfo {
   @NotNull private Set<HgNameWithHashInfo> myBookmarks = Collections.emptySet();
   @NotNull private Set<HgNameWithHashInfo> myTags = Collections.emptySet();
   @NotNull private Set<HgNameWithHashInfo> myLocalTags = Collections.emptySet();
-  @NotNull Set<HgNameWithHashInfo> mySubrepos = Collections.emptySet();
+  @NotNull private Set<HgNameWithHashInfo> mySubrepos = Collections.emptySet();
+  @NotNull private List<HgNameWithHashInfo> myMQApplied = Collections.emptyList();
+  @NotNull private List<String> myMqNames = Collections.emptyList();
 
   public HgRepoInfo(@NotNull String currentBranch,
                     @Nullable String currentRevision,
@@ -44,7 +46,8 @@ public class HgRepoInfo {
                     @NotNull Collection<HgNameWithHashInfo> bookmarks,
                     @Nullable String currentBookmark,
                     @NotNull Collection<HgNameWithHashInfo> tags,
-                    @NotNull Collection<HgNameWithHashInfo> localTags, @NotNull Collection<HgNameWithHashInfo> subrepos) {
+                    @NotNull Collection<HgNameWithHashInfo> localTags, @NotNull Collection<HgNameWithHashInfo> subrepos,
+                    @NotNull List<HgNameWithHashInfo> mqApplied, @NotNull List<String> mqNames) {
     myCurrentBranch = currentBranch;
     myCurrentRevision = currentRevision;
     myTipRevision = currentTipRevision;
@@ -55,6 +58,8 @@ public class HgRepoInfo {
     myTags = new LinkedHashSet<HgNameWithHashInfo>(tags);
     myLocalTags = new LinkedHashSet<HgNameWithHashInfo>(localTags);
     mySubrepos = new HashSet<HgNameWithHashInfo>(subrepos);
+    myMQApplied = mqApplied;
+    myMqNames = mqNames;
   }
 
   @NotNull
@@ -102,6 +107,15 @@ public class HgRepoInfo {
     return myState;
   }
 
+  @NotNull
+  public List<HgNameWithHashInfo> getMQApplied() {
+    return myMQApplied;
+  }
+
+  public List<String> getMqPatchNames() {
+    return myMqNames;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -119,6 +133,8 @@ public class HgRepoInfo {
     if (!myTags.equals(info.myTags)) return false;
     if (!myLocalTags.equals(info.myLocalTags)) return false;
     if (!mySubrepos.equals(info.mySubrepos)) return false;
+    if (!myMQApplied.equals(info.myMQApplied)) return false;
+    if (!myMqNames.equals(info.myMqNames)) return false;
 
     return true;
   }
@@ -126,7 +142,7 @@ public class HgRepoInfo {
   @Override
   public int hashCode() {
     return Objects.hashCode(myCurrentBranch, myCurrentRevision, myTipRevision, myCurrentBookmark, myState, myBranches, myBookmarks, myTags,
-                            myLocalTags, mySubrepos);
+                            myLocalTags, mySubrepos, myMQApplied, myMqNames);
   }
 
   @Override

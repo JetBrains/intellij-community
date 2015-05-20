@@ -48,4 +48,9 @@ public abstract class GitRemoteBranch extends GitBranch {
   @NotNull
   public abstract GitRemote getRemote();
 
+  @Override
+  public boolean isRemote() {
+    return true;
+  }
+
 }

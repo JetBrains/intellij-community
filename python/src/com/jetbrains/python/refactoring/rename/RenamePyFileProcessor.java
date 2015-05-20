@@ -48,8 +48,8 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
 
   @Override
   public PsiElement substituteElementToRename(PsiElement element, @Nullable Editor editor) {
-    PyFile file = (PyFile) element;
-    if (file.getName().equals(PyNames.INIT_DOT_PY)) {
+    final PyFile file = (PyFile) element;
+    if (file.getName().equals(PyNames.INIT_DOT_PY) && editor != null) {
       return file.getParent();
     }
     return element;
@@ -74,7 +74,7 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
                              List<UsageInfo> result) {
     final String newFileName = FileUtil.getNameWithoutExtension(newName);
     if (!PyNames.isIdentifier(newFileName)) {
-      List<UsageInfo> usages = new ArrayList<UsageInfo>(result);
+      final List<UsageInfo> usages = new ArrayList<UsageInfo>(result);
       for (UsageInfo usageInfo : usages) {
         final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(usageInfo.getElement(), PyImportStatementBase.class);
         if (importStatement != null) {
@@ -91,19 +91,15 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
   }
 
   private static boolean isNotAliasedInImportElement(@NotNull PsiReference reference) {
-    boolean include = true;
     if (reference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
       for (ResolveResult result : results) {
         final PsiElement resolved = result.getElement();
-        if (resolved instanceof PyImportElement) {
-          if (((PyImportElement)resolved).getAsName() != null) {
-            include = false;
-            break;
-          }
+        if (resolved instanceof PyImportElement && ((PyImportElement)resolved).getAsName() != null) {
+          return false;
         }
       }
     }
-    return include;
+    return true;
   }
 }

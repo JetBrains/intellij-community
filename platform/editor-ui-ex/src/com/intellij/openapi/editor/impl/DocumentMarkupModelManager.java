@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.WeakList;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class DocumentMarkupModelManager extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentMarkupModelManager");
 
-  private final WeakList<DocumentImpl> myDocumentSet = new WeakList<DocumentImpl>();
+  private final WeakList<Document> myDocumentSet = new WeakList<Document>();
   private volatile boolean myDisposed;
 
   public static DocumentMarkupModelManager getInstance(Project project) {
@@ -46,7 +47,7 @@ public class DocumentMarkupModelManager extends AbstractProjectComponent {
     });
   }
 
-  public void registerDocument(DocumentImpl document) {
+  public void registerDocument(Document document) {
     LOG.assertTrue(!myDisposed);
     myDocumentSet.add(document);
   }
@@ -58,7 +59,7 @@ public class DocumentMarkupModelManager extends AbstractProjectComponent {
   private void cleanupProjectMarkups() {
     if (!myDisposed) {
       myDisposed = true;
-      for (DocumentImpl document : myDocumentSet.toStrongList()) {
+      for (Document document : myDocumentSet.toStrongList()) {
         DocumentMarkupModel.removeMarkupModel(document, myProject);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @State(
   name = "PathMacrosImpl",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/path.macros.xml", roamingType = RoamingType.PER_PLATFORM)}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/path.macros.xml", roamingType = RoamingType.PER_PLATFORM)
 )
 public class PathMacrosImpl extends PathMacros implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(PathMacrosImpl.class);

@@ -15,5 +15,13 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.ProjectManager;
+
 public class TemplateProjectStructureAction extends ShowStructureSettingsAction {
+
+  @Override
+  public void actionPerformed(AnActionEvent e) {
+    showDialog(ProjectManager.getInstance().getDefaultProject());
+  }
 }

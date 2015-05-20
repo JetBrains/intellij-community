@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-
 public abstract class JarFileSystem extends ArchiveFileSystem implements JarCopyingFileSystem, LocalFileProvider {
   public static final String PROTOCOL = StandardFileSystems.JAR_PROTOCOL;
   public static final String PROTOCOL_PREFIX = StandardFileSystems.JAR_PROTOCOL_PREFIX;
@@ -40,10 +38,6 @@ public abstract class JarFileSystem extends ArchiveFileSystem implements JarCopy
   public VirtualFile getJarRootForLocalFile(@NotNull VirtualFile file) {
     return getRootByLocal(file);
   }
-
-  /** @deprecated to be removed in IDEA 15 */
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
-  public abstract JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException;
 
   @Nullable
   @Override

@@ -152,7 +152,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "FINALLY_ON_NEW_LINE",
                                    "INDENT_CASE_FROM_SWITCH",
                                    "SPECIAL_ELSE_IF_TREATMENT",
-                                   "ENUM_CONSTANTS_WRAP");
+                                   "ENUM_CONSTANTS_WRAP",
+                                   "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
+                                   "WRAP_FIRST_METHOD_IN_CALL_CHAIN");
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",
@@ -206,7 +208,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   private static final String GENERAL_CODE_SAMPLE =
     "public class Foo {\n" +
-    "  public int[] X = new int[]{1, 3, 5 7, 9, 11};\n" +
+    "  public int[] X = new int[]{1, 3, 5, 7, 9, 11};\n" +
     "\n" +
     "  public void foo(boolean a, int x, int y, int z) {\n" +
     "    label1:\n" +
@@ -244,7 +246,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    if (2 < 3) return;\n" +
     "    if (3 < 4) return;\n" +
     "    do {\n" +
-    "      x++\n" +
+    "      x++;\n" +
     "    }\n" +
     "    while (x < 10000);\n" +
     "    while (x < 50000) x++;\n" +
@@ -280,7 +282,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "      new Runnable() {\n" +
     "          public void run() {\n" +
     "          }\n" +
-    "      }\n" +
+    "      };\n" +
     "  }\n" +
     "\n" +
     "  public class InnerClass {\n" +
@@ -300,8 +302,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "@SuppressWarnings({\"ALL\"})\n" +
     "public class Foo<T extends Bar & Abba, U> {\n" +
     "  int[] X = new int[]{1, 3, 5, 6, 7, 87, 1213, 2};\n" +
+    "  int[] empty = new int[]{};" +
     "\n" +
-    "  public void foo(int x, int y) {" +
+    "  public void foo(int x, int y) {\n" +
     "    Runnable r = () -> {};\n" +
     "    Runnable r1 = this :: bar;\n" +
     "    for (int i = 0; i < x; i++) {\n" +
@@ -356,6 +359,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    int\n" +
     "i = 0;\n" +
     "    int[] a = new int[] {1, 2, 0x0052, 0x0053, 0x0054};\n" +
+    "    int[] empty = new int[] {};\n" +
     "    int var1 = 1; int var2 = 2;\n" +
     "    foo1(0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057);\n" +
     "    int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF);\n" +
@@ -369,7 +373,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    if (2 < 3) return; else if (2 > 3) return; else return;\n" +
     "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i);\n" +
     "    while (x < 50000) x++;\n" +
-    "    do x++ while (x < 10000);\n" +
+    "    do x++; while (x < 10000);\n" +
     "    switch (a) {\n" +
     "    case 0:\n" +
     "      doCase0();\n" +
@@ -386,7 +390,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    }\n" +
     "    do {\n" +
     "        x--;\n" +
-    "    } while (x > 10) \n" +
+    "    } while (x > 10); \n" +
     "  }\n" +
     "    public static void test() \n" +
     "        throws Exception { \n" +

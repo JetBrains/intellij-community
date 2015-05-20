@@ -17,9 +17,14 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -412,6 +417,41 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
   }
 
+  protected VirtualFile prepareFile() {
+    myFixture.copyDirectoryToProject(getTestDirectory(false), "");
+    return myFixture.configureByFile(getTestDirectory(false) + "/" + getTestName(true) + ".py").getVirtualFile();
+  }
+
+  protected void doEvaluateExpressionTest(@NotNull VirtualFile mainFile, @NotNull String expression, int lineNumber) {
+    PsiElement element = PyDebuggerEditorsProvider.getContextElement(myFixture.getProject(),
+                                                                     XSourcePositionImpl.create(mainFile, lineNumber));
+    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(myFixture.getProject(), "fragment.py", expression, true);
+    fragment.setContext(element);
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
+    myFixture.enableInspections(getInspectionClass());
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
+
+  public void testEvaluateExpressionBuiltins() {
+    VirtualFile mainFile = prepareFile();
+    doEvaluateExpressionTest(mainFile, "len(a)", 2);
+    doEvaluateExpressionTest(mainFile, "a", 2);
+  }
+
+  public void testEvaluateExpressionInsideFunction() {
+    VirtualFile mainFile = prepareFile();
+    doEvaluateExpressionTest(mainFile, "a", 3);
+    doEvaluateExpressionTest(mainFile, "s", 3);
+  }
+
+  // PY-14309
+  public void testEvaluateExpressionClass() {
+    VirtualFile mainFile = prepareFile();
+    doEvaluateExpressionTest(mainFile, "s", 4);
+    doEvaluateExpressionTest(mainFile, "self", 4);
+    doEvaluateExpressionTest(mainFile, "self.a", 4);
+  }
+
   // PY-13554
   public void testDocstringTypeFromSubModule() {
     doMultiFileTest();
@@ -438,6 +478,31 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-14398
   public void testImportToContainingFileInPackage() {
     doMultiFileTest("p1/__init__.py");
+  }
+
+  // PY-11401
+  public void testNoUnresolvedReferencesForClassesWithBadMRO() {
+    doTest();
+  }
+
+  // PY-11401
+  public void testFallbackToOldStyleMROIfUnresolvedAncestorsAndC3Fails() {
+    doTest();
+  }
+
+  // PY-11401
+  public void testOverriddenMRO() {
+    doTest();
+  }
+
+  // PY-11401
+  public void testOverriddenMROInAncestors() {
+    doTest();
+  }
+
+  // PY-15002
+  public void testIncorrectFileLevelMetaclass() {
+    doTest();
   }
 
   @NotNull

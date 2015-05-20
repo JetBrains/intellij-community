@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@ package com.intellij.debugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +32,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.InvokeThread");
 
   private static final ThreadLocal<WorkerThreadRequest> ourWorkerRequest = new ThreadLocal<WorkerThreadRequest>();
+
+  protected final Project myProject;
 
   public static final class WorkerThreadRequest<E extends PrioritizedTask> implements Runnable {
     private final InvokeThread<E> myOwner;
@@ -114,7 +119,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   private volatile WorkerThreadRequest myCurrentRequest = null;
 
-  public InvokeThread() {
+  public InvokeThread(Project project) {
+    myProject = project;
     myEvents = new EventQueue<E>(PrioritizedTask.Priority.values().length);
     startNewWorkerThread();
   }
@@ -129,6 +135,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
     try {
+      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
       while(true) {
         try {
           if(threadRequest.isStopRequested()) {
@@ -151,6 +158,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
         catch (EventQueueClosedException ignored) {
           break;
         }
+        catch (ProcessCanceledException ignored) {}
         catch (RuntimeException e) {
           if(e.getCause() instanceof InterruptedException) {
             break;
@@ -177,6 +185,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Request " + toString() + " exited");
       }
+      DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
     }
 
   }

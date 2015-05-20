@@ -94,6 +94,24 @@ public class BuildInfo implements Comparable<BuildInfo> {
     return myMessage;
   }
 
+  /**
+   * @return -1 if version information is missing or does not match to expected format "majorVer.minorVer"
+   */
+  public int getMajorVersion() {
+    final String version = getVersion();
+    try {
+      if (!version.isEmpty()) {
+        final int dotIndex = version.indexOf('.');
+        if (dotIndex > 0) {
+          return Integer.parseInt(version.substring(0, dotIndex));
+        }
+      }
+    }
+    catch (NumberFormatException ignored) {
+    }
+    return -1;
+  }
+  
   @Nullable
   public Date getReleaseDate() {
     return myReleaseDate;
@@ -101,9 +119,13 @@ public class BuildInfo implements Comparable<BuildInfo> {
 
   @Nullable
   public PatchInfo findPatchForCurrentBuild() {
-    BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
+    return findPatchForBuild(ApplicationInfo.getInstance().getBuild());
+  }
+
+  @Nullable
+  public PatchInfo findPatchForBuild(BuildNumber currentBuild) {
     for (PatchInfo each : myPatches) {
-      if (each.isAvailable() && each.getFromBuild().asStringWithoutProductCode().equals(currentBuild.asStringWithoutProductCode())) 
+      if (each.isAvailable() && each.getFromBuild().asStringWithoutProductCode().equals(currentBuild.asStringWithoutProductCode()))
         return each;
     }
     return null;

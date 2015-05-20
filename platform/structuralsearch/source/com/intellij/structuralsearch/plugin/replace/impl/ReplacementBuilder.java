@@ -79,8 +79,8 @@ public final class ReplacementBuilder {
           info.setArgumentContext(true);
           info.setHasCommaAfter(ch == ',');
         }
-        info.setAfterDelimiterPos(pos);
       }
+      info.setAfterDelimiterPos(pos);
 
       if (parameterizations==null) {
         parameterizations = new ArrayList<ParameterInfo>();

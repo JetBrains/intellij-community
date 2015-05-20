@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util.xml;
 
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -43,16 +42,11 @@ public abstract class DomService {
   }
 
   /**
-   * @deprecated use {@link #getDomFileCandidates(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)} (to remove in IDEA 15)
-   */
-  public abstract Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> description, Project project);
-
-  /**
    * @param rootElementClass class of root (file-level) element in DOM model
    * @param project          current project
    * @param scope            search scope
    * @return files containing given root element
-   * @see #getFileElements(Class, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope)
+   * @see #getFileElements(Class, Project, GlobalSearchScope)
    */
   public abstract Collection<VirtualFile> getDomFileCandidates(Class<? extends DomElement> rootElementClass,
                                                                Project project,
@@ -65,7 +59,7 @@ public abstract class DomService {
    * @return DOM file elements containing given root element
    */
   public abstract <T extends DomElement> List<DomFileElement<T>> getFileElements(Class<T> rootElementClass,
-                                                                                 final Project project,
+                                                                                 Project project,
                                                                                  @Nullable GlobalSearchScope scope);
 
   public abstract ModelMerger createModelMerger();
@@ -85,6 +79,5 @@ public abstract class DomService {
     SHOW, SHOW_CHILDREN, SKIP
   }
 
-  public abstract StructureViewBuilder createSimpleStructureViewBuilder(final XmlFile file,
-                                                                        final Function<DomElement, StructureViewMode> modeProvider);
+  public abstract StructureViewBuilder createSimpleStructureViewBuilder(XmlFile file, Function<DomElement, StructureViewMode> modeProvider);
 }

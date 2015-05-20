@@ -32,7 +32,7 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 public class FunctionalExpressionSearch extends ExtensibleQueryFactory<PsiFunctionalExpression, FunctionalExpressionSearch.SearchParameters> {
-  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.functionalInterfaceSearch");
+  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.functionalInterfaceSearch");
   public static final FunctionalExpressionSearch INSTANCE = new FunctionalExpressionSearch();
 
   public static class SearchParameters {

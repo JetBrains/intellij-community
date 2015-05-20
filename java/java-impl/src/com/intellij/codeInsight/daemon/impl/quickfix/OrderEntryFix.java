@@ -28,6 +28,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
@@ -123,6 +124,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           if (isJunit4) {
             final VirtualFile location = PsiUtilCore.getVirtualFile(reference.getElement());
             boolean inTests = location != null && ModuleRootManager.getInstance(currentModule).getFileIndex().isInTestSourceContent(location);
+            DumbService.getInstance(project).setAlternativeResolveEnabled(true);
             try {
               addJUnit4Library(inTests, currentModule);
               final GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
@@ -133,6 +135,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             }
             catch (ClassNotFoundException e) {
               throw new RuntimeException(e);
+            }
+            finally {
+              DumbService.getInstance(project).setAlternativeResolveEnabled(false);
             }
           } else {
             addBundledJarToRoots(project, editor, currentModule, reference, className, JavaSdkUtil.getJunit3JarPath());
@@ -248,10 +253,15 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
             }
 
             @Override
-            public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
+            public void invoke(@NotNull final Project project, @Nullable final Editor editor, PsiFile file) {
               OrderEntryUtil.addLibraryToRoots(libraryEntry, currentModule);
               if (editor != null) {
-                new AddImportAction(project, reference, editor, aClass).execute();
+                DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+                  @Override
+                  public void run() {
+                    new AddImportAction(project, reference, editor, aClass).execute();
+                  }
+                });
               }
             }
           };
@@ -323,11 +333,16 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                           @NonNls final String libVirtFile) {
     addJarToRoots(libVirtFile, currentModule, reference != null ? reference.getElement() : null);
 
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-    PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-    if (aClass != null && editor != null && reference != null) {
-      new AddImportAction(project, reference, editor, aClass).execute();
-    }
+    DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
+      @Override
+      public void run() {
+        GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
+        PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
+        if (aClass != null && editor != null && reference != null) {
+          new AddImportAction(project, reference, editor, aClass).execute();
+        }
+      }
+    });
   }
 
   public static void addJarToRoots(String libPath, final Module module, @Nullable PsiElement location) {

@@ -1,0 +1,47 @@
+<!--suppress XmlUnboundNsPrefix -->
+<idea-plugin version="2">
+  <id>com.jetbrains.python.edu.interactivelearning.python</id>
+  <name>Educational plugin for PyCharm</name>
+  <version>2.0</version>
+
+  <description><![CDATA[
+      Educational plugin for students. This plugin allows to learn Python
+       using intelligent PyCharm IDE.
+      ]]></description>
+
+  <change-notes><![CDATA[
+
+      ]]>
+  </change-notes>
+
+  <depends>com.intellij.modules.lang</depends>
+  <depends>com.intellij.modules.python</depends>
+  <depends>com.jetbrains.edu.interactivelearning</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
+  </extensions>
+  <extensions defaultExtensionNs="Pythonid">
+    <visitorFilter language="Python" implementationClass="com.jetbrains.edu.learning.highlighting.PyStudyVisitorFilter"/>
+  </extensions>
+  <extensions defaultExtensionNs="Edu">
+    <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>
+    <StudyLanguageManager implementationClass="com.jetbrains.edu.learning.PyStudyLanguageManager" language="Python"/>
+  </extensions>
+  <actions>
+    <action id="WelcomeScreen.PythonIntro" class="com.jetbrains.edu.learning.actions.PyStudyIntroductionCourseAction"
+            icon="InteractiveLearningPythonIcons.EducationalProjectType">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+    </action>
+    <action id="StudyWatchTutorial" class="com.jetbrains.edu.learning.actions.PyStudyWatchTutorialAction">
+      <add-to-group group-id="HelpMenu" anchor="first"/>
+    </action>
+  </actions>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.edu.learning.PyStudyShowTutorial</implementation-class>
+      <interface-class>com.jetbrains.edu.learning.PyStudyShowTutorial</interface-class>
+    </component>
+  </project-components>
+</idea-plugin>

@@ -84,7 +84,7 @@ class WarModelBuilderImpl implements ModelBuilderService {
           }
 
           final String relativePath = resolver.destPath.pathString
-          final def sourcePaths
+          def sourcePaths
 
           if (resolver.metaClass.respondsTo(resolver, 'getSourcePaths')) {
             sourcePaths = resolver.getSourcePaths()
@@ -101,8 +101,8 @@ class WarModelBuilderImpl implements ModelBuilderService {
           if(sourcePaths) {
             (sourcePaths.flatten() as List).each { def path ->
               if (path instanceof String) {
-                def file = new File(warTask.project.projectDir, path)
-                addPath(webResources, relativePath, "", file)
+                def file = new File(path)
+                addPath(webResources, relativePath, "", file.absolute ? file : new File(warTask.project.projectDir, path))
               }
             }
           }

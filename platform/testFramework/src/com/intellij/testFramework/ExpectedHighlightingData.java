@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -357,45 +357,25 @@ public class ExpectedHighlightingData {
   private static final HighlightInfoType WHATEVER = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION,
                                                                                                 HighlighterColors.TEXT);
 
-  public void checkLineMarkers(Collection<LineMarkerInfo> markerInfos, String text) {
+  public void checkLineMarkers(@NotNull Collection<LineMarkerInfo> markerInfos, @NotNull String text) {
     String fileName = myFile == null ? "" : myFile.getName() + ": ";
     String failMessage = "";
 
-    if (markerInfos != null) {
-      for (LineMarkerInfo info : markerInfos) {
-        if (!containsLineMarker(info, lineMarkerInfos.values())) {
-          final int startOffset = info.startOffset;
-          final int endOffset = info.endOffset;
-
-          int y1 = StringUtil.offsetToLineNumber(text, startOffset);
-          int y2 = StringUtil.offsetToLineNumber(text, endOffset);
-          int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
-          int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
-
-          if (!failMessage.isEmpty()) failMessage += '\n';
-          failMessage += fileName + "Extra line marker highlighted " +
-                            "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
-                            "(" + (x2 + 1) + ", " + (y2 + 1) + ")"
-                            + ": '"+info.getLineMarkerTooltip()+"'"
-                            ;
-        }
+    for (LineMarkerInfo info : markerInfos) {
+      if (!containsLineMarker(info, lineMarkerInfos.values())) {
+        if (!failMessage.isEmpty()) failMessage += '\n';
+        failMessage += fileName + "Extra line marker highlighted " +
+                          rangeString(text, info.startOffset, info.endOffset)
+                          + ": '"+info.getLineMarkerTooltip()+"'"
+                          ;
       }
     }
 
     for (LineMarkerInfo expectedLineMarker : lineMarkerInfos.values()) {
-      if (markerInfos != null && !containsLineMarker(expectedLineMarker, markerInfos)) {
-        final int startOffset = expectedLineMarker.startOffset;
-        final int endOffset = expectedLineMarker.endOffset;
-
-        int y1 = StringUtil.offsetToLineNumber(text, startOffset);
-        int y2 = StringUtil.offsetToLineNumber(text, endOffset);
-        int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
-        int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
-
+      if (!markerInfos.isEmpty() && !containsLineMarker(expectedLineMarker, markerInfos)) {
         if (!failMessage.isEmpty()) failMessage += '\n';
         failMessage += fileName + "Line marker was not highlighted " +
-                       "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
-                       "(" + (x2 + 1) + ", " + (y2 + 1) + ")"
+                       rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset)
                        + ": '"+expectedLineMarker.getLineMarkerTooltip()+"'"
           ;
       }
@@ -441,15 +421,9 @@ public class ExpectedHighlightingData {
         String s = text.substring(startOffset, endOffset);
         String desc = info.getDescription();
 
-        int y1 = StringUtil.offsetToLineNumber(text, startOffset);
-        int y2 = StringUtil.offsetToLineNumber(text, endOffset);
-        int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
-        int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
-
         if (!failMessage.isEmpty()) failMessage += '\n';
         failMessage += fileName + "Extra text fragment highlighted " +
-                          "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
-                          "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
+                          rangeString(text, startOffset, endOffset) +
                           " :'" +
                           s +
                           "'" + (desc == null ? "" : " (" + desc + ")")
@@ -467,15 +441,9 @@ public class ExpectedHighlightingData {
           String s = text.substring(startOffset, endOffset);
           String desc = expectedInfo.getDescription();
 
-          int y1 = StringUtil.offsetToLineNumber(text, startOffset);
-          int y2 = StringUtil.offsetToLineNumber(text, endOffset);
-          int x1 = startOffset - StringUtil.lineColToOffset(text, y1, 0);
-          int x2 = endOffset - StringUtil.lineColToOffset(text, y2, 0);
-
           if (!failMessage.isEmpty()) failMessage += '\n';
           failMessage += fileName + "Text fragment was not highlighted " +
-                            "(" + (x1 + 1) + ", " + (y1 + 1) + ")" + "-" +
-                            "(" + (x2 + 1) + ", " + (y2 + 1) + ")" +
+                            rangeString(text, startOffset, endOffset) +
                             " :'" +
                             s +
                             "'" + (desc == null ? "" : " (" + desc + ")");
@@ -636,5 +604,16 @@ public class ExpectedHighlightingData {
       (expectedInfo.forcedTextAttributes == null || Comparing.equal(expectedInfo.getTextAttributes(null, null),
                                                                     info.getTextAttributes(null, null))) &&
       (expectedInfo.forcedTextAttributesKey == null || expectedInfo.forcedTextAttributesKey.equals(info.forcedTextAttributesKey));
+  }
+
+  private static String rangeString(String text, int startOffset, int endOffset) {
+    int startLine = StringUtil.offsetToLineNumber(text, startOffset);
+    int endLine = StringUtil.offsetToLineNumber(text, endOffset);
+
+    int startCol = startOffset - StringUtil.lineColToOffset(text, startLine, 0);
+    int endCol = endOffset - StringUtil.lineColToOffset(text, endLine, 0);
+
+    return "(line: " + (startLine + 1) + "; col: " + (startCol + 1) + ")" + " - " +
+           "(line: " + (endLine   + 1) + "; col: " + (endCol   + 1) + ")";
   }
 }

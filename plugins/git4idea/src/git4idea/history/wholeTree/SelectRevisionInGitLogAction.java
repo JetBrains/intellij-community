@@ -2,6 +2,11 @@ package git4idea.history.wholeTree;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -22,10 +27,12 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author rachinskiy
- */
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
 public class SelectRevisionInGitLogAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(SelectRevisionInGitLogAction.class);
 
   public SelectRevisionInGitLogAction() {
     super(GitBundle.getString("vcs.history.action.gitlog"), GitBundle.getString("vcs.history.action.gitlog"), null);
@@ -33,7 +40,7 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
+    final Project project = event.getRequiredData(CommonDataKeys.PROJECT);
     final VcsRevisionNumber revision = getRevisionNumber(event);
     if (revision == null) {
       return;
@@ -63,7 +70,7 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
         Runnable selectCommit = new Runnable() {
           @Override
           public void run() {
-            log.jumpToReference(revision.asString());
+            jumpToRevisionUnderProgress(project, log, revision);
           }
         };
 
@@ -94,7 +101,7 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
     logUi.invokeOnChange(selectAndOpenLog);
   }
 
-  private void showLogNotReadyMessage(Project project) {
+  private static void showLogNotReadyMessage(@NotNull Project project) {
     VcsBalloonProblemNotifier.showOverChangesView(project, GitBundle.getString("vcs.history.action.gitlog.error"), MessageType.WARNING);
   }
 
@@ -131,5 +138,25 @@ public class SelectRevisionInGitLogAction extends DumbAwareAction {
     return null;
   }
 
-
+  private static void jumpToRevisionUnderProgress(@NotNull Project project, @NotNull VcsLog log, @NotNull VcsRevisionNumber revision) {
+    final Future<Boolean> future = log.jumpToReference(revision.asString());
+    if (!future.isDone()) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching for revision " + revision.asString(), false/*can not cancel*/,
+                                                                PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            future.get();
+          }
+          catch (CancellationException ignored) {
+          }
+          catch (InterruptedException ignored) {
+          }
+          catch (ExecutionException e) {
+            LOG.error(e);
+          }
+        }
+      });
+    }
+  }
 }

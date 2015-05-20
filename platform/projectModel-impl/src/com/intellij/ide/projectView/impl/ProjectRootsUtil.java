@@ -50,6 +50,11 @@ public class ProjectRootsUtil {
     return projectFileIndex.isInSourceContent(directoryFile);
   }
 
+  public static boolean isInTestSource(@NotNull PsiFile file) {
+    VirtualFile vFile = file.getVirtualFile();
+    return vFile != null && isInTestSource(vFile, file.getProject());
+  }
+
   public static boolean isInTestSource(@NotNull VirtualFile directoryFile, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     return projectFileIndex.isInTestSourceContent(directoryFile);

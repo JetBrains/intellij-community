@@ -26,6 +26,7 @@
     </action>
     <action id="ActivateChangesToolWindow">
       <keyboard-shortcut first-keystroke="meta 9" />
+      <keyboard-shortcut first-keystroke="meta shift 9" />
     </action>
     <action id="FileStructurePopup">
       <keyboard-shortcut first-keystroke="control 6"/>
@@ -563,6 +564,12 @@
     </action>
     <action id="GotoBookmark9">
       <keyboard-shortcut first-keystroke="control alt 9"/>
+    </action>
+    
+    <!-- No dire need for emmet action in Xcode keymap. Removed to avoid conflicts with SwitchLeft and SwitchRight -->
+    <action id="EmmetPreviousEditPoint">
+    </action>
+    <action id="EmmetNextEditPoint">
     </action>
   </keymap>
 </component>

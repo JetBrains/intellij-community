@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -60,6 +61,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.jar.Attributes;
@@ -240,7 +242,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       }
     });
     DebuggerSession session = new DebuggerSession(environment.getSessionName(), debugProcess);
-    final ExecutionResult executionResult = session.attach(environment);
+    ExecutionResult executionResult;
+    try {
+      executionResult = session.attach(environment);
+    }
+    catch (ExecutionException e) {
+      session.dispose();
+      throw e;
+    }
     if (executionResult == null) {
       return null;
     }
@@ -273,7 +282,18 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
             // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
             // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
             if (!DebuggerManagerThreadImpl.isManagerThread()) {
-              debugProcess.waitFor(10000);
+              if (SwingUtilities.isEventDispatchThread()) {
+                ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+                  @Override
+                  public void run() {
+                    ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                    debugProcess.waitFor(10000);
+                  }
+                }, "Waiting For Debugger Response", false, debugProcess.getProject());
+              }
+              else {
+                debugProcess.waitFor(10000);
+              }
             }
           }
         }

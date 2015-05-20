@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,15 +34,16 @@ public interface Notifications {
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
 
   void notify(@NotNull Notification notification);
-  void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType defaultDisplayType);
-  void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType defaultDisplayType, boolean shouldLog);
-  void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType defaultDisplayType, boolean shouldLog, boolean shouldReadAloud);
+
+  void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType);
+  void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType, boolean shouldLog);
+  void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType, boolean shouldLog, boolean shouldReadAloud);
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {
     /**
      * Registration is OPTIONAL: BALLOON display type will be used by default.
-     * @deprecated use {@link com.intellij.notification.NotificationGroup}
+     * @deprecated use {@link NotificationGroup}
      */
     @SuppressWarnings("JavaDoc")
     public static void register(@NotNull final String group_id, @NotNull final NotificationDisplayType defaultDisplayType) {
@@ -78,9 +79,10 @@ public interface Notifications {
     }
 
     private static void doNotify(Notification notification, @Nullable Project project) {
-      if (project != null && !project.isDisposed()) {
+      if (project != null && !project.isDisposed() && !project.isDefault()) {
         project.getMessageBus().syncPublisher(TOPIC).notify(notification);
-      } else {
+      }
+      else {
         Application app = ApplicationManager.getApplication();
         if (!app.isDisposed()) {
           app.getMessageBus().syncPublisher(TOPIC).notify(notification);

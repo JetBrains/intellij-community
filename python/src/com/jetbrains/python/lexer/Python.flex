@@ -160,6 +160,7 @@ return PyTokenTypes.DOCSTRING; }
 "-="                  { return PyTokenTypes.MINUSEQ; }
 "**="                 { return PyTokenTypes.EXPEQ; }
 "*="                  { return PyTokenTypes.MULTEQ; }
+"@="                  { return PyTokenTypes.ATEQ; }
 "//="                 { return PyTokenTypes.FLOORDIVEQ; }
 "/="                  { return PyTokenTypes.DIVEQ; }
 "%="                  { return PyTokenTypes.PERCEQ; }
@@ -177,6 +178,7 @@ return PyTokenTypes.DOCSTRING; }
 "=="                  { return PyTokenTypes.EQEQ; }
 "!="                  { return PyTokenTypes.NE; }
 "<>"                  { return PyTokenTypes.NE_OLD; }
+"->"                  { return PyTokenTypes.RARROW; }
 "+"                   { return PyTokenTypes.PLUS; }
 "-"                   { return PyTokenTypes.MINUS; }
 "*"                   { return PyTokenTypes.MULT; }

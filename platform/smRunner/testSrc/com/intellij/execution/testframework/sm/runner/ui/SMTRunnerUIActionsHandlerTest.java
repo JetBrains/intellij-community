@@ -44,7 +44,7 @@ public class SMTRunnerUIActionsHandlerTest extends BaseSMTRunnerTestCase {
       }
     };
 
-    myUIActionsHandler = new SMTRunnerUIActionsHandler(myProperties);
+    myUIActionsHandler = new SMTRunnerUIActionsHandler(myProperties, null);
 
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myProperties, false);
     TestConsoleProperties.OPEN_FAILURE_LINE.set(myProperties, false);

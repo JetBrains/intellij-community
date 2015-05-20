@@ -17,10 +17,8 @@ package com.intellij.internal.statistic;
 
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
@@ -28,10 +26,10 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class OsNameUsageCollector extends UsagesCollector {
+class OsNameUsageCollector extends UsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
+  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
     String osName = SystemInfo.isLinux ? "Linux" : SystemInfo.isMac ? "Mac OS X" : SystemInfo.isWindows ? "Windows" : SystemInfo.OS_NAME;
     return Collections.singleton(new UsageDescriptor(osName, 1));
   }

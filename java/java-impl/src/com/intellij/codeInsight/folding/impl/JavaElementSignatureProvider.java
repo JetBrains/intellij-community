@@ -147,6 +147,9 @@ public class JavaElementSignatureProvider extends AbstractElementSignatureProvid
       if (!(parent instanceof PsiClass) && !(parent instanceof PsiMethod) && !(parent instanceof PsiField)) {
         return null;
       }
+      if (!element.equals(((PsiDocCommentOwner)parent).getDocComment())) {
+        return null;
+      }
       String parentSignature = getSignature(parent);
       if (parentSignature == null) return null;
       buffer.append(parentSignature);

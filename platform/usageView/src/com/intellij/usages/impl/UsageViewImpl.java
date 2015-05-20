@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -53,10 +54,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
@@ -72,6 +70,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.plaf.TreeUI;
+import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -89,6 +89,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   private final UsageNodeTreeBuilder myBuilder;
   private final MyPanel myRootPanel;
+  @NotNull
   private final JTree myTree;
   private Content myContent;
 
@@ -286,6 +287,32 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
+  private void clearRendererCache() {
+    // clear renderer cache of node preferred size
+    TreeUI ui = myTree.getUI();
+    if (ui instanceof BasicTreeUI) {
+      AbstractLayoutCache treeState = ReflectionUtil.getField(BasicTreeUI.class, ui, AbstractLayoutCache.class, "treeState");
+      Rectangle visibleRect = myTree.getVisibleRect();
+      int rowForLocation = myTree.getClosestRowForLocation(0, visibleRect.y);
+      int visibleRowCount = getVisibleRowCount();
+      for (int i = rowForLocation + visibleRowCount + 1; i >= rowForLocation; i--) {
+        final TreePath eachPath = myTree.getPathForRow(i);
+        if (eachPath == null) continue;
+
+        treeState.invalidatePathBounds(eachPath);
+      }
+      myTree.repaint(visibleRect);
+    }
+    else {
+      myTree.setCellRenderer(myUsageViewTreeCellRenderer);
+    }
+  }
+
+  private int getVisibleRowCount() {
+    // myTree.getVisibleRowCount returns 20
+    return TreeUtil.getVisibleRowCountForFixedRowHeight(myTree);
+  }
+
   private void setupCentralPanel() {
     myCentralPanel.removeAll();
     disposeUsageContextPanels();
@@ -293,12 +320,22 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree);
     // add reaction to scrolling:
     // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
-    // and we need to recalculate it when the node scrolled into visible rectangle
+    // and we need to recalculate them when the node scrolled into the visible rectangle
     treePane.getViewport().addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        // clear renderer cache of node preferred size
-        myTree.setCellRenderer(myUsageViewTreeCellRenderer);
+        clearRendererCache();
+      }
+    });
+    myTree.addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        clearRendererCache();
+      }
+
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+        clearRendererCache();
       }
     });
     myPreviewSplitter = new Splitter(false, 0.5f, 0.1f, 0.9f);
@@ -772,7 +809,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
   }
 
-  void associateProgress(ProgressIndicator indicator) {
+  void associateProgress(@NotNull ProgressIndicator indicator) {
     associatedProgress = indicator;
   }
 
@@ -1039,9 +1076,12 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
 
   private void updateOnSelectionChanged() {
-    List<UsageInfo> infos = getSelectedUsageInfos();
     if (myCurrentUsageContextPanel != null) {
-      myCurrentUsageContextPanel.updateLayout(infos);
+      try {
+        myCurrentUsageContextPanel.updateLayout(getSelectedUsageInfos());
+      }
+      catch (IndexNotReadyException ignore) {
+      }
     }
   }
 
@@ -1563,7 +1603,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       setLayout(new FlowLayout(FlowLayout.LEFT, 8, 0));
     }
 
-    public void addButtonRunnable(int index, final Runnable runnable, String text) {
+    private void addButtonRunnable(int index, final Runnable runnable, String text) {
       if (getBorder() == null) setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
       final JButton button = new JButton(UIUtil.replaceMnemonicAmpersand(text));

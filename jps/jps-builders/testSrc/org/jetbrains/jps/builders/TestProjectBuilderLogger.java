@@ -16,7 +16,9 @@
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
@@ -34,9 +36,11 @@ import java.util.Set;
 public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
   private MultiMap<String, File> myCompiledFiles = new MultiMap<String, File>();
   private Set<File> myDeletedFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+  private List<String> myLogLines = new ArrayList<String>();
   
   @Override
   public void logDeletedFiles(Collection<String> paths) {
+    super.logDeletedFiles(paths);
     for (String path : paths) {
       myDeletedFiles.add(new File(path));
     }
@@ -44,12 +48,17 @@ public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
 
   @Override
   public void logCompiledFiles(Collection<File> files, String builderName, String description) throws IOException {
+    super.logCompiledFiles(files, builderName, description);
     myCompiledFiles.putValues(builderName, files);
   }
 
-  public void clear() {
+  public void clearFilesData() {
     myCompiledFiles.clear();
     myDeletedFiles.clear();
+  }
+
+  public void clearLog() {
+    myLogLines.clear();
   }
 
   public void assertCompiled(String builderName, File[] baseDirs, String... paths) {
@@ -77,6 +86,24 @@ public class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
 
   @Override
   protected void logLine(String message) {
+    myLogLines.add(message);
+  }
+
+  public String getFullLog(final File... baseDirs) {
+    return StringUtil.join(myLogLines, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        for (File dir : baseDirs) {
+          if (dir != null) {
+            String path = FileUtil.toSystemIndependentName(dir.getAbsolutePath()) + "/";
+            if (s.startsWith(path)) {
+              return s.substring(path.length());
+            }
+          }
+        }
+        return s;
+      }
+    }, "\n");
   }
 
   @Override

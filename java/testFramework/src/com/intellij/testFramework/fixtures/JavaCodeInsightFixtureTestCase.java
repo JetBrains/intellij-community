@@ -80,7 +80,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
 
   /**
    * Return relative path to the test data. Path is relative to the
-   * {@link com.intellij.openapi.application.PathManager#getHomePath()}
+   * {@link PathManager#getHomePath()}
    *
    * @return relative path to the test data.
    */

@@ -61,7 +61,9 @@ public class HgAnnotationProvider implements AnnotationProvider {
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(fileToAnnotate, revision);
     final List<HgFileRevision> logResult;
     try {
-      logResult = (new HgLogCommand(myProject)).execute(fileToAnnotate, DEFAULT_LIMIT, false);
+      HgLogCommand logCommand = new HgLogCommand(myProject);
+      logCommand.setFollowCopies(true);
+      logResult = logCommand.execute(fileToAnnotate, DEFAULT_LIMIT, false);
     }
     catch (HgCommandException e) {
       throw new VcsException("Can not annotate, " + HgVcsMessages.message("hg4idea.error.log.command.execution"), e);

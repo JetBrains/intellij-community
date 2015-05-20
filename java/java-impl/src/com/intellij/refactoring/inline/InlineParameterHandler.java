@@ -16,6 +16,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -117,8 +118,8 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         return true;
       }
     });
-    final int offset = editor.getCaretModel().getOffset();
-    final PsiElement refExpr = psiElement.getContainingFile().findElementAt(offset);
+    final PsiReference reference = TargetElementUtil.findReference(editor);
+    final PsiReferenceExpression refExpr = reference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)reference) : null;
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(refExpr, PsiCodeBlock.class);
     if (codeBlock != null) {
       final PsiElement[] defs = DefUseUtil.getDefs(codeBlock, psiParameter, refExpr);
@@ -127,19 +128,22 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
         if (def instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)def)) {
           final PsiExpression rExpr = ((PsiAssignmentExpression)def.getParent()).getRExpression();
           if (rExpr != null) {
-            final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, psiParameter, refExpr);
+            PsiExpression toInline = InlineLocalHandler.getDefToInline(psiParameter, refExpr, codeBlock);
+            if (toInline != null) {
+              final PsiElement[] refs = DefUseUtil.getRefs(codeBlock, psiParameter, toInline);
 
-            if (InlineLocalHandler.checkRefsInAugmentedAssignmentOrUnaryModified(refs, def) == null) {
-              new WriteCommandAction(project) {
-                @Override
-                protected void run(Result result) throws Throwable {
-                  for (final PsiElement ref : refs) {
-                    InlineUtil.inlineVariable(psiParameter, rExpr, (PsiJavaCodeReferenceElement)ref);
+              if (InlineLocalHandler.checkRefsInAugmentedAssignmentOrUnaryModified(refs, def) == null) {
+                new WriteCommandAction(project) {
+                  @Override
+                  protected void run(Result result) throws Throwable {
+                    for (final PsiElement ref : refs) {
+                      InlineUtil.inlineVariable(psiParameter, rExpr, (PsiJavaCodeReferenceElement)ref);
+                    }
+                    def.getParent().delete();
                   }
-                  def.getParent().delete();
-                }
-              }.execute();
-              return;
+                }.execute();
+                return;
+              }
             }
           }
         }

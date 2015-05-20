@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.tasks.impl;
 
 import com.intellij.notification.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -225,6 +226,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
+  public void addTaskListener(@NotNull TaskListener listener, @NotNull Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
+  }
+
+  @Override
   public void removeTaskListener(TaskListener listener) {
     myDispatcher.removeListener(listener);
   }
@@ -295,6 +301,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         continue;
       }
       try {
+        LOG.info("Searching for task '" + id + "' in " + repository);
         Task issue = repository.findTask(id);
         if (issue != null) {
           LocalTask localTask = findTask(id);
@@ -413,7 +420,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     ArrayList<BranchInfo> infos = new ArrayList<BranchInfo>();
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
-      VcsTaskHandler.TaskInfo[] tasks = handler.getCurrentTasks();
+      VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
       for (VcsTaskHandler.TaskInfo info : tasks) {
         infos.addAll(ContainerUtil.filter(BranchInfo.fromTaskInfo(info, false), new Condition<BranchInfo>() {
           @Override
@@ -434,22 +441,24 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {
+    if (branches.isEmpty()) return new VcsTaskHandler.TaskInfo(null, Collections.<String>emptyList());
     MultiMap<String, String> map = new MultiMap<String, String>();
     for (BranchInfo branch : branches) {
       map.putValue(branch.name, branch.repository);
     }
-    return new VcsTaskHandler.TaskInfo(map);
+    Map.Entry<String, Collection<String>> next = map.entrySet().iterator().next();
+    return new VcsTaskHandler.TaskInfo(next.getKey(), next.getValue());
   }
 
   public void createBranch(LocalTask task, LocalTask previousActive, String name) {
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
-      VcsTaskHandler.TaskInfo info = handler.getActiveTask();
+      VcsTaskHandler.TaskInfo[] info = handler.getCurrentTasks();
       if (previousActive != null && previousActive.getBranches(false).isEmpty()) {
         addBranches(previousActive, info, false);
       }
       addBranches(task, info, true);
-      addBranches(task, handler.startNewTask(name), false);
+      addBranches(task, new VcsTaskHandler.TaskInfo[] { handler.startNewTask(name) }, false);
     }
   }
 
@@ -463,10 +472,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
-  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo info, boolean original) {
-    List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(info, original);
-    for (BranchInfo branchInfo : branchInfos) {
-      task.addBranch(branchInfo);
+  private static void addBranches(LocalTask task, VcsTaskHandler.TaskInfo[] info, boolean original) {
+    for (VcsTaskHandler.TaskInfo taskInfo : info) {
+      List<BranchInfo> branchInfos = BranchInfo.fromTaskInfo(taskInfo, original);
+      for (BranchInfo branchInfo : branchInfos) {
+        task.addBranch(branchInfo);
+      }
     }
   }
 
@@ -692,6 +703,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
         public void actionPerformed(@NotNull ActionEvent e) {
           if (myConfig.updateEnabled && !myUpdating) {
+            LOG.info("Updating issues cache (every " + myConfig.updateInterval + " min)");
             updateIssues(null);
           }
         }
@@ -735,7 +747,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   private static LocalTaskImpl createDefaultTask() {
-    return new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
+    LocalTaskImpl task = new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
+    Date date = new Date();
+    task.setCreated(date);
+    task.setUpdated(date);
+    return task;
   }
 
   public void disposeComponent() {
@@ -816,7 +832,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         long start = System.currentTimeMillis();
         Task[] tasks = repository.getIssues(request, offset, limit, withClosed, cancelled);
         long timeSpent = System.currentTimeMillis() - start;
-        LOG.debug(String.format("Total %s ms to download %d issues from '%s'", timeSpent, tasks.length, repository.getUrl()));
+        LOG.info(String.format("Total %s ms to download %d issues from '%s' (pattern '%s')",
+                               timeSpent, tasks.length, repository.getUrl(), request));
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<Task>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
@@ -981,8 +998,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   public String suggestBranchName(Task task) {
-    if (task.isIssue() && StringUtil.isNotEmpty(task.getNumber())) {
-      return task.getId().replace(' ', '-');
+    if (task.isIssue()) {
+      return TaskUtil.formatTask(task, myConfig.branchNameFormat).replace(' ', '-');
     }
     else {
       String summary = task.getSummary();
@@ -1029,15 +1046,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean createBranch = true;
 
     // close task options
-    public boolean closeIssue = true;
     public boolean commitChanges = true;
     public boolean mergeBranch = true;
 
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;
-    public boolean markAsInProgress = false;
 
     public String changelistNameFormat = "{id} {summary}";
+    public String branchNameFormat = "{id}";
 
     public boolean searchClosedTasks = false;
     @Tag("servers")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,12 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.codeInspection.ex.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProfileManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 
-import java.util.Arrays;
-
 public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigurable {
-  private static final Logger LOG = Logger.getInstance("#" + ProjectInspectionToolsConfigurable.class.getName());
   public ProjectInspectionToolsConfigurable(InspectionProfileManager profileManager, InspectionProjectProfileManager projectProfileManager) {
     super(projectProfileManager, profileManager);
   }
@@ -43,16 +37,11 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   }
 
   @Override
-  public void apply() throws ConfigurationException {
-    super.apply();
-    final InspectionProfileImpl selectedObject = getSelectedObject();
-    final String profileName = selectedObject.getName();
-    final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
-    LOG.assertTrue(selectedPanel != null, "selected profile: " + profileName + " panels: " + Arrays.toString(getKnownNames().toArray()));
-    if (selectedPanel.isProfileShared()) {
-      myProjectProfileManager.setProjectProfile(profileName);
+  protected void applyRootProfile(String name, boolean isShared) {
+    if (isShared) {
+      myProjectProfileManager.setProjectProfile(name);
     } else {
-      myProfileManager.setRootProfile(profileName);
+      myProfileManager.setRootProfile(name);
       myProjectProfileManager.setProjectProfile(null);
     }
     InspectionProfileManagerImpl.onProfilesChanged();

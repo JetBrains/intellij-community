@@ -33,7 +33,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -52,7 +51,10 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
-import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.PyPackageManagerUI;
+import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
+import com.jetbrains.python.packaging.PyPackageUtil;
+import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
@@ -68,7 +70,7 @@ import java.util.List;
 /**
  * User: catherine
  */
-public class PyIntegratedToolsConfigurable implements SearchableConfigurable, NonDefaultProjectConfigurable {
+public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
   private JComboBox myTestRunnerComboBox;
   private JComboBox myDocstringFormatComboBox;

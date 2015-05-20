@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.ui;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkPropertyListener;
+import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.ToolbarPanel;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -28,7 +29,9 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +41,7 @@ import java.beans.PropertyChangeListener;
 /**
  * @author yole
  */
-public abstract class TestResultsPanel extends JPanel implements Disposable {
+public abstract class TestResultsPanel extends JPanel implements Disposable, DataProvider  {
   private JScrollPane myLeftPane;
   private JComponent myStatisticsComponent;
   private Splitter myStatisticsSplitter;
@@ -137,6 +140,21 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
   }
 
   protected abstract JComponent createTestTreeView();
+
+  @Nullable
+  protected TestTreeView getTreeView() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    final TestTreeView view = getTreeView();
+    if (view != null) {
+      return view.getData(dataId);
+    }
+    return null;
+  }
 
   private static JComponent createOutputTab(JComponent console, AnAction[] consoleActions) {
     JPanel outputTab = new JPanel(new BorderLayout());

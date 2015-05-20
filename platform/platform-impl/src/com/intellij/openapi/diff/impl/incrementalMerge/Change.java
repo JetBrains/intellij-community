@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,13 +70,11 @@ public abstract class Change {
     RangeMarker originalRangeMarker = getRangeMarker(original);
     RangeMarker rangeMarker = getRangeMarker(targetSide);
 
-    if (originalRangeMarker != null && rangeMarker != null) {
-      TextRange textRange = modifyDocument(getProject(), originalRangeMarker, rangeMarker);
-      if (textRange != null && isValid()) {
-        updateTargetRangeMarker(targetSide, textRange);
-      }
-      onApplied();
+    TextRange textRange = modifyDocument(getProject(), originalRangeMarker, rangeMarker);
+    if (textRange != null && isValid()) {
+      updateTargetRangeMarker(targetSide, textRange);
     }
+    onApplied();
   }
 
   /**
@@ -113,7 +111,7 @@ public abstract class Change {
       int offset = target.getStartOffset();
       document.deleteString(offset, target.getEndOffset());
     }
-    String text = DocumentUtil.getText(original);
+    CharSequence text = original.getDocument().getImmutableCharSequence().subSequence(original.getStartOffset(), original.getEndOffset());
     int startOffset = target.getStartOffset();
     if (DocumentUtil.isEmpty(target)) {
       document.insertString(startOffset, text);
@@ -142,10 +140,12 @@ public abstract class Change {
     return getChangeList().getProject();
   }
 
+  @NotNull
   private ChangeHighlighterHolder getHighlighterHolder(FragmentSide side) {
     return getChangeSide(side).getHighlighterHolder();
   }
 
+  @NotNull
   private RangeMarker getRangeMarker(FragmentSide side) {
     ChangeSide changeSide = getChangeSide(side);
     LOG.assertTrue(changeSide != null);
@@ -226,6 +226,7 @@ public abstract class Change {
       return myRange;
     }
 
+    @NotNull
     @Override
     public ChangeHighlighterHolder getHighlighterHolder() {
       return myHighlighterHolder;

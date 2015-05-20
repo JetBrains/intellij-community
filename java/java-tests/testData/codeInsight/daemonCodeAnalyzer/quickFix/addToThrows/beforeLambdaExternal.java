@@ -1,4 +1,4 @@
-// "Add Exception to Method Signature" "false"
+// "Add exception to method signature" "false"
 class C {
 
   public static void main(String[] args) throws InterruptedException {

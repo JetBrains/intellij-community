@@ -44,10 +44,10 @@ public class ParameterData {
     myType = type;
   }
 
-  public static void createFromConstructor(final PsiMethod constructor, final Map<String, ParameterData> result) {
+  public static void createFromConstructor(final PsiMethod constructor, String setterPrefix, final Map<String, ParameterData> result) {
 
     for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
-      initParameterData(parameter, result);
+      initParameterData(parameter, setterPrefix, result);
     }
 
     final PsiMethod chainedConstructor = RefactoringUtil.getChainedConstructor(constructor);
@@ -61,7 +61,7 @@ public class ParameterData {
       for (final PsiParameter parameter : chainedConstructor.getParameterList().getParameters()) {
         if (!parameter.isVarArgs()) {
           final PsiExpression arg = args[i];
-          final ParameterData parameterData = initParameterData(parameter, result);
+          final ParameterData parameterData = initParameterData(parameter, setterPrefix, result);
           if (!(arg instanceof PsiReferenceExpression && ((PsiReferenceExpression)arg).resolve() instanceof PsiParameter)) {
             parameterData.setDefaultValue(arg.getText());
           }
@@ -71,7 +71,7 @@ public class ParameterData {
     }
   }
 
-  private static ParameterData initParameterData(PsiParameter parameter, Map<String, ParameterData> result) {
+  private static ParameterData initParameterData(PsiParameter parameter, String setterPrefix, Map<String, ParameterData> result) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(parameter.getProject());
     final String paramName = parameter.getName();
     final String pureParamName = styleManager.variableNameToPropertyName(paramName, VariableKind.PARAMETER);
@@ -91,7 +91,7 @@ public class ParameterData {
       parameterData = new ParameterData(paramName, parameter.getType());
 
       parameterData.setFieldName(styleManager.suggestVariableName(VariableKind.FIELD, uniqueParamName, null, parameter.getType()).names[0]);
-      parameterData.setSetterName(PropertyUtil.suggestSetterName(uniqueParamName));
+      parameterData.setSetterName(PropertyUtil.suggestSetterName(uniqueParamName, setterPrefix));
 
       result.put(uniqueParamName, parameterData);
     }

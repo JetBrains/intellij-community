@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,9 +53,12 @@ public class RatesPanel extends JPanel {
 
   public void setRate(String rating) {
     Double dblRating = 0d;
-    try {
-      dblRating = Double.valueOf(rating);
-    } catch (Exception ignore) {}
+    if (rating != null) {
+      try {
+        dblRating = Double.valueOf(rating);
+      }
+      catch (NumberFormatException ignore) { }
+    }
 
     final int intRating = dblRating.intValue();
 
@@ -72,6 +76,6 @@ public class RatesPanel extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(55, 11);
+    return JBUI.size(55, 11);
   }
 }

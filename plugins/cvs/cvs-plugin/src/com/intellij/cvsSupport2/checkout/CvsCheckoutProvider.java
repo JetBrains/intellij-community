@@ -25,6 +25,7 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.ui.experts.checkout.CheckoutWizard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -74,14 +75,19 @@ public class CvsCheckoutProvider implements CheckoutProvider {
 
   public void refreshAfterCheckout(final Listener listener, final CvsElement[] selectedElements, final File checkoutDirectory,
                                    final boolean useAlternateCheckoutPath) {
+
     VirtualFileManager.getInstance().asyncRefresh(new Runnable() {
       public void run() {
-        // shouldn't hold write action when calling this (IDEADEV-20086)
-        for (CvsElement element : selectedElements) {
-          final File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
-          listener.directoryCheckedOut(path, CvsVcs2.getKey());
-        }
-        listener.checkoutCompleted();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            for (CvsElement element : selectedElements) {
+              final File path = useAlternateCheckoutPath ? checkoutDirectory : new File(checkoutDirectory, element.getCheckoutPath());
+              listener.directoryCheckedOut(path, CvsVcs2.getKey());
+            }
+            listener.checkoutCompleted();
+          }
+        });
       }
     });
   }

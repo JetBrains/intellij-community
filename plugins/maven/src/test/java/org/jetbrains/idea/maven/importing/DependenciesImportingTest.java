@@ -2191,7 +2191,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<repositories>" +
                   "  <repository>" +
                   "    <id>central</id>" +
-                  "    <url>file://localhost/${basedir}/repo</url>" +
+                  "    <url>file://localhost/" + repoPath + "</url>" +
                   "  </repository>" +
                   "</repositories>");
 
@@ -2248,6 +2248,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   //}
   //
   public void testVersionRangeInDependencyManagementDoesntBreakIndirectDependency() throws Exception {
+    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
+    String repoPath = helper.getTestDataPath("local1");
+    setRepositoryPath(repoPath);
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +

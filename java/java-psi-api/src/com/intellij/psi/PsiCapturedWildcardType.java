@@ -77,7 +77,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
       return false;
     }
 
-    if (myContext instanceof PsiReferenceExpression && !Comparing.equal(myParameter, captured.myParameter)) {
+    if ((myContext instanceof PsiReferenceExpression || myContext instanceof PsiMethodCallExpression) && !Comparing.equal(myParameter, captured.myParameter)) {
       return false;
     }
 
@@ -92,7 +92,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
   @NotNull
   @Override
   public String getPresentableText() {
-    return myExistential.getPresentableText();
+    return "capture of " + myExistential.getPresentableText();
   }
 
   @NotNull

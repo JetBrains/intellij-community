@@ -17,20 +17,20 @@ package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public abstract class NewBranchAction<T extends Repository> extends DumbAwareAction {
   protected final List<T> myRepositories;
-  protected Project myProject;
+  protected final Project myProject;
 
   public NewBranchAction(@NotNull Project project, @NotNull List<T> repositories) {
-    super("New Branch", "Create and checkout new branch", IconUtil.getAddIcon());
+    super("New Branch", "Create and checkout new branch", AllIcons.General.Add);
     myRepositories = repositories;
     myProject = project;
   }

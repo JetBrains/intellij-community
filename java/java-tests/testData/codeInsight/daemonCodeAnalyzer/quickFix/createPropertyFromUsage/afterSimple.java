@@ -1,4 +1,4 @@
-// "Create Property" "true"
+// "Create property" "true"
 class Calculator {
     private int i;
 

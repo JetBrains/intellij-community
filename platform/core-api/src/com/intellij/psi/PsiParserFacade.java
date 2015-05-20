@@ -39,10 +39,16 @@ public interface PsiParserFacade {
   PsiElement createWhiteSpaceFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
 
   /**
-   * Creates a comment for the specified language.
+   * Creates a line comment for the specified language.
    */
   @NotNull
   PsiComment createLineCommentFromText(@NotNull LanguageFileType fileType, @NotNull String text) throws IncorrectOperationException;
+
+  /**
+   * Creates a line comment for the specified language.
+   */
+  @NotNull
+  PsiComment createBlockCommentFromText(@NotNull Language language, @NotNull String text) throws IncorrectOperationException;
 
   /**
    * Creates a line comment for the specified language or block comment if language doesn't support line ones

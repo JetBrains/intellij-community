@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,9 +69,6 @@ public class FieldMayBeStaticInspection extends BaseInspection {
       if (SideEffectChecker.mayHaveSideEffects(initializer)) {
         return;
       }
-      if (!canBeStatic(initializer)) {
-        return;
-      }
       final PsiType type = field.getType();
       if (!ClassUtils.isImmutable(type)) {
         return;
@@ -84,12 +81,17 @@ public class FieldMayBeStaticInspection extends BaseInspection {
         // inner class cannot have static declarations
         return;
       }
+      if (containingClass instanceof PsiAnonymousClass && !PsiUtil.isCompileTimeConstant(field)) {
+        return;
+      }
+      if (!canBeStatic(initializer)) {
+        return;
+      }
       registerFieldError(field);
     }
 
     private static boolean canBeStatic(PsiExpression initializer) {
-      final CanBeStaticVisitor canBeStaticVisitor =
-        new CanBeStaticVisitor();
+      final CanBeStaticVisitor canBeStaticVisitor = new CanBeStaticVisitor();
       initializer.accept(canBeStaticVisitor);
       return canBeStaticVisitor.canBeStatic();
     }

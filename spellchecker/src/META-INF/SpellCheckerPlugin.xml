@@ -18,11 +18,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"
+                        serviceImplementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomizationProviderImpl"
+                        overrides="true"/>
+
     <projectService serviceInterface="com.intellij.spellchecker.settings.SpellCheckerSettings"
                     serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
     <projectService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"
                     serviceImplementation="com.intellij.spellchecker.SpellCheckerManager"/>
-    <editorCustomization implementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomization"/>
     <projectConfigurable groupId="editor" instance="com.intellij.spellchecker.settings.SpellCheckerSettingsManager" id="reference.settings.ide.settings.spelling" key="spelling" bundle="com.intellij.spellchecker.util.SpellCheckerBundle" />
 
 

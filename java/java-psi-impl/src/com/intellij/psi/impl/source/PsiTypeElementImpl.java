@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -76,6 +77,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   private PsiType calculateType() {
+    final PsiType inferredType = PsiAugmentProvider.getInferredType(this);
+    if (inferredType != null) {
+      return inferredType;
+    }
+
     PsiType type = null;
     SmartList<PsiAnnotation> annotations = new SmartList<PsiAnnotation>();
 
@@ -139,7 +145,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       if (PsiUtil.isJavaToken(child, JavaTokenType.AND)) {
         List<PsiType> types = collectTypes();
         assert !types.isEmpty() : this;
-        type = PsiIntersectionType.createIntersection(types);
+        type = PsiIntersectionType.createIntersection(false, types.toArray(PsiType.createArray(types.size())));
         break;
       }
 

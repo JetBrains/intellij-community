@@ -17,19 +17,13 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.generation.OverrideMethodsHandler;
 import com.intellij.lang.CodeInsightActions;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.NotNull;
 
-public class OverrideMethodsAction extends BaseCodeInsightAction {
+public class OverrideMethodsAction extends PresentableActionHandlerBasedAction {
 
   @NotNull
   @Override
@@ -37,24 +31,9 @@ public class OverrideMethodsAction extends BaseCodeInsightAction {
     return new OverrideMethodsHandler();
   }
 
+  @NotNull
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
-    Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
-    final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.OVERRIDE_METHOD.forLanguage(language);
-    if (codeInsightActionHandler != null) {
-      return codeInsightActionHandler.isValidFor(editor, file);
-    }
-    return false;
-  }
-
-  @Override
-  public void update(final AnActionEvent event) {
-    if (CodeInsightActions.OVERRIDE_METHOD.hasAnyExtensions()) {
-      event.getPresentation().setVisible(true);
-      super.update(event);
-    }
-    else {
-      event.getPresentation().setVisible(false);
-    }
+  protected LanguageExtension<LanguageCodeInsightActionHandler> getLanguageExtension() {
+    return CodeInsightActions.OVERRIDE_METHOD;
   }
 }

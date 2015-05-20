@@ -3,6 +3,8 @@ package org.jetbrains.plugins.ipnb.psi;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.console.parsing.PyConsoleParsingContext;
+import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.FunctionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
@@ -10,16 +12,16 @@ import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
 
-public class IpnbPyParsingContext extends ParsingContext {
+public class IpnbPyParsingContext extends PyConsoleParsingContext {
   private final StatementParsing myStatementParser;
   private final ExpressionParsing myExpressionParser;
   private final FunctionParsing myFunctionParser;
 
   public IpnbPyParsingContext(final PsiBuilder builder,
                               LanguageLevel languageLevel,
-                              StatementParsing.FUTURE futureFlag) {
-    super(builder, languageLevel, futureFlag);
-    myStatementParser = new IpnbPyStatementParsing(this, futureFlag);
+                              StatementParsing.FUTURE futureFlag, boolean startSymbol, PythonConsoleData data) {
+    super(builder, languageLevel, futureFlag, data, startSymbol);
+    myStatementParser = new IpnbPyStatementParsing(this, futureFlag, startSymbol, data);
     myExpressionParser = new IpnbPyExpressionParsing(this);
     myFunctionParser = new IpnbPyFunctionParsing(this);
   }
@@ -39,7 +41,7 @@ public class IpnbPyParsingContext extends ParsingContext {
     return myFunctionParser;
   }
 
-  private static class IpnbPyExpressionParsing extends ExpressionParsing {
+  private static class IpnbPyExpressionParsing extends ConsoleExpressionParsing {
     public IpnbPyExpressionParsing(ParsingContext context) {
       super(context);
     }
@@ -64,10 +66,10 @@ public class IpnbPyParsingContext extends ParsingContext {
     }
   }
 
-  private static class IpnbPyStatementParsing extends StatementParsing {
+  private static class IpnbPyStatementParsing extends ConsoleStatementParsing {
 
-    protected IpnbPyStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag) {
-      super(context, futureFlag);
+    protected IpnbPyStatementParsing(ParsingContext context, @Nullable FUTURE futureFlag, boolean startSymbol, PythonConsoleData data) {
+      super(context, futureFlag, startSymbol, data);
     }
 
     @Override
@@ -76,6 +78,7 @@ public class IpnbPyParsingContext extends ParsingContext {
     }
 
   }
+
   private static class IpnbPyFunctionParsing extends FunctionParsing {
 
     public IpnbPyFunctionParsing(ParsingContext context) {

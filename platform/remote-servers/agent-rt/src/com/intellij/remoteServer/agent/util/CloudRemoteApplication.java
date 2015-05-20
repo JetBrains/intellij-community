@@ -15,12 +15,16 @@
  */
 package com.intellij.remoteServer.agent.util;
 
+import com.intellij.remoteServer.agent.annotation.ImmediateCall;
+
 /**
  * @author michael.golubev
  */
 public interface CloudRemoteApplication {
 
+  @ImmediateCall
   String getName();
 
+  @ImmediateCall
   String getWebUrl();
 }

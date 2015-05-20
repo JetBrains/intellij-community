@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,18 +51,16 @@ class ModifierPredicate implements PsiElementPredicate {
           (myModifier.equals(PsiModifier.PRIVATE) || myModifier.equals(PsiModifier.PROTECTED))) {
         return false;
       }
-    } else if (parent instanceof PsiMethod) {
+    }
+    else if (parent instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)parent;
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || containingClass.isInterface()) {
+      if (containingClass == null || containingClass.isInterface() || (method.isConstructor() && containingClass.isEnum())) {
         return false;
       }
     }
     final PsiModifierListOwner owner = (PsiModifierListOwner)parent;
     final PsiModifierList modifierList = owner.getModifierList();
-    if (modifierList == null) {
-      return false;
-    }
-    return !modifierList.hasModifierProperty(myModifier);
+    return modifierList != null && !modifierList.hasModifierProperty(myModifier);
   }
 }

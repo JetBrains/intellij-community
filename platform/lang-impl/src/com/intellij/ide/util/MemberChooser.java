@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -361,7 +362,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     installSpeedSearch();
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    scrollPane.setPreferredSize(new Dimension(350, 450));
+    scrollPane.setPreferredSize(JBUI.size(350, 450));
     panel.add(scrollPane, BorderLayout.CENTER);
 
     return panel;
@@ -514,7 +515,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   public void setCopyJavadocVisible(boolean state) {
-    myCopyJavadocCheckbox.setVisible(state);
+    if (myCopyJavadocCheckbox != null) {
+      myCopyJavadocCheckbox.setVisible(state);
+    }
   }
 
   public boolean isCopyJavadoc() {

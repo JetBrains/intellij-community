@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.preview;
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +27,9 @@ public interface PreviewManager {
 
     @Nullable
     private static PreviewManager getInstance(@NotNull Project project) {
-      if (!UISettings.getInstance().NAVIGATE_TO_PREVIEW) return null;
-      return ServiceManager.getService(project, PreviewManager.class);
+      return null;//disabled for a while
+      //if (!UISettings.getInstance().NAVIGATE_TO_PREVIEW) return null;
+      //return ServiceManager.getService(project, PreviewManager.class);
     }
 
     /**

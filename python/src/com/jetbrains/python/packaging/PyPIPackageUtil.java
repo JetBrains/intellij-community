@@ -17,8 +17,12 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.webcore.packaging.RepoPackage;
+import com.jetbrains.python.PythonHelpersLocator;
 import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +39,6 @@ import javax.swing.text.html.parser.ParserDelegator;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -50,16 +53,45 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
 public class PyPIPackageUtil {
-  public static Logger LOG = Logger.getInstance(PyPIPackageUtil.class.getName());
-  @NonNls public static String PYPI_URL = "https://pypi.python.org/pypi";
-  @NonNls public static String PYPI_LIST_URL = "https://pypi.python.org/pypi?%3Aaction=index";
+  public static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class.getName());
+  @NonNls public static final String PYPI_URL = "https://pypi.python.org/pypi";
+  @NonNls public static final String PYPI_LIST_URL = "https://pypi.python.org/pypi?%3Aaction=index";
+
+  public static Map<String, String> PACKAGES_TOPLEVEL = new HashMap<String, String>();
+
+  public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
+
   private XmlRpcClient myXmlRpcClient;
-  public static PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
   private Map<String, List<String>> packageToReleases = new HashMap<String, List<String>>();
   private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
   private Set<RepoPackage> myAdditionalPackageNames;
   @Nullable private volatile Set<String> myPackageNames = null;
+
+
+  static {
+    try {
+      fillPackages();
+    }
+    catch (IOException e) {
+      LOG.error("Cannot find \"packages\". " + e.getMessage());
+    }
+  }
+
+  private static void fillPackages() throws IOException {
+    FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/packages"));
+    try {
+      final String text = FileUtil.loadTextAndClose(reader);
+      final List<String> lines = StringUtil.split(text, "\n");
+      for (String line : lines) {
+        final List<String> split = StringUtil.split(line, " ");
+        PACKAGES_TOPLEVEL.put(split.get(0), split.get(1));
+      }
+    }
+    finally {
+      reader.close();
+    }
+  }
 
   public static Set<String> getPackageNames(final String url) throws IOException {
     final TreeSet<String> names = new TreeSet<String>();
@@ -202,16 +234,20 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  public List<String> getPyPIListFromWeb() throws IOException {
-    final List<String> packages = new ArrayList<String>();
-    HTMLEditorKit.ParserCallback callback =
-        new HTMLEditorKit.ParserCallback() {
-          HTML.Tag myTag;
+  public List<String> getPyPIListFromWeb() {
+    return HttpRequests.request(PYPI_LIST_URL).connect(new HttpRequests.RequestProcessor<List<String>>() {
+      @Override
+      public List<String> process(@NotNull HttpRequests.Request request) throws IOException {
+        final List<String> packages = new ArrayList<String>();
+        Reader reader = request.getReader();
+        new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
           boolean inTable = false;
+
           @Override
           public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
-            if ("table".equals(tag.toString()))
+            if ("table".equals(tag.toString())) {
               inTable = !inTable;
+            }
 
             if (inTable && "a".equals(tag.toString())) {
               packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
@@ -220,41 +256,14 @@ public class PyPIPackageUtil {
 
           @Override
           public void handleEndTag(HTML.Tag tag, int i) {
-            if ("table".equals(tag.toString()))
+            if ("table".equals(tag.toString())) {
               inTable = !inTable;
+            }
           }
-        };
-
-
-    // Create a trust manager that does not validate certificate
-    TrustManager[] trustAllCerts = new TrustManager[]{new PyPITrustManager()};
-
-    try {
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, trustAllCerts, new SecureRandom());
-
-      final HttpConfigurable settings = HttpConfigurable.getInstance();
-      final URLConnection connection = settings.openConnection(PYPI_LIST_URL);
-
-      if (connection instanceof HttpsURLConnection) {
-        ((HttpsURLConnection)connection).setSSLSocketFactory(sslContext.getSocketFactory());
+        }, true);
+        return packages;
       }
-      InputStream is = connection.getInputStream();
-      Reader reader = new InputStreamReader(is);
-      try{
-        new ParserDelegator().parse(reader, callback, true);
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-      finally {
-        reader.close();
-      }
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-    }
-    return packages;
+    }, Collections.<String>emptyList(), LOG);
   }
 
   public Collection<String> getPackageNames() {
@@ -281,11 +290,11 @@ public class PyPIPackageUtil {
     if (myPackageNames == null) {
       final Set<String> names = new HashSet<String>();
       for (String name : getPyPIPackages().keySet()) {
-        names.add(name.toLowerCase());
+        names.add(name.toLowerCase(Locale.ENGLISH));
       }
       myPackageNames = names;
     }
-    return myPackageNames != null && myPackageNames.contains(packageName.toLowerCase());
+    return myPackageNames != null && myPackageNames.contains(packageName.toLowerCase(Locale.ENGLISH));
   }
 
   private static class PyPIXmlRpcTransport extends DefaultXmlRpcTransport {

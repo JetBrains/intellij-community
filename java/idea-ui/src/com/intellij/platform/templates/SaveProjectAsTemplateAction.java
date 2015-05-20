@@ -216,12 +216,17 @@ public class SaveProjectAsTemplateAction extends AnAction {
     else if (overwrite) {
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         public void run() {
-          try {
-            VfsUtil.saveText(descriptionFile, text);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                VfsUtil.saveText(descriptionFile, text);
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
+            }
+          });
         }
       });
     }
@@ -249,7 +254,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                           Project project,
                                           Map<String, String> parameters) throws IOException {
     String text = VfsUtilCore.loadText(virtualFile);
-    final FileTemplate template = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
+    final FileTemplate template = FileTemplateManager.getInstance(project).getDefaultTemplate(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     final String templateText = template.getText();
     final Pattern pattern = FileHeaderChecker.getTemplatePattern(template, project, new TIntObjectHashMap<String>());
     String result = convertTemplates(text, pattern, templateText);

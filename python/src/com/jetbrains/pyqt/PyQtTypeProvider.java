@@ -15,9 +15,10 @@
  */
 package com.jetbrains.pyqt;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.Callable;
+import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -36,7 +37,7 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
   private static final String ourQt4Signal = "pyqtSignal";
 
   @Override
-  public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (PyNames.INIT.equals(callable.getName()) && callable instanceof PyFunction) {
       final PyFunction function = (PyFunction)callable;
       final PyClass containingClass = function.getContainingClass();
@@ -46,8 +47,10 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
           final QualifiedName name = QualifiedName.fromDottedString(classQName);
           final String qtVersion = name.getComponents().get(0);
           final PyClass aClass = PyClassNameIndex.findClass(qtVersion + "." + ourQtBoundSignal, function.getProject());
-          if (aClass != null)
-            return new PyClassTypeImpl(aClass, false);
+          if (aClass != null) {
+            final PyType type = new PyClassTypeImpl(aClass, false);
+            return Ref.create(type);
+          }
         }
       }
     }
@@ -56,7 +59,7 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallableType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+  public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyFunction) {
       final String qualifiedName = callable.getQualifiedName();
       if (qualifiedName != null && qualifiedName.startsWith("PyQt")){

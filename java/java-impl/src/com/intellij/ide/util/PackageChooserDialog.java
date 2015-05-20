@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.TextFieldAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -40,13 +40,17 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.JavaReferenceEditorUtil;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +79,7 @@ public class PackageChooserDialog extends PackageChooser {
   private Module myModule;
   private EditorTextField myPathEditor;
 
-  private Alarm myAlarm = new Alarm(getDisposable()); 
+  private final Alarm myAlarm = new Alarm(getDisposable());
 
   public PackageChooserDialog(String title, @NotNull Module module) {
     super(module.getProject(), true);
@@ -135,7 +139,7 @@ public class PackageChooserDialog extends PackageChooser {
     );
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
-    scrollPane.setPreferredSize(new Dimension(500, 300));
+    scrollPane.setPreferredSize(JBUI.size(500, 300));
 
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
       public String convert(TreePath path) {

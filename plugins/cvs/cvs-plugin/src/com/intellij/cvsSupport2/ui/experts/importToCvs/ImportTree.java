@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -237,8 +237,8 @@ public class ImportTree extends NodeRenderer {
         if (file.isDirectory() && file.getName().equals(CvsUtil.CVS)) return true;
 
         if (FileTypeManager.getInstance().isFileIgnored(abstractFileObject.getName())) return true;
+        final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
         if (myProject != null && !includedFiles.contains(file)) {
-          final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
           if (vFile != null && isIgnoredByVcs(vFile)) {
             return true;
           }
@@ -250,7 +250,7 @@ public class ImportTree extends NodeRenderer {
         if (!myParentToIgnoresMap.containsKey(parentFile)) {
           myParentToIgnoresMap.put(parentFile, IgnoredFilesInfoImpl.createForFile(new File(parentFile, CvsUtil.CVS_IGNORE_FILE)));
         }
-        return myParentToIgnoresMap.get(parentFile).shouldBeIgnored(file.getName());
+        return myParentToIgnoresMap.get(parentFile).shouldBeIgnored(vFile);
       }
     };
   }

@@ -96,7 +96,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   }
 
   @NotNull
-  private static MyPathAndProjectButtonPanel createPanel(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
+  public static MyPathAndProjectButtonPanel createPanel(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
     final EditorTextField textField = createTextField(project, externalSystemId);
     
     final FixedSizeButton selectRegisteredProjectButton = new FixedSizeButton();
@@ -237,7 +237,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     }
   }
 
-  private static void collapse(@NotNull final Editor editor, @NotNull final String placeholder) {
+  public static void collapse(@NotNull final Editor editor, @NotNull final String placeholder) {
     final FoldingModel foldingModel = editor.getFoldingModel();
     foldingModel.runBatchFoldingOperation(new Runnable() {
       @Override

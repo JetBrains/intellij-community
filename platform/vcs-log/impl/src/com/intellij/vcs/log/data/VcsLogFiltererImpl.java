@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
@@ -24,20 +28,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogHashMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class VcsLogFiltererImpl implements VcsLogFilterer {
+  private static final Logger LOG = Logger.getInstance(VcsLogFiltererImpl.class);
 
   @NotNull private final SingleTaskController<Request, VisiblePack> myTaskController;
   @NotNull private final VisiblePackBuilder myVisiblePackBuilder;
@@ -46,16 +50,17 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   @NotNull private PermanentGraph.SortType mySortType;
   @NotNull private CommitCountStage myCommitCount = CommitCountStage.INITIAL;
   @Nullable private DataPack myDataPack;
+  @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
 
   VcsLogFiltererImpl(@NotNull final Project project,
                      @NotNull Map<VirtualFile, VcsLogProvider> providers,
                      @NotNull VcsLogHashMap hashMap,
-                     @NotNull Map<Hash, VcsCommitMetadata> topCommitsDetailsCache,
+                     @NotNull Map<Integer, VcsCommitMetadata> topCommitsDetailsCache,
                      @NotNull CommitDetailsGetter detailsGetter,
                      @NotNull final PermanentGraph.SortType initialSortType,
                      @NotNull final Consumer<VisiblePack> visiblePackConsumer) {
     myVisiblePackBuilder = new VisiblePackBuilder(providers, hashMap, topCommitsDetailsCache, detailsGetter);
-    myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null);
+    myFilters = new VcsLogFilterCollectionImpl(null, null, null, null, null, null, null);
     mySortType = initialSortType;
 
     myTaskController = new SingleTaskController<Request, VisiblePack>(visiblePackConsumer) {
@@ -64,7 +69,8 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            ProgressManagerImpl.runProcessWithProgressAsynchronously(new MyTask(project, "Applying filters..."));
+            ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
+              new MyTask(project, "Applying filters..."));
           }
         });
       }
@@ -94,54 +100,77 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
   private class MyTask extends Task.Backgroundable {
 
     public MyTask(@Nullable Project project, @NotNull String title) {
-      super(project, title);
+      super(project, title, false);
     }
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       VisiblePack visiblePack = null;
       List<Request> requests;
-      List<MoreCommitsRequest> requestsToRun = new ArrayList<MoreCommitsRequest>();
       while (!(requests = myTaskController.popRequests()).isEmpty()) {
-        RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
-        FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
-        SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
-        List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
-        requestsToRun.addAll(moreCommitsRequests);
-
-        if (refreshRequest != null) {
-          myDataPack = refreshRequest.dataPack;
+        try {
+          visiblePack = getVisiblePack(visiblePack, requests);
         }
-        if (filterRequest != null) {
-          myFilters = filterRequest.filters;
+        catch (ProcessCanceledException ignored) {
+          return;
         }
-        if (sortTypeRequest != null) {
-          mySortType = sortTypeRequest.sortType;
+        catch (Throwable t) {
+          LOG.error("Error while filtering log", t);
         }
-
-        if (myDataPack == null) { // when filter is set during initialization, just remember filters
-          continue;
-        }
-
-        if (filterRequest != null) {
-          // "more commits needed" has no effect if filter changes; it also can't come after filter change request
-          myCommitCount = CommitCountStage.INITIAL;
-        }
-        else if (!moreCommitsRequests.isEmpty()) {
-          myCommitCount = myCommitCount.next();
-        }
-
-        Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.build(myDataPack, mySortType, myFilters, myCommitCount);
-        visiblePack = pair.first;
-        myCommitCount = pair.second;
       }
 
       // visible pack can be null (e.g. when filter is set during initialization) => we just remember filters set by user
       myTaskController.taskCompleted(visiblePack);
 
-      for (MoreCommitsRequest request : requestsToRun) {
-        request.onLoaded.run();
+      if (visiblePack != null) {
+        final List<MoreCommitsRequest> requestsToRun = myRequestsToRun;
+        myRequestsToRun = ContainerUtil.newArrayList();
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            for (MoreCommitsRequest request : requestsToRun) {
+              request.onLoaded.run();
+            }
+          }
+        });
       }
+    }
+
+    @Nullable
+    private VisiblePack getVisiblePack(@Nullable VisiblePack visiblePack, @NotNull List<Request> requests) {
+      RefreshRequest refreshRequest = ContainerUtil.findLastInstance(requests, RefreshRequest.class);
+      FilterRequest filterRequest = ContainerUtil.findLastInstance(requests, FilterRequest.class);
+      SortTypeRequest sortTypeRequest = ContainerUtil.findLastInstance(requests, SortTypeRequest.class);
+      List<MoreCommitsRequest> moreCommitsRequests = ContainerUtil.findAll(requests, MoreCommitsRequest.class);
+      myRequestsToRun.addAll(moreCommitsRequests);
+
+      if (refreshRequest != null) {
+        myDataPack = refreshRequest.dataPack;
+      }
+      if (filterRequest != null) {
+        myFilters = filterRequest.filters;
+      }
+      if (sortTypeRequest != null) {
+        mySortType = sortTypeRequest.sortType;
+      }
+
+      if (myDataPack == null) { // when filter is set during initialization, just remember filters
+        return visiblePack;
+      }
+
+      if (filterRequest != null) {
+        // "more commits needed" has no effect if filter changes; it also can't come after filter change request
+        myCommitCount = CommitCountStage.INITIAL;
+      }
+      else if (!moreCommitsRequests.isEmpty()) {
+        myCommitCount = myCommitCount.next();
+      }
+
+      Pair<VisiblePack, CommitCountStage> pair = myVisiblePackBuilder.build(myDataPack, mySortType, myFilters, myCommitCount);
+      visiblePack = pair.first;
+      myCommitCount = pair.second;
+      return visiblePack;
     }
   }
 

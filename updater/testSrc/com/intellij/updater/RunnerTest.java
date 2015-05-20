@@ -14,12 +14,12 @@ public class RunnerTest extends UpdaterTestCase {
     Runner.initLogger();
 
     assertEquals(Arrays.asList("xxx", "yyy", "zzz/zzz", "aaa"),
-                 Runner.extractFiles(args, "ignored"));
+                 Runner.extractArguments(args, "ignored"));
 
     assertEquals(Arrays.asList("ccc"),
-                 Runner.extractFiles(args, "critical"));
+                 Runner.extractArguments(args, "critical"));
 
     assertEquals(Collections.<String>emptyList(),
-                 Runner.extractFiles(args, "unknown"));
+                 Runner.extractArguments(args, "unknown"));
   }
 }

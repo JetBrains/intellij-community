@@ -159,6 +159,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
     }
     catch (TypeMigrationLabeler.MigrateException e) {
       setPreviewUsages(true);
+      myLabeler.clearStopException();
       return myLabeler.getMigratedUsages(false, myRoot);
     }
   }
@@ -171,7 +172,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @Override
   public void performRefactoring(UsageInfo[] usages) {
     for (PsiElement element : myRoot) {
-      if (element instanceof PsiVariable) {
+      if (element instanceof PsiVariable && ((PsiVariable)element).getTypeElement() != null) {
         ((PsiVariable)element).normalizeDeclaration();
       }
     }

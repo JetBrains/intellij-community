@@ -65,6 +65,7 @@ import java.util.Map;
  */
 @State(
   name = "Palette2",
+  defaultStateAsResource = true,
   storages = {
     @Storage(file = StoragePathMacros.PROJECT_FILE),
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/uiDesigner.xml", scheme = StorageScheme.DIRECTORY_BASED)

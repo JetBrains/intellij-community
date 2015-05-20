@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 
 package com.intellij.refactoring.classMembers;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 
 /**
@@ -25,7 +27,7 @@ import com.intellij.psi.util.PsiUtilCore;
  */
 public abstract class MemberInfoBase<T extends PsiElement> {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractSuperclass.MemberInfo");
-  protected T myMember;
+  private SmartPsiElementPointer<T> myMember;
   protected boolean isStatic;
   protected String displayName;
   private boolean isChecked = false;
@@ -36,7 +38,7 @@ public abstract class MemberInfoBase<T extends PsiElement> {
   private boolean toAbstract = false;
 
   public MemberInfoBase(T member) {
-    myMember = member;
+    updateMember(member);
   }
 
   public boolean isStatic() {
@@ -67,16 +69,16 @@ public abstract class MemberInfoBase<T extends PsiElement> {
   }
 
   public T getMember() {
-    PsiUtilCore.ensureValid(myMember);
-    return myMember;
+    T element = myMember.getElement();
+    PsiUtilCore.ensureValid(element);
+    return element;
   }
 
   /**
    * Use this method solely to update element from smart pointer and the likes
-   * @param element
    */
   public void updateMember(T element) {
-    myMember = element;
+    myMember = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
   }
 
   public boolean isToAbstract() {
@@ -87,7 +89,7 @@ public abstract class MemberInfoBase<T extends PsiElement> {
     this.toAbstract = toAbstract;
   }
 
-  public static interface Filter<T extends PsiElement> {
+  public interface Filter<T extends PsiElement> {
     boolean includeMember(T member);
   }
 

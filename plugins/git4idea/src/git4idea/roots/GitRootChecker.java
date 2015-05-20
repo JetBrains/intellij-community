@@ -31,7 +31,7 @@ public class GitRootChecker extends VcsRootChecker {
 
   @Override
   public boolean isRoot(@NotNull String path) {
-    return new File(path, GitUtil.DOT_GIT).exists();
+    return GitUtil.isGitRoot(new File(path));
   }
 
   @Override

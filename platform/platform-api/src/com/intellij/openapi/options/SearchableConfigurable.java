@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.options;
 
+import com.intellij.ide.ui.search.SearchableOptionContributor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +27,18 @@ import javax.swing.JComponent;
 /**
  * SearchableConfigurable instances would be instantiated on buildSearchableOptions step during Installer's build to index of all available options. 
  * {@link #com.intellij.ide.ui.search.TraverseUIStarter}
+ * 
+ * @see SearchableOptionContributor
  */
 public interface SearchableConfigurable extends Configurable {
   @NotNull
   @NonNls String getId();
 
+  /**
+   * @param option setting search query
+   * @return an action to perform when this configurable is opened when a search filter query is entered by the user in setting dialog.
+   * This action, for example, can select something in a tree or a list embedded in this setting page that matches the query. 
+   */
   @Nullable Runnable enableSearch(String option);
 
   interface Parent extends SearchableConfigurable, Composite {

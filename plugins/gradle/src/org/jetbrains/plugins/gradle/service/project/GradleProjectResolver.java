@@ -30,9 +30,10 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,14 +45,15 @@ import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
+import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 
 import java.io.File;
 import java.util.*;
@@ -129,6 +131,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final List<String> commandLineArgs = ContainerUtil.newArrayList();
     final Set<Class> toolingExtensionClasses = ContainerUtil.newHashSet();
 
+    final GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
          resolverExtension = resolverExtension.getNext()) {
@@ -138,8 +141,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       resolverExtension.preImportCheck();
       // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
       projectImportAction.addExtraProjectModelClasses(resolverExtension.getExtraProjectModelClasses());
-      // collect extra JVM arguments provided by gradle project resolver extensions
-      extraJvmArgs.addAll(resolverExtension.getExtraJvmArgs());
+
+      if (importCustomizer == null || importCustomizer.useExtraJvmArgs()) {
+        // collect extra JVM arguments provided by gradle project resolver extensions
+        extraJvmArgs.addAll(resolverExtension.getExtraJvmArgs());
+      }
       // collect extra command-line arguments
       commandLineArgs.addAll(resolverExtension.getExtraCommandLineArgs());
       // collect tooling extensions classes
@@ -151,15 +157,17 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       parametersList.addProperty(jvmArg.getKey(), jvmArg.getValue());
     }
 
+    final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx.getConnection());
+    GradleVersion gradleVersion = null;
+    if (buildEnvironment != null) {
+      gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+    }
 
     BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = resolverCtx.getConnection().action(projectImportAction);
 
-    // TODO [vlad] remove the check
-    if (!GradleEnvironment.DISABLE_ENHANCED_TOOLING_API) {
-      File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionClasses);
-      if (initScript != null) {
-        ContainerUtil.addAll(commandLineArgs, GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
-      }
+    File initScript = GradleExecutionHelper.generateInitScript(isBuildSrcProject, toolingExtensionClasses);
+    if (initScript != null) {
+      ContainerUtil.addAll(commandLineArgs, GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
     }
 
     GradleExecutionHelper.prepare(
@@ -173,6 +181,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       buildActionExecutor.withCancellationToken(cancellationTokenSource.token());
       synchronized (myCancellationMap) {
         myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), cancellationTokenSource);
+        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.1")) < 0) {
+          myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), new UnsupportedCancellationToken());
+        }
       }
       allModels = buildActionExecutor.run();
       if (allModels == null) {
@@ -200,7 +211,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
 
-    final BuildEnvironment buildEnvironment = getBuildEnvironment(resolverCtx);
     allModels.setBuildEnvironment(buildEnvironment);
     resolverCtx.setModels(allModels);
 
@@ -247,6 +257,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
       DataNode<ModuleData> moduleDataNode = projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
       moduleMap.put(moduleName, Pair.create(moduleDataNode, gradleModule));
+      if(StringUtil.equals(moduleData.getLinkedExternalProjectPath(), projectData.getLinkedExternalProjectPath())) {
+        projectData.setGroup(moduleData.getGroup());
+        projectData.setVersion(moduleData.getVersion());
+      }
     }
 
     // populate modules nodes
@@ -264,19 +278,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
 
-    // populate root project tasks
-    final Collection<TaskData> rootProjectTaskCandidates = projectResolverChain.filterRootProjectTasks(allTasks);
-
-    Set<Couple<String>> rootProjectTaskCandidatesMap = ContainerUtilRt.newHashSet();
-    for (final TaskData taskData : rootProjectTaskCandidates) {
-      rootProjectTaskCandidatesMap.add(Couple.of(taskData.getName(), taskData.getDescription()));
-    }
-    for (final Couple<String> p : rootProjectTaskCandidatesMap) {
-      projectDataNode.createChild(
-        ProjectKeys.TASK,
-        new TaskData(GradleConstants.SYSTEM_ID, p.first, projectData.getLinkedExternalProjectPath(), p.second));
-    }
-
     // ensure unique library names
     Collection<DataNode<LibraryData>> libraries = ExternalSystemApiUtil.getChildren(projectDataNode, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
@@ -284,21 +285,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return projectDataNode;
   }
 
-  @Nullable
-  private static BuildEnvironment getBuildEnvironment(@NotNull ProjectResolverContext resolverCtx) {
-    try {
-      return resolverCtx.getConnection().getModel(BuildEnvironment.class);
-    }
-    catch (Exception e) {
-      return null;
-    }
-  }
-
   private void handleBuildSrcProject(@NotNull final DataNode<ProjectData> resultProjectDataNode,
                                      @NotNull final ProjectConnectionDataNodeFunction projectConnectionDataNodeFunction) {
 
     if (projectConnectionDataNodeFunction.myIsPreviewMode
-        || GradleEnvironment.DISABLE_ENHANCED_TOOLING_API
         || !new File(projectConnectionDataNodeFunction.myProjectPath).isDirectory()) {
       return;
     }
@@ -318,7 +308,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       projectConnectionDataNodeFunction.myProjectPath, projectConnectionDataNodeFunction.mySettings, projectConnectionDataNodeFunction);
 
     if (buildSrcProjectDataDataNode != null) {
-      final DataNode<ModuleData> moduleDataNode = ExternalSystemApiUtil.find(buildSrcProjectDataDataNode, ProjectKeys.MODULE);
+      final DataNode<ModuleData> moduleDataNode = ExternalSystemApiUtil.find(
+        buildSrcProjectDataDataNode, ProjectKeys.MODULE, new BooleanFunction<DataNode<ModuleData>>() {
+          @Override
+          public boolean fun(DataNode<ModuleData> node) {
+            return projectConnectionDataNodeFunction.myProjectPath.equals(node.getData().getLinkedExternalProjectPath());
+          }
+        });
       if (moduleDataNode != null) {
         for (DataNode<LibraryData> libraryDataNode : ExternalSystemApiUtil.findAll(buildSrcProjectDataDataNode, ProjectKeys.LIBRARY)) {
           resultProjectDataNode.createChild(libraryDataNode.getKey(), libraryDataNode.getData());
@@ -326,6 +322,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
         final DataNode<ModuleData> newModuleDataNode = resultProjectDataNode.createChild(ProjectKeys.MODULE, moduleDataNode.getData());
         for (DataNode node : moduleDataNode.getChildren()) {
+          if(!ProjectKeys.MODULE.equals(node.getKey()) && !ProjectKeys.MODULE_DEPENDENCY.equals(node.getKey()))
           newModuleDataNode.createChild(node.getKey(), node.getData());
         }
       }

@@ -254,7 +254,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
 
     public void removeRow(final int idx) {
       myFilters.remove(idx);
-      fireTableDataChanged();
+      fireTableRowsDeleted(idx, idx);
     }
   }
 

@@ -28,7 +28,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
-import junit.framework.Assert;
 
 public class PyResolveTest extends PyResolveTestCase {
   @Override
@@ -50,7 +49,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   private ResolveResult[] multiResolve() {
     PsiReference ref = findReferenceByMarker();
-    Assert.assertTrue(ref instanceof PsiPolyVariantReference);
+    assertTrue(ref instanceof PsiPolyVariantReference);
     return ((PsiPolyVariantReference)ref).multiResolve(false);
   }
 
@@ -60,102 +59,102 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testFunc() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyFunction);
+    assertTrue(targetElement instanceof PyFunction);
   }
 
   public void testToConstructor() {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PyFunction);
-    Assert.assertEquals(PyNames.INIT, ((PyFunction)target).getName());
+    assertTrue(target instanceof PyFunction);
+    assertEquals(PyNames.INIT, ((PyFunction)target).getName());
   }
 
   public void testToConstructorInherited() {
     ResolveResult[] targets = multiResolve();
-    Assert.assertEquals(2, targets.length); // to class, to init
+    assertEquals(2, targets.length); // to class, to init
     PsiElement elt;
     // class
     elt = targets[0].getElement();
-    Assert.assertTrue(elt instanceof PyClass);
-    Assert.assertEquals("Bar", ((PyClass)elt).getName());
+    assertTrue(elt instanceof PyClass);
+    assertEquals("Bar", ((PyClass)elt).getName());
     // init
     elt = targets[1].getElement();
-    Assert.assertTrue(elt instanceof PyFunction);
+    assertTrue(elt instanceof PyFunction);
     PyFunction fun = (PyFunction)elt;
-    Assert.assertEquals(PyNames.INIT, fun.getName());
+    assertEquals(PyNames.INIT, fun.getName());
     PyClass cls = fun.getContainingClass();
-    Assert.assertNotNull(cls);
-    Assert.assertEquals("Foo", cls.getName());
+    assertNotNull(cls);
+    assertEquals("Foo", cls.getName());
   }
 
   // NOTE: maybe this test does not belong exactly here; still it's the best place currently.
   public void testComplexCallee() {
     PsiElement targetElement = resolve();
     PyExpression assigned = ((PyAssignmentStatement)targetElement.getContext()).getAssignedValue();
-    Assert.assertTrue(assigned instanceof PyCallExpression);
+    assertTrue(assigned instanceof PyCallExpression);
     PsiElement callee = ((PyCallExpression)assigned).getCallee();
-    Assert.assertTrue(callee instanceof PySubscriptionExpression);
+    assertTrue(callee instanceof PySubscriptionExpression);
   }
 
   public void testVar() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testDefaultInClass() {
     PsiElement targetElement = resolve();
-    Assert.assertNotNull(targetElement);
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertEquals("FOO", ((PyTargetExpression)targetElement).getName());
+    assertNotNull(targetElement);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertEquals("FOO", ((PyTargetExpression)targetElement).getName());
   }
 
   public void testQualifiedFunc() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyFunction);
+    assertTrue(targetElement instanceof PyFunction);
   }
 
   public void testQualifiedVar() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testQualifiedTarget() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testQualifiedFalseTarget() {
     PsiElement targetElement = resolve();
-    Assert.assertNull(targetElement);
+    assertNull(targetElement);
   }
 
   public void testInnerFuncVar() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testTupleInComprh() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testForStatement() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testExceptClause() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testLookAhead() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testLookAheadCapped() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testTryExceptElse() {
@@ -184,109 +183,109 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testLambda() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyNamedParameter);
+    assertTrue(targetElement instanceof PyNamedParameter);
   }
 
   public void testLambdaParameterOutside() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testSuperField() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testFieldInCondition() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testMultipleFields() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testClassPeerMembers() {
     PsiElement target = resolve();
-    Assert.assertTrue(target instanceof PyFunction);
+    assertTrue(target instanceof PyFunction);
   }
 
   public void testTuple() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testMultiTarget() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testMultiTargetTuple() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertNotNull(PsiTreeUtil.getParentOfType(targetElement, PyAssignmentStatement.class)); // it's deep in a tuple
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertNotNull(PsiTreeUtil.getParentOfType(targetElement, PyAssignmentStatement.class)); // it's deep in a tuple
   }
 
   public void testWithStatement() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertTrue(targetElement.getParent() instanceof PyWithItem);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyWithItem);
   }
 
   public void testTupleInExcept() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertTrue(PsiTreeUtil.getParentOfType(targetElement, PyExceptPart.class) != null);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(PsiTreeUtil.getParentOfType(targetElement, PyExceptPart.class) != null);
   }
 
 
   public void testDocStringClass() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyStringLiteralExpression);
-    Assert.assertEquals("Docstring of class Foo", ((PyStringLiteralExpression)targetElement).getStringValue());
+    assertTrue(targetElement instanceof PyStringLiteralExpression);
+    assertEquals("Docstring of class Foo", ((PyStringLiteralExpression)targetElement).getStringValue());
   }
 
   public void testDocStringInstance() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyStringLiteralExpression);
-    Assert.assertEquals("Docstring of class Foo", ((PyStringLiteralExpression)targetElement).getStringValue());
+    assertTrue(targetElement instanceof PyStringLiteralExpression);
+    assertEquals("Docstring of class Foo", ((PyStringLiteralExpression)targetElement).getStringValue());
   }
 
   public void testDocStringFunction() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyStringLiteralExpression);
-    Assert.assertEquals("Docstring of function bar", ((PyStringLiteralExpression)targetElement).getStringValue());
+    assertTrue(targetElement instanceof PyStringLiteralExpression);
+    assertEquals("Docstring of function bar", ((PyStringLiteralExpression)targetElement).getStringValue());
   }
 
   public void testDocStringInvalid() {
     PsiElement targetElement = resolve();
-    Assert.assertNull(targetElement);
+    assertNull(targetElement);
   }
 
   public void testFieldNotInInit() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement instanceof PyTargetExpression);
   }
 
   public void testClassIsNotMemberOfItself() {
     PsiElement targetElement = resolve();
-    Assert.assertNull(targetElement);
+    assertNull(targetElement);
   }
 
   public void testSuper() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyFunction);
-    Assert.assertEquals("A", ((PyFunction)targetElement).getContainingClass().getName());
+    assertTrue(targetElement instanceof PyFunction);
+    assertEquals("A", ((PyFunction)targetElement).getContainingClass().getName());
   }
 
   public void testSuperPy3k() {  // PY-1330
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
     try {
       final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "foo");
-      Assert.assertEquals("A", pyFunction.getContainingClass().getName());
+      assertEquals("A", pyFunction.getContainingClass().getName());
     }
     finally {
       PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
@@ -295,58 +294,58 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testStackOverflow() {
     PsiElement targetElement = resolve();
-    Assert.assertNull(targetElement);
+    assertNull(targetElement);
   }
 
   public void testProperty() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyFunction);
-    Assert.assertEquals("set_full_name", ((PyFunction)targetElement).getName());
+    assertTrue(targetElement instanceof PyFunction);
+    assertEquals("set_full_name", ((PyFunction)targetElement).getName());
   }
 
   public void testLambdaWithParens() {  // PY-882
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyParameter);
+    assertTrue(targetElement instanceof PyParameter);
   }
 
   public void testTextBasedResolve() {
     ResolveResult[] resolveResults = multiResolve();
-    Assert.assertEquals(1, resolveResults.length);
-    Assert.assertTrue(resolveResults[0].getElement() instanceof PyFunction);
+    assertEquals(1, resolveResults.length);
+    assertTrue(resolveResults[0].getElement() instanceof PyFunction);
   }
 
   public void testClassPrivateInClass() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testClassPrivateInMethod() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testClassPrivateInMethodNested() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testClassPrivateInherited() {
     PsiElement targetElement = resolve();
-    Assert.assertTrue(targetElement instanceof PyTargetExpression);
-    Assert.assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
+    assertTrue(targetElement instanceof PyTargetExpression);
+    assertTrue(targetElement.getParent() instanceof PyAssignmentStatement);
   }
 
   public void testClassPrivateOutsideClass() {
     PsiElement targetElement = resolve();
-    Assert.assertNull(targetElement);
+    assertNull(targetElement);
   }
 
   public void testClassPrivateOutsideInstance() {
     PsiElement targetElement = resolve();
-    Assert.assertNull(targetElement);
+    assertNull(targetElement);
   }
 
   public void testClassNameEqualsMethodName() {
@@ -356,10 +355,10 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testUnresolvedImport() {
     final ResolveResult[] results = multiResolve();
-    Assert.assertEquals(1, results.length);
+    assertEquals(1, results.length);
     UsefulTestCase.assertInstanceOf(results[0], ImportedResolveResult.class);
     ImportedResolveResult result = (ImportedResolveResult) results [0];
-    Assert.assertNull(result.getElement());
+    assertNull(result.getElement());
   }
 
   public void testIsInstance() {  // PY-1133
@@ -382,13 +381,13 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testSuperTwoClasses() {  // PY-2133
     final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "my_call");
-    Assert.assertEquals("Base2", pyFunction.getContainingClass().getName());
+    assertEquals("Base2", pyFunction.getContainingClass().getName());
   }
 
   public void testLambdaDefaultParameter() {
     final PsiElement element = doResolve();
     UsefulTestCase.assertInstanceOf(element, PyTargetExpression.class);
-    Assert.assertTrue(element.getParent() instanceof PySetCompExpression);
+    assertTrue(element.getParent() instanceof PySetCompExpression);
   }
 
   public void testListAssignment() {
@@ -406,7 +405,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testBuiltinVsClassMember() {  // PY-1654
     final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "eval");
-    Assert.assertEquals("__builtin__.py", pyFunction.getContainingFile().getName());
+    assertEquals("__builtin__.py", pyFunction.getContainingFile().getName());
   }
 
   public void testLambdaToClass() {  // PY-2182
@@ -419,7 +418,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testModuleToBuiltins() {
     final PsiElement element = doResolve();
-    Assert.assertNull(element);
+    assertNull(element);
   }
 
   public void testWithParentheses() {
@@ -436,7 +435,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testNoResolveIntoGenerator() {  // PY-3030
     PyTargetExpression expr = assertResolvesTo(PyTargetExpression.class, "foo");
-    Assert.assertEquals("foo = 1", expr.getParent().getText());
+    assertEquals("foo = 1", expr.getParent().getText());
   }
 
   public void testResolveInGenerator() {
@@ -461,9 +460,9 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testImplicitResolveInstanceAttribute() {
     ResolveResult[] resolveResults = multiResolve();
-    Assert.assertEquals(1, resolveResults.length);
+    assertEquals(1, resolveResults.length);
     final PsiElement psiElement = resolveResults[0].getElement();
-    Assert.assertTrue(psiElement instanceof PyTargetExpression && "xyzzy".equals(((PyTargetExpression)psiElement).getName()));
+    assertTrue(psiElement instanceof PyTargetExpression && "xyzzy".equals(((PyTargetExpression)psiElement).getName()));
   }
 
   public void testAttributeAssignedNearby() {
@@ -480,7 +479,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testMetaclass() {
     final PyFunction function = assertResolvesTo(PyFunction.class, "getStore");
-    Assert.assertEquals("PluginMetaclass", function.getContainingClass().getName());
+    assertEquals("PluginMetaclass", function.getContainingClass().getName());
   }
 
   // PY-6083
@@ -515,9 +514,9 @@ public class PyResolveTest extends PyResolveTestCase {
     final PsiReference ref = findReferenceByMarker();
     final PsiElement source = ref.getElement();
     final PsiElement target = ref.resolve();
-    Assert.assertNotNull(target);
-    Assert.assertTrue(source != target);
-    Assert.assertTrue(PyPsiUtils.isBefore(target, source));
+    assertNotNull(target);
+    assertTrue(source != target);
+    assertTrue(PyPsiUtils.isBefore(target, source));
   }
 
   // PY-7541
@@ -525,8 +524,8 @@ public class PyResolveTest extends PyResolveTestCase {
     final PsiReference ref = findReferenceByMarker();
     final PsiElement source = ref.getElement();
     final PsiElement target = ref.resolve();
-    Assert.assertNotNull(target);
-    Assert.assertTrue(source == target);
+    assertNotNull(target);
+    assertTrue(source == target);
   }
 
   // PY-7970
@@ -540,10 +539,10 @@ public class PyResolveTest extends PyResolveTestCase {
     final PsiElement source = ref.getElement();
     final PsiElement resolved = ref.resolve();
     UsefulTestCase.assertInstanceOf(resolved, PyReferenceExpression.class);
-    Assert.assertNotSame(resolved, source);
+    assertNotSame(resolved, source);
     final PyReferenceExpression res = (PyReferenceExpression)resolved;
-    Assert.assertNotNull(res);
-    Assert.assertEquals("foo", res.getName());
+    assertNotNull(res);
+    assertEquals("foo", res.getName());
     UsefulTestCase.assertInstanceOf(res.getParent(), PyAugAssignmentStatement.class);
   }
 
@@ -556,15 +555,30 @@ public class PyResolveTest extends PyResolveTestCase {
     final PsiElement resolved = resolve();
     UsefulTestCase.assertInstanceOf(resolved, PyTargetExpression.class);
     final PyTargetExpression target = (PyTargetExpression)resolved;
-    Assert.assertEquals("foo", target.getName());
+    assertEquals("foo", target.getName());
     final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
-    Assert.assertNotNull(owner);
+    assertNotNull(owner);
     UsefulTestCase.assertInstanceOf(owner, PyFunction.class);
-    Assert.assertEquals("__new__", owner.getName());
+    assertEquals("__new__", owner.getName());
   }
 
   public void testPreferInitForAttributes() {  // PY-9228
     PyTargetExpression xyzzy = assertResolvesTo(PyTargetExpression.class, "xyzzy");
     assertEquals("__init__", PsiTreeUtil.getParentOfType(xyzzy, PyFunction.class).getName());
+  }
+
+  // PY-11401
+  public void testResolveAttributesUsingOldStyleMROWhenUnresolvedAncestorsAndC3Fails() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
+  // PY-15390
+  public void testMatMul() {
+    assertResolvesTo(PyFunction.class, "__matmul__");
+  }
+
+  // PY-15390
+  public void testRMatMul() {
+    assertResolvesTo(PyFunction.class, "__rmatmul__");
   }
 }

@@ -32,6 +32,7 @@ import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.help.HelpManager;
@@ -49,6 +50,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
@@ -339,16 +341,21 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     final SimpleDiffRequest r = new SimpleDiffRequest(myProject, m.getTitle());
 
     new Task.Modal(myProject, message("message.processing.revisions"), false) {
-      public void run(@NotNull ProgressIndicator i) {
-        RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
-        p.processingLeftRevision();
-        DiffContent left = m.getLeftDiffContent(p);
+      public void run(@NotNull final ProgressIndicator i) {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
+            p.processingLeftRevision();
+            DiffContent left = m.getLeftDiffContent(p);
 
-        p.processingRightRevision();
-        DiffContent right = m.getRightDiffContent(p);
+            p.processingRightRevision();
+            DiffContent right = m.getRightDiffContent(p);
 
-        r.setContents(left, right);
-        r.setContentTitles(m.getLeftTitle(p), m.getRightTitle(p));
+            r.setContents(left, right);
+            r.setContentTitles(m.getLeftTitle(p), m.getRightTitle(p));
+          }
+        });
       }
     }.queue();
 
@@ -488,8 +495,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
     final DialogBuilder b = new DialogBuilder(myProject);
+    JComponent createPatchPanel = p.getPanel();
+    b.setPreferredFocusComponent(IdeFocusTraversalPolicy.getPreferredFocusedComponent(createPatchPanel));
     b.setTitle(message("create.patch.dialog.title"));
-    b.setCenterPanel(p.getPanel());
+    b.setCenterPanel(createPatchPanel);
     p.installOkEnabledListener(new Consumer<Boolean>() {
       public void consume(final Boolean aBoolean) {
         b.setOkActionEnabled(aBoolean);

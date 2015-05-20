@@ -278,7 +278,7 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     }
     // map unmapped named params to **kwarg
     if (myKwdArg != null) {
-      for (int j = implicitOffset; j != parameters.size(); ++j) {
+      for (int j = implicitOffset; j < parameters.size(); ++j) {
         final PyParameter par = parameters.get(j);
         final PyNamedParameter namedParameter = par.getAsNamed();
         if (namedParameter != null && !namedParameter.isKeywordContainer()

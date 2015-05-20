@@ -4,7 +4,7 @@ class CLS {
     static <V extends String>  void bar (V v) {}
 
     static void foo () {
-        <error descr="Inferred type 'java.lang.Object' for type parameter 'V' is not within its bound; should extend 'java.lang.String'">bar(new Object())</error>;
+        bar<error descr="'bar(V)' in 'CLS' cannot be applied to '(java.lang.Object)'">(new Object())</error>;
     }
 }
 //////////////////////////////

@@ -104,7 +104,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   }
 
   public boolean isDeclareFinal() {
-    return myCbFinal.isEnabled() && myCbFinalState;
+    return myCbFinal.isSelected();
   }
 
   public boolean isReplaceLValues() {
@@ -264,7 +264,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     myNameSuggestionsManager.nameSelected();
     myTypeSelectorManager.typeSelected(getSelectedType());
     if (myCbFinal.isEnabled()) {
-      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbFinalState;
+      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbFinal.isSelected();
     }
     super.doOKAction();
   }

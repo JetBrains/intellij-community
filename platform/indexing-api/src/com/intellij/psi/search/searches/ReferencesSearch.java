@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.application.DumbAwareSearchParameters;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
@@ -26,20 +28,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Locates all references to a specified PSI element.
+ *
+ * @see PsiReference
  * @author max
  */
 public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, ReferencesSearch.SearchParameters> {
-  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.referencesSearch");
+  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.referencesSearch");
   private static final ReferencesSearch INSTANCE = new ReferencesSearch();
 
   private ReferencesSearch() {
   }
 
-  public static class SearchParameters {
+  public static class SearchParameters implements DumbAwareSearchParameters {
     private final PsiElement myElementToSearch;
     private final SearchScope myScope;
     private final boolean myIgnoreAccessScope;
     private final SearchRequestCollector myOptimizer;
+    private final Project myProject;
     private final boolean isSharedOptimizer;
 
     public SearchParameters(@NotNull PsiElement elementToSearch, @NotNull SearchScope scope, boolean ignoreAccessScope, @Nullable SearchRequestCollector optimizer) {
@@ -48,10 +54,17 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       myIgnoreAccessScope = ignoreAccessScope;
       isSharedOptimizer = optimizer != null;
       myOptimizer = optimizer == null ? new SearchRequestCollector(new SearchSession()) : optimizer;
+      myProject = PsiUtilCore.getProjectInReadAction(elementToSearch);
     }
 
     public SearchParameters(@NotNull PsiElement elementToSearch, @NotNull SearchScope scope, final boolean ignoreAccessScope) {
       this(elementToSearch, scope, ignoreAccessScope, null);
+    }
+
+    @Override
+    @NotNull
+    public Project getProject() {
+      return myProject;
     }
 
     @NotNull
@@ -60,9 +73,18 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     }
 
     /**
-     * Use {@link #getEffectiveSearchScope} instead
+     * @return the user-visible search scope, most often "Project Files" or "Project and Libraries".
+     * Searchers most likely need to use {@link #getEffectiveSearchScope()}.
      */
-    @Deprecated()
+    public SearchScope getScopeDeterminedByUser() {
+      return myScope;
+    }
+
+
+    /**
+     * Same as {@link #getScopeDeterminedByUser()}. Use {@link #getEffectiveSearchScope} instead
+     */
+    @Deprecated
     @NotNull
     public SearchScope getScope() {
       return myScope;
@@ -87,21 +109,50 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     }
   }
 
+  /**
+   * Searches for references to the specified element in the scope in which such references are expected to be found, according to
+   * dependencies and access rules.
+   *
+   * @param element the element (declaration) the references to which are requested.
+   * @return the query allowing to enumerate the references.
+   */
   @NotNull
   public static Query<PsiReference> search(@NotNull PsiElement element) {
     return search(element, GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(element)), false);
   }
 
+  /**
+   * Searches for references to the specified element in the specified scope.
+   *
+   * @param element the element (declaration) the references to which are requested.
+   * @param searchScope the scope in which the search is performed.
+   * @return the query allowing to enumerate the references.
+   */
   @NotNull
   public static Query<PsiReference> search(@NotNull PsiElement element, @NotNull SearchScope searchScope) {
     return search(element, searchScope, false);
   }
 
+  /**
+   * Searches for references to the specified element in the specified scope, optionally returning also references which
+   * are invalid because of access rules (e.g. references to a private method from a different class).
+   *
+   * @param element the element (declaration) the references to which are requested.
+   * @param searchScope the scope in which the search is performed.
+   * @param ignoreAccessScope if true, references which are invalid because of access rules are included in the results.
+   * @return the query allowing to enumerate the references.
+   */
   @NotNull
   public static Query<PsiReference> search(@NotNull PsiElement element, @NotNull SearchScope searchScope, boolean ignoreAccessScope) {
     return search(new SearchParameters(element, searchScope, ignoreAccessScope));
   }
 
+  /**
+   * Searches for references to the specified element according to the specified parameters.
+   *
+   * @param parameters the parameters for the search (contain also the element the references to which are requested).
+   * @return the query allowing to enumerate the references.
+   */
   @NotNull
   public static Query<PsiReference> search(@NotNull final SearchParameters parameters) {
     final Query<PsiReference> result = INSTANCE.createQuery(parameters);
@@ -117,7 +168,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
   }
 
   @NotNull
-  private static UniqueResultsQuery<PsiReference, ReferenceDescriptor> uniqueResults(@NotNull Query<PsiReference> composite) {
+  private static Query<PsiReference> uniqueResults(@NotNull Query<PsiReference> composite) {
     return new UniqueResultsQuery<PsiReference, ReferenceDescriptor>(composite, ContainerUtil.<ReferenceDescriptor>canonicalStrategy(), ReferenceDescriptor.MAPPER);
   }
 

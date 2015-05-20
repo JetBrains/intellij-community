@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +35,7 @@ public class PyModuleListener {
   public PyModuleListener(MessageBus messageBus) {
     messageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       @Override
-      public void beforeModuleRemoved(Project project, Module module) {
+      public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
         final Collection<RunnerAndConfigurationSettings> configurations = new ArrayList<RunnerAndConfigurationSettings>(runManager.getSortedConfigurations());
         for (RunnerAndConfigurationSettings configuration : configurations) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -45,10 +46,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private final PsiType[] myTypesForMain;
   private final PsiType[] myTypesForAll;
   private final boolean myIsOneSuggestion;
-  private TypeSelector myTypeSelector;
+  private final TypeSelector myTypeSelector;
   private final PsiElementFactory myFactory;
   private final SmartTypePointerManager mySmartTypePointerManager;
-  private ExpectedTypesProvider.ExpectedClassProvider myOccurrenceClassProvider;
+  private final ExpectedTypesProvider.ExpectedClassProvider myOccurrenceClassProvider;
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences) {
     this(project, type, occurrences, true);
@@ -197,7 +198,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return result.toArray(PsiType.createArray(result.size()));
   }
 
-  private void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<PsiType> allowedTypes) {
+  private static void collectAllSameShapedTypes(ExpectedTypeInfo[] expectedTypes, ArrayList<PsiType> allowedTypes) {
     for (ExpectedTypeInfo info : expectedTypes) {
       if (info.getKind() == ExpectedTypeInfo.TYPE_SAME_SHAPED) {
         allowedTypes.add(info.getDefaultType());
@@ -205,7 +206,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
   }
 
-  private PsiType[] getTypesForAll(final boolean areTypesDirected) {
+  protected PsiType[] getTypesForAll(final boolean areTypesDirected) {
     final ArrayList<ExpectedTypeInfo[]> expectedTypesFromAll = new ArrayList<ExpectedTypeInfo[]>();
     for (PsiExpression occurrence : myOccurrences) {
       final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(occurrence, false, myOccurrenceClassProvider, isUsedAfter());
@@ -333,19 +334,24 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     typeSelected(type, getDefaultType());
   }
 
-  public static void typeSelected(final PsiType type, final PsiType defaultType) {
+  public static void typeSelected(@NotNull final PsiType type, @Nullable final PsiType defaultType) {
+    if (defaultType == null) return;
     StatisticsManager.getInstance().incUseCount(new StatisticsInfo(getStatsKey(defaultType), serialize(type)));
   }
 
   private String getStatsKey() {
-    return getStatsKey(getDefaultType());
+    final PsiType defaultType = getDefaultType();
+    if (defaultType == null) {
+      return "IntroduceVariable##";
+    }
+    return getStatsKey(defaultType);
   }
 
   private static String getStatsKey(final PsiType defaultType) {
     return "IntroduceVariable##" + serialize(defaultType);
   }
 
-  private static String serialize(PsiType type) {
+  private static String serialize(@NotNull PsiType type) {
     if (PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return type.getCanonicalText();
     return TypeConversionUtil.erasure(type).getCanonicalText();
   }

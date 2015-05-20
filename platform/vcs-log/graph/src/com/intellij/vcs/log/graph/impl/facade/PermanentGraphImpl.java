@@ -17,17 +17,24 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 
-import com.intellij.openapi.util.Condition;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
-import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.impl.facade.bek.*;
+import com.intellij.vcs.log.graph.collapsing.BranchFilterController;
+import com.intellij.vcs.log.graph.collapsing.CollapsedController;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap;
+import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter;
 import com.intellij.vcs.log.graph.impl.permanent.*;
+import com.intellij.vcs.log.graph.linearBek.LinearBekController;
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
 
@@ -36,10 +43,19 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
                                                                     @NotNull final GraphColorManager<CommitId> graphColorManager,
                                                                     @NotNull Set<CommitId> branchesCommitId) {
     PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
-    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build();
-    Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent = permanentLinearGraphBuilder.getCommitsWithNotLoadParent();
+    final Map<Integer, CommitId> notLoadCommits = ContainerUtil.newHashMap();
+    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(new NotNullFunction<CommitId, Integer>() {
+      @NotNull
+      @Override
+      public Integer fun(CommitId dom) {
+        int nodeId = -(notLoadCommits.size() + 2);
+        notLoadCommits.put(nodeId, dom);
+        return nodeId;
+      }
+    });
 
-    final PermanentCommitsInfoIml<CommitId> commitIdPermanentCommitsInfo = PermanentCommitsInfoIml.newInstance(graphCommits);
+    final PermanentCommitsInfoIml<CommitId> commitIdPermanentCommitsInfo =
+      PermanentCommitsInfoIml.newInstance(graphCommits, notLoadCommits);
 
     GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, new Comparator<Integer>() {
       @Override
@@ -51,75 +67,70 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     });
 
     return new PermanentGraphImpl<CommitId>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, graphColorManager,
-                                            branchesCommitId, commitsWithNotLoadParent);
+                                            branchesCommitId);
   }
 
-  @NotNull
-  private final PermanentCommitsInfoIml<CommitId> myPermanentCommitsInfo;
-  @NotNull
-  private final PermanentLinearGraphImpl myPermanentLinearGraph;
-  @NotNull
-  private final GraphLayoutImpl myPermanentGraphLayout;
-  @NotNull
-  private final GraphColorManager<CommitId> myGraphColorManager;
-  @NotNull
-  private final Set<CommitId> myBranchesCommitId;
-  @NotNull
-  private final Set<Integer> myBranchNodeIndexes;
-  @NotNull
-  private final Map<CommitId, GraphCommit<CommitId>> myCommitsWithNotLoadParent;
-  @NotNull
-  private final ContainingBranchesGetter myBranchesGetter;
-  @NotNull
-  private final PermanentGraphInfo<CommitId> myBekGraphInfo;
+  @NotNull private final PermanentCommitsInfoIml<CommitId> myPermanentCommitsInfo;
+  @NotNull private final PermanentLinearGraphImpl myPermanentLinearGraph;
+  @NotNull private final GraphLayoutImpl myPermanentGraphLayout;
+  @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
+  @NotNull private final Set<CommitId> myBranchesCommitId;
+  @NotNull private final Set<Integer> myBranchNodeIds;
+  @NotNull private final ContainingBranchesGetter myBranchesGetter;
+  @NotNull private final BekIntMap myBekIntMap;
 
   public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
                             @NotNull GraphLayoutImpl permanentGraphLayout,
                             @NotNull PermanentCommitsInfoIml<CommitId> permanentCommitsInfo,
                             @NotNull GraphColorManager<CommitId> graphColorManager,
-                            @NotNull Set<CommitId> branchesCommitId,
-                            @NotNull Map<CommitId, GraphCommit<CommitId>> commitsWithNotLoadParent) {
+                            @NotNull Set<CommitId> branchesCommitId) {
     myPermanentGraphLayout = permanentGraphLayout;
     myPermanentCommitsInfo = permanentCommitsInfo;
     myPermanentLinearGraph = permanentLinearGraph;
     myGraphColorManager = graphColorManager;
     myBranchesCommitId = branchesCommitId;
-    myCommitsWithNotLoadParent = commitsWithNotLoadParent;
-    myBranchNodeIndexes = permanentCommitsInfo.convertToCommitIndexes(branchesCommitId);
-    myBranchesGetter = new ContainingBranchesGetter(permanentLinearGraph, myBranchNodeIndexes);
-    myBekGraphInfo = createBekSort();
+    myBranchNodeIds = permanentCommitsInfo.convertToNodeIds(branchesCommitId);
+    myBranchesGetter = new ContainingBranchesGetter(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph), myBranchNodeIds);
+    myBekIntMap = BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
   }
 
   @NotNull
   @Override
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
-                                                   @Nullable Set<CommitId> headsOfVisibleBranches,
-                                                   @Nullable Condition<CommitId> filter) {
-    if (filter == null) {
-      return CollapsedVisibleGraph.newInstance(getBekPermanentGraphInfo(sortType), headsOfVisibleBranches);
-    } else {
-      return FilterVisibleGraph.newInstance(getBekPermanentGraphInfo(sortType), headsOfVisibleBranches, filter);
+                                                   @Nullable Set<CommitId> visibleHeads,
+                                                   @Nullable Set<CommitId> matchingCommits) {
+    CascadeController baseController;
+    if (sortType == SortType.Normal) {
+      baseController = new BaseController(this);
     }
-  }
+    else if (sortType == SortType.LinearBek) {
+      baseController = new LinearBekController(new BekBaseController(this, myBekIntMap), this);
+    }
+    else {
+      baseController = new BekBaseController(this, myBekIntMap);
+    }
 
-  @NotNull
-  private PermanentGraphInfo<CommitId> getBekPermanentGraphInfo(@NotNull SortType sortType) {
-    if (sortType == SortType.Normal)
-      return this;
-    else
-      return myBekGraphInfo;
-  }
+    LinearGraphController controller;
+    if (matchingCommits != null) {
+      controller = new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
+    }
+    else if (sortType == SortType.LinearBek) {
+      if (visibleHeads != null) {
+        controller = new BranchFilterController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads));
+      }
+      else {
+        controller = baseController;
+      }
+    }
+    else {
+      Set<Integer> idOfVisibleBranches = null;
+      if (visibleHeads != null) {
+        idOfVisibleBranches = myPermanentCommitsInfo.convertToNodeIds(visibleHeads);
+      }
+      controller = new CollapsedController(baseController, this, idOfVisibleBranches);
+    }
 
-  @NotNull
-  private PermanentGraphInfo<CommitId> createBekSort() {
-    if (!BekSorter.isBekEnabled())
-      return this;
-
-    BekIntMap bekMap = BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter());
-
-    DelegatedPermanentGraphInfo<CommitId> graphInfo = new DelegatedPermanentGraphInfo<CommitId>(this, bekMap);
-    assert BekChecker.checkLinearGraph(graphInfo.getPermanentLinearGraph());
-    return graphInfo;
+    return new VisibleGraphImpl<CommitId>(controller, this);
   }
 
   @NotNull
@@ -128,11 +139,10 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     List<GraphCommit<CommitId>> result = ContainerUtil.newArrayList();
     for (int index = 0; index < myPermanentLinearGraph.nodesCount(); index++) {
       CommitId commitId = myPermanentCommitsInfo.getCommitId(index);
-      GraphCommit<CommitId> graphCommit = myCommitsWithNotLoadParent.get(commitId);
-      if (graphCommit == null) {
-        List<CommitId> parentsCommitIds = myPermanentCommitsInfo.convertToCommitIdList(myPermanentLinearGraph.getDownNodes(index));
-        graphCommit = new GraphCommitImpl<CommitId>(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
-      }
+      List<Integer> downNodes = LinearGraphUtils.getDownNodesIncludeNotLoad(myPermanentLinearGraph, index);
+      List<CommitId> parentsCommitIds = myPermanentCommitsInfo.convertToCommitIdList(downNodes);
+      GraphCommit<CommitId> graphCommit =
+        new GraphCommitImpl<CommitId>(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
       result.add(graphCommit);
     }
 
@@ -142,14 +152,14 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   @NotNull
   @Override
   public List<CommitId> getChildren(@NotNull CommitId commit) {
-    int commitIndex = myPermanentCommitsInfo.getPermanentNodeIndex(commit);
-    return myPermanentCommitsInfo.convertToCommitIdList(myPermanentLinearGraph.getUpNodes(commitIndex));
+    int commitIndex = myPermanentCommitsInfo.getNodeId(commit);
+    return myPermanentCommitsInfo.convertToCommitIdList(LinearGraphUtils.getUpNodes(myPermanentLinearGraph, commitIndex));
   }
 
   @NotNull
   @Override
   public Set<CommitId> getContainingBranches(@NotNull CommitId commit) {
-    int commitIndex = myPermanentCommitsInfo.getPermanentNodeIndex(commit);
+    int commitIndex = myPermanentCommitsInfo.getNodeId(commit);
     return myPermanentCommitsInfo.convertToCommitIdSet(myBranchesGetter.getBranchNodeIndexes(commitIndex));
   }
 
@@ -159,7 +169,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  public LinearGraph getPermanentLinearGraph() {
+  public PermanentLinearGraphImpl getPermanentLinearGraph() {
     return myPermanentLinearGraph;
   }
 
@@ -179,23 +189,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
-  public Set<Integer> getBranchNodeIndexes() {
-    return myBranchNodeIndexes;
-  }
-
-  @NotNull
-  public Condition<Integer> getNotCollapsedNodes() {
-    return new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return myBranchNodeIndexes.contains(integer);
-      }
-    };
-  }
-
-  @NotNull
-  public Map<CommitId, GraphCommit<CommitId>> getCommitsWithNotLoadParent() {
-    return myCommitsWithNotLoadParent;
+  public Set<Integer> getBranchNodeIds() {
+    return myBranchNodeIds;
   }
 
 }

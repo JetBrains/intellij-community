@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
+import com.intellij.util.BitUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,13 +62,14 @@ class WhiteSpace {
   private boolean      myForceSkipTabulationsUsage;
   private boolean      myIsBeforeCodeBlockEnd;
 
-  private static final byte FIRST = 1;
-  private static final byte SAFE = 0x2;
-  private static final byte KEEP_FIRST_COLUMN = 0x4;
-  private static final byte LINE_FEEDS_ARE_READ_ONLY = 0x8;
-  private static final byte READ_ONLY = 0x10;
-  private static final byte CONTAINS_LF_INITIALLY = 0x20;
-  private static final byte CONTAINS_SPACES_INITIALLY = 0x40;
+  private static final byte FIRST_MASK = 1;
+  private static final byte SAFE_MASK = 0x2;
+  private static final byte KEEP_FIRST_COLUMN_MASK = 0x4;
+  private static final byte LINE_FEEDS_ARE_READ_ONLY_MASK = 0x8;
+  private static final byte READ_ONLY_MASK = 0x10;
+  private static final byte CONTAINS_LF_INITIALLY_MASK = 0x20;
+  private static final byte CONTAINS_SPACES_INITIALLY_MASK = 0x40;
+
   private static final int LF_COUNT_SHIFT = 7;
   private static final int MAX_LF_COUNT = 1 << 24;
 
@@ -139,12 +141,10 @@ class WhiteSpace {
     myInitialLastLinesSpaces = indent.whiteSpaces;
     myInitialLastLinesTabs = indent.tabs;
 
-    if (getLineFeeds() > 0) myFlags |= CONTAINS_LF_INITIALLY;
-    else myFlags &= ~CONTAINS_LF_INITIALLY;
+    setFlag(CONTAINS_LF_INITIALLY_MASK, getLineFeeds() > 0);
 
     final int totalSpaces = getTotalSpaces();
-    if (totalSpaces > 0) myFlags |= CONTAINS_SPACES_INITIALLY;
-    else myFlags &=~ CONTAINS_SPACES_INITIALLY;
+    setFlag(CONTAINS_SPACES_INITIALLY_MASK, totalSpaces > 0);
   }
 
   /**
@@ -295,7 +295,7 @@ class WhiteSpace {
     performModification(new Runnable() {
       @Override
       public void run() {
-        if (!isKeepFirstColumn() || (myFlags & CONTAINS_SPACES_INITIALLY) != 0) {
+        if (!isKeepFirstColumn() || getFlag(CONTAINS_SPACES_INITIALLY_MASK)) {
           mySpaces = spaces;
           myIndentSpaces = indent;
         }
@@ -508,20 +508,15 @@ class WhiteSpace {
   }
 
   public void setIsSafe(final boolean value) {
-    setFlag(SAFE, value);
+    setFlag(SAFE_MASK, value);
   }
 
   private void setFlag(final int mask, final boolean value) {
-    if (value) {
-      myFlags |= mask;
-    }
-    else {
-      myFlags &= ~mask;
-    }
+    myFlags = BitUtil.set(myFlags, mask, value);
   }
 
   private boolean getFlag(final int mask) {
-    return (myFlags & mask) != 0;
+    return BitUtil.isSet(myFlags, mask);
   }
 
   private boolean isFirst() {
@@ -537,7 +532,7 @@ class WhiteSpace {
    */
   public boolean containsLineFeedsInitially() {
     if (myInitial == null) return false;
-    return (myFlags & CONTAINS_LF_INITIALLY) != 0;
+    return getFlag(CONTAINS_LF_INITIALLY_MASK);
   }
 
   /**
@@ -588,7 +583,7 @@ class WhiteSpace {
   }
 
   public void setKeepFirstColumn(final boolean b) {
-    setFlag(KEEP_FIRST_COLUMN, b);
+    setFlag(KEEP_FIRST_COLUMN_MASK, b);
   }
 
   public void setLineFeedsAreReadOnly() {
@@ -600,35 +595,35 @@ class WhiteSpace {
   }
 
   public boolean isIsFirstWhiteSpace() {
-    return getFlag(FIRST);
+    return getFlag(FIRST_MASK);
   }
 
   public boolean isIsSafe() {
-    return getFlag(SAFE);
+    return getFlag(SAFE_MASK);
   }
 
   public boolean isKeepFirstColumn() {
-    return getFlag(KEEP_FIRST_COLUMN);
+    return getFlag(KEEP_FIRST_COLUMN_MASK);
   }
 
   public boolean isLineFeedsAreReadOnly() {
-    return getFlag(LINE_FEEDS_ARE_READ_ONLY);
+    return getFlag(LINE_FEEDS_ARE_READ_ONLY_MASK);
   }
 
   public void setLineFeedsAreReadOnly(final boolean lineFeedsAreReadOnly) {
-    setFlag(LINE_FEEDS_ARE_READ_ONLY, lineFeedsAreReadOnly);
+    setFlag(LINE_FEEDS_ARE_READ_ONLY_MASK, lineFeedsAreReadOnly);
   }
 
   public boolean isIsReadOnly() {
-    return getFlag(READ_ONLY);
+    return getFlag(READ_ONLY_MASK);
   }
 
   public void setIsReadOnly(final boolean isReadOnly) {
-    setFlag(READ_ONLY, isReadOnly);
+    setFlag(READ_ONLY_MASK, isReadOnly);
   }
 
   public void setIsFirstWhiteSpace(final boolean isFirstWhiteSpace) {
-    setFlag(FIRST, isFirstWhiteSpace);
+    setFlag(FIRST_MASK, isFirstWhiteSpace);
   }
 
   public StringBuilder generateWhiteSpace(final CommonCodeStyleSettings.IndentOptions indentOptions,

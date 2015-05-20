@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
@@ -106,11 +107,27 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
+  /**
+   * @deprecated use {@link #addFavoritesListener(FavoritesListener, Disposable)} instead
+   */
   public void addFavoritesListener(FavoritesListener listener) {
     myListeners.add(listener);
     listener.rootsChanged();
   }
+  public void addFavoritesListener(final FavoritesListener listener, @NotNull Disposable parent) {
+    myListeners.add(listener);
+    listener.rootsChanged();
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        removeFavoritesListener(listener);
+      }
+    });
+  }
 
+  /**
+   * @deprecated use {@link #addFavoritesListener(FavoritesListener, Disposable)} instead
+   */
   public void removeFavoritesListener(FavoritesListener listener) {
     myListeners.remove(listener);
   }

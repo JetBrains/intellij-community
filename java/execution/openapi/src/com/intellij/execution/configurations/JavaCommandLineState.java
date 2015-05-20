@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,13 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-
-public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine{
+public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine {
   private JavaParameters myParams;
-  
-  protected JavaCommandLineState(@NotNull final ExecutionEnvironment environment) {
+
+  protected JavaCommandLineState(@NotNull ExecutionEnvironment environment) {
     super(environment);
   }
 
@@ -38,6 +36,10 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return myParams;
   }
 
+  public void clear() {
+    myParams = null;
+  }
+  
   @Override
   @NotNull
   protected OSProcessHandler startProcess() throws ExecutionException {
@@ -51,8 +53,8 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   protected abstract JavaParameters createJavaParameters() throws ExecutionException;
 
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    return CommandLineBuilder.createFromJavaParameters(getJavaParameters(), CommonDataKeys.PROJECT
-      .getData(DataManager.getInstance().getDataContext()), true);
+    final Project project = getEnvironment().getProject();
+    return CommandLineBuilder.createFromJavaParameters(getJavaParameters(), project, true);
   }
 
   public boolean shouldAddJavaProgramRunnerActions() {

@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,8 +124,11 @@ public class SheetMessage {
       focusCandidate = IdeFocusManager.getGlobalInstance().getLastFocusedFor(IdeFocusManager.getGlobalInstance().getLastFocusedFrame());
     }
 
-    LOG.assertTrue(focusCandidate != null, "The should return focus on closing the message");
-    focusCandidate.requestFocus();
+    // focusCandidate is null if a welcome screen is closed and ide frame is not opened.
+    // this is ok. We set focus correctly on our frame activation.
+    if (focusCandidate != null) {
+      focusCandidate.requestFocus();
+    }
   }
 
   private static void maximizeIfNeeded(final Window owner) {
@@ -218,6 +222,7 @@ public class SheetMessage {
           staticImage = null;
           myWindow.setContentPane(myController.getPanel(myWindow));
 
+          IJSwingUtilities.moveMousePointerOn(myWindow.getRootPane().getDefaultButton());
           myController.requestFocus();
         } else {
           if (restoreFullScreenButton) {
@@ -255,11 +260,6 @@ public class SheetMessage {
         setPositionRelativeToParent();
       }
     });
-  }
-
-  FontMetrics getFontMetrics(final Font f) {
-    final Component c = (myParent == null) ? WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow() : myParent;
-    return c.getGraphics().getFontMetrics(f);
   }
 }
 

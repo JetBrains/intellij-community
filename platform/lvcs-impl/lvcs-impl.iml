@@ -14,6 +14,7 @@
     <orderEntry type="library" name="jcip" level="project" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="diff-api" />
   </component>
   <component name="copyright">
     <Base>
@@ -21,4 +22,3 @@
     </Base>
   </component>
 </module>
-

@@ -24,7 +24,6 @@ import com.intellij.openapi.preview.PreviewProviderId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.docking.DockManager;
@@ -78,7 +77,7 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
   @NotNull
   @Override
   protected String getTitle(@NotNull VirtualFile file) {
-    return StringUtil.getShortened(EditorTabbedContainer.calcTabTitle(myProject, file), UISettings.getInstance().EDITOR_TAB_TITLE_LIMIT);
+    return EditorTabbedContainer.calcTabTitle(myProject, file);
   }
 
   @Nullable

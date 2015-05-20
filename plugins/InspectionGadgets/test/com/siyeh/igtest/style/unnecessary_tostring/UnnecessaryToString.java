@@ -3,7 +3,7 @@ package com.siyeh.igtest.style.unnecessary_tostring;
 public class UnnecessaryToString {
 
     String foo(Object o) {
-        return "star" + o.toString();
+        return "star" + o.<warning descr="Unnecessary 'toString()' call">toString</warning>();
     }
 
     String bar() {
@@ -14,19 +14,24 @@ public class UnnecessaryToString {
     void fizzz(Object o) {
         boolean c = true;
         System.out.println(o.toString() + c);
+        System.out.println((o.toString()) + c);
     }
 
     void polyadic(Object s) {
-      s = "abc" + s.toString() + "efg";
+      s = "abc" + s.<warning descr="Unnecessary 'toString()' call">toString</warning>() + "efg";
     }
 
     void printStream(Object o) {
-        System.out.print(o.toString());
+        System.out.print(o.<warning descr="Unnecessary 'toString()' call">toString</warning>());
     }
 
     void builder(StringBuilder builder, Object o) {
-        builder.append(o.toString());
+        builder.append(o.<warning descr="Unnecessary 'toString()' call">toString</warning>());
     }
+
+  String self() {
+    return toString();
+  }
 
   public static void main22(String[] args) {
     foo(args[0].toString());
@@ -44,6 +49,14 @@ public class UnnecessaryToString {
   class B extends A {
     public String toString() {
       return "B" + super.toString();
+    }
+  }
+
+  void exception() {
+    try {
+
+    } catch (RuntimeException e) {
+      org.slf4j.LoggerFactory.getLogger(UnnecessaryToString.class).info("this: {}", e.toString());
     }
   }
 }

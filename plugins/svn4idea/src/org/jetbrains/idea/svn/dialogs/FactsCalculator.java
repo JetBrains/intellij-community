@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CalledInAwt;
+import org.jetbrains.annotations.CalledInAwt;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConvertor;

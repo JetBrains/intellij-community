@@ -25,21 +25,18 @@ public class BitSetFlags implements Flags {
 
   private final int mySize;
 
-  @NotNull
-  private final BitSet myBitSet;
+  @NotNull private final BitSet myBitSet;
 
   // default value is false
   public BitSetFlags(int size) {
-    if (size < 0)
-      throw new NegativeArraySizeException("size < 0: " + size);
+    if (size < 0) throw new NegativeArraySizeException("size < 0: " + size);
     mySize = size;
-    myBitSet = new BitSet(size);
+    myBitSet = new BitSet();
   }
 
   public BitSetFlags(int size, boolean defaultValue) {
     this(size);
-    if (defaultValue)
-      setAll(true);
+    if (defaultValue) setAll(true);
   }
 
   @Override
@@ -65,10 +62,8 @@ public class BitSetFlags implements Flags {
   }
 
   private void checkRange(int index) {
-    if (index < 0)
-      throw new IndexOutOfBoundsException("index < 0:" + index);
-    if (index >= mySize)
-      throw new IndexOutOfBoundsException("index: " + index + " >= mySize: " + mySize);
+    if (index < 0) throw new IndexOutOfBoundsException("index is " + index + " which is less then zero");
+    if (index >= mySize) throw new IndexOutOfBoundsException("index is " + index + " and set size is " + mySize);
   }
 
 

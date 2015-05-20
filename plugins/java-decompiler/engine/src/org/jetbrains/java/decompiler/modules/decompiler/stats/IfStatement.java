@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
@@ -30,8 +34,8 @@ import java.util.List;
 
 public class IfStatement extends Statement {
 
-  public static int IFTYPE_IF = 0;
-  public static int IFTYPE_IFELSE = 1;
+  public static final int IFTYPE_IF = 0;
+  public static final int IFTYPE_IFELSE = 1;
 
   public int iftype;
 
@@ -49,7 +53,7 @@ public class IfStatement extends Statement {
 
   private boolean iffflag;
 
-  private List<Exprent> headexprent = new ArrayList<Exprent>(); // contains IfExprent
+  private final List<Exprent> headexprent = new ArrayList<Exprent>(); // contains IfExprent
 
   // *****************************************************************************
   // constructors
@@ -216,7 +220,7 @@ public class IfStatement extends Statement {
     tracer.incrementCurrentSourceLine();
 
     if (ifstat == null) {
-      buf.append(InterpreterUtil.getIndentString(indent + 1));
+      buf.appendIndent(indent + 1);
 
       if (ifedge.explicit) {
         if (ifedge.getType() == StatEdge.TYPE_BREAK) {
@@ -256,14 +260,13 @@ public class IfStatement extends Statement {
         elseif = true;
       }
       else {
-        BytecodeMappingTracer else_tracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
+        BytecodeMappingTracer else_tracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine() + 1);
         TextBuffer content = ExprProcessor.jmpWrapper(elsestat, indent + 1, false, else_tracer);
 
         if (content.length() > 0) {
           buf.appendIndent(indent).append("} else {").appendLineSeparator();
 
-          else_tracer.shiftSourceLines(1);
-          tracer.setCurrentSourceLine(else_tracer.getCurrentSourceLine() + 1);
+          tracer.setCurrentSourceLine(else_tracer.getCurrentSourceLine());
           tracer.addTracer(else_tracer);
 
           buf.append(content);
@@ -422,4 +425,42 @@ public class IfStatement extends Statement {
   public StatEdge getElseEdge() {
     return elseedge;
   }
+  
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public IMatchable findObject(MatchNode matchNode, int index) {
+
+    IMatchable object = super.findObject(matchNode, index);
+    if(object != null) {
+      return object;
+    }
+    
+    if(matchNode.getType() == MatchNode.MATCHNODE_EXPRENT) {
+      String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
+      if("head".equals(position)) {
+        return getHeadexprent();
+      }
+    }
+
+    return null;
+  }
+
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+
+    if(!super.match(matchNode, engine)) {
+      return false;
+    }
+
+    Integer type = (Integer)matchNode.getRuleValue(MatchProperties.STATEMENT_IFTYPE);
+    if(type != null) {
+      if(this.iftype != type.intValue()) {
+        return false;
+      }
+    }
+        
+    return true;
+  }
+  
 }

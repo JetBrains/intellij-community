@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 package org.jetbrains.jps.builders.rebuild
+
+import org.jetbrains.jps.util.JpsPathUtil
+import com.intellij.util.PathUtil
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+
 /**
  * @author nik
  */
@@ -68,6 +74,19 @@ public class ModuleRebuildTest: JpsRebuildTestCase() {
           file("a.txt")
           file("index.html")
         }
+      }
+    })
+  }
+
+  fun testResourceRootWithRelativeOutputPath() {
+    val m = addModule("m")
+    val res = PathUtil.getParentPath(createFile("res/a.txt", "42"))
+    val url = JpsPathUtil.pathToUrl(res)
+    m.addSourceRoot(url, JavaResourceRootType.RESOURCE, JpsJavaExtensionService.getInstance().createResourceRootProperties("foo", false))
+    rebuild()
+    assertOutput(getAbsolutePath("out/production/m"), fs {
+      dir("foo") {
+        file("a.txt", "42")
       }
     })
   }

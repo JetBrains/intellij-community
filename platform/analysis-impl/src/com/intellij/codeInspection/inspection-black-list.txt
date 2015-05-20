@@ -239,7 +239,7 @@ org.intellij.lang.xpath.validation.inspections.ImplicitTypeConversion
 org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion
 org.intellij.plugins.intelliLang.inject.java.validation.LanguageMismatch
 org.intellij.plugins.intelliLang.pattern.PatternValidator
-org.jetbrains.generate.tostring.inspection.ClassHasNoToStringMethodInspection
+org.jetbrains.java.generate.inspection.ClassHasNoToStringMethodInspection
 org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection
 org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignmentCanBeOperatorAssignmentInspection
 org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyOverlyComplexArithmeticExpressionInspection

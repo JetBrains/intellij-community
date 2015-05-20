@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   }
 
   //null key means project
-  private final Map<VirtualFile, Charset> myMapping = new HashMap<VirtualFile, Charset>();
+  private final Map<VirtualFile, Charset> myMapping = ContainerUtil.newConcurrentMap();
+  private volatile Charset myProjectCharset;
 
   @Override
   public Element getState() {
@@ -96,7 +97,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       ContainerUtil.quickSort(files, new Comparator<VirtualFile>() {
         @Override
         public int compare(final VirtualFile o1, final VirtualFile o2) {
-          if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
           return o1.getPath().compareTo(o2.getPath());
         }
       });
@@ -104,9 +104,15 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
         Charset charset = myMapping.get(file);
         Element child = new Element("file");
         element.addContent(child);
-        child.setAttribute("url", file == null ? PROJECT_URL : file.getUrl());
+        child.setAttribute("url", file.getUrl());
         child.setAttribute("charset", charset.name());
       }
+    }
+    if (myProjectCharset != null) {
+      Element child = new Element("file");
+      element.addContent(child);
+      child.setAttribute("url", PROJECT_URL);
+      child.setAttribute("charset", myProjectCharset.name());
     }
 
     if (myOldUTFGuessing != null) {
@@ -134,9 +140,14 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
         String charsetName = fileElement.getAttributeValue("charset");
         Charset charset = CharsetToolkit.forName(charsetName);
         if (charset == null) continue;
-        VirtualFile file = url.equals(PROJECT_URL) ? null : VirtualFileManager.getInstance().findFileByUrl(url);
-        if (file != null || url.equals(PROJECT_URL)) {
-          mapping.put(file, charset);
+        if (url.equals(PROJECT_URL)) {
+          myProjectCharset = charset;
+        }
+        else {
+          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+          if (file != null) {
+            mapping.put(file, charset);
+          }
         }
       }
       myMapping.putAll(mapping);
@@ -165,10 +176,9 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @Nullable
   public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
     VirtualFile parent = virtualFile;
-    while (true) {
+    while (parent != null) {
       Charset charset = myMapping.get(parent);
       if (charset != null || !useParentDefaults) return charset;
-      if (parent == null) break;
       parent = parent.getParent();
     }
 
@@ -184,11 +194,17 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   public void setEncoding(@Nullable final VirtualFile virtualFileOrDir, @Nullable final Charset charset) {
     Charset oldCharset;
 
-    if (charset == null) {
-      oldCharset = myMapping.remove(virtualFileOrDir);
+    if (virtualFileOrDir == null) {
+      oldCharset = myProjectCharset;
+      myProjectCharset = charset;
     }
     else {
-      oldCharset = myMapping.put(virtualFileOrDir, charset);
+      if (charset == null) {
+        oldCharset = myMapping.remove(virtualFileOrDir);
+      }
+      else {
+        oldCharset = myMapping.put(virtualFileOrDir, charset);
+      }
     }
 
     if (!Comparing.equal(oldCharset, charset)) {
@@ -205,10 +221,15 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     reload(virtualFileOrDir);
   }
 
-  private static void reload(@NotNull VirtualFile virtualFile) {
-    FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    ((VirtualFileListener)documentManager)
-      .contentsChanged(new VirtualFileEvent(null, virtualFile, virtualFile.getName(), virtualFile.getParent()));
+  private static void reload(@NotNull final VirtualFile virtualFile) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        ((VirtualFileListener)documentManager)
+          .contentsChanged(new VirtualFileEvent(null, virtualFile, virtualFile.getName(), virtualFile.getParent()));
+      }
+    });
   }
 
   @Override
@@ -216,6 +237,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   public Collection<Charset> getFavorites() {
     Set<Charset> result = new HashSet<Charset>();
     result.addAll(myMapping.values());
+    result.add(getDefaultCharset());
     result.add(CharsetToolkit.UTF8_CHARSET);
     result.add(CharsetToolkit.getDefaultSystemCharset());
     result.add(CharsetToolkit.UTF_16_CHARSET);
@@ -229,12 +251,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   }
 
   @NotNull
-  @Override
   public Map<VirtualFile, Charset> getAllMappings() {
     return myMapping;
   }
 
-  @Override
   public void setMapping(@NotNull final Map<VirtualFile, Charset> mapping) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
@@ -250,7 +270,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
           VirtualFile virtualFile = entry.getKey();
           Charset charset = entry.getValue();
           if (charset == null) throw new IllegalArgumentException("Null charset for " + virtualFile + "; mapping: " + mapping);
-          if (virtualFile != null) {
+          if (virtualFile == null) {
+            myProjectCharset = charset;
+          }
+          else {
             if (!fileIndex.isInContent(virtualFile)) continue;
             if (!virtualFile.isDirectory() && !Comparing.equal(charset, oldMap.get(virtualFile))) {
               Document document;
@@ -268,8 +291,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
 
               if (!changed) continue;
             }
+            newMap.put(virtualFile, charset);
           }
-          newMap.put(virtualFile, charset);
         }
       }
     });
@@ -352,7 +375,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @Override
   @NotNull
   public Charset getDefaultCharset() {
-    Charset charset = getEncoding(null, false);
+    Charset charset = myProjectCharset;
     return charset == null ? Charset.defaultCharset() : charset;
   }
 
@@ -365,7 +388,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   static void suppressReloadDuring(@NotNull Runnable action) {
     Boolean old = SUPPRESS_RELOAD.get();
     try {
-      SUPPRESS_RELOAD.set(true);
+      SUPPRESS_RELOAD.set(Boolean.TRUE);
       action.run();
     }
     finally {
@@ -462,11 +485,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable) {
     EncodingManager.getInstance().addPropertyChangeListener(listener,parentDisposable);
-  }
-
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
-    EncodingManager.getInstance().removePropertyChangeListener(listener);
   }
 
   @Override

@@ -1,0 +1,445 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html lang="en">
+  <head>
+    <title>Apache License, Version 2.0</title>
+
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta property="og:image" content="http://www.apache.org/images/asf_logo.gif" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/style.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/code.css">
+
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/apache_boot.js"></script>
+
+    
+
+    
+    <!-- Licensed to the Apache Software Foundation (ASF) under one or more contributor license agreements.  See the NOTICE file distributed with this work for additional information regarding copyright ownership.  The ASF licenses this file to you under the Apache License, Version 2.0 (the &quot;License&quot;); you may not use this file except in compliance with the License.  You may obtain a copy of the License at . http://www.apache.org/licenses/LICENSE-2.0 . Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the License for the specific language governing permissions and limitations under the License. -->
+  </head>
+
+  <body>
+    <div id="page" class="container_16">
+      <div id="header" class="grid_8">
+        <img src="/images/feather-small.gif" alt="The Apache Software Foundation">
+        <h1>The Apache Software Foundation</h1>
+        <h2>Apache License, Version 2.0</h2>
+      </div>
+      <div id="nav" class="grid_8">
+        <ul>
+          <!-- <li><a href="/" title="Welcome!">Home</a></li> -->
+          <li><a href="/foundation/" title="The Foundation">Foundation</a></li>
+          <li><a href="http://projects.apache.org" title="The Projects">Projects</a></li>
+          <li><a href="http://people.apache.org" title="The People">People</a></li>
+          <li><a href="/foundation/getinvolved.html" title="Get Involved">Get Involved</a></li>
+          <li><a href="/dyn/closer.cgi" title="Download">Download</a></li>
+          <li><a href="/foundation/sponsorship.html" title="Support Apache">Support Apache</a></li>
+        </ul>
+        <p><a href="/">Home</a>&nbsp;&raquo&nbsp;<a href="/licenses/">Licenses</a></p>
+        <form name="search" id="search" action="http://www.google.com/search" method="get">
+          <input value="apache.org" name="sitesearch" type="hidden"/>
+          <input type="text" name="q" id="query">
+          <input type="submit" id="submit" value="Search">
+        </form>
+      </div>
+      <div class="clear"></div>
+      <div id="content" class="grid_16"><div class="section-content"><p>Apache License<br></br>Version 2.0, January 2004<br></br>
+<a href="http://www.apache.org/licenses/">http://www.apache.org/licenses/</a> </p>
+<p>TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION</p>
+<p><strong><a name="definitions">1. Definitions</a></strong>.</p>
+<p>"License" shall mean the terms and conditions for use, reproduction, and
+distribution as defined by Sections 1 through 9 of this document.</p>
+<p>"Licensor" shall mean the copyright owner or entity authorized by the
+copyright owner that is granting the License.</p>
+<p>"Legal Entity" shall mean the union of the acting entity and all other
+entities that control, are controlled by, or are under common control with
+that entity. For the purposes of this definition, "control" means (i) the
+power, direct or indirect, to cause the direction or management of such
+entity, whether by contract or otherwise, or (ii) ownership of fifty
+percent (50%) or more of the outstanding shares, or (iii) beneficial
+ownership of such entity.</p>
+<p>"You" (or "Your") shall mean an individual or Legal Entity exercising
+permissions granted by this License.</p>
+<p>"Source" form shall mean the preferred form for making modifications,
+including but not limited to software source code, documentation source,
+and configuration files.</p>
+<p>"Object" form shall mean any form resulting from mechanical transformation
+or translation of a Source form, including but not limited to compiled
+object code, generated documentation, and conversions to other media types.</p>
+<p>"Work" shall mean the work of authorship, whether in Source or Object form,
+made available under the License, as indicated by a copyright notice that
+is included in or attached to the work (an example is provided in the
+Appendix below).</p>
+<p>"Derivative Works" shall mean any work, whether in Source or Object form,
+that is based on (or derived from) the Work and for which the editorial
+revisions, annotations, elaborations, or other modifications represent, as
+a whole, an original work of authorship. For the purposes of this License,
+Derivative Works shall not include works that remain separable from, or
+merely link (or bind by name) to the interfaces of, the Work and Derivative
+Works thereof.</p>
+<p>"Contribution" shall mean any work of authorship, including the original
+version of the Work and any modifications or additions to that Work or
+Derivative Works thereof, that is intentionally submitted to Licensor for
+inclusion in the Work by the copyright owner or by an individual or Legal
+Entity authorized to submit on behalf of the copyright owner. For the
+purposes of this definition, "submitted" means any form of electronic,
+verbal, or written communication sent to the Licensor or its
+representatives, including but not limited to communication on electronic
+mailing lists, source code control systems, and issue tracking systems that
+are managed by, or on behalf of, the Licensor for the purpose of discussing
+and improving the Work, but excluding communication that is conspicuously
+marked or otherwise designated in writing by the copyright owner as "Not a
+Contribution."</p>
+<p>"Contributor" shall mean Licensor and any individual or Legal Entity on
+behalf of whom a Contribution has been received by Licensor and
+subsequently incorporated within the Work.</p>
+<p><strong><a name="copyright">2. Grant of Copyright License</a></strong>. Subject to the
+terms and conditions of this License, each Contributor hereby grants to You
+a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+copyright license to reproduce, prepare Derivative Works of, publicly
+display, publicly perform, sublicense, and distribute the Work and such
+Derivative Works in Source or Object form.</p>
+<p><strong><a name="patent">3. Grant of Patent License</a></strong>. Subject to the terms
+and conditions of this License, each Contributor hereby grants to You a
+perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+(except as stated in this section) patent license to make, have made, use,
+offer to sell, sell, import, and otherwise transfer the Work, where such
+license applies only to those patent claims licensable by such Contributor
+that are necessarily infringed by their Contribution(s) alone or by
+combination of their Contribution(s) with the Work to which such
+Contribution(s) was submitted. If You institute patent litigation against
+any entity (including a cross-claim or counterclaim in a lawsuit) alleging
+that the Work or a Contribution incorporated within the Work constitutes
+direct or contributory patent infringement, then any patent licenses
+granted to You under this License for that Work shall terminate as of the
+date such litigation is filed.</p>
+<p><strong><a name="redistribution">4. Redistribution</a></strong>. You may reproduce and
+distribute copies of the Work or Derivative Works thereof in any medium,
+with or without modifications, and in Source or Object form, provided that
+You meet the following conditions:</p>
+<ol style="list-style: lower-latin;">
+<li>You must give any other recipients of the Work or Derivative Works a
+copy of this License; and</li>
+
+<li>You must cause any modified files to carry prominent notices stating
+that You changed the files; and</li>
+
+<li>You must retain, in the Source form of any Derivative Works that You
+distribute, all copyright, patent, trademark, and attribution notices from
+the Source form of the Work, excluding those notices that do not pertain to
+any part of the Derivative Works; and</li>
+
+<li>If the Work includes a "NOTICE" text file as part of its distribution,
+then any Derivative Works that You distribute must include a readable copy
+of the attribution notices contained within such NOTICE file, excluding
+those notices that do not pertain to any part of the Derivative Works, in
+at least one of the following places: within a NOTICE text file distributed
+as part of the Derivative Works; within the Source form or documentation,
+if provided along with the Derivative Works; or, within a display generated
+by the Derivative Works, if and wherever such third-party notices normally
+appear. The contents of the NOTICE file are for informational purposes only
+and do not modify the License. You may add Your own attribution notices
+within Derivative Works that You distribute, alongside or as an addendum to
+the NOTICE text from the Work, provided that such additional attribution
+notices cannot be construed as modifying the License.
+<br/>
+<br/>
+You may add Your own copyright statement to Your modifications and may
+provide additional or different license terms and conditions for use,
+reproduction, or distribution of Your modifications, or for any such
+Derivative Works as a whole, provided Your use, reproduction, and
+distribution of the Work otherwise complies with the conditions stated in
+this License.
+</li>
+
+</ol>
+
+<p><strong><a name="contributions">5. Submission of Contributions</a></strong>. Unless You
+explicitly state otherwise, any Contribution intentionally submitted for
+inclusion in the Work by You to the Licensor shall be under the terms and
+conditions of this License, without any additional terms or conditions.
+Notwithstanding the above, nothing herein shall supersede or modify the
+terms of any separate license agreement you may have executed with Licensor
+regarding such Contributions.</p>
+<p><strong><a name="trademarks">6. Trademarks</a></strong>. This License does not grant
+permission to use the trade names, trademarks, service marks, or product
+names of the Licensor, except as required for reasonable and customary use
+in describing the origin of the Work and reproducing the content of the
+NOTICE file.</p>
+<p><strong><a name="no-warranty">7. Disclaimer of Warranty</a></strong>. Unless required by
+applicable law or agreed to in writing, Licensor provides the Work (and
+each Contributor provides its Contributions) on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied, including,
+without limitation, any warranties or conditions of TITLE,
+NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE. You
+are solely responsible for determining the appropriateness of using or
+redistributing the Work and assume any risks associated with Your exercise
+of permissions under this License.</p>
+<p><strong><a name="no-liability">8. Limitation of Liability</a></strong>. In no event and
+under no legal theory, whether in tort (including negligence), contract, or
+otherwise, unless required by applicable law (such as deliberate and
+grossly negligent acts) or agreed to in writing, shall any Contributor be
+liable to You for damages, including any direct, indirect, special,
+incidental, or consequential damages of any character arising as a result
+of this License or out of the use or inability to use the Work (including
+but not limited to damages for loss of goodwill, work stoppage, computer
+failure or malfunction, or any and all other commercial damages or losses),
+even if such Contributor has been advised of the possibility of such
+damages.</p>
+<p><strong><a name="additional">9. Accepting Warranty or Additional Liability</a></strong>.
+While redistributing the Work or Derivative Works thereof, You may choose
+to offer, and charge a fee for, acceptance of support, warranty, indemnity,
+or other liability obligations and/or rights consistent with this License.
+However, in accepting such obligations, You may act only on Your own behalf
+and on Your sole responsibility, not on behalf of any other Contributor,
+and only if You agree to indemnify, defend, and hold each Contributor
+harmless for any liability incurred by, or claims asserted against, such
+Contributor by reason of your accepting any such warranty or additional
+liability.</p>
+<p>END OF TERMS AND CONDITIONS</p>
+<h1 id="apply">APPENDIX: How to apply the Apache License to your work</h1>
+<p>To apply the Apache License to your work, attach the following boilerplate
+notice, with the fields enclosed by brackets "[]" replaced with your own
+identifying information. (Don't include the brackets!) The text should be
+enclosed in the appropriate comment syntax for the file format. We also
+recommend that a file or class name and description of purpose be included
+on the same "printed page" as the copyright notice for easier
+identification within third-party archives.</p>
+<div class="codehilite"><pre>Copyright [yyyy] [name of copyright owner]
+
+Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</pre></div></div></div>
+      <div class="clear"></div>
+    </div>
+    <div id="footer" class="container_16">
+      <div class="links grid_16">
+      <div class="grid_3">
+        <h4>Projects</h4>
+        <ul>
+<li><a href="http://httpd.apache.org/" title="Apache Web Server (httpd)">HTTP Server</a></li>
+<li><a href="http://abdera.apache.org/" title="Atom Publishing Protocol Implementation">Abdera</a></li>
+<li><a href="http://accumulo.apache.org/" title="Sorted, distributed key/value store">Accumulo</a></li>
+<li><a href="http://ace.apache.org/" title="Centralized life cycle management and deployment of OSGi based and related modular software artifacts for distribution.">ACE</a></li>
+<li><a href="http://activemq.apache.org/" title="Distributed Messaging System">ActiveMQ</a></li>
+<li><a href="http://airavata.apache.org/" title="Workflow and Computational Job Management Middleware">Airavata</a></li>
+<li><a href="http://allura.apache.org/" title="Forge software for hosting software projects">Allura</a></li>
+<li><a href="http://ambari.apache.org/" title="Hadoop cluster management">Ambari</a></li>
+<li><a href="http://ant.apache.org/" title="Java-based build tool">Ant</a></li>
+<li><a href="http://any23.apache.org/" title="Anything to Triples">Any23</a></li>
+<li><a href="http://apr.apache.org/" title="Apache Portable Runtime libraries">APR</a></li>
+<li><a href="http://archiva.apache.org/" title="Build Artifact Repository Manager">Archiva</a></li>
+<li><a href="http://aries.apache.org/" title="Enterprise OSGi application programming model">Aries</a></li>
+<li><a href="http://avro.apache.org/" title="A Serialization System">Avro</a></li>
+<li><a href="http://axis.apache.org/" title="Java SOAP Engine">Axis</a></li>
+<li><a href="http://bigtop.apache.org/" title="Apache Hadoop ecosystem integration and distribution project">Bigtop</a></li>
+<li><a href="http://bloodhound.apache.org/" title="Issue tracking, wiki and repository browser">Bloodhound</a></li>
+<li><a href="http://buildr.apache.org/" title="Simple and intuitive build system for Java applications">Buildr</a></li>
+<li><a href="http://bval.apache.org/" title="Apache BVal: JSR-303 Bean Validation Implementation and Extensions">BVal</a></li>
+<li><a href="http://camel.apache.org/" title="Spring based Integration Framework which implements the Enterprise Integration Patterns">Camel</a></li>
+<li><a href="http://cassandra.apache.org/" title="Highly scalable second-generation distributed database">Cassandra</a></li>
+<li><a href="http://cayenne.apache.org/" title="User-friendly Java ORM with Tools">Cayenne</a></li>
+<li><a href="http://chemistry.apache.org/" title="CMIS (Content Managment Interoperability Services) Clients and Servers">Chemistry</a></li>
+<li><a href="http://chukwa.apache.org/" title="Open source data collection system for monitoring large distributed systems.">Chukwa</a></li>
+<li><a href="http://clerezza.apache.org/" title="Semantically linked data for OSGi">Clerezza</a></li>
+<li><a href="http://cloudstack.apache.org/" title="Infrastructure as a Service solution">CloudStack</a></li>
+<li><a href="http://cocoon.apache.org/" title="Web development framework: separation of concerns, component-based">Cocoon</a></li>
+<li><a href="http://commons.apache.org/" title="Reusable Java components">Commons</a></li>
+<li><a href="http://continuum.apache.org/" title="Continuous Integration and Build Server">Continuum</a></li>
+<li><a href="http://cordova.apache.org/" title="Platform for building native mobile applications using HTML, CSS and JavaScript">Cordova</a></li>
+<li><a href="http://couchdb.apache.org/" title="RESTful document database">CouchDB</a></li>
+<li><a href="http://creadur.apache.org/" title="Comprehension and auditing of software distributions">Creadur</a></li>
+<li><a href="http://crunch.apache.org/" title="Simple and Efficient MapReduce Pipelines">Crunch</a></li>
+<li><a href="http://ctakes.apache.org/" title="Natural language processing (NLP) tool for information extraction from electronic medical record clinical free-text">cTAKES</a></li>
+<li><a href="http://curator.apache.org/" title="Java libraries that make using Apache ZooKeeper easier">Curator</a></li>
+<li><a href="http://cxf.apache.org/" title="Service Framework">CXF</a></li>
+<li><a href="http://db.apache.org/" title="Database access">DB</a></li>
+<li><a href="http://deltacloud.apache.org/" title="RESTful cloud management interface">Deltacloud</a></li>
+<li><a href="http://deltaspike.apache.org/" title="Portable CDI extensions that provide useful features for Java application developers">DeltaSpike</a></li>
+<li><a href="http://directmemory.apache.org/" title="An off-heap cache for the Java Virtual Machine">DirectMemory</a></li>
+<li><a href="http://directory.apache.org/" title="Apache Directory Server">Directory</a></li>
+<li><a href="http://empire-db.apache.org/" title="Relational Data Persistence">Empire-db</a></li>
+<li><a href="http://etch.apache.org/" title="Cross-platform, language- and transport-independent RPC-like messaging framework">Etch</a></li>
+<li><a href="http://felix.apache.org/" title="OSGi Framework and components.">Felix</a></li>
+<li><a href="http://flex.apache.org/" title="Application framework for expressive web applications that deploy to all major browsers, desktops and devices.">Flex</a></li>
+<li><a href="http://flume.apache.org/" title="A reliable service for efficiently collecting, aggregating, and moving large amounts of log data">Flume</a></li>
+<li><a href="http://forrest.apache.org/" title="Aggregated multi-channel documentation, separation of concerns">Forrest</a></li>
+<li><a href="http://geronimo.apache.org/" title="Java2, Enterprise Edition (J2EE) container">Geronimo</a></li>
+<li><a href="http://giraph.apache.org/" title="Iterative graph processing system built for high scalability">Giraph</a></li>
+<li><a href="http://gora.apache.org/" title="ORM framework for column stores such as Apache HBase and Apache Cassandra with a specific focus on Hadoop">Gora</a></li>
+<li><a href="http://gump.apache.org/" title="Continuous integration of open source projects">Gump</a></li>
+<li><a href="http://hadoop.apache.org/" title="Distributed computing platform">Hadoop</a></li>
+<li><a href="http://hama.apache.org/" title="a Bulk Synchronous Parallel computing framework on top of Hadoop">Hama</a></li>
+<li><a href="http://hbase.apache.org/" title="Hadoop Database">HBase</a></li>
+<li><a href="http://helix.apache.org/" title="A cluster management framework for partitioned and replicated distributed resources">Helix</a></li>
+<li><a href="http://hive.apache.org/" title="Data warehouse infrastructure using the Hadoop Database">Hive</a></li>
+<li><a href="http://hc.apache.org/" title="Java toolset of low level HTTP components">HttpComponents</a></li>
+<li><a href="http://isis.apache.org/" title="Framework for rapidly developing domain-driven apps in Java">Isis</a></li>
+<li><a href="http://jackrabbit.apache.org/" title="Content Repository for Java">Jackrabbit</a></li>
+<li><a href="http://james.apache.org/" title="Java Apache Mail Enterprise Server">James</a></li>
+<li><a href="http://jclouds.apache.org/" title="Java cloud APIs and abstractions">jclouds</a></li>
+<li><a href="http://jena.apache.org/" title="Java framework for building Semantic Web applications">Jena</a></li>
+<li><a href="http://jmeter.apache.org/" title="Java performance and functional testing">JMeter</a></li>
+<li><a href="http://jspwiki.apache.org/" title="Leading open source WikiWiki engine, feature-rich and built around standard J2EE components (Java, servlets, JSP). ">JSPWiki</a></li>
+<li><a href="http://juddi.apache.org/" title="Java implementation of the Universal Description, Discovery, and Integration specification">jUDDI</a></li>
+<li><a href="http://kafka.apache.org/" title="Distributed publish-subscribe messaging system">Kafka</a></li>
+<li><a href="http://karaf.apache.org/" title="Server-side OSGi distribution">Karaf</a></li>
+<li><a href="http://knox.apache.org/" title="Simplify and normalize the deployment and implementation of secure Hadoop clusters">Knox</a></li>
+<li><a href="http://lenya.apache.org/" title="Content Management System">Lenya</a></li>
+<li><a href="http://libcloud.apache.org/" title="Unified interface to the cloud">Libcloud</a></li>
+<li><a href="http://logging.apache.org/" title="Cross-language logging services">Logging</a></li>
+<li><a href="http://lucene.apache.org/" title="Search engine library">Lucene</a></li>
+<li><a href="http://lucenenet.apache.org/" title="Search engine library targeted at .NET runtime users.">Lucene.Net</a></li>
+<li><a href="http://lucy.apache.org/" title="Search engine library for dynamic languages">Lucy</a></li>
+<li><a href="http://mahout.apache.org/" title="Scalable machine learning library">Mahout</a></li>
+<li><a href="http://manifoldcf.apache.org/" title="Framework for connecting source content repositories to target repositories or indexes.">ManifoldCF</a></li>
+<li><a href="http://marmotta.apache.org/" title="An Open Platform for Linked Data">Marmotta</a></li>
+<li><a href="http://maven.apache.org/" title="Java project management and comprehension tools">Maven</a></li>
+<li><a href="http://mesos.apache.org/" title="a cluster manager that provides efficient resource isolation and sharing across distributed applications">Mesos</a></li>
+<li><a href="http://mina.apache.org/" title="Multipurpose Infrastructure for Network Application">MINA</a></li>
+<li><a href="http://mrunit.apache.org/" title="Java library that helps developers unit test Apache Hadoop map reduce jobs">MRUnit</a></li>
+<li><a href="http://myfaces.apache.org/" title="JavaServer(tm) Faces implementation and components">MyFaces</a></li>
+<li><a href="http://nutch.apache.org/" title="Open Source Web Search Software">Nutch</a></li>
+<li><a href="http://ode.apache.org/" title="Orchestration Director Engine: Business Process Management (BPM), Process Orchestration and Workflow through service composition.">ODE</a></li>
+<li><a href="http://ofbiz.apache.org/" title="Open for Business: enterprise automation software">OFBiz</a></li>
+<li><a href="http://olingo.apache.org/" title="OASIS OData protocol libraries">Olingo</a></li>
+<li><a href="http://oltu.apache.org/" title="OAuth protocol implementation in Java">Oltu</a></li>
+<li><a href="http://onami.apache.org/" title="Development and maintenance of a set of Google Guice extensions">Onami</a></li>
+<li><a href="http://oodt.apache.org/" title="Object Oriented Data Technology (middleware metadata)">OODT</a></li>
+<li><a href="http://oozie.apache.org/" title="A workflow scheduler system to manage Apache Hadoop jobs.">Oozie</a></li>
+<li><a href="http://climate.apache.org/" title="Climate model evaluation">Open Climate Workbench</a></li>
+<li><a href="http://openjpa.apache.org/" title="OpenJPA: Object Relational Mapping for Java">OpenJPA</a></li>
+<li><a href="http://openmeetings.apache.org/" title="OpenMeetings: Web-Conferencing and real-time collaboration">OpenMeetings</a></li>
+<li><a href="http://opennlp.apache.org/" title="Machine learning based toolkit for the processing of natural language text">OpenNLP</a></li>
+<li><a href="http://openoffice.apache.org/" title="An open-source, office-document productivity suite">OpenOffice</a></li>
+<li><a href="http://openwebbeans.apache.org/" title="OpenWebBeans: JSR-299 Context and Dependency Injection for Java EE Platform Implementation">OpenWebBeans</a></li>
+<li><a href="http://pdfbox.apache.org/" title="Java library for working with PDF documents">PDFBox</a></li>
+<li><a href="http://perl.apache.org/" title="Dynamic websites using Perl">Perl</a></li>
+<li><a href="http://pig.apache.org/" title="Platform for analyzing large data sets">Pig</a></li>
+<li><a href="http://pivot.apache.org/" title="Rich Internet applications in Java">Pivot</a></li>
+<li><a href="http://poi.apache.org/" title="Java API for OLE 2 Compound and OOXML Documents">POI</a></li>
+<li><a href="http://portals.apache.org/" title="Portal technology">Portals</a></li>
+<li><a href="http://qpid.apache.org/" title="Multiple language implementation of the latest Advanced Message Queuing Protocol (AMQP)">Qpid</a></li>
+<li><a href="http://rave.apache.org/" title="Web and social mashup engine">Rave</a></li>
+<li><a href="http://river.apache.org/" title="Jini service oriented architecture">River</a></li>
+<li><a href="http://roller.apache.org/" title="Java blog server">Roller</a></li>
+<li><a href="http://santuario.apache.org/" title="XML Security in Java and C++">Santuario</a></li>
+<li><a href="http://servicemix.apache.org/" title="Enterprise Service Bus">ServiceMix</a></li>
+<li><a href="http://shindig.apache.org/" title="Opensocial Reference Implementation">Shindig</a></li>
+<li><a href="http://shiro.apache.org/" title="Powerful and easy-to-use application security framework">Shiro</a></li>
+<li><a href="http://sis.apache.org/" title="Spatial Information System">SIS</a></li>
+<li><a href="http://sling.apache.org/" title="Web Framework for JCR Content Repositories">Sling</a></li>
+<li><a href="http://spamassassin.apache.org/" title="Mail filter to identify spam">SpamAssassin</a></li>
+<li><a href="http://spark.apache.org/" title="Fast and general engine for large-scale data processing">Spark</a></li>
+<li><a href="http://sqoop.apache.org/" title="Bulk Data Transfer for Hadoop and Structured Datastores">Sqoop</a></li>
+<li><a href="http://stanbol.apache.org/" title="Reusable components for semantic content management">Stanbol</a></li>
+<li><a href="http://steve.apache.org/" title="Apache's Python based single transferable vote software system">STeVe</a></li>
+<li><a href="http://storm.apache.org/" title="Distributed, real-time computation system">Storm</a></li>
+<li><a href="http://struts.apache.org/" title="Model 2 framework for building Java web applications">Struts</a></li>
+<li><a href="http://subversion.apache.org/" title="Version Control">Subversion</a></li>
+<li><a href="http://synapse.apache.org/" title="Enterprise Service Bus and Mediation Framework">Synapse</a></li>
+<li><a href="http://syncope.apache.org/" title="Managing digital identities in enterprise environments">Syncope</a></li>
+<li><a href="http://tajo.apache.org/" title="Big data warehouse system on Hadoop">Tajo</a></li>
+<li><a href="http://tapestry.apache.org/" title="Component-based Java Web Application Framework">Tapestry</a></li>
+<li><a href="http://tcl.apache.org/" title="Dynamic websites using TCL">Tcl</a></li>
+<li><a href="http://tez.apache.org/" title="High-performance and scalable distributed data processing framework">Tez</a></li>
+<li><a href="http://thrift.apache.org/" title="Framework for scalable cross-language services development">Thrift</a></li>
+<li><a href="http://tika.apache.org" title="Content Analysis and Detection Toolkit">Tika</a></li>
+<li><a href="http://tiles.apache.org/" title="A templating framework for web application user interfaces">Tiles</a></li>
+<li><a href="http://tomcat.apache.org/" title="A Java Servlet and JSP Container">Tomcat</a></li>
+<li><a href="http://tomee.apache.org/" title="Java EE Web Profile built on Tomcat">TomEE</a></li>
+<li><a href="http://trafficserver.apache.org/" title="A fast, scalable and extensible HTTP/1.1 compliant caching proxy server">Traffic Server</a></li>
+<li><a href="http://turbine.apache.org/" title="A Java Servlet Web Application Framework and associated component library">Turbine</a></li>
+<li><a href="http://tuscany.apache.org/" title="An SCA based Service Composition Framework">Tuscany</a></li>
+<li><a href="http://uima.apache.org/" title="Framework and annotators for unstructured information analysis">UIMA</a></li>
+<li><a href="http://vcl.apache.org/" title="Virtual Computing Lab">VCL</a></li>
+<li><a href="http://velocity.apache.org/" title="A Java Templating Engine">Velocity</a></li>
+<li><a href="http://vxquery.apache.org/" title="A parallel XQuery processor">VXQuery</a></li>
+<li><a href="http://ws.apache.org/" title="Projects related to Web Services">Web Services</a></li>
+<li><a href="http://whirr.apache.org/" title="Libraries for running Cloud Services">Whirr</a></li>
+<li><a href="http://wicket.apache.org/" title="Component-based Java Web Application Framework.">Wicket</a></li>
+<li><a href="http://wink.apache.org/" title="RESTful Web services Framework">Wink</a></li>
+<li><a href="http://wookie.apache.org/" title="Widgets for Applications">Wookie</a></li>
+<li><a href="http://xalan.apache.org/" title="XSLT processors in Java and C++">Xalan</a></li>
+<li><a href="http://xerces.apache.org/" title="XML parsers in Java, C++ and Perl">Xerces</a></li>
+<li><a href="http://xmlbeans.apache.org/" title="XML-Java binding tool">XMLBeans</a></li>
+<li><a href="http://xmlgraphics.apache.org/" title="Conversion from XML to graphical output">XML Graphics</a></li>
+<li><a href="http://zookeeper.apache.org/" title="Centralized service for maintaining configuration information">ZooKeeper</a></li>
+</ul>
+      </div>
+      <div class="grid_3">
+        <h4>Foundation</h4>
+        <ul>
+          <li><a href="/foundation/faq.html">FAQ</a></li> 
+          <li><a href="/foundation/glossary.html">Glossary</a></li> 
+          <li><a href="/licenses/" title="Overview of the Apache Licenese">Licenses</a></li> 
+          <li><a href="/foundation/marks/" title="Apache marks policies and listing">Trademarks</a></li>  
+          <li><a href="/foundation/news.html" title="Official news feed of Foundation announcements">News</a></li> 
+          <li><a href="/press/" title="Press, Media, and Analyst contact">Press Inquiries</a></li> 
+          <li><a href="/foundation/records/" title="Formal corporate records and board meeting minutes">Public Records</a></li> 
+          <li><a href="/foundation/mailinglists.html" title="Mailing lists and Apache">Mailing Lists</a></li> 
+          <li><a href="/foundation/sponsorship.html" title="Sponsor the Foundation">Sponsorship</a></li> 
+          <li><a href="/foundation/contributing.html" title="Donate to the Foundation">Donations</a></li> 
+          <li><a href="/foundation/buy_stuff.html" title="Buy Apache branded merchandise">Buy Stuff</a></li> 
+          <li><a href="/foundation/thanks.html" title="Thank you to our Sponsors">Thanks</a></li> 
+          <li><a href="/foundation/contact.html" title="Contact Us">Contact</a></li> 
+        </ul>
+      </div>
+      <div class="grid_3 suffix_1">
+        <h4>Foundation Projects</h4>
+        <ul>
+          <li><a href="http://attic.apache.org/" title="Inactive projects repository">Attic</a></li> 
+          <li><a href="/foundation/conferences.html" title="Meetings of developers and users">Conferences</a></li> 
+          <li><a href="http://community.apache.org/" title="Helping newcomers to the ASF">Community Development</a></li> 
+          <li><a href="http://incubator.apache.org/" title="Shepherd for new projects">Incubator</a></li> 
+          <li><a href="/dev/" title="ASF Infrastructure: Operations and howto documents for PMCs and contributors">Infrastructure</a></li> 
+          <li><a href="http://labs.apache.org/" title="The Innovation Laboratories of the Apache Software Foundation">Labs</a></li> 
+          <li><a href="/legal/" title="Legal Affairs">Legal Affairs</a></li> 
+          <li><a href="/press/" title="Public Relations">Public Relations</a></li> 
+          <li><a href="/security/" title="Security">Security</a></li> 
+          <li><a href="/travel/" title="Travel Assistance">Travel Assistance</a></li> 
+        </ul>
+      </div>
+      
+      <div class="grid_3">
+        <h4>Community</h4>
+        <ul>
+          <li><a href="http://people.apache.org/" title="Apache committer homepages">People</a></li> 
+          <li><a href="/memorials/" title="In memoriam of past committers">Memorials</a></li> 
+          <li><a href="http://feathercast.apache.org/" title="Apache Podcasts">Feathercast</a></li> 
+          <li><a href="http://blogs.apache.org/" title="Apache Project Blogs">Project Blogs</a></li> 
+          <li><a href="http://planet.apache.org/committers/" title="Apache Committers' Blogs">PlanetApache</a></li> 
+        </ul>
+      </div>
+      <div class="grid_3">
+        <h4>How It Works</h4>
+        <ul>
+          <li><a href="/foundation/how-it-works.html">Introduction</a></li> 
+          <li><a href="/foundation/how-it-works.html#meritocracy">Meritocracy</a></li> 
+          <li><a href="/foundation/how-it-works.html#structure">Structure</a></li> 
+          <li><a href="/foundation/how-it-works.html#roles">Roles</a></li> 
+          <li><a href="/foundation/how-it-works.html#management">Collaboration</a></li> 
+          <li><a href="/foundation/how-it-works.html#incubator">Incubator</a></li> 
+          <li><a href="/foundation/how-it-works.html#other">Other entities</a></li> 
+          <li><a href="/foundation/glossary.html">Glossary</a></li> 
+          <li><a href="/foundation/voting.html">Voting</a></li> 
+        </ul>
+      </div>
+    </div>
+    <div class="clear"></div>
+    
+    </div>
+    <div id="copyright" class="container_16">
+      <p>Copyright &#169; 2012 The Apache Software Foundation, Licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a>.<br/>Apache and the Apache feather logo are trademarks of The Apache Software Foundation.</p>
+    </div>
+  </body>
+</html>

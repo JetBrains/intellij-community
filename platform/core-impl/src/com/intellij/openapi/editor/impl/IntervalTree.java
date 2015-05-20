@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
-public interface IntervalTree<T extends Interval> {
+interface IntervalTree<T extends Interval> {
   boolean process(@NotNull Processor<? super T> processor);
   boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor);
   boolean processContaining(int offset, @NotNull Processor<? super T> processor);

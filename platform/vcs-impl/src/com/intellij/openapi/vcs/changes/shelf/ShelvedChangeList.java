@@ -24,7 +24,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -109,8 +108,8 @@ public class ShelvedChangeList implements JDOMExternalizable {
   public List<ShelvedChange> getChanges(Project project) {
     if (myChanges == null) {
       try {
-        final List<TextFilePatch> list = ShelveChangesManager.loadPatches(project, PATH, null);
         myChanges = new ArrayList<ShelvedChange>();
+        final List<? extends FilePatch> list = ShelveChangesManager.loadPatchesWithoutContent(project, PATH, null);
         for (FilePatch patch : list) {
           FileStatus status;
           if (patch.isNewFile()) {
@@ -126,7 +125,7 @@ public class ShelvedChangeList implements JDOMExternalizable {
         }
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("Failed to parse the file patch: [" + PATH + "]", e);
       }
     }
     return myChanges;

@@ -50,10 +50,8 @@ import java.util.*;
 )
 public final class FileEditorProviderManagerImpl extends FileEditorProviderManager
   implements PersistentStateComponent<FileEditorProviderManagerImpl> {
-  private static final FileEditorProvider[] EMPTY_ARRAY = new FileEditorProvider[0];
-  private static final String SEPARATOR = ",";
 
-  private final List<FileEditorProvider> myProviders = new ArrayList<FileEditorProvider>();
+  private final List<FileEditorProvider> myProviders = ContainerUtil.createConcurrentList();
 
   public FileEditorProviderManagerImpl(@NotNull FileEditorProvider[] providers) {
     Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(
@@ -79,27 +77,28 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
 
   @Override
   @NotNull
-  public synchronized FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public FileEditorProvider[] getProviders(@NotNull final Project project, @NotNull final VirtualFile file) {
     // Collect all possible editors
-    List<FileEditorProvider> mySharedProviderList = new ArrayList<FileEditorProvider>();
+    List<FileEditorProvider> sharedProviders = new ArrayList<FileEditorProvider>();
     boolean doNotShowTextEditor = false;
-    final boolean dumb = DumbService.getInstance(project).isDumb();
     for (final FileEditorProvider provider : myProviders) {
-      boolean canUseProvider = !dumb || DumbService.isDumbAware(provider);
-      if (canUseProvider && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
+          if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+            return false;
+          }
           return provider.accept(project, file);
         }
       })) {
-        mySharedProviderList.add(provider);
+        sharedProviders.add(provider);
         doNotShowTextEditor |= provider.getPolicy() == FileEditorPolicy.HIDE_DEFAULT_EDITOR;
       }
     }
 
     // Throw out default editors provider if necessary
     if (doNotShowTextEditor) {
-      ContainerUtil.retainAll(mySharedProviderList, new Condition<FileEditorProvider>() {
+      ContainerUtil.retainAll(sharedProviders, new Condition<FileEditorProvider>() {
         @Override
         public boolean value(FileEditorProvider provider) {
           return !(provider instanceof TextEditorProvider);
@@ -108,17 +107,14 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     }
 
     // Sort editors according policies
-    Collections.sort(mySharedProviderList, MyComparator.ourInstance);
+    Collections.sort(sharedProviders, MyComparator.ourInstance);
 
-    if (mySharedProviderList.isEmpty()) {
-      return EMPTY_ARRAY;
-    }
-    return mySharedProviderList.toArray(new FileEditorProvider[mySharedProviderList.size()]);
+    return sharedProviders.toArray(new FileEditorProvider[sharedProviders.size()]);
   }
 
   @Override
   @Nullable
-  public synchronized FileEditorProvider getProvider(@NotNull String editorTypeId) {
+  public FileEditorProvider getProvider(@NotNull String editorTypeId) {
     for (FileEditorProvider provider : myProviders) {
       if (provider.getEditorTypeId().equals(editorTypeId)) {
         return provider;
@@ -170,7 +166,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   }
 
   private static String computeKey(FileEditorProvider[] providers) {
-    return StringUtil.join(ContainerUtil.map(providers, EDITOR_PROVIDER_STRING_FUNCTION), SEPARATOR);
+    return StringUtil.join(ContainerUtil.map(providers, EDITOR_PROVIDER_STRING_FUNCTION), ",");
   }
 
   @Nullable
@@ -190,6 +186,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     return mySelectedProviders;
   }
 
+  @SuppressWarnings("unused")
   public void setSelectedProviders(Map<String, String> selectedProviders) {
     mySelectedProviders.clear();
     mySelectedProviders.putAll(selectedProviders);

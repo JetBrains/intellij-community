@@ -15,13 +15,24 @@ public abstract class CallFrameBase implements CallFrame {
 
   protected NotNullLazyValue<List<Scope>> scopes;
 
+  protected EvaluateContext evaluateContext;
+
+  protected boolean hasOnlyGlobalScope;
+
   /**
    * You must initialize {@link #scopes} or override {@link #getVariableScopes()}
    */
-  protected CallFrameBase(@Nullable String functionName, int line, int column) {
+  protected CallFrameBase(@Nullable String functionName, int line, int column, @Nullable("init in your constructor") EvaluateContext evaluateContext) {
     this.functionName = functionName;
     this.line = line;
     this.column = column;
+
+    this.evaluateContext = evaluateContext;
+  }
+
+  @Override
+  public final boolean hasOnlyGlobalScope() {
+    return hasOnlyGlobalScope;
   }
 
   @NotNull
@@ -44,5 +55,11 @@ public abstract class CallFrameBase implements CallFrame {
   @Override
   public int getColumn() {
     return column;
+  }
+
+  @NotNull
+  @Override
+  public final EvaluateContext getEvaluateContext() {
+    return evaluateContext;
   }
 }

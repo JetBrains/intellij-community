@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,10 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
   
   private PsiElement wrapContext(Project project, final PsiElement originalContext) {
     if (project.isDefault()) return originalContext;
+    //TODO [egor] : does not work for anything other than java anyway, see IDEA-132677
+    if (!(myDelegate instanceof DefaultCodeFragmentFactory)) {
+      return originalContext;
+    }
     PsiElement context = originalContext;
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session != null) {

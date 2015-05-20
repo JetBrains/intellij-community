@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PropertyUtil;
@@ -41,22 +42,25 @@ public class DfaExpressionFactory {
 
   private static Condition<String> parseFalseGetters() {
     try {
-      final Pattern pattern = Pattern.compile(Registry.stringValue("ide.dfa.getters.with.side.effects"));
-      return new Condition<String>() {
-        @Override
-        public boolean value(String s) {
-          return pattern.matcher(s).matches();
-        }
-      };
+      String regex = Registry.stringValue("ide.dfa.getters.with.side.effects").trim();
+      if (!StringUtil.isEmpty(regex)) {
+        final Pattern pattern = Pattern.compile(regex);
+        return new Condition<String>() {
+          @Override
+          public boolean value(String s) {
+            return pattern.matcher(s).matches();
+          }
+        };
+      }
     }
     catch (Exception e) {
       LOG.error(e);
-      return Conditions.alwaysFalse();
     }
+    return Conditions.alwaysFalse();
   }
 
   private final DfaValueFactory myFactory;
-  private Map<Integer, PsiVariable> myMockIndices = ContainerUtil.newHashMap();
+  private final Map<Integer, PsiVariable> myMockIndices = ContainerUtil.newHashMap();
 
   public DfaExpressionFactory(DfaValueFactory factory) {
     myFactory = factory;
@@ -70,6 +74,7 @@ public class DfaExpressionFactory {
       return getExpressionDfaValue(((PsiParenthesizedExpression)expression).getExpression());
     }
 
+    PsiType type = expression.getType();
     if (expression instanceof PsiArrayAccessExpression) {
       PsiExpression arrayExpression = ((PsiArrayAccessExpression)expression).getArrayExpression();
       DfaValue qualifier = getExpressionDfaValue(arrayExpression);
@@ -79,7 +84,9 @@ public class DfaExpressionFactory {
           return myFactory.getVarFactory().createVariableValue(indexVar, expression.getType(), false, (DfaVariableValue)qualifier);
         }
       }
-      return null;
+      if (type != null) {
+        return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, null));
+      }
     }
 
     if (expression instanceof PsiMethodCallExpression) {
@@ -94,17 +101,24 @@ public class DfaExpressionFactory {
       return myFactory.createLiteralValue((PsiLiteralExpression)expression);
     }
 
-    if (expression instanceof PsiNewExpression) {
+    if (expression instanceof PsiNewExpression || expression instanceof PsiLambdaExpression) {
       return myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL);
     }
 
     final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-    PsiType type = expression.getType();
     if (value != null && type != null) {
       if (value instanceof String) {
         return myFactory.createTypeValue(type, Nullness.NOT_NULL); // Non-null string literal.
       }
       return myFactory.getConstFactory().createFromValue(value, type, null);
+    }
+
+    if (expression instanceof PsiThisExpression) {
+      PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)expression).getQualifier();
+      PsiElement target = qualifier == null ? null : qualifier.resolve();
+      if (target instanceof PsiClass) {
+        return myFactory.getVarFactory().createVariableValue((PsiModifierListOwner)target, null, false, null);
+      }
     }
 
     return null;
@@ -142,10 +156,11 @@ public class DfaExpressionFactory {
       return (PsiVariable)target;
     }
     if (target instanceof PsiMethod) {
-      if (PropertyUtil.isSimplePropertyGetter((PsiMethod)target)) {
-        String qName = PsiUtil.getMemberQualifiedName((PsiMethod)target);
+      PsiMethod method = (PsiMethod)target;
+      if (PropertyUtil.isSimplePropertyGetter(method) && !(method.getReturnType() instanceof PsiPrimitiveType)) {
+        String qName = PsiUtil.getMemberQualifiedName(method);
         if (qName == null || !FALSE_GETTERS.value(qName)) {
-          return (PsiMethod)target;
+          return method;
         }
       }
     }

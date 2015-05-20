@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -37,10 +36,9 @@ import java.util.List;
 @State(
   name = "FindSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/find.xml")
-  },
-  storageChooser = LastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/find.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class FindSettingsImpl extends FindSettings implements PersistentStateComponent<FindSettingsImpl> {
   @NonNls private static final String FIND_DIRECTION_FORWARD = "forward";

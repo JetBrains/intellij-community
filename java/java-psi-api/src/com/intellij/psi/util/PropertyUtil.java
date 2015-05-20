@@ -26,13 +26,14 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
 import java.util.*;
+import java.util.HashMap;
 
 /**
  * @author Mike
@@ -345,9 +346,16 @@ public class PropertyUtil {
   }
 
   public static String suggestSetterName(@NonNls String propertyName) {
-    @NonNls StringBuilder name =
-      new StringBuilder(StringUtil.capitalizeWithJavaBeanConvention(StringUtil.sanitizeJavaIdentifier(propertyName)));
-    name.insert(0, "set");
+    return suggestSetterName(propertyName, "set");
+  }
+
+  public static String suggestSetterName(@NonNls String propertyName, String setterPrefix) {
+    final String sanitizeJavaIdentifier = StringUtil.sanitizeJavaIdentifier(propertyName);
+    if (StringUtil.isEmpty(setterPrefix)) {
+      return sanitizeJavaIdentifier;
+    }
+    @NonNls StringBuilder name = new StringBuilder(StringUtil.capitalizeWithJavaBeanConvention(sanitizeJavaIdentifier));
+    name.insert(0, setterPrefix);
     return name.toString();
   }
 
@@ -397,7 +405,8 @@ public class PropertyUtil {
   }
 
   /**
-   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateGetterPrototype(com.intellij.psi.PsiField)}
+   * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateGetterPrototype(com.intellij.psi.PsiField)} or
+   * {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleGetterPrototype(com.intellij.psi.PsiField)}
    * to add @Override annotation
    */
   @Nullable
@@ -428,6 +437,7 @@ public class PropertyUtil {
 
   /**
    * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(com.intellij.psi.PsiField)}
+   * or {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleSetterPrototype(com.intellij.psi.PsiField)}
    * to add @Override annotation
    */
   @Nullable
@@ -437,6 +447,7 @@ public class PropertyUtil {
 
   /**
    * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(com.intellij.psi.PsiField)}
+   * or {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleSetterPrototype(com.intellij.psi.PsiField)}
    * to add @Override annotation
    */
   @Nullable
@@ -446,6 +457,7 @@ public class PropertyUtil {
 
   /**
    * Consider using {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSetterPrototype(com.intellij.psi.PsiField)}
+   * or {@link com.intellij.codeInsight.generation.GenerateMembersUtil#generateSimpleSetterPrototype(com.intellij.psi.PsiField)}
    * to add @Override annotation
    */
   @Nullable
@@ -505,8 +517,8 @@ public class PropertyUtil {
     }
   }
 
-  private static void annotateWithNullableStuff(final PsiModifierListOwner field,
-                                                final PsiModifierListOwner listOwner)
+  public static void annotateWithNullableStuff(final PsiModifierListOwner field,
+                                               final PsiModifierListOwner listOwner)
     throws IncorrectOperationException {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(field.getProject());
     final PsiAnnotation notNull = manager.copyNotNullAnnotation(field);

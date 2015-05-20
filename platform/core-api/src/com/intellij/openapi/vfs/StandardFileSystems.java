@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,22 +23,11 @@ import org.jetbrains.annotations.Nullable;
 public class StandardFileSystems {
   public static final String FILE_PROTOCOL = URLUtil.FILE_PROTOCOL;
   public static final String FILE_PROTOCOL_PREFIX = FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
+
   public static final String JAR_PROTOCOL = URLUtil.JAR_PROTOCOL;
   public static final String JAR_PROTOCOL_PREFIX = JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR;
 
-  @Deprecated
-  @SuppressWarnings("UnusedDeclaration")
-  /**
-   * @deprecated use {@link com.intellij.util.io.URLUtil#JAR_SEPARATOR}
-   */
-  public static final String JAR_SEPARATOR = URLUtil.JAR_SEPARATOR;
-
-  @Deprecated
-  @SuppressWarnings("UnusedDeclaration")
-  /**
-   * @deprecated use {@link com.intellij.util.io.URLUtil#HTTP_PROTOCOL}
-   */
-  public static final String HTTP_PROTOCOL = URLUtil.HTTP_PROTOCOL;
+  public static final String JRT_PROTOCOL = "jrt";
 
   private static final NotNullLazyValue<VirtualFileSystem> ourLocal = new NotNullLazyValue<VirtualFileSystem>() {
     @NotNull

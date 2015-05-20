@@ -47,7 +47,6 @@ import java.util.regex.Matcher;
   })
 public class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState> {
   private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
-  private final static Locale DEFAULT_LOCALE = new Locale("", "", "");
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
 
@@ -159,34 +158,6 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
   }
 
   @NotNull
-  public Locale getLocale(final @NotNull VirtualFile propertiesFile) {
-    final String customResourceBundleName = getCustomResourceBundleName(propertiesFile);
-
-    String name = propertiesFile.getName();
-
-    if (!StringUtil.containsChar(name, '_')) {
-      return DEFAULT_LOCALE;
-    }
-
-    if (customResourceBundleName != null) {
-      name = name.substring(customResourceBundleName.length());
-    }
-
-    final Matcher matcher = PropertiesUtil.LOCALE_PATTERN.matcher(name);
-    if (matcher.find()) {
-      final String rawLocale = matcher.group(1);
-      final String[] splittedRawLocale = rawLocale.split("_");
-      if (splittedRawLocale.length > 1 && splittedRawLocale[1].length() >= 2) {
-        final String language = splittedRawLocale[1];
-        final String country = splittedRawLocale.length > 2 ? splittedRawLocale[2] : "";
-        final String variant = splittedRawLocale.length > 3 ? splittedRawLocale[3] : "";
-        return new Locale(language, country, variant);
-      }
-    }
-    return DEFAULT_LOCALE;
-  }
-
-  @NotNull
   public String getBaseName(@NotNull final PsiFile file) {
     return getBaseName(file.getVirtualFile());
   }
@@ -211,6 +182,9 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
       LOG.assertTrue(state != null);
       myState.getCustomResourceBundles().remove(state);
     } else {
+      if (EmptyResourceBundle.getInstance() != resourceBundle) {
+        ((ResourceBundleImpl) resourceBundle).invalidate();
+      }
       for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
         final VirtualFile file = propertiesFile.getContainingFile().getVirtualFile();
         myState.getDissociatedFiles().add(file.getUrl());

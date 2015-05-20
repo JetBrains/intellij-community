@@ -15,12 +15,10 @@
  */
 package org.intellij.plugins.xpathView;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -51,7 +49,8 @@ public class ShowXPathAction extends XPathAction {
         super.update(event);
 
         final Presentation presentation = event.getPresentation();
-        if (ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && presentation.getText().startsWith("Show ")) {
+        String presentationText = presentation.getText();
+        if (presentationText != null && ActionPlaces.isMainMenuOrActionSearch(event.getPlace()) && presentationText.startsWith("Show ")) {
             final String text = presentation.getText().substring("Show ".length());
             presentation.setText(Character.toUpperCase(text.charAt(0)) + text.substring(1));
         }
@@ -68,7 +67,7 @@ public class ShowXPathAction extends XPathAction {
     }
 
     public void actionPerformed(AnActionEvent e) {
-        final Editor editor = LangDataKeys.EDITOR.getData(e.getDataContext());
+        final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
         if (editor == null) {
             return;
         }
@@ -107,7 +106,7 @@ public class ShowXPathAction extends XPathAction {
         label.setOpaque(false);
         label.setEditable(false);
         label.setBorder(null);
-        label.setHorizontalAlignment(JTextField.CENTER);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
         label.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 
         final JPanel p = new NonOpaquePanel(new BorderLayout());
@@ -135,6 +134,6 @@ public class ShowXPathAction extends XPathAction {
         final Point point = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
         point.y += editor.getLineHeight() / 2;
       HintHint hintHint = new HintHint(editor, point).setAwtTooltip(true).setContentActive(true).setExplicitClose(true).setShowImmediately(true);
-      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY, 0, false, hintHint);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, HintManager.HIDE_BY_ANY_KEY, 0, false, hintHint);
     }
 }

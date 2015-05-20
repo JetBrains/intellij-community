@@ -21,15 +21,14 @@
 package com.intellij.rt.execution.junit;
 
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public interface IdeaTestRunner {
 
-  int startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree);
-  void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx);
+  int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree);
+  void setStreams(Object segmentedOut, Object segmentedErr, int lastIdx);
 
   Object getTestToStart(String[] args, String name);
   List getChildTests(Object description);

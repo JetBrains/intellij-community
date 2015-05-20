@@ -18,19 +18,32 @@ package com.intellij.remote;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
-* @author traff
-*/
+ * @author traff
+ */
 public class VagrantBasedCredentialsHolder {
   private static final String VAGRANT_FOLDER = "VAGRANT_FOLDER";
+  private static final String MACHINE_NAME = "MACHINE_NAME";
+
   private String myVagrantFolder;
+  private String myMachineName;
 
   public VagrantBasedCredentialsHolder() {
   }
 
+  @Deprecated
+  /**
+   * @deprecated use constructor supporting multiple machines configuration
+   */
   public VagrantBasedCredentialsHolder(@NotNull String folder) {
     myVagrantFolder = folder;
+  }
+
+  public VagrantBasedCredentialsHolder(@NotNull String vagrantFolder, @Nullable String machineName) {
+    myVagrantFolder = vagrantFolder;
+    myMachineName = machineName;
   }
 
   public void setVagrantFolder(@NotNull String vagrantFolder) {
@@ -42,11 +55,55 @@ public class VagrantBasedCredentialsHolder {
     return myVagrantFolder;
   }
 
+  @Nullable
+  public String getMachineName() {
+    return myMachineName;
+  }
+
+  public void setMachineName(String machineName) {
+    myMachineName = machineName;
+  }
+
   public void load(Element element) {
     setVagrantFolder(StringUtil.notNullize(element.getAttributeValue(VAGRANT_FOLDER)));
+    setMachineName(element.getAttributeValue(MACHINE_NAME));
   }
 
   public void save(Element element) {
     element.setAttribute(VAGRANT_FOLDER, getVagrantFolder());
+    if (StringUtil.isNotEmpty(getMachineName())) {
+      element.setAttribute(MACHINE_NAME, getMachineName());
+    }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    VagrantBasedCredentialsHolder holder = (VagrantBasedCredentialsHolder)o;
+
+    if (!myVagrantFolder.equals(holder.myVagrantFolder)) return false;
+
+    if (StringUtil.isNotEmpty(myMachineName) || StringUtil.isNotEmpty(holder.myMachineName)) {
+      return StringUtil.equals(myMachineName, holder.myMachineName);
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myVagrantFolder.hashCode();
+    result = 31 * result + (myMachineName != null ? myMachineName.hashCode() : 0);
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "VagrantBasedCredentialsHolder{" +
+           "myVagrantFolder='" + myVagrantFolder + '\'' +
+           ", myMachineName='" + myMachineName + '\'' +
+           '}';
   }
 }

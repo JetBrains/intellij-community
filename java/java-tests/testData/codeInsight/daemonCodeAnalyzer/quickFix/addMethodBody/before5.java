@@ -1,4 +1,4 @@
-// "Add Method Body" "false"
+// "Add method body" "false"
 interface a {
  <caret>String f();
 }

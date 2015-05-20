@@ -79,7 +79,7 @@ public class GroovyMethodCallPattern extends GroovyExpressionPattern<GrCallExpre
       @Override
       public boolean accepts(@NotNull GrCallExpression callExpression, ProcessingContext context) {
         for (GroovyResolveResult result : callExpression.getCallVariants(null)) {
-          if (methodPattern.getCondition().accepts(result.getElement(), context)) {
+          if (methodPattern.accepts(result.getElement(), context)) {
             return true;
           }
         }

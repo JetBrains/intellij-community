@@ -20,7 +20,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
@@ -84,14 +83,20 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                                                    MethodSignature signature) {
         return DuplicateConflictResolver.INSTANCE;
       }
-
-      @Override
-      protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
-        return functionalInterfaceType;
-      }
     };
 
-    final ResolveResult[] result = resolver.resolve(this, getContainingFile(), false);
+    final Map<PsiElement, PsiType> map = LambdaUtil.getFunctionalTypeMap();
+    final PsiType added = map.put(this, functionalInterfaceType);
+    final ResolveResult[] result;
+    try {
+      result = resolver.resolve(this, getContainingFile(), false);
+    }
+    finally {
+      if (added == null) {
+        map.remove(this);
+      }
+    }
+
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
     final int interfaceArity = interfaceMethod.getParameterList().getParametersCount();
     for (ResolveResult resolveResult : result) {
@@ -146,6 +151,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             result.add(signature.getMethod());
           }
         }
+
+        if (result.isEmpty()) {
+          return null;
+        }
         methods = result.toArray(new PsiMethod[result.size()]);
       }
       else if (isConstructor()) {
@@ -156,7 +165,27 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           LOG.assertTrue(componentType != null, qualifierResolveResult.getSubstitutor());
           //15.13.1 A method reference expression of the form ArrayType :: new is always exact.
           return factory.createMethodFromText("public " + componentType.createArrayType().getCanonicalText() + " __array__(int i) {return null;}", this);
-        } else {
+        }
+        else {
+          if (getQualifierType() == null) {
+            //ClassType is raw or is a non-static member type of a raw type.
+            PsiClass aClass = containingClass;
+            while (aClass != null) {
+              if (aClass.hasTypeParameters()) {
+                return null;
+              }
+
+              if (aClass.hasModifierProperty(PsiModifier.STATIC)) {
+                break;
+              }
+
+              aClass = aClass.getContainingClass();
+
+              if (PsiTreeUtil.isAncestor(aClass, this, true)) {
+                break;
+              }
+            }
+          }
           methods = containingClass.getConstructors();
         }
       }
@@ -454,7 +483,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
         PsiClass qContainingClass = PsiMethodReferenceUtil.getQualifierResolveResult(this).getContainingClass();
         if (qContainingClass != null && containingClass != null &&
-            PsiMethodReferenceUtil.isReceiverType(left, containingClass, (PsiMethod)resolve)) {
+            PsiMethodReferenceUtil.isReceiverType(PsiMethodReferenceUtil.getFirstParameterType(left, this), qContainingClass, subst)) {
           subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
           LOG.assertTrue(subst != null);
         }
@@ -482,7 +511,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         methodReturnType = JavaPsiFacade.getElementFactory(getProject()).createType(containingClass, subst);
       }
 
-      return TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false);
+      return TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType);
     }
     return false;
   }

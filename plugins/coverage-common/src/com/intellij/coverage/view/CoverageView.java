@@ -58,6 +58,7 @@ public class CoverageView extends JPanel implements DataProvider, Disposable {
     myProject = project;
     myStateBean = stateBean;
     final JLabel titleLabel = new JLabel();
+    titleLabel.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
     final CoverageSuitesBundle suitesBundle = dataManager.getCurrentSuitesBundle();
     myModel = new CoverageTableModel(suitesBundle, stateBean, project);
 

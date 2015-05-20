@@ -28,14 +28,13 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.selectorWithChooser;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 // todo: support for int[].var (parses as .class access!)
 public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpressionSelector {
   public IntroduceVariablePostfixTemplate() {
-    super("var", "T name = expr", JAVA_PSI_INFO, selectorWithChooser(IS_NON_VOID));
+    super("var", "T name = expr", selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.StringSetSpinAllocator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -39,8 +40,10 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 
 
 public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extends DialogWrapper {
@@ -108,7 +111,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     expacndChecked(tree);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(tree);
-    scrollPane.setPreferredSize(new Dimension(400, 400));
+    scrollPane.setPreferredSize(JBUI.size(400, 400));
     panel.add(scrollPane, BorderLayout.CENTER);
     return panel;
   }

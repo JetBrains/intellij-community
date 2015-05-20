@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ public class NestedClassProcessor {
     // hide synthetic lambda content methods
     if (node.type == ClassNode.CLASS_LAMBDA && !node.lambdaInformation.is_method_reference) {
       ClassNode node_content = DecompilerContext.getClassProcessor().getMapRootClasses().get(node.classStruct.qualifiedName);
-      if (node_content != null && node_content.wrapper != null) {
-        node_content.wrapper.getHiddenMembers().add(node.lambdaInformation.content_method_key);
+      if (node_content != null && node_content.getWrapper() != null) {
+        node_content.getWrapper().getHiddenMembers().add(node.lambdaInformation.content_method_key);
       }
     }
 
@@ -91,7 +91,7 @@ public class NestedClassProcessor {
         insertLocalVars(node, child);
 
         if (child.type == ClassNode.CLASS_LOCAL) {
-          setLocalClassDefinition(node.wrapper.getMethods().getWithKey(child.enclosingMethod), child);
+          setLocalClassDefinition(node.getWrapper().getMethods().getWithKey(child.enclosingMethod), child);
         }
       }
     }
@@ -107,8 +107,8 @@ public class NestedClassProcessor {
       return;
     }
 
-    final MethodWrapper meth = parent.wrapper.getMethods().getWithKey(child.lambdaInformation.content_method_key);
-    final MethodWrapper encmeth = parent.wrapper.getMethods().getWithKey(child.enclosingMethod);
+    final MethodWrapper meth = parent.getWrapper().getMethods().getWithKey(child.lambdaInformation.content_method_key);
+    final MethodWrapper encmeth = parent.getWrapper().getMethods().getWithKey(child.enclosingMethod);
 
     MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(child.lambdaInformation.method_descriptor);
     final MethodDescriptor md_content = MethodDescriptor.parseDescriptor(child.lambdaInformation.content_method_descriptor);
@@ -120,7 +120,7 @@ public class NestedClassProcessor {
 
     final boolean is_static_lambda_content = child.lambdaInformation.is_content_method_static;
 
-    final String parent_class_name = parent.wrapper.getClassStruct().qualifiedName;
+    final String parent_class_name = parent.getWrapper().getClassStruct().qualifiedName;
     final String lambda_class_name = child.simpleName;
 
     final VarType lambda_class_type = new VarType(lambda_class_name, true);
@@ -220,8 +220,10 @@ public class NestedClassProcessor {
 
         if (!hasEnclosing) {
           if (child.type == ClassNode.CLASS_ANONYMOUS) {
-            String message = "Unreferenced anonymous class " + child.classStruct.qualifiedName + "!";
-            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+            if (!child.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
+              String message = "Unreferenced anonymous class " + child.classStruct.qualifiedName + "!";
+              DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+            }
           }
           else if (child.type == ClassNode.CLASS_LOCAL) {
             String message = "Unreferenced local class " + child.classStruct.qualifiedName + "!";
@@ -272,10 +274,12 @@ public class NestedClassProcessor {
 
           cltypes |= nd.type;
 
-          HashMap<String, List<VarFieldPair>> mask = getMaskLocalVars(nd.wrapper);
+          HashMap<String, List<VarFieldPair>> mask = getMaskLocalVars(nd.getWrapper());
           if (mask.isEmpty()) {
-            String message = "Nested class " + nd.classStruct.qualifiedName + " has no constructor!";
-            DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+            if (!nd.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
+              String message = "Nested class " + nd.classStruct.qualifiedName + " has no constructor!";
+              DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+            }
           }
           else {
             mapVarMasks.put(nd.classStruct.qualifiedName, mask);
@@ -291,7 +295,7 @@ public class NestedClassProcessor {
     if (cltypes != ClassNode.CLASS_MEMBER) {
 
       // iterate enclosing class
-      for (final MethodWrapper meth : node.wrapper.getMethods()) {
+      for (final MethodWrapper meth : node.getWrapper().getMethods()) {
 
         if (meth.root != null) { // neither abstract, nor native
           DirectGraph graph = meth.getOrBuildGraph();
@@ -423,7 +427,7 @@ public class NestedClassProcessor {
       for (Entry<String, List<VarFieldPair>> entmt : entcl.getValue().entrySet()) {
         mergeListSignatures(entmt.getValue(), intrPairMask, false);
 
-        MethodWrapper meth = nestedNode.wrapper.getMethodWrapper("<init>", entmt.getKey());
+        MethodWrapper meth = nestedNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, entmt.getKey());
         meth.signatureFields = new ArrayList<VarVersionPair>();
 
         for (VarFieldPair pair : entmt.getValue()) {
@@ -436,10 +440,10 @@ public class NestedClassProcessor {
   private static void insertLocalVars(final ClassNode parent, final ClassNode child) {
 
     // enclosing method, is null iff member class
-    MethodWrapper encmeth = parent.wrapper.getMethods().getWithKey(child.enclosingMethod);
+    MethodWrapper encmeth = parent.getWrapper().getMethods().getWithKey(child.enclosingMethod);
 
     // iterate all child methods
-    for (final MethodWrapper meth : child.wrapper.getMethods()) {
+    for (final MethodWrapper meth : child.getWrapper().getMethods()) {
 
       if (meth.root != null) { // neither abstract nor native
 
@@ -503,7 +507,7 @@ public class NestedClassProcessor {
 
             if (clnode.type != ClassNode.CLASS_MEMBER) {
 
-              MethodWrapper enclosing_method = clnode.parent.wrapper.getMethods().getWithKey(clnode.enclosingMethod);
+              MethodWrapper enclosing_method = clnode.parent.getWrapper().getMethods().getWithKey(clnode.enclosingMethod);
 
               varname = enclosing_method.varproc.getVarName(entr.getValue());
               vartype = enclosing_method.varproc.getVarType(entr.getValue());
@@ -528,7 +532,7 @@ public class NestedClassProcessor {
             // hide synthetic field
             if (clnode == child) { // fields higher up the chain were already handled with their classes
               StructField fd = child.classStruct.getFields().getWithKey(entr.getKey());
-              child.wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
+              child.getWrapper().getHiddenMembers().add(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));
             }
           }
         }
@@ -573,7 +577,7 @@ public class NestedClassProcessor {
               }
             }
 
-            if (child.type == ClassNode.CLASS_ANONYMOUS && "<init>".equals(meth.methodStruct.getName())
+            if (child.type == ClassNode.CLASS_ANONYMOUS && CodeConstants.INIT_NAME.equals(meth.methodStruct.getName())
                 && exprent.type == Exprent.EXPRENT_INVOCATION) {
               InvocationExprent invexpr = (InvocationExprent)exprent;
               if (invexpr.getFunctype() == InvocationExprent.TYP_INIT) {
@@ -642,11 +646,11 @@ public class NestedClassProcessor {
 
     // iterate over constructors
     for (StructMethod mt : cl.getMethods()) {
-      if ("<init>".equals(mt.getName())) {
+      if (CodeConstants.INIT_NAME.equals(mt.getName())) {
 
         MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
-        MethodWrapper meth = wrapper.getMethodWrapper("<init>", mt.getDescriptor());
+        MethodWrapper meth = wrapper.getMethodWrapper(CodeConstants.INIT_NAME, mt.getDescriptor());
         DirectGraph graph = meth.getOrBuildGraph();
 
         if (graph != null) { // something gone wrong, should not be null

@@ -101,13 +101,13 @@ public class PackageViewProjectNode extends AbstractProjectNode {
   protected AbstractTreeNode createModuleGroup(final Module module) throws
                                                                     InvocationTargetException,
                                                                     NoSuchMethodException, InstantiationException, IllegalAccessException {
-    return createTreeNode(PackageViewModuleNode.class, getProject(), module, getSettings());
+    return new PackageViewModuleNode(getProject(), module, getSettings());
   }
 
   @Override
   protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-    return createTreeNode(PackageViewModuleGroupNode.class, getProject(),  moduleGroup, getSettings());
+    return new PackageViewModuleGroupNode(getProject(),  moduleGroup, getSettings());
   }
 
   @Override

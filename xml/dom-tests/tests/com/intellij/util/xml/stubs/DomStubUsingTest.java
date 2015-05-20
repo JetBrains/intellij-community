@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,13 @@ public class DomStubUsingTest extends DomStubTest {
 
     Foo foo = fileElement.getRootElement();
     List<Bar> bars = foo.getBars();
+    assertFalse(file.getNode().isParsed());
+
+    final List<GenericDomValue<String>> listElements = foo.getLists();
+    final GenericDomValue<String> listElement0 = listElements.get(0);
+    assertEquals("list0", listElement0.getValue());
+    final GenericDomValue<String> listElement1 = listElements.get(1);
+    assertEquals("list1", listElement1.getValue());
     assertFalse(file.getNode().isParsed());
 
     assertEquals(2, bars.size());
@@ -126,33 +133,27 @@ public class DomStubUsingTest extends DomStubTest {
     final DomFileElement<Foo> fileElement = prepare("foo.xml", Foo.class);
     final Bar bar = fileElement.getRootElement().getBars().get(0);
 
-    assertNotNull(bar);
-    assertTrue(bar.exists());
-
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        bar.undefine();
-      }
-    }.execute().throwException();
-
-    assertFalse(bar.exists());
+    assertUndefine(bar);
   }
 
   public void testRootElementUndefineNotExisting() {
     final DomFileElement<Foo> fileElement = prepare("foo.xml", Foo.class);
 
     final DomElement rootElement = fileElement.getRootElement();
-    assertNotNull(rootElement);
-    assertTrue(rootElement.exists());
+    assertUndefine(rootElement);
+  }
+
+  private static void assertUndefine(final DomElement domElement) {
+    assertNotNull(domElement);
+    assertTrue(domElement.exists());
 
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {
-        rootElement.undefine();
+        domElement.undefine();
       }
     }.execute().throwException();
 
-    assertFalse(rootElement.exists());
+    assertFalse(domElement.exists());
   }
 }

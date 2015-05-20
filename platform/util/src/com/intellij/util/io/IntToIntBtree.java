@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.BitUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -488,8 +489,8 @@ public class IntToIntBtree {
     protected void doInitFlags(int flags) {
       super.doInitFlags(flags);
       flags = (flags >> FLAGS_SHIFT) & 0xFF;
-      isHashedLeaf = (flags & HASHED_LEAF_MASK) == HASHED_LEAF_MASK;
-      isIndexLeaf = (flags & INDEX_LEAF_MASK) == INDEX_LEAF_MASK;
+      isHashedLeaf = BitUtil.isSet(flags, HASHED_LEAF_MASK);
+      isIndexLeaf = BitUtil.isSet(flags, INDEX_LEAF_MASK);
     }
 
     void setIndexLeaf(boolean value) {

@@ -24,11 +24,9 @@ import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
-import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
@@ -74,8 +72,7 @@ public class ToolWindowTaskService extends AbstractToolWindowService<TaskData> {
 
   @Override
   protected void processData(@NotNull Collection<DataNode<TaskData>> nodes,
-                             @NotNull Project project,
-                             @Nullable final ExternalSystemTasksTreeModel model)
+                             @NotNull Project project)
   {
     if (nodes.isEmpty()) {
       return;
@@ -94,9 +91,5 @@ public class ToolWindowTaskService extends AbstractToolWindowService<TaskData> {
     Map<String, Collection<ExternalTaskPojo>> availableTasks = ContainerUtilRt.newHashMap(settings.getAvailableTasks());
     availableTasks.putAll(data);
     settings.setAvailableTasks(availableTasks);
-
-    if (model != null) {
-      ExternalSystemUiUtil.apply(settings, model);
-    }
   }
 }

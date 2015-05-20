@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
@@ -239,9 +240,13 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @NotNull
   private JavaResolveResult[] resolve(IElementType parentType, @NotNull PsiFile containingFile) {
     if (parentType == JavaElementType.REFERENCE_EXPRESSION) {
+      JavaResolveResult[] variable = null;
       JavaResolveResult[] result = resolveToVariable(containingFile);
-      if (result.length > 0) {
-        return result;
+      if (result.length == 1) {
+        if (result[0].isAccessible()) {
+          return result;
+        }
+        variable = result;
       }
 
       PsiElement classNameElement = getReferenceNameElement();
@@ -260,7 +265,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
         result = resolveToPackage(containingFile);
       }
 
-      return result;
+      return result.length == 0 && variable != null ? variable : result;
     }
 
     if (parentType == JavaElementType.METHOD_CALL_EXPRESSION) {
@@ -401,11 +406,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
           PsiUtil.ensureValidType(substitutedType);
           PsiType normalized = PsiImplUtil.normalizeWildcardTypeByPosition(substitutedType, expr);
           PsiUtil.ensureValidType(normalized);
-          return normalized;
+          return PsiClassImplUtil.correctType(normalized, expr.getResolveScope());
         }
       }
 
-      return TypeConversionUtil.erasure(ret);
+      return PsiClassImplUtil.correctType(TypeConversionUtil.erasure(ret), expr.getResolveScope());
     }
   }
 

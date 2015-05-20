@@ -8,7 +8,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.PsiReferenceProvider
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.javadoc.PsiDocTag
@@ -20,10 +22,12 @@ import org.jetbrains.annotations.NotNull
  * @author mike
  */
 public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
-
+  private CodeStyleSettings settings
+  private JavaCodeStyleSettings javaSettings
+  
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = true
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
     super.tearDown()
   }
 
@@ -35,6 +39,8 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    settings = CodeStyleSettingsManager.getSettings(getProject());
+    javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class)
     myFixture.enableInspections(new JavaDocLocalInspection());
   }
 
@@ -166,7 +172,7 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testShortenClassName() throws Throwable {
-    CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = false;
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT;
     doTest();
   }
 
@@ -179,7 +185,7 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testShortenClassReference() throws Throwable {
-    CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
     doTest()
   }
   public void testQualifiedClassReference() throws Throwable {
@@ -295,7 +301,7 @@ class Impl extends Bar implements Foo {}
   }
 
   public void testShortenMethodParameterTypes() {
-    CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC = false
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
     myFixture.addClass("package foo; public class Foo {}")
     myFixture.addClass("package bar; public class Bar {}")
     myFixture.configureByText "a.java", '''
@@ -321,6 +327,190 @@ class Goo { void goo(Foo foo, Bar bar) {} }
     myFixture.configureByText "a.java", text
     assert !myFixture.completeBasic()
     myFixture.checkResult(text)
+  }
+  
+  public void testShortNameInJavadocIfWasImported() {
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
+    def text = '''
+import java.util.Map;
+
+/**
+ * {@link Ma<caret>}
+ */
+class Test {
+}
+'''
+    myFixture.configureByText "a.java", text
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult '''
+import java.util.Map;
+
+/**
+ * {@link Map}
+ */
+class Test {
+}
+'''
+  }
+
+  public void testFqnInJavadocIfWasNotImported() {
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
+    def text = '''
+import java.util.Map;
+
+/**
+ * {@link HashMa<caret>}
+ */
+class Test {
+}
+'''
+    myFixture.configureByText "a.java", text
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult '''
+import java.util.Map;
+
+/**
+ * {@link java.util.HashMap}
+ */
+class Test {
+}
+'''
+  }
+
+
+  public void testFqnNameInJavadocIfWasImported() {
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS
+    def text = '''
+import java.util.Map;
+
+/**
+ * {@link Ma<caret>}
+ */
+class Test {
+}
+'''
+    myFixture.configureByText "a.java", text
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult '''
+import java.util.Map;
+
+/**
+ * {@link java.util.Map}
+ */
+class Test {
+}
+'''
+  }
+
+  public void testShortNameInJavadoc() {
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
+    def text = '''
+import java.util.Map;
+
+/**
+ * {@link Ma<caret>}
+ */
+class Test {
+}
+'''
+    myFixture.configureByText "a.java", text
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult '''
+import java.util.Map;
+
+/**
+ * {@link Map}
+ */
+class Test {
+}
+'''
+  }
+
+  public void testShortNameInJavadocIfWasImportOnDemand() {
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
+    def text = '''
+import java.util.*;
+
+/**
+ * {@link Ma<caret>}
+ */
+class Test {
+}
+'''
+    myFixture.configureByText "a.java", text
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult '''
+import java.util.*;
+
+/**
+ * {@link Map}
+ */
+class Test {
+}
+'''
+  }
+
+  public void testNullQualifiedName() {
+    def text = '''
+public class Test {
+
+  public static void main(String[] args) {
+    class Super {
+    }
+
+    /**
+     * {@link Su<caret>}
+     */
+    Super aSuper = new Super();
+
+  }
+}
+'''
+    myFixture.configureByText "a.java", text
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult '''
+public class Test {
+
+  public static void main(String[] args) {
+    class Super {
+    }
+
+    /**
+     * {@link Super}
+     */
+    Super aSuper = new Super();
+
+  }
+}
+'''
+
+  }
+  
+  public void testShortNameIfImplicitlyImported() {
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
+    def text = '''
+/**
+ * {@link Str<caret>}
+ */
+class Test {
+}
+'''
+    myFixture.configureByText "a.java", text
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult '''
+/**
+ * {@link String}
+ */
+class Test {
+}
+'''
   }
 
   public void testCustomReferenceProvider() throws Exception {

@@ -3,6 +3,6 @@ abstract class A<S> {
 
     {
         A<?> a = null;
-        <error descr="Inferred type 'A<capture<?>>' for type parameter 'T' is not within its bound; should extend 'A<? extends java.lang.Throwable>'">foo(a)</error>;
+        foo<error descr="'foo(T)' in 'A' cannot be applied to '(A<capture<?>>)'">(a)</error>;
     }
 }

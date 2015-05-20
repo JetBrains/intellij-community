@@ -143,7 +143,7 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
     }
     if (!exported) {
       if (myExportedOnly) return false;
-      if (myRecursivelyExportedOnly && !isEnumerationRootModule(module)) return false;
+      if ((myRecursivelyExportedOnly || element instanceof JpsSdkDependency) && !isEnumerationRootModule(module)) return false;
     }
     return true;
   }

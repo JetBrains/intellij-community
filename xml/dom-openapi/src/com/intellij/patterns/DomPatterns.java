@@ -56,9 +56,9 @@ public class DomPatterns {
       public boolean accepts(@NotNull final XmlElement xmlElement, final ProcessingContext context) {
         final DomManager manager = DomManager.getDomManager(xmlElement.getProject());
         if (xmlElement instanceof XmlAttribute) {
-          return pattern.getCondition().accepts(manager.getDomElement((XmlAttribute)xmlElement), context);
+          return pattern.accepts(manager.getDomElement((XmlAttribute)xmlElement), context);
         }
-        return xmlElement instanceof XmlTag && pattern.getCondition().accepts(manager.getDomElement((XmlTag)xmlElement), context);
+        return xmlElement instanceof XmlTag && pattern.accepts(manager.getDomElement((XmlTag)xmlElement), context);
       }
     });
   }

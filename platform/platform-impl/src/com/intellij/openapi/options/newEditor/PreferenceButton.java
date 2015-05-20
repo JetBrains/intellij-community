@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class PreferenceButton extends JComponent {
     } else {
       setFont(UIUtil.getLabelFont());
     }
-    setPreferredSize(new Dimension(100, 70));
+    setPreferredSize(JBUI.size(100, 70));
     setOpaque(false);
   }
 

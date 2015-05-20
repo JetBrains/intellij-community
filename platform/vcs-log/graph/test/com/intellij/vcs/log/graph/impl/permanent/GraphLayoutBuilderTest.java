@@ -16,10 +16,11 @@
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
-import com.intellij.vcs.log.graph.AbstractTestWithTextFile;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -29,7 +30,7 @@ import java.util.List;
 import static com.intellij.vcs.log.graph.GraphStrUtils.permanentGraphLayoutModelToStr;
 import static org.junit.Assert.assertEquals;
 
-public abstract class GraphLayoutBuilderTest<CommitId> extends AbstractTestWithTextFile {
+public abstract class GraphLayoutBuilderTest<CommitId> extends AbstractTestWithTwoTextFile {
   public GraphLayoutBuilderTest() {
     super("layoutBuilder/");
   }
@@ -44,7 +45,7 @@ public abstract class GraphLayoutBuilderTest<CommitId> extends AbstractTestWithT
 
     GraphLayout graphLayout = GraphLayoutBuilder.build(graph, new Comparator<Integer>() {
       @Override
-      public int compare(Integer o1, Integer o2) {
+      public int compare(@NotNull Integer o1, @NotNull Integer o2) {
         CommitId id1 = commits.get(o1).getId();
         CommitId id2 = commits.get(o2).getId();
         return idManager.toStr(id1).compareTo(idManager.toStr(id2));

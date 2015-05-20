@@ -100,7 +100,6 @@
 
       <action id="Cvs.Add" class="com.intellij.cvsSupport2.actions.AddFileOrDirectoryAction"/>
       <action id="Cvs.UndoAdd" class="com.intellij.cvsSupport2.actions.UnmarkAddedAction"/>
-      <action id="Cvs.Remove" class="com.intellij.cvsSupport2.actions.RemoveLocallyDeletedFilesAction"/>
       <reference id="Cvs.Ignore"/>
 
       <separator/>

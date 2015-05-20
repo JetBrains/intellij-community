@@ -34,6 +34,10 @@ public class ForeachTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
+  public void testInAnonymousRunnable() {
+    doTest();
+  }
+
   public void testFinalLocals() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     boolean oldGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;

@@ -1,4 +1,4 @@
-// "Implement Methods" "true"
+// "Implement methods" "true"
 class Test {
     class A<T> {
         public class Inner { }

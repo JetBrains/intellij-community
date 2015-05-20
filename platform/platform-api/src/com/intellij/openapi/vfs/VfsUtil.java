@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +38,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -51,9 +46,6 @@ import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
-
-  /** @deprecated incorrect name, use {@link #VFS_SEPARATOR_CHAR} (to be removed in IDEA 15) */
-  public static final char VFS_PATH_SEPARATOR = VFS_SEPARATOR_CHAR;
 
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
@@ -214,8 +206,6 @@ public class VfsUtil extends VfsUtilCore {
     return file;
   }
 
-  @NonNls private static final String MAILTO = "mailto";
-
   /**
    * Searches for the file specified by given java,net.URL.
    * Note that this method currently tested only for "file" and "jar" protocols under Unix and Windows
@@ -244,51 +234,16 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /**
-   * Converts VsfUrl info java.net.URL. Does not support "jar:" protocol.
+   * Converts VsfUrl info java.net.URL.
    *
    * @param vfsUrl VFS url (as constructed by VfsFile.getUrl())
    * @return converted URL or null if error has occured
+   * @deprecated Use {@link VfsUtilCore#convertToURL(String)} instead. To be removed in IDEA 16.
    */
-
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Nullable
   public static URL convertToURL(@NotNull String vfsUrl) {
-    if (vfsUrl.startsWith(StandardFileSystems.JAR_PROTOCOL)) {
-      LOG.error("jar: protocol not supported.");
-      return null;
-    }
-
-    // [stathik] for supporting mail URLs in Plugin Manager
-    if (vfsUrl.startsWith(MAILTO)) {
-      try {
-        return new URL (vfsUrl);
-      }
-      catch (MalformedURLException e) {
-        return null;
-      }
-    }
-
-    String[] split = vfsUrl.split("://");
-
-    if (split.length != 2) {
-      LOG.debug("Malformed VFS URL: " + vfsUrl);
-      return null;
-    }
-
-    String protocol = split[0];
-    String path = split[1];
-
-    try {
-      if (protocol.equals(StandardFileSystems.FILE_PROTOCOL)) {
-        return new URL(StandardFileSystems.FILE_PROTOCOL, "", path);
-      }
-      else {
-        return UrlClassLoader.internProtocol(new URL(vfsUrl));
-      }
-    }
-    catch (MalformedURLException e) {
-      LOG.debug("MalformedURLException occurred:" + e.getMessage());
-      return null;
-    }
+    return VfsUtilCore.convertToURL(vfsUrl);
   }
 
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
@@ -406,7 +361,6 @@ public class VfsUtil extends VfsUtilCore {
    * @return the relative path, or null if the files have no common ancestor.
    * @since 5.0.2
    */
-
   @Nullable
   public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
@@ -436,10 +390,11 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   public static VirtualFile createChildSequent(Object requestor, @NotNull VirtualFile dir, @NotNull String prefix, @NotNull String extension) throws IOException {
-    String fileName = prefix + "." + extension;
+    String dotExt = PathUtil.makeFileName("", extension);
+    String fileName = prefix + dotExt;
     int i = 1;
     while (dir.findChild(fileName) != null) {
-      fileName = prefix + i + "." + extension;
+      fileName = prefix + "_" + i + dotExt;
       i++;
     }
     return dir.createChildData(requestor, fileName);

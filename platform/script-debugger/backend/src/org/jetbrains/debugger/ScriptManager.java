@@ -1,7 +1,5 @@
 package org.jetbrains.debugger;
 
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -43,5 +41,5 @@ public interface ScriptManager {
   Script findScriptById(@NotNull String id);
 
   @Nullable
-  ActionCallback getScriptSourceMapLoadCallback(@NotNull Script script);
+  Promise<Void> getScriptSourceMapPromise(@NotNull Script script);
 }

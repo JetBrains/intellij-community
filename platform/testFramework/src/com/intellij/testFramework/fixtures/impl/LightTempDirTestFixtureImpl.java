@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
@@ -45,7 +44,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
     Assert.assertNotNull(fsRoot);
     mySourceRoot = new WriteAction<VirtualFile>() {
       @Override
-      protected void run(final Result<VirtualFile> result) throws Throwable {
+      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         result.setResult(fsRoot.createChildDirectory(this, "root"));
       }
     }.execute().getResultObject();
@@ -121,7 +120,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
       @Override
       public VirtualFile compute() {
         final VirtualFile from = LocalFileSystem.getInstance().refreshAndFindFileByPath(dataDir);
-        assert from != null: "Cannot find testdata directory " + dataDir;
+        Assert.assertNotNull("Cannot find testdata directory " + dataDir, from);
         try {
           UsefulTestCase.refreshRecursively(from);
 
@@ -176,7 +175,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   }
 
   @Override
-  public VirtualFile getFile(@NotNull @NonNls String path) {
+  public VirtualFile getFile(@NotNull String path) {
     final VirtualFile sourceRoot = getSourceRoot();
     final VirtualFile result = sourceRoot.findFileByRelativePath(path);
     if (result == null) {
@@ -188,7 +187,7 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
 
   @Override
   @NotNull
-  public VirtualFile createFile(String targetPath) {
+  public VirtualFile createFile(@NotNull String targetPath) {
     final String path = PathUtil.getParentPath(targetPath);
     final String name = PathUtil.getFileName(targetPath);
     return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {

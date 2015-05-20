@@ -26,8 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class ModuleFileType implements InternalFileType {
+  public static final ModuleFileType INSTANCE = new ModuleFileType();
+
   @NonNls public static final String DEFAULT_EXTENSION = "iml";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".iml";
+
+  private ModuleFileType() {}
 
   @Override
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,16 @@ import org.jetbrains.annotations.Nullable;
 public class ControlFlowUtils {
 
   private ControlFlowUtils() {}
+
+  public static boolean isElseIf(PsiIfStatement ifStatement) {
+    final PsiElement parent = ifStatement.getParent();
+    if (!(parent instanceof PsiIfStatement)) {
+      return false;
+    }
+    final PsiIfStatement parentStatement = (PsiIfStatement)parent;
+    final PsiStatement elseBranch = parentStatement.getElseBranch();
+    return ifStatement.equals(elseBranch);
+  }
 
   public static boolean statementMayCompleteNormally(@Nullable PsiStatement statement) {
     if (statement == null) {
@@ -319,6 +329,15 @@ public class ControlFlowUtils {
   }
 
   public static boolean isInFinallyBlock(@NotNull PsiElement element) {
+    final PsiType type;
+    if (element instanceof PsiThrowStatement) {
+      final PsiThrowStatement throwStatement = (PsiThrowStatement)element;
+      final PsiExpression exception = throwStatement.getException();
+      type = exception != null ? exception.getType() : null;
+    }
+    else {
+      type = null;
+    }
     PsiElement currentElement = element;
     while (true) {
       final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(currentElement, PsiTryStatement.class, true, PsiClass.class, PsiLambdaExpression.class);
@@ -326,15 +345,22 @@ public class ControlFlowUtils {
         return false;
       }
       final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock != null) {
-        if (PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)) {
-          final PsiMethod elementMethod = PsiTreeUtil.getParentOfType(currentElement, PsiMethod.class);
-          final PsiMethod finallyMethod = PsiTreeUtil.getParentOfType(finallyBlock, PsiMethod.class);
-          return elementMethod != null && elementMethod.equals(finallyMethod);
-        }
+      if (PsiTreeUtil.isAncestor(finallyBlock, currentElement, true)) {
+        return true;
+      }
+      if (type != null && isCaught(tryStatement, type)) {
+        return false;
       }
       currentElement = tryStatement;
     }
+  }
+
+  public static boolean isCaught(PsiTryStatement tryStatement, PsiType exceptionType) {
+    for (PsiParameter parameter : tryStatement.getCatchBlockParameters()) {
+      final PsiType type = parameter.getType();
+      if (type.isAssignableFrom(exceptionType)) return true;
+    }
+    return false;
   }
 
   public static boolean isInCatchBlock(@NotNull PsiElement element) {
@@ -568,6 +594,10 @@ public class ControlFlowUtils {
     @Override
     public void visitClass(@NotNull PsiClass psiClass) {
       // do nothing, to keep drilling into inner classes
+    }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
     }
 
     @Override

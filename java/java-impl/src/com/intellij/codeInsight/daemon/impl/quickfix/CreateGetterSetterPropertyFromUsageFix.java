@@ -38,7 +38,7 @@ public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUs
   protected boolean isAvailableImpl(int offset) {
     boolean available = super.isAvailableImpl(offset);
     if (available) {
-      setText("Create Property");
+      setText("Create property");
     }
     return available;
   }
@@ -57,13 +57,13 @@ public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUs
 
   @Override
   protected void beforeTemplateFinished(PsiClass aClass, PsiField field) {
-    PsiMethod getterPrototype = GenerateMembersUtil.generateGetterPrototype(field);
+    PsiMethod getterPrototype = GenerateMembersUtil.generateSimpleGetterPrototype(field);
     if (aClass.findMethodsBySignature(getterPrototype, false).length == 0) {
       aClass.add(getterPrototype);
     }
 
 
-    PsiMethod setterPrototype = GenerateMembersUtil.generateSetterPrototype(field);
+    PsiMethod setterPrototype = GenerateMembersUtil.generateSimpleSetterPrototype(field);
     if (aClass.findMethodsBySignature(setterPrototype, false).length == 0) {
       aClass.add(setterPrototype);
     }

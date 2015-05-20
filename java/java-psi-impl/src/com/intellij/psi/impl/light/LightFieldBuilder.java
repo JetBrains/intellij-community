@@ -83,4 +83,14 @@ public class LightFieldBuilder extends LightVariableBuilder<LightFieldBuilder> i
   public PsiClass getContainingClass() {
     return myContainingClass;
   }
+
+  @Override
+  public boolean isEquivalentTo(PsiElement another) {
+    if (!(another instanceof PsiField)) return false;
+    if (!((PsiField)another).getName().equals(getName())) return false;
+    if (hasModifierProperty(PsiModifier.STATIC) != ((PsiField)another).hasModifierProperty(PsiModifier.STATIC)) return false;
+    final PsiClass containingClass = getContainingClass();
+    final PsiClass anotherClass = ((PsiField)another).getContainingClass();
+    return containingClass == null && anotherClass == null || getManager().areElementsEquivalent(containingClass, anotherClass);
+  }
 }

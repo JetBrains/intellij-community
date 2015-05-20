@@ -56,7 +56,7 @@ public abstract class SoftWrapAwareDocumentParsingListenerAdapter implements Sof
   }
 
   @Override
-  public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event, boolean normal) {
+  public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event) {
   }
 
   @Override

@@ -35,5 +35,14 @@ public interface DataContext {
    * @param dataId the data identifier for which the value is requested.
    * @return the value, or null if no value is available in the current context for this identifier.
    */
-  @Nullable Object getData(@NonNls String dataId);
+  @Nullable
+  Object getData(@NonNls String dataId);
+
+  DataContext EMPTY_CONTEXT = new DataContext() {
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      return null;
+    }
+  };
 }

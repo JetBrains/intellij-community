@@ -41,7 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *         Date: 1/21/12
  */
 public class JavacMain {
-  private static final boolean IS_VM_6_VERSION = System.getProperty("java.version", "1.6").contains("1.6");
+  private static final String JAVA_VERSION = System.getProperty("java.version", "");
+  
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
@@ -75,7 +76,9 @@ public class JavacMain {
     final List<JavaSourceTransformer> transformers = getSourceTransformers();
 
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
-    final JavacFileManager fileManager = new JavacFileManager(new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, usingJavac), transformers);
+    final JavacFileManager fileManager = new JavacFileManager(
+      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, canUseOptimizedFileManager(compilingTool)), transformers
+    );
 
     if (!platformClasspath.isEmpty()) {
       // for javac6 this will prevent lazy initialization of Paths.bootClassPathRtJar 
@@ -186,6 +189,11 @@ public class JavacMain {
       }
     }
     return false;
+  }
+
+  private static boolean canUseOptimizedFileManager(JavaCompilingTool compilingTool) {
+    // since java 9 internal API's used by the optimizedFileManager have changed
+    return compilingTool instanceof JavacCompilerTool && !SystemInfo.isJavaVersionAtLeast("1.9");
   }
 
   private static void handleCancelException(DiagnosticOutputConsumer diagnosticConsumer) {

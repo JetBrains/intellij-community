@@ -1578,7 +1578,7 @@ gnu/trove/THashIterator.class:/lib/trove4j.jar
 gnu/trove/TIterator.class:/lib/trove4j.jar
 com/intellij/openapi/vfs/VfsUtil.class:/lib/openapi.jar
 com/intellij/util/containers/Convertor.class:/lib/util.jar
-FileTypeManager.xml:/lib/resources.jar
+defaultFileTypes.xml:/lib/resources.jar
 com/intellij/util/PatternUtil.class:/lib/util.jar
 com/intellij/openapi/options/SettingsEditor.class:/lib/openapi.jar
 com/intellij/ide/highlighter/custom/impl/CustomFileTypeEditor.class:/lib/idea.jar

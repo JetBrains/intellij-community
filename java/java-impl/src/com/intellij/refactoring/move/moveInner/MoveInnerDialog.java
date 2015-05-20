@@ -20,6 +20,7 @@
  */
 package com.intellij.refactoring.move.moveInner;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -52,13 +54,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class MoveInnerDialog extends RefactoringDialog {
+public class MoveInnerDialog extends MoveDialogBase {
   private final Project myProject;
   private final PsiClass myInnerClass;
   private final PsiElement myTargetContainer;
@@ -74,10 +77,21 @@ public class MoveInnerDialog extends RefactoringDialog {
   private JLabel myPackageNameLabel;
   private JLabel myClassNameLabel;
   private JLabel myParameterNameLabel;
+  private JPanel myOpenInEditorPanel;
   private SuggestedNameInfo mySuggestedNameInfo;
   private final PsiClass myOuterClass;
 
   @NonNls private static final String RECENTS_KEY = "MoveInnerDialog.RECENTS_KEY";
+
+  @Override
+  protected String getMovePropertySuffix() {
+    return "Inner";
+  }
+
+  @Override
+  protected String getCbTitle() {
+    return "Open moved member in editor";
+  }
 
   public MoveInnerDialog(Project project, PsiClass innerClass, MoveInnerProcessor processor, final PsiElement targetContainer) {
     super(project, true);
@@ -91,6 +105,7 @@ public class MoveInnerDialog extends RefactoringDialog {
     myPackageNameLabel.setLabelFor(myPackageNameField.getChildComponent());
     myClassNameLabel.setLabelFor(myClassNameField);
     myParameterNameLabel.setLabelFor(myParameterField);
+    myOpenInEditorPanel.add(initOpenInEditorCb(), BorderLayout.EAST);
   }
 
   public boolean isSearchInComments() {
@@ -297,6 +312,10 @@ public class MoveInnerDialog extends RefactoringDialog {
     if (target == null) return;
     myProcessor.setup(getInnerClass(), className, isPassOuterClass(), parameterName,
                       isSearchInComments(), isSearchInNonJavaFiles(), target);
+
+    final boolean openInEditor = isOpenInEditor();
+    saveOpenInEditorOption();
+    myProcessor.setOpenInEditor(openInEditor);
     invokeRefactoring(myProcessor);
   }
 

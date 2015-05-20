@@ -39,10 +39,9 @@ import java.util.*;
 @State(
   name = "XDebuggerSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/debugger.xml")
-  },
-  storageChooser = LastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/debugger.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class XDebuggerSettingsManager extends com.intellij.xdebugger.settings.XDebuggerSettingsManager implements PersistentStateComponent<XDebuggerSettingsManager.SettingsState> {
   private Map<String, XDebuggerSettings<?>> mySettingsById;

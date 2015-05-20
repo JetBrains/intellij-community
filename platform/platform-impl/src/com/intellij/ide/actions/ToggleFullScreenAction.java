@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -57,7 +58,9 @@ public class ToggleFullScreenAction extends ToggleAction implements DumbAware {
     IdeFrameEx frame = null;
     boolean isApplicable = WindowManager.getInstance().isFullScreenSupportedInCurrentOS() && (frame = getFrame()) != null;
 
-    p.setVisible(isApplicable);
+    if (e.getPlace() != ActionPlaces.MAIN_TOOLBAR) {
+      p.setVisible(isApplicable);
+    }
     p.setEnabled(isApplicable);
 
     if (isApplicable) {
@@ -70,7 +73,7 @@ public class ToggleFullScreenAction extends ToggleAction implements DumbAware {
     Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     if (focusOwner != null) {
       Window window = focusOwner instanceof JFrame ? (Window) focusOwner : SwingUtilities.getWindowAncestor(focusOwner);
-      if (window instanceof JDialog) {
+      if (!(window instanceof IdeFrameEx)) {
         window = SwingUtilities.getWindowAncestor(window);
       }
       if (window instanceof IdeFrameEx) {

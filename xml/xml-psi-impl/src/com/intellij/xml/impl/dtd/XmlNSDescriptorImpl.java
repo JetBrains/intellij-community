@@ -21,6 +21,7 @@ import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -32,6 +33,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,8 +97,8 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   public XmlElementDescriptor[] getElements() {
-    final Collection<XmlElementDescriptor> delcarations = buildDeclarationMap().values();
-    return delcarations.toArray(new XmlElementDescriptor[delcarations.size()]);
+    final Collection<XmlElementDescriptor> declarations = buildDeclarationMap().values();
+    return declarations.toArray(new XmlElementDescriptor[declarations.size()]);
   }
 
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {
@@ -111,16 +113,24 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
         final List<XmlElementDecl> result = new ArrayList<XmlElementDecl>();
         myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
         final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<String, XmlElementDescriptor>((int)(result.size() * 1.5));
+        Set<PsiFile> dependencies = new THashSet<PsiFile>(1);
+        dependencies.add(myDescriptorFile);
 
         for (final XmlElementDecl xmlElementDecl : result) {
           final String name = xmlElementDecl.getName();
           if (name != null) {
             if (!ret.containsKey(name)) {
               ret.put(name, new XmlElementDescriptorImpl(xmlElementDecl));
+              // if element descriptor was produced from entity reference use proper dependency
+              PsiElement dependingElement = xmlElementDecl.getUserData(XmlElement.DEPENDING_ELEMENT);
+              if (dependingElement != null) {
+                PsiFile dependingElementContainingFile = dependingElement.getContainingFile();
+                if (dependingElementContainingFile != null) dependencies.add(dependingElementContainingFile);
+              }
             }
           }
         }
-        return new Result<Map<String, XmlElementDescriptor>>(ret, myDescriptorFile);
+        return new Result<Map<String, XmlElementDescriptor>>(ret, dependencies.toArray());
        }
      }, false);
   }

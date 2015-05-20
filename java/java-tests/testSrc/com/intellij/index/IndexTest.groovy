@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.index
+
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -28,48 +29,45 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.psi.impl.source.PsiFileWithStubSupport
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.MapIndexStorage
 import com.intellij.util.indexing.StorageException
 import com.intellij.util.io.*
 import org.jetbrains.annotations.NotNull
+
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 12, 2007
+ * @since Dec 12, 2007
  */
+@SkipSlowTestLocally
 public class IndexTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
     if ("testUndoToFileContentForUnsavedCommittedDocument".equals(getName())) {
       super.invokeTestRunnable(runnable);
-    } else {
+    }
+    else {
       WriteCommandAction.runWriteCommandAction(getProject(), runnable);
     }
   }
 
   public void testUpdate() throws StorageException, IOException {
-    final File storageFile = FileUtil.createTempFile("indextest", "storage");
-    final File metaIndexFile = FileUtil.createTempFile("indextest_inputs", "storage");
-    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, new EnumeratorStringDescriptor(), new EnumeratorStringDescriptor(), 16 * 1024);
-    final StringIndex index = new StringIndex(indexStorage, new Factory<PersistentHashMap<Integer, Collection<String>>>() {
-      @Override
-      public PersistentHashMap<Integer, Collection<String>> create() {
-        try {
-          return createMetaIndex(metaIndexFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    StringIndex index = createIndex(new EnumeratorStringDescriptor())
 
     try {
-// build index
+      // build index
       index.update("com/ppp/a.java", "a b c d", null);
       index.update("com/ppp/b.java", "a b g h", null);
       index.update("com/ppp/c.java", "a z f", null);
@@ -91,7 +89,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertDataEquals(index.getFilesByWord("e"), "com/ppp/e.java");
 
       // update index
-
       index.update("com/ppp/d.java", "a u y z", "a a u y z");
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java");
       index.update("com/ppp/d.java", "u y z", "a u y z");
@@ -109,11 +106,46 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertDataEquals(index.getFilesByWord("h"));
     }
     finally {
-      indexStorage.close();
-      FileUtil.delete(storageFile);
+      index.dispose()
     }
   }
 
+  public void testUpdateWithCustomEqualityPolicy() {
+    def index = createIndex(new CaseInsensitiveEnumeratorStringDescriptor())
+    try {
+      index.update("a.java", "x", null)
+      assertDataEquals(index.getFilesByWord("x"), "a.java")
+      index.flush() //todo: this should not be required but the following line will fail without it
+      assertDataEquals(index.getFilesByWord("X"), "a.java")
+
+      index.update("b.java", "y", null)
+      assertDataEquals(index.getFilesByWord("y"), "b.java")
+      index.update("c.java", "Y", null)
+      index.flush() //todo: this should not be required but the following line will fail without it
+      assertDataEquals(index.getFilesByWord("y"), "b.java", "c.java")
+    }
+    finally {
+      index.dispose()
+    }
+  }
+
+  private static StringIndex createIndex(EnumeratorStringDescriptor keyDescriptor) {
+    final File storageFile = FileUtil.createTempFile("index_test", "storage");
+    final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage");
+    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024);
+    return new StringIndex(indexStorage, new Factory<PersistentHashMap<Integer, Collection<String>>>() {
+      @Override
+      public PersistentHashMap<Integer, Collection<String>> create() {
+        try {
+          return createMetaIndex(metaIndexFile);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+  }
+  
   private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
     return new PersistentHashMap<Integer, Collection<String>>(metaIndexFile, new EnumeratorIntegerDescriptor(), new DataExternalizer<Collection<String>>() {
       @Override
@@ -137,7 +169,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private static <T> void assertDataEquals(List<T> actual, T... expected) {
-    assertTrue(new HashSet<T>(Arrays.asList(expected)).equals(new HashSet<T>(actual)));
+    assertSameElements(actual, expected);
   }
 
   public void testCollectedPsiWithChangedDocument() throws IOException {
@@ -151,6 +183,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.deleteString(0, document.getTextLength());
     assertNotNull(findClass("Foo"));
 
+    //noinspection GroovyUnusedAssignment
     psiFile = null;
     PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
@@ -178,6 +211,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.insertString(0, " ");
     //assertNotNull(myJavaFacade.findClass("Foo", scope));
 
+    //noinspection GroovyUnusedAssignment
     psiFile = null;
     PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
@@ -252,7 +286,8 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     ((VirtualFileSystemEntry)vFile).setModificationStamp(0); // as unchanged file
 
     final Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    assertTrue(document != null && document.getModificationStamp() == 0);
+    assertTrue(document != null);
+    assert document.getModificationStamp() == 0;
     assertNotNull(findClass("Foo"));
 
     WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
@@ -280,6 +315,78 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(findClass("Foo"));
   }
 
+  public void "test rename unsaved file"() {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def scope = GlobalSearchScope.allScope(project)
+
+    assert !FileDocumentManager.instance.unsavedDocuments
+
+    ((PsiJavaFile)psiFile).importList.add(elementFactory.createImportStatementOnDemand("java.io"))
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
+
+    assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
+
+    assert !((FileManagerImpl) psiManager.fileManager).getCachedDirectory(psiFile.virtualFile.parent)
+    assert psiFile.setName("Foo1.java") == psiFile
+
+    assert FileDocumentManager.instance.unsavedDocuments
+    assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
+  }
+
+  public void "test rename dir with unsaved file"() {
+    def psiFile = myFixture.addFileToProject("foo/Foo.java", "package pkg; class Foo {}")
+    def scope = GlobalSearchScope.allScope(project)
+
+    assert !FileDocumentManager.instance.unsavedDocuments
+
+    ((PsiJavaFile)psiFile).importList.add(elementFactory.createImportStatementOnDemand("java.io"))
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
+
+    assert JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope)
+
+    def dir = psiFile.virtualFile.parent
+    assert !((FileManagerImpl) psiManager.fileManager).getCachedDirectory(dir)
+    dir.rename(this, "bar")
+
+    assert FileDocumentManager.instance.unsavedDocuments
+    assert JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope)
+  }
+
+  public void "test language level change"() {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def scope = GlobalSearchScope.allScope(project)
+
+    psiFile.add(elementFactory.createEnum("SomeEnum"))
+
+    CodeStyleManager.getInstance(getProject()).reformat(psiFile)
+    assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
+
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
+
+    assert ((PsiJavaFile)psiFile).importList.node
+  }
+
+  public void "test language level change2"() {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    def vFile = psiFile.virtualFile
+    def scope = GlobalSearchScope.allScope(project)
+
+    psiFile.add(elementFactory.createEnum("SomeEnum"))
+
+    CodeStyleManager.getInstance(getProject()).reformat(psiFile)
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+
+    assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
+
+    IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
+    assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
+  }
+
   public void "test changing a file without psi makes the document committed and updates index"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
     def vFile = psiFile.virtualFile
@@ -287,8 +394,9 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     FileDocumentManager.instance.getDocument(vFile).text = "import zoo.Zoo; class Foo1 {}"
     assert PsiDocumentManager.getInstance(project).uncommittedDocuments
-    psiFile = null
 
+    //noinspection GroovyUnusedAssignment
+    psiFile = null
     PlatformTestUtil.tryGcSoftlyReachableObjects()
 
     assert !((PsiManagerEx) psiManager).fileManager.getCachedPsiFile(vFile)
@@ -302,4 +410,19 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("Foo3", scope)
   }
 
+  public void "test do not collect stub tree while holding stub elements"() throws IOException {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile();
+
+    PsiFileWithStubSupport psiFile = getPsiManager().findFile(vFile) as PsiFileWithStubSupport;
+    assertNotNull(psiFile);
+
+    def clazz = findClass("Foo")
+    assertNotNull(clazz)
+    def stubTreeHash = psiFile.getStubTree().hashCode()
+
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    def stubTree = psiFile.getStubTree()
+    assertNotNull(stubTree)
+    assertEquals(stubTreeHash, stubTree.hashCode())
+  }
 }

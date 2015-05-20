@@ -47,7 +47,7 @@ public class GroovyNamedArgumentPattern extends GroovyElementPattern<GrNamedArgu
     return with(new PatternCondition<GrNamedArgument>("left") {
       @Override
       public boolean accepts(@NotNull GrNamedArgument namedArgument, final ProcessingContext context) {
-        return labelPattern.getCondition().accepts(namedArgument.getLabelName(), context);
+        return labelPattern.accepts(namedArgument.getLabelName(), context);
       }
     });
   }
@@ -56,7 +56,7 @@ public class GroovyNamedArgumentPattern extends GroovyElementPattern<GrNamedArgu
     return with(new PatternCondition<GrNamedArgument>("left") {
       @Override
       public boolean accepts(@NotNull GrNamedArgument namedArgument, final ProcessingContext context) {
-        return pattern.getCondition().accepts(namedArgument.getExpression(), context);
+        return pattern.accepts(namedArgument.getExpression(), context);
       }
     });
   }

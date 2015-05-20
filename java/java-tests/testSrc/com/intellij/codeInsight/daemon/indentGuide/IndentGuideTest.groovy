@@ -21,8 +21,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ArrayUtilRt
 import org.jetbrains.annotations.NotNull
 
-import static junit.framework.Assert.assertNotNull
-
 /**
  * @author Denis Zhdanov
  * @since 2/7/13 4:01 PM
@@ -53,21 +51,20 @@ class Test {
     )
   }
 
-  void "test that inner comment indents do not exceed"() {
-    // IDEA-89471.
+  void "test no indent guides in commented regions"() {
     doTest(
 """\
 class Test {
   void test() {
   |  return;
-//|  |  if (true) {
-//|  |  |  int i1 = 1;
-//|  |  |  int i2 = 2;
-//|  |  |  if (true) {
-//|  |  |  |  int j1 = 1;
-//|  |  |  |  int j2 = 2;
-//|  |  |  }
-//|  |  }
+//|    if (true) {
+//|      int i1 = 1;
+//|      int i2 = 2;
+//|      if (true) {
+//|        int j1 = 1;
+//|        int j2 = 2;
+//|      }
+//|    }
 //|  int k = 1;
   }
 }
@@ -76,13 +73,12 @@ class Test {
   }
 
   void "test indent guide which starts on comment line"() {
-    // IDEA-62184
     doTest(
 """\
 class Test {
   void test(int i) {
   |  switch (i) {
-  |  //
+  |  |//
   |  |  case 1:
   |  |  case 2:
   |  }
@@ -125,14 +121,29 @@ class Test {
 class Test {
   int test() {
   |  return 1 /*{
-  |  |  int test2() {
-  |  |  |  int i1;
-  |  |  }
-  |  |  int i2;
+  |    int test2() {
+  |      int i1;
+  |    }
+  |    int i2;
   |  }*/;
   }
 }
 """
+    )
+  }
+  
+  void "test empty comment does not break indents"() {
+    doTest(
+"""\
+class Test {
+  void m() {
+  |
+//|
+  |
+  |  int v;
+  }
+}
+"""      
     )
   }
   

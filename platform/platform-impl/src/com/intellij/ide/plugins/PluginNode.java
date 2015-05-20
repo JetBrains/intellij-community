@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Mar 27, 2003
- * Time: 10:07:29 PM
- * To change this template use Options | File Templates.
+ * @author stathik
+ * @since Mar 27, 2003
  */
 public class PluginNode implements IdeaPluginDescriptor {
   public static final int STATUS_UNKNOWN = 0;
@@ -56,21 +53,18 @@ public class PluginNode implements IdeaPluginDescriptor {
   private String vendorUrl;
   private String url;
   private long date = Long.MAX_VALUE;
-  private List<PluginId> depends;
+  private List<PluginId> myDependencies;
   private PluginId[] myOptionalDependencies;
-
-  private int status = STATUS_UNKNOWN;
-  private boolean loaded = false;
-
+  private int myStatus = STATUS_UNKNOWN;
+  private boolean myLoaded = false;
   private String myDownloadUrl;
   private String myRepositoryName;
   private String myInstalledVersion;
-
   private boolean myEnabled = true;
   private String myRating;
+  private boolean myIncomplete;
 
-  public PluginNode() {
-  }
+  public PluginNode() { }
 
   public PluginNode(PluginId id) {
     this.id = id;
@@ -151,11 +145,11 @@ public class PluginNode implements IdeaPluginDescriptor {
    * @return Status of plugin
    */
   public int getStatus() {
-    return status;
+    return myStatus;
   }
 
   public void setStatus(int status) {
-    this.status = status;
+    this.myStatus = status;
   }
 
   public String toString() {
@@ -163,11 +157,11 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   public boolean isLoaded() {
-    return loaded;
+    return myLoaded;
   }
 
   public void setLoaded(boolean loaded) {
-    this.loaded = loaded;
+    this.myLoaded = loaded;
   }
 
   public String getDownloads() {
@@ -227,21 +221,19 @@ public class PluginNode implements IdeaPluginDescriptor {
   }
 
   public List<PluginId> getDepends() {
-    return depends;
+    return myDependencies;
   }
 
   public void setDepends(List<PluginId> depends, @Nullable PluginId[] optionalDependencies) {
-    this.depends = depends;
+    this.myDependencies = depends;
     myOptionalDependencies = optionalDependencies;
   }
 
-
-  public void addDepends(PluginId depends) {
-    if (this.depends == null) {
-      this.depends = new ArrayList<PluginId>();
+  public void addDepends(String id) {
+    if (this.myDependencies == null) {
+      this.myDependencies = new ArrayList<PluginId>();
     }
-
-    this.depends.add(depends);
+    this.myDependencies.add(PluginId.getId(id));
   }
 
   /**
@@ -334,7 +326,7 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   @Nullable
   public String getStatusText() {
-    switch (status) {
+    switch (myStatus) {
       case STATUS_UNKNOWN:
         return "Available";
       case STATUS_INSTALLED:
@@ -346,12 +338,12 @@ public class PluginNode implements IdeaPluginDescriptor {
     }
   }
 
-  public void setDownloadUrl(String host) {
-    myDownloadUrl = host;
-  }
-
   public String getDownloadUrl() {
     return myDownloadUrl;
+  }
+
+  public void setDownloadUrl(String host) {
+    myDownloadUrl = host;
   }
 
   public String getRepositoryName() {
@@ -362,19 +354,27 @@ public class PluginNode implements IdeaPluginDescriptor {
     myRepositoryName = repositoryName;
   }
 
+  public String getInstalledVersion() {
+    return myInstalledVersion;
+  }
+
   public void setInstalledVersion(String installedVersion) {
     myInstalledVersion = installedVersion;
   }
 
-  public String getInstalledVersion() {
-    return myInstalledVersion;
+  public String getRating() {
+    return myRating;
   }
 
   public void setRating(String rating) {
     myRating = rating;
   }
 
-  public String getRating() {
-    return myRating;
+  public boolean isIncomplete() {
+    return myIncomplete;
+  }
+
+  public void setIncomplete(boolean incomplete) {
+    myIncomplete = incomplete;
   }
 }

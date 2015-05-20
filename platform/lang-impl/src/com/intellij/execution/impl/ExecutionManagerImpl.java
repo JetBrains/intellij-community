@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -45,13 +46,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -59,6 +60,7 @@ import java.util.List;
 
 public class ExecutionManagerImpl extends ExecutionManager implements Disposable {
   public static final Key<Object> EXECUTION_SESSION_ID_KEY = Key.create("EXECUTION_SESSION_ID_KEY");
+  public static final Key<Boolean> EXECUTION_SKIP_RUN = Key.create("EXECUTION_SKIP_RUN");
 
   private static final Logger LOG = Logger.getInstance(ExecutionManagerImpl.class);
   private static final ProcessHandler[] EMPTY_PROCESS_HANDLERS = new ProcessHandler[0];
@@ -69,8 +71,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
   private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
     ContainerUtil.createLockFreeCopyOnWriteList();
+  private volatile boolean myForceCompilationInTests;
 
-  ExecutionManagerImpl(@NotNull Project project) {
+  protected ExecutionManagerImpl(@NotNull Project project) {
     myProject = project;
   }
 
@@ -159,16 +162,29 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
               return;
             }
           }
-          // important! Do not use DumbService.smartInvokeLater here because it depends on modality state
-          // and execution of startRunnable could be skipped if modality state check fails
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!myProject.isDisposed()) {
-                DumbService.getInstance(myProject).runWhenSmart(startRunnable);
-              }
-            }
-          });
+
+          doRun(environment, startRunnable);
+        }
+      });
+    }
+  }
+
+  protected void doRun(@NotNull final ExecutionEnvironment environment, @NotNull final Runnable startRunnable) {
+    Boolean allowSkipRun = environment.getUserData(EXECUTION_SKIP_RUN);
+    if (allowSkipRun != null && allowSkipRun) {
+      environment.getProject().getMessageBus().syncPublisher(EXECUTION_TOPIC).processNotStarted(environment.getExecutor().getId(),
+                                                                                                environment);
+    }
+    else {
+      // important! Do not use DumbService.smartInvokeLater here because it depends on modality state
+      // and execution of startRunnable could be skipped if modality state check fails
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (!myProject.isDisposed()) {
+            DumbService.getInstance(myProject).runWhenSmart(startRunnable);
+          }
         }
       });
     }
@@ -200,7 +216,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         try {
           project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStarting(executor.getId(), environment);
 
-          final RunContentDescriptor descriptor = starter.execute(project, executor, state, environment.getContentToReuse(), environment);
+          final RunContentDescriptor descriptor = starter.execute(state, environment);
           if (descriptor != null) {
             environment.setContentToReuse(descriptor);
             final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
@@ -236,7 +252,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       }
     };
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !myForceCompilationInTests) {
       startRunnable.run();
     }
     else {
@@ -282,27 +298,6 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       builder.runnerAndSettings(runner, configuration);
     }
     return builder;
-  }
-
-  @Override
-  public void restartRunProfile(@NotNull Project project,
-                                @NotNull Executor executor,
-                                @NotNull ExecutionTarget target,
-                                @Nullable RunnerAndConfigurationSettings configuration,
-                                @Nullable RunContentDescriptor currentDescriptor) {
-    ExecutionEnvironmentBuilder builder = createEnvironmentBuilder(project, executor, configuration);
-    restartRunProfile(builder.target(target).contentToReuse(currentDescriptor).build());
-  }
-
-  @Override
-  public void restartRunProfile(@Nullable ProgramRunner runner,
-                                @NotNull ExecutionEnvironment environment,
-                                @Nullable RunContentDescriptor currentDescriptor) {
-    ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(environment).contentToReuse(currentDescriptor);
-    if (runner != null) {
-      builder.runner(runner);
-    }
-    restartRunProfile(builder.build());
   }
 
   public static boolean isProcessRunning(@Nullable RunContentDescriptor descriptor) {
@@ -353,7 +348,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     awaitingTerminationAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (ExecutorRegistry.getInstance().isStarting(environment)) {
+        if (DumbService.getInstance(myProject).isDumb() || ExecutorRegistry.getInstance().isStarting(environment)) {
           awaitingTerminationAlarm.addRequest(this, 100);
           return;
         }
@@ -368,6 +363,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         start(environment);
       }
     }, 50);
+  }
+
+  @TestOnly
+  public void setForceCompilationInTests(boolean forceCompilationInTests) {
+    myForceCompilationInTests = forceCompilationInTests;
   }
 
   private static void start(@NotNull ExecutionEnvironment environment) {
@@ -548,7 +548,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
       if (myProject.isDisposed()) return;
 
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myProfile, myProcessHandler);
-      VirtualFileManager.getInstance().asyncRefresh(null);
+
+      SaveAndSyncHandler.getInstance().scheduleRefresh();
     }
 
     @Override

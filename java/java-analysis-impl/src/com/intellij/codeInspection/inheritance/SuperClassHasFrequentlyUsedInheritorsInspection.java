@@ -95,11 +95,12 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaBat
     if (extendsList != null) {
       final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
       if (referenceElements.length == 1) {
-        PsiClass returnClass = (PsiClass)referenceElements[0].resolve();
-        if (returnClass != null &&
-            !CommonClassNames.JAVA_LANG_OBJECT.equals(returnClass.getQualifiedName()) &&
-            !returnClass.isInterface()) {
-          return returnClass;
+        final PsiElement resolved = referenceElements[0].resolve();
+        if (resolved instanceof PsiClass) {
+          PsiClass returnClass = (PsiClass)resolved;
+          if (!CommonClassNames.JAVA_LANG_OBJECT.equals(returnClass.getQualifiedName()) && !returnClass.isInterface()) {
+            return returnClass;
+          }
         }
       }
     }

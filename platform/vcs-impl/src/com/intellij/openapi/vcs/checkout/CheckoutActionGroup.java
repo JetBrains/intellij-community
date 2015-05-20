@@ -35,8 +35,14 @@ public class CheckoutActionGroup extends ComputableActionGroup.Simple {
     Arrays.sort(providers, new CheckoutProvider.CheckoutProviderComparator());
     AnAction[] children = new AnAction[providers.length];
     for (int i = 0; i < providers.length; i++) {
-      children[i] = new CheckoutAction(providers[i]);
+      CheckoutProvider provider = providers[i];
+      children[i] = createAction(provider);
     }
     return children;
+  }
+
+  @NotNull
+  protected AnAction createAction(CheckoutProvider provider) {
+    return new CheckoutAction(provider);
   }
 }

@@ -131,7 +131,7 @@ class ndarray(object):
 
     def __rmul__(self, y): # real signature unknown; restored from __doc__
         """
-            x.__rmul__(y) <==> x*y
+            x.__rmul__(y) <==> y*x
 
             Returns
             -------
@@ -159,6 +159,16 @@ class ndarray(object):
         """
         pass
 
+    def __radd__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__radd__(y) <==> y+x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
     def __copy__(self, order=None): # real signature unknown; restored from __doc__
         """
         a.__copy__([order])
@@ -179,7 +189,6 @@ class ndarray(object):
         """
         pass
 
-
     def __div__(self, y): # real signature unknown; restored from __doc__
         """
             x.__div__(y) <==> x/y
@@ -190,10 +199,589 @@ class ndarray(object):
         """
         pass
 
+    def __rdiv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rdiv__(y) <==> y/x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __truediv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__truediv__(y) <==> x/y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rtruediv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rtruediv__(y) <==> y/x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __floordiv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__floordiv__(y) <==> x//y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rfloordiv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rfloordiv__(y) <==> y//x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __mod__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__mod__(y) <==> x%y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rmod__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rmod__(y) <==> y%x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __lshift__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__lshift__(y) <==> x<<y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rlshift__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rlshift__(y) <==> y<<x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rshift__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rshift__(y) <==> x>>y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rrshift__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rrshift__(y) <==> y>>x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __and__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__and__(y) <==> x&y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rand__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rand__(y) <==> y&x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __or__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__or__(y) <==> x|y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ror__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ror__(y) <==> y|x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __xor__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__xor__(y) <==> x^y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rxor__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rxor__(y) <==> y^x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ge__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ge__(y) <==> x>=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rge__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rge__(y) <==> y>=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __eq__(self, y): # real signature unknown; restored from __doc__
+        """
+             x.__eq__(y) <==> x==y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __req__(self, y): # real signature unknown; restored from __doc__
+        """
+             x.__req__(y) <==> y==x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
 
     def __sub__(self, y): # real signature unknown; restored from __doc__
         """
             x.__sub__(y) <==> x-y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rsub__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rsub__(y) <==> y-x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __lt__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__lt__(y) <==> x<y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rlt__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rlt__(y) <==> y<x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __le__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__le__(y) <==> x<=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rle__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rle__(y) <==> y<=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __gt__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__gt__(y) <==> x>y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rgt__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rgt__(y) <==> y>x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ne__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ne__(y) <==> x!=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rne__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rne__(y) <==> y!=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __iadd__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__iadd__(y) <==> x+=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __riadd__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__riadd__(y) <==> y+=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __isub__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__isub__(y) <==> x-=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __risub__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__risub__(y) <==> y-=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __imul__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__imul__(y) <==> x*=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rimul__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rimul__(y) <==> y*=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __idiv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__idiv__(y) <==> x/=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ridiv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ridiv__(y) <==> y/=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __itruediv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__itruediv__(y) <==> x/y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ritruediv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ritruediv__(y) <==> y/x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ifloordiv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ifloordiv__(y) <==> x//y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rifloordiv__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rifloordiv__(y) <==> y//x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __imod__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__imod__(y) <==> x%=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rimod__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rimod__(y) <==> y%=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ipow__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ipow__(y) <==> x**=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ripow__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ripow__(y) <==> y**=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ilshift__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ilshift__(y) <==> x<<=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rilshift__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rilshift__(y) <==> y<<=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __irshift__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__irshift__(y) <==> x>>=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rirshift__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rirshift__(y) <==> y>>=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __iand__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__iand__(y) <==> x&=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __riand__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__riand__(y) <==> y&=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ior__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ior__(y) <==> x|=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rior__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rior__(y) <==> y|=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __ixor__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__ixor__(y) <==> x^=y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __rixor__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__rixor__(y) <==> y^=x
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __pow__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__pow__(y) <==> x**y
+
+            Returns
+            -------
+            out : ndarray
+        """
+        pass
+
+    def __divmod__(self, y): # real signature unknown; restored from __doc__
+        """
+            x.__divmod__(y) <==> x%y
 
             Returns
             -------

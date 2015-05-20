@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,8 +150,10 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doTextTest(initial, formatted); // Expect spaces to be inserted after unary operators
   }
 
-  public void testJavadocMethodParams() {
+  public void _testJavadocMethodParams() {
     // Inspired by IDEA-42167
+    // Disabled because the contents of the {@code tag} is not necessarily Java code and
+    // therefore it's incorrect to modify it when formatting
     getSettings().SPACE_AFTER_COMMA = false;
 
     String initial =

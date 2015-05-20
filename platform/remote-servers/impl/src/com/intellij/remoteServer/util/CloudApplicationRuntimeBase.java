@@ -15,6 +15,7 @@
  */
 package com.intellij.remoteServer.util;
 
+import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.util.CloudAgentApplication;
 import com.intellij.remoteServer.agent.util.CloudAgentDeploymentCallback;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
@@ -49,6 +50,20 @@ public abstract class CloudApplicationRuntimeBase extends CloudApplicationRuntim
         });
       }
     }, callback);
+  }
+
+  protected ServerTaskExecutor getTaskExecutor() {
+    return myTaskExecutor;
+  }
+
+  @Override
+  protected AgentTaskExecutor getAgentTaskExecutor() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected ServerType<?> getCloudType() {
+    throw new UnsupportedOperationException();
   }
 
   protected abstract CloudAgentApplication getApplication();

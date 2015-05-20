@@ -61,7 +61,7 @@ public class DataManagerImpl extends DataManager {
   @Nullable
   private Object getData(@NotNull String dataId, final Component focusedComponent) {
     for (Component c = focusedComponent; c != null; c = c.getParent()) {
-      final DataProvider dataProvider = getDataProvider(c);
+      final DataProvider dataProvider = getDataProviderEx(c);
       if (dataProvider == null) continue;
       Object data = getDataFromProvider(dataProvider, dataId, null);
       if (data != null) return data;
@@ -100,7 +100,7 @@ public class DataManagerImpl extends DataManager {
   }
 
   @Nullable
-  private static DataProvider getDataProvider(Object component) {
+  public static DataProvider getDataProviderEx(Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
       dataProvider = (DataProvider)component;
@@ -305,6 +305,17 @@ public class DataManagerImpl extends DataManager {
     return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
   }
 
+  @Nullable
+  public static Editor validateEditor(Editor editor) {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (focusOwner instanceof JComponent) {
+      final JComponent jComponent = (JComponent)focusOwner;
+      if (jComponent.getClientProperty("AuxEditorComponent") != null) return null; // Hack for EditorSearchComponent
+    }
+
+    return editor;
+  }
+
   private static class NullResult {
     public static final NullResult INSTANCE = new NullResult();
   }
@@ -381,17 +392,6 @@ public class DataManagerImpl extends DataManager {
         return validateEditor(editor);
       }
       return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
-    }
-
-    @Nullable
-    private static Editor validateEditor(Editor editor) {
-      Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      if (focusOwner instanceof JComponent) {
-        final JComponent jComponent = (JComponent)focusOwner;
-        if (jComponent.getClientProperty("AuxEditorComponent") != null) return null; // Hack for EditorSearchComponent
-      }
-
-      return editor;
     }
 
     @NonNls

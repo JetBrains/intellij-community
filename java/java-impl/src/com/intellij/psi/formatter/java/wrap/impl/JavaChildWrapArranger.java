@@ -18,6 +18,7 @@ package com.intellij.psi.formatter.java.wrap.impl;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -157,7 +158,7 @@ public class JavaChildWrapArranger {
       if (prev != null && prev.getElementType() == JavaElementType.MODIFIER_LIST) {
         ASTNode last = prev.getLastChildNode();
         if (last != null && last.getElementType() == JavaElementType.ANNOTATION) {
-          if (isTypeAnnotation(last.getPsi()) || javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isFieldModifierListWithSingleAnnotation(prev)) {
+          if (isTypeAnnotationOrFalseIfDumb(last) || javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isFieldModifierListWithSingleAnnotation(prev)) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
           else {
@@ -171,9 +172,9 @@ public class JavaChildWrapArranger {
 
     else if (nodeType == JavaElementType.MODIFIER_LIST) {
       if (childType == JavaElementType.ANNOTATION) {
-        if (isTypeAnnotation(child.getPsi())) {
+        if (isTypeAnnotationOrFalseIfDumb(child)) {
           ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
-          if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotation(prev.getPsi())) {
+          if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotationOrFalseIfDumb(prev)) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
         }
@@ -263,6 +264,11 @@ public class JavaChildWrapArranger {
     }
 
     return suggestedWrap;
+  }
+
+  private static boolean isTypeAnnotationOrFalseIfDumb(@NotNull ASTNode child) {
+    PsiElement node = child.getPsi();
+    return !DumbService.isDumb(node.getProject()) && isTypeAnnotation(node);
   }
 
   private static void putPreferredWrapInParentBlock(@NotNull AbstractJavaBlock block, @NotNull Wrap preferredWrap) {

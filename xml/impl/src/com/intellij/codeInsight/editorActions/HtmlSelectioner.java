@@ -54,7 +54,6 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       return Character.isJavaIdentifierPart(ch) || ch == '-';
     }
   };
-  private static final String CLASS_ATTRIBUTE_NAME = "class";
 
   @Override
   public boolean canSelect(PsiElement e) {
@@ -134,7 +133,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       final XmlAttributeValue value = attribute.getValueElement();
 
       if (value != null) {
-        if (CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(attribute.getName())) {
+        if (HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(attribute.getName())) {
           addClassAttributeRanges(result, editor, editorText, value);
         }
         final TextRange range = value.getTextRange();
@@ -153,7 +152,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
       final XmlAttributeValue attributeValue = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
       if (attribute != null && attributeValue != null) {
-        if (CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(attribute.getName())) {
+        if (HtmlUtil.CLASS_ATTRIBUTE_NAME.equalsIgnoreCase(attribute.getName())) {
           final TextRange valueTextRange = attributeValue.getValueTextRange();
           if (!valueTextRange.isEmpty()) {
             int start = cursorOffset;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.text.StringFactory;
 import net.n3.nanoxml.*;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +45,7 @@ public class NanoXmlUtil {
   }
 
   private static MyXMLReader createReader(PsiFile psiFile) {
-    return new MyXMLReader(new StringReader(psiFile.getText()));
+    return new MyXMLReader(new CharSequenceReader(psiFile.getViewProvider().getContents()));
   }
 
   public static void parseFile(PsiFile psiFile, final IXMLBuilder builder) {

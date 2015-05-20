@@ -6,7 +6,7 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -173,13 +173,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return new JavaCompiledPattern();
   }
 
-  @Override
-  public boolean canProcess(@NotNull FileType fileType) {
-    return fileType == StdFileTypes.JAVA;
-  }
-
   public boolean isMyLanguage(@NotNull Language language) {
-    return language == StdLanguages.JAVA;
+    return language == JavaLanguage.INSTANCE;
   }
 
   @Override
@@ -372,6 +367,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     );
     final boolean replaceIsExpression = statements2.length == 1 && statements2[0].getLastChild() instanceof PsiErrorElement;
 
+    if (searchIsExpression && statements[0].getFirstChild() instanceof PsiModifierList && statements2.length == 0) {
+      return;
+    }
     if (searchIsExpression != replaceIsExpression) {
       throw new UnsupportedPatternException(
         searchIsExpression ? SSRBundle.message("replacement.template.is.not.expression.error.message") :
@@ -448,7 +446,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           ParameterInfo nameInfo = builder.findParameterization(name);
           ParameterInfo typeInfo = builder.findParameterization(type);
 
-          if (nameInfo != null && typeInfo != null && !(parameter.getParent() instanceof PsiCatchSection)) {
+          final PsiElement scope = parameter.getDeclarationScope();
+          if (nameInfo != null && typeInfo != null && !(scope instanceof PsiCatchSection) && !(scope instanceof PsiForeachStatement)) {
             nameInfo.setArgumentContext(false);
             typeInfo.setArgumentContext(false);
             typeInfo.setMethodParameterContext(true);

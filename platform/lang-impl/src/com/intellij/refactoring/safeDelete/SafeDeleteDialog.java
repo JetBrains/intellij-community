@@ -20,8 +20,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
@@ -39,6 +41,7 @@ import java.awt.event.ActionListener;
  * @author dsl
  */
 public class SafeDeleteDialog extends DialogWrapper {
+  private final Project myProject;
   private final PsiElement[] myElements;
   private final Callback myCallback;
 
@@ -55,6 +58,7 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   public SafeDeleteDialog(Project project, PsiElement[] elements, Callback callback) {
     super(project, true);
+    myProject = project;
     myElements = elements;
     myCallback = callback;
     myDelegate = getDelegate();
@@ -134,20 +138,13 @@ public class SafeDeleteDialog extends DialogWrapper {
       panel.add(myCbSearchTextOccurrences, gbc);
     }
 
-    if (myDelegate == null) {
-      final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
-      myCbSearchInComments.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS);
-      if (myCbSearchTextOccurrences != null) {
-        myCbSearchTextOccurrences.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA);
-      }
-      if (myCbSafeDelete != null) {
-        myCbSafeDelete.setSelected(refactoringSettings.SAFE_DELETE_WHEN_DELETE);
-      }
-    } else {
-      myCbSearchInComments.setSelected(myDelegate.isToSearchInComments(myElements[0]));
-      if (myCbSearchTextOccurrences != null) {
-        myCbSearchTextOccurrences.setSelected(myDelegate.isToSearchForTextOccurrences(myElements[0]));
-      }
+    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    if (myCbSafeDelete != null) {
+      myCbSafeDelete.setSelected(refactoringSettings.SAFE_DELETE_WHEN_DELETE);
+    }
+    myCbSearchInComments.setSelected(myDelegate != null ? myDelegate.isToSearchInComments(myElements[0]) : refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS);
+    if (myCbSearchTextOccurrences != null) {
+      myCbSearchTextOccurrences.setSelected(myDelegate != null ? myDelegate.isToSearchForTextOccurrences(myElements[0]) : refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA);
     }
     updateControls(myCbSearchTextOccurrences);
     updateControls(myCbSearchInComments);
@@ -197,26 +194,33 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    if (DumbService.isDumb(myProject)) {
+      Messages.showMessageDialog(myProject, "Safe delete refactoring is not available while indexing is in progress", "Indexing", null);
+      return;
+    }
+
     if (myCallback != null && isSafeDelete()) {
       myCallback.run(this);
     } else {
       super.doOKAction();
     }
 
-    if (myDelegate == null) {
-      final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
-      refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS = isSearchInComments();
-      if (myCbSearchTextOccurrences != null) {
-        refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA = isSearchForTextOccurences();
-      }
-      if (myCbSafeDelete != null) {
-        refactoringSettings.SAFE_DELETE_WHEN_DELETE = myCbSafeDelete.isSelected();
-      }
-    } else {
-      myDelegate.setToSearchInComments(myElements[0], isSearchInComments());
-
-      if (myCbSearchTextOccurrences != null) {
-        myDelegate.setToSearchForTextOccurrences(myElements[0], isSearchForTextOccurences());
+    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    if (myCbSafeDelete != null) {
+      refactoringSettings.SAFE_DELETE_WHEN_DELETE = myCbSafeDelete.isSelected();
+    }
+    if (isSafeDelete()) {
+      if (myDelegate == null) {
+        refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS = isSearchInComments();
+        if (myCbSearchTextOccurrences != null) {
+          refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA = isSearchForTextOccurences();
+        }
+      } else {
+        myDelegate.setToSearchInComments(myElements[0], isSearchInComments());
+  
+        if (myCbSearchTextOccurrences != null) {
+          myDelegate.setToSearchForTextOccurrences(myElements[0], isSearchForTextOccurences());
+        }
       }
     }
   }

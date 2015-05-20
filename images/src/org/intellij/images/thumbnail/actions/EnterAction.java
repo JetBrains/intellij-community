@@ -57,7 +57,7 @@ public final class EnterAction extends AnAction {
             if (selection.length > 0) {
                 if (selection.length == 1 && selection[0].isDirectory()) {
                     presentation.setVisible(true);
-                } else if (selection.length > 0) {
+                } else {
                     boolean notImages = false;
                     ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
                     for (VirtualFile file : selection) {
@@ -65,9 +65,6 @@ public final class EnterAction extends AnAction {
                     }
                     presentation.setEnabled(!notImages);
                     presentation.setVisible(false);
-                } else {
-                    presentation.setVisible(false);
-                    presentation.setEnabled(false);
                 }
             } else {
                 presentation.setVisible(false);

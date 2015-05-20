@@ -278,9 +278,9 @@ public class TreeState implements JDOMExternalizable {
 
   public void applyTo(final JTree tree, final DefaultMutableTreeNode node) {
     final TreeFacade facade = getFacade(tree);
-    ActionCallback callback = facade.getInitialized().doWhenDone(new Runnable() {
+    ActionCallback callback = facade.getInitialized().doWhenDone(new TreeRunnable("TreeState.applyTo: on done facade init") {
       @Override
-      public void run() {
+      public void perform() {
         facade.batch(new Progressive() {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
@@ -290,9 +290,9 @@ public class TreeState implements JDOMExternalizable {
       }
     });
     if (tree.getSelectionCount() == 0) {
-      callback.doWhenDone(new Runnable() {
+      callback.doWhenDone(new TreeRunnable("TreeState.applyTo: on done") {
         @Override
-        public void run() {
+        public void perform() {
           applySelected(tree, node);
         }
       });
@@ -369,9 +369,9 @@ public class TreeState implements JDOMExternalizable {
       if (!pathElement.matchedWithByObject(userObject)) return false;
     }
 
-    tree.expand(treeNode).doWhenDone(new Runnable() {
+    tree.expand(treeNode).doWhenDone(new TreeRunnable("TreeState.applyTo") {
       @Override
-      public void run() {
+      public void perform() {
         indicator.checkCanceled();
 
         if (positionInPath == path.size() - 1) {

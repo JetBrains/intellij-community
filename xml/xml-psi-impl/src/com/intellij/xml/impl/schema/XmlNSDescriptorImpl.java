@@ -886,7 +886,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return findSpecialTag(name, "attributeGroup", myTag, this, null);
   }
 
-  public XmlElementDescriptor[] getSubstitutes(String localName, String namespace) {
+  public synchronized XmlElementDescriptor[] getSubstitutes(String localName, String namespace) {
     if (!initSubstitutes()) {
       return XmlElementDescriptor.EMPTY_ARRAY;
     }
@@ -1030,7 +1030,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     return myTag;
   }
 
-  public boolean hasSubstitutions() {
+  public synchronized boolean hasSubstitutions() {
     initSubstitutes();
     return mySubstitutions != null && mySubstitutions.size() > 0;
   }

@@ -34,13 +34,13 @@ public class SyntaxInfo {
 
   private final int myDefaultForeground;
   private final int myDefaultBackground;
-  private final int myFontSize;
+  private final float myFontSize;
 
   private SyntaxInfo(int outputInfoCount,
                      byte[] outputInfosSerialized,
                     int defaultForeground,
                     int defaultBackground,
-                    int fontSize,
+                    float fontSize,
                     @NotNull FontNameRegistry fontNameRegistry,
                     @NotNull ColorRegistry colorRegistry)
   {
@@ -71,7 +71,7 @@ public class SyntaxInfo {
     return myDefaultBackground;
   }
 
-  public int getFontSize() {
+  public float getFontSize() {
     return myFontSize;
   }
 
@@ -146,12 +146,12 @@ public class SyntaxInfo {
     private final FontNameRegistry myFontNameRegistry = new FontNameRegistry();
     private final int myDefaultForeground;
     private final int myDefaultBackground;
-    private final int myFontSize;
+    private final float myFontSize;
     private final ByteArrayOutputStream myStream = new ByteArrayOutputStream();
     private final OutputInfoSerializer.OutputStream myOutputInfoStream;
     private int myOutputInfoCount;
 
-    public Builder(Color defaultForeground, Color defaultBackground, int fontSize) {
+    public Builder(Color defaultForeground, Color defaultBackground, float fontSize) {
       myDefaultForeground = myColorRegistry.getId(defaultForeground);
       myDefaultBackground = myColorRegistry.getId(defaultBackground);
       myFontSize = fontSize;

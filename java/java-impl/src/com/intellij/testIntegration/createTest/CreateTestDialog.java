@@ -203,8 +203,8 @@ public class CreateTestDialog extends DialogWrapper {
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)),
                                 myTargetPackageField.getChildComponent());
 
-    myGenerateBeforeBox = new JCheckBox("setUp/@Before");
-    myGenerateAfterBox = new JCheckBox("tearDown/@After");
+    myGenerateBeforeBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.setUp"));
+    myGenerateAfterBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.tearDown"));
 
     myShowInheritedMethodsBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
     myShowInheritedMethodsBox.addActionListener(new ActionListener() {
@@ -411,7 +411,9 @@ public class CreateTestDialog extends DialogWrapper {
     constr.gridy = gridy++;
     constr.gridx = 0;
     constr.weightx = 0;
-    panel.add(new JLabel(CodeInsightBundle.message("intention.create.test.dialog.select.methods")), constr);
+    final JLabel membersLabel = new JLabel(CodeInsightBundle.message("intention.create.test.dialog.select.methods"));
+    membersLabel.setLabelFor(myMethodsTable);
+    panel.add(membersLabel, constr);
 
     constr.gridx = 1;
     constr.weightx = 1;
@@ -438,6 +440,10 @@ public class CreateTestDialog extends DialogWrapper {
 
   public String getClassName() {
     return myTargetClassNameField.getText();
+  }
+
+  public PsiClass getTargetClass() {
+    return myTargetClass;
   }
 
   @Nullable

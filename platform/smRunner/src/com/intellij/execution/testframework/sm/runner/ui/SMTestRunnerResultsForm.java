@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,8 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMRunnerUtil;
 import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
-import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.util.ColorProgressBar;
@@ -163,7 +161,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
     Disposer.register(this, myTreeBuilder);
 
-    myAnimator = new MyAnimator(this, myTreeBuilder);
+    myAnimator = new TestsProgressAnimator(myTreeBuilder);
 
     //TODO always hide root node
     //myTreeView.setRootVisible(false);
@@ -218,12 +216,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myStartTime = System.currentTimeMillis();
     boolean printTestingStartedTime = true;
     if (myConsoleProperties instanceof SMTRunnerConsoleProperties) {
-      printTestingStartedTime = ((SMTRunnerConsoleProperties) myConsoleProperties).isPrintTestingStartedTime();
+      printTestingStartedTime = ((SMTRunnerConsoleProperties)myConsoleProperties).isPrintTestingStartedTime();
     }
     if (printTestingStartedTime) {
-      myTestsRootNode.addSystemOutput("Testing started at "
-                                      + DateFormatUtil.formatTime(myStartTime)
-                                      + " ...\n");
+      myTestsRootNode.addSystemOutput("Testing started at " + DateFormatUtil.formatTime(myStartTime) + " ...\n");
     }
 
     updateStatusLabel(false);
@@ -273,6 +269,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateOnTestStarted(false);
     _addTestOrSuite(testProxy);
     fireOnTestNodeAdded(testProxy);
+  }
+
+  @Override
+  public void onSuiteTreeNodeAdded(SMTestProxy testProxy) {
+    myTotalTestCount++;
+    _addTestOrSuite(testProxy);
+  }
+
+  @Override
+  public void onSuiteTreeStarted(SMTestProxy suite) {
+    _addTestOrSuite(suite);
   }
 
   public void onTestFailed(@NotNull final SMTestProxy test) {
@@ -569,13 +576,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     };
   }
 
-
-  private static class MyAnimator extends TestsProgressAnimator {
-    public MyAnimator(final Disposable parentDisposable, final AbstractTestTreeBuilder builder) {
-      super(parentDisposable);
-      init(builder);
-    }
-  }
 
   private void updateCountersAndProgressOnTestCount(final int count, final boolean isCustomMessage) {
     if (!isModeConsistent(isCustomMessage)) return;

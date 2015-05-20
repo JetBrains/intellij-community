@@ -40,7 +40,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -68,7 +67,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       return;
     }
 
-    if (!CodeInsightUtilBase.prepareEditorForWrite(originalEditor) || !FileDocumentManager.getInstance().requestWriting(originalEditor.getDocument(), project)) {
+    if (!CodeInsightUtilBase.prepareEditorForWrite(originalEditor)) {
       return;
     }
 
@@ -207,6 +206,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
 
   @Nullable
   private static CharFilter.Result getFiltersDecision(char charTyped, LookupImpl lookup) {
+    lookup.checkValid();
     LookupElement item = lookup.getCurrentItem();
     int prefixLength = item == null ? lookup.getAdditionalPrefix().length(): lookup.itemPattern(item).length();
 
@@ -214,6 +214,9 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       final CharFilter.Result result = extension.acceptChar(charTyped, prefixLength, lookup);
       if (result != null) {
         return result;
+      }
+      if (lookup.isLookupDisposed()) {
+        throw new AssertionError("Lookup disposed after " + extension);
       }
     }
     return null;

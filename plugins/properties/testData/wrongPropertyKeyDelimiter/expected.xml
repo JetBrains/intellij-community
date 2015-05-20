@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test1.properties</file>
+    <line>2</line>
+    <description>Property key/value delimiter doesn't correspond to code style</description>
+  </problem>
+  <problem>
+    <file>Test1.properties</file>
+    <line>3</line>
+    <description>Property key/value delimiter doesn't correspond to code style</description>
+  </problem>
+</problems>

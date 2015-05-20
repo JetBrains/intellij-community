@@ -16,6 +16,7 @@
 
 package com.intellij.util.io.fs;
 
+@Deprecated
 public class FileSystem {
   public static IFileSystem FILE_SYSTEM = new IoFileSystem();
 

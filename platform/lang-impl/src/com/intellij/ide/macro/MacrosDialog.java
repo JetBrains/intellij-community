@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -162,7 +163,7 @@ public final class MacrosDialog extends DialogWrapper {
     myPreviewTextarea.setLineWrap(true);
     myPreviewTextarea.setPreferredSize(null);
 
-    panel.setPreferredSize(new Dimension(400, 500));
+    panel.setPreferredSize(JBUI.size(400, 500));
 
     return panel;
   }

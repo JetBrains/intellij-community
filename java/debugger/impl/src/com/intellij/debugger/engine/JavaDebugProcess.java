@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,11 +137,7 @@ public class JavaDebugProcess extends XDebugProcess {
     myNodeManager = new NodeManagerImpl(session.getProject(), null) {
       @Override
       public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
-        // value gathered here is required for correct renderers work. e.g. array renderer
-        //((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
-        final DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(null, descriptor);
-        //((NodeDescriptorImpl)descriptor).updateRepresentation((EvaluationContextImpl)evaluationContext, DescriptorLabelListener.DUMMY_LISTENER);
-        return node;
+        return new DebuggerTreeNodeImpl(null, descriptor);
       }
 
       @Override
@@ -322,28 +318,20 @@ public class JavaDebugProcess extends XDebugProcess {
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
     Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
     leftToolbar.add(Separator.getInstance(), beforeRunner);
-    leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.EXPORT_THREADS), beforeRunner);
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);
     leftToolbar.add(Separator.getInstance(), beforeRunner);
 
-    settings.addAction(new AutoVarsSwitchAction(), Constraints.FIRST);
-    settings.addAction(new WatchLastMethodReturnValueAction(), Constraints.FIRST);
+    Constraints beforeSort = new Constraints(Anchor.BEFORE, "XDebugger.ToggleSortValues");
+    settings.addAction(new WatchLastMethodReturnValueAction(), beforeSort);
+    settings.addAction(new AutoVarsSwitchAction(), beforeSort);
   }
 
   private static class AutoVarsSwitchAction extends ToggleAction {
     private volatile boolean myAutoModeEnabled;
 
     public AutoVarsSwitchAction() {
-      super("", "", AllIcons.Debugger.AutoVariablesMode);
+      super(DebuggerBundle.message("action.auto.variables.mode"), DebuggerBundle.message("action.auto.variables.mode.description"), null);
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
-    }
-
-    @Override
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      final Presentation presentation = e.getPresentation();
-      final boolean autoModeEnabled = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
-      presentation.setText(autoModeEnabled ? "All-Variables Mode" : "Auto-Variables Mode");
     }
 
     @Override
@@ -361,28 +349,24 @@ public class JavaDebugProcess extends XDebugProcess {
 
   private static class WatchLastMethodReturnValueAction extends ToggleAction {
     private volatile boolean myWatchesReturnValues;
-    private final String myTextEnable;
+    private final String myText;
     private final String myTextUnavailable;
-    private final String myMyTextDisable;
 
     public WatchLastMethodReturnValueAction() {
       super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
       myWatchesReturnValues = DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
-      myTextEnable = DebuggerBundle.message("action.watches.method.return.value.enable");
-      myMyTextDisable = DebuggerBundle.message("action.watches.method.return.value.disable");
+      myText = DebuggerBundle.message("action.watches.method.return.value.enable");
       myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      final boolean watchValues = (Boolean)presentation.getClientProperty(SELECTED_PROPERTY);
       DebugProcessImpl process = getCurrentDebugProcess(e.getProject());
-      final String actionText = watchValues ? myMyTextDisable : myTextEnable;
       if (process == null || process.canGetMethodReturnValue()) {
         presentation.setEnabled(true);
-        presentation.setText(actionText);
+        presentation.setText(myText);
       }
       else {
         presentation.setEnabled(false);

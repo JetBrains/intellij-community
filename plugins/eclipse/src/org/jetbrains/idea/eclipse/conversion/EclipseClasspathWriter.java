@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,92 +26,88 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.ConversionException;
+import org.jetbrains.idea.eclipse.EclipseModuleManager;
 import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.EclipseModuleManager;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 public class EclipseClasspathWriter {
-  private static final Logger LOG = Logger.getInstance("#" + EclipseClasspathWriter.class.getName());
-  private final ModuleRootModel myModel;
-  private final Map<String, Element> myOldEntries = new HashMap<String, Element>();
+  public static final Logger LOG = Logger.getInstance(EclipseClasspathWriter.class);
 
-  public EclipseClasspathWriter(final ModuleRootModel model) {
-    myModel = model;
-  }
+  private final Map<String, Element> myOldEntries = new THashMap<String, Element>();
 
-  public void writeClasspath(Element classpathElement, @Nullable Element oldRoot) throws ConversionException {
+  @NotNull
+  public Element writeClasspath(@Nullable Element oldRoot, @NotNull ModuleRootModel model) {
+    Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);
     if (oldRoot != null) {
-      for (Object o : oldRoot.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
-        final Element oldChild = (Element)o;
-        final String oldKind = oldChild.getAttributeValue(EclipseXml.KIND_ATTR);
-        final String oldPath = oldChild.getAttributeValue(EclipseXml.PATH_ATTR);
+      for (Element oldChild : oldRoot.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
+        String oldKind = oldChild.getAttributeValue(EclipseXml.KIND_ATTR);
+        String oldPath = oldChild.getAttributeValue(EclipseXml.PATH_ATTR);
         myOldEntries.put(oldKind + getJREKey(oldPath), oldChild);
       }
     }
 
-    for (OrderEntry orderEntry : myModel.getOrderEntries()) {
-      createClasspathEntry(orderEntry, classpathElement);
+    for (OrderEntry orderEntry : model.getOrderEntries()) {
+      createClasspathEntry(orderEntry, classpathElement, model);
     }
 
-    @NonNls String outputPath = "bin";
-    final String compilerOutputUrl = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
-    final EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(myModel.getModule());
+    String outputPath = "bin";
+    final String compilerOutputUrl = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
+    final EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(model.getModule());
     final String linkedPath = eclipseModuleManager.getEclipseLinkedVarPath(compilerOutputUrl);
     if (linkedPath != null) {
       outputPath = linkedPath;
-    } else {
-      final VirtualFile contentRoot = EPathUtil.getContentRoot(myModel);
-      final VirtualFile output = myModel.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-      if (contentRoot != null && output != null && VfsUtil.isAncestor(contentRoot, output, false)) {
-        outputPath = EPathUtil.collapse2EclipsePath(output.getUrl(), myModel);
+    }
+    else {
+      VirtualFile contentRoot = EPathUtil.getContentRoot(model);
+      VirtualFile output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
+      if (contentRoot != null && output != null && VfsUtilCore.isAncestor(contentRoot, output, false)) {
+        outputPath = EPathUtil.collapse2EclipsePath(output.getUrl(), model);
       }
       else if (output == null && compilerOutputUrl != null) {
-        outputPath = EPathUtil.collapse2EclipsePath(compilerOutputUrl, myModel);
+        outputPath = EPathUtil.collapse2EclipsePath(compilerOutputUrl, model);
       }
     }
     for (String support : eclipseModuleManager.getUsedCons()) {
-      final Integer place = eclipseModuleManager.getSrcPlace(support);
-      addOrderEntry(EclipseXml.CON_KIND, support, classpathElement, place != null ? place.intValue() : -1);
+      addOrderEntry(EclipseXml.CON_KIND, support, classpathElement, eclipseModuleManager.getSrcPlace(support));
     }
-    final Element orderEntry = addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement);
-    setAttributeIfAbsent(orderEntry, EclipseXml.PATH_ATTR, EclipseXml.BIN_DIR);
+    setAttributeIfAbsent(addOrderEntry(EclipseXml.OUTPUT_KIND, outputPath, classpathElement), EclipseXml.PATH_ATTR, EclipseXml.BIN_DIR);
+
+    return classpathElement;
   }
 
-  private void createClasspathEntry(OrderEntry entry, Element classpathRoot) throws ConversionException {
-    final EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule());
+  private void createClasspathEntry(@NotNull OrderEntry entry, @NotNull Element classpathRoot, @NotNull ModuleRootModel model) throws ConversionException {
+    EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule());
     if (entry instanceof ModuleSourceOrderEntry) {
-      final boolean shouldPlaceSeparately =
-        eclipseModuleManager.isExpectedModuleSourcePlace(Arrays.binarySearch(myModel.getOrderEntries(), entry));
-      final ContentEntry[] entries = myModel.getContentEntries();
-      for (final ContentEntry contentEntry : entries) {
-        final VirtualFile contentRoot = contentEntry.getFile();
+      boolean shouldPlaceSeparately = eclipseModuleManager.isExpectedModuleSourcePlace(Arrays.binarySearch(model.getOrderEntries(), entry));
+      for (ContentEntry contentEntry : model.getContentEntries()) {
+        VirtualFile contentRoot = contentEntry.getFile();
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-          final String srcUrl = sourceFolder.getUrl();
-          String relativePath = EPathUtil.collapse2EclipsePath(srcUrl, myModel);
-          if (!Comparing.equal(contentRoot, EPathUtil.getContentRoot(myModel))) {
-            final String linkedPath = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getEclipseLinkedSrcVariablePath(srcUrl);
+          String srcUrl = sourceFolder.getUrl();
+          String relativePath = EPathUtil.collapse2EclipsePath(srcUrl, model);
+          if (!Comparing.equal(contentRoot, EPathUtil.getContentRoot(model))) {
+            String linkedPath = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getEclipseLinkedSrcVariablePath(srcUrl);
             if (linkedPath != null) {
               relativePath = linkedPath;
             }
           }
-          final Integer idx = eclipseModuleManager.getSrcPlace(srcUrl);
-          addOrderEntry(EclipseXml.SRC_KIND, relativePath, classpathRoot, shouldPlaceSeparately && idx != null ? idx.intValue() : -1);
+          int index = eclipseModuleManager.getSrcPlace(srcUrl);
+          addOrderEntry(EclipseXml.SRC_KIND, relativePath, classpathRoot, shouldPlaceSeparately && index != -1 ? index : -1);
         }
       }
     }
     else if (entry instanceof ModuleOrderEntry) {
-      Element orderEntry = addOrderEntry(EclipseXml.SRC_KIND, "/" + ((ModuleOrderEntry)entry).getModuleName(), classpathRoot);
+      Element orderEntry = addOrderEntry(EclipseXml.SRC_KIND, '/' + ((ModuleOrderEntry)entry).getModuleName(), classpathRoot);
       setAttributeIfAbsent(orderEntry, EclipseXml.COMBINEACCESSRULES_ATTR, EclipseXml.FALSE_VALUE);
       setExported(orderEntry, ((ExportableOrderEntry)entry));
     }
@@ -149,20 +145,20 @@ public class EclipseClasspathWriter {
             }
             else {
               LOG.assertTrue(!StringUtil.isEmptyOrSpaces(files[0]), "Library: " + libraryName);
-              orderEntry = addOrderEntry(EclipseXml.LIB_KIND, EPathUtil.collapse2EclipsePath(files[0], myModel), classpathRoot);
+              orderEntry = addOrderEntry(EclipseXml.LIB_KIND, EPathUtil.collapse2EclipsePath(files[0], model), classpathRoot);
             }
 
             final String srcRelativePath;
             String eclipseSrcVariablePath = null;
 
             boolean addSrcRoots = true;
-            final String[] srcFiles = libraryOrderEntry.getRootUrls(OrderRootType.SOURCES);
+            String[] srcFiles = libraryOrderEntry.getRootUrls(OrderRootType.SOURCES);
             if (srcFiles.length == 0) {
               srcRelativePath = null;
             }
             else {
               final String srcFile = srcFiles[0];
-              srcRelativePath = EPathUtil.collapse2EclipsePath(srcFile, myModel);
+              srcRelativePath = EPathUtil.collapse2EclipsePath(srcFile, model);
               if (eclipseVariablePath != null) {
                 eclipseSrcVariablePath = eclipseModuleManager.getEclipseSrcVariablePath(srcFile);
                 if (eclipseSrcVariablePath == null) {
@@ -172,10 +168,11 @@ public class EclipseClasspathWriter {
                   eclipseSrcVariablePath = EPathUtil.collapse2EclipseVariabledPath(libraryOrderEntry, OrderRootType.SOURCES);
                   if (eclipseSrcVariablePath != null) {
                     eclipseSrcVariablePath = "/" + eclipseSrcVariablePath;
-                  } else {
+                  }
+                  else {
                     if (newVarLibrary) { //new library which cannot be replaced with vars
                       orderEntry.detach();
-                      orderEntry = addOrderEntry(EclipseXml.LIB_KIND, EPathUtil.collapse2EclipsePath(files[0], myModel), classpathRoot);
+                      orderEntry = addOrderEntry(EclipseXml.LIB_KIND, EPathUtil.collapse2EclipsePath(files[0], model), classpathRoot);
                     }
                     else {
                       LOG.info("Added root " + srcRelativePath + " (in existing var library) can't be replaced with any variable; src roots placed in .eml only");
@@ -187,20 +184,21 @@ public class EclipseClasspathWriter {
             }
             setOrRemoveAttribute(orderEntry, EclipseXml.SOURCEPATH_ATTR, addSrcRoots ? (eclipseSrcVariablePath != null ? eclipseSrcVariablePath : srcRelativePath) : null);
 
-            EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, myModel);
+            EJavadocUtil.setupJavadocAttributes(orderEntry, libraryOrderEntry, model);
             setExported(orderEntry, libraryOrderEntry);
           }
         }
       }
       else {
-        final Element orderEntry;
+        Element orderEntry;
         if (eclipseModuleManager.getUnknownCons().contains(libraryName)) {
           orderEntry = addOrderEntry(EclipseXml.CON_KIND, libraryName, classpathRoot);
-        } else if (Comparing.strEqual(libraryName, IdeaXml.ECLIPSE_LIBRARY)) {
+        }
+        else if (Comparing.strEqual(libraryName, IdeaXml.ECLIPSE_LIBRARY)) {
           orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.ECLIPSE_PLATFORM, classpathRoot);
         }
         else {
-          orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.USER_LIBRARY + "/" + libraryName, classpathRoot);
+          orderEntry = addOrderEntry(EclipseXml.CON_KIND, EclipseXml.USER_LIBRARY + '/' + libraryName, classpathRoot);
         }
         setExported(orderEntry, libraryOrderEntry);
       }
@@ -222,7 +220,7 @@ public class EclipseClasspathWriter {
           if (jdk.getSdkType() instanceof JavaSdkType) {
             jdkLink += EclipseXml.JAVA_SDK_TYPE;
           }
-          jdkLink += "/" + jdk.getName();
+          jdkLink += '/' + jdk.getName();
         }
         addOrderEntry(EclipseXml.CON_KIND, jdkLink, classpathRoot);
       }
@@ -236,26 +234,29 @@ public class EclipseClasspathWriter {
     return addOrderEntry(kind, path, classpathRoot, -1);
   }
 
-  private Element addOrderEntry(String kind, String path, Element classpathRoot, int idx) {
-    final Element element = myOldEntries.get(kind + getJREKey(path));
-    if (element != null){
-      final Element clonedElement = (Element)element.clone();
-      if (idx == -1 || idx >= classpathRoot.getContentSize()) {
+  private Element addOrderEntry(@NotNull String kind, String path, Element classpathRoot, int index) {
+    Element element = myOldEntries.get(kind + getJREKey(path));
+    if (element != null) {
+      Element clonedElement = element.clone();
+      if (index == -1 || index >= classpathRoot.getContentSize()) {
         classpathRoot.addContent(clonedElement);
-      } else {
-        classpathRoot.addContent(idx, clonedElement);
+      }
+      else {
+        classpathRoot.addContent(index, clonedElement);
       }
       return clonedElement;
     }
+
     Element orderEntry = new Element(EclipseXml.CLASSPATHENTRY_TAG);
     orderEntry.setAttribute(EclipseXml.KIND_ATTR, kind);
     if (path != null) {
       orderEntry.setAttribute(EclipseXml.PATH_ATTR, path);
     }
-    if (idx == -1) {
+    if (index == -1 || index >= classpathRoot.getContentSize()) {
       classpathRoot.addContent(orderEntry);
-    } else {
-      classpathRoot.addContent(idx, orderEntry);
+    }
+    else {
+      classpathRoot.addContent(index, orderEntry);
     }
     return orderEntry;
   }
@@ -268,19 +269,18 @@ public class EclipseClasspathWriter {
     setOrRemoveAttribute(orderEntry, EclipseXml.EXPORTED_ATTR, dependency.isExported() ? EclipseXml.TRUE_VALUE : null);
   }
 
-  private static void setOrRemoveAttribute(Element element, String name, String value) {
-    if (value != null) {
-      element.setAttribute(name, value);
+  private static void setOrRemoveAttribute(@NotNull Element element, @NotNull String name, @Nullable String value) {
+    if (value == null) {
+      element.removeAttribute(name);
     }
     else {
-      element.removeAttribute(name);
+      element.setAttribute(name, value);
     }
   }
 
-  private static void setAttributeIfAbsent(Element element, String name, String value) {
+  private static void setAttributeIfAbsent(@NotNull Element element, String name, String value) {
     if (element.getAttribute(name) == null) {
       element.setAttribute(name, value);
     }
   }
-
 }

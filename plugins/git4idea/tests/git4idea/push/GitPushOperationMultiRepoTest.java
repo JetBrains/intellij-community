@@ -19,12 +19,11 @@ import com.intellij.dvcs.push.PushSpec;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitImpl;
 import git4idea.commands.GitLineHandlerListener;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.test.GitTestUtil;
 import git4idea.update.GitUpdateResult;
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
@@ -81,20 +79,20 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
   private static class FailingPushGit extends GitImpl {
     private Condition<GitRepository> myPushShouldFail;
 
-    @NotNull
     @Override
+    @NotNull
     public GitCommandResult push(@NotNull GitRepository repository,
-                                 @NotNull GitLocalBranch source,
-                                 @NotNull GitRemoteBranch target,
+                                 @NotNull GitRemote remote,
+                                 @NotNull String spec,
                                  boolean force,
                                  boolean updateTracking,
                                  @Nullable String tagMode,
                                  GitLineHandlerListener... listeners) {
       if (myPushShouldFail.value(repository)) {
-        return new GitCommandResult(false, 128, Arrays.asList("Failed to push to " + target.getName()),
+        return new GitCommandResult(false, 128, Collections.singletonList("Failed to push to " + remote.getName()),
                                     Collections.<String>emptyList(), null);
       }
-      return super.push(repository, source, target, force, updateTracking, tagMode, listeners);
+      return super.push(repository, remote, spec, force, updateTracking, tagMode, listeners);
     }
   }
 
@@ -109,39 +107,40 @@ public class GitPushOperationMultiRepoTest extends GitPushOperationBaseTest {
     };
 
     cd(myRepository);
-    makeCommit("file.txt");
+    GitTestUtil.makeCommit("file.txt");
     cd(myCommunity);
-    makeCommit("com.txt");
+    GitTestUtil.makeCommit("com.txt");
 
     PushSpec<GitPushSource, GitPushTarget> spec1 = makePushSpec(myRepository, "master", "origin/master");
     PushSpec<GitPushSource, GitPushTarget> spec2 = makePushSpec(myCommunity, "master", "origin/master");
     Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> map = ContainerUtil.newHashMap();
     map.put(myRepository, spec1);
     map.put(myCommunity, spec2);
-    GitPushResult result = new GitPushOperation(myProject, map, null, false).execute();
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport, map, null, false).execute();
 
     GitPushRepoResult result1 = result.getResults().get(myRepository);
     GitPushRepoResult result2 = result.getResults().get(myCommunity);
 
     assertResult(GitPushRepoResult.Type.ERROR, -1, "master", "origin/master", null, result1);
-    assertEquals("Error text is incorrect", "Failed to push to origin/master", result1.getError());
+    assertEquals("Error text is incorrect", "Failed to push to origin", result1.getError());
     assertResult(GitPushRepoResult.Type.SUCCESS, 1, "master", "origin/master", null, result2);
   }
 
   public void test_update_all_roots_on_reject_when_needed_even_if_only_one_in_push_spec() throws IOException {
     cd(myBro);
-    String broHash = makeCommit("bro.txt");
+    String broHash = GitTestUtil.makeCommit("bro.txt");
     git("push");
     cd(myBroCommunity);
-    String broCommunityHash = makeCommit("bro_com.txt");
+    String broCommunityHash = GitTestUtil.makeCommit("bro_com.txt");
     git("push");
 
     cd(myRepository);
-    makeCommit("file.txt");
+    GitTestUtil.makeCommit("file.txt");
 
     PushSpec<GitPushSource, GitPushTarget> mainSpec = makePushSpec(myRepository, "master", "origin/master");
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE); // auto-update-all-roots is selected by default
-    GitPushResult result = new GitPushOperation(myProject, Collections.singletonMap(myRepository, mainSpec), null, false).execute();
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport,
+                                                Collections.singletonMap(myRepository, mainSpec), null, false).execute();
 
     GitPushRepoResult result1 = result.getResults().get(myRepository);
     GitPushRepoResult result2 = result.getResults().get(myCommunity);

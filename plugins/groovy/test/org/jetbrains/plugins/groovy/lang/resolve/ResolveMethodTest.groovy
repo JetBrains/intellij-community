@@ -2216,4 +2216,16 @@ v.ba<caret>r()
 ''', PsiMethod)
   }
 
+  void testMethodReferenceWithDefaultParameters() {
+    resolveByText('''
+class X {
+  def foo(def it = null) {print it}
+
+  def bar() {
+    print this.&f<caret>oo
+  }
+}
+''', PsiMethod)
+  }
+
 }

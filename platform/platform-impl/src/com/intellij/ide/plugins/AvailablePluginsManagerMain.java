@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
@@ -49,6 +50,8 @@ import java.util.TreeSet;
 public class AvailablePluginsManagerMain extends PluginManagerMain {
   public static final String MANAGE_REPOSITORIES = "Manage repositories...";
   public static final String N_A = "N/A";
+
+  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   private final PluginManagerMain installed;
   private final String myVendorFilter;
@@ -94,7 +97,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     AvailablePluginsTableModel model = new AvailablePluginsTableModel();
     model.setVendor(myVendorFilter);
     if (PluginManagerUISettings.getInstance().availableSortByStatus) {
-      pluginsModel.setSortByStatus(true);
+      model.setSortByStatus(true);
     }
 
     pluginsModel = model;
@@ -134,16 +137,16 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
         if (descr instanceof PluginNode) {
           enabled &= !PluginManagerColumnInfo.isDownloaded((PluginNode)descr);
           if (((PluginNode)descr).getStatus() == PluginNode.STATUS_INSTALLED) {
-            enabled &= InstalledPluginsTableModel.hasNewerVersion(descr.getPluginId());
+            enabled &= ourState.hasNewerVersion(descr.getPluginId());
           }
         }
         else if (descr instanceof IdeaPluginDescriptorImpl) {
           PluginId id = descr.getPluginId();
-          enabled &= InstalledPluginsTableModel.hasNewerVersion(id);
+          enabled &= ourState.hasNewerVersion(id);
         }
       }
       if (enabled) {
-        new ActionInstallPlugin(this, installed).install(null);
+        new InstallPluginAction(this, installed).install(null);
       }
       return true;
     }
@@ -183,7 +186,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     else {
       actionGroup.add(createSortersGroup());
       actionGroup.add(Separator.getInstance());
-      actionGroup.add(new ActionInstallPlugin(getAvailable(), getInstalled()));
+      actionGroup.add(new InstallPluginAction(getAvailable(), getInstalled()));
     }
     return actionGroup;
   }
@@ -235,7 +238,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     }
 
     private AnAction createFilterByCategoryAction(final String availableCategory) {
-      return new AnAction(availableCategory) {
+      return new DumbAwareAction(availableCategory) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);
@@ -278,7 +281,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
     }
 
     private AnAction createFilterByRepositoryAction(final String host) {
-      return new AnAction(host) {
+      return new DumbAwareAction(host) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           final String filter = myFilter.getFilter().toLowerCase(Locale.ENGLISH);

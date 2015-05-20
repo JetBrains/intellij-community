@@ -46,10 +46,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ListIterator;
@@ -72,6 +69,22 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public SpeedSearchBase(Comp component) {
     myComponent = component;
 
+    myComponent.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentHidden(ComponentEvent event) {
+        manageSearchPopup(null);
+      }
+
+      @Override
+      public void componentMoved(ComponentEvent event) {
+        moveSearchPopup();
+      }
+
+      @Override
+      public void componentResized(ComponentEvent event) {
+        moveSearchPopup();
+      }
+    });
     myComponent.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
@@ -182,8 +195,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return str != null && compare(str, pattern);
   }
 
-  protected boolean compare(String text, String pattern) {
-    return myComparator.matchingFragments(pattern, text) != null;
+  protected boolean compare(@NotNull String text, @Nullable String pattern) {
+    return pattern != null && myComparator.matchingFragments(pattern, text) != null;
   }
 
   public SpeedSearchComparator getComparator() {
@@ -338,6 +351,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if ( mySearchPopup != null ) mySearchPopup.refreshSelection();
   }
 
+  @Override
+  public void findAndSelectElement(@NotNull String searchQuery) {
+    selectElement(findElement(searchQuery), searchQuery);
+  }
+
   private class SearchPopup extends JPanel {
     private final SearchField mySearchField;
 
@@ -425,7 +443,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
 
     public void refreshSelection () {
-      updateSelection(findElement(mySearchField.getText()));
+      findAndSelectElement(mySearchField.getText());
     }
 
     private void updateSelection(Object element) {
@@ -525,8 +543,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       myPopupLayeredPane.validate();
       myPopupLayeredPane.repaint();
       myPopupLayeredPane = null;
-      
-      Disposer.dispose(myListenerDisposable);
+
+      if (myListenerDisposable != null) {
+        Disposer.dispose(myListenerDisposable);
+      }
       myListenerDisposable = null;
     }
     else if (searchPopup != null) {
@@ -561,7 +581,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       return;
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
-    if (myPopupLayeredPane == null) return; // See # 27482. Somewho it does happen...
+    moveSearchPopup();
+  }
+
+  private void moveSearchPopup() {
+    if (myComponent == null || mySearchPopup == null || myPopupLayeredPane == null) return;
     Point lPaneP = myPopupLayeredPane.getLocationOnScreen();
     Point componentP = getComponentLocationOnScreen();
     Rectangle r = getComponentVisibleRect();

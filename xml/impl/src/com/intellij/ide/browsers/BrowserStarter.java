@@ -5,6 +5,7 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Urls;
 import com.intellij.util.net.NetUtils;
@@ -22,12 +23,26 @@ public class BrowserStarter {
 
   private final StartBrowserSettings mySettings;
   private final RunConfiguration myRunConfiguration;
-  private final ProcessHandler myServerProcessHandler;
+  private final Computable<Boolean> myOutdated;
 
-  public BrowserStarter(@NotNull RunConfiguration runConfiguration, @NotNull StartBrowserSettings settings, @NotNull ProcessHandler serverProcessHandler) {
+  public BrowserStarter(@NotNull RunConfiguration runConfiguration,
+                        @NotNull StartBrowserSettings settings,
+                        @NotNull Computable<Boolean> outdated) {
     mySettings = settings;
     myRunConfiguration = runConfiguration;
-    myServerProcessHandler = serverProcessHandler;
+    myOutdated = outdated;
+  }
+
+  public BrowserStarter(@NotNull RunConfiguration runConfiguration,
+                        @NotNull StartBrowserSettings settings,
+                        @NotNull final ProcessHandler serverProcessHandler) {
+    this(runConfiguration, settings, new Computable<Boolean>() {
+
+      @Override
+      public Boolean compute() {
+        return serverProcessHandler.isProcessTerminating() || serverProcessHandler.isProcessTerminated();
+      }
+    });
   }
 
   public void start() {
@@ -74,7 +89,7 @@ public class BrowserStarter {
     }
     else {
       LOG.info("[attempt#" + attemptNumber + "] Checking " + hostAndPort + " failed");
-      if (!isProcessTerminated()) {
+      if (!isOutdated()) {
         int delayMillis = getDelayMillis(attemptNumber);
         checkAndOpenPageLater(hostAndPort, attemptNumber + 1, delayMillis);
       }
@@ -101,12 +116,12 @@ public class BrowserStarter {
   }
 
   private void openPageNow() {
-    if (!isProcessTerminated()) {
+    if (!isOutdated()) {
       JavaScriptDebuggerStarter.Util.startDebugOrLaunchBrowser(myRunConfiguration, mySettings);
     }
   }
 
-  private boolean isProcessTerminated() {
-    return myServerProcessHandler.isProcessTerminating() || myServerProcessHandler.isProcessTerminated();
+  private boolean isOutdated() {
+    return myOutdated.compute();
   }
 }

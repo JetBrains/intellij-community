@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
+import gnu.trove.THashMap;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import org.intellij.lang.annotations.Language;
@@ -155,6 +159,13 @@ public class XmlSerializerTest extends TestCase {
       "  </option>\n" +
       "</BeanWithSubBean>",
       bean);
+  }
+
+  public void testSubBeanSerializationAndSkipDefaults() {
+    BeanWithSubBean bean = new BeanWithSubBean();
+    doSerializerTest(
+      "<BeanWithSubBean />",
+      bean, new SkipDefaultsSerializationFilter());
   }
 
   public void testNullFieldValue() {
@@ -337,8 +348,8 @@ public class XmlSerializerTest extends TestCase {
 
   public static class BeanWithMapWithBeanValue {
     public Map<String, BeanWithProperty> VALUES = new LinkedHashMap<String, BeanWithProperty>();
-
   }
+
   public void testMapWithBeanValue() {
     BeanWithMapWithBeanValue bean = new BeanWithMapWithBeanValue();
 
@@ -375,6 +386,20 @@ public class XmlSerializerTest extends TestCase {
       "  </option>\n" +
       "</BeanWithMapWithBeanValue>",
       bean);
+  }
+
+
+  public static class BeanWithMapWithBeanValue2 {
+    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+    public Map<String, BeanWithProperty> values = new THashMap<String, BeanWithProperty>();
+  }
+
+
+  public void testMapWithBeanValueUsingSkipDefaultsFilter() {
+    BeanWithMapWithBeanValue2 bean = new BeanWithMapWithBeanValue2();
+    doSerializerTest(
+      "<BeanWithMapWithBeanValue2 />",
+      bean, new SkipDefaultsSerializationFilter());
   }
 
   public static class BeanWithOption {
@@ -537,7 +562,7 @@ public class XmlSerializerTest extends TestCase {
                      "</BeanWithPublicFields>",
                      new SerializationFilter() {
       @Override
-      public boolean accepts(@NotNull Accessor accessor, Object bean) {
+      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
         return accessor.getName().startsWith("I");
       }
     });
@@ -546,8 +571,9 @@ public class XmlSerializerTest extends TestCase {
   public static class BeanWithArray {
     public String[] ARRAY_V = new String[] {"a", "b"};
   }
+
   public void testArray() {
-    final BeanWithArray bean = new BeanWithArray();
+    BeanWithArray bean = new BeanWithArray();
     doSerializerTest(
       "<BeanWithArray>\n" +
       "  <option name=\"ARRAY_V\">\n" +
@@ -558,7 +584,7 @@ public class XmlSerializerTest extends TestCase {
       "  </option>\n" +
       "</BeanWithArray>", bean);
 
-    bean.ARRAY_V = new String[] {"1", "2", "3"};
+    bean.ARRAY_V = new String[] {"1", "2", "3", ""};
     doSerializerTest(
       "<BeanWithArray>\n" +
       "  <option name=\"ARRAY_V\">\n" +
@@ -566,6 +592,7 @@ public class XmlSerializerTest extends TestCase {
       "      <option value=\"1\" />\n" +
       "      <option value=\"2\" />\n" +
       "      <option value=\"3\" />\n" +
+      "      <option value=\"\" />\n" +
       "    </array>\n" + "  </option>\n" +
       "</BeanWithArray>", bean);
   }
@@ -585,9 +612,10 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithArrayWithoutTagName {
-    @com.intellij.util.xmlb.annotations.AbstractCollection(surroundWithTag = false)
+    @AbstractCollection(surroundWithTag = false)
     public String[] V = new String[]{"a"};
   }
+
   public void testArrayAnnotationWithoutTagNAmeGivesError() {
     final BeanWithArrayWithoutTagName bean = new BeanWithArrayWithoutTagName();
 
@@ -602,7 +630,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithArrayWithElementTagName {
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v")
+    @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v")
     public String[] V = new String[]{"a", "b"};
   }
   public void testArrayAnnotationWithElementTag() {
@@ -634,7 +662,7 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public static class BeanWithArrayWithoutTag {
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+    @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
     public String[] V = new String[]{"a", "b"};
     public int INT_V = 1;
   }
@@ -715,10 +743,12 @@ public class XmlSerializerTest extends TestCase {
 
   public static class BeanWithArrayWithoutAllsTag {
     @Property(surroundWithTag = false)
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+    @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
     public String[] V = new String[]{"a", "b"};
+
     public int INT_V = 1;
   }
+
   public void testArrayWithoutAllTags() {
     final BeanWithArrayWithoutAllsTag bean = new BeanWithArrayWithoutAllsTag();
 
@@ -743,7 +773,7 @@ public class XmlSerializerTest extends TestCase {
 
   public static class BeanWithArrayWithoutAllsTag2 {
     @Property(surroundWithTag = false)
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vvalue", elementValueAttribute = "", surroundWithTag = false)
+    @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "", surroundWithTag = false)
     public String[] V = new String[]{"a", "b"};
     public int INT_V = 1;
   }
@@ -770,12 +800,14 @@ public class XmlSerializerTest extends TestCase {
   }
 
   public void testDeserializeFromFormattedXML() throws Exception {
-    String xml = "<BeanWithArrayWithoutAllsTag>\n" + "  <option name=\"INT_V\" value=\"2\"/>\n" + "  <vvalue v=\"1\"/>\n" +
-                 "  <vvalue v=\"2\"/>\n" + "  <vvalue v=\"3\"/>\n" + "</BeanWithArrayWithoutAllsTag>";
+    String xml = "<BeanWithArrayWithoutAllsTag>\n" +
+                 "  <option name=\"INT_V\" value=\"2\"/>\n" +
+                 "  <vvalue v=\"1\"/>\n" +
+                 "  <vvalue v=\"2\"/>\n" +
+                 "  <vvalue v=\"3\"/>\n" +
+                 "</BeanWithArrayWithoutAllsTag>";
 
-    final BeanWithArrayWithoutAllsTag bean =
-      XmlSerializer.deserialize(JDOMUtil.loadDocument(xml).getRootElement(), BeanWithArrayWithoutAllsTag.class);
-
+    BeanWithArrayWithoutAllsTag bean = XmlSerializer.deserialize(JDOMUtil.loadDocument(xml).getRootElement(), BeanWithArrayWithoutAllsTag.class);
 
     assertEquals(2, bean.INT_V);
     assertEquals("[1, 2, 3]", Arrays.asList(bean.V).toString());
@@ -783,7 +815,7 @@ public class XmlSerializerTest extends TestCase {
 
 
   public static class BeanWithPolymorphicArray {
-    @com.intellij.util.xmlb.annotations.AbstractCollection(elementTypes = {BeanWithPublicFields.class, BeanWithPublicFieldsDescendant.class})
+    @AbstractCollection(elementTypes = {BeanWithPublicFields.class, BeanWithPublicFieldsDescendant.class})
     public BeanWithPublicFields[] V = new BeanWithPublicFields[] {};
   }
 
@@ -850,7 +882,7 @@ public class XmlSerializerTest extends TestCase {
   }
   public static class PropertyFilterTest implements SerializationFilter {
     @Override
-    public boolean accepts(@NotNull Accessor accessor, Object bean) {
+    public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
       return !accessor.read(bean).equals("skip");
     }
   }
@@ -1192,12 +1224,12 @@ public class XmlSerializerTest extends TestCase {
                      "</BeanWithConverter>", bean);
   }
 
-  public void testConverterUsingSkipDefaultsFilters() {
+  public void testConverterUsingSkipDefaultsFilter() {
     BeanWithConverter bean = new BeanWithConverter();
-    doSerializerTest("<BeanWithConverter />", bean, new SkipDefaultValuesSerializationFilters());
+    doSerializerTest("<BeanWithConverter />", bean, new SkipDefaultsSerializationFilter());
 
     bean.foo = Ref.create("testValue");
-    doSerializerTest("<BeanWithConverter foo=\"testValue\" />", bean, new SkipDefaultValuesSerializationFilters());
+    doSerializerTest("<BeanWithConverter foo=\"testValue\" />", bean, new SkipDefaultsSerializationFilter());
 
     bean.foo = Ref.create();
     bean.bar = Ref.create("testValue2");
@@ -1236,13 +1268,73 @@ public class XmlSerializerTest extends TestCase {
     Bean2 bean = new Bean2();
     bean.module = "module";
     bean.ab = "ab";
-    doSerializerTest("<Bean2 ab=\"ab\" module=\"module\" />", bean, new SkipDefaultValuesSerializationFilters());
+    doSerializerTest("<Bean2 ab=\"ab\" module=\"module\" />", bean, new SkipDefaultsSerializationFilter());
 
     checkSmartSerialization(new Bean2(), "<Bean2 module=\"1\" ab=\"2\" ac=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ab=\"2\" module=\"1\" ac=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" module=\"1\" ab=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" ab=\"32\" />");
     checkSmartSerialization(new Bean2(), "<Bean2 ac=\"2\" ab=\"32\" module=\"\" />");
+  }
+
+  @SuppressWarnings("deprecation")
+  @Tag("b")
+  static class Bean3 {
+    public JDOMExternalizableStringList list = new JDOMExternalizableStringList();
+  }
+
+  @Tag("b")
+  static class Bean4 {
+    @CollectionBean
+    public final List<String> list = new SmartList<String>();
+  }
+
+  @SuppressWarnings("deprecation")
+  public void testJDOMExternalizableStringList() throws IOException, JDOMException {
+    Bean3 bean = new Bean3();
+    bean.list.add("one");
+    bean.list.add("two");
+    bean.list.add("three");
+    doSerializerTest("<b>\n" +
+                     "  <list>\n" +
+                     "    <item value=\"one\" />\n" +
+                     "    <item value=\"two\" />\n" +
+                     "    <item value=\"three\" />\n" +
+                     "  </list>\n" +
+                     "</b>", bean, new SkipDefaultsSerializationFilter());
+  }
+
+  public void testCollectionBean() throws IOException, JDOMException {
+    Bean4 bean = new Bean4();
+    bean.list.add("one");
+    bean.list.add("two");
+    bean.list.add("three");
+    doSerializerTest("<b>\n" +
+                     "  <list>\n" +
+                     "    <item value=\"one\" />\n" +
+                     "    <item value=\"two\" />\n" +
+                     "    <item value=\"three\" />\n" +
+                     "  </list>\n" +
+                     "</b>", bean, new SkipDefaultsSerializationFilter());
+  }
+
+  public void testCollectionBeanReadJDOMExternalizableStringList() throws IOException, JDOMException {
+    @SuppressWarnings("deprecation")
+    JDOMExternalizableStringList list = new JDOMExternalizableStringList();
+    list.add("one");
+    list.add("two");
+    list.add("three");
+
+    Element value = new Element("value");
+    list.writeExternal(value);
+    Bean4 o = XmlSerializer.deserialize(new Element("state").addContent(new Element("option").setAttribute("name", "myList").addContent(value)), Bean4.class);
+    assertSerializer(o, "<b>\n" +
+                        "  <list>\n" +
+                        "    <item value=\"one\" />\n" +
+                        "    <item value=\"two\" />\n" +
+                        "    <item value=\"three\" />\n" +
+                        "  </list>\n" +
+                        "</b>", "Deserialization failure", new SkipDefaultsSerializationFilter());
   }
 
   private static void checkSmartSerialization(@NotNull Bean2 bean, @NotNull String serialized) throws IOException, JDOMException {

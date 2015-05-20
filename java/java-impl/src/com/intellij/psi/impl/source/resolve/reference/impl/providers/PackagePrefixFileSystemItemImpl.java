@@ -19,8 +19,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -192,7 +192,7 @@ class PackagePrefixFileSystemItemImpl extends PsiElementBase implements PsiFileS
   @Override
   public boolean isPhysical() {
     final VirtualFile file = getVirtualFile();
-    return file != null && !(file.getFileSystem() instanceof DummyFileSystem);
+    return file != null && !(file.getFileSystem() instanceof NonPhysicalFileSystem);
   }
 
   @Override

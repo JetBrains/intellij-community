@@ -51,15 +51,13 @@ public class JDOMExternalizer {
   }
 
   public static int readInteger(Element root, String name, int defaultValue) {
-    String v = readString(root, name);
-    return v == null ? defaultValue : StringUtilRt.parseInt(v, defaultValue);
+    return StringUtilRt.parseInt(readString(root, name), defaultValue);
   }
 
   @Nullable
   public static String readString(@NonNls Element root, @NonNls String name) {
     for (Element element : root.getChildren("setting")) {
-      String childName = element.getAttributeValue("name");
-      if (Comparing.strEqual(childName, name)) {
+      if (Comparing.strEqual(element.getAttributeValue("name"), name)) {
         return element.getAttributeValue("value");
       }
     }

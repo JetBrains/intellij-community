@@ -17,7 +17,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.codeInsight.daemon.impl.analysis.InsertRequiredAttributeFix;
+import com.intellij.codeInspection.htmlInspections.AddAttributeValueIntentionFix;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import org.jetbrains.annotations.NotNull;
@@ -34,5 +36,11 @@ public class XmlQuickFixFactoryImpl extends XmlQuickFixFactory {
   @Override
   public LocalQuickFix createNSDeclarationIntentionFix(@NotNull PsiElement element, @NotNull String namespacePrefix, @Nullable XmlToken token) {
     return new CreateNSDeclarationIntentionFix(element, namespacePrefix, token);
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement addAttributeValueFix(@NotNull XmlAttribute attribute) {
+    return new AddAttributeValueIntentionFix(attribute);
   }
 }

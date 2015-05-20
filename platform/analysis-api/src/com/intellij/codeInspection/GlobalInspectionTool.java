@@ -39,6 +39,12 @@ import org.jetbrains.annotations.Nullable;
  * @since 6.0
  */
 public abstract class GlobalInspectionTool extends InspectionProfileEntry {
+  @NotNull
+  @Override
+  protected final String getSuppressId() {
+    return super.getSuppressId();
+  }
+
   /**
    * Returns the annotator which will receive callbacks while the reference graph
    * is being built. The annotator can be used to add additional markers to reference
@@ -189,8 +195,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
 
   /**
    * @return JobDescriptors array to show inspection progress correctly. TotalAmount should be set (e.g. in
-   * {@link #runInspection(com.intellij.analysis.AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)})
-   * ProgressIndicator should progress with {@link com.intellij.codeInspection.GlobalInspectionContext#incrementJobDoneAmount(com.intellij.codeInspection.ex.JobDescriptor, String)}
+   * {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)})
+   * ProgressIndicator should progress with {@link GlobalInspectionContext#incrementJobDoneAmount(JobDescriptor, String)}
    */
   @Nullable
   public JobDescriptor[] getAdditionalJobs() {

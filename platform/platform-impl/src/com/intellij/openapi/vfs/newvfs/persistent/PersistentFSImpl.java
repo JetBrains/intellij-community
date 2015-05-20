@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -66,7 +67,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final Object myInputLock = new Object();
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
-  @SuppressWarnings("FieldCanBeLocal")
+  @SuppressWarnings({"FieldCanBeLocal", "unused"})
   private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
@@ -277,7 +278,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                                  @NotNull FileAttributes attributes) {
     String name = file.getName();
     if (!name.isEmpty()) {
-      if (namesEqual(fs, name, FSRecords.getName(id))) return false; // TODO: Handle root attributes change.
+      if (namesEqual(fs, name, FSRecords.getNameSequence(id))) return false; // TODO: Handle root attributes change.
     }
     else {
       if (areChildrenLoaded(id)) return false; // TODO: hack
@@ -305,8 +306,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.getParent(id);
   }
 
-  private static boolean namesEqual(@NotNull VirtualFileSystem fs, @NotNull String n1, String n2) {
-    return fs.isCaseSensitive() ? n1.equals(n2) : n1.equalsIgnoreCase(n2);
+  private static boolean namesEqual(@NotNull VirtualFileSystem fs, @NotNull CharSequence n1, CharSequence n2) {
+    return Comparing.equal(n1, n2, fs.isCaseSensitive());
   }
 
   @Override
@@ -345,11 +346,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public boolean isSpecialFile(@NotNull VirtualFile file) {
-    return isSpecialFile(getFileAttributes(getFileId(file)));
-  }
-
-  @Override
   public boolean isWritable(@NotNull VirtualFile file) {
     return (getFileAttributes(getFileId(file)) & IS_READ_ONLY) == 0;
   }
@@ -385,7 +381,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     for (final int childId : children) {
-      if (namesEqual(fs, childName, FSRecords.getName(childId))) return childId;
+      if (namesEqual(fs, childName, FSRecords.getNameSequence(childId))) return childId;
     }
 
     final VirtualFile fake = new FakeVirtualFile(parent, childName);
@@ -506,7 +502,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         FSRecords.setLength(fileId, content.length);
       }
 
-      ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+      Application application = ApplicationManager.getApplication();
       // we should cache every local files content
       // because the local history feature is currently depends on this cache,
       // perforce offline mode as well
@@ -622,6 +618,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       public void close() throws IOException {
         if (closed) return;
         super.close();
+
+        ApplicationManager.getApplication().assertWriteAccessAllowed();
 
         VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
         List<VFileContentChangeEvent> events = Collections.singletonList(event);
@@ -789,7 +787,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     publisher.after(validated);
   }
 
-  private void applyChildrenChangeEvents(VirtualFile parent, List<VFileEvent> events) {
+  private void applyChildrenChangeEvents(@NotNull VirtualFile parent, @NotNull List<VFileEvent> events) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
     TIntArrayList childrenIdsUpdated = new TIntArrayList();
     List<VirtualFile> childrenToBeUpdated = new SmartList<VirtualFile>();
@@ -1288,7 +1286,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
 
   private abstract static class AbstractRoot extends VirtualDirectoryImpl {
-    public AbstractRoot(int id, VfsData.Segment segment, VfsData.DirectoryData data, NewVirtualFileSystem fs) {
+    private AbstractRoot(int id, VfsData.Segment segment, VfsData.DirectoryData data, NewVirtualFileSystem fs) {
       super(id, segment, data, null, fs);
     }
 
@@ -1323,7 +1321,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     @NotNull
     @Override
     public CharSequence getNameSequence() {
-      return myParentLocalFile.getName();
+      return myParentLocalFile.getNameSequence();
     }
 
     @Override

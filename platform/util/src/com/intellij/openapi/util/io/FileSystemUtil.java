@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -56,7 +57,7 @@ public class FileSystemUtil {
     @Nullable
     protected abstract String resolveSymLink(@NotNull String path) throws Exception;
 
-    protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception { return false; }
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception { return false; }
 
     @NotNull
     private String getName() { return getClass().getSimpleName().replace("MediatorImpl", ""); }
@@ -67,9 +68,9 @@ public class FileSystemUtil {
 
   private static Mediator getMediator() {
     Throwable error = null;
-    final boolean forceUseNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
+    boolean forceNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
 
-    if (!forceUseNio2) {
+    if (!forceNio2) {
       if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
         try {
           return check(new IdeaWin32MediatorImpl());
@@ -97,9 +98,7 @@ public class FileSystemUtil {
       }
     }
 
-    final String message =
-      "Failed to load filesystem access layer (" + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", " + forceUseNio2 + ")";
-    LOG.error(message, error);
+    LOG.warn("Failed to load filesystem access layer: " + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", nio2=" + forceNio2, error);
 
     return new FallbackMediatorImpl();
   }
@@ -170,33 +169,27 @@ public class FileSystemUtil {
     return resolveSymLink(file.getAbsolutePath());
   }
 
-  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static int getPermissions(@NotNull String path) {
-    return -1;
-  }
-
-  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static int getPermissions(@NotNull File file) {
-    return -1;
-  }
-
-  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void setPermissions(@NotNull String path, int permissions) { }
-
-  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
-  public static void setPermissions(@NotNull File file, int permissions) { }
-
   /**
    * Gives the second file permissions of the first one if possible; returns true if succeed.
    * Will do nothing on Windows.
    */
   public static boolean clonePermissions(@NotNull String source, @NotNull String target) {
     try {
-      return ourMediator.clonePermissions(source, target);
+      return ourMediator.clonePermissions(source, target, false);
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+      return false;
+    }
+  }
+
+  /**
+   * Gives the second file permissions to execute of the first one if possible; returns true if succeed.
+   * Will do nothing on Windows.
+   */
+  public static boolean clonePermissionsToExecute(@NotNull String source, @NotNull String target) {
+    try {
+      return ourMediator.clonePermissions(source, target, true);
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -284,8 +277,7 @@ public class FileSystemUtil {
       }
       catch (InvocationTargetException e) {
         final Throwable cause = e.getCause();
-        if (cause != null && ("java.nio.file.NoSuchFileException".equals(cause.getClass().getName()) ||
-                              "java.nio.file.InvalidPathException".equals(cause.getClass().getName()))) {
+        if (cause instanceof IOException || cause != null && "java.nio.file.InvalidPathException".equals(cause.getClass().getName())) {
           LOG.debug(cause);
           return null;
         }
@@ -303,20 +295,42 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception {
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
       if (SystemInfo.isUnix) {
-        Object pathObj = myGetPath.invoke(myDefaultFileSystem, source, ArrayUtil.EMPTY_STRING_ARRAY);
-        Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "posix:permissions", myLinkOptions);
-        if (attributes != null) {
-          Object permissions = attributes.get("permissions");
-          if (permissions instanceof Collection) {
-            mySetAttribute.invoke(null, pathObj, "posix:permissions", permissions, myLinkOptions);
-            return true;
+        Object sourcePath = myGetPath.invoke(myDefaultFileSystem, source, ArrayUtil.EMPTY_STRING_ARRAY);
+        Object targetPath = myGetPath.invoke(myDefaultFileSystem, target, ArrayUtil.EMPTY_STRING_ARRAY);
+        Collection sourcePermissions = getPermissions(sourcePath);
+        Collection targetPermissions = getPermissions(targetPath);
+        if (sourcePermissions != null && targetPermissions != null) {
+          if (onlyPermissionsToExecute) {
+            Collection<Object> permissionsToSet = ContainerUtil.newHashSet();
+            for (Object permission : targetPermissions) {
+              if (!permission.toString().endsWith("_EXECUTE")) {
+                permissionsToSet.add(permission);
+              }
+            }
+            for (Object permission : sourcePermissions) {
+              if (permission.toString().endsWith("_EXECUTE")) {
+                permissionsToSet.add(permission);
+              }
+            }
+            mySetAttribute.invoke(null, targetPath, "posix:permissions", permissionsToSet, myLinkOptions);
           }
+          else {
+            mySetAttribute.invoke(null, targetPath, "posix:permissions", sourcePermissions, myLinkOptions);
+          }
+          return true;
         }
       }
 
       return false;
+    }
+
+    private Collection getPermissions(Object sourcePath) throws IllegalAccessException, InvocationTargetException {
+      Map attributes = (Map)myReadAttributes.invoke(null, sourcePath, "posix:permissions", myLinkOptions);
+      if (attributes == null) return null;
+      Object permissions = attributes.get("permissions");
+      return permissions instanceof Collection ? (Collection)permissions : null;
     }
   }
 
@@ -346,6 +360,7 @@ public class FileSystemUtil {
       int S_IFREG = 0100000;  // regular file
       int S_IFDIR = 0040000;  // directory
       int PERM_MASK = 0777;
+      int EXECUTE_MASK = 0111;
       int WRITE_MASK = 0222;
       int W_OK = 2;           // write permission flag for access(2)
 
@@ -361,11 +376,14 @@ public class FileSystemUtil {
 
     private static final int[] LINUX_32 =  {16, 44, 72, 24, 28};
     private static final int[] LINUX_64 =  {24, 48, 88, 28, 32};
+    private static final int[] LNX_PPC32 = {16, 48, 80, 24, 28};
+    private static final int[] LNX_PPC64 = LINUX_64;
     private static final int[] BSD_32 =    { 8, 48, 32, 12, 16};
     private static final int[] BSD_64 =    { 8, 72, 40, 12, 16};
     private static final int[] SUN_OS_32 = {20, 48, 64, 28, 32};
     private static final int[] SUN_OS_64 = {16, 40, 64, 24, 28};
 
+    private static final int STAT_VER = 1;
     private static final int OFF_MODE = 0;
     private static final int OFF_SIZE = 1;
     private static final int OFF_TIME = 2;
@@ -379,11 +397,23 @@ public class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP, false);
 
     private JnaUnixMediatorImpl() throws Exception {
-      myOffsets = SystemInfo.isLinux ? (SystemInfo.is32Bit ? LINUX_32 : LINUX_64) :
-                  SystemInfo.isMac | SystemInfo.isFreeBSD ? (SystemInfo.is32Bit ? BSD_32 : BSD_64) :
-                  SystemInfo.isSolaris ? (SystemInfo.is32Bit ? SUN_OS_32 : SUN_OS_64) :
-                  null;
-      if (myOffsets == null || myOffsets.length != 5) throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
+      if (SystemInfo.isLinux) {
+        if ("ppc".equals(SystemInfo.OS_ARCH)) {
+          myOffsets = SystemInfo.is32Bit ? LNX_PPC32 : LNX_PPC64;
+        }
+        else {
+          myOffsets = SystemInfo.is32Bit ? LINUX_32 : LINUX_64;
+        }
+      }
+      else if (SystemInfo.isMac | SystemInfo.isFreeBSD) {
+        myOffsets = SystemInfo.is32Bit ? BSD_32 : BSD_64;
+      }
+      else if (SystemInfo.isSolaris) {
+        myOffsets = SystemInfo.is32Bit ? SUN_OS_32 : SUN_OS_64;
+      }
+      else {
+        throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
+      }
 
       myLibC = (LibC)Native.loadLibrary("c", LibC.class);
       myUid = myLibC.getuid();
@@ -393,17 +423,16 @@ public class FileSystemUtil {
     @Override
     protected FileAttributes getAttributes(@NotNull String path) throws Exception {
       Memory buffer = new Memory(256);
-      int res = SystemInfo.isLinux ? myLibC.__lxstat64(0, path, buffer) : myLibC.lstat(path, buffer);
+      int res = SystemInfo.isLinux ? myLibC.__lxstat64(STAT_VER, path, buffer) : myLibC.lstat(path, buffer);
       if (res != 0) return null;
 
-      int mode = (SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE])) & LibC.S_MASK;
+      int mode = getModeFlags(buffer) & LibC.S_MASK;
       boolean isSymlink = (mode & LibC.S_IFLNK) == LibC.S_IFLNK;
       if (isSymlink) {
-        res = SystemInfo.isLinux ? myLibC.__xstat64(0, path, buffer) : myLibC.stat(path, buffer);
-        if (res != 0) {
+        if (!loadFileStatus(path, buffer)) {
           return FileAttributes.BROKEN_SYMLINK;
         }
-        mode = (SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE])) & LibC.S_MASK;
+        mode = getModeFlags(buffer) & LibC.S_MASK;
       }
 
       boolean isDirectory = (mode & LibC.S_IFDIR) == LibC.S_IFDIR;
@@ -416,6 +445,10 @@ public class FileSystemUtil {
       boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : myLibC.access(path, LibC.W_OK) == 0;
 
       return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
+    }
+
+    private boolean loadFileStatus(@NotNull String path, Memory buffer) {
+      return (SystemInfo.isLinux ? myLibC.__xstat64(STAT_VER, path, buffer) : myLibC.stat(path, buffer)) == 0;
     }
 
     @Override
@@ -434,15 +467,25 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception {
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
       Memory buffer = new Memory(256);
-      int res = SystemInfo.isLinux ? myLibC.__xstat64(0, source, buffer) : myLibC.stat(source, buffer);
-      if (res == 0) {
-        int permissions = (SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE])) & LibC.PERM_MASK;
-        return myLibC.chmod(target, permissions) == 0;
-      }
+      if (!loadFileStatus(source, buffer)) return false;
 
-      return false;
+      int permissions;
+      int sourcePermissions = getModeFlags(buffer) & LibC.PERM_MASK;
+      if (onlyPermissionsToExecute) {
+        if (!loadFileStatus(target, buffer)) return false;
+        int targetPermissions = getModeFlags(buffer) & LibC.PERM_MASK;
+        permissions = targetPermissions & ~LibC.EXECUTE_MASK | sourcePermissions & LibC.EXECUTE_MASK;
+      }
+      else {
+        permissions = sourcePermissions;
+      }
+      return myLibC.chmod(target, permissions) == 0;
+    }
+
+    private int getModeFlags(Memory buffer) {
+      return SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE]);
     }
 
     private boolean ownFile(Memory buffer) {
@@ -509,11 +552,14 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception {
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target, boolean onlyPermissionsToExecute) throws Exception {
       if (SystemInfo.isUnix) {
         File srcFile = new File(source);
         File dstFile = new File(target);
-        return dstFile.setWritable(srcFile.canWrite(), true) && dstFile.setExecutable(srcFile.canExecute(), true);
+        if (!onlyPermissionsToExecute) {
+          if (!dstFile.setWritable(srcFile.canWrite(), true)) return false;
+        }
+        return dstFile.setExecutable(srcFile.canExecute(), true);
       }
 
       return false;

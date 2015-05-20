@@ -409,4 +409,43 @@ public class FormatTest {
       ]
     )
   }
+
+  void "test field dependency through method call"() {
+    doTest(
+      initial: '''
+public class TmpTest {
+    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    static final String SUB_MESSAGE_REQUEST_SNAPSHOT = create(1);
+
+    private static String create(int i) {
+        return Integer.toString(i + EMPTY_OBJECT_ARRAY.length);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(SUB_MESSAGE_REQUEST_SNAPSHOT);
+    }
+}
+''',
+      expected: '''
+public class TmpTest {
+    private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
+    static final String SUB_MESSAGE_REQUEST_SNAPSHOT = create(1);
+
+    public static void main(String[] args) {
+        System.out.println(SUB_MESSAGE_REQUEST_SNAPSHOT);
+    }
+
+    private static String create(int i) {
+        return Integer.toString(i + EMPTY_OBJECT_ARRAY.length);
+    }
+}
+''',
+      rules: [
+        rule(FIELD),
+        rule(PRIVATE, FIELD),
+        rule(PUBLIC, METHOD),
+        rule(PRIVATE, METHOD)
+      ]
+    );
+  }
 }

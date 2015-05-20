@@ -46,7 +46,7 @@ public final class HgVersion implements Comparable<HgVersion> {
   /**
    * The minimal supported version
    */
-  public static final HgVersion MIN = new HgVersion(1, 9, 1);
+  public static final HgVersion MIN = new HgVersion(2, 0, 1);
   public static final HgVersion AMEND_SUPPORTED = new HgVersion(2, 2, 0);
 
   // before 2.3 build in func not supported

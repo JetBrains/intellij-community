@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       Evaluator bodyEvaluator = accept(statement.getBody());
       Evaluator conditionEvaluator = accept(statement.getCondition());
       if (conditionEvaluator != null) {
-        myResult = new DoWhileStatementEvaluator(conditionEvaluator, bodyEvaluator, getLabel(statement));
+        myResult = new DoWhileStatementEvaluator(new UnBoxingEvaluator(conditionEvaluator), bodyEvaluator, getLabel(statement));
       }
     }
 
@@ -242,7 +242,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       Evaluator bodyEvaluator = accept(statement.getBody());
       Evaluator conditionEvaluator = accept(statement.getCondition());
       if (conditionEvaluator != null) {
-        myResult = new WhileStatementEvaluator(conditionEvaluator, bodyEvaluator, getLabel(statement));
+        myResult = new WhileStatementEvaluator(new UnBoxingEvaluator(conditionEvaluator), bodyEvaluator, getLabel(statement));
       }
     }
 
@@ -250,6 +250,9 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitForStatement(PsiForStatement statement) {
       Evaluator initializerEvaluator = accept(statement.getInitialization());
       Evaluator conditionEvaluator = accept(statement.getCondition());
+      if (conditionEvaluator != null) {
+        conditionEvaluator = new UnBoxingEvaluator(conditionEvaluator);
+      }
       Evaluator updateEvaluator = accept(statement.getUpdate());
       Evaluator bodyEvaluator = accept(statement.getBody());
       if (bodyEvaluator != null) {
@@ -302,7 +305,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if(condition == null) return;
       condition.accept(this);
 
-      myResult = new IfStatementEvaluator(myResult, thenEvaluator, elseEvaluator);
+      myResult = new IfStatementEvaluator(new UnBoxingEvaluator(myResult), thenEvaluator, elseEvaluator);
     }
 
     @Override
@@ -582,7 +585,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (myResult == null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", condition.getText())); return;
       }
-      Evaluator conditionEvaluator = myResult;
+      Evaluator conditionEvaluator = new UnBoxingEvaluator(myResult);
       thenExpression.accept(this);
       if (myResult == null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", thenExpression.getText())); return;
@@ -949,11 +952,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
 
           if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() instanceof PsiClass) {
-            // this is a call to a 'static' method
-            if (contextClass == null && type == null) {
-              throwEvaluateException(DebuggerBundle.message("evaluation.error.qualifier.type.unknown", qualifier.getText()));
+            // this is a call to a 'static' method but class is not available, try to evaluate by qname
+            if (contextClass == null) {
+              contextClass = JVMNameUtil.getJVMRawText(((PsiReferenceExpression)qualifier).getQualifiedName());
             }
-            assert contextClass != null;
             objectEvaluator = new TypeEvaluator(contextClass);
           }
           else {
@@ -986,15 +988,18 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
 
       boolean defaultInterfaceMethod = false;
+      boolean mustBeVararg = false;
 
       if (psiMethod != null) {
         processBoxingConversions(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
         argumentEvaluators = wrapVarargs(psiMethod.getParameterList().getParameters(), argExpressions, resolveResult.getSubstitutor(), argumentEvaluators);
         defaultInterfaceMethod = psiMethod.hasModifierProperty(PsiModifier.DEFAULT);
+        mustBeVararg = psiMethod.isVarArgs();
       }
 
       myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(),
-                                     psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators, defaultInterfaceMethod);
+                                     psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators,
+                                     defaultInterfaceMethod, mustBeVararg);
     }
 
     @Override

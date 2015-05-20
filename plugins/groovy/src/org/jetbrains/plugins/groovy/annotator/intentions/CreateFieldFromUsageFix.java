@@ -20,7 +20,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
@@ -32,19 +31,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
  */
 public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
 
-  public CreateFieldFromUsageFix(GrReferenceExpression refExpression) {
+  private final @NotNull String myReferenceName;
+
+  public CreateFieldFromUsageFix(GrReferenceExpression refExpression, @NotNull String referenceName) {
     super(refExpression);
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return GroovyBundle.message("create.from.usage.family.name");
-  }
-
-  @Nullable
-  private String getFieldName() {
-    return getRefExpr().getReferenceName();
+    myReferenceName = referenceName;
   }
 
   private String[] generateModifiers(@NotNull PsiClass targetClass) {
@@ -62,13 +53,13 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
   @Override
   @NotNull
   public String getText() {
-    return GroovyBundle.message("create.field.from.usage", getFieldName());
+    return GroovyBundle.message("create.field.from.usage", myReferenceName);
   }
 
   @Override
   protected void invokeImpl(Project project, @NotNull PsiClass targetClass) {
     final CreateFieldFix fix = new CreateFieldFix(targetClass);
-    fix.doFix(targetClass.getProject(), generateModifiers(targetClass), getFieldName(), calculateTypeConstrains(), getRefExpr());
+    fix.doFix(targetClass.getProject(), generateModifiers(targetClass), myReferenceName, calculateTypeConstrains(), getRefExpr());
   }
 
   @Override

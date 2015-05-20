@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.internal.statistic.persistence;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -27,12 +26,11 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
-import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +47,9 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   implements ApplicationComponent, PersistentStateComponent<Element> {
   private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
 
+  private final Alarm myAlarm;
+  private final long PERSIST_PERIOD = 24*60*60*1000; //1 day
+
   private static final String TOKENIZER = ",";
 
   @NonNls
@@ -59,11 +60,14 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   @NonNls
   private static final String PROJECT_TAG = "project";
   @NonNls
+  private static final String COLLECTION_TIME_TAG = "collectionTime";
+  @NonNls
   private static final String PROJECT_ID_ATTR = "id";
   @NonNls
   private static final String VALUES_ATTR = "values";
 
   public ApplicationStatisticsPersistenceComponent() {
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   }
 
   public static ApplicationStatisticsPersistenceComponent getInstance() {
@@ -71,27 +75,28 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   }
 
   @Override
-  public void loadState(final Element element) {
-    List groups = element.getChildren(GROUP_TAG);
-
-    for (Object group : groups) {
-      Element groupElement = (Element)group;
-      String groupName = groupElement.getAttributeValue(GROUP_NAME_ATTR);
-
-      final GroupDescriptor groupDescriptor = GroupDescriptor.create(groupName);
-
-      List projectsList = groupElement.getChildren(PROJECT_TAG);
-      for (Object project : projectsList) {
-        Element projectElement = (Element)project;
+  public void loadState(Element element) {
+    for (Element groupElement : element.getChildren(GROUP_TAG)) {
+      GroupDescriptor groupDescriptor = GroupDescriptor.create(groupElement.getAttributeValue(GROUP_NAME_ATTR));
+      List<Element> projectsList = groupElement.getChildren(PROJECT_TAG);
+      for (Element projectElement : projectsList) {
         String projectId = projectElement.getAttributeValue(PROJECT_ID_ATTR);
         String frameworks = projectElement.getAttributeValue(VALUES_ATTR);
         if (!StringUtil.isEmptyOrSpaces(projectId) && !StringUtil.isEmptyOrSpaces(frameworks)) {
-          Set<UsageDescriptor> frameworkDescriptors = new HashSet<UsageDescriptor>();
+          Set<UsageDescriptor> frameworkDescriptors = new THashSet<UsageDescriptor>();
           for (String key : StringUtil.split(frameworks, TOKENIZER)) {
-            final UsageDescriptor descriptor = getUsageDescriptor(key);
-            if (descriptor != null) frameworkDescriptors.add(descriptor);
+            UsageDescriptor descriptor = getUsageDescriptor(key);
+            if (descriptor != null) {
+              frameworkDescriptors.add(descriptor);
+            }
           }
-          getApplicationData(groupDescriptor).put(projectId, frameworkDescriptors);
+          long collectionTime;
+          try {
+            collectionTime = Long.valueOf(projectElement.getAttributeValue(COLLECTION_TIME_TAG));
+          } catch (NumberFormatException ignored) {
+            collectionTime = 0;
+          }
+          getApplicationData(groupDescriptor).put(projectId, new CollectedUsages(frameworkDescriptors, collectionTime));
         }
       }
     }
@@ -101,17 +106,18 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   public Element getState() {
     Element element = new Element("state");
 
-    for (Map.Entry<GroupDescriptor, Map<String, Set<UsageDescriptor>>> appData : getApplicationData().entrySet()) {
+    for (Map.Entry<GroupDescriptor, Map<String, CollectedUsages>> appData : getApplicationData().entrySet()) {
       Element groupElement = new Element(GROUP_TAG);
       groupElement.setAttribute(GROUP_NAME_ATTR, appData.getKey().getId());
       boolean isEmptyGroup = true;
 
-      for (Map.Entry<String, Set<UsageDescriptor>> projectData : appData.getValue().entrySet()) {
+      for (Map.Entry<String, CollectedUsages> projectData : appData.getValue().entrySet()) {
         Element projectElement = new Element(PROJECT_TAG);
         projectElement.setAttribute(PROJECT_ID_ATTR, projectData.getKey());
-        final Set<UsageDescriptor> projectDataValue = projectData.getValue();
-        if (!projectDataValue.isEmpty()) {
-          projectElement.setAttribute(VALUES_ATTR, joinUsages(projectDataValue));
+        final CollectedUsages projectDataValue = projectData.getValue();
+        if (!projectDataValue.usages.isEmpty()) {
+          projectElement.setAttribute(VALUES_ATTR, joinUsages(projectDataValue.usages));
+          projectElement.setAttribute(COLLECTION_TIME_TAG, String.valueOf(projectDataValue.collectionTime));
           groupElement.addContent(projectElement);
           isEmptyGroup = false;
         }
@@ -144,7 +150,8 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
         }
       }
       return new UsageDescriptor(usage, 1);
-    } catch (AssertionError e) {
+    }
+    catch (AssertionError e) {
       //escape loading of invalid usages
     }
     return null;
@@ -157,8 +164,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
       public String fun(UsageDescriptor usageDescriptor) {
         final String key = usageDescriptor.getKey();
         final int value = usageDescriptor.getValue();
-
-        return value > 1 ? key + "=" + value : key;
+        return value != 1 ? key + "=" + value : key;
       }
     }, TOKENIZER);
   }
@@ -172,79 +178,54 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   @Override
   public void initComponent() {
-    onAppClosing();
-    onProjectClosing();
-  }
-
-  private void onProjectClosing() {
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerListener() {
-      @Override
-      public void projectOpened(Project project) {
-      }
-
-      @Override
-      public boolean canCloseProject(Project project) {
-        return true;
-      }
-
-      @Override
-      public void projectClosed(Project project) {
-      }
-
-      @Override
-      public void projectClosing(Project project) {
-        if (project != null && project.isInitialized()) {
-          if (persistOnClosing) {
-            doPersistProjectUsages(project);
-          }
-        }
-      }
-    });
-  }
-
-  private static void doPersistProjectUsages(@NotNull Project project) {
-    if (DumbService.isDumb(project)) return;
-    for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
-      if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
-        ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
-      }
-    }
-  }
-
-  private void onAppClosing() {
-    final MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
-
-    messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-      }
-
-      @Override
-      public void appStarting(Project projectFromCommandLine) {
-      }
-
-      @Override
-      public void projectFrameClosed() {
-      }
-
-      @Override
-      public void projectOpenFailed() {
-      }
-
-      @Override
-      public void welcomeScreenDisplayed() {
-      }
-
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       @Override
       public void appClosing() {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          if (project.isInitialized()) {
-            doPersistProjectUsages(project);
-          }
-        }
+        persistOpenedProjects();
         persistOnClosing = false;
       }
     });
+
+    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+      @Override
+      public void projectClosing(Project project) {
+        if (persistOnClosing && project != null) {
+          doPersistProjectUsages(project);
+        }
+      }
+    });
+
+    persistPeriodically();
+  }
+
+  private void persistPeriodically() {
+    myAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        persistOpenedProjects();
+        persistPeriodically();
+      }
+    }, PERSIST_PERIOD);
+  }
+
+  private static void persistOpenedProjects() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      doPersistProjectUsages(project);
+    }
+  }
+
+  private static void doPersistProjectUsages(@NotNull Project project) {
+    synchronized (ApplicationStatisticsPersistenceComponent.class) {
+      if (!project.isInitialized() || DumbService.isDumb(project)) {
+        return;
+      }
+
+      for (UsagesCollector usagesCollector : Extensions.getExtensions(UsagesCollector.EP_NAME)) {
+        if (usagesCollector instanceof AbstractApplicationUsagesCollector) {
+          ((AbstractApplicationUsagesCollector)usagesCollector).persistProjectUsages(project);
+        }
+      }
+    }
   }
 
   @Override

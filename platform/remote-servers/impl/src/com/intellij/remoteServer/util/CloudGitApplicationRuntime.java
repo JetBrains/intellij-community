@@ -20,8 +20,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler;
 import com.intellij.remoteServer.agent.util.CloudGitAgentDeployment;
+import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +59,18 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
     return myLoggingHandler;
   }
 
+  @Override
   public AgentTaskExecutor getAgentTaskExecutor() {
     return getServerRuntime().getAgentTaskExecutor();
+  }
+
+  public ServerTaskExecutor getTaskExecutor() {
+    return getServerRuntime().getTaskExecutor();
+  }
+
+  @Override
+  protected ServerType<?> getCloudType() {
+    return getServerRuntime().getCloudType();
   }
 
   public CloudGitAgentDeployment getDeployment() {
@@ -67,7 +79,7 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
 
   @Override
   public void undeploy(final @NotNull UndeploymentTaskCallback callback) {
-    getServerRuntime().getTaskExecutor().submit(new ThrowableRunnable<Exception>() {
+    getTaskExecutor().submit(new ThrowableRunnable<Exception>() {
 
       @Override
       public void run() throws Exception {

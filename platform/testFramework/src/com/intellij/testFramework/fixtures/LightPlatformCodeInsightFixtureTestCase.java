@@ -37,10 +37,17 @@ import java.io.File;
 /**
  * @author peter
  */
+@SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
 public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTestCase {
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+
   public LightPlatformCodeInsightFixtureTestCase() {
-    PlatformTestCase.autodetectPlatformPrefix();
+    this(true);
+  }
+
+  protected LightPlatformCodeInsightFixtureTestCase(boolean autodetect) {
+    if (autodetect) {
+      PlatformTestCase.autodetectPlatformPrefix();
+    }
   }
 
   protected CodeInsightTestFixture myFixture;

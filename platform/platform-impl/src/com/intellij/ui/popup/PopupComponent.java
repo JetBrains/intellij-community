@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,9 +138,7 @@ public interface PopupComponent {
 
     public void show() {
 
-      if (Registry.is("suppress.focus.stealing")) {
-        UIUtil.setAutoRequestFocus(getWindow(), false);
-      }
+    UIUtil.suppressFocusStealing(getWindow());
 
       if (!myRequestFocus) {
         myDialog.setFocusableWindowState(false);
@@ -209,7 +207,7 @@ public interface PopupComponent {
 
     private static void fixFlickering(Window wnd, boolean opaque) {
       try {
-        if (UIUtil.isUnderDarcula() && !SystemInfo.isLinux && wnd != null) {
+        if (UIUtil.isUnderDarcula() && SystemInfo.isMac && Registry.is("darcula.fix.native.flickering") && wnd != null) {
           AWTUtilities.setWindowOpaque(wnd, opaque);
         }
       } catch (Exception ignore) {}

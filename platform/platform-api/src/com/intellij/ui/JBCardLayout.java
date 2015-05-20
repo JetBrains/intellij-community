@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,11 +126,8 @@ public class JBCardLayout extends CardLayout {
         }
         linearProgress[0] = Math.min(1, Math.max(0, (float)timePassed / mySwipeTime));
         double naturalProgress = (1 - Math.cos(Math.PI * linearProgress[0])) / 2;
-        Rectangle bounds = parent.getBounds();
-        Insets insets = parent.getInsets();
-        bounds.setLocation(insets.left, insets.top);
-        bounds.width -= insets.left + insets.right;
-        bounds.height -= insets.top + insets.bottom;
+        Rectangle bounds = new Rectangle(parent.getWidth(), parent.getHeight());
+        JBInsets.removeFrom(bounds, parent.getInsets());
         Rectangle r = new Rectangle(bounds);
         int x = (int)((naturalProgress * r.width));
         r.translate(isForward ? -x : x, 0);
@@ -243,7 +242,7 @@ public class JBCardLayout extends CardLayout {
     p.add(centerPanel, BorderLayout.CENTER);
     p.add(nextButton, BorderLayout.EAST);
     f.setContentPane(p);
-    f.setSize(new Dimension(600, 800));
+    f.setSize(JBUI.size(600, 800));
     f.setLocationRelativeTo(null);
     f.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     f.setVisible(true);

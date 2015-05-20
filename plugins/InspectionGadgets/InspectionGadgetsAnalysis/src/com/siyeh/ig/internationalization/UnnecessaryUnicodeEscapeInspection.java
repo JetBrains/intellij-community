@@ -156,13 +156,14 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           charBuffer.clear();
           charBuffer.put(d).rewind();
           final CoderResult coderResult = encoder.encode(charBuffer, byteBuffer, true);
-          if (!coderResult.isUnmappable()) {
-            final PsiElement element = file.findElementAt(i);
-            if (element != null && isSuppressedFor(element)) {
-              return;
-            }
-            registerErrorAtOffset(file, i, escapeEnd - i, Character.valueOf(d));
+          if (coderResult.isError()) {
+            continue;
           }
+          final PsiElement element = file.findElementAt(i);
+          if (element != null && isSuppressedFor(element)) {
+            return;
+          }
+          registerErrorAtOffset(file, i, escapeEnd - i, Character.valueOf(d));
         }
       }
     }

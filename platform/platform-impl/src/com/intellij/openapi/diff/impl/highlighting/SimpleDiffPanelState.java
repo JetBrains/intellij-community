@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.ContentChangeListener;
-import com.intellij.openapi.diff.impl.fragments.*;
+import com.intellij.openapi.diff.impl.fragments.FragmentHighlighterImpl;
+import com.intellij.openapi.diff.impl.fragments.FragmentList;
+import com.intellij.openapi.diff.impl.fragments.FragmentListImpl;
+import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
@@ -58,7 +61,7 @@ public abstract class SimpleDiffPanelState implements Disposable  {
     return editorWrapper;
   }
   
-  public void setComparisonPolicy(ComparisonPolicy comparisonPolicy) {
+  public void setComparisonPolicy(@NotNull ComparisonPolicy comparisonPolicy) {
     myComparisonPolicy = comparisonPolicy;
   }
 

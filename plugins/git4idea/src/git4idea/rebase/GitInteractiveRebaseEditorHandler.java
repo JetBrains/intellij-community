@@ -15,8 +15,10 @@
  */
 package git4idea.rebase;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -24,6 +26,7 @@ import git4idea.commands.GitHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
+import java.util.List;
 
 /**
  * The handler for rebase editor request. The handler shows {@link git4idea.rebase.GitRebaseEditor}
@@ -63,6 +66,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    * Set to true after rebase editor was shown
    */
   protected boolean myRebaseEditorShown = false;
+
+  private boolean myNoopSituation;
 
   /**
    * The constructor from fields that is expected to be
@@ -107,24 +112,37 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
             GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, path);
             if (editor.showAndGet()) {
               editor.save();
-              isSuccess.set(true);
-              return;
             }
-            else {
-              isSuccess.set(false);
-            }
+            isSuccess.set(true);
+            return;
           }
           else {
             setRebaseEditorShown();
-            GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, path);
-            if (editor.showAndGet()) {
-              editor.save();
-              isSuccess.set(true);
-              return;
+            GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
+            try {
+              List<GitRebaseEntry> entries = rebaseFile.load();
+              GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, entries);
+              if (editor.showAndGet()) {
+                rebaseFile.save(editor.getEntries());
+                isSuccess.set(true);
+                return;
+              }
+              else {
+                rebaseFile.cancel();
+              }
             }
-            else {
-              editor.cancel();
-              isSuccess.set(true);
+            catch (GitInteractiveRebaseFile.NoopException e) {
+              LOG.info("Noop situation while rebasing " + myRoot);
+              String message = "There are no commits to rebase because the current branch is directly below the base branch " +
+                               "(the 'noop' situation).\n" +
+                               "Do you want to continue (this will reset the current branch to the base branch)?";
+              int rebase = Messages.showOkCancelDialog(myProject, message, "Git Rebase", CommonBundle.getOkButtonText(),
+                                                       CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+              if (rebase == Messages.OK) {
+                isSuccess.set(true);
+                myNoopSituation = true;
+                return;
+              }
             }
           }
         }
@@ -167,5 +185,12 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   public int getHandlerNo() {
     return myHandlerNo;
+  }
+
+  /**
+   * Tells if there was a "noop" situation during rebase (no commits were rebase, just the label was moved).
+   */
+  public boolean wasNoopSituationDetected() {
+    return myNoopSituation;
   }
 }

@@ -26,6 +26,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
+import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
@@ -85,6 +89,7 @@ public class VarExprent extends Exprent {
     if (classDef) {
       ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(varType.value);
       new ClassWriter().classToJava(child, buffer, indent, tracer);
+      tracer.incrementCurrentSourceLine(buffer.countLines());
     }
     else {
       String name = null;
@@ -179,4 +184,31 @@ public class VarExprent extends Exprent {
   public void setStack(boolean stack) {
     this.stack = stack;
   }
+  
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+
+    if(!super.match(matchNode, engine)) {
+      return false;
+    }
+    
+    RuleValue rule = matchNode.getRules().get(MatchProperties.EXPRENT_VAR_INDEX);
+    if(rule != null) {
+      if(rule.isVariable()) {
+        if(!engine.checkAndSetVariableValue((String)rule.value, this.index)) {
+          return false;
+        }
+      } else { 
+        if(this.index != Integer.valueOf((String)rule.value).intValue()) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
+  }
+  
 }

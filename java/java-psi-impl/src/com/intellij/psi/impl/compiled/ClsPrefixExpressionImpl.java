@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,22 +22,21 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpression {
-  private ClsElementImpl myParent;
+abstract class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpression {
+  private final ClsElementImpl myParent;
   private final PsiJavaToken myOperation;
   private final PsiExpression myOperand;
 
-  public ClsPrefixExpressionImpl(ClsElementImpl parent, ClsJavaTokenImpl operation, ClsLiteralExpressionImpl operand) {
+  ClsPrefixExpressionImpl(ClsElementImpl parent) {
     myParent = parent;
-    myOperation = operation;
-    myOperand = operand;
-    operation.setParent(this);
-    operand.setParent(this);
+    myOperation = createOperation();
+    myOperand = createOperand();
   }
 
-  void setParent(ClsElementImpl parent) {
-    myParent = parent;
-  }
+  @NotNull
+  protected abstract PsiExpression createOperand();
+  @NotNull
+  protected abstract PsiJavaToken createOperation();
 
   @NotNull
   @Override

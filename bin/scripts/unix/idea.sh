@@ -43,11 +43,26 @@ fi
 OS_TYPE=`"$UNAME" -s`
 
 # ---------------------------------------------------------------------
+# Ensure IDE_HOME points to the directory where the IDE is installed.
+# ---------------------------------------------------------------------
+SCRIPT_LOCATION=$0
+if [ -x "$READLINK" ]; then
+  while [ -L "$SCRIPT_LOCATION" ]; do
+    SCRIPT_LOCATION=`"$READLINK" -e "$SCRIPT_LOCATION"`
+  done
+fi
+
+IDE_HOME=`dirname "$SCRIPT_LOCATION"`/..
+IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
+
+# ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
-# Try (in order): @@product_uc@@_JDK, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): @@product_uc@@_JDK, ../jre, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
+elif [ -x "$IDE_HOME/jre/bin/java" ] && "$IDE_HOME/jre/bin/java" -version > /dev/null 2>&1 ; then
+  JDK="$IDE_HOME/jre"
 elif [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
   JDK="$JDK_HOME"
 elif [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
@@ -109,23 +124,16 @@ else
 fi
 
 # ---------------------------------------------------------------------
-# Ensure IDE_HOME points to the directory where the IDE is installed.
-# ---------------------------------------------------------------------
-SCRIPT_LOCATION=$0
-if [ -x "$READLINK" ]; then
-  while [ -L "$SCRIPT_LOCATION" ]; do
-    SCRIPT_LOCATION=`"$READLINK" -e "$SCRIPT_LOCATION"`
-  done
-fi
-
-IDE_HOME=`dirname "$SCRIPT_LOCATION"`/..
-IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
-
-# ---------------------------------------------------------------------
 # Collect JVM options and properties.
 # ---------------------------------------------------------------------
+if [ "$OS_TYPE" = "Darwin" ]; then
+  OS_SPECIFIC_BIN_DIR=$IDE_BIN_HOME/mac
+else
+  OS_SPECIFIC_BIN_DIR=$IDE_BIN_HOME/linux
+fi
+
 if [ -n "$@@product_uc@@_PROPERTIES" ]; then
-  IDE_PROPERTIES_PROPERTY="-Didea.properties.file=\"$@@product_uc@@_PROPERTIES\""
+  IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$@@product_uc@@_PROPERTIES"
 fi
 
 MAIN_CLASS_NAME="$@@product_uc@@_MAIN_CLASS_NAME"
@@ -133,42 +141,50 @@ if [ -z "$MAIN_CLASS_NAME" ]; then
   MAIN_CLASS_NAME="com.intellij.idea.Main"
 fi
 
-VM_OPTIONS_FILE="$@@product_uc@@_VM_OPTIONS"
-if [ -z "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS_FILE="$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"
-fi
-
-if [ -r "$VM_OPTIONS_FILE" ]; then
-  VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
-  VM_OPTIONS="$VM_OPTIONS -Djb.vmOptionsFile=\"$VM_OPTIONS_FILE\""
-fi
+VM_OPTIONS=""
+VM_OPTIONS_FILES_USED=""
+for vm_opts_file in "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" "$OS_SPECIFIC_BIN_DIR/@@vm_options@@$BITS.vmoptions" "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" "$@@product_uc@@_VM_OPTIONS"; do
+  if [ -r "$vm_opts_file" ]; then
+    VM_OPTIONS_DATA=`"$CAT" "$vm_opts_file" | "$GREP" -v "^#.*" | "$TR" '\n' ' '`
+    VM_OPTIONS="$VM_OPTIONS $VM_OPTIONS_DATA"
+    if [ -n "$VM_OPTIONS_FILES_USED" ]; then
+      VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED,"
+    fi
+    VM_OPTIONS_FILES_USED="$VM_OPTIONS_FILES_USED$vm_opts_file"
+  fi
+done
 
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
   OS_NAME=`echo $OS_TYPE | "$TR" '[:upper:]' '[:lower:]'`
   AGENT_LIB="yjpagent-$OS_NAME$BITS"
   if [ -r "$IDE_BIN_HOME/lib$AGENT_LIB.so" ]; then
-    AGENT="-agentlib:$AGENT_LIB=disablej2ee,disablealloc,delay=10000,sessionname=@@system_selector@@"
+    AGENT="-agentlib:$AGENT_LIB=disablealloc,delay=10000,sessionname=@@system_selector@@"
   fi
 fi
 
-COMMON_JVM_ARGS="-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log \"-Xbootclasspath/a:$IDE_HOME/lib/boot.jar\" -Didea.paths.selector=@@system_selector@@ $IDE_PROPERTIES_PROPERTY"
 IDE_JVM_ARGS="@@ide_jvm_args@@"
-ALL_JVM_ARGS="$VM_OPTIONS $COMMON_JVM_ARGS $IDE_JVM_ARGS $AGENT $REQUIRED_JVM_ARGS"
 
 @@class_path@@
 if [ -n "$@@product_uc@@_CLASSPATH" ]; then
   CLASSPATH="$CLASSPATH:$@@product_uc@@_CLASSPATH"
 fi
-export CLASSPATH
-
-LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH"
-export LD_LIBRARY_PATH
 
 # ---------------------------------------------------------------------
 # Run the IDE.
 # ---------------------------------------------------------------------
-while true ; do
-  eval "$JDK/bin/java" $ALL_JVM_ARGS -Djb.restart.code=88 $MAIN_CLASS_NAME "$@"
-  test $? -ne 88 && break
-done
+LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JDK/bin/java" \
+  $AGENT \
+  "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
+  -classpath "$CLASSPATH" \
+  $VM_OPTIONS "-Djb.vmOptionsFile=$VM_OPTIONS_FILES_USED" \
+  "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
+  -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
+  $IDE_PROPERTIES_PROPERTY \
+  $IDE_JVM_ARGS \
+  $REQUIRED_JVM_ARGS \
+  $MAIN_CLASS_NAME \
+  "$@"
+EC=$?
+test $EC -ne 88 && exit $EC
+exec "$0" "$@"

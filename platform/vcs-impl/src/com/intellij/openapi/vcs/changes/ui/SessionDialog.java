@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitSession;
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public class SessionDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myConfigurationComponent;
+    return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myConfigurationComponent);
   }
 
   private void updateButtons() {

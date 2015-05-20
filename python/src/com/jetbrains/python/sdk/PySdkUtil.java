@@ -139,6 +139,7 @@ public class PySdkUtil {
   private static ProcessOutput getOutputForException(final Exception e) {
     LOG.warn(e);
     return new ProcessOutput() {
+      @NotNull
       @Override
       public String getStderr() {
         String err = super.getStderr();

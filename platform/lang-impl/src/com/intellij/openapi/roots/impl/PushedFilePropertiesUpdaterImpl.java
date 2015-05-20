@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -55,10 +56,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
 
 public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater");
@@ -237,7 +240,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
 
   @Override
   public void pushAll(final FilePropertyPusher... pushers) {
-    queueTasks(Arrays.asList(new Runnable() {
+    queueTasks(Collections.singletonList(new Runnable() {
       @Override
       public void run() {
         doPushAll(pushers);
@@ -252,6 +255,8 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
         return ModuleManager.getInstance(myProject).getModules();
       }
     });
+
+    List<Runnable> tasks = new ArrayList<Runnable>();
 
     for (final Module module : modules) {
       Runnable iteration = ApplicationManager.getApplication().runReadAction(new Computable<Runnable>() {
@@ -280,8 +285,48 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
           };
         }
       });
-      iteration.run();
+      tasks.add(iteration);
     }
+
+    invoke2xConcurrentlyIfPossible(tasks);
+  }
+
+  public static void invoke2xConcurrentlyIfPossible(final List<Runnable> tasks) {
+    if (tasks.size() == 1 ||
+        ApplicationManager.getApplication().isWriteAccessAllowed() ||
+        !Registry.is("idea.concurrent.scanning.files.to.index")) {
+      for(Runnable r:tasks) r.run();
+      return;
+    }
+    final ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<Runnable>(tasks);
+    Future<?> result = null;
+    if (tasks.size() > 1) {
+      result = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          Runnable runnable;
+          while ((runnable = tasksQueue.poll()) != null) runnable.run();
+        }
+      });
+    }
+
+    Runnable runnable;
+    while ((runnable = tasksQueue.poll()) != null) runnable.run();
+
+    if (result != null) {
+      try {
+        result.get();
+      } catch (Exception ex) {
+        LOG.error(ex);
+      }
+    }
+    //JobLauncher.getInstance().invokeConcurrently(tasks, null, false, false, new Processor<Runnable>() {
+    //  @Override
+    //  public boolean process(Runnable runnable) {
+    //    runnable.run();
+    //    return true;
+    //  }
+    //});
   }
 
   private void applyPushersToFile(final VirtualFile fileOrDir, final FilePropertyPusher[] pushers, final Object[] moduleValues) {
@@ -301,9 +346,10 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
         //noinspection unchecked
         pusher = pushers[i];
-        if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
-        else if (isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) continue;
-        findAndUpdateValue(fileOrDir, pusher, moduleValues != null ? moduleValues[i]:null);
+        if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir)) || isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) {
+          continue;
+        }
+        findAndUpdateValue(fileOrDir, pusher, moduleValues != null ? moduleValues[i] : null);
       }
     }
     catch (AbstractMethodError ame) { // acceptsDirectory is missed

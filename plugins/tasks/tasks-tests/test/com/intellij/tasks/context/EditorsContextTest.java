@@ -18,12 +18,14 @@ package com.intellij.tasks.context;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.FileEditorManagerTestCase;
+import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.ui.docking.DockManager;
 import org.jdom.Element;
 
 /**
  * @author Dmitry Avdeev
  */
+@SkipInHeadlessEnvironment
 public class EditorsContextTest extends FileEditorManagerTestCase {
 
   public void testDockableContainer() throws Exception {

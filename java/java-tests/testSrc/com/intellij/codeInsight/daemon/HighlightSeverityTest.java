@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,14 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiIdentifier;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,13 +32,48 @@ public class HighlightSeverityTest extends LightDaemonAnalyzerTestCase {
 
 
   public void testErrorLikeUnusedSymbol() throws Exception {
-    enableInspectionTool(new GlobalInspectionToolWrapper(new UnusedDeclarationInspection()) {
+    enableInspectionTool(new LocalInspectionToolWrapper(new LocalInspectionTool() {
+      @NotNull
+      @Override
+      public String getShortName() {
+        return getDisplayName();
+      }
+
+      @NotNull
+      @Override
+      public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
+                                            boolean isOnTheFly,
+                                            @NotNull LocalInspectionToolSession session) {
+        return new JavaElementVisitor() {
+          @Override
+          public void visitIdentifier(PsiIdentifier identifier) {
+            if (identifier.getText().equals("k")) {
+              holder.registerProblem(identifier, "Variable 'k' is never used");
+            }
+          }
+        };
+      }
+
       @NotNull
       @Override
       public HighlightDisplayLevel getDefaultLevel() {
         return HighlightDisplayLevel.ERROR;
       }
-    });
+
+      @Nls
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return "x";
+      }
+
+      @Nls
+      @NotNull
+      @Override
+      public String getGroupDisplayName() {
+        return getDisplayName();
+      }
+    }));
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
   }
 }

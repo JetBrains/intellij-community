@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package com.intellij.ide.ui;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -39,24 +37,20 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.Map;
 
 import static com.intellij.util.ui.UIUtil.isValidFont;
 
 @State(
   name = "UISettings",
-  storages = {
-    @Storage(
-      file = StoragePathMacros.APP_CONFIG + "/ui.lnf.xml"
-    )}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/ui.lnf.xml")
 )
-public class UISettings extends SimpleModificationTracker implements PersistentStateComponent<UISettings>, ExportableApplicationComponent {
+public class UISettings extends SimpleModificationTracker implements PersistentStateComponent<UISettings> {
   /** Not tabbed pane. */
   public static final int TABS_NONE = 0;
 
   public static UISettings getInstance() {
-    return ApplicationManager.getApplication().getComponent(UISettings.class);
+    return ServiceManager.getService(UISettings.class);
   }
 
   /**
@@ -65,7 +59,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public static UISettings getShadowInstance() {
     Application application = ApplicationManager.getApplication();
-    UISettings settings = application == null ? null : application.getComponent(UISettings.class);
+    UISettings settings = application == null ? null : getInstance();
     return settings == null ? new UISettings() : settings;
   }
 
@@ -74,9 +68,11 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int RECENT_FILES_LIMIT = 50;
   public int CONSOLE_COMMAND_HISTORY_LIMIT = 300;
   public int EDITOR_TAB_LIMIT = 10;
-  public int EDITOR_TAB_TITLE_LIMIT = 100;
+  public boolean REUSE_NOT_MODIFIED_TABS = false;
   public boolean ANIMATE_WINDOWS = true;
-  public int ANIMATION_SPEED = 2000; // Pixels per second
+  @Deprecated //todo remove in IDEA 16
+  public int ANIMATION_SPEED = 4000; // Pixels per second
+  public int ANIMATION_DURATION = 300; // Milliseconds
   public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
   public boolean HIDE_TOOL_STRIPES = true;
   public boolean WIDESCREEN_SUPPORT = false;
@@ -91,6 +87,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean ALWAYS_SHOW_WINDOW_BUTTONS = false;
   public boolean CYCLE_SCROLLING = true;
   public boolean SCROLL_TAB_LAYOUT_IN_EDITOR = true;
+  public boolean HIDE_TABS_IF_NEED = true;
   public boolean SHOW_CLOSE_BUTTON = true;
   public int EDITOR_TAB_PLACEMENT = 1;
   public boolean HIDE_KNOWN_EXTENSION_IN_TABS = false;
@@ -99,6 +96,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean ACTIVATE_MRU_EDITOR_ON_CLOSE = false;
   public boolean ACTIVATE_RIGHT_EDITOR_ON_CLOSE = false;
   public boolean ANTIALIASING_IN_EDITOR = true;
+  public boolean USE_LCD_RENDERING_IN_EDITOR = true;
   public boolean MOVE_MOUSE_ON_DEFAULT_BUTTON = false;
   public boolean ENABLE_ALPHA_MODE = false;
   public int ALPHA_MODE_DELAY = 1500;
@@ -131,7 +129,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     setSystemFontFaceAndSize();
 
     Boolean scrollToSource = WelcomeWizardUtil.getAutoScrollToSource();
-    if (scrollToSource != null) DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
+    if (scrollToSource != null) {
+      DEFAULT_AUTOSCROLL_TO_SOURCE = scrollToSource;
+    }
   }
 
   private void tweakPlatformDefaults() {
@@ -186,7 +186,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
 
   public static class FontFilter implements SerializationFilter {
     @Override
-    public boolean accepts(@NotNull Accessor accessor, Object bean) {
+    public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
       UISettings settings = (UISettings)bean;
       return !hasDefaultFontSetting(settings);
     }
@@ -266,11 +266,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     UISettings uiSettings = getInstance();
 
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+
     if (!isRemoteDesktopConnected() && UIUtil.isRetina()) {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    }
-    else {
-      if (uiSettings == null || uiSettings.ANTIALIASING_IN_EDITOR) {
+    } else {
         Toolkit tk = Toolkit.getDefaultToolkit();
         //noinspection HardCodedStringLiteral
         Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
@@ -282,16 +281,19 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
             g2d.addRenderingHints(map);
           }
         }
-        else {
-          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        }
+
         if (FORCE_USE_FRACTIONAL_METRICS) {
           g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
         }
-      }
-      else {
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-      }
+
+    }
+
+    if (uiSettings != null && uiSettings.ANTIALIASING_IN_EDITOR) {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, uiSettings.USE_LCD_RENDERING_IN_EDITOR ?
+                                                                 RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB :
+                                                                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    } else {
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
     }
   }
 
@@ -306,29 +308,4 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
     return false;
   }
-
-  @NotNull
-  @Override
-  public File[] getExportFiles() {
-    return new File[]{PathManager.getOptionsFile("ui.lnf")};
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return IdeBundle.message("ui.settings");
-  }
-
-  @NonNls
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "UISettings";
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() { }
 }

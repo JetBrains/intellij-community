@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAn
   public PsiAnnotationPattern qName(final ElementPattern<String> pattern) {
     return with(new PatternCondition<PsiAnnotation>("qName") {
       public boolean accepts(@NotNull final PsiAnnotation psiAnnotation, final ProcessingContext context) {
-        return pattern.getCondition().accepts(psiAnnotation.getQualifiedName(), context);
+        return pattern.accepts(psiAnnotation.getQualifiedName(), context);
       }
     });
   }

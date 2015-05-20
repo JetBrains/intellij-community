@@ -59,24 +59,25 @@ public class SourceMap {
     return entry == null ? -1: entry.getSourceLine();
   }
 
+  @Nullable
+  public MappingList findMappingList(@NotNull List<Url> sourceUrls, @Nullable VirtualFile sourceFile, @Nullable NullableLazyValue<SourceResolver.Resolver> resolver) {
+    MappingList mappings = sourceResolver.findMappings(sourceUrls, this, sourceFile);
+    if (mappings == null && resolver != null) {
+      SourceResolver.Resolver resolverValue = resolver.getValue();
+      if (resolverValue != null) {
+        mappings = sourceResolver.findMappings(sourceFile, this, resolverValue);
+      }
+    }
+    return mappings;
+  }
+
   public boolean processMappingsInLine(@NotNull List<Url> sourceUrls,
                                        int sourceLine,
                                        @NotNull Processor<MappingEntry> mappingProcessor,
                                        @Nullable VirtualFile sourceFile,
                                        @Nullable NullableLazyValue<SourceResolver.Resolver> resolver) {
-    MappingList mappings = sourceResolver.findMappings(sourceUrls, this, sourceFile);
-    if (mappings == null) {
-      if (resolver != null) {
-        SourceResolver.Resolver resolverValue = resolver.getValue();
-        if (resolverValue != null) {
-          mappings = sourceResolver.findMappings(sourceFile, this, resolverValue);
-        }
-      }
-      if (mappings == null) {
-        return false;
-      }
-    }
-    return mappings.processMappingsInLine(sourceLine, mappingProcessor);
+    MappingList mappings = findMappingList(sourceUrls, sourceFile, resolver);
+    return mappings != null && mappings.processMappingsInLine(sourceLine, mappingProcessor);
   }
 
   @NotNull

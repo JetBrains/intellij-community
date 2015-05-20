@@ -16,10 +16,8 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -39,7 +37,7 @@ public abstract class ForIndexedPostfixTemplate extends StringBasedPostfixTempla
   };
 
   protected ForIndexedPostfixTemplate(@NotNull String key, @NotNull String example) {
-    super(key, example, JAVA_PSI_INFO, IS_NUMBER_OR_ARRAY_OR_ITERABLE);
+    super(key, example, selectorTopmost(IS_NUMBER_OR_ARRAY_OR_ITERABLE));
   }
 
   @Override

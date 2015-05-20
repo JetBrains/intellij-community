@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 
@@ -28,9 +29,9 @@ public class BackspaceToWordStartHandler extends BackspaceHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, DataContext dataContext) {
-    if (!handleBackspace(editor, dataContext, true)) {
-      myOriginalHandler.execute(editor, dataContext);
+  public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    if (!handleBackspace(editor, caret, dataContext, true)) {
+      myOriginalHandler.execute(editor, caret, dataContext);
     }
   }
 }

@@ -4,46 +4,19 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class Digester {
-  public static Map<String, Long> digestFiles(File dir, List<String> ignoredFiles, UpdaterUI ui)
-    throws IOException, OperationCancelledException {
-    Map<String, Long> result = new HashMap<String, Long>();
+  // CRC32 will only use the lower 32bits of long, never returning negative values.
+  public static long INVALID = -1;
+  public static long DIRECTORY = -2;
 
-    LinkedHashSet<String> paths = Utils.collectRelativePaths(dir);
-    for (String each : paths) {
-      if (ignoredFiles.contains(each)) continue;
-      ui.setStatus(each);
-      ui.checkCancelled();
-      result.put(each, digestFile(new File(dir, each)));
+  public static long digestRegularFile(File file, boolean normalize) throws IOException {
+    if (file.isDirectory()) {
+      return DIRECTORY;
     }
-    return result;
-  }
-
-  public static long digestFile(File file) throws IOException {
-    if (!Runner.ZIP_AS_BINARY && Utils.isZipFile(file.getName())) {
-      ZipFile zipFile;
-      try {
-        zipFile = new ZipFile(file);
-      }
-      catch (IOException e) {
-        Runner.printStackTrace(e);
-        return digestRegularFile(file);
-      }
-
-      try {
-        return doDigestZipFile(zipFile);
-      }
-      finally {
-        zipFile.close();
-      }
-    }
-    return digestRegularFile(file);
-  }
-
-  public static long digestRegularFile(File file) throws IOException {
-    InputStream in = new BufferedInputStream(new FileInputStream(file));
+    InputStream in = new BufferedInputStream(Utils.newFileInputStream(file, normalize));
     try {
       return digestStream(in);
     }
@@ -52,32 +25,43 @@ public class Digester {
     }
   }
 
-  private static long doDigestZipFile(ZipFile zipFile) throws IOException {
-    List<ZipEntry> sorted = new ArrayList<ZipEntry>();
-
-    Enumeration<? extends ZipEntry> temp = zipFile.entries();
-    while (temp.hasMoreElements()) {
-      ZipEntry each = temp.nextElement();
-      if (!each.isDirectory()) sorted.add(each);
+  public static long digestZipFile(File file) throws IOException {
+    ZipFile zipFile;
+    try {
+      zipFile = new ZipFile(file);
+    } catch (ZipException e) {
+      // This was not a zip file...
+      return digestRegularFile(file, false);
     }
+    try {
+      List<ZipEntry> sorted = new ArrayList<ZipEntry>();
 
-    Collections.sort(sorted, new Comparator<ZipEntry>() {
-      public int compare(ZipEntry o1, ZipEntry o2) {
-        return o1.getName().compareTo(o2.getName());
+      Enumeration<? extends ZipEntry> temp = zipFile.entries();
+      while (temp.hasMoreElements()) {
+        ZipEntry each = temp.nextElement();
+        if (!each.isDirectory()) sorted.add(each);
       }
-    });
 
-    CRC32 crc = new CRC32();
-    for (ZipEntry each : sorted) {
-      InputStream in = zipFile.getInputStream(each);
-      try {
-        doDigestStream(in, crc);
+      Collections.sort(sorted, new Comparator<ZipEntry>() {
+        public int compare(ZipEntry o1, ZipEntry o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+
+      CRC32 crc = new CRC32();
+      for (ZipEntry each : sorted) {
+        InputStream in = zipFile.getInputStream(each);
+        try {
+          doDigestStream(in, crc);
+        }
+        finally {
+          in.close();
+        }
       }
-      finally {
-        in.close();
-      }
+      return crc.getValue();
+    } finally {
+      zipFile.close();
     }
-    return crc.getValue();
   }
 
   public static long digestStream(InputStream in) throws IOException {

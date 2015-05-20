@@ -15,6 +15,15 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -24,6 +33,8 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Tests for a type system based on mypy's typing module.
@@ -84,7 +95,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testUnionType() {
-    doTest("int | str",
+    doTest("Union[int, str]",
            "from typing import Union\n" +
            "\n" +
            "def f(expr: Union[int, str]):\n" +
@@ -124,7 +135,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testBuiltinTupleWithParameters() {
-    doTest("(int, str)",
+    doTest("Tuple[int, str]",
            "from typing import Tuple\n" +
            "\n" +
            "def f(expr: Tuple[int, str]):\n" +
@@ -132,7 +143,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyType() {
-    doTest("unknown",
+    doTest("Any",
            "from typing import Any\n" +
            "\n" +
            "def f(expr: Any):\n" +
@@ -141,9 +152,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testGenericType() {
     doTest("A",
-           "from typing import typevar\n" +
+           "from typing import TypeVar\n" +
            "\n" +
-           "T = typevar('A')\n" +
+           "T = TypeVar('A')\n" +
            "\n" +
            "def f(expr: T):\n" +
            "    pass\n");
@@ -151,9 +162,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testGenericBoundedType() {
     doTest("T <= int | str",
-           "from typing import typevar\n" +
+           "from typing import TypeVar\n" +
            "\n" +
-           "T = typevar('T', values=(int, str))\n" +
+           "T = TypeVar('T', int, str)\n" +
            "\n" +
            "def f(expr: T):\n" +
            "    pass\n");
@@ -161,9 +172,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testParameterizedClass() {
     doTest("C[int]",
-           "from typing import Generic, typevar\n" +
+           "from typing import Generic, TypeVar\n" +
            "\n" +
-           "T = typevar('T')\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "class C(Generic[T]):\n" +
            "    def __init__(self, x: T):\n" +
@@ -174,9 +185,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testParameterizedClassMethod() {
     doTest("int",
-           "from typing import Generic, typevar\n" +
+           "from typing import Generic, TypeVar\n" +
            "\n" +
-           "T = typevar('T')\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "class C(Generic[T]):\n" +
            "    def __init__(self, x: T):\n" +
@@ -189,9 +200,9 @@ public class PyTypingTest extends PyTestCase {
 
   public void testParameterizedClassInheritance() {
     doTest("int",
-           "from typing import Generic, typevar\n" +
+           "from typing import Generic, TypeVar\n" +
            "\n" +
-           "T = typevar('T')\n" +
+           "T = TypeVar('T')\n" +
            "\n" +
            "class B(Generic[T]):\n" +
            "    def foo(self) -> T:\n" +
@@ -214,7 +225,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAnyStrForUnknown() {
-    doTest("str | bytes",
+    doTest("Union[bytes, str]",
            "from typing import AnyStr\n" +
            "\n" +
            "def foo(x: AnyStr) -> AnyStr:\n" +
@@ -224,11 +235,11 @@ public class PyTypingTest extends PyTestCase {
            "    expr = foo(x)\n");
   }
 
-  public void testFunctionType() {
+  public void testCallableType() {
     doTest("(int, str) -> str",
-           "from typing import Function\n" +
+           "from typing import Callable\n" +
            "\n" +
-           "def foo(expr: Function[[int, str], str]):\n" +
+           "def foo(expr: Callable[[int, str], str]):\n" +
            "    pass\n");
   }
 
@@ -247,6 +258,116 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n" +
            "\n" +
            "expr = foo('bar')\n");
+  }
+
+  public void testOptionalType() {
+    doTest("Optional[int]",
+           "from typing import Optional\n" +
+           "\n" +
+           "def foo(expr: Optional[int]):\n" +
+           "    pass\n");
+  }
+
+  public void testOptionalFromDefaultNone() {
+    doTest("Optional[int]",
+           "def foo(expr: int = None):\n" +
+           "    pass\n");
+  }
+
+  public void testFlattenUnions() {
+    doTest("Union[int, str, list]",
+           "from typing import Union\n" +
+           "\n" +
+           "def foo(expr: Union[int, Union[str, list]]):\n" +
+           "    pass\n");
+  }
+
+  public void testCast() {
+    doTest("str",
+           "from typing import cast\n" +
+           "\n" +
+           "def foo(x):\n" +
+           "    expr = cast(str, x)\n");
+  }
+
+  public void testComment() {
+    doTest("int",
+           "def foo(x):\n" +
+           "    expr = x  # type: int\n");
+  }
+
+  public void testMultiAssignmentComment() {
+    doTest("Tuple[int, str]",
+           "def foo(x):\n" +
+           "    c1, c2 = x  # type: int, str\n" +
+           "    expr = c1, c2\n");
+  }
+
+  public void testForLoopComment() {
+    doTest("int",
+           "def foo(xs):\n" +
+           "    for expr, x in xs:  # type: int, str\n" +
+           "        pass\n");
+  }
+
+  public void testWithComment() {
+    doTest("int",
+           "def foo(x):\n" +
+           "    with x as expr:  # type: int\n" +
+           "        pass\n");
+  }
+
+  public void testStringLiteralInjection() {
+    doTestInjectedText("class C:\n" +
+                       "    def foo(self, expr: '<caret>C'):\n" +
+                       "        pass\n",
+                       "C");
+  }
+
+  public void testStringLiteralInjectionParameterizedType() {
+    doTestInjectedText("from typing import Union, List\n" +
+                       "\n" +
+                       "class C:\n" +
+                       "    def foo(self, expr: '<caret>Union[List[C], C]'):\n" +
+                       "        pass\n",
+                       "Union[List[C], C]");
+  }
+
+  // PY-15810
+  public void testNoStringLiteralInjectionForNonTypingStrings() {
+    doTestNoInjectedText("class C:\n" +
+                         "    def foo(self, expr: '<caret>foo bar'):\n" +
+                         "        pass\n");
+  }
+
+  private void doTestNoInjectedText(@NotNull String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
+    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(getElementAtCaret());
+    assertNull(host);
+  }
+
+  private void doTestInjectedText(@NotNull String text, @NotNull String expected) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
+    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(getElementAtCaret());
+    assertNotNull(host);
+    final List<Pair<PsiElement, TextRange>> files = languageManager.getInjectedPsiFiles(host);
+    assertNotNull(files);
+    assertFalse(files.isEmpty());
+    final PsiElement injected = files.get(0).getFirst();
+    assertEquals(expected, injected.getText());
+  }
+
+  @NotNull
+  private PsiElement getElementAtCaret() {
+    final Editor editor = myFixture.getEditor();
+    final Document document = editor.getDocument();
+    final PsiFile file = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
+    assertNotNull(file);
+    final PsiElement element = file.findElementAt(myFixture.getCaretOffset());
+    assertNotNull(element);
+    return element;
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {

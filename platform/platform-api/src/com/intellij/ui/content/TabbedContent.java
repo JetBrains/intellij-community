@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@ import java.util.List;
  * @since 14.1
  */
 public interface TabbedContent extends Content {
+  String SPLIT_PROPERTY_PREFIX = "tabbed.toolwindow.expanded.";
+
   void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab);
   void removeContent(@NotNull JComponent content);
   void selectContent(int index);
   List<Pair<String, JComponent>> getTabs();
   String getTitlePrefix();
   void setTitlePrefix(String titlePrefix);
+  void split();
 }

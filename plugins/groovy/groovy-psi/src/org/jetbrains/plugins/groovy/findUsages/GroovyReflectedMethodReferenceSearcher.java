@@ -37,7 +37,7 @@ public class GroovyReflectedMethodReferenceSearcher extends QueryExecutorBase<Ps
     final PsiMethod method = queryParameters.getMethod();
     if (method instanceof GrMethod) {
       for (GrReflectedMethod reflectedMethod : ((GrMethod)method).getReflectedMethods()) {
-        MethodReferencesSearch.search(reflectedMethod, queryParameters.getScope(), true).forEach(consumer);
+        MethodReferencesSearch.search(reflectedMethod, queryParameters.getEffectiveSearchScope(), true).forEach(consumer);
       }
     }
   }

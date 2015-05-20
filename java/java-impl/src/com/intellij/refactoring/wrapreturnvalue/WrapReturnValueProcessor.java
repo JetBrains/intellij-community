@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
@@ -58,7 +58,7 @@ import java.util.Set;
 public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("com.siyeh.rpp.wrapreturnvalue.WrapReturnValueProcessor");
 
-  private MoveDestination myMoveDestination;
+  private final MoveDestination myMoveDestination;
   private final PsiMethod myMethod;
   private final String myClassName;
   private final String myPackageName;
@@ -140,7 +140,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     }
     final String returnType = calculateReturnTypeString();
     usages.add(new ChangeReturnType(psiMethod, returnType));
-    psiMethod.accept(new ReturnSearchVisitor(usages, returnType, psiMethod));
+    psiMethod.accept(new ReturnSearchVisitor(usages, returnType));
   }
 
   private String calculateReturnTypeString() {
@@ -158,7 +158,30 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
       }, ","));
       returnTypeBuffer.append('>');
     }
+    else if (myDelegateField != null) {
+      final PsiType type = myDelegateField.getType();
+      final PsiType returnType = myMethod.getReturnType();
+      final PsiClass containingClass = myDelegateField.getContainingClass();
+      final PsiType inferredType = getInferredType(type, returnType, containingClass, myMethod);
+      if (inferredType != null) {
+        returnTypeBuffer.append("<").append(inferredType.getCanonicalText()).append(">");
+      }
+    }
     return returnTypeBuffer.toString();
+  }
+
+  protected static PsiType getInferredType(PsiType type, PsiType returnType, PsiClass containingClass, PsiMethod method) {
+    if (containingClass != null && containingClass.getTypeParameters().length == 1) {
+      final PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(method.getProject())
+        .inferTypeArguments(containingClass.getTypeParameters(), new PsiType[]{type}, new PsiType[]{returnType}, PsiUtil.getLanguageLevel(
+          method));
+      final PsiTypeParameter typeParameter = containingClass.getTypeParameters()[0];
+      final PsiType substituted = substitutor.substitute(typeParameter);
+      if (substituted != null && !typeParameter.equals(PsiUtil.resolveClassInClassTypeOnly(substituted))) {
+        return substituted;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -179,12 +202,16 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
             @Override
             public void visitReturnStatement(final PsiReturnStatement statement) {
               super.visitReturnStatement(statement);
-              if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class) != myMethod) return;
               final PsiExpression returnValue = statement.getReturnValue();
               if (returnValue != null) {
                 returnTypes.add(returnValue.getType());
               }
             }
+
+            @Override
+            public void visitClass(PsiClass aClass) {}
+            @Override
+            public void visitLambdaExpression(PsiLambdaExpression expression) {}
           });
         }
 
@@ -195,7 +222,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
             final PsiParameter parameter = parameters[0];
             final PsiType parameterType = parameter.getType();
             for (PsiType returnType : returnTypes) {
-              if (!TypeConversionUtil.isAssignable(parameterType, returnType)) {
+              if (getInferredType(parameterType, returnType, existingClass, myMethod) == null && !TypeConversionUtil.isAssignable(parameterType, returnType)) {
                 continue constr;
               }
             }
@@ -316,23 +343,19 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   private class ReturnSearchVisitor extends JavaRecursiveElementWalkingVisitor {
     private final List<FixableUsageInfo> usages;
     private final String type;
-    private final PsiMethod myMethod;
 
-    ReturnSearchVisitor(List<FixableUsageInfo> usages, String type, final PsiMethod psiMethod) {
+    ReturnSearchVisitor(List<FixableUsageInfo> usages, String type) {
       super();
       this.usages = usages;
       this.type = type;
-      myMethod = psiMethod;
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
-    }
+    public void visitClass(PsiClass aClass) {}
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
-
-      if (PsiTreeUtil.getParentOfType(statement, PsiMethod.class) != myMethod) return;
 
       final PsiExpression returnValue = statement.getReturnValue();
       if (myUseExistingClass && returnValue instanceof PsiMethodCallExpression) {

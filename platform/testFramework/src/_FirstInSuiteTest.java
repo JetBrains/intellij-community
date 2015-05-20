@@ -25,7 +25,10 @@ import javax.swing.*;
  */
 @SuppressWarnings("JUnitTestClassNamingConvention")
 public class _FirstInSuiteTest extends TestCase {
+  public static long suiteStarted = 0L;
+
   public void testNothing() throws Exception {
+    suiteStarted = System.nanoTime();
     SwingUtilities.invokeAndWait(new Runnable() {
       @Override
       public void run() {

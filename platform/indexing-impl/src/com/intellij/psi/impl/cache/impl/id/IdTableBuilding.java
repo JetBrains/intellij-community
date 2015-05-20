@@ -47,26 +47,6 @@ public class IdTableBuilding {
     void run(CharSequence chars, @Nullable char[] charsArray, int start, int end);
   }
 
-  public static class PlainTextIndexer extends FileTypeIdIndexer {
-    @Override
-    @NotNull
-    public Map<IdIndexEntry, Integer> map(@NotNull final FileContent inputData) {
-      final IdDataConsumer consumer = new IdDataConsumer();
-      final CharSequence chars = inputData.getContentAsText();
-      scanWords(new ScanWordProcessor() {
-        @Override
-        public void run(final CharSequence chars11, @Nullable char[] charsArray, final int start, final int end) {
-          if (charsArray != null) {
-            consumer.addOccurrence(charsArray, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
-          } else {
-            consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
-          }
-        }
-      }, chars, 0, chars.length());
-      return consumer.getResult();
-    }
-  }
-
   private static final Map<FileType, FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
 
   @Deprecated

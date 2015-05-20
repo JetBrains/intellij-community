@@ -162,7 +162,7 @@ public class PyNames {
 
   public static final String NOT_IMPLEMENTED_ERROR = "NotImplementedError";
 
-  public static final String UNKNOWN_TYPE = "unknown";
+  public static final String UNKNOWN_TYPE = "Any";
 
   public static final String UNNAMED_ELEMENT = "<unnamed>";
 
@@ -347,6 +347,7 @@ public class PyNames {
     .putAll(BuiltinMethods)
     .put("__nonzero__", _only_self_descr)
     .put("__div__", _self_other_descr)
+    .put(NEXT, _only_self_descr)
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
@@ -355,10 +356,26 @@ public class PyNames {
     .put("__bytes__", _only_self_descr)
     .put("__format__", new BuiltinDescription("(self, format_spec)"))
     .put("__round__", new BuiltinDescription("(self, n=None)"))
+    .put(DUNDER_NEXT, _only_self_descr)
+    .build();
+
+  public static ImmutableMap<String, BuiltinDescription> PY35_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .putAll(PY3_BUILTIN_METHODS)
+    .put("__imatmul__", _self_other_descr)
+    .put("__matmul__", _self_other_descr)
+    .put("__rmatmul__", _self_other_descr)
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
-    return level.isPy3K() ? PY3_BUILTIN_METHODS : PY2_BUILTIN_METHODS;
+    if (level.isAtLeast(LanguageLevel.PYTHON35)) {
+      return PY35_BUILTIN_METHODS;
+    }
+    else if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+      return PY3_BUILTIN_METHODS;
+    }
+    else {
+      return PY2_BUILTIN_METHODS;
+    }
   }
 
   // canonical names, not forced by interpreter
@@ -472,7 +489,7 @@ public class PyNames {
   }
 
   public static boolean isRightOperatorName(@Nullable String name) {
-    return name != null && name.matches("__r[a-z]+__");
+    return name != null && (name.matches("__r[a-z]+__") || CONTAINS.equals(name));
   }
 
   /**
@@ -503,4 +520,6 @@ public class PyNames {
   public static final ImmutableSet<String> METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("__func__", "__self__");
 
   public static final ImmutableSet<String> LEGACY_METHOD_SPECIAL_ATTRIBUTES = ImmutableSet.of("im_func", "im_self", "im_class");
+
+  public static final String MRO = "mro";
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.diff.util.DiffPlaces;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -40,7 +42,9 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
@@ -53,6 +57,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -69,6 +74,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -93,31 +99,18 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
   private Splitter mySplitter;
-  private boolean myDetailsOn;
-  private FilePath myDetailsFilePath;
-  private ZipperUpdater myDetailsUpdater;
-  private Runnable myUpdateDetails;
   private MessageBusConnection myConnection;
   private ChangesViewManager.ToggleDetailsAction myToggleDetailsAction;
 
-  private final ShortDiffDetails myDiffDetails;
+  private boolean myDetailsOn;
+  private final MyChangeProcessor myDiffDetails;
+
   private final TreeSelectionListener myTsl;
-  private final FileAndDocumentListenersForShortDiff myListenersForShortDiff;
   private Content myContent;
-  private Change[] mySelectedChanges;
   private static final String DETAILS_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   public static ChangesViewI getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
-  }
-
-  private boolean shouldUpdateDetailsNow() {
-    if (myContent != null && myDetailsOn) {
-      if (! myContentManager.isToolwindowVisible() || ! myContentManager.isContentSelected(myContent)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   public ChangesViewManager(Project project, ChangesViewContentManager contentManager, final VcsChangeDetailsManager vcsChangeDetailsManager) {
@@ -127,45 +120,10 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-    myDiffDetails = new ShortDiffDetails(myProject, new Getter<Change[]>() {
-      @Override
-      public Change[] get() {
-        return myView.getSelectedChanges();
-      }
-    }, vcsChangeDetailsManager);
-    myListenersForShortDiff = new FileAndDocumentListenersForShortDiff(myDiffDetails) {
-      @Override
-      protected void updateDetails() {
-        myDetailsUpdater.queue(myUpdateDetails);
-      }
-
-      @Override
-      protected boolean updateSynchronously() {
-        if (shouldUpdateDetailsNow()) {
-          return myDiffDetails.refreshDataSynch();
-        }
-        return false;
-      }
-    };
-    myDiffDetails.setParent(myView);
-    myDetailsUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, myProject);
-    myUpdateDetails = new Runnable() {
-      @Override
-      public void run() {
-        if (! shouldUpdateDetailsNow()) {
-          // refresh later
-            myDetailsUpdater.queue(this);
-            return;
-        }
-        changeDetails();
-      }
-    };
+    myDiffDetails = new MyChangeProcessor(myProject);
     myTsl = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        Change[] selectedChanges = myView.getSelectedChanges();
-        if (Comparing.equal(mySelectedChanges, selectedChanges)) return;
-        mySelectedChanges = selectedChanges;
         if (LOG.isDebugEnabled()) {
           LOG.debug("selection changed. selected:  " + toStringPaths(myView.getSelectionPaths()) + " from: " + DebugUtil.currentStackTrace());
         }
@@ -224,10 +182,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   public void projectClosed() {
     PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
-    if (myToggleDetailsAction.isSelected(null)) {
-      myListenersForShortDiff.off();
-    }
-    myDiffDetails.dispose();
+    Disposer.dispose(myDiffDetails);
     myView.removeTreeSelectionListener(myTsl);
     myConnection.disconnect();
     myDisposed = true;
@@ -244,19 +199,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     DefaultActionGroup group = (DefaultActionGroup) ActionManager.getInstance().getAction("ChangesViewToolbar");
 
-    ActionManager.getInstance().getAction("ChangesView.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), panel);
-    ActionManager.getInstance().getAction("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
-    ActionManager.getInstance().getAction("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.getDelete(), panel);
-    AnAction moveToChangeList = ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
-    moveToChangeList.registerCustomShortcutSet(new CompositeShortcutSet(moveToChangeList.getShortcutSet(),
-                                                                        CommonShortcuts.getMove()), panel);
-    ActionManager.getInstance().getAction("ChangesView.Rename").registerCustomShortcutSet(CommonShortcuts.getRename(), panel);
-    ActionManager.getInstance().getAction("ChangesView.SetDefault").registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.ALT_DOWN_MASK | ctrlMask())), panel);
-
-    final CustomShortcutSet diffShortcut =
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, ctrlMask()));
-    ActionManager.getInstance().getAction("ChangesView.Diff").registerCustomShortcutSet(diffShortcut, panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), panel);
+    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.Rename",CommonShortcuts.getRename() , panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, KeyEvent.ALT_DOWN_MASK | ctrlMask())), panel);
+    EmptyAction.registerWithShortcutSet("ChangesView.Diff", CommonShortcuts.getDiff(), panel);
 
     JPanel toolbarPanel = new JPanel(new BorderLayout());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
@@ -270,11 +219,9 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander, panel));
 
     ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
-    showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P,
-                                                                                             ctrlMask())),
-                                                panel);
+    showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, ctrlMask())), panel);
     visualActionsGroup.add(showFlattenAction);
-    visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));                                              
+    visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
     myToggleDetailsAction = new ToggleDetailsAction();
@@ -313,28 +260,24 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     content.add(myProgressLabel, BorderLayout.SOUTH);
     panel.setContent(content);
 
-    myDiffDetails.getPanel();
-
     myView.installDndSupport(ChangeListManagerImpl.getInstanceImpl(myProject));
     myView.addTreeSelectionListener(myTsl);
     return panel;
   }
 
   private void changeDetails() {
-    if (! myDetailsOn) {
+    if (!myDetailsOn) {
+      myDiffDetails.clear();
+
       if (mySplitter.getSecondComponent() != null) {
         setChangeDetailsPanel(null);
       }
-    } else {
-      try {
-        myDiffDetails.refresh();
-      } catch(ChangeOutdatedException e) {
-        return;
-      }
-      myDetailsFilePath = myDiffDetails.getCurrentFilePath();
+    }
+    else {
+      myDiffDetails.refresh();
 
       if (mySplitter.getSecondComponent() == null) {
-        setChangeDetailsPanel(myDiffDetails.getPanel());
+        setChangeDetailsPanel(myDiffDetails.getComponent());
       }
     }
   }
@@ -358,7 +301,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         if (myProgressLabel != null) {
           myProgressLabel.removeAll();
           myProgressLabel.add(progress.create());
-          myProgressLabel.setMinimumSize(new Dimension(0, 0));
+          myProgressLabel.setMinimumSize(JBUI.emptySize());
         }
       }
     });
@@ -419,7 +362,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("refresh view, unversioned collections size: " + unversionedPair.getFirst().size() + " unv size passed: " +
-      unversionedPair.getSecond() + " dirs: " + unversionedPair.getThird());
+                unversionedPair.getSecond() + " dirs: " + unversionedPair.getThird());
     }
     myView.updateModel(changeListManager.getChangeListsCopy(), unversionedPair,
                        changeListManager.getDeletedFiles(),
@@ -600,15 +543,43 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      if (myDetailsOn) {
-        myListenersForShortDiff.off();
-      } else {
-        myListenersForShortDiff.on();
-      }
-      myDetailsOn = ! myDetailsOn;
+      myDetailsOn = state;
       // not sure we should turn it on on start (and pre-select smthg - rather heavy actions..)
-//      VcsConfiguration.getInstance(myProject).CHANGE_DETAILS_ON = myDetailsOn;
+      //      VcsConfiguration.getInstance(myProject).CHANGE_DETAILS_ON = myDetailsOn;
       changeDetails();
+    }
+  }
+
+  private class MyChangeProcessor extends CacheChangeProcessor {
+    public MyChangeProcessor(@NotNull Project project) {
+      super(project, DiffPlaces.CHANGES_VIEW);
+    }
+
+    @Override
+    public boolean isWindowFocused() {
+      return DiffUtil.isFocusedComponent(myProject, myContent.getComponent());
+    }
+
+    @NotNull
+    @Override
+    protected List<Change> getSelectedChanges() {
+      return Arrays.asList(myView.getSelectedChanges());
+    }
+
+    @NotNull
+    @Override
+    protected List<Change> getAllChanges() {
+      return Arrays.asList(myView.getChanges());
+    }
+
+    @Override
+    protected void selectChange(@NotNull Change change) {
+      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
+      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, change);
+      if (node != null) {
+        TreePath path = TreeUtil.getPathFromRoot(node);
+        TreeUtil.selectPath(myView, path, false);
+      }
     }
   }
 }

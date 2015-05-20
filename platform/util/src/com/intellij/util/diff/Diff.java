@@ -61,7 +61,7 @@ public class Diff {
       return builder.getFirstChange();
     }
 
-    Enumerator<T> enumerator = new Enumerator<T>(objects1.length + objects2.length, ContainerUtil.<T>canonicalStrategy());
+    Enumerator<T> enumerator = new Enumerator<T>(trimmedLength1 + trimmedLength2, ContainerUtil.<T>canonicalStrategy());
     int[] ints1 = enumerator.enumerate(objects1, startShift, endCut);
     int[] ints2 = enumerator.enumerate(objects2, startShift, endCut);
     Reindexer reindexer = new Reindexer(); // discard unique elements, that have no chance to be matched
@@ -80,9 +80,18 @@ public class Diff {
       changes = patienceIntLCS.getChanges();
     }
     else {
-      IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
-      intLCS.execute();
-      changes = intLCS.getChanges();
+      try {
+        IntLCS intLCS = new IntLCS(discarded[0], discarded[1]);
+        intLCS.execute();
+        changes = intLCS.getChanges();
+      }
+      catch (FilesTooBigForDiffException e) {
+        PatienceIntLCS patienceIntLCS = new PatienceIntLCS(discarded[0], discarded[1]);
+        patienceIntLCS.failOnSmallSizeReduction();
+        patienceIntLCS.execute();
+        changes = patienceIntLCS.getChanges();
+        LOG.info("Successful fallback to patience diff");
+      }
     }
 
     reindexer.reindex(changes, builder);
@@ -119,11 +128,13 @@ public class Diff {
    * @return          translated line if the processing is ok; negative value otherwise
    */
   public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line) throws FilesTooBigForDiffException {
+    return translateLine(before, after, line, false);
+  }
+
+  public static int translateLine(@NotNull CharSequence before, @NotNull CharSequence after, int line, boolean approximate)
+    throws FilesTooBigForDiffException {
     Change change = buildChanges(before, after);
-    if (change == null) {
-      return -1;
-    }
-    return translateLine(change, line);
+    return translateLine(change, line, approximate);
   }
 
   /**
@@ -133,17 +144,20 @@ public class Diff {
    * @param line      target line before change
    * @return          translated line if the processing is ok; negative value otherwise
    */
-  public static int translateLine(@NotNull Change change, int line) {
+  public static int translateLine(@Nullable Change change, int line) {
+    return translateLine(change, line, false);
+  }
+
+  public static int translateLine(@Nullable Change change, int line, boolean approximate) {
     int result = line;
 
     Change currentChange = change;
-    
     while (currentChange != null) {
       if (line < currentChange.line0) break;
       if (line >= currentChange.line0 + currentChange.deleted) {
         result += currentChange.inserted - currentChange.deleted;
       } else {
-        return -1;
+        return approximate ? currentChange.line1 : -1;
       }
 
       currentChange = currentChange.link;
@@ -174,7 +188,7 @@ public class Diff {
 
      If DELETED is 0 then LINE0 is the number of the line before
      which the insertion was done; vice versa for INSERTED and LINE1.  */
-    protected Change(int line0, int line1, int deleted, int inserted, Change old) {
+    public Change(int line0, int line1, int deleted, int inserted, @Nullable Change old) {
       this.line0 = line0;
       this.line1 = line1;
       this.inserted = inserted;

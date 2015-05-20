@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="indexing-api" />
     <orderEntry type="module" module-name="xml-psi-api" />
     <orderEntry type="module" module-name="projectModel-api" />
+    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="lang-api" />
   </component>
 </module>
-

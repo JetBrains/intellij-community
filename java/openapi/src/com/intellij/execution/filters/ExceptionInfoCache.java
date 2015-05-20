@@ -15,13 +15,13 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author peter
  */
 public class ExceptionInfoCache {
-  private final ConcurrentMap<String, SoftReference<Pair<PsiClass[], PsiFile[]>>> myCache = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<String, Pair<PsiClass[], PsiFile[]>> myCache = ContainerUtil.createConcurrentSoftValueMap();
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
 
@@ -53,11 +53,15 @@ public class ExceptionInfoCache {
   }
 
   Pair<PsiClass[], PsiFile[]> resolveClass(String className) {
-    Pair<PsiClass[], PsiFile[]> cached = SoftReference.dereference(myCache.get(className));
+    Pair<PsiClass[], PsiFile[]> cached = myCache.get(className);
     if (cached != null) {
       return cached;
     }
 
+    if (DumbService.isDumb(myProject)) {
+      return Pair.create(PsiClass.EMPTY_ARRAY, PsiFile.EMPTY_ARRAY);
+    }
+    
     PsiClass[] classes = findClassesPreferringMyScope(className);
     if (classes.length == 0) {
       final int dollarIndex = className.indexOf('$');
@@ -72,7 +76,7 @@ public class ExceptionInfoCache {
     }
 
     Pair<PsiClass[], PsiFile[]> result = Pair.create(classes, files);
-    myCache.put(className, new SoftReference<Pair<PsiClass[], PsiFile[]>>(result));
+    myCache.put(className, result);
     return result;
   }
 

@@ -87,17 +87,24 @@ public abstract class AbstractConfigUtils {
     return getSDKJarVersion(jarPath, Pattern.compile(jarRegex), manifestPath);
   }
 
+
+  @Nullable
+  public static String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath) {
+    return getSDKJarVersion(jarPath, jarPattern, manifestPath, 1);
+  }
+
   /**
    * Return value of Implementation-Version attribute in jar manifest
    * <p/>
    *
    * @param jarPath      directory containing jar file
-   * @param jarPattern     filename pattern for jar file
+   * @param jarPattern   filename pattern for jar file
    * @param manifestPath path to manifest file in jar file
+   * @param versionGroup group number to get from matcher
    * @return value of Implementation-Version attribute, null if not found
    */
   @Nullable
-  public static String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath) {
+  public static String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath, int versionGroup) {
     try {
       File[] jars = LibrariesUtil.getFilesInDirectoryByPattern(jarPath, jarPattern);
       if (jars.length != 1) {
@@ -123,8 +130,8 @@ public abstract class AbstractConfigUtils {
         }
 
         final Matcher matcher = jarPattern.matcher(jars[0].getName());
-        if (matcher.matches() && matcher.groupCount() == 1) {
-          return matcher.group(1);
+        if (matcher.matches() && matcher.groupCount() >= versionGroup) {
+          return matcher.group(versionGroup);
         }
         return null;
       }
@@ -163,14 +170,6 @@ public abstract class AbstractConfigUtils {
   public abstract boolean isSDKLibrary(Library library);
 
   public Library[] getSDKLibrariesByModule(final Module module) {
-    final Condition<Library> condition = new Condition<Library>() {
-      @Override
-      public boolean value(Library library) {
-        return isSDKLibrary(library);
-      }
-    };
-    return LibrariesUtil.getLibrariesByCondition(module, condition);
+    return LibrariesUtil.getLibrariesByCondition(module, LIB_SEARCH_CONDITION);
   }
-
-
 }

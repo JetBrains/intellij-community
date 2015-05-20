@@ -78,7 +78,7 @@ public interface PsiClass
   /**
    * Returns the list of classes that this class or interface extends.
    *
-   * @return the extends list, or null for anonymous classes, enums and annotation types
+   * @return the extends list, or null for anonymous classes.
    */
   @Nullable
   PsiReferenceList getExtendsList();
@@ -94,8 +94,7 @@ public interface PsiClass
   /**
    * Returns the list of class types for the classes that this class or interface extends.
    *
-   * @return the list of extended class types, or an empty list for anonymous classes,
-   *         enums and annotation types
+   * @return the list of extended class types, or an empty list for anonymous classes.
    */
   @NotNull
   PsiClassType[] getExtendsListTypes();

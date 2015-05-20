@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -177,7 +178,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
       }
     }
     final Location location = event.location();
-    final String locationQName = location.declaringType().name() + "." + location.method().name();
+    final String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName;
     try {
       locationFileName = location.sourceName();

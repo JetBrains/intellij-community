@@ -24,15 +24,15 @@ public abstract class AbstractIntToIntMap implements IntToIntMap {
   public int getShortIndex(int longIndex) {
     checkLongIndex(longIndex);
 
-    if (shortSize() == 0 || getLongIndex(0) > longIndex)
-      return 0;
+    if (shortSize() == 0 || getLongIndex(0) > longIndex) return 0;
     int a = 0;
     int b = shortSize() - 1;
     while (b > a + 1) {
       int middle = (a + b) / 2;
       if (getLongIndex(middle) <= longIndex) {
         a = middle;
-      } else {
+      }
+      else {
         b = middle;
       }
     }
@@ -40,18 +40,21 @@ public abstract class AbstractIntToIntMap implements IntToIntMap {
   }
 
   protected void checkLongIndex(int longIndex) {
-    if (longIndex < 0 || longIndex >= longSize())
+    if (longIndex < 0 || longIndex >= longSize()) {
       throw new IndexOutOfBoundsException("LongSize is: " + longSize() + ", but longIndex: " + longIndex);
+    }
   }
 
   protected void checkShortIndex(int shortIndex) {
-    if (shortIndex < 0 || shortIndex >= shortSize())
+    if (shortIndex < 0 || shortIndex >= shortSize()) {
       throw new IndexOutOfBoundsException("ShortSize is: " + shortSize() + ", but shortIndex: " + shortIndex);
+    }
   }
 
   protected void checkUpdateParameters(int startLongIndex, int endLongIndex) {
-    if (startLongIndex < 0 || endLongIndex < startLongIndex || endLongIndex >= longSize())
+    if (startLongIndex < 0 || endLongIndex < startLongIndex || endLongIndex >= longSize()) {
       throw new IllegalArgumentException(
-        "ShortSize is: " + shortSize() + ", but updateRequest is: (" + startLongIndex +", " + endLongIndex + ")");
+        "ShortSize is: " + shortSize() + ", but updateRequest is: (" + startLongIndex + ", " + endLongIndex + ")");
+    }
   }
 }

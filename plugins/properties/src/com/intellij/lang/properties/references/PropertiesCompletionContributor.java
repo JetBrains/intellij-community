@@ -77,7 +77,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static boolean hasMoreImportantReference(PsiReference[] references, PropertyReference propertyReference) {
+  public static boolean hasMoreImportantReference(@NotNull PsiReference[] references, @NotNull PropertyReference propertyReference) {
     return propertyReference.isSoft() && ContainerUtil.or(references, new Condition<PsiReference>() {
       @Override
       public boolean value(PsiReference reference) {
@@ -99,7 +99,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
       String value = property.getValue();
       boolean hasBundle = resourceBundle != EmptyResourceBundle.getInstance();
       if (hasBundle) {
-        PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile(propertiesFile.getProject());
+        PropertiesFile defaultPropertiesFile = resourceBundle.getDefaultPropertiesFile();
         IProperty defaultProperty = defaultPropertiesFile.findPropertyByKey(key);
         if (defaultProperty != null) {
           value = defaultProperty.getValue();

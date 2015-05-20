@@ -26,7 +26,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,13 +65,24 @@ class LanguageResolvingUtil {
 
     final Project project = context.getProject();
     final GlobalSearchScope projectProductionScope = GlobalSearchScopesCore.projectProductionScope(project);
-    GlobalSearchScope allScope = projectProductionScope.union(ProjectScope.getLibrariesScope(project));
-    final Collection<PsiClass> allLanguages = ClassInheritorsSearch.search(languageClass,
-                                                                           allScope, true).findAll();
+    final Collection<PsiClass> allLanguages =
+      CachedValuesManager.getCachedValue(languageClass, new CachedValueProvider<Collection<PsiClass>>() {
+        @Nullable
+        @Override
+        public Result<Collection<PsiClass>> compute() {
+          GlobalSearchScope allScope = projectProductionScope.union(ProjectScope.getLibrariesScope(project));
+          return Result.create(ClassInheritorsSearch.search(languageClass, allScope, true).findAll(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      });
+    ;
     final List<LanguageDefinition> libraryDefinitions = collectLibraryLanguages(context, allLanguages);
 
-    final Collection<PsiClass> projectLanguages = ClassInheritorsSearch.search(languageClass,
-                                                                               projectProductionScope, true).findAll();
+    final Collection<PsiClass> projectLanguages = ContainerUtil.filter(allLanguages, new Condition<PsiClass>() {
+      @Override
+      public boolean value(PsiClass aClass) {
+        return PsiSearchScopeUtil.isInScope(projectProductionScope, aClass);
+      }
+    });
     final List<LanguageDefinition> projectDefinitions = collectProjectLanguages(projectLanguages, libraryDefinitions);
 
     final List<LanguageDefinition> all = new ArrayList<LanguageDefinition>(libraryDefinitions);

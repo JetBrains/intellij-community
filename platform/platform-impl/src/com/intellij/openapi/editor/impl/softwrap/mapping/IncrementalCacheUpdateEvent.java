@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,55 +28,39 @@ import org.jetbrains.annotations.NotNull;
  * @since 11/17/10 9:33 AM
  */
 public class IncrementalCacheUpdateEvent {
+  private static Logger LOG = Logger.getInstance(IncrementalCacheUpdateEvent.class);
   
-  private final int myStartLogicalLine;
-  private final int myExactStartOffset;
-  private final int myOldExactEndOffset;
-  private final int myOldStartOffset;
-  private final int myOldEndOffset;
-  private final int myOldLogicalLinesDiff;
-  private final int myNewExactEndOffset;
-  private int myNewStartOffset;
-  private int myNewEndOffset;
-  private int myNewLogicalLinesDiff;
+  private final int myStartOffset;
+  private final int myMandatoryEndOffset;
+  private int myActualEndOffset = -1;
+  
+  private final int myLengthDiff;
+  
+  @NotNull
+  private final LogicalPosition myStartLogicalPosition;
+  private final int myOldEndLogicalLine;
+  private int myNewEndLogicalLine = -1;
 
   /**
    * Creates new <code>IncrementalCacheUpdateEvent</code> object on the basis on the given event object that describes
    * document change that caused cache update.
    * <p/>
-   * This constructor is assumed to be used during processing <b>before</b> the document change, i.e. it's assumed that
-   * <code>'old'</code> offsets within the document {@link DocumentEvent#getDocument() denoted} by the given event object.
-   * <p/>
-   * <code>'New'</code> offsets are assumed to be configured during {@link #updateNewOffsetsIfNecessary(Document, FoldingModelEx)}
-   * processing that, in turn, is called <b>'after'</b> document change.
+   * This constructor is assumed to be used <b>before</b> the document change, {@link #updateAfterDocumentChange(Document)}
+   * should be called <b>'after'</b> document change to complete object creation.
    * 
    * @param event   object that describes document change that caused cache update
    */
-  public IncrementalCacheUpdateEvent(@NotNull DocumentEvent event, @NotNull Editor editor) {
-    this(editor,
-         event.getOffset(),
-         event.getOffset() + event.getOldLength(),
-         event.getOffset() + event.getNewLength());
+  IncrementalCacheUpdateEvent(@NotNull DocumentEvent event, @NotNull CachingSoftWrapDataMapper mapper) {
+    this(event.getDocument(), event.getOffset(), event.getOffset() + event.getOldLength(), event.getOffset() + event.getNewLength(), mapper);
   }
 
   /**
    * Creates new <code>IncrementalCacheUpdateEvent</code> object for the event not changing document length
    * (like expansion of folded region).
    */
-  public IncrementalCacheUpdateEvent(@NotNull Editor editor, int startOffset, int endOffset) {
-    this(editor, startOffset, endOffset, endOffset);
-  }
-
-  private IncrementalCacheUpdateEvent(@NotNull Editor editor, int startOffset, int oldEndOffset, int newEndOffset) {
-    Document document = editor.getDocument();
-    myExactStartOffset = startOffset;
-    myOldExactEndOffset = oldEndOffset;
-    myNewExactEndOffset = newEndOffset;
-    myStartLogicalLine = getLine(myExactStartOffset, document);
-    myOldLogicalLinesDiff = getLine(myOldExactEndOffset, document) - myStartLogicalLine;
-
-    myOldStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, myExactStartOffset);
-    myOldEndOffset = EditorUtil.getNotFoldedLineEndOffset(editor, myOldExactEndOffset);
+  IncrementalCacheUpdateEvent(@NotNull Document document, int startOffset, int endOffset, @NotNull CachingSoftWrapDataMapper mapper) {
+    this(document, startOffset, endOffset, endOffset, mapper);
+    myNewEndLogicalLine = myOldEndLogicalLine;
   }
 
   /**
@@ -86,143 +69,97 @@ public class IncrementalCacheUpdateEvent {
    * 
    * @param document    target document to reparse
    */
-  public IncrementalCacheUpdateEvent(@NotNull Document document) {
-    this(document, 0, Math.max(0, document.getTextLength() - 1));
+  IncrementalCacheUpdateEvent(@NotNull Document document) {
+    myStartOffset = 0;
+    myMandatoryEndOffset = document.getTextLength();
+    myLengthDiff = 0;
+    myStartLogicalPosition = new LogicalPosition(0, 0, 0, 0, 0, 0, 0);
+    myOldEndLogicalLine = myNewEndLogicalLine = Math.max(0, document.getLineCount() - 1);
+  }
+  
+  private IncrementalCacheUpdateEvent(@NotNull Document document, int startOffset, int oldEndOffset, int newEndOffset, @NotNull CachingSoftWrapDataMapper mapper) {
+    myStartOffset = mapper.getPreviousVisualLineStartOffset(startOffset);
+    myMandatoryEndOffset = newEndOffset;
+    myLengthDiff = newEndOffset - oldEndOffset;
+    myStartLogicalPosition = mapper.offsetToLogicalPosition(myStartOffset);
+    LOG.assertTrue(myStartLogicalPosition.visualPositionAware);
+    myOldEndLogicalLine = document.getLineNumber(oldEndOffset);
+  }
+
+  public void updateAfterDocumentChange(@NotNull Document document) {
+    myNewEndLogicalLine = document.getLineNumber(myMandatoryEndOffset);
   }
 
   /**
-   * Creates new <code>IncrementalCacheUpdateEvent</code> object that is configured for exact document region with
-   * the given offsets.
-   * 
-   * @param document          document which text should be re-parsed
-   * @param exactStartOffset  start offset of document range to reparse (inclusive)
-   * @param exactEndOffset    end offset of document range to reparse (inclusive)
+   * Returns offset, from which soft wrap recalculation should start
    */
-  public IncrementalCacheUpdateEvent(@NotNull Document document, int exactStartOffset, int exactEndOffset) {
-    myOldStartOffset = myExactStartOffset = exactStartOffset;
-    myOldEndOffset = myOldExactEndOffset = myNewExactEndOffset = exactEndOffset;
-    myStartLogicalLine = getLine(myExactStartOffset, document);
-    myOldLogicalLinesDiff = getLine(myOldExactEndOffset, document) - myStartLogicalLine;
+  public int getStartOffset() {
+    return myStartOffset;
   }
 
   /**
-   * There is a possible case that current cache update event reflects particular document change. It's also possible that
-   * current object is constructed before document change and we need to normalize 'after change' data later then.
-   * <p/>
-   * This method allows to do that, i.e. it's assumed that current cache update event will be used within the cache that is
-   * bound to the given document and normalizes 'new offsets' if necessary when the document is really changed.
-   * 
-   * @param document      document which change caused current cache update event construction
-   * @param foldingModel  fold model to use
+   * Returns logical position, from which soft wrap recalculation should start
    */
-  public void updateNewOffsetsIfNecessary(@NotNull Editor editor) {
-    Document document = editor.getDocument();
-    myNewLogicalLinesDiff = document.getLineNumber(myNewExactEndOffset) - document.getLineNumber(myExactStartOffset);
-    myNewStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, myExactStartOffset);
-    myNewEndOffset = EditorUtil.getNotFoldedLineEndOffset(editor, myNewExactEndOffset);
+  @NotNull
+  public LogicalPosition getStartLogicalPosition() {
+    return myStartLogicalPosition;
   }
 
   /**
-   * @return    number of changed document symbols. May be either negative, zero and positive 
+   * Returns offset, till which soft wrap recalculation should proceed
    */
-  public int getExactOffsetsDiff() {
-    return myNewExactEndOffset - myOldExactEndOffset;
+  public int getMandatoryEndOffset() {
+    return myMandatoryEndOffset;
   }
 
   /**
-   * @return    logical line that contains start offset of the changed region
+   * Returns offset, till which soft wrap recalculation actually was performed. It can be larger that the value returned by 
+   * {@link #getMandatoryEndOffset()}.
+   */
+  public int getActualEndOffset() {
+    return myActualEndOffset;
+  }
+
+  void setActualEndOffset(int actualEndOffset) {
+    myActualEndOffset = actualEndOffset;
+  }
+
+  /**
+   * Returns change in document length for the event causing soft wrap recalculation.
+   */
+  public int getLengthDiff() {
+    return myLengthDiff;
+  }
+
+  /**
+   * Returns change in document line count for the event causing soft wrap recalculation.
+   */
+  public int getLogicalLinesDiff() {
+    return myNewEndLogicalLine - myOldEndLogicalLine;
+  }
+
+  /**
+   * Returns line number for initial change's starting point 
    */
   public int getStartLogicalLine() {
-    return myStartLogicalLine;
-  }
-  
-  /**
-   * @return    exact start offset of the changed document range
-   * @see #getOldStartOffset()  
-   */
-  public int getOldExactStartOffset() {
-    return myExactStartOffset;
+    return myStartLogicalPosition.line;
   }
 
   /**
-   * @return    exact end offset of the changed document range
-   * @see #getOldEndOffset()
-   */
-  public int getOldExactEndOffset() {
-    return myOldExactEndOffset;
-  }
-
-  /**
-   * We assume that the cache where such cache update events are processed works in 'by line' mode. E.g. it re-parses whole line
-   * if particular symbol on it is changed. Hence, we want to use line start offset instead of 'exact' start offset.
-   * 
-   * @return    old start offset of the change document to use
-   */
-  public int getOldStartOffset() {
-    return myOldStartOffset;
-  }
-
-  /**
-   * Has the same relation to {@link #getOldExactEndOffset()} as {@link #getOldStartOffset()} to {@link #getOldExactStartOffset()}.
-   * 
-   * @return      old end offset of the change document to use
-   */
-  public int getOldEndOffset() {
-    return myOldEndOffset;
-  }
-
-  /**
-   * @return    difference between logical line that contains {@link #getOldExactEndOffset() old end offset} and
-   *            {@link #getOldExactStartOffset() old start offset}
-   */
-  public int getOldLogicalLinesDiff() {
-    return myOldLogicalLinesDiff;
-  }
-
-  /**
-   * @return    logical line that contained end offset of the changed region
+   * Returns line number for initial change's ending point 
    */
   public int getOldEndLogicalLine() {
-    return myStartLogicalLine + myOldLogicalLinesDiff;
+    return myOldEndLogicalLine;
   }
 
-  /**
-   * @return    start offset (inclusive) within the current document to use during performing cache update
-   */
-  public int getNewStartOffset() {
-    return myNewStartOffset;
-  }
-
-  /**
-   * @return    end offset (inclusive) within the current document to use during performing cache update
-   */
-  public int getNewEndOffset() {
-    return myNewEndOffset;
-  }
-
-  /**
-   * @return    difference between logical line that contains {@link #getNewEndOffset()}  new end offset} and
-   *            {@link #getNewStartOffset()}  new start offset}
-   */
-  public int getNewLogicalLinesDiff() {
-    return myNewLogicalLinesDiff;
-  }
-
-  private static int getLine(int offset, Document document) {
-    if (offset >= document.getTextLength()) {
-      int result = document.getLineCount();
-      return result > 0 ? result - 1 : 0;
-    }
-    return document.getLineNumber(offset);
-  }
-  
   @Override
   public String toString() {
-    return String.format(
-      "exact old offsets: %d-%d; recalculation old offsets: %d-%d; exact new offsets: %d-%d; recalculation new offsets: %d-%d; "
-      + "old logical lines diff: %d; new logical lines diff: %d; offset diff: %d",
-      myExactStartOffset, myOldExactEndOffset, myOldStartOffset, myOldEndOffset, myExactStartOffset, myNewExactEndOffset,
-      myNewStartOffset, myNewEndOffset, getOldLogicalLinesDiff(), getNewLogicalLinesDiff(), getExactOffsetsDiff()
-    );
+    return "startOffset=" + myStartOffset +
+           ", mandatoryEndOffset=" + myMandatoryEndOffset +
+           ", actualEndOffset=" + myActualEndOffset +
+           ", lengthDiff=" + myLengthDiff +
+           ", startLogicalPosition=" + myStartLogicalPosition +
+           ", oldEndLogicalLine=" + myOldEndLogicalLine +
+           ", newEndLogicalLine=" + myNewEndLogicalLine;
   }
 }

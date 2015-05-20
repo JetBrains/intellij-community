@@ -30,9 +30,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import java.util.List;
 
 /**
- * @author Max Medvedev
+ * Provides members from extension classes referenced in {@code META-INF/services/org.codehaus.groovy.runtime.ExtensionModule}.
  */
 public class DGMMemberContributor extends NonCodeMembersContributor {
+
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      PsiClass aClass,

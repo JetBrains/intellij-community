@@ -24,9 +24,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,7 +53,7 @@ public class UsageTargetUtil {
 
   public static UsageTarget[] findUsageTargets(Editor editor, PsiFile file) {
     List<UsageTarget> result = new ArrayList<UsageTarget>();
-    for (UsageTargetProvider provider : Extensions.getExtensions(EP_NAME)) {
+    for (UsageTargetProvider provider : getProviders(file.getProject())) {
       UsageTarget[] targets = provider.getTargets(editor, file);
       if (targets != null) Collections.addAll(result, targets);
     }
@@ -62,12 +62,15 @@ public class UsageTargetUtil {
 
   public static UsageTarget[] findUsageTargets(PsiElement psiElement) {
     List<UsageTarget> result = new ArrayList<UsageTarget>();
-    UsageTargetProvider[] providers = Extensions.getExtensions(EP_NAME);
-    Project project = psiElement.getProject();
-    for (UsageTargetProvider provider : DumbService.getInstance(project).filterByDumbAwareness(Arrays.asList(providers))) {
+    for (UsageTargetProvider provider : getProviders(psiElement.getProject())) {
       UsageTarget[] targets = provider.getTargets(psiElement);
       if (targets != null) Collections.addAll(result, targets);
     }
     return result.isEmpty() ? null : result.toArray(new UsageTarget[result.size()]);
+  }
+
+  @NotNull
+  private static List<UsageTargetProvider> getProviders(Project project) {
+    return DumbService.getInstance(project).filterByDumbAwareness(Extensions.getExtensions(EP_NAME));
   }
 }

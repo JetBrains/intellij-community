@@ -8,8 +8,8 @@ class Parent(object):
     """
     CLASS_VAR_2 = 2
 
-    def __init__(self): pass
-
+    def __init__(self):
+        pass
 
     def method_2(self):
         i = 1

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -47,7 +48,7 @@ public class PresentationModeProgressPanel {
 
   public PresentationModeProgressPanel(InlineProgressIndicator progress) {
     myProgress = progress;
-    final Font font = UIUtil.getLabelFont().deriveFont(11f);
+    final Font font = JBUI.Fonts.label(11);
     myText.setFont(font);
     myText2.setFont(font);
     myText.setIcon(EmptyIcon.create(1, 16));

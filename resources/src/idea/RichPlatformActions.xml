@@ -47,12 +47,20 @@
 
     <!-- File -->
     <group id="OpenProjectGroup">
-      <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction"/>
-      <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction"/>
-      <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction" text="Import Project..."/>
-      <action id="ImportModule" class="com.intellij.ide.actions.ImportModuleAction" text="Import Module..."/>
-      <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+      <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" text="New" popup="true"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
+    </group>
+
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+
+    <group id="NewProjectOrModuleGroup">
+      <action id="NewProject" class="com.intellij.ide.actions.NewProjectAction" text="Project..."/>
+      <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction" text="Project from Existing Sources..."/>
+      <group id="NewProjectFromVCS" class="com.intellij.openapi.vcs.checkout.NewProjectFromVCSGroup" text="Project from Version Control" popup="true"/>
+      <separator/>
+      <action id="NewModule" class="com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction" text="Module..."/>
+      <action id="ImportModule" class="com.intellij.ide.actions.ImportModuleAction" text="Module from Existing Sources..."/>
+      <separator/>
     </group>
 
     <action id="SaveAsNewFormat" class="com.intellij.ide.actions.SaveAsDirectoryBasedFormatAction" text="Save as Directory-Based Format...">
@@ -103,6 +111,7 @@
     </group>
 
     <group id="CompilerErrorViewPopupMenu">
+      <action id="ExcludeFromValidation" class="com.intellij.compiler.options.ExcludeFromValidationAction"/>
     </group>
 
     <!-- Tools -->
@@ -124,6 +133,7 @@
         <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
         <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"
                 text="Dump All Comments In Project"/>
+        <action id="DumpScreenConfiguration" text="Dump Screen Configuration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
       </group>
 
       <separator/>
@@ -336,6 +346,8 @@
       <reference ref="EditSource"/>
       <reference ref="ViewSource"/>
       <separator/>
+      <action id="Testing.SelectInTree" class="com.intellij.execution.testframework.actions.SelectInTreeAction"
+              text="Select in Tree" description="Navigate from tests statistics to tests tree"/>
     </group>
 
     <!--  TODO: fix
@@ -363,8 +375,6 @@
     </group>
 
     <group id="WelcomeScreen.Documentation.IDEA">
-      <action id="WelcomeScreen.JetBrainsTV.IDEA" class="com.intellij.openapi.wm.impl.welcomeScreen.IdeaJetBrainsTvAction"
-              icon="AllIcons.General.JetbrainsTvIdea"/>
       <action id="WelcomeScreen.DevelopPlugins" class="com.intellij.openapi.wm.impl.welcomeScreen.DevelopPluginsAction"
               icon="AllIcons.General.PluginManager"/>
 

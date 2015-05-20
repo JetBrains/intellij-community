@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,9 +197,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
       fileset(dir: "$home/lib", includesfile: "${home}/lib/required_for_dist.txt")
 
-      fileset(dir: "$home/lib/src") {
-        include(name: "trove4j_changes.txt")
-        include(name: "trove4j_src.jar")
+      dir("src") {
+        fileset(dir: "$home/lib/src") {
+          include(name: "trove4j_src.jar")
+        }
       }
       fileset(dir: "$home/xml/relaxng/lib", includes: "*.jar")
 
@@ -251,6 +252,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   printUnusedModules(info.usedModules)
 
   //reorder(targetDirectory)
+  return info
 }
 
 public def layoutCommunityPlugins(String home) {
@@ -262,7 +264,7 @@ public def layoutCommunityPlugins(String home) {
   }
 
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
+    def simplePlugins = ["copyright", "java-i18n", "hg4idea", "github"] //, "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it
@@ -301,8 +303,14 @@ public def layoutCommunityPlugins(String home) {
       jar("maven2-server-impl.jar") {
         module("maven2-server-impl")
       }
-      jar("maven3-server-impl.jar") {
-        module("maven3-server-impl")
+      jar("maven3-server-common.jar") {
+        module("maven3-server-common")
+      }
+      jar("maven30-server-impl.jar") {
+        module("maven30-server-impl")
+      }
+      jar("maven32-server-impl.jar") {
+        module("maven32-server-impl")
       }
 
       jar("artifact-resolver-m2.jar") {
@@ -323,15 +331,19 @@ public def layoutCommunityPlugins(String home) {
         }
       }
 
+      dir("maven3-server-lib") {
+        fileset(dir: "$home/plugins/maven/maven3-server-common/lib") {include(name: "*.jar")}
+      }
       dir("maven3") {
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib") {include(name: "*.jar")}
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "*.jar")}
-        fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/boot")
+        fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3")
       }
 
-      dir("maven2") {
+      dir("maven2-server-lib") {
         fileset(dir: "$home/lib/") { include(name: "jaxb*.jar")}
-        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
+        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib") {include(name: "*.jar")}
+      }
+      dir("maven2") {
+        fileset(dir: "$home/plugins/maven/maven2-server-impl/lib/maven2")
       }
 
       fileset(dir: "$home/plugins/maven/lib") {exclude(name: "plexus-utils-*") }
@@ -465,10 +477,11 @@ public def layoutCommunityPlugins(String home) {
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoot method
         jar("groovy-jps-plugin.jar") {
           module("groovy-jps-plugin")
-          module("groovy-rt-constants")
         }
         jar("groovy_rt.jar") {
           module("groovy_rt")
+        }
+        jar("groovy-rt-constants.jar") {
           module("groovy-rt-constants")
         }
         dir("standardDsls") {
@@ -696,6 +709,9 @@ def layoutAndroid(String androidHome) {
       jar("sdklib.jar") {
         module("sdklib")
       }
+      jar("sdk-common.jar") {
+        module("sdk-common")
+      }
       jar("layoutlib-api.jar") {
         module("layoutlib-api")
       }
@@ -710,7 +726,6 @@ def layoutAndroid(String androidHome) {
         module("lint-api")
         module("lint-checks")
         module("ninepatch")
-        module("sdk-common")
         module("perflib")
       }
       jar("androidAnnotations.jar") {
@@ -762,19 +777,22 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
       jar("jps-plugin-system.jar") {
         module("jps-plugin-system")
       }
+      //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
       jar("groovy-jps-plugin.jar") {
         module("groovy-jps-plugin")
-        module("groovy-rt-constants")
       }
       jar("groovy_rt.jar") {
         module("groovy_rt")
+      }
+      jar("groovy-rt-constants.jar") {
+        module("groovy-rt-constants")
       }
       jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
 
 
       jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
       jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
-      fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
+      fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
 
       jar("eclipse-jps-plugin.jar") {
         module("common-eclipse-util")
@@ -839,8 +857,9 @@ def layout_core(String home, String target) {
       include(name: "asm.jar")
       include(name: "asm-commons.jar")
       include(name: "cli-parser-1.1.jar")
-      include(name: "snappy-in-java-0.3.jar")
+      include(name: "snappy-in-java-0.3.1.jar")
       include(name: "jayatana-1.2.4.jar")
+      include(name: "imgscalr-lib-4.2.jar")
     }
   }
 }

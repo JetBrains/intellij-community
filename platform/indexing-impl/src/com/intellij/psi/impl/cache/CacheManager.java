@@ -18,6 +18,7 @@ package com.intellij.psi.impl.cache;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
@@ -37,6 +38,9 @@ public interface CacheManager {
 
   @NotNull
   PsiFile[] getFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
+
+  @NotNull
+  VirtualFile[] getVirtualFilesWithWord(@NotNull String word, short occurenceMask, @NotNull GlobalSearchScope scope, final boolean caseSensitively);
 
   boolean processFilesWithWord(@NotNull Processor<PsiFile> processor,
                                @NotNull String word,

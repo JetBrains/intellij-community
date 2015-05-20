@@ -70,12 +70,18 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
 
   @Override
   protected void selectElement(Object element, String selectedText) {
-    final int index = ((Integer)element).intValue();
-    final int row = index / myComponent.getColumnCount();
-    final int col = index % myComponent.getColumnCount();
-    myComponent.getSelectionModel().setSelectionInterval(row, row);
-    myComponent.getColumnModel().getSelectionModel().setSelectionInterval(col, col);
-    TableUtil.scrollSelectionToVisible(myComponent);
+    if (element instanceof Integer) {
+      final int index = ((Integer)element).intValue();
+      final int row = index / myComponent.getColumnCount();
+      final int col = index % myComponent.getColumnCount();
+      myComponent.getSelectionModel().setSelectionInterval(row, row);
+      myComponent.getColumnModel().getSelectionModel().setSelectionInterval(col, col);
+      TableUtil.scrollSelectionToVisible(myComponent);
+    }
+    else {
+      myComponent.getSelectionModel().clearSelection();
+      myComponent.getColumnModel().getSelectionModel().clearSelection();
+    }
   }
 
   @Override

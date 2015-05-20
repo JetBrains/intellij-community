@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,17 +40,16 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder {
-  private static final Insets ICON_INSETS = new Insets(2, 2, 2, 2);
 
   private static final Icon ourEmptyIcon = EmptyIcon.ICON_18;
 
-  private Dimension myMinimumButtonSize;
+  private JBDimension myMinimumButtonSize;
   private PropertyChangeListener myActionButtonSynchronizer;
   private Icon myDisabledIcon;
   private Icon myIcon;
   protected final Presentation myPresentation;
   protected final AnAction myAction;
-  private final String myPlace;
+  protected final String myPlace;
   private ActionButtonLook myLook = ActionButtonLook.IDEA_LOOK;
   private boolean myMouseDown;
   private boolean myRollover;
@@ -57,12 +58,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private boolean myNoIconsInPopup = false;
   private Insets myInsets;
 
-  public ActionButton(
-    final AnAction action,
-    final Presentation presentation,
-    final String place,
-    @NotNull final Dimension minimumSize
-    ) {
+  public ActionButton(AnAction action,
+                      Presentation presentation,
+                      String place,
+                      @NotNull Dimension minimumSize) {
     setMinimumButtonSize(minimumSize);
     setIconInsets(null);
     myRollover = false;
@@ -72,7 +71,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     myPlace = place;
     setFocusable(false);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-    myMinimumButtonSize = minimumSize;
 
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
   }
@@ -82,7 +80,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void setMinimumButtonSize(@NotNull Dimension size) {
-    myMinimumButtonSize = size;
+    myMinimumButtonSize = JBDimension.create(size);
   }
 
   public void paintChildren(Graphics g) {}
@@ -111,13 +109,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private void performAction(MouseEvent e) {
-    AnActionEvent event = new AnActionEvent(
-      e, getDataContext(),
-      myPlace,
-      myPresentation,
-      ActionManager.getInstance(),
-      e.getModifiers()
-    );
+    AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext());
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
       return;
     }
@@ -197,23 +189,21 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   public Dimension getPreferredSize() {
     Icon icon = getIcon();
-    if (
-      icon.getIconWidth() < myMinimumButtonSize.width &&
-      icon.getIconHeight() < myMinimumButtonSize.height
-    ) {
+    if (icon.getIconWidth() < myMinimumButtonSize.width &&
+        icon.getIconHeight() < myMinimumButtonSize.height) {
       return myMinimumButtonSize;
     }
     else {
       return new Dimension(
-        icon.getIconWidth() + myInsets.left + myInsets.right,
-        icon.getIconHeight() + myInsets.top + myInsets.bottom
+        Math.max(myMinimumButtonSize.width, icon.getIconWidth() + myInsets.left + myInsets.right),
+        Math.max(myMinimumButtonSize.height, icon.getIconHeight() + myInsets.top + myInsets.bottom)
       );
     }
   }
 
 
   public void setIconInsets(@Nullable Insets insets) {
-    myInsets = insets != null ? insets : new Insets(0,0,0,0);
+    myInsets = insets != null ? JBUI.insets(insets) : new Insets(0,0,0,0);
   }
 
   public Dimension getMinimumSize() {
@@ -350,6 +340,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       String propertyName = e.getPropertyName();
       if (Presentation.PROP_TEXT.equals(propertyName)) {
         updateToolTipText();
+        revalidate(); // recalc preferred size & repaint instantly
       }
       else if (Presentation.PROP_ENABLED.equals(propertyName)) {
         updateIcon();

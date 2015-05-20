@@ -86,4 +86,12 @@ public final class DocumentUtil {
   public static boolean isValidOffset(int offset, @NotNull Document document) {
     return offset >= 0 && offset <= document.getTextLength();
   }
+
+  public static int getLineStartOffset(int offset, @NotNull Document document) {
+    if (offset < 0 || offset > document.getTextLength()) {
+      return offset;
+    }
+    int lineNumber = document.getLineNumber(offset);
+    return document.getLineStartOffset(lineNumber);
+  }
 }

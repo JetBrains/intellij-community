@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,25 +32,21 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader;
 import org.jetbrains.idea.eclipse.IdeaXml;
-import org.jetbrains.idea.eclipse.config.CachedXmlDocumentSet;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSame;
@@ -70,17 +66,6 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
   public static final String INHERIT_JDK = "inheritJdk";
 
-  private IdeaSpecificSettings() {
-  }
-
-  public static void readIDEASpecific(ModifiableRootModel model, CachedXmlDocumentSet documentSet, String eml) throws InvalidDataException, IOException, JDOMException {
-    new IdeaSpecificSettings().readIDEASpecific(documentSet.read(eml, false).getRootElement(), model, null, new HashMap<String, String>());
-  }
-
-  @Override
-  protected void readLibraryLevels(Element root, Map<String, String> levels) {
-  }
-
   @Override
   protected ContentEntry[] getEntries(ModifiableRootModel model) {
     return model.getContentEntries();
@@ -93,23 +78,22 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   @Override
   protected void setupLibraryRoots(Element root, ModifiableRootModel model) {
-    for (Object o : root.getChildren("lib")) {
-      Element libElement = (Element)o;
+    for (Element libElement : root.getChildren("lib")) {
       final String libName = libElement.getAttributeValue("name");
       Library libraryByName = model.getModuleLibraryTable().getLibraryByName(libName);
       if (libraryByName != null) {
         appendLibraryScope(model, libElement, libraryByName);
         final Library.ModifiableModel modifiableModel = libraryByName.getModifiableModel();
         replaceCollapsedByEclipseSourceRoots(libElement, modifiableModel);
-        for (Object r : libElement.getChildren(JAVADOCROOT_ATTR)) {
-          final String url = ((Element)r).getAttributeValue("url");
-          modifiableModel.addRoot(url, JavadocOrderRootType.getInstance());
+        for (Element r : libElement.getChildren(JAVADOCROOT_ATTR)) {
+          modifiableModel.addRoot(r.getAttributeValue("url"), JavadocOrderRootType.getInstance());
         }
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.SOURCES, RELATIVE_MODULE_SRC);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, OrderRootType.CLASSES, RELATIVE_MODULE_CLS);
         replaceModuleRelatedRoots(model.getProject(), modifiableModel, libElement, JavadocOrderRootType.getInstance(), RELATIVE_MODULE_JAVADOC);
         modifiableModel.commit();
-      } else {
+      }
+      else {
         final Library library = EclipseClasspathReader.findLibraryByName(model.getProject(), libName);
         if (library != null) {
           appendLibraryScope(model, libElement, library);
@@ -123,7 +107,8 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     final String inheritJdk = root.getAttributeValue(INHERIT_JDK);
     if (inheritJdk != null && Boolean.parseBoolean(inheritJdk)) {
       model.inheritSdk();
-    } else {
+    }
+    else {
       final String jdkName = root.getAttributeValue("jdk");
       if (jdkName != null) {
         final Sdk jdkByName = ProjectJdkTable.getInstance().findJdk(jdkName);
@@ -151,7 +136,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   }
 
   @Override
-  protected void readLanguageLevel(Element root, ModifiableRootModel model) throws InvalidDataException {
+  protected void readLanguageLevel(Element root, ModifiableRootModel model) {
     model.getModuleExtension(LanguageLevelModuleExtensionImpl.class).readExternal(root);
   }
 
@@ -162,9 +147,9 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   @Override
   protected void overrideModulesScopes(Element root, ModifiableRootModel model) {
-    for (Object o : root.getChildren("module")) {
-      final String moduleName = ((Element)o).getAttributeValue("name");
-      final String scope = ((Element)o).getAttributeValue("scope");
+    for (Element o : root.getChildren("module")) {
+      String moduleName = o.getAttributeValue("name");
+      String scope = o.getAttributeValue("scope");
       if (scope != null) {
         for (OrderEntry entry : model.getOrderEntries()) {
           if (entry instanceof ModuleOrderEntry && Comparing.strEqual(((ModuleOrderEntry)entry).getModuleName(), moduleName)) {
@@ -192,9 +177,9 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     String[] srcUrlsFromClasspath = modifiableModel.getUrls(OrderRootType.SOURCES);
     LOG.assertTrue(srcUrlsFromClasspath.length <= 1);
     final String eclipseUrl = srcUrlsFromClasspath.length > 0 ? srcUrlsFromClasspath[0] : null;
-    for (Object r : libElement.getChildren(SRCROOT_ATTR)) {
-      final String url = ((Element)r).getAttributeValue("url");
-      final String bindAttr = ((Element)r).getAttributeValue(SRCROOT_BIND_ATTR);
+    for (Element r : libElement.getChildren(SRCROOT_ATTR)) {
+      final String url = r.getAttributeValue("url");
+      final String bindAttr = r.getAttributeValue(SRCROOT_BIND_ATTR);
       boolean notBind = bindAttr != null && !Boolean.parseBoolean(bindAttr);
       if (notBind) {
         modifiableModel.addRoot(url, OrderRootType.SOURCES);
@@ -221,8 +206,8 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     }
 
     final boolean[] testFolders = new boolean[sourceFoldersUrls.length];
-    for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
-      final String url = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
+    for (Element o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
+      final String url = o.getAttributeValue(IdeaXml.URL_ATTR);
       for (int i = 0; i < sourceFoldersUrls.length; i++) {
         if (Comparing.strEqual(sourceFoldersUrls[i], url)) {
           testFolders[i] = true;
@@ -235,8 +220,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       entry.addSourceFolder(sourceFoldersUrls[i], testFolders[i]);
     }
     
-    for (Object o : root.getChildren(IdeaXml.PACKAGE_PREFIX_TAG)) {
-      Element ppElement = (Element)o;
+    for (Element ppElement : root.getChildren(IdeaXml.PACKAGE_PREFIX_TAG)) {
       final String prefix = ppElement.getAttributeValue(IdeaXml.PACKAGE_PREFIX_VALUE_ATTR);
       final String url = ppElement.getAttributeValue(IdeaXml.URL_ATTR);
       for (SourceFolder folder : entry.getSourceFolders()) {
@@ -248,20 +232,18 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     }
     
     final String url = entry.getUrl();
-    for (Object o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
-      final String excludeUrl = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
+    for (Element o : root.getChildren(IdeaXml.EXCLUDE_FOLDER_TAG)) {
+      final String excludeUrl = o.getAttributeValue(IdeaXml.URL_ATTR);
       if (FileUtil.isAncestor(new File(url), new File(excludeUrl), false)) { //check if it is excluded manually
         entry.addExcludeFolder(excludeUrl);
       }
     }
   }
 
-  public static boolean writeIDEASpecificClasspath(final Element root, ModuleRootModel model) throws WriteExternalException {
-
+  public static boolean writeIdeaSpecificClasspath(@NotNull Element root, @NotNull ModuleRootModel model) {
     boolean isModified = false;
 
-    final CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
-
+    CompilerModuleExtension compilerModuleExtension = model.getModuleExtension(CompilerModuleExtension.class);
     if (compilerModuleExtension.getCompilerOutputUrlForTests() != null) {
       final Element pathElement = new Element(IdeaXml.OUTPUT_TEST_TAG);
       pathElement.setAttribute(IdeaXml.URL_ATTR, compilerModuleExtension.getCompilerOutputUrlForTests());
@@ -277,15 +259,14 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       isModified = true;
     }
 
-    final LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
-    final LanguageLevel languageLevel = languageLevelModuleExtension.getLanguageLevel();
-    if (languageLevel != null) {
+    LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
+    if (languageLevelModuleExtension.getLanguageLevel() != null) {
       languageLevelModuleExtension.writeExternal(root);
       isModified = true;
     }
 
     for (ContentEntry entry : model.getContentEntries()) {
-      final Element contentEntryElement = new Element(IdeaXml.CONTENT_ENTRY_TAG);
+      Element contentEntryElement = new Element(IdeaXml.CONTENT_ENTRY_TAG);
       contentEntryElement.setAttribute(IdeaXml.URL_ATTR, entry.getUrl());
       root.addContent(contentEntryElement);
       for (SourceFolder sourceFolder : entry.getSourceFolders()) {
@@ -295,7 +276,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
           element.setAttribute(IdeaXml.URL_ATTR, sourceFolder.getUrl());
           isModified = true;
         }
-        final String packagePrefix = sourceFolder.getPackagePrefix();
+        String packagePrefix = sourceFolder.getPackagePrefix();
         if (!StringUtil.isEmptyOrSpaces(packagePrefix)) {
           Element element = new Element(IdeaXml.PACKAGE_PREFIX_TAG);
           contentEntryElement.addContent(element);
@@ -305,20 +286,19 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
         }
       }
 
-      final VirtualFile entryFile = entry.getFile();
+      VirtualFile entryFile = entry.getFile();
       for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-        final String exludeFolderUrl = excludeFolder.getUrl();
-        final VirtualFile excludeFile = excludeFolder.getFile();
+        VirtualFile excludeFile = excludeFolder.getFile();
         if (entryFile == null || excludeFile == null || VfsUtilCore.isAncestor(entryFile, excludeFile, false)) {
           Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
           contentEntryElement.addContent(element);
-          element.setAttribute(IdeaXml.URL_ATTR, exludeFolderUrl);
+          element.setAttribute(IdeaXml.URL_ATTR, excludeFolder.getUrl());
           isModified = true;
         }
       }
     }
 
-    final Map<String, String> libLevels = new LinkedHashMap<String, String>();
+    Map<String, String> libLevels = new LinkedHashMap<String, String>();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         final DependencyScope scope = ((ModuleOrderEntry)entry).getScope();
@@ -335,7 +315,8 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
         if (EclipseModuleManagerImpl.getInstance(entry.getOwnerModule()).getInvalidJdk() != null || jdk != null) {
           if (entry instanceof InheritedJdkOrderEntry) {
             root.setAttribute(INHERIT_JDK, "true");
-          } else {
+          }
+          else {
             root.setAttribute("jdk", ((JdkOrderEntry)entry).getJdkName());
             if (jdk != null) {
               root.setAttribute("jdk_type", jdk.getSdkType().getName());
@@ -346,10 +327,27 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       }
       if (!(entry instanceof LibraryOrderEntry)) continue;
 
-      final Element element = new Element("lib");
-      element.setAttribute("name", entry.getPresentableName());
-      final LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
-      final DependencyScope scope = libraryEntry.getScope();
+      Element element = new Element("lib");
+      LibraryOrderEntry libraryEntry = (LibraryOrderEntry)entry;
+
+      String libraryName = ((LibraryOrderEntry)entry).getLibraryName();
+      if (libraryName == null) {
+        final String[] urls = libraryEntry.getRootUrls(OrderRootType.CLASSES);
+        if (urls.length > 0) {
+          VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(urls[0]);
+          final VirtualFile fileForJar = JarFileSystem.getInstance().getVirtualFileForJar(file);
+          if (fileForJar != null) {
+            file = fileForJar;
+          }
+          libraryName = file != null ? file.getName() : null;
+        }
+        if (libraryName == null) {
+          libraryName = libraryEntry.getPresentableName();
+        }
+      }
+
+      element.setAttribute("name", libraryName);
+      DependencyScope scope = libraryEntry.getScope();
       element.setAttribute("scope", scope.name());
       if (libraryEntry.isModuleLevel()) {
         final String[] urls = libraryEntry.getRootUrls(OrderRootType.SOURCES);
@@ -371,7 +369,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
         }
 
         final String[] javadocUrls = libraryEntry.getRootUrls(JavadocOrderRootType.getInstance());
-        for (int i = 1; i < javadocUrls.length;  i++) {
+        for (int i = 1; i < javadocUrls.length; i++) {
           Element javadocElement = new Element(JAVADOCROOT_ATTR);
           javadocElement.setAttribute("url", javadocUrls[i]);
           element.addContent(javadocElement);
@@ -394,8 +392,9 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
           isModified = true;
           continue;
         }
-      } else {
-        final String libraryLevel = libraryEntry.getLibraryLevel();
+      }
+      else {
+        String libraryLevel = libraryEntry.getLibraryLevel();
         if (!LibraryTablesRegistrar.APPLICATION_LEVEL.equals(libraryLevel)) {
           libLevels.put(libraryEntry.getLibraryName(), libraryLevel);
         }
@@ -407,9 +406,9 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     }
 
     if (!libLevels.isEmpty()) {
-      final Element libLevelsElement = new Element("levels");
+      Element libLevelsElement = new Element("levels");
       for (String libName : libLevels.keySet()) {
-        final Element libElement = new Element("level");
+        Element libElement = new Element("level");
         libElement.setAttribute("name", libName);
         libElement.setAttribute("value", libLevels.get(libName));
         libLevelsElement.addContent(libElement);
@@ -426,8 +425,8 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
                                                final Library.ModifiableModel modifiableModel, final Element libElement,
                                                final OrderRootType orderRootType, final String relativeModuleName) {
     final List<String> urls = new ArrayList<String>(Arrays.asList(modifiableModel.getUrls(orderRootType)));
-    for (Object r : libElement.getChildren(relativeModuleName)) {
-      final String root = PathMacroManager.getInstance(project).expandPath(((Element)r).getAttributeValue(PROJECT_RELATED));
+    for (Element r : libElement.getChildren(relativeModuleName)) {
+      final String root = PathMacroManager.getInstance(project).expandPath(r.getAttributeValue(PROJECT_RELATED));
       for (Iterator<String> iterator = urls.iterator(); iterator.hasNext();) {
         final String url = iterator.next();
         if (areUrlsPointTheSame(root, url)) {
@@ -442,18 +441,23 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   public static boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootName, ModuleRootModel model) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(classesUrl);
+    if (file == null) {
+      return false;
+    }
+
     final Project project = model.getModule().getProject();
-    if (file != null) {
-      if (file.getFileSystem() instanceof JarFileSystem) {
-        file = JarFileSystem.getInstance().getVirtualFileForJar(file);
-        assert file != null;
-      }
-      final Module module = ModuleUtilCore.findModuleForFile(file, project);
-      if (module != null) {
-        return appendRelatedToModule(element, classesUrl, rootName, file, module);
-      } else if (ProjectRootManager.getInstance(project).getFileIndex().isExcluded(file)) {
-        for (Module aModule : ModuleManager.getInstance(project).getModules()) {
-          if (appendRelatedToModule(element, classesUrl, rootName, file, aModule)) return true;
+    if (file.getFileSystem() instanceof JarFileSystem) {
+      file = JarFileSystem.getInstance().getVirtualFileForJar(file);
+      assert file != null;
+    }
+    final Module module = ModuleUtilCore.findModuleForFile(file, project);
+    if (module != null) {
+      return appendRelatedToModule(element, classesUrl, rootName, file, module);
+    }
+    else if (ProjectRootManager.getInstance(project).getFileIndex().isExcluded(file)) {
+      for (Module aModule : ModuleManager.getInstance(project).getModules()) {
+        if (appendRelatedToModule(element, classesUrl, rootName, file, aModule)) {
+          return true;
         }
       }
     }
@@ -461,8 +465,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   }
 
   private static boolean appendRelatedToModule(Element element, String classesUrl, String rootName, VirtualFile file, Module module) {
-    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-    for (VirtualFile contentRoot : contentRoots) {
+    for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
       if (VfsUtilCore.isAncestor(contentRoot, file, false)) {
         final Element clsElement = new Element(rootName);
         clsElement.setAttribute(PROJECT_RELATED, PathMacroManager.getInstance(module.getProject()).collapsePath(classesUrl));

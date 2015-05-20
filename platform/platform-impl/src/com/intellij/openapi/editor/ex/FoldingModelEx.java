@@ -36,6 +36,9 @@ public interface FoldingModelEx extends FoldingModel {
 
   boolean intersectsRegion(int startOffset, int endOffset);
 
+  /**
+   * @deprecated Use an equivalent method {@link FoldingModel#getCollapsedRegionAtOffset(int)} instead. To be removed in IDEA 16.
+   */
   FoldRegion fetchOutermost(int offset);
 
   /**

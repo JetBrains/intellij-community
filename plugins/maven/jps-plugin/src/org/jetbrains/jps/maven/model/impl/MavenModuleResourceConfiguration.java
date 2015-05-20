@@ -41,6 +41,10 @@ public class MavenModuleResourceConfiguration {
   @Tag("directory")
   public String directory;
 
+  @Nullable
+  @Tag("manifest")
+  public String manifest;
+
   @NotNull
   @Tag("delimiters-pattern")
   public String delimitersPattern;
@@ -68,6 +72,9 @@ public class MavenModuleResourceConfiguration {
 
   @OptionTag
   public String outputDirectory = null;
+
+  @OptionTag
+  public String testOutputDirectory = null;
 
   @Tag("resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
@@ -102,12 +109,14 @@ public class MavenModuleResourceConfiguration {
     int result = id.hashCode();
     result = 31 * result + (parentId != null ? parentId.hashCode() : 0);
     result = 31 * result + directory.hashCode();
+    result = 31 * result + (manifest != null ? manifest.hashCode() : 0);
     result = 31 * result + delimitersPattern.hashCode();
     result = 31 * result + modelMap.hashCode();
     result = 31 * result + properties.hashCode();
     result = 31 * result + filteringExclusions.hashCode();
     result = 31 * result + (escapeString != null ? escapeString.hashCode() : 0);
     result = 31 * result + (outputDirectory != null ? outputDirectory.hashCode() : 0);
+    result = 31 * result + (testOutputDirectory != null ? testOutputDirectory.hashCode() : 0);
     result = 31 * result + (escapeWindowsPaths ? 1 : 0);
     result = 31 * result + (overwrite ? 1 : 0);
     return result;

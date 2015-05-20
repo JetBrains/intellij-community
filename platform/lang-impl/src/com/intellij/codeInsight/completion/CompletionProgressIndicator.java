@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
@@ -41,6 +41,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -78,6 +79,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -131,6 +133,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ContainerUtil.newConcurrentMap(ContainerUtil.<LookupElement>identityStrategy());
   private final PropertyChangeListener myLookupManagerListener;
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<Runnable>();
+  private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
 
   public CompletionProgressIndicator(final Editor editor,
@@ -224,7 +227,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!initContext.getOffsetMap().wasModified(CompletionInitializationContext.IDENTIFIER_END_OFFSET)) {
       try {
         final int selectionEndOffset = initContext.getSelectionEndOffset();
-        final PsiReference reference = TargetElementUtilBase.findReference(myEditor, selectionEndOffset);
+        final PsiReference reference = TargetElementUtil.findReference(myEditor, selectionEndOffset);
         if (reference != null) {
           initContext.setReplacementOffset(findReplacementOffset(selectionEndOffset, reference));
         }
@@ -337,7 +340,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       if (Registry.is("dump.threads.on.empty.lookup") && myLookup.isCalculating() && myLookup.getItems().isEmpty()) {
-        PerformanceWatcher.getInstance().dumpThreads(true);
+        PerformanceWatcher.getInstance().dumpThreads("emptyLookup/", true);
       }
 
       if (!myLookup.showLookup()) {
@@ -374,7 +377,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 
-  public synchronized void addItem(final CompletionResult item) {
+  void addItem(final CompletionResult item) {
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
 
@@ -383,14 +386,28 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     }
 
-    LOG.assertTrue(myParameters.getPosition().isValid());
-
     LookupElement lookupElement = item.getLookupElement();
     if (!myHasPsiElements && lookupElement.getPsiElement() != null) {
       myHasPsiElements = true;
     }
+
+    boolean allowMiddleMatches = myCount > CompletionLookupArranger.MAX_PREFERRED_COUNT * 2;
+    if (allowMiddleMatches) {
+      addDelayedMiddleMatches();
+    }
+
     myItemSorters.put(lookupElement, (CompletionSorterImpl)item.getSorter());
-    if (!myLookup.addItem(lookupElement, item.getPrefixMatcher())) {
+    if (item.isStartMatch() || allowMiddleMatches) {
+      addItemToLookup(item);
+    } else {
+      synchronized (myDelayedMiddleMatches) {
+        myDelayedMiddleMatches.add(item);
+      }
+    }
+  }
+
+  private void addItemToLookup(CompletionResult item) {
+    if (!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher())) {
       return;
     }
     myCount++;
@@ -404,6 +421,19 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }, 300);
     }
     myQueue.queue(myUpdate);
+  }
+
+  void addDelayedMiddleMatches() {
+    ArrayList<CompletionResult> delayed;
+    synchronized (myDelayedMiddleMatches) {
+      if (myDelayedMiddleMatches.isEmpty()) return;
+      delayed = ContainerUtil.newArrayList(myDelayedMiddleMatches);
+      myDelayedMiddleMatches.clear();
+    }
+    for (CompletionResult item : delayed) {
+      ProgressManager.checkCanceled();
+      addItemToLookup(item);
+    }
   }
 
   public void closeAndFinish(boolean hideLookup) {
@@ -598,7 +628,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @Override
   public boolean isAutopopupCompletion() {
-    return myHandler.autopopup;
+    return myParameters.getInvocationCount() == 0;
   }
 
   @NotNull
@@ -683,6 +713,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   protected void handleEmptyLookup(final boolean awaitSecondInvocation) {
+    if (isAutopopupCompletion() && ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     LOG.assertTrue(!isAutopopupCompletion());
 
     if (ApplicationManager.getApplication().isUnitTestMode() || !myHandler.invokedExplicitly) {
@@ -721,6 +755,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
     if (!Registry.is("ide.completion.autopopup.choose.by.enter")) {
       return false;
+    }
+
+    if (Registry.is("ide.completion.lookup.element.preselect.depends.on.context")) {
+      for (CompletionPreselectionBehaviourProvider provider : Extensions.getExtensions(CompletionPreselectionBehaviourProvider.EP_NAME)) {
+        if (!provider.shouldPreselectFirstSuggestion(parameters)) {
+          return false;
+        }
+      }
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {

@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
-import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -88,7 +87,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
   }
 
   @Override
-  protected void check(GrControlFlowOwner owner, ProblemsHolder problemsHolder) {
+  protected void check(@NotNull GrControlFlowOwner owner, @NotNull ProblemsHolder problemsHolder) {
     Instruction[] flow = owner.getControlFlow();
     ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow, true);
     for (ReadWriteVariableInstruction read : reads) {
@@ -100,7 +99,6 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
             !(property instanceof PsiParameter) &&
             !(property instanceof PsiField) &&
             PsiTreeUtil.isAncestor(owner, property, false) &&
-            !GppTypeConverter.hasTypedContext(element) &&
             !(myIgnoreBooleanExpressions && isBooleanCheck(element))
           ) {
           problemsHolder.registerProblem(element, GroovyInspectionBundle.message("unassigned.access.tooltip", name));

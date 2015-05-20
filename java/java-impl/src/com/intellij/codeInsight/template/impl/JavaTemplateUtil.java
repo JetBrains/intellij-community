@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,27 +68,33 @@ public class JavaTemplateUtil {
           PsiElement element = file.findElementAt(segmentStart);
           PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
           if (method != null) {
-            if (((PsiTypeParameter)aClass).getOwner() instanceof PsiMethod || method.hasModifierProperty(PsiModifier.STATIC)) {
-              PsiTypeParameterList paramList = method.getTypeParameterList();
-              PsiTypeParameter[] params = paramList != null ? paramList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
-              for (PsiTypeParameter param : params) {
-                if (param.getName().equals(aClass.getName())) return;
-              }
-              try {
-                if (paramList == null) {
-                  final PsiTypeParameterList newList =
-                    JVMElementFactories.getFactory(method.getLanguage(), project).createTypeParameterList();
-                  paramList = (PsiTypeParameterList)method.addAfter(newList, method.getModifierList());
-                }
-                paramList.add(aClass.copy());
-                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
+            if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+              PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
+              if (PsiTreeUtil.isAncestor(owner, method, false)) {
+                continue;
               }
             }
+
+            PsiTypeParameterList paramList = method.getTypeParameterList();
+            PsiTypeParameter[] params = paramList != null ? paramList.getTypeParameters() : PsiTypeParameter.EMPTY_ARRAY;
+            for (PsiTypeParameter param : params) {
+              if (param.getName().equals(aClass.getName())) return;
+            }
+            try {
+              if (paramList == null) {
+                final PsiTypeParameterList newList =
+                  JVMElementFactories.getFactory(method.getLanguage(), project).createTypeParameterList();
+                paramList = (PsiTypeParameterList)method.addAfter(newList, method.getModifierList());
+              }
+              paramList.add(aClass.copy());
+              PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+            }
+            catch (IncorrectOperationException e) {
+              LOG.error(e);
+            }
           }
-        } else if (!noImport) {
+        }
+        else if (!noImport) {
           addImportForClass(document, aClass, segmentStart, segmentEnd);
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
         }

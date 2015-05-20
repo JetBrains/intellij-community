@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -248,7 +249,7 @@ public class IntentionManagerImpl extends IntentionManager {
   @Override
   @NotNull
   public IntentionAction[] getIntentionActions() {
-    return myActions.toArray(new IntentionAction[myActions.size()]);
+    return ArrayUtil.stripTrailingNulls(myActions.toArray(new IntentionAction[myActions.size()]));
   }
 
   @NotNull

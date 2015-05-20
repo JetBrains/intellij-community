@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,18 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.concurrency.JobLauncher;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.testFramework.PlatformLangTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.vcs.DirectoryData;
-import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -43,42 +34,36 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
 
-public class VfsUtilTest extends PlatformLangTestCase {
+public class VfsUtilTest extends PlatformTestCase {
   @Override
-  protected void runBareRunnable(Runnable runnable) throws Throwable {
-    runnable.run();
+  protected boolean isRunInEdt() {
+    return false;
+  }
+
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 
   @Override
   protected void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    invokeAndWaitIfNeeded(new ThrowableRunnable<Exception>() {
       @Override
-      public void run() {
-        try {
-          VfsUtilTest.super.setUp();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+      public void run() throws Exception {
+        VfsUtilTest.super.setUp();
       }
     });
   }
 
   @Override
   protected void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    invokeAndWaitIfNeeded(new ThrowableRunnable<Exception>() {
       @Override
-      public void run() {
-        try {
-          VfsUtilTest.super.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+      public void run() throws Exception {
+        VfsUtilTest.super.tearDown();
       }
     });
   }
@@ -169,90 +154,6 @@ public class VfsUtilTest extends PlatformLangTestCase {
     }
   }
 
-  @Bombed(user = "Roman Shevchenko", year = 2014, month = Calendar.JANUARY, day = 21)
-  public void testAsyncRefresh() throws Throwable {
-    final File tempDir = createTempDirectory();
-
-    final Throwable[] ex = {null};
-    boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[8]),
-      ProgressManager.getInstance().getProgressIndicator(), true, new Processor<Object>() {
-      @Override
-      public boolean process(Object o) {
-        try {
-          doAsyncRefreshTest(tempDir);
-        }
-        catch (Throwable t) {
-          ex[0] = t;
-        }
-        return true;
-      }
-    });
-
-    if (ex[0] != null) throw ex[0];
-    if (!success) fail("!success");
-  }
-
-  private static void doAsyncRefreshTest(File temp) throws Exception {
-    final int N = 1000;
-    final byte[] data = "xxx".getBytes(CharsetToolkit.UTF8_CHARSET);
-
-    LocalFileSystem fs = LocalFileSystem.getInstance();
-    VirtualFile vTemp = fs.findFileByIoFile(temp);
-    assertNotNull(vTemp);
-    VirtualFile[] children = new VirtualFile[N];
-
-    long[] timestamp = new long[N];
-    for (int i = 0; i < N; i++) {
-      File file = new File(temp, i + ".txt");
-      FileUtil.writeToFile(file, data);
-      VirtualFile child = fs.refreshAndFindFileByIoFile(file);
-      assertNotNull(child);
-      children[i] = child;
-      timestamp[i] = file.lastModified();
-    }
-
-    vTemp.refresh(false, true);
-
-    for (int i = 0; i < N; i++) {
-      File file = new File(temp, i + ".txt");
-      assertEquals(timestamp[i], file.lastModified());
-      VirtualFile child = fs.findFileByIoFile(file);
-      assertNotNull(child);
-      IoTestUtil.assertTimestampsEqual(timestamp[i], child.getTimeStamp());
-    }
-
-    for (int i = 0; i < N; i++) {
-      File file = new File(temp, i + ".txt");
-      FileUtil.writeToFile(file, data);
-      assertTrue(file.setLastModified(timestamp[i] - 2000));
-      long modified = file.lastModified();
-      assertTrue("File:" + file.getPath() + "; time:" + modified, timestamp[i] != modified);
-      timestamp[i] = modified;
-      IoTestUtil.assertTimestampsNotEqual(children[i].getTimeStamp(), modified);
-    }
-
-    final CountDownLatch latch = new CountDownLatch(N);
-    for (final VirtualFile child : children) {
-      child.refresh(true, true, new Runnable() {
-        @Override
-        public void run() {
-          latch.countDown();
-        }
-      });
-      TimeoutUtil.sleep(10);
-    }
-    while (latch.getCount() > 0) {
-      latch.await(100, TimeUnit.MILLISECONDS);
-      UIUtil.pump();
-    }
-
-    for (int i = 0; i < N; i++) {
-      VirtualFile child = children[i];
-      IoTestUtil.assertTimestampsEqual(timestamp[i], child.getTimeStamp());
-    }
-  }
-
   public void testFindChildWithTrailingSpace() throws IOException {
     File tempDir = createTempDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
@@ -286,15 +187,6 @@ public class VfsUtilTest extends PlatformLangTestCase {
     VirtualFile vFile2 = refreshAndFindFile(file);
     assertNotNull(vFile2);
     assertTrue(vFile2.isDirectory());
-  }
-
-  private static VirtualFile refreshAndFindFile(final File file) {
-    return UIUtil.invokeAndWaitIfNeeded(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-      }
-    });
   }
 
   public void testPresentableUrlSurvivesDeletion() throws IOException {
@@ -372,80 +264,16 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertFalse(VfsUtilCore.isEqualOrAncestor("file:///my/dir/", "file:///my/dir2"));
   }
 
-  public void testFindChildByNamePerformance() throws IOException {
-    File tempDir = createTempDirectory();
-    final VirtualFile vDir = refreshAndFindFile(tempDir);
-    assertNotNull(vDir);
-    assertTrue(vDir.isDirectory());
-
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        for (int i=0; i<10000; i++) {
-          final String name = i + ".txt";
-          vDir.createChildData(vDir, name);
-        }
-      }
-    }.execute();
-    final VirtualFile theChild = vDir.findChild("5111.txt");
-    System.out.println("Start searching...");
-    PlatformTestUtil.startPerformanceTest("find child is slow", 450, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        for (int i = 0; i < 1000000; i++) {
-          VirtualFile child = vDir.findChild("5111.txt");
-          assertEquals(theChild, child);
-        }
-      }
-    }).assertTiming();
-
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        for (VirtualFile file : vDir.getChildren()) {
-          file.delete(this);
-        }
-      }
-    }.execute().throwException();
-
-  }
-
   public void testFindRootWithDenormalizedPath() throws IOException {
     File tempJar = IoTestUtil.createTestJar();
     VirtualFile jar = refreshAndFindFile(tempJar);
     assertNotNull(jar);
 
     JarFileSystem fs = JarFileSystem.getInstance();
-    NewVirtualFile root1 = ManagingFS.getInstance().findRoot(jar.getPath()+"!/", fs);
-    NewVirtualFile root2 = ManagingFS.getInstance().findRoot(jar.getParent().getPath() + "//"+ jar.getName()+"!/", fs);
+    NewVirtualFile root1 = ManagingFS.getInstance().findRoot(jar.getPath() + "!/", fs);
+    NewVirtualFile root2 = ManagingFS.getInstance().findRoot(jar.getParent().getPath() + "//" + jar.getName() + "!/", fs);
     assertNotNull(root1);
     assertSame(root1, root2);
-  }
-
-  public void testFindRootPerformance() throws IOException {
-    File tempJar = IoTestUtil.createTestJar();
-    final VirtualFile jar = refreshAndFindFile(tempJar);
-    assertNotNull(jar);
-
-    final JarFileSystem fs = JarFileSystem.getInstance();
-    final NewVirtualFile root = ManagingFS.getInstance().findRoot(jar.getPath()+"!/", fs);
-    PlatformTestUtil.startPerformanceTest("find root is slow", 500, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        final String path = jar.getPath() + "!/";
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(500, null), null, false, new Processor<Object>() {
-          @Override
-          public boolean process(Object o) {
-            for (int i = 0; i < 1000; i++) {
-              NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
-              assertNotNull(rootJar);
-              assertSame(root, rootJar);
-            }
-            return true;
-          }
-        });
-      }
-    }).assertTiming();
   }
 
   public void testNotCanonicallyNamedChild() throws IOException {

@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.Patches;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -27,8 +26,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
@@ -183,8 +184,7 @@ public class IdeEventQueue extends EventQueue {
 
 
   private void addIdleTimeCounterRequest() {
-    Application application = ApplicationManager.getApplication();
-    if (application != null && application.isUnitTestMode()) return;
+    if (isTestMode()) return;
 
     myIdleTimeCounterAlarm.cancelAllRequests();
     myLastActiveTime = System.currentTimeMillis();
@@ -368,9 +368,9 @@ public class IdeEventQueue extends EventQueue {
       return;
     }
 
-    fixNonEnglishKeyboardLayouts(e);
-
     e = InertialMouseRouter.changeSourceIfNeeded(e);
+
+    e = fixNonEnglishKeyboardLayouts(e);
 
     e = mapEvent(e);
 
@@ -405,18 +405,94 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  private static void fixNonEnglishKeyboardLayouts(AWTEvent e) {
-    if (!Registry.is("ide.non.english.keyboard.layout.fix")) return;
+  private static int ctrlIsPressedCount = 0;
+  private static boolean leftAltIsPressed = false;
+  //private static boolean altGrIsPressed = false;
+
+  private static AWTEvent fixNonEnglishKeyboardLayouts(AWTEvent e) {
+    KeyboardSettingsExternalizable externalizable = KeyboardSettingsExternalizable.getInstance();
+    if (externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
+
     if (e instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)e;
+
+      // Try to get it from editor
+      Component sourceComponent = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+
+      if (ke.getID() == KeyEvent.KEY_PRESSED) {
+        switch (ke.getKeyCode()) {
+          case (KeyEvent.VK_CONTROL):
+            if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
+              ctrlIsPressedCount++;
+            }
+            break;
+          case (KeyEvent.VK_ALT):
+            if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
+              if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
+                leftAltIsPressed = true;
+              }
+            }
+            break;
+        }
+      } else if (ke.getID() == KeyEvent.KEY_RELEASED) {
+        switch (ke.getKeyCode()) {
+          case (KeyEvent.VK_CONTROL):
+            ctrlIsPressedCount--;
+            break;
+          case (KeyEvent.VK_ALT):
+            if (ke.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
+              leftAltIsPressed = false;
+            }
+            break;
+        }
+      }
+
+      if (!leftAltIsPressed && KeyboardSettingsExternalizable.getInstance().isUkrainianKeyboard(sourceComponent) ) {
+        if ('ґ' == ke.getKeyChar() || ke.getKeyCode() == KeyEvent.VK_U) {
+          ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), 0,
+                            KeyEvent.VK_UNDEFINED, 'ґ', ke.getKeyLocation());
+          ke.setKeyCode(KeyEvent.VK_U);
+          ke.setKeyChar('ґ');
+          return ke;
+        }
+      }
+
       Integer keyCodeFromChar = CharToVKeyMap.get(ke.getKeyChar());
       if (keyCodeFromChar != null) {
         if (keyCodeFromChar != ke.getKeyCode()) {
           // non-english layout
           ke.setKeyCode(keyCodeFromChar);
         }
+
+        //for (int i = 0; sourceComponent == null && i < WindowManagerEx.getInstanceEx().getAllProjectFrames().length; i++) {
+        //  sourceComponent = WindowManagerEx.getInstanceEx().getAllProjectFrames()[i].getComponent();
+        //}
+
+        if (sourceComponent != null) {
+          if (KeyboardSettingsExternalizable.isSupportedKeyboardLayout(sourceComponent)) {
+            if ((ke.getModifiersEx() & (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) != 0 /*&& ke.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT*/) {
+              // On German keyboard layout on Windows  we are getting on key press
+              // ctrl + alt instead of AltGr
+
+              int modifiers = ke.getModifiersEx() ^ InputEvent.ALT_DOWN_MASK ^ InputEvent.CTRL_DOWN_MASK;
+
+              if (ctrlIsPressedCount > 1) {
+                modifiers |= InputEvent.CTRL_DOWN_MASK;
+              }
+
+              if (leftAltIsPressed) {
+                modifiers |= InputEvent.ALT_MASK;
+              }
+
+              //noinspection MagicConstant
+              e = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), modifiers,
+                               ke.getKeyCode(), ke.getKeyChar(), ke.getKeyLocation());
+            }
+          }
+        }
       }
     }
+    return e;
   }
 
   private static AWTEvent mapEvent(AWTEvent e) {
@@ -529,12 +605,6 @@ public class IdeEventQueue extends EventQueue {
 
     if (e instanceof InputMethodEvent) {
       if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
-        return;
-      }
-    }
-    if (e instanceof InputEvent && Patches.SPECIAL_INPUT_METHOD_PROCESSING) {
-      final InputEvent inputEvent = (InputEvent)e;
-      if (!inputEvent.getComponent().isShowing()) {
         return;
       }
     }
@@ -974,7 +1044,7 @@ public class IdeEventQueue extends EventQueue {
               !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
               !(UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE)) {
-            return true;
+            return false;
           }
 
           if (ke.getID() == KeyEvent.KEY_PRESSED) {
@@ -1035,6 +1105,31 @@ public class IdeEventQueue extends EventQueue {
   public void postEvent(AWTEvent theEvent) {
     myFrequentEventDetector.eventHappened();
     super.postEvent(theEvent);
+  }
+
+  @Override
+  public AWTEvent peekEvent() {
+    AWTEvent event = super.peekEvent();
+    if (event != null) {
+      return event;
+    }
+    if (isTestMode() && LaterInvocator.ensureFlushRequested()) {
+      return super.peekEvent();
+    }
+    return null;
+  }
+
+  private Boolean myTestMode;
+  private boolean isTestMode() {
+    Boolean testMode = myTestMode;
+    if (testMode != null) return testMode;
+    
+    Application application = ApplicationManager.getApplication();
+    if (application == null) return false;
+
+    testMode = application.isUnitTestMode();
+    myTestMode = testMode;
+    return testMode;
   }
 
   /**

@@ -12,7 +12,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 /**
  * @author yole
  */
-public class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageProvejctViewNodeDecorator {
+public class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
   public CoverageProjectViewDirectoryNodeDecorator(final CoverageDataManager coverageDataManager) {
     super(coverageDataManager);
   }

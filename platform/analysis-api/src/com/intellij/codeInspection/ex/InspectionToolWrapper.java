@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,14 +73,15 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   @NotNull
   public T getTool() {
-    if (myTool == null) {
+    T tool = myTool;
+    if (tool == null) {
       //noinspection unchecked
-      myTool = (T)myEP.instantiateTool();
-      if (!myTool.getShortName().equals(myEP.getShortName())) {
-        LOG.error("Short name not matched for " + myTool.getClass() + ": getShortName() = " + myTool.getShortName() + "; ep.shortName = " + myEP.getShortName());
+      myTool = tool = (T)myEP.instantiateTool();
+      if (!tool.getShortName().equals(myEP.getShortName())) {
+        LOG.error("Short name not matched for " + tool.getClass() + ": getShortName() = " + tool.getShortName() + "; ep.shortName = " + myEP.getShortName());
       }
     }
-    return myTool;
+    return tool;
   }
 
   public boolean isInitialized() {
@@ -112,6 +113,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   @NotNull
   public String getShortName() {
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
+  }
+
+  public String getID() {
+    return getShortName();
   }
 
   @NotNull

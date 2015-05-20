@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -86,6 +87,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
     EditorFoldingInfo info = EditorFoldingInfo.get(editor);
     FoldRegion[] foldRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : foldRegions) {
+      if (!region.isValid()) continue;
       PsiElement element = info.getPsiElement(region);
       boolean expanded = region.isExpanded();
       boolean collapseByDefault = element != null &&
@@ -97,9 +99,10 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
           myPsiElements.add(smartPointerManager.createSmartPsiElementPointer(element, file));
           element.putUserData(FOLDING_INFO_KEY, fi);
         }
-        else if (region.isValid()) {
-          myRangeMarkers.add(region);
-          region.putUserData(FOLDING_INFO_KEY, fi);
+        else {
+          RangeMarker marker = editor.getDocument().createRangeMarker(region.getStartOffset(), region.getEndOffset());
+          myRangeMarkers.add(marker);
+          marker.putUserData(FOLDING_INFO_KEY, fi);
         }
       }
     }
@@ -195,7 +198,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   void clear() {
     myPsiElements.clear();
     for (RangeMarker marker : myRangeMarkers) {
-      if (!(marker instanceof FoldRegion)) marker.dispose();
+      marker.dispose();
     }
     myRangeMarkers.clear();
     mySerializedElements.clear();
@@ -222,13 +225,20 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
           continue;
         }
 
-        PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiElement.getContainingFile(), signature);
+        PsiFile containingFile = psiElement.getContainingFile();
+        PsiElement restoredElement = FoldingPolicy.restoreBySignature(containingFile, signature);
         if (!psiElement.equals(restoredElement)) {
           StringBuilder trace = new StringBuilder();
-          PsiElement restoredAgain = FoldingPolicy.restoreBySignature(psiElement.getContainingFile(), signature, trace);
-          LOG.error("element: " + psiElement + "(" + psiElement.getText() + "); restoredElement: " + restoredElement
-                    + "; signature: '" + signature + "'; file: " + psiElement.getContainingFile() + "; restored again: "
-                    + restoredAgain + "; restore produces same results: " + (restoredAgain == restoredElement) + "; trace:\n" + trace);
+          PsiElement restoredAgain = FoldingPolicy.restoreBySignature(containingFile, signature, trace);
+          LOG.error("element: " + psiElement + "(" + psiElement.getText() 
+                    + "); restoredElement: " + restoredElement
+                    + "; signature: '" + signature 
+                    + "'; file: " + containingFile 
+                    + "; injected: " + InjectedLanguageManager.getInstance(myProject).isInjectedFragment(containingFile) 
+                    + "; languages: " + containingFile.getViewProvider().getLanguages()                    
+                    + "; restored again: " + restoredAgain +
+                    "; restore produces same results: " + (restoredAgain == restoredElement) 
+                    + "; trace:\n" + trace);
         }
 
         Element e = new Element(ELEMENT_TAG);

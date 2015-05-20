@@ -1,6 +1,9 @@
-   Apache Ant
-   Copyright 1999-2010 The Apache Software Foundation
+Apache Ant
+Copyright 1999-2014 The Apache Software Foundation
 
-   The <sync> task is based on code Copyright (c) 2002, Landmark
-   Graphics Corp that has been kindly donated to the Apache Software
-   Foundation.
+This product includes software developed at
+The Apache Software Foundation (http://www.apache.org/).
+
+The <sync> task is based on code Copyright (c) 2002, Landmark
+Graphics Corp that has been kindly donated to the Apache Software
+Foundation.

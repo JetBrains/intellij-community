@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,11 +43,13 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Map;
 
 class EncodingFileTreeTable extends AbstractFileTreeTable<Charset> {
-  public EncodingFileTreeTable(@NotNull Project project) {
+  EncodingFileTreeTable(@NotNull Project project) {
     super(project, Charset.class, "Default Encoding", VirtualFileFilter.ALL, false);
-    reset(EncodingProjectManager.getInstance(project).getAllMappings());
+    Map<VirtualFile, Charset> mappings = FileEncodingConfigurable.getExistingMappingIncludingDefault(project);
+    reset(mappings);
     getValueColumn().setCellRenderer(new DefaultTableCellRenderer(){
       @Override
       public Component getTableCellRendererComponent(final JTable table, final Object value,

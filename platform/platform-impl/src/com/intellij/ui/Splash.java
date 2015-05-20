@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +47,7 @@ public class Splash extends JDialog implements StartupProgress {
   @Nullable public static Rectangle BOUNDS;
 
   private final Icon myImage;
-  private int myProgressHeight = 2;
+  private int myProgressHeight = JBUI.scale(2);
   private Color myProgressColor = null;
   private int myProgressY;
   private float myProgress;
@@ -87,7 +88,7 @@ public class Splash extends JDialog implements StartupProgress {
   private void setLocationInTheCenterOfScreen() {
     Rectangle bounds = getGraphicsConfiguration().getBounds();
     if (SystemInfo.isWindows) {
-      Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration());
+      Insets insets = ScreenUtil.getScreenInsets(getGraphicsConfiguration());
       int x = insets.left + (bounds.width - insets.left - insets.right - getWidth()) / 2;
       int y = insets.top + (bounds.height - insets.top - insets.bottom - getHeight()) / 2;
       setLocation(x, y);
@@ -101,7 +102,7 @@ public class Splash extends JDialog implements StartupProgress {
     this(info.getSplashImageUrl(), info.getSplashTextColor());
     if (info instanceof ApplicationInfoImpl) {
       final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
-      myProgressHeight = 2;
+      myProgressHeight = JBUI.scale(2);
       myProgressColor = appInfo.getProgressColor();
       myProgressY = appInfo.getProgressY();
       myProgressTail = appInfo.getProgressTailIcon();
@@ -142,7 +143,8 @@ public class Splash extends JDialog implements StartupProgress {
     g.setColor(color);
     g.fillRect(1, getProgressY(), width, getProgressHeight());
     if (myProgressTail != null) {
-      myProgressTail.paintIcon(this, g, width - (myProgressTail.getIconWidth()/2), getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight())/2);
+      myProgressTail.paintIcon(this, g, width - (myProgressTail.getIconWidth() / JBUI.scale(1) / 2 * JBUI.scale(1)),
+                               getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / JBUI.scale(1) / 2 * JBUI.scale(1)); //I'll buy you a beer if you understand this line without playing with it
     }
     myProgressLastPosition = progressWidth;
   }
@@ -156,7 +158,7 @@ public class Splash extends JDialog implements StartupProgress {
   }
 
   private int getProgressY() {
-    return myProgressY;
+    return JBUI.scale(myProgressY);
   }
 
   public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor) {
@@ -164,14 +166,14 @@ public class Splash extends JDialog implements StartupProgress {
       final LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         UIUtil.applyRenderingHints(g);
-        g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, SystemInfo.isUnix ? 10 : 11));
+        g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, JBUI.scale(SystemInfo.isUnix ? 10 : 11)));
 
         g.setColor(textColor);
         final String licensedToMessage = provider.getLicensedToMessage();
         final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
-        g.drawString(licensedToMessage, x + 15, y + height - 30);
+        g.drawString(licensedToMessage, x + JBUI.scale(15), y + height - JBUI.scale(30));
         if (licenseRestrictionsMessages.size() > 0) {
-          g.drawString(licenseRestrictionsMessages.get(0), x + 15, y + height - 14);
+          g.drawString(licenseRestrictionsMessages.get(0), x + JBUI.scale(15), y + height - JBUI.scale(14));
         }
       }
       return true;

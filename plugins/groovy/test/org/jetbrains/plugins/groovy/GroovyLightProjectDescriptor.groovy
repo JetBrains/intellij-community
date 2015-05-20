@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 
+import static org.jetbrains.plugins.groovy.config.GroovyFacetUtil.getBundledGroovyJar
 import static org.jetbrains.plugins.groovy.util.TestUtils.*
 
 /**
@@ -33,6 +34,7 @@ class GroovyLightProjectDescriptor extends DefaultLightProjectDescriptor {
   public static final GroovyLightProjectDescriptor GROOVY_2_1 = new GroovyLightProjectDescriptor(mockGroovy2_1LibraryName)
   public static final GroovyLightProjectDescriptor GROOVY_2_2 = new GroovyLightProjectDescriptor(mockGroovy2_2LibraryName)
   public static final GroovyLightProjectDescriptor GROOVY_2_3 = new GroovyLightProjectDescriptor(mockGroovy2_3LibraryName)
+  public static final GroovyLightProjectDescriptor GROOVY_2_3_9 = new GroovyLightProjectDescriptor(getBundledGroovyJar() as String)
 
   private final String myLibPath
 

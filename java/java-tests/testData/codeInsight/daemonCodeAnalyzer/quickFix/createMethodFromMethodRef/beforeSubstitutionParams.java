@@ -1,4 +1,4 @@
-// "Create Method 'fooBar'" "true"
+// "Create method 'fooBar'" "true"
 class FooBar {
   {
     Comparator<String> c = this::foo<caret>Bar;

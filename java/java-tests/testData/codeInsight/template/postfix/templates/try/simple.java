@@ -1,5 +1,7 @@
 public class Foo {
     void m() {
-        somevalue.try<caret>
+        doAct().try<caret>
     }
+
+    void doAct() {}
 }

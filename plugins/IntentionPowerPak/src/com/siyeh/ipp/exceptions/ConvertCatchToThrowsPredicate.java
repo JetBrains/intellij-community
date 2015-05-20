@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 Bas Leijdekkers
+ * Copyright 2007-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,11 @@ class ConvertCatchToThrowsPredicate implements PsiElementPredicate {
     if (element instanceof PsiCodeBlock) {
       return false;
     }
-    final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, true, PsiClass.class);
-    return method != null;
+    final PsiElement owner = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiClass.class, PsiLambdaExpression.class);
+    if (owner instanceof PsiLambdaExpression) {
+      final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(owner);
+      return !(method instanceof PsiCompiledElement);
+    }
+    return owner instanceof PsiMethod;
   }
 }

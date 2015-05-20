@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.hint.HintManager;
@@ -31,8 +31,6 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,6 +53,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -186,12 +185,21 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       MouseEvent mouseEvent = e.getMouseEvent();
 
+      Point prevLocation = myPrevMouseLocation;
+      myPrevMouseLocation = mouseEvent.getLocationOnScreen();
       if (isMouseOverTooltip(mouseEvent.getLocationOnScreen())
-          || ScreenUtil.isMovementTowards(myPrevMouseLocation, mouseEvent.getLocationOnScreen(), getHintBounds())) {
-        myPrevMouseLocation = mouseEvent.getLocationOnScreen();
+          || ScreenUtil.isMovementTowards(prevLocation, mouseEvent.getLocationOnScreen(), getHintBounds())) {
         return;
       }
-      myPrevMouseLocation = mouseEvent.getLocationOnScreen();
+      cancelPreviousTooltip();
+
+      myStoredModifiers = mouseEvent.getModifiers();
+      BrowseMode browseMode = getBrowseMode(myStoredModifiers);
+
+      if (browseMode == BrowseMode.None) {
+        disposeHighlighter();
+        return;
+      }
 
       Editor editor = e.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
@@ -209,12 +217,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       int selStart = editor.getSelectionModel().getSelectionStart();
       int selEnd = editor.getSelectionModel().getSelectionEnd();
 
-      myStoredModifiers = mouseEvent.getModifiers();
-      BrowseMode browseMode = getBrowseMode(myStoredModifiers);
-
-      cancelPreviousTooltip();
-
-      if (browseMode == BrowseMode.None || offset >= selStart && offset < selEnd) {
+      if (offset >= selStart && offset < selEnd) {
         disposeHighlighter();
         return;
       }
@@ -290,25 +293,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private static BrowseMode getBrowseMode(@JdkConstants.InputEventMask int modifiers) {
     if (modifiers != 0) {
       final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
-      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
-      if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
+      if (KeymapUtil.matchActionMouseShortcutsModifiers(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
+      if (KeymapUtil.matchActionMouseShortcutsModifiers(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
+      if (KeymapUtil.matchActionMouseShortcutsModifiers(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
       if (modifiers == InputEvent.CTRL_MASK || modifiers == InputEvent.META_MASK) return BrowseMode.Declaration;
     }
     return BrowseMode.None;
-  }
-
-  private static boolean matchMouseShortcut(final Keymap activeKeymap, @JdkConstants.InputEventMask int modifiers, final String actionId) {
-    final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
-    for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
-      if (shortcut instanceof MouseShortcut) {
-        final MouseShortcut mouseShortcut = (MouseShortcut)shortcut;
-        if (mouseShortcut.getModifiers() == syntheticShortcut.getModifiers()) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @Nullable
@@ -500,12 +490,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
     else if (browseMode == BrowseMode.Declaration) {
-      final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+      final PsiReference ref = TargetElementUtil.findReference(editor, offset);
       final List<PsiElement> resolvedElements = ref == null ? Collections.<PsiElement>emptyList() : resolve(ref);
       final PsiElement resolvedElement = resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
 
       final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset, false);
-      final PsiElement elementAtPointer = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
+      final PsiElement elementAtPointer = file.findElementAt(TargetElementUtil.adjustOffset(file, editor.getDocument(), offset));
 
       if (targetElements != null) {
         if (targetElements.length == 0) {
@@ -529,7 +519,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
     else if (browseMode == BrowseMode.Implementation) {
-      final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
+      final PsiElement element = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
       PsiElement[] targetElements = new ImplementationSearcher() {
         @Override
         @NotNull
@@ -568,26 +558,28 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
-    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, file, offset);
+    final PsiNameIdentifierOwner element = GotoDeclarationAction.findElementToShowUsagesOf(editor, offset);
     if (element != null) {
       PsiElement identifier = element.getNameIdentifier();
-      return new Info(identifier){
-        @Override
-        public void showDocInfo(@NotNull DocumentationManager docManager) {
-        }
-
-        @NotNull
-        @Override
-        public DocInfo getInfo() {
-          String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
-          return new DocInfo("Show usages of "+name, null, element);
-        }
-
-        @Override
-        public boolean isValid(@NotNull Document document) {
-          return element.isValid();
-        }
-      };
+      if (identifier != null && identifier.isValid()) {
+        return new Info(identifier){
+          @Override
+          public void showDocInfo(@NotNull DocumentationManager docManager) {
+          }
+  
+          @NotNull
+          @Override
+          public DocInfo getInfo() {
+            String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
+            return new DocInfo("Show usages of "+name, null, element);
+          }
+  
+          @Override
+          public boolean isValid(@NotNull Document document) {
+            return element.isValid();
+          }
+        };
+      }
     }
     return null;
   }
@@ -634,14 +626,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            try {
-              fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
-            }
-            catch (IndexNotReadyException e) {
-              fullTextRef.set("Documentation is not available while indexing is in progress");
-            }
-            if (anchorElement instanceof PsiQualifiedNamedElement) {
-              qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
+            if (anchorElement.isValid() && originalElement.isValid()) {
+              try {
+                fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
+              }
+              catch (IndexNotReadyException e) {
+                fullTextRef.set("Documentation is not available while indexing is in progress");
+              }
+              if (anchorElement instanceof PsiQualifiedNamedElement) {
+                qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
+              }
             }
           }
         });
@@ -726,7 +720,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   /**
    * It's possible that we need to expand quick doc control's width in order to provide better visual representation
-   * (see http://youtrack.jetbrains.com/issue/IDEA-101425). This method calculates that width expand.
+   * (see https://youtrack.jetbrains.com/issue/IDEA-101425). This method calculates that width expand.
    *
    * @param buttonWidth  icon button's width
    * @param updatedText  text which will be should at the quick doc control

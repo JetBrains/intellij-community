@@ -24,6 +24,11 @@ public class CloudSilentLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
+  public LogListener getOrCreateEmptyLogListener(String pipeName) {
+    return LogListener.NULL;
+  }
+
+  @Override
   public LogListener createConsole(String pipeName, OutputStream consoleInput) {
     return LogListener.NULL;
   }

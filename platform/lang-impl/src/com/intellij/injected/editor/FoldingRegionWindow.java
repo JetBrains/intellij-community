@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,24 +18,24 @@ package com.intellij.injected.editor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
-import com.intellij.openapi.editor.impl.FoldRegionImpl;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: cdr
  */
-public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
+class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
   private final EditorWindow myEditorWindow;
 
-  private final FoldRegionImpl myHostRegion;
+  private final FoldRegion myHostRegion;
 
-  public FoldingRegionWindow(@NotNull DocumentWindow documentWindow,
-                             @NotNull EditorWindow editorWindow,
-                             @NotNull FoldRegionImpl hostRegion,
-                             int startShift,
-                             int endShift)
+  FoldingRegionWindow(@NotNull DocumentWindow documentWindow,
+                      @NotNull EditorWindow editorWindow,
+                      @NotNull FoldRegion hostRegion,
+                      int startShift,
+                      int endShift)
   {
-    super(documentWindow, hostRegion, startShift, endShift);
+    super(documentWindow, (RangeMarkerEx)hostRegion, startShift, endShift);
     myEditorWindow = editorWindow;
     myHostRegion = hostRegion;
   }
@@ -72,7 +72,7 @@ public class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion
   }
 
   @Override
-  public FoldRegionImpl getDelegate() {
-    return myHostRegion;
+  public RangeMarkerEx getDelegate() {
+    return (RangeMarkerEx)myHostRegion;
   }
 }

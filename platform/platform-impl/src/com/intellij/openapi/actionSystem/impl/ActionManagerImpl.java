@@ -23,6 +23,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -374,6 +375,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       LOG.error(new PluginException(message, null, pluginId));
     }
   }
+  private static void reportActionWarning(final PluginId pluginId, @NonNls @NotNull String message) {
+    if (pluginId == null) {
+      LOG.warn(message);
+    }
+    else {
+      LOG.warn(new PluginException(message, null, pluginId).getMessage());
+    }
+  }
 
   @NonNls
   private static String getPluginInfo(@Nullable PluginId id) {
@@ -477,28 +486,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   @Override
   public AnAction getAction(@NotNull String id) {
-    return getActionImpl(id, false, null);
+    return getActionImpl(id, false);
   }
 
-  @Override
-  public AnAction getAction(@NonNls @NotNull String actionId, @Nullable ProjectType projectType) {
-    return getActionImpl(actionId, false, projectType);
-  }
-
-  private AnAction getActionImpl(String id, boolean canReturnStub, ProjectType projectType) {
+  private AnAction getActionImpl(String id, boolean canReturnStub) {
     synchronized (myLock) {
-      AnAction action;
-      Object o = myId2Action.get(id);
-      if (o == null) {
-        return null;
-      }
-      if (o instanceof AnAction) {
-        action = (AnAction)o;
-      }
-      else {
-        //noinspection unchecked
-        action = ((Map<ProjectType, AnAction>)o).get(projectType);
-      }
+      AnAction action = myId2Action.get(id);
       if (!canReturnStub && action instanceof ActionStub) {
         action = convert((ActionStub)action);
       }
@@ -549,7 +542,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   @Override
   public boolean isGroup(@NotNull String actionId) {
-    return getActionImpl(actionId, true, null) instanceof ActionGroup;
+    return getActionImpl(actionId, true) instanceof ActionGroup;
   }
 
   @Override
@@ -559,7 +552,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   @Override
   public AnAction getActionOrStub(String id) {
-    return getActionImpl(id, true, null);
+    return getActionImpl(id, true);
   }
 
   /**
@@ -854,10 +847,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       reportActionError(pluginId, actionName + ": attribute \"group-id\" should be defined");
       return null;
     }
-    AnAction parentGroup = getActionImpl(groupId, true, null);
+    AnAction parentGroup = getActionImpl(groupId, true);
     if (parentGroup == null) {
       reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" isn't registered; action will be added to the \"Other\" group");
-      parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true, null);
+      parentGroup = getActionImpl(IdeActions.GROUP_OTHER_MENU, true);
     }
     if (!(parentGroup instanceof DefaultActionGroup)) {
       reportActionError(pluginId, actionName + ": group with id \"" + groupId + "\" should be instance of " + DefaultActionGroup.class.getName() +
@@ -919,7 +912,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
     Keymap keymap = myKeymapManager.getKeymap(keymapName);
     if (keymap == null) {
-      reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
+      reportActionWarning(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
     }
     final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);
@@ -954,7 +947,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       return null;
     }
 
-    AnAction action = getActionImpl(ref, true, null);
+    AnAction action = getActionImpl(ref, true);
 
     if (action == null) {
       if (!myNotRegisteredInternalActionIds.contains(ref)) {
@@ -1271,6 +1264,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         @Override
         public void run() {
           try {
+            SearchableOptionsRegistrar.getInstance(); // load inspection descriptions etc. to be used in Goto Action, Search Everywhere 
             doPreloadActions();
           } catch (RuntimeInterruptedException ignore) {
           }

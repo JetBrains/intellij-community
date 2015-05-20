@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn.ignore.FileGroupInfo;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 import org.junit.Assert;
@@ -250,16 +251,16 @@ public class SvnRollbackTest extends Svn17TestCase {
     assertMovedChange(inner);
     final Change innerChange = assertMovedChange(innerFile);
 
-    final Change fantomDelete1 = new Change(new SimpleContentRevision("1", new FilePathImpl(wasLowestDir, true), "2"),
-                                            new SimpleContentRevision("1", new FilePathImpl(wasLowestDirAfter, true), "2"));
-    final Change fantomDelete2 = new Change(new SimpleContentRevision("1", new FilePathImpl(wasInnerFile1, false), "2"),
-                                            new SimpleContentRevision("1", new FilePathImpl(wasInnerFile1After, false), SVNRevision.WORKING.getName()));
+    final Change fantomDelete1 = new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(wasLowestDir, true), "2"),
+                                            new SimpleContentRevision("1", VcsUtil.getFilePath(wasLowestDirAfter, true), "2"));
+    final Change fantomDelete2 = new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile1, false), "2"),
+                                            new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile1After, false), SVNRevision.WORKING.getName()));
 
     rollbackIMpl(Arrays.asList(change),
-                 Arrays.asList(new Change(new SimpleContentRevision("1", new FilePathImpl(wasInnerFile, false), "2"),
-                                          new SimpleContentRevision("1", new FilePathImpl(wasInnerFileAfter, false), SVNRevision.WORKING.getName())),
-                               new Change(new SimpleContentRevision("1", new FilePathImpl(inner2Before, true), "2"),
-                                          new SimpleContentRevision("1", new FilePathImpl(inner2After, true), SVNRevision.WORKING.getName())),
+                 Arrays.asList(new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile, false), "2"),
+                                          new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFileAfter, false), SVNRevision.WORKING.getName())),
+                               new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(inner2Before, true), "2"),
+                                          new SimpleContentRevision("1", VcsUtil.getFilePath(inner2After, true), SVNRevision.WORKING.getName())),
                                fantomDelete1, fantomDelete2));
     Assert.assertTrue(wasU2.exists());
   }
@@ -294,10 +295,10 @@ public class SvnRollbackTest extends Svn17TestCase {
     Assert.assertEquals("cde", getProperty(new File(innerFile.getPath()), "abc"));
 
     rollbackIMpl(Arrays.asList(change),
-                 Arrays.asList(new Change(new SimpleContentRevision("1", new FilePathImpl(innerBefore, true), "2"),
-                                          new SimpleContentRevision("1", new FilePathImpl(innerAfter, true), SVNRevision.WORKING.getName())),
-                               new Change(new SimpleContentRevision("1", new FilePathImpl(fileBefore, false), "2"),
-                                          new SimpleContentRevision("1", new FilePathImpl(fileAfter, false), SVNRevision.WORKING.getName()))));
+                 Arrays.asList(new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(innerBefore, true), "2"),
+                                          new SimpleContentRevision("1", VcsUtil.getFilePath(innerAfter, true), SVNRevision.WORKING.getName())),
+                               new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(fileBefore, false), "2"),
+                                          new SimpleContentRevision("1", VcsUtil.getFilePath(fileAfter, false), SVNRevision.WORKING.getName()))));
     Assert.assertEquals("cde", getProperty(fileAfter, "abc"));
   }
 
@@ -324,8 +325,8 @@ public class SvnRollbackTest extends Svn17TestCase {
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
-    final FilePath fpSource = new FilePathImpl(new File(tree.mySourceDir.getPath()), true);
-    final FilePath fpT11 = new FilePathImpl(new File(tree.myTargetFiles.get(0).getPath()), false);
+    final FilePath fpSource = VcsUtil.getFilePath(new File(tree.mySourceDir.getPath()), true);
+    final FilePath fpT11 = VcsUtil.getFilePath(new File(tree.myTargetFiles.get(0).getPath()), false);
     VcsTestUtil.deleteFileInCommand(myProject, tree.mySourceDir);
     VcsTestUtil.deleteFileInCommand(myProject, tree.myTargetFiles.get(0));
 
@@ -515,7 +516,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     final Change s1Change = assertMovedChange(tree.myS1File);
     final Change s2Change = assertMovedChange(tree.myS2File);
 
-    final FilePathImpl fp = new FilePathImpl(was2, false);
+    final FilePath fp = VcsUtil.getFilePath(was2, false);
     rollbackIMpl(Arrays.asList(dirChange, s1Change), Arrays.asList(new Change(
       new SimpleContentRevision("1", fp, "1"), new SimpleContentRevision("1", fp, SVNRevision.WORKING.getName()))));
   }
@@ -566,7 +567,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     }
     Assert.assertTrue(files.isEmpty());
 
-    rollbackLocallyDeleted(Collections.<FilePath>singletonList(new FilePathImpl(wasFile, true)), Collections.<FilePath>emptyList());
+    rollbackLocallyDeleted(Collections.<FilePath>singletonList(VcsUtil.getFilePath(wasFile, true)), Collections.<FilePath>emptyList());
   }
 
   @Test
@@ -607,7 +608,7 @@ public class SvnRollbackTest extends Svn17TestCase {
     Assert.assertTrue(files.contains(deletedFiles.get(1).getPath().getIOFile()));
     Assert.assertTrue(files.contains(deletedFiles.get(2).getPath().getIOFile()));
 
-    rollbackLocallyDeleted(Arrays.<FilePath>asList(new FilePathImpl(wasFile2, true), new FilePathImpl(wasFile1, false)), Collections.<FilePath>emptyList());
+    rollbackLocallyDeleted(Arrays.<FilePath>asList(VcsUtil.getFilePath(wasFile2, true), VcsUtil.getFilePath(wasFile1, false)), Collections.<FilePath>emptyList());
   }
 
   @Test
@@ -638,7 +639,7 @@ public class SvnRollbackTest extends Svn17TestCase {
            "D root" + File.separator + "source" + File.separator + "s2.txt"
     );
 
-    rollbackLocallyDeleted(Collections.<FilePath>singletonList(new FilePathImpl(was, true)), Collections.<FilePath>emptyList());
+    rollbackLocallyDeleted(Collections.<FilePath>singletonList(VcsUtil.getFilePath(was, true)), Collections.<FilePath>emptyList());
     runAndVerifyStatusSorted("D root" + File.separator + "source",
                "D root" + File.separator + "source" + File.separator + "s1.txt",
                "D root" + File.separator + "source" + File.separator + "s2.txt");

@@ -16,8 +16,10 @@
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -39,8 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.openapi.vfs.VirtualFileManager.*;
 
 /**
  * @author vlan
@@ -91,32 +91,29 @@ public class PyMoveFileHandler extends MoveFileHandler {
         continue;
       }
       final QualifiedName newName = QualifiedNameFinder.findShortestImportableQName(sourceElement);
-      final PsiElement fromKeyword = statement.getFirstChild();
-      final PsiElement firstDot = fromKeyword.getNextSibling().getNextSibling();
-      assert firstDot.getNode().getElementType() == PyTokenTypes.DOT;
-      final PsiWhiteSpace nextWhitespace = PsiTreeUtil.getNextSiblingOfType(firstDot, PsiWhiteSpace.class);
-      final PsiElement replacementEnd = nextWhitespace == null ? statement.getLastChild() : nextWhitespace.getPrevSibling();
-      if (replacementEnd != firstDot) {
-        statement.deleteChildRange(firstDot.getNextSibling(), replacementEnd);
-      }
-      replaceWithQualifiedExpression(firstDot, newName);
+      replaceRelativeImportSourceWithQualifiedExpression(statement, newName);
     }
   }
 
   @Nullable
   private static PsiFileSystemItem resolveRelativeImportSourceFromModuleLocation(@NotNull String moduleLocation,
                                                                                  @NotNull PyFromImportStatement statement) {
-    String relativeImportBasePath = extractPath(moduleLocation);
+    String relativeImportBasePath = VirtualFileManager.extractPath(moduleLocation);
     for (int level = 0; level < statement.getRelativeLevel(); level++) {
       relativeImportBasePath = PathUtil.getParentPath(relativeImportBasePath);
     }
     if (!relativeImportBasePath.isEmpty()) {
-      //noinspection ConstantConditions
-      final String relativeImportBaseUrl = constructUrl(extractProtocol(moduleLocation), relativeImportBasePath);
-      final VirtualFile relativeImportBaseDir = getInstance().findFileByUrl(relativeImportBaseUrl);
+      final String protocol = VirtualFileManager.extractProtocol(moduleLocation);
+      assert protocol != null : "Original location: " + moduleLocation;
+      final String relativeImportBaseUrl = VirtualFileManager.constructUrl(protocol, relativeImportBasePath);
+      final VirtualFile relativeImportBaseDir = VirtualFileManager.getInstance().findFileByUrl(relativeImportBaseUrl);
       VirtualFile sourceFile = relativeImportBaseDir;
       if (relativeImportBaseDir != null && relativeImportBaseDir.exists() && statement.getImportSource() != null) {
-        final String relativePath = statement.getImportSource().getText().replace('.', '/');
+        final QualifiedName qualifiedName = statement.getImportSource().asQualifiedName();
+        if (qualifiedName == null) {
+          return null;
+        }
+        final String relativePath = qualifiedName.join("/");
         sourceFile = relativeImportBaseDir.findFileByRelativePath(relativePath);
         if (sourceFile == null) {
           sourceFile = relativeImportBaseDir.findFileByRelativePath(relativePath + PyNames.DOT_PY);
@@ -186,8 +183,12 @@ public class PyMoveFileHandler extends MoveFileHandler {
               continue;
             }
             final QualifiedName newElementName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
-            removeLeadingDots(element);
-            replaceWithQualifiedExpression(element, newElementName);
+            if (importStmt instanceof PyFromImportStatement) {
+              replaceRelativeImportSourceWithQualifiedExpression((PyFromImportStatement)importStmt, newElementName);
+            }
+            else {
+              replaceWithQualifiedExpression(element, newElementName);
+            }
           }
           else if (element instanceof PyReferenceExpression) {
             updatedFiles.add(file);
@@ -227,21 +228,58 @@ public class PyMoveFileHandler extends MoveFileHandler {
     return oldElement;
   }
 
-  private static void removeLeadingDots(@NotNull PsiElement element) {
-    PsiElement lastDot = null;
-    PsiElement firstDot = null;
-    for (PsiElement prev = element.getPrevSibling(); prev != null; prev = prev.getPrevSibling()) {
-      if (prev.getNode().getElementType() != PyTokenTypes.DOT) {
-        break;
+  /**
+   * Replace import source with leading dots (if any) with reference expression created from given qualified name.
+   * Basically it does the same thing as {@link #replaceWithQualifiedExpression}, but also removes leading dots.
+   *
+   * @param importStatement import statement to update
+   * @param qualifiedName   qualified name of new import source
+   * @return updated import statement
+   * @see #replaceWithQualifiedExpression(com.intellij.psi.PsiElement, com.intellij.psi.util.QualifiedName)
+   */
+  @NotNull
+  private static PsiElement replaceRelativeImportSourceWithQualifiedExpression(@NotNull PyFromImportStatement importStatement,
+                                                                               @Nullable QualifiedName qualifiedName) {
+    final Couple<PsiElement> range = getRelativeImportSourceRange(importStatement);
+    if (range != null && qualifiedName != null) {
+      if (range.getFirst() == range.getSecond()) {
+        replaceWithQualifiedExpression(range.getFirst(), qualifiedName);
       }
-      if (lastDot == null) {
-        lastDot = prev;
+      else {
+        importStatement.deleteChildRange(range.getFirst().getNextSibling(), range.getSecond());
+        replaceWithQualifiedExpression(range.getFirst(), qualifiedName);
       }
-      firstDot = prev;
     }
-    if (lastDot != null && firstDot != null) {
-      element.getParent().deleteChildRange(firstDot, lastDot);
+    return importStatement;
+  }
+
+  @Nullable
+  private static Couple<PsiElement> getRelativeImportSourceRange(@NotNull PyFromImportStatement statement) {
+    final PsiElement fromKeyword = statement.getFirstChild();
+    assert fromKeyword.getNode().getElementType() == PyTokenTypes.FROM_KEYWORD;
+    final PsiElement elementAfterFrom = PsiTreeUtil.skipSiblingsForward(fromKeyword, PsiWhiteSpace.class);
+    if (elementAfterFrom == null) {
+      return null;
     }
+    else if (elementAfterFrom instanceof PyReferenceExpression) {
+      return Couple.of(elementAfterFrom, elementAfterFrom);
+    }
+    else if (elementAfterFrom.getNode().getElementType() == PyTokenTypes.DOT) {
+      PsiElement lastDot;
+      PsiElement next = elementAfterFrom;
+      do {
+        lastDot = next;
+        next = PsiTreeUtil.skipSiblingsForward(next, PsiWhiteSpace.class);
+      }
+      while (next != null && next.getNode().getElementType() == PyTokenTypes.DOT);
+      if (next instanceof PyReferenceExpression) {
+        return Couple.of(elementAfterFrom, next);
+      }
+      else {
+        return Couple.of(elementAfterFrom, lastDot);
+      }
+    }
+    return null;
   }
 
   @Override

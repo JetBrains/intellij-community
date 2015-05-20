@@ -1,8 +1,8 @@
 public class Foo {
     void m() {
-        assert is();<caret>
+        is();.assert    <caret>
     }
-  
+
     boolean is() {
       return false;
     }

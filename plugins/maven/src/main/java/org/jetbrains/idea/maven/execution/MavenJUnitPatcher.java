@@ -54,19 +54,15 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-surefire-plugin");
     if (config == null) return;
 
+    MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
+
     MavenTestRunningSettings testRunningSettings = MavenProjectSettings.getInstance(module.getProject()).getTestRunningSettings();
 
     List<String> paths = MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement");
 
     if (paths.size() > 0) {
-      MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
-
       for (String path : paths) {
-        if (domModel != null) {
-          path = MavenPropertyResolver.resolve(path, domModel);
-        }
-
-        javaParameters.getClassPath().add(resolveSurefireProperties(path));
+        javaParameters.getClassPath().add(resolveSurefireProperties(path, domModel));
       }
     }
 
@@ -77,7 +73,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
           String propertyName = element.getName();
 
           if (!javaParameters.getVMParametersList().hasProperty(propertyName)) {
-            String value = resolveSurefireProperties(element.getValue());
+            String value = resolveSurefireProperties(element.getValue(), domModel);
             value = resolveVmProperties(javaParameters.getVMParametersList(), value);
             if (isResolved(value)) {
               javaParameters.getVMParametersList().addProperty(propertyName, value);
@@ -94,7 +90,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
           String variableName = element.getName();
 
           if (!javaParameters.getEnv().containsKey(variableName)) {
-            String value = resolveSurefireProperties(element.getValue());
+            String value = resolveSurefireProperties(element.getValue(), domModel);
             value = resolveVmProperties(javaParameters.getVMParametersList(), value);
             if (isResolved(value)) {
               javaParameters.addEnv(variableName, value);
@@ -107,7 +103,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (testRunningSettings.isPassArgLine() && isEnabled("argLine")) {
       Element argLine = config.getChild("argLine");
       if (argLine != null) {
-        String value = resolveSurefireProperties(argLine.getTextTrim());
+        String value = resolveSurefireProperties(argLine.getTextTrim(), domModel);
         value = resolveVmProperties(javaParameters.getVMParametersList(), value);
         if (StringUtil.isNotEmpty(value) && isResolved(value)) {
           javaParameters.getVMParametersList().addParametersString(value);
@@ -116,7 +112,10 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     }
   }
 
-  private static String resolveSurefireProperties(String value) {
+  private static String resolveSurefireProperties(@NotNull String value, @Nullable MavenDomProjectModel domModel) {
+    if (domModel != null) {
+      value = MavenPropertyResolver.resolve(value, domModel);
+    }
     return value.replaceAll("\\$\\{surefire\\.(forkNumber|threadNumber)\\}", "1");
   }
 

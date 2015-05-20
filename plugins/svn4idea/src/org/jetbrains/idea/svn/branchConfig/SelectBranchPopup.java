@@ -18,11 +18,9 @@ package org.jetbrains.idea.svn.branchConfig;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
@@ -81,15 +79,7 @@ public class SelectBranchPopup {
 
   public static void showForBranchRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title,
                                        final Component component) {
-    final SvnBranchConfigurationNew configuration;
-    try {
-      configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
-    }
-    catch (VcsException e1) {
-      Messages.showErrorDialog(project, SvnBundle.message("getting.branch.configuration.error", e1.getMessage()), title);
-      return;
-    }
-
+    final SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
     final List<String> items = new ArrayList<String>();
     if (! StringUtil.isEmptyOrSpaces(configuration.getTrunkUrl())) {
       items.add(getTrunkString(configuration));

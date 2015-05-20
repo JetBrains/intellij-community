@@ -27,6 +27,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,22 +54,27 @@ public class StandardDataFlowRunner extends DataFlowRunner {
     myIsInMethod = parent instanceof PsiMethod;
     if (myIsInMethod) {
       PsiMethod method = (PsiMethod)parent;
-      PsiType returnType = method.getReturnType();
-      myInNullableMethod = NullableNotNullManager.isNullable(method) ||
-                           returnType != null && returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID);
+      myInNullableMethod = isTreatedAsNullable(method);
       myInNotNullMethod = NullableNotNullManager.isNotNull(method);
     } else if (parent instanceof PsiLambdaExpression) {
       PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
       if (method != null) {
         myIsInMethod = true;
-        PsiType returnType = method.getReturnType();
-        myInNullableMethod = NullableNotNullManager.isNullable(method) ||
-                             returnType != null && returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID);
+        myInNullableMethod = isTreatedAsNullable(method);
         myInNotNullMethod = NullableNotNullManager.isNotNull(method);
       }
     }
 
     myCCEInstructions.clear();
+  }
+
+  private static boolean isTreatedAsNullable(PsiMethod method) {
+    if (NullableStuffInspectionBase.isNullableNotInferred(method, true)) {
+      return true;
+    }
+
+    PsiType returnType = method.getReturnType();
+    return returnType != null && (returnType == PsiType.VOID || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID));
   }
 
   public void onInstructionProducesCCE(Instruction instruction) {

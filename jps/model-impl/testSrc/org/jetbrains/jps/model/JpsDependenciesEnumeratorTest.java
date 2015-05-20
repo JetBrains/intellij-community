@@ -18,7 +18,7 @@ package org.jetbrains.jps.model;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.jps.util.JpsPathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -26,10 +26,11 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.jetbrains.jps.model.java.JpsJavaExtensionService.dependencies;
 
@@ -43,34 +44,39 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    File home = PathManagerEx.findFileUnderCommunityHome("java/mockJDK-1.7");
-    JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk =
-      myModel.getGlobal().addSdk("mockJDK-1.7", home.getAbsolutePath(), "1.7", JpsJavaSdkType.INSTANCE);
-    jdk.addRoot(getRtJar(), JpsOrderRootType.COMPILED);
+    JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk = addJdk("1.7");
     myModule = addModule();
-    myModule.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, jdk.getProperties().createReference());
-    myModule.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
+    JpsModuleRootModificationUtil.setModuleSdk(myModule, jdk.getProperties());
+  }
+
+  @NotNull
+  private JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJdk(final String mockJdkVersion) {
+    final String mockJdkDir = "mockJDK-" + mockJdkVersion;
+    File home = PathManagerEx.findFileUnderCommunityHome("java/" + mockJdkDir);
+    JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk = myModel.getGlobal().addSdk(mockJdkVersion, home.getAbsolutePath(), mockJdkVersion, JpsJavaSdkType.INSTANCE);
+    jdk.addRoot(getRtJar(mockJdkDir), JpsOrderRootType.COMPILED);
+    return jdk;
   }
 
   public void testLibrary() throws Exception {
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
-    assertClassRoots(dependencies(myModule), getRtJar(), getJDomJar());
+    assertClassRoots(dependencies(myModule), getRtJarJdk17(), getJDomJar());
     assertClassRoots(dependencies(myModule).withoutSdk(), getJDomJar());
     assertClassRoots(dependencies(myModule).withoutSdk().productionOnly().runtimeOnly(), getJDomJar());
-    assertClassRoots(dependencies(myModule).withoutLibraries(), getRtJar());
+    assertClassRoots(dependencies(myModule).withoutLibraries(), getRtJarJdk17());
     assertSourceRoots(dependencies(myModule), getJDomSources());
   }
 
-  private String getJDomSources() {
+  private static String getJDomSources() {
     return getJarUrlFromLibDir("src/jdom.zip");
   }
 
-  private String getJDomJar() {
+  private static String getJDomJar() {
     return getJarUrlFromLibDir("jdom.jar");
   }
 
-  private String getAsmJar() {
+  private static String getAsmJar() {
     return getJarUrlFromLibDir("asm.jar");
   }
 
@@ -78,8 +84,16 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     return JpsPathUtil.getLibraryRootUrl(PathManager.findFileInLibDirectory(relativePath));
   }
 
-  private static String getRtJar() {
-    return JpsPathUtil.getLibraryRootUrl(PathManagerEx.findFileUnderCommunityHome("java/mockJDK-1.7/jre/lib/rt.jar"));
+  private static String getRtJarJdk17() {
+    return getRtJar("mockJDK-1.7");
+  }
+
+  private static String getRtJarJdk18() {
+    return getRtJar("mockJDK-1.8");
+  }
+
+  private static String getRtJar(final String mockJdkDir) {
+    return JpsPathUtil.getLibraryRootUrl(PathManagerEx.findFileUnderCommunityHome("java/" + mockJdkDir + "/jre/lib/rt.jar"));
   }
 
   private JpsLibrary createJDomLibrary() {
@@ -199,6 +213,15 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     assertClassRoots(dependencies(myModule).exportedOnly());
   }
 
+  public void testDoNotAddJdkRootsFromModuleDependency() {
+    JpsModule dep = addModule("dep");
+    JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk8 = addJdk("1.8");
+    JpsModuleRootModificationUtil.addDependency(myModule, dep);
+    JpsModuleRootModificationUtil.setModuleSdk(dep, jdk8.getProperties());
+    assertClassRoots(dependencies(myModule).recursively(), getRtJarJdk17());
+    assertClassRoots(dependencies(dep).recursively(), getRtJarJdk18());
+  }
+
   public void testProject() throws Exception {
     JpsModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
@@ -219,9 +242,9 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     final String output = setModuleOutput(myModule, false);
     final String testOutput = setModuleOutput(myModule, true);
 
-    assertClassRoots(getJavaService().enumerateDependencies(Arrays.asList(myModule)).withoutSdk(),
+    assertClassRoots(getJavaService().enumerateDependencies(Collections.singletonList(myModule)).withoutSdk(),
                      testOutput, output, getJDomJar());
-    assertSourceRoots(getJavaService().enumerateDependencies(Arrays.asList(myModule)).withoutSdk(),
+    assertSourceRoots(getJavaService().enumerateDependencies(Collections.singletonList(myModule)).withoutSdk(),
                       srcRoot, testRoot, getJDomSources());
   }
 

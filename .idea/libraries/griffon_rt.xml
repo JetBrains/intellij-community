@@ -2,8 +2,6 @@
   <library name="griffon-rt">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/plugins/groovy/testdata/griffon/griffon-rt-1.1.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/groovy/testdata/griffon/slf4j-api-1.7.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/groovy/testdata/griffon/slf4j-simple-1.7.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/plugins/groovy/testdata/griffon/griffon-cli-1.1.0.jar!/" />
     </CLASSES>
     <JAVADOC />

@@ -49,8 +49,9 @@ import java.util.regex.Matcher;
  */
 public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
   @NotNull
-  public static SuppressQuickFix[] getSuppressActions(@NotNull String name) {
-    final HighlightDisplayKey displayKey = HighlightDisplayKey.find(name);
+  public static SuppressQuickFix[] getSuppressActions(@NotNull String toolId) {
+    final HighlightDisplayKey displayKey = HighlightDisplayKey.findById(toolId);
+    assert displayKey != null : toolId;
     return new SuppressQuickFix[] {
       new SuppressByGroovyCommentFix(displayKey),
       new SuppressForMemberFix(displayKey, false),

@@ -1,10 +1,10 @@
-<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude" url="http://confluence.jetbrains.com/display/PYH/">
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
   <!-- Components and extensions declared in this file work ONLY in Python plugin, not in standalone PyCharm.
        Anything related to Python/Java integration must go in this file. -->
 
   <id>PythonCore</id>
   <name>Python Community Edition</name>
-  <idea-version since-build="138.0" until-build="140.*"/>
+  <idea-version since-build="138.0" until-build="143.0"/>
 
   <description><![CDATA[
 The Python plug-in provides smart editing for Python scripts. The feature set of the plugin
@@ -12,17 +12,22 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 <br>
 <a href="http://blog.jetbrains.com/pycharm">PyCharm blog</a><br>
 <a href="http://forum.jetbrains.com/forum/PyCharm">Discussion forum</a><br>
-<a href="http://youtrack.jetbrains.com/issues/PY">Issue tracker</a><br>
+<a href="https://youtrack.jetbrains.com/issues/PY">Issue tracker</a><br>
 ]]></description>
 
-  <!-- <PyCharm version> <Beta>? <Branch number>.<Build number> -->
-  <version>4.0 Beta 140.@@BUILD_NUMBER@@</version>
+  <!-- <PyCharm version> <Build number>  -->
+  <version>@@PYCHARM_VERSION@@ @@BUILD_NUMBER@@</version>
   <depends>com.intellij.modules.java</depends>
 
 
-  <vendor url="http://www.jetbrains.com/pycharm/" logo="/com/jetbrains/python/python.png">JetBrains</vendor>
+  <vendor url="https://www.jetbrains.com/pycharm/">JetBrains</vendor>
   <xi:include href="/META-INF/python-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/python-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <!-- Two different versions of this file exist: one is used when building from sources (when auxiliary
+     plugins are loaded as separate plugins) and another is used for the real release build (when auxiliary
+     plugins are packed inside the Python plugin jar) -->
+  <xi:include href="/META-INF/python-plugin-dependencies.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <application-components>
     <component>

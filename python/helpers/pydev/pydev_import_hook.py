@@ -23,7 +23,7 @@ class ImportHookManager(ModuleType):
             if activate_func:
                 activate_func() #call activate function
         except:
-            sys.stderr.write("Matplotlib support failed")
+            sys.stderr.write("Matplotlib support failed\n")
         return module
 
 try:

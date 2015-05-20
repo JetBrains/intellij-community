@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.OptionGroup;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class ForceArrangementPanel {
 
@@ -62,7 +62,7 @@ public class ForceArrangementPanel {
     JPanel textWithComboPanel = new JPanel();
     textWithComboPanel.setLayout(new BoxLayout(textWithComboPanel, BoxLayout.LINE_AXIS));
     textWithComboPanel.add(new JLabel(ApplicationBundle.message("arrangement.settings.additional.force.combobox.name")));
-    textWithComboPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+    textWithComboPanel.add(Box.createRigidArea(JBUI.size(5, 0)));
     textWithComboPanel.add(myForceRearrangeComboBox);
     group.add(textWithComboPanel);
     return group.createPanel();

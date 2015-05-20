@@ -1,18 +1,21 @@
 package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class ScriptRegExpBreakpointTarget extends BreakpointTarget {
   private final String regExp;
+  public final String language;
 
-  public ScriptRegExpBreakpointTarget(@NotNull String regExp) {
+  public ScriptRegExpBreakpointTarget(@NotNull String regExp, @Nullable String language) {
     this.regExp = regExp;
+    this.language = language;
   }
 
   @Override
   public <R> R accept(Visitor<R> visitor) {
-    if (visitor instanceof ScriptRegExpSupport.Visitor) {
-      return ((ScriptRegExpSupport.Visitor<R>)visitor).visitRegExp(regExp);
+    if (visitor instanceof ScriptRegExpSupportVisitor) {
+      return ((ScriptRegExpSupportVisitor<R>)visitor).visitRegExp(this);
     }
     else {
       return visitor.visitUnknown(this);
@@ -32,7 +35,6 @@ public final class ScriptRegExpBreakpointTarget extends BreakpointTarget {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
     return regExp.equals(((ScriptRegExpBreakpointTarget)o).regExp);
   }
 

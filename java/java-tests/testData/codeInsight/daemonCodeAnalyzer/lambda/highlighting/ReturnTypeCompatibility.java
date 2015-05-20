@@ -68,5 +68,5 @@ class ReturnTypeChecks1 {
     }
 
     I<Integer, Integer> accepted = i -> { return i; };
-    I<Double, Integer> rejected = <error descr="Incompatible return type Double in lambda expression">i -> { return i; }</error>;
+    I<Double, Integer> rejected = i -> { return <error descr="Bad return type in lambda expression: Double cannot be converted to Integer">i</error>; };
 }

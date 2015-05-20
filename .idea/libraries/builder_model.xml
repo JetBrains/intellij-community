@@ -1,11 +1,11 @@
 <component name="libraryTable">
   <library name="builder-model">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/builder-model-0.14.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/android/android/lib/builder-model-1.1.0-rc1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/src/builder-model-0.14.0-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/android/android/lib/src/builder-model-1.1.0-rc1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

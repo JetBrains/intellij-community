@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +108,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
   }
 
   private static Font getWidgetFont() {
-    return UIUtil.getLabelFont().deriveFont(11.0f);
+    return JBUI.Fonts.label(11);
   }
 
   @Override
@@ -137,7 +138,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final int totalBarLength = size.width - insets.left - insets.right;
       final int usedBarLength = (int)(totalBarLength * usedMem / maxMem);
       final int unusedBarLength = (int)(totalBarLength * unusedMem / maxMem);
-      final int barHeight = HEIGHT;
+      final int barHeight = Math.max(JBUI.scale(HEIGHT), getFont().getSize() + 2);
       final int yOffset = (size.height - barHeight) / 2;
       final int xOffset = insets.left;
 
@@ -160,12 +161,6 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       if (!UIUtil.isUnderDarcula()) {
         g2.setColor(UNUSED_COLOR_3);
         g2.drawLine(xOffset + usedBarLength + unusedBarLength, yOffset, xOffset + usedBarLength + unusedBarLength, barHeight);
-      }
-
-      // frame
-      if (!UIUtil.isUnderDarcula()) {
-        g2.setColor(USED_COLOR_2);
-        g2.drawRect(xOffset, yOffset, totalBarLength - 1, barHeight - 1);
       }
 
       // label

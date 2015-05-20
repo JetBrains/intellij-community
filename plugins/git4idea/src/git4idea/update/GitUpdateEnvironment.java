@@ -16,7 +16,6 @@
 package git4idea.update;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,7 +28,6 @@ import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
-import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -41,21 +39,12 @@ import java.util.Set;
 
 import static git4idea.GitUtil.*;
 
-/**
- * Git update environment implementation. The environment does
- * {@code git pull -v} for each vcs root. Rebase variant is detected
- * and processed as well.
- */
 public class GitUpdateEnvironment implements UpdateEnvironment {
-  private final GitVcs myVcs;
   private final Project myProject;
   private final GitVcsSettings mySettings;
   @NotNull private final GitPlatformFacade myPlatformFacade;
 
-  private static final Logger LOG = Logger.getInstance(GitUpdateEnvironment.class);
-
-  public GitUpdateEnvironment(@NotNull Project project, @NotNull GitVcs vcs, GitVcsSettings settings) {
-    myVcs = vcs;
+  public GitUpdateEnvironment(@NotNull Project project, @NotNull GitVcsSettings settings) {
     myProject = project;
     mySettings = settings;
     myPlatformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
@@ -71,8 +60,8 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     GitRepositoryManager repositoryManager = getRepositoryManager(myProject);
     final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject, myPlatformFacade,
                                                                    progressIndicator, getRepositoriesFromRoots(repositoryManager, roots),
-                                                                   updatedFiles);
-    boolean result = gitUpdateProcess.update(GitUpdateProcess.UpdateMethod.READ_FROM_SETTINGS).isSuccess();
+                                                                   updatedFiles, true);
+    boolean result = gitUpdateProcess.update(mySettings.getUpdateType()).isSuccess();
     return new GitUpdateSession(result);
   }
 

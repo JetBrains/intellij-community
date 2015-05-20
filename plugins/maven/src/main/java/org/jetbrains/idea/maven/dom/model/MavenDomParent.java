@@ -19,6 +19,7 @@
 
 package org.jetbrains.idea.maven.dom.model;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
@@ -26,6 +27,7 @@ import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.MavenParentRelativePathConverter;
+import org.jetbrains.idea.maven.dom.model.presentation.MavenParentPresentationProvider;
 
 /**
  * http://maven.apache.org/POM/4.0.0:Parent interface.
@@ -34,6 +36,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenParentRelativePathConverter;
  * 4.0.0
  * </pre>
  */
+@Presentation(provider = MavenParentPresentationProvider.class)
 public interface MavenDomParent extends MavenDomElement, MavenDomArtifactCoordinates {
   /**
    * Returns the value of the relativePath child.

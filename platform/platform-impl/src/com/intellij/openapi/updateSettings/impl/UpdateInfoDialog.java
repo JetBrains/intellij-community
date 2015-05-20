@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -22,6 +23,9 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
@@ -33,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -41,6 +46,7 @@ import java.util.List;
  */
 class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
+  private final boolean myForceHttps;
   private final Collection<PluginDownloader> myUpdatedPlugins;
   private final BuildInfo myLatestBuild;
   private final PatchInfo myPatch;
@@ -48,10 +54,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   protected UpdateInfoDialog(@NotNull UpdateChannel channel,
                              boolean enableLink,
+                             boolean forceHttps,
                              Collection<PluginDownloader> updatedPlugins,
                              Collection<IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
+    myForceHttps = forceHttps;
     myUpdatedPlugins = updatedPlugins;
     myLatestBuild = channel.getLatestBuild();
     myPatch = myLatestBuild != null ? myLatestBuild.findPatchForCurrentBuild() : null;
@@ -63,17 +71,13 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
-      final boolean onePluginFound = incompatiblePlugins.size() == 1;
-      String incompatibilityError = "Incompatible with new version plugin";
-      incompatibilityError += (onePluginFound ? " is" : "s are") + " detected: ";
-      incompatibilityError += onePluginFound ? "" : "<br>";
-      incompatibilityError += StringUtil.join(incompatiblePlugins, new Function<IdeaPluginDescriptor, String>() {
+      String list = StringUtil.join(incompatiblePlugins, new Function<IdeaPluginDescriptor, String>() {
         @Override
         public String fun(IdeaPluginDescriptor downloader) {
           return downloader.getName();
         }
       }, "<br/>");
-      setErrorText(incompatibilityError);
+      setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
     }
   }
 
@@ -88,7 +92,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     List<Action> actions = ContainerUtil.newArrayList();
 
     if (myPatch != null) {
-      final boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
+      boolean canRestart = ApplicationManager.getApplication().isRestartCapable();
       String button = IdeBundle.message(canRestart ? "updates.download.and.restart.button" : "updates.download.and.install.button");
       actions.add(new AbstractAction(button) {
         {
@@ -97,7 +101,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          downloadPatch(canRestart);
+          downloadPatchAndRestart();
         }
       });
     }
@@ -138,26 +142,24 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     return IdeBundle.message("updates.remind.later.button");
   }
 
-  private void downloadPatch(final boolean canRestart) {
-    final UpdateChecker.DownloadPatchResult result = UpdateChecker.downloadAndInstallPatch(myLatestBuild);
-    if (result == UpdateChecker.DownloadPatchResult.SUCCESS) {
-      if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
-        new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins, true){
-          @Override
-          protected boolean downloadModal() {
-            return true;
-          }
+  private void downloadPatchAndRestart() {
+    try {
+      UpdateChecker.installPlatformUpdate(myPatch, myLatestBuild.getNumber(), myForceHttps);
 
-          @Override
-          protected String getOkButtonText() {
-            return IdeBundle.message(canRestart ? "update.restart.plugins.update.action" : "update.shutdown.plugins.update.action");
-          }
-        }.show();
+      if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
+        new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).show();
       }
+
       restart();
     }
-    else if (result == UpdateChecker.DownloadPatchResult.FAILED) {
-      openDownloadPage();
+    catch (IOException e) {
+      Logger.getInstance(UpdateChecker.class).warn(e);
+      if (Messages.showOkCancelDialog(IdeBundle.message("update.downloading.patch.error", e.getMessage()),
+                                      IdeBundle.message("updates.error.connection.title"),
+                                      IdeBundle.message("updates.download.page.button"), CommonBundle.message("button.cancel"),
+                                      Messages.getErrorIcon()) == Messages.OK) {
+        openDownloadPage();
+      }
     }
   }
 
@@ -208,7 +210,12 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
 
-      myCurrentVersion.setText(formatVersion(appInfo.getFullVersion(), appInfo.getBuild().asStringWithoutProductCode()));
+      myCurrentVersion.setText(
+        formatVersion(
+          appInfo.getFullVersion() + (appInfo instanceof ApplicationInfoEx && ((ApplicationInfoEx)appInfo).isEAP() ? " EAP": ""),
+          appInfo.getBuild().asStringWithoutProductCode()
+        )
+      );
       myNewVersion.setText(formatVersion(myLatestBuild.getVersion(), myLatestBuild.getNumber().asStringWithoutProductCode()));
 
       if (myPatch != null) {
@@ -227,7 +234,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         configureMessageArea(myMessageArea);
       }
 
-      if (mySubscribtionLicense && myLicenseInfo != null) {
+      if (myLicenseInfo != null) {
         configureMessageArea(myLicenseArea, myLicenseInfo, myPaidUpgrade ? JBColor.RED : null, null);
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ public abstract class PsiAnchor {
   public abstract int getStartOffset();
   public abstract int getEndOffset();
 
+  @NotNull
   public static PsiAnchor create(@NotNull final PsiElement element) {
     if (!element.isValid()) {
       throw new PsiInvalidElementAccessException(element);
@@ -77,7 +78,7 @@ public abstract class PsiAnchor {
     PsiAnchor stubRef = createStubReference(element, file);
     if (stubRef != null) return stubRef;
 
-    if (!element.isPhysical() && element instanceof PsiCompiledElement|| element instanceof LightElement) {
+    if (!element.isPhysical() && element instanceof PsiCompiledElement || element instanceof LightElement || element instanceof SyntheticElement) {
       return new HardReference(element);
     }
 
@@ -125,7 +126,7 @@ public abstract class PsiAnchor {
     return elementType instanceof IStubFileElementType && vFile != null && ((IStubFileElementType)elementType).shouldBuildStubFor(vFile);
   }
 
-  public static int calcStubIndex(StubBasedPsiElement psi) {
+  public static int calcStubIndex(@NotNull StubBasedPsiElement psi) {
     if (psi instanceof PsiFile) {
       return 0;
     }

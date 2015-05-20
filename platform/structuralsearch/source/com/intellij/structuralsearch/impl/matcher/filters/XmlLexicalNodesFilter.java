@@ -1,7 +1,8 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.xml.XmlText;
 
 /**
 * @author Eugene.Kudelevsky
@@ -13,7 +14,13 @@ public class XmlLexicalNodesFilter extends XmlElementVisitor {
     this.myLexicalNodesFilter = lexicalNodesFilter;
   }
 
-  @Override public void visitXmlText(XmlText text) {
+  @Override
+  public void visitWhiteSpace(PsiWhiteSpace space) {
+    myLexicalNodesFilter.setResult(true);
+  }
+
+  @Override
+  public void visitErrorElement(PsiErrorElement element) {
     myLexicalNodesFilter.setResult(true);
   }
 }

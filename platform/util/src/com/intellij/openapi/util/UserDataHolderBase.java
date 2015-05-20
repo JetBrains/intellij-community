@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
-  public static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
+  private static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   /**
    * Concurrent writes to this field are via CASes only, using the {@link #updater}
    */
-  @NotNull private volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
+  @NotNull
+  private volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
 
   @Override
   protected Object clone() {
@@ -47,10 +48,10 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
   public String getUserDataString() {
     final KeyFMap userMap = getUserMap();
     final KeyFMap copyableMap = getUserData(COPYABLE_USER_MAP_KEY);
-    return userMap.toString() + (copyableMap == null ? "" : copyableMap.toString());
+    return userMap + (copyableMap == null ? "" : copyableMap.toString());
   }
 
-  public void copyUserDataTo(UserDataHolderBase other) {
+  public void copyUserDataTo(@NotNull UserDataHolderBase other) {
     other.setUserMap(getUserMap());
   }
 
@@ -80,13 +81,13 @@ public class UserDataHolderBase implements UserDataHolderEx, Cloneable {
     return updater.compareAndSet(this, oldMap, newMap);
   }
 
-  public <T> T getCopyableUserData(Key<T> key) {
+  public <T> T getCopyableUserData(@NotNull Key<T> key) {
     KeyFMap map = getUserData(COPYABLE_USER_MAP_KEY);
     //noinspection unchecked,ConstantConditions
     return map == null ? null : map.get(key);
   }
 
-  public <T> void putCopyableUserData(Key<T> key, T value) {
+  public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
     while (true) {
       KeyFMap map = getUserMap();
       KeyFMap copyableMap = map.get(COPYABLE_USER_MAP_KEY);

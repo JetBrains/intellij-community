@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,9 @@ package com.intellij.ide.browsers.impl;
 import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
-import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Url;
@@ -38,40 +34,41 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class WebBrowserServiceImpl extends WebBrowserService {
-  public static boolean isHtmlOrXmlFile(@NotNull PsiElement element) {
-    Language language = element.getLanguage();
-    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE || language == XMLLanguage.INSTANCE;
-  }
-
   @NotNull
   @Override
   public Collection<Url> getUrlsToOpen(@NotNull OpenInBrowserRequest request, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
-    VirtualFile virtualFile = request.getVirtualFile();
-    if (virtualFile instanceof HttpVirtualFile) {
-      return Collections.singleton(Urls.newFromVirtualFile(virtualFile));
+    boolean isHtmlOrXml = isHtmlOrXmlFile(request.getFile().getViewProvider().getBaseLanguage());
+    if (!preferLocalUrl || !isHtmlOrXml) {
+      Collection<Url> urls = getUrls(request);
+      if (!isHtmlOrXml || !urls.isEmpty()) {
+        return urls;
+      }
     }
 
-    if (!preferLocalUrl || !isHtmlOrXmlFile(request.getFile())) {
-      WebBrowserUrlProvider provider = getProvider(request);
-      if (provider != null) {
-        if (request.getResult() != null) {
-          return request.getResult();
-        }
+    VirtualFile file = request.getVirtualFile();
+    return file instanceof LightVirtualFile || !request.getFile().getViewProvider().isPhysical()
+           ? Collections.<Url>emptyList()
+           : Collections.singletonList(Urls.newFromVirtualFile(file));
+  }
 
-        try {
-          Collection<Url> urls = provider.getUrls(request);
-          if (!urls.isEmpty()) {
-            return urls;
-          }
-        }
-        catch (WebBrowserUrlProvider.BrowserException e) {
-          if (!HtmlUtil.isHtmlFile(request.getFile())) {
-            throw e;
-          }
+  @NotNull
+  private static Collection<Url> getUrls(@NotNull OpenInBrowserRequest request) throws WebBrowserUrlProvider.BrowserException {
+    WebBrowserUrlProvider provider = getProvider(request);
+    if (provider != null) {
+      if (request.getResult() != null) {
+        return request.getResult();
+      }
+
+      try {
+        return provider.getUrls(request);
+      }
+      catch (WebBrowserUrlProvider.BrowserException e) {
+        if (!HtmlUtil.isHtmlFile(request.getFile())) {
+          throw e;
         }
       }
     }
-    return virtualFile instanceof LightVirtualFile || !request.getFile().getViewProvider().isPhysical() ? Collections.<Url>emptySet() : Collections.singleton(Urls.newFromVirtualFile(virtualFile));
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -85,25 +82,19 @@ public class WebBrowserServiceImpl extends WebBrowserService {
     return null;
   }
 
-  @Nullable
-  public static Url getUrlForContext(@NotNull PsiElement sourceElement) {
-    Url url;
+  @NotNull
+  public static Collection<Url> getDebuggableUrls(@Nullable PsiElement context) {
     try {
-      Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(sourceElement, false);
-      url = ContainerUtil.getFirstItem(urls);
-      if (url == null) {
-        return null;
-      }
+      OpenInBrowserRequest request = context == null ? null : OpenInBrowserRequest.create(context);
+      return request == null || request.getFile().getViewProvider().getBaseLanguage() == XMLLanguage.INSTANCE ? Collections.<Url>emptyList() : getUrls(request);
     }
     catch (WebBrowserUrlProvider.BrowserException ignored) {
-      return null;
+      return Collections.emptyList();
     }
+  }
 
-    VirtualFile virtualFile = sourceElement.getContainingFile().getVirtualFile();
-    if (virtualFile == null) {
-      return null;
-    }
-
-    return !url.isInLocalFileSystem() || HtmlUtil.isHtmlFile(virtualFile) ? url : null;
+  @Nullable
+  public static Url getDebuggableUrl(@Nullable PsiElement context) {
+    return ContainerUtil.getFirstItem(getDebuggableUrls(context));
   }
 }

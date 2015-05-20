@@ -67,20 +67,40 @@ public class AnActionEvent implements PlaceProvider<String> {
     myModifiers = modifiers;
   }
 
+  @Deprecated
   @NotNull
-  public static AnActionEvent createFromInputEvent(@NotNull AnAction action, InputEvent event, @NotNull String place) {
+  public static AnActionEvent createFromInputEvent(@NotNull AnAction action, @Nullable InputEvent event, @NotNull String place) {
     DataContext context = event == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(event.getComponent());
+    return createFromAnAction(action, event, place, context);
+  }
+
+  @NotNull
+  public static AnActionEvent createFromAnAction(@NotNull AnAction action,
+                                                 @Nullable InputEvent event,
+                                                 @NotNull String place,
+                                                 @NotNull DataContext dataContext) {
     int modifiers = event == null ? 0 : event.getModifiers();
-    AnActionEvent anActionEvent = new AnActionEvent(
-      event,
-      context,
-      place,
-      action.getTemplatePresentation(),
-      ActionManager.getInstance(),
-      modifiers
-    );
+    Presentation presentation = action.getTemplatePresentation().clone();
+    AnActionEvent anActionEvent = new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(), modifiers);
     anActionEvent.setInjectedContext(action.isInInjectedContext());
     return anActionEvent;
+  }
+
+  @NotNull
+  public static AnActionEvent createFromDataContext(@NotNull String place,
+                                                    @Nullable Presentation presentation,
+                                                    @NotNull DataContext dataContext) {
+    return new AnActionEvent(null, dataContext, place, presentation == null ? new Presentation() : presentation, ActionManager.getInstance(), 0);
+  }
+
+
+  @NotNull
+  public static AnActionEvent createFromInputEvent(@Nullable InputEvent event,
+                                                   @NotNull String place,
+                                                   @NotNull Presentation presentation,
+                                                   @NotNull DataContext dataContext) {
+    return new AnActionEvent(event, dataContext, place, presentation, ActionManager.getInstance(),
+                             event == null ? 0 : event.getModifiers());
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,9 @@ import javax.swing.event.HyperlinkEvent;
 
 public class DslErrorReporterImpl extends DslErrorReporter {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex");
-  public static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("Groovy DSL errors", NotificationDisplayType.BALLOON, true);
+  private final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Groovy DSL errors", NotificationDisplayType.BALLOON, true);
 
-  static {
+  public DslErrorReporterImpl() {
     NotificationsConfigurationImpl.remove("Groovy DSL parsing");
   }
 
@@ -44,7 +43,7 @@ public class DslErrorReporterImpl extends DslErrorReporter {
 
     final String exceptionText = ExceptionUtil.getThrowableText(e);
     LOG.info(exceptionText);
-    GroovyDslFileIndex.disableFile(vfile, exceptionText);
+    GroovyDslFileIndex.disableFile(vfile, DslActivationStatus.Status.ERROR, exceptionText);
 
 
     if (!ApplicationManagerEx.getApplicationEx().isInternal() && !ProjectRootManager.getInstance(project).getFileIndex().isInContent(vfile)) {
@@ -61,6 +60,5 @@ public class DslErrorReporterImpl extends DslErrorReporter {
                                               notification.expire();
                                             }
                                           }).notify(project);
-
   }
 }

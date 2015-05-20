@@ -1,4 +1,4 @@
-// "Create Method 'run'" "true"
+// "Create method 'run'" "true"
 class Bug {
 
   interface Foo<X> {

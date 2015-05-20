@@ -29,6 +29,8 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.ClickListener;
@@ -37,13 +39,17 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IconUtil;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.util.EventObject;
 
 /**
@@ -251,11 +257,21 @@ public abstract class AbstractValueHint {
   }
 
   private static boolean isAltMask(@JdkConstants.InputEventMask int modifiers) {
-    return modifiers == InputEvent.ALT_MASK;
+    return KeymapUtil.matchActionMouseShortcutsModifiers(KeymapManager.getInstance().getActiveKeymap(),
+                                                         modifiers,
+                                                         XDebuggerActions.QUICK_EVALUATE_EXPRESSION);
   }
 
-  public static ValueHintType getType(final EditorMouseEvent e) {
-    return isAltMask(e.getMouseEvent().getModifiers()) ? ValueHintType.MOUSE_ALT_OVER_HINT : ValueHintType.MOUSE_OVER_HINT;
+  @Nullable
+  public static ValueHintType getHintType(final EditorMouseEvent e) {
+    int modifiers = e.getMouseEvent().getModifiers();
+    if (modifiers == 0) {
+      return ValueHintType.MOUSE_OVER_HINT;
+    }
+    else if (isAltMask(modifiers)) {
+      return ValueHintType.MOUSE_ALT_OVER_HINT;
+    }
+    return null;
   }
 
   public boolean isInsideHint(Editor editor, Point point) {

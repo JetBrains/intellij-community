@@ -57,7 +57,6 @@ public class PropertiesProjectViewTest extends LightPlatformCodeInsightFixtureTe
                        "    xxx_en.properties\n" +
                        "    xxx_ru_RU.properties\n" +
                        "   X.txt\n" +
-                       myStructure.getProjectFileRepresentation() +
                        " External Libraries\n";
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);
   }
@@ -74,7 +73,6 @@ public class PropertiesProjectViewTest extends LightPlatformCodeInsightFixtureTe
                        "   xxx2.properties\n" +
                        "   yyy.properties\n" +
                        "   X.txt\n" +
-                       myStructure.getProjectFileRepresentation() +
                        " External Libraries\n";
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);
@@ -94,7 +92,6 @@ public class PropertiesProjectViewTest extends LightPlatformCodeInsightFixtureTe
                        "    xxx.properties\n" +
                        "    xxx_en.properties\n" +
                        "   X.txt\n" +
-                       myStructure.getProjectFileRepresentation() +
                        " External Libraries\n";
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);
@@ -111,7 +108,6 @@ public class PropertiesProjectViewTest extends LightPlatformCodeInsightFixtureTe
                 "    xxx_en.properties\n" +
                 "   xxx2.properties\n" +
                 "   yyy.properties\n" +
-                myStructure.getProjectFileRepresentation() +
                 " External Libraries\n";
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), structure);

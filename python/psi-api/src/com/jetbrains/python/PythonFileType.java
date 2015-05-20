@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.text.CharSequenceReader;
 import icons.PythonPsiApiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
@@ -88,7 +88,7 @@ public class PythonFileType extends LanguageFileType {
   }
 
   @Override
-  public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull String content) {
+  public Charset extractCharsetFromFileContent(@Nullable Project project, @Nullable VirtualFile file, @NotNull CharSequence content) {
     final String charsetName = getCharsetFromEncodingDeclaration(content);
     if (charsetName == null) {
       return null;
@@ -119,12 +119,12 @@ public class PythonFileType extends LanguageFileType {
   }
 
   @Nullable
-  private static String getCharsetFromEncodingDeclaration(@Nullable String content) {
-    if (content == null || content.isEmpty()) {
+  private static String getCharsetFromEncodingDeclaration(@Nullable CharSequence content) {
+    if (content == null || content.length() == 0) {
       return null;
     }
     try {
-      final BufferedReader reader = new BufferedReader(new StringReader(content));
+      final BufferedReader reader = new BufferedReader(new CharSequenceReader(content));
       try {
         for (int i = 0; i < MAX_CHARSET_ENCODING_LINE; i++) {
           final String line = reader.readLine();

@@ -1,4 +1,4 @@
-// "Create Class 'MyTableModel'" "true"
+// "Create class 'MyTableModel'" "true"
 import javax.swing.*;
 import javax.swing.table.TableModel;
 

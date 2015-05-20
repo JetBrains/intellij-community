@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.extensions.impl;
 
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
@@ -23,7 +26,6 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
-import org.picocontainer.defaults.CachingComponentAdapter;
 
 /**
  * @author Alexander Kireyev
@@ -61,7 +63,7 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   @Override
   public Class getComponentImplementation() {
-    return loadClass(myImplementationClassName);
+    return loadImplementationClass();
   }
 
   @Override
@@ -81,11 +83,6 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
             catch (Exception e) {
               throw new PicoInitializationException(e);
             }
-          }
-
-          ExtensionInitializer initializer = (ExtensionInitializer)container.getComponentInstance(ExtensionInitializer.class);
-          if (initializer != null) {
-            initializer.initExtension(componentInstance);
           }
 
           myComponentInstance = componentInstance;
@@ -149,14 +146,15 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myPluginDescriptor;
   }
 
-  private Class loadClass(final String className) {
+  @NotNull
+  private Class loadImplementationClass() {
     if (myImplementationClass == null) {
       try {
         ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
         if (classLoader == null) {
           classLoader = getClass().getClassLoader();
         }
-        myImplementationClass = Class.forName(className, false, classLoader);
+        myImplementationClass = Class.forName(myImplementationClassName, false, classLoader);
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);
@@ -167,16 +165,11 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   private synchronized ComponentAdapter getDelegate() {
     if (myDelegate == null) {
-      Class impl = loadClass(myImplementationClassName);
-      myDelegate = new CachingComponentAdapter(new ConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true));
+      Class impl = loadImplementationClass();
+      myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true);
     }
 
     return myDelegate;
-  }
-
-  @Override
-  public boolean isAssignableTo(Class aClass) {
-    return aClass.getName().equals(myImplementationClassName);
   }
 
   @Override

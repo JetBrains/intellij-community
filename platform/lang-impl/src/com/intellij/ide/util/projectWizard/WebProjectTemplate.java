@@ -15,7 +15,8 @@
  */
 package com.intellij.ide.util.projectWizard;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.module.WebModuleBuilder;
 import com.intellij.openapi.module.WebModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -32,14 +33,29 @@ import javax.swing.*;
  *         Date: 9/28/12
  */
 public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> implements ProjectTemplate {
+  private NotNullLazyValue<GeneratorPeer<T>> myPeerHolder;
 
-  private final NotNullLazyValue<GeneratorPeer<T>> myPeerHolder = new NotNullLazyValue<GeneratorPeer<T>>() {
-    @NotNull
-    @Override
-    protected GeneratorPeer<T> compute() {
-      return createPeer();
-    }
-  };
+  public WebProjectTemplate() {
+    reset();
+    //peer stays in memory forever. So, adding hard reference is OK here
+    //todo[Dmitry]: pass some Disposable object here
+    LafManager.getInstance().addLafManagerListener(new LafManagerListener() {
+      @Override
+      public void lookAndFeelChanged(LafManager source) {
+        reset();
+      }
+    });
+  }
+
+  public void reset() {
+    myPeerHolder = new NotNullLazyValue<GeneratorPeer<T>>() {
+      @NotNull
+      @Override
+      protected GeneratorPeer<T> compute() {
+        return createPeer();
+      }
+    };
+  }
 
   @NotNull
   @Override
@@ -58,7 +74,7 @@ public abstract class WebProjectTemplate<T> extends WebProjectGenerator<T> imple
   }
 
   public Icon getLogo() {
-    return AllIcons.Nodes.PpWeb;
+    return getIcon();
   }
 
   @NotNull

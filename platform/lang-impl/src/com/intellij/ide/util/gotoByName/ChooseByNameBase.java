@@ -48,6 +48,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -71,8 +72,8 @@ import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -102,7 +103,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class ChooseByNameBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
@@ -530,7 +530,7 @@ public abstract class ChooseByNameBase {
                   return;
                 }
 
-                if (oppositeComponent != null) {
+                if (oppositeComponent != null && myProject != null && !myProject.isDisposed()) {
                   ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
                   ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowManager.getActiveToolWindowId());
                   if (toolWindow != null) {
@@ -803,14 +803,18 @@ public abstract class ChooseByNameBase {
   private boolean postponeCloseWhenListReady(boolean ok) {
     if (!isToFixLostTyping()) return false;
 
-    final String text = myTextField.getText();
-    if (ok && myCalcElementsThread != null && text != null && !text.trim().isEmpty()) {
+    final String text = getTrimmedText();
+    if (ok && myCalcElementsThread != null && !text.isEmpty()) {
       myPostponedOkAction = new ActionCallback();
       IdeFocusManager.getInstance(myProject).typeAheadUntil(myPostponedOkAction);
       return true;
     }
 
     return false;
+  }
+
+  @NotNull public String getTrimmedText() {
+    return StringUtil.trimLeading(StringUtil.notNullize(myTextField.getText()));
   }
 
   public void setFixLostTyping(boolean fixLostTyping) {
@@ -881,6 +885,7 @@ public abstract class ChooseByNameBase {
       (10, (paneHeight - (y + preferredTextFieldPanelSize.height)) / (preferredTextFieldPanelSize.height / 2) - 1);
 
     ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myTextFieldPanel, myTextField);
+    builder.setLocateWithinScreenBounds(false);
     builder.setCancelCallback(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
@@ -897,7 +902,7 @@ public abstract class ChooseByNameBase {
     myTextPopup.setSize(bounds.getSize());
     myTextPopup.setLocation(bounds.getLocation());
 
-    new MnemonicHelper().register(myTextFieldPanel);
+    MnemonicHelper.init(myTextFieldPanel);
     if (myProject != null && !myProject.isDefault()) {
       DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(myTextPopup);
     }
@@ -965,9 +970,8 @@ public abstract class ChooseByNameBase {
       calcElementsThread.cancel();
     }
 
-    final String text = myTextField.getText();
-    if (!canShowListForEmptyPattern() &&
-        (text == null || text.trim().isEmpty())) {
+    final String text = getTrimmedText();
+    if (!canShowListForEmptyPattern() && text.isEmpty()) {
       myListModel.clear();
       hideList();
       myTextFieldPanel.hideHint();
@@ -1067,7 +1071,7 @@ public abstract class ChooseByNameBase {
     int bestMatch = Integer.MIN_VALUE;
     final int count = myListModel.getSize();
 
-    Matcher matcher = buildPatternMatcher(transformPattern(myTextField.getText()));
+    Matcher matcher = buildPatternMatcher(transformPattern(getTrimmedText()));
 
     final String statContext = statisticsContext();
     for (int i = 0; i < count; i++) {
@@ -1096,7 +1100,7 @@ public abstract class ChooseByNameBase {
   @NotNull
   @NonNls
   protected String statisticsContext() {
-    return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + myTextField.getText();
+    return "choose_by_name#" + myModel.getPromptText() + "#" + myCheckBox.isSelected() + "#" + getTrimmedText();
   }
 
   private static class MyListModel<T> extends DefaultListModel implements ModelDiff.Model<T> {
@@ -1284,10 +1288,9 @@ public abstract class ChooseByNameBase {
       if (myCompletionKeyStroke != null && keyStroke.equals(myCompletionKeyStroke)) {
         completionKeyStrokeHappened = true;
         e.consume();
-        final String pattern = myTextField.getText();
-        final String oldText = myTextField.getText();
+        final String pattern = getTrimmedText();
         final int oldPos = myList.getSelectedIndex();
-        myHistory.add(Pair.create(oldText, oldPos));
+        myHistory.add(Pair.create(pattern, oldPos));
         final Runnable postRunnable = new Runnable() {
           @Override
           public void run() {
@@ -1300,7 +1303,7 @@ public abstract class ChooseByNameBase {
       if (backStroke != null && keyStroke.equals(backStroke)) {
         e.consume();
         if (!myHistory.isEmpty()) {
-          final String oldText = myTextField.getText();
+          final String oldText = getTrimmedText();
           final int oldPos = myList.getSelectedIndex();
           final Pair<String, Integer> last = myHistory.remove(myHistory.size() - 1);
           myTextField.setText(last.first);
@@ -1312,7 +1315,7 @@ public abstract class ChooseByNameBase {
       if (forwardStroke != null && keyStroke.equals(forwardStroke)) {
         e.consume();
         if (!myFuture.isEmpty()) {
-          final String oldText = myTextField.getText();
+          final String oldText = getTrimmedText();
           final int oldPos = myList.getSelectedIndex();
           final Pair<String, Integer> next = myFuture.remove(myFuture.size() - 1);
           myTextField.setText(next.first);
@@ -1347,7 +1350,7 @@ public abstract class ChooseByNameBase {
       final List<String> list = myProvider.filterNames(ChooseByNameBase.this, getNames(myCheckBox.isSelected()), pattern);
 
       if (isComplexPattern(pattern)) return; //TODO: support '*'
-      final String oldText = myTextField.getText();
+      final String oldText = getTrimmedText();
       final int oldPos = myList.getSelectedIndex();
 
       String commonPrefix = null;
@@ -1541,18 +1544,18 @@ public abstract class ChooseByNameBase {
       new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myScopeExpanded).scheduleThread();
     }
 
-    public void addElementsByPattern(@NotNull String pattern,
+    private void addElementsByPattern(@NotNull String pattern,
                                       @NotNull final Set<Object> elements,
-                                      @NotNull final ProgressIndicator cancelled,
+                                      @NotNull final ProgressIndicator indicator,
                                       boolean everywhere) {
       long start = System.currentTimeMillis();
       myProvider.filterElements(
         ChooseByNameBase.this, pattern, everywhere,
-        cancelled,
+        indicator,
         new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (cancelled.isCanceled()) return false;
+            if (indicator.isCanceled()) return false;
             elements.add(o);
 
             if (isOverflow(elements)) {
@@ -1653,8 +1656,9 @@ public abstract class ChooseByNameBase {
       cancelListUpdater();
 
       final UsageViewPresentation presentation = new UsageViewPresentation();
-      final String prefixPattern = myFindUsagesTitle + " \'" + myTextField.getText().trim() + "\'";
-      final String nonPrefixPattern = myFindUsagesTitle + " \'*" + myTextField.getText().trim() + "*\'";
+      final String text = getTrimmedText();
+      final String prefixPattern = myFindUsagesTitle + " \'" + text + "\'";
+      final String nonPrefixPattern = myFindUsagesTitle + " \'*" + text + "*\'";
       presentation.setCodeUsagesString(prefixPattern);
       presentation.setUsagesInGeneratedCodeString(prefixPattern + " in generated code");
       presentation.setDynamicUsagesString(nonPrefixPattern);
@@ -1667,45 +1671,38 @@ public abstract class ChooseByNameBase {
       fillUsages(Arrays.asList(elements[0]), usages, targets, false);
       fillUsages(Arrays.asList(elements[1]), usages, targets, true);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
-        final String text = myTextField.getText();
         final boolean everywhere = myCheckBox.isSelected();
-        final LinkedHashSet<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
-        final LinkedHashSet<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
+        final Set<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
+        final Set<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
         hideHint();
         ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true) {
           private ChooseByNameBase.CalcElementsThread myCalcUsagesThread;
-
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             ensureNamesLoaded(everywhere);
             indicator.setIndeterminate(true);
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
+            final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
+            myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, false) {
+              @Override
+              protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
+                tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
+                if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+                  int usageCount = elementsArray.size() + myMaximumListSizeLimit;
+                  UsageViewManagerImpl.showTooManyUsagesWarning(getProject(), tooManyUsagesStatus, indicator, presentation, usageCount, null);
+                }
+                return false;
+              }
+            };
 
+            ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
               public void run() {
-                final boolean[] overFlow = {false};
-                myCalcUsagesThread = new CalcElementsThread(text, everywhere, null, ModalityState.NON_MODAL, false) {
-                  private final AtomicBoolean userAskedToAbort = new AtomicBoolean();
-                  @Override
-                  protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
-                    if (elementsArray.size() > UsageLimitUtil.USAGES_LIMIT - myMaximumListSizeLimit && !userAskedToAbort.getAndSet(true)) {
-                      final UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, UsageViewBundle
-                        .message("find.excessive.usage.count.prompt", elementsArray.size() + myMaximumListSizeLimit, StringUtil.pluralize(presentation.getUsagesWord())), presentation);
-                      if (ret == UsageLimitUtil.Result.ABORT) {
-                        overFlow[0] = true;
-                        return true;
-                      }
-                    }
-                    return false;
-                  }
-                };
-
                 boolean anyPlace = isSearchInAnyPlace();
                 setSearchInAnyPlace(false);
                 myCalcUsagesThread.addElementsByPattern(text, prefixMatchElementsArray, indicator, everywhere);
                 setSearchInAnyPlace(anyPlace);
 
-                if (anyPlace && !overFlow[0]) {
+                if (anyPlace && !indicator.isCanceled()) {
                   myCalcUsagesThread.addElementsByPattern(text, nonPrefixMatchElementsArray, indicator, everywhere);
                   nonPrefixMatchElementsArray.removeAll(prefixMatchElementsArray);
                 }

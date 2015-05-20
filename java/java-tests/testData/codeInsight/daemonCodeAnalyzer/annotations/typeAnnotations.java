@@ -59,6 +59,7 @@ class Outer {
   {
     new @TA Object();
     new @TA ArrayList<String>();
+    new @TA Runnable() { public void run() { } }.run();
 
     ArrayList<String> var = new <String> @TA ArrayList();
     new @TA Outer().new @TA Middle();

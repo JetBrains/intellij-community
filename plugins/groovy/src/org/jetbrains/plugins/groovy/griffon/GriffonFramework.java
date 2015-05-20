@@ -36,6 +36,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -206,12 +207,19 @@ public class GriffonFramework extends MvcFramework {
 
   @Override
   public VirtualFile getSdkRoot(@Nullable Module module) {
-    VirtualFile coreJar = findCoreJar(module);
-    if (coreJar == null) return null;
-
-    final VirtualFile parent = coreJar.getParent();
-    if (parent != null) {
-      return parent.getParent();
+    if (module == null) return null;
+    final VirtualFile[] classRoots = ModuleRootManager.getInstance(module).orderEntries().librariesOnly().getClassesRoots();
+    for (VirtualFile file : classRoots) {
+      if (GriffonLibraryPresentationProvider.isGriffonCoreJar(file)) {
+        final VirtualFile localFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+        if (localFile != null) {
+          final VirtualFile parent = localFile.getParent();
+          if (parent != null) {
+            return parent.getParent();
+          }
+        }
+        return null;
+      }
     }
     return null;
   }

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public abstract class InspectionManager {
   public abstract Project getProject();
 
   @NotNull
-  public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull String descriptionTemplate, QuickFix... fixes);
+  public abstract CommonProblemDescriptor createProblemDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate, QuickFix... fixes);
 
   /**
    * Factory method for ProblemDescriptor. Should be called from LocalInspectionTool.checkXXX() methods.
@@ -49,21 +50,21 @@ public abstract class InspectionManager {
    */
   @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull String descriptionTemplate,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             LocalQuickFix fix,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly);
 
   @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull String descriptionTemplate,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             boolean onTheFly,
                                                             LocalQuickFix[] fixes,
                                                             @NotNull ProblemHighlightType highlightType);
 
   @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull String descriptionTemplate,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             LocalQuickFix[] fixes,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
@@ -72,7 +73,7 @@ public abstract class InspectionManager {
   @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                             @NotNull PsiElement endElement,
-                                                            @NotNull String descriptionTemplate,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             LocalQuickFix... fixes);
@@ -80,14 +81,14 @@ public abstract class InspectionManager {
   @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             @Nullable("null means the text range of the element") TextRange rangeInElement,
-                                                            @NotNull final String descriptionTemplate,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
                                                             LocalQuickFix... fixes);
 
   @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                            @NotNull final String descriptionTemplate,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                                                             final boolean showTooltip,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,

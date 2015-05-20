@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,8 @@ public class OpenFileAction extends AnAction implements DumbAware {
 
   // vanilla OpenProjectFileChooserDescriptor only accepts project files; this one is overridden to accept any files
   private static class ProjectOrFileChooserDescriptor extends OpenProjectFileChooserDescriptor {
-    private final FileChooserDescriptor myStandardDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+    private final FileChooserDescriptor myStandardDescriptor =
+      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withHideIgnored(false);
 
     public ProjectOrFileChooserDescriptor() {
       super(true);

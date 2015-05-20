@@ -52,7 +52,8 @@ public abstract class AbstractMakeStaticDialog extends RefactoringDialog {
     final Settings settings = new Settings(
             isReplaceUsages(),
             isMakeClassParameter() ? getClassParameterName() : null,
-            getVariableData()
+            getVariableData(),
+            isGenerateDelegate()
     );
     if (myMember instanceof PsiMethod) {
       invokeRefactoring(new MakeMethodStaticProcessor(getProject(), (PsiMethod)myMember, settings));
@@ -60,6 +61,10 @@ public abstract class AbstractMakeStaticDialog extends RefactoringDialog {
     else {
       invokeRefactoring(new MakeClassStaticProcessor(getProject(), (PsiClass)myMember, settings));
     }
+  }
+
+  protected boolean isGenerateDelegate() {
+    return false;
   }
 
   protected abstract boolean validateData();

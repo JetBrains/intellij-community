@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -26,7 +25,6 @@ import com.intellij.util.ui.DialogUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -44,6 +42,7 @@ import java.util.Map;
  * @since 5.1
  */
 public class MnemonicHelper extends ComponentTreeWatcher {
+  private static final MnemonicContainerListener LISTENER = new MnemonicContainerListener();
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.MnemonicHelper");
   private Map<Integer, String> myMnemonics = null;
 
@@ -59,6 +58,11 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   };
   @NonNls public static final String TEXT_CHANGED_PROPERTY = "text";
 
+  /**
+   * @see #init(Component)
+   * @deprecated do not use this object as a tree watcher
+   */
+  @Deprecated
   public MnemonicHelper() {
     super(ArrayUtil.EMPTY_CLASS_ARRAY);
   }
@@ -80,7 +84,7 @@ public class MnemonicHelper extends ComponentTreeWatcher {
   }
 
   private static void fixMacMnemonicKeyStroke(JComponent component, String type) {
-    if (SystemInfo.isMac) {
+    if (SystemInfo.isMac && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
       // hack to make component's mnemonic work for ALT+KEY_CODE on Macs.
       // Default implementation uses ALT+CTRL+KEY_CODE (see BasicLabelUI).
       InputMap inputMap = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -144,5 +148,19 @@ public class MnemonicHelper extends ComponentTreeWatcher {
                       "control alt pressed " + mnemonic :
                       "alt pressed " + mnemonic;
     return CustomShortcutSet.fromString(shortcut);
+  }
+
+  /**
+   * Initializes mnemonics support for the specified component and for its children if needed.
+   *
+   * @param component the root component of the hierarchy
+   */
+  public static void init(Component component) {
+    if (Registry.is("ide.mnemonic.helper.old") || Registry.is("ide.checkDuplicateMnemonics")) {
+      new MnemonicHelper().register(component);
+    }
+    else {
+      LISTENER.addTo(component);
+    }
   }
 }

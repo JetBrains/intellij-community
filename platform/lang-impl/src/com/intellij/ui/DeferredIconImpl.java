@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -31,9 +29,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.TransferToEDTQueue;
-import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +42,7 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class DeferredIconImpl<T> implements DeferredIcon {
   private static final int MIN_AUTO_UPDATE_MILLIS = 950;
@@ -52,12 +52,14 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private Function<T, Icon> myEvaluator;
   private volatile boolean myIsScheduled = false;
   private T myParam;
-  private static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
+  private static final Icon EMPTY_ICON = JBUI.emptyIcon(16);
   private final boolean myNeedReadAction;
   private boolean myDone;
   private final boolean myAutoUpdatable;
   private long myLastCalcTime = 0L;
   private long myLastTimeSpent = 0L;
+
+  private static final ThreadPoolExecutor ourIconsCalculatingExecutor = ConcurrencyUtil.newSingleThreadExecutor("Icons");
 
   private final IconListener<T> myEvalListener;
   private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator", 200);
@@ -98,8 +100,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
     final Component target = getTarget(c);
     final Component paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent.class, c);
     final Rectangle paintingParentRec = paintingParent == null ? null : ((PaintingParent)paintingParent).getChildRec(c);
-
-    JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
+    ourIconsCalculatingExecutor.submit(new Runnable() {
       @Override
       public void run() {
         int oldWidth = myDelegateIcon.getIconWidth();

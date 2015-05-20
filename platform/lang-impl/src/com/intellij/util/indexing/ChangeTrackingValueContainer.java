@@ -144,6 +144,11 @@ class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>
       }
 
       if (myAdded != null) {
+        if (fileId2ValueMapping != null) {
+          // there is no sense for value per file validation because we have fileId -> value mapping and we are enforcing it here
+          fileId2ValueMapping.disableOneValuePerFileValidation();
+        }
+
         myAdded.forEach(new ContainerAction<Value>() {
           @Override
           public boolean perform(final int inputId, final Value value) {

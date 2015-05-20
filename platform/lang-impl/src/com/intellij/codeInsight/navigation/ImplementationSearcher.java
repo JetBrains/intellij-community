@@ -17,14 +17,15 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -41,11 +42,11 @@ public class ImplementationSearcher {
 
   @NotNull
   public PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
-    final TargetElementUtilBase targetElementUtil = TargetElementUtilBase.getInstance();
+    final TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
     boolean onRef = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED), offset) == null;
+        return targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED), offset) == null;
       }
     });
     return searchImplementations(element, editor, offset, onRef && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -77,7 +78,13 @@ public class ImplementationSearcher {
       }
       return filterElements(element, all, offset);
     }
-    return (includeSelfAlways || includeSelfIfNoOthers) && element.getTextRange() != null ?
+    return (includeSelfAlways || includeSelfIfNoOthers) &&
+           ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
+             @Override
+             public TextRange compute() {
+               return element.getTextRange();
+             }
+           }) != null ?
            new PsiElement[] {element} :
            PsiElement.EMPTY_ARRAY;
   }
@@ -86,7 +93,7 @@ public class ImplementationSearcher {
     return ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
       @Override
       public SearchScope compute() {
-        return TargetElementUtilBase.getInstance().getSearchScope(editor, element);
+        return TargetElementUtil.getInstance().getSearchScope(editor, element);
       }
     });
   }
@@ -126,7 +133,7 @@ public class ImplementationSearcher {
   }
 
   public static int getFlags() {
-    return TargetElementUtilBase.getInstance().getDefinitionSearchFlags();
+    return TargetElementUtil.getInstance().getDefinitionSearchFlags();
   }
 
   public static class FirstImplementationsSearcher extends ImplementationSearcher {

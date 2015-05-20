@@ -24,7 +24,10 @@ import java.lang.annotation.ElementType;
 /**
  * Used to indicate that a method
  * would be called in AWT thread
+ *
+ * @deprecated use {@link org.jetbrains.annotations.CalledInAwt }
  */
+@Deprecated
 @Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.METHOD})
 public @interface CalledInAwt {

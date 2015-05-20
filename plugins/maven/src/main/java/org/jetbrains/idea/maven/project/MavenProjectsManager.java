@@ -15,7 +15,11 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationSettings;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -29,13 +33,18 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
@@ -53,7 +62,9 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -62,6 +73,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;
+  private static final String NON_MANAGED_POM_NOTIFICATION_GROUP_ID = "Maven: non-managed pom.xml";
+  private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
+    NotificationGroup.balloonGroup(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
@@ -161,6 +175,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     startupManager.registerPostStartupActivity(new Runnable() {
       @Override
       public void run() {
+        if (!isMavenizedProject()) {
+          showNotificationOrphanMavenProject(myProject);
+        }
         CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
           @Override
           public boolean execute(CompileContext context) {
@@ -175,6 +192,71 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
             return true;
           }
         });
+      }
+    });
+  }
+
+  private void showNotificationOrphanMavenProject(final Project project) {
+    final NotificationSettings notificationSettings = NotificationsConfigurationImpl.getSettings(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
+    if (!notificationSettings.isShouldLog() && notificationSettings.getDisplayType().equals(NotificationDisplayType.NONE)) {
+      return;
+    }
+
+    File baseDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
+    final File[] files = baseDir.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return FileUtil.namesEqual("pom.xml", name);
+      }
+    });
+
+    if (files != null && files.length != 0) {
+      final VirtualFile file = VfsUtil.findFileByIoFile(files[0], true);
+      if (file == null) return;
+
+      showBalloon(
+        ProjectBundle.message("maven.orphan.notification.title"),
+        ProjectBundle.message("maven.orphan.notification.msg", file.getPresentableUrl()),
+        NON_MANAGED_POM_NOTIFICATION_GROUP, NotificationType.INFORMATION, new NotificationListener.Adapter() {
+          @Override
+          protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+            if ("#add".equals(e.getDescription())) {
+              addManagedFilesOrUnignore(ContainerUtil.list(file));
+              notification.expire();
+            }
+            else if ("#disable".equals(e.getDescription())) {
+              final int result = Messages.showYesNoDialog(
+                myProject,
+                "Notification will be disabled for all projects.\n\n" +
+                "Settings | Appearance & Behavior | Notifications | " +
+                NON_MANAGED_POM_NOTIFICATION_GROUP_ID +
+                "\ncan be used to configure the notification.",
+                "Non-Managed Maven Project Detection",
+                "Disable Notification", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
+              if (result == Messages.YES) {
+                NotificationsConfigurationImpl.getInstanceImpl().changeSettings(
+                  NON_MANAGED_POM_NOTIFICATION_GROUP_ID, NotificationDisplayType.NONE, false, false);
+                notification.expire();
+              }
+              else {
+                notification.hideBalloon();
+              }
+            }
+          }
+        }
+      );
+    }
+  }
+
+  public void showBalloon(@NotNull final String title,
+                          @NotNull final String message,
+                          @NotNull final NotificationGroup group,
+                          @NotNull final NotificationType type,
+                          @Nullable final NotificationListener listener) {
+    AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
+      @Override
+      public void run() {
+        group.createNotification(title, message, type, listener).notify(myProject);
       }
     });
   }
@@ -346,6 +428,16 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         if (haveChanges(toImport) || !deleted.isEmpty()) {
           scheduleForNextImport(toImport);
         }
+
+        if (!deleted.isEmpty() && !hasScheduledProjects()) {
+          MavenProject project = ObjectUtils.chooseNotNull(ContainerUtil.getFirstItem(toResolve),
+                                                           ContainerUtil.getFirstItem(getNonIgnoredProjects()));
+          if (project != null) {
+            scheduleForNextImport(Pair.create(project, MavenProjectChanges.ALL));
+            scheduleForNextResolve(ContainerUtil.list(project));
+          }
+        }
+
         scheduleForNextResolve(toResolve);
 
         fireProjectScheduled();
@@ -724,8 +816,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void scheduleImportAndResolve() {
-    scheduleImport();
-    scheduleResolve();
+    scheduleResolve();  // scheduleImport will be called after the scheduleResolve process has finished
     fireImportAndResolveScheduled();
   }
 

@@ -72,8 +72,9 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
 
   public void remove(@NotNull final T element) {
     int i = myItems.indexOf(element);
-    myItems.remove(element);
-    fireIntervalRemoved(this, i, i);
+    if (myItems.remove(element)) {
+      fireIntervalRemoved(this, i, i);
+    }
   }
 
   public void setElementAt(@NotNull final T element, final int index) {

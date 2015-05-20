@@ -3,9 +3,11 @@ package com.intellij.json.psi.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonParserDefinition;
+import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,12 +20,15 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class JsonPsiImplUtils {
+  private static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<List<Pair<TextRange, String>>>("JSON string fragments");
+
   @NotNull
   public static String getName(@NotNull JsonProperty property) {
-    return StringUtil.stripQuotesAroundValue(property.getNameElement().getText());
+    return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(property.getNameElement().getText()));
   }
 
   /**
@@ -31,7 +36,7 @@ public class JsonPsiImplUtils {
    * but for compatibility with JavaScript integration any JSON literals as well as identifiers (unquoted words)
    * are possible and highlighted as error later.
    *
-   * @see com.intellij.json.codeinsight.JsonStandardComplianceInspection
+   * @see JsonStandardComplianceInspection
    */
   @NotNull
   public static JsonValue getNameElement(@NotNull JsonProperty property) {
@@ -67,6 +72,12 @@ public class JsonPsiImplUtils {
       @Nullable
       @Override
       public Icon getIcon(boolean unused) {
+        if (property.getValue() instanceof JsonArray) {
+          return AllIcons.Json.Property_brackets;
+        }
+        if (property.getValue() instanceof JsonObject) {
+          return AllIcons.Json.Property_braces;
+        }
         return PlatformIcons.PROPERTY_ICON;
       }
     };
@@ -122,56 +133,61 @@ public class JsonPsiImplUtils {
 
   @NotNull
   public static List<Pair<TextRange, String>> getTextFragments(@NotNull JsonStringLiteral literal) {
-    final List<Pair<TextRange, String>> result = new ArrayList<Pair<TextRange, String>>();
-    final String text = literal.getText();
-    final int length = text.length();
-    int pos = 1, unescapedSequenceStart = 1;
-    while (pos < length) {
-      if (text.charAt(pos) == '\\') {
-        if (unescapedSequenceStart != pos) {
-          result.add(Pair.create(new TextRange(unescapedSequenceStart, pos), text.substring(unescapedSequenceStart, pos)));
-        }
-        if (pos == length - 1) {
-          result.add(Pair.create(new TextRange(pos, pos + 1), "\\"));
-          break;
-        }
-        final char next = text.charAt(pos + 1);
-        switch (next) {
-          case '"':
-          case '\\':
-          case '/':
-          case 'b':
-          case 'f':
-          case 'n':
-          case 'r':
-          case 't':
-            final int idx = ourEscapesTable.indexOf(next);
-            result.add(Pair.create(new TextRange(pos, pos + 2), ourEscapesTable.substring(idx + 1, idx + 2)));
-            pos += 2;
+    List<Pair<TextRange, String>> result = literal.getUserData(STRING_FRAGMENTS);
+    if (result == null) {
+      result = new ArrayList<Pair<TextRange, String>>();
+      final String text = literal.getText();
+      final int length = text.length();
+      int pos = 1, unescapedSequenceStart = 1;
+      while (pos < length) {
+        if (text.charAt(pos) == '\\') {
+          if (unescapedSequenceStart != pos) {
+            result.add(Pair.create(new TextRange(unescapedSequenceStart, pos), text.substring(unescapedSequenceStart, pos)));
+          }
+          if (pos == length - 1) {
+            result.add(Pair.create(new TextRange(pos, pos + 1), "\\"));
             break;
-          case 'u':
-            int i = pos + 2;
-            for (; i < pos + 6; i++) {
-              if (i == length || !StringUtil.isHexDigit(text.charAt(i))) {
-                break;
+          }
+          final char next = text.charAt(pos + 1);
+          switch (next) {
+            case '"':
+            case '\\':
+            case '/':
+            case 'b':
+            case 'f':
+            case 'n':
+            case 'r':
+            case 't':
+              final int idx = ourEscapesTable.indexOf(next);
+              result.add(Pair.create(new TextRange(pos, pos + 2), ourEscapesTable.substring(idx + 1, idx + 2)));
+              pos += 2;
+              break;
+            case 'u':
+              int i = pos + 2;
+              for (; i < pos + 6; i++) {
+                if (i == length || !StringUtil.isHexDigit(text.charAt(i))) {
+                  break;
+                }
               }
-            }
-            result.add(Pair.create(new TextRange(pos, i), text.substring(pos, i)));
-            pos = i;
-            break;
-          default:
-            result.add(Pair.create(new TextRange(pos, pos + 2), text.substring(pos, pos + 2)));
-            pos += 2;
+              result.add(Pair.create(new TextRange(pos, i), text.substring(pos, i)));
+              pos = i;
+              break;
+            default:
+              result.add(Pair.create(new TextRange(pos, pos + 2), text.substring(pos, pos + 2)));
+              pos += 2;
+          }
+          unescapedSequenceStart = pos;
         }
-        unescapedSequenceStart = pos;
+        else {
+          pos++;
+        }
       }
-      else {
-        pos++;
+      final int contentEnd = text.charAt(0) == text.charAt(length - 1) ? length - 1 : length;
+      if (unescapedSequenceStart < contentEnd) {
+        result.add(Pair.create(new TextRange(unescapedSequenceStart, length), text.substring(unescapedSequenceStart, contentEnd)));
       }
-    }
-    final int contentEnd = text.charAt(0) == text.charAt(length - 1) ? length - 1 : length;
-    if (unescapedSequenceStart < contentEnd) {
-      result.add(Pair.create(new TextRange(unescapedSequenceStart, length), text.substring(unescapedSequenceStart, contentEnd)));
+      result = Collections.unmodifiableList(result);
+      literal.putUserData(STRING_FRAGMENTS, result);
     }
     return result;
   }
@@ -194,7 +210,7 @@ public class JsonPsiImplUtils {
 
   @NotNull
   public static String getValue(@NotNull JsonStringLiteral literal) {
-    return StringUtil.unescapeStringCharacters(StringUtil.unquoteString(literal.getText()));
+    return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(literal.getText()));
   }
 
   public static boolean getValue(@NotNull JsonBooleanLiteral literal) {

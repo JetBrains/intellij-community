@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author max
  */
 package com.intellij.openapi.projectRoots;
 
@@ -45,6 +41,9 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+/**
+ * @author max
+ */
 public class JdkUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.JdkUtil");
   private static final String WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper";
@@ -99,8 +98,12 @@ public class JdkUtil {
     return null;
   }
 
+  public static boolean checkForJdk(@NotNull String homePath) {
+    return checkForJdk(new File(FileUtil.toSystemDependentName(homePath)));
+  }
+
   public static boolean checkForJdk(@NotNull File homePath) {
-    File binPath = new File(homePath.getAbsolutePath() + File.separator + "bin");
+    File binPath = new File(homePath, "bin");
     if (!binPath.exists()) return false;
 
     FileFilter fileFilter = new FileFilter() {
@@ -118,8 +121,11 @@ public class JdkUtil {
   }
 
   public static boolean checkForJre(@NotNull String homePath) {
-    homePath = new File(FileUtil.toSystemDependentName(homePath)).getAbsolutePath();
-    File binPath = new File(homePath + File.separator + "bin");
+    return checkForJre(new File(FileUtil.toSystemDependentName(homePath)));
+  }
+
+  public static boolean checkForJre(@NotNull File homePath) {
+    File binPath = new File(homePath, "bin");
     if (!binPath.exists()) return false;
 
     FileFilter fileFilter = new FileFilter() {
@@ -131,12 +137,13 @@ public class JdkUtil {
     File[] children = binPath.listFiles(fileFilter);
 
     return children != null && children.length >= 1 &&
-           checkForRuntime(homePath);
+           checkForRuntime(homePath.getAbsolutePath());
   }
 
   public static boolean checkForRuntime(@NotNull String homePath) {
     return new File(homePath, "jre/lib/rt.jar").exists() ||          // JDK
            new File(homePath, "lib/rt.jar").exists() ||              // JRE
+           new File(homePath, "lib/modules").exists() ||             // Jigsaw JDK/JRE
            new File(homePath, "../Classes/classes.jar").exists() ||  // Apple JDK
            new File(homePath, "jre/lib/vm.jar").exists() ||          // IBM JDK
            new File(homePath, "classes").isDirectory();              // custom build

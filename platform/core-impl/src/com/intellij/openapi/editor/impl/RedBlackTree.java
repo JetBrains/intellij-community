@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public abstract class RedBlackTree<K> {
     verifyProperties();
   }
 
-  protected void rotateLeft(Node<K> n) {
+  protected void rotateLeft(@NotNull Node<K> n) {
     Node<K> r = n.getRight();
     replaceNode(n, r);
     n.setRight(r.getLeft());
@@ -46,7 +47,7 @@ public abstract class RedBlackTree<K> {
     n.setParent(r);
   }
 
-  protected void rotateRight(Node<K> n) {
+  protected void rotateRight(@NotNull Node<K> n) {
     Node<K> l = n.getLeft();
     replaceNode(n, l);
     n.setLeft(l.getRight());
@@ -176,10 +177,11 @@ public abstract class RedBlackTree<K> {
     verifyProperties();
   }
 
-  protected abstract Node<K> swapWithMaxPred(Node<K> nowAscendant, Node<K> nowDescendant);
+  @NotNull
+  protected abstract Node<K> swapWithMaxPred(@NotNull Node<K> nowAscendant, @NotNull Node<K> nowDescendant);
 
-  protected Node<K> maximumNode(Node<K> n) {
-    assert n != null;
+  @NotNull
+  protected Node<K> maximumNode(@NotNull Node<K> n) {
     while (n.getRight() != null) {
       n = n.getRight();
     }
@@ -299,17 +301,14 @@ public abstract class RedBlackTree<K> {
     protected Node<K> parent = null;
 
     private volatile byte myFlags;
-    protected static final int COLOR_FLAG = 0;
+    protected static final byte COLOR_MASK = 1;
 
-    protected boolean isFlagSet(int flag) {
-      int state = myFlags >> flag;
-      return (state & 1) != 0;
+    protected boolean isFlagSet(byte mask) {
+      return BitUtil.isSet(myFlags, mask);
     }
 
-    protected void setFlag(int flag, boolean value) {
-      assert flag < 8;
-      int state = value ? 1 : 0;
-      myFlags = (byte)(myFlags & ~(1 << flag) | state << flag);
+    protected void setFlag(byte mask, boolean value) {
+      myFlags = BitUtil.set(myFlags, mask, value);
     }
 
 
@@ -325,7 +324,7 @@ public abstract class RedBlackTree<K> {
       return this == parent.getLeft() ? parent.getRight() : parent.getLeft();
     }
 
-    public Node<K> uncle() {
+    private Node<K> uncle() {
       assert getParent() != null; // Root node has no uncle
       assert getParent().getParent() != null; // Children of root have no uncle
       return getParent().sibling();
@@ -360,16 +359,16 @@ public abstract class RedBlackTree<K> {
     public abstract boolean hasAliveKey(boolean purgeDead);
 
     public boolean isBlack() {
-      return isFlagSet(COLOR_FLAG);
+      return isFlagSet(COLOR_MASK);
     }
-    public void setBlack() {
-      setFlag(COLOR_FLAG, true);
+    private void setBlack() {
+      setFlag(COLOR_MASK, true);
     }
     public void setRed() {
-      setFlag(COLOR_FLAG, false);
+      setFlag(COLOR_MASK, false);
     }
     public void setColor(boolean isBlack) {
-      setFlag(COLOR_FLAG, isBlack);
+      setFlag(COLOR_MASK, isBlack);
     }
   }
 

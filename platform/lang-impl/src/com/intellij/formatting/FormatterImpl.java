@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -232,6 +233,18 @@ public class FormatterImpl extends FormatterEx
   }
 
   @NotNull
+  @Override
+  public Spacing createDependentLFSpacing(int minSpaces,
+                                          int maxSpaces,
+                                          @NotNull List<TextRange> dependentRegion,
+                                          boolean keepLineBreaks,
+                                          int keepBlankLines,
+                                          @NotNull DependentSpacingRule rule)
+  {
+    return new DependantSpacingImpl(minSpaces, maxSpaces, dependentRegion, keepLineBreaks, keepBlankLines, rule);
+  }
+
+  @NotNull
   private FormattingProgressCallback getProgressCallback() {
     FormattingProgressCallback result = myProgressTask.get();
     return result == null ? FormattingProgressCallback.EMPTY : result;
@@ -339,7 +352,7 @@ public class FormatterImpl extends FormatterEx
       final FormatProcessor processor = buildProcessorAndWrapBlocks(
         model, block, settings, indentOptions, new FormatTextRanges(affectedRange, true)
       );
-      final LeafBlockWrapper blockBefore = processor.getBlockAfter(affectedRange.getStartOffset());
+      final LeafBlockWrapper blockBefore = processor.getBlockAtOrAfter(affectedRange.getStartOffset());
       LOG.assertTrue(blockBefore != null);
       WhiteSpace whiteSpace = blockBefore.getWhiteSpace();
       LOG.assertTrue(whiteSpace != null);
@@ -449,7 +462,7 @@ public class FormatterImpl extends FormatterEx
         documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
       );
 
-      final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
+      final LeafBlockWrapper blockAfterOffset = processor.getBlockAtOrAfter(offset);
 
       if (blockAfterOffset != null && blockAfterOffset.contains(offset)) {
         return offset;
@@ -574,7 +587,7 @@ public class FormatterImpl extends FormatterEx
     final FormatProcessor processor = buildProcessorAndWrapBlocks(
       documentModel, block, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset
     );
-    final LeafBlockWrapper blockAfterOffset = processor.getBlockAfter(offset);
+    final LeafBlockWrapper blockAfterOffset = processor.getBlockAtOrAfter(offset);
 
     if (blockAfterOffset != null && !blockAfterOffset.contains(offset)) {
       final WhiteSpace whiteSpace = blockAfterOffset.getWhiteSpace();

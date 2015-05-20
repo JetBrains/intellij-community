@@ -18,14 +18,17 @@ package hg4idea.test;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.Executor;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.ShellCommand;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-public class HgExecutor extends Executor {
+import static com.intellij.openapi.vcs.Executor.*;
+
+public class HgExecutor {
 
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
 
@@ -35,7 +38,7 @@ public class HgExecutor extends Executor {
     final String programName = "hg";
     final String unixExec = "hg";
     final String winExec = "hg.exe";
-    String exec = findEnvValue(programName, Arrays.asList(HG_EXECUTABLE_ENV));
+    String exec = findEnvValue(programName, Collections.singletonList(HG_EXECUTABLE_ENV));
     if (exec != null) {
       return exec;
     }
@@ -57,15 +60,26 @@ public class HgExecutor extends Executor {
     return null;
   }
 
-  public static String hg(String command) {
+  public static String hg(@NotNull String command) {
     return hg(command, false);
   }
 
-  public static String hg(String command, boolean ignoreNonZeroExitCode) {
+  public static String hg(@NotNull String command, boolean ignoreNonZeroExitCode) {
     List<String> split = splitCommandInParameters(command);
     split.add(0, HG_EXECUTABLE);
     debug("hg " + command);
-    return run(ourCurrentDir(), split, ignoreNonZeroExitCode);
+    HgCommandResult result;
+    try {
+      result = new ShellCommand(split, pwd(), null).execute(false);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    int exitValue = result.getExitValue();
+    if (!ignoreNonZeroExitCode && exitValue != 0) {
+      throw new RuntimeException(result.getRawError());
+    }
+    return result.getRawOutput();
   }
 
   public static void updateProject() {

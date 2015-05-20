@@ -1,12 +1,34 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -88,6 +110,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testValueNotOnField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
   public void testValueNotOnStaticField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
   public void testValueOnNotInitializedField() throws Exception { doTestWithLangLevel(LanguageLevel.HIGHEST); }
+  public void testJava18Tags() throws Exception { doTestWithLangLevel(LanguageLevel.JDK_1_8); }
 
   public void testUnknownInlineTag() throws Exception { doTest(); }
   public void testUnknownTags() throws Exception { doTest(); }
@@ -102,9 +125,42 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testMissingReturnDescription() throws Exception { doTest(); }
 
+  public void testDoubleParenthesesInCode() throws Exception {
+    doTest();
+  }
+
   private void doTestWithLangLevel(final LanguageLevel langLevel) throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(langLevel);
     doTest();
+  }
+
+  public void testLinksInJavaDoc() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    final List<WebReference> refs = new ArrayList<WebReference>();
+    myFile.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        for(PsiReference ref:element.getReferences()) {
+          if (ref instanceof WebReference) refs.add((WebReference)ref);
+        }
+
+        super.visitElement(element);
+      }
+    });
+
+    String[] targets = {"http://www.unicode.org/unicode/standard/standard.html",
+      "http://docs.oracle.com/javase/7/docs/technotes/guides/lang/cl-mt.html",
+      "https://youtrack.jetbrains.com/issue/IDEA-131621",
+      "mailto:webmaster@jetbrains.com"
+    };
+    assertTrue(refs.size() == targets.length);
+    int i = 0;
+
+    for(WebReference ref:refs) {
+      assertEquals(ref.getCanonicalText(), targets[i++]);
+      assertTrue(ref.isSoft());
+      assertNotNull(ref.resolve());
+    }
   }
 
   protected void doTest() throws Exception {

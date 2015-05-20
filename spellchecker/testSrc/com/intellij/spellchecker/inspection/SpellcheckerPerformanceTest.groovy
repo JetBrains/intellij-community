@@ -14,19 +14,38 @@
  * limitations under the License.
  */
 package com.intellij.spellchecker.inspection
+
 import com.intellij.testFramework.PlatformTestUtil
 /**
  * @author peter
  */
 public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    def start = System.currentTimeMillis()
+    super.setUp()
+    println("setUp took " + (System.currentTimeMillis() - start))
+  }
 
   public void "test large text file with many typos"() {
-    int typoCount = 150000
-    String text = "aaaaaaaaa " * typoCount // about 1.5M
-    myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("foo.txt", text).virtualFile)
+    int typoCount = 50000
+    String text = "aaaaaaaaa " * typoCount // about 0.5M
+
+    def start = System.currentTimeMillis()
+    def file = myFixture.addFileToProject("foo.txt", text).virtualFile
+    println("creation took " + (System.currentTimeMillis() - start))
+
+    start = System.currentTimeMillis()
+    myFixture.configureFromExistingVirtualFile(file)
+    println("configure took " + (System.currentTimeMillis() - start))
 
     myFixture.enableInspections(inspectionTools)
-    PlatformTestUtil.assertTiming("highlighting too long", 5000) { assertSize(typoCount, myFixture.doHighlighting()) }
+
+    start = System.currentTimeMillis()
+    assertSize(typoCount, myFixture.doHighlighting())
+    println("warmup took " + (System.currentTimeMillis() - start))
+
+    PlatformTestUtil.assertTiming("highlighting too long", 1000) { assertSize(typoCount, myFixture.doHighlighting()) }
   }
   
 }

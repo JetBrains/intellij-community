@@ -57,7 +57,11 @@ public class DfaVariableValue extends DfaValue {
     }
 
     public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated) {
-      return createVariableValue(myVariable, myVariable.getType(), isNegated, null);
+      PsiType varType = myVariable.getType();
+      if (varType instanceof PsiEllipsisType) {
+        varType = new PsiArrayType(((PsiEllipsisType)varType).getComponentType());
+      }
+      return createVariableValue(myVariable, varType, isNegated, null);
     }
     @NotNull
     public DfaVariableValue createVariableValue(@NotNull PsiModifierListOwner myVariable,

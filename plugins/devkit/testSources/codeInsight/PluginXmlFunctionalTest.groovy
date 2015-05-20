@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 package org.jetbrains.idea.devkit.codeInsight
-
-import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.openapi.application.ApplicationManager
@@ -25,14 +24,16 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
+import com.intellij.util.PathUtil
+import com.intellij.util.xmlb.annotations.AbstractCollection
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection
-
 /**
  * @author peter
  */
@@ -51,6 +52,12 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/codeInsight";
+  }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    String pathForClass = PathUtil.getJarPathForClass(AbstractCollection.class);
+    moduleBuilder.addLibrary("util", pathForClass);
   }
 
   public void testExtensionsHighlighting() throws Throwable {
@@ -215,6 +222,10 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting("extensionAttributeWithAccessors.xml", "ExtBeanWithAccessors.java");
   }
 
+  public void testExtensionWithInnerTags() {
+    myFixture.testHighlighting("extensionWithInnerTags.xml", "ExtBeanWithInnerTags.java");
+  }
+
   public void testLanguageAttribute() {
     myFixture.addClass("package com.intellij.lang; " +
                        "public class Language { " +
@@ -242,7 +253,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   public void testExtensionPointPresentation() {
     myFixture.configureByFile(getTestName(true) + ".xml");
     final PsiElement element =
-      TargetElementUtilBase.findTargetElement(myFixture.getEditor(), TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+      TargetElementUtil.findTargetElement(myFixture.getEditor(), TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assert element != null;
     assertEquals("Extension Point", ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE));
     assertEquals("Extension Point bar", ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE));

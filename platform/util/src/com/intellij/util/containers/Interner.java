@@ -19,6 +19,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
+/**
+ * Allow to reuse structurally equal objects to avoid memory being wasted on them. Note: objects are cached inside
+ * and on hard references, so even the ones that are not used anymore will be still present in the memory.
+ *
+ * @see WeakInterner
+ * @author peter
+ */
+
 public class Interner<T> {
 
   private final OpenTHashSet<T> mySet = new OpenTHashSet<T>();

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.java.JavaDocumentationProvider;
@@ -60,7 +61,6 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   protected static @NonNls final Pattern ourHTMLFilesuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
   private static @NonNls final Pattern ourHREFselector = Pattern.compile("<A.*?HREF=\"([^>\"]*)\"", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
   private static @NonNls final Pattern ourMethodHeading = Pattern.compile("<H[34]>(.+?)</H[34]>", Pattern.CASE_INSENSITIVE|Pattern.DOTALL);
-  protected static @NonNls final String DOC_ELEMENT_PROTOCOL = "doc_element://";
   @NonNls protected static final String H2 = "</H2>";
   @NonNls protected static final String HTML_CLOSE = "</HTML>";
   @NonNls protected static final String HTML = "<HTML>";
@@ -74,7 +74,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
         }
 
         if (StringUtil.startsWithChar(href, '#')) {
-          return DOC_ELEMENT_PROTOCOL + root + href;
+          return root + href;
         }
 
         String nakedRoot = ourHTMLFilesuffix.matcher(root).replaceAll("/");
@@ -89,12 +89,10 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
 
         return
           (JavaPsiFacade.getInstance(myProject).findClass(classRef, GlobalSearchScope.allScope(myProject)) != null)
-          ? DocumentationManager.PSI_ELEMENT_PROTOCOL + elementRef
-          : DOC_ELEMENT_PROTOCOL + doAnnihilate(nakedRoot + href);
+          ? DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + elementRef
+          : doAnnihilate(nakedRoot + href);
       }
-    },
-
-    myIMGConvertor
+    }
   };
 
   public JavaDocExternalFilter(Project project) {
@@ -102,7 +100,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   }
 
   @Override
-  protected RefConvertor[] getRefConvertors() {
+  protected RefConvertor[] getRefConverters() {
     return myReferenceConvertors;
   }
 

@@ -2,6 +2,8 @@
   <extensions defaultExtensionNs="com.intellij">
 
     <postStartupActivity implementation="com.intellij.openapi.externalSystem.service.ExternalSystemStartupActivity"/>
+
+    <keymapExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension"/>
     
     <!--Generic services-->
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager"/>
@@ -17,9 +19,11 @@
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager"/>
+    <externalSystemNotificationExtension implementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtensionImpl" />
 
     <!--Project structure management services-->
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager"/>
+    <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager" order="first"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>
@@ -31,6 +35,7 @@
     <!--Tool window services-->
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowModuleService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowTaskService"/>
+    <externalSystemViewContributor implementation="com.intellij.openapi.externalSystem.view.ExternalSystemViewDefaultContributor"/>
     
     <!--Execution-->
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>

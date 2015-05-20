@@ -1,4 +1,4 @@
-// "Create Parameter 'popop'" "true"
+// "Create parameter 'popop'" "true"
 class Calculator {
     public void printError(String detail, int line, String file, String popop) {
         int i = popop;

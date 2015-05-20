@@ -17,14 +17,7 @@
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -32,10 +25,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.*;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
@@ -73,7 +65,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     myCopyrightProfile = copyrightProfile;
     myDisplayName = myCopyrightProfile.getName();
     final Set<EditorCustomization> features = new HashSet<EditorCustomization>();
-    features.add(SpellCheckingEditorCustomization.ENABLED);
+    ContainerUtil.addIfNotNull(features, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
@@ -121,14 +113,14 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public boolean isModified() {
     return myModified ||
-           !Comparing.strEqual(EntityUtil.encode(myEditor.getDocument().getText().trim()), myCopyrightProfile.getNotice()) ||
+           !Comparing.strEqual(EntityUtil.encode(myEditor.getDocument().getText()), myCopyrightProfile.getNotice()) ||
            !Comparing.strEqual(myKeywordTf.getText().trim(), myCopyrightProfile.getKeyword()) ||
            !Comparing.strEqual(myAllowReplaceTextField.getText().trim(), myCopyrightProfile.getAllowReplaceKeyword()) ||
            !Comparing.strEqual(myDisplayName, myCopyrightProfile.getName());
   }
 
   public void apply() throws ConfigurationException {
-    myCopyrightProfile.setNotice(EntityUtil.encode(myEditor.getDocument().getText().trim()));
+    myCopyrightProfile.setNotice(EntityUtil.encode(myEditor.getDocument().getText()));
     final String keyword = myKeywordTf.getText().trim();
     try {
       if (!StringUtil.isEmptyOrSpaces(keyword)) {
@@ -139,7 +131,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
       throw new ConfigurationException("Keyword pattern syntax is incorrect: " + e.getMessage());
     }
     myCopyrightProfile.setKeyword(keyword);
-    myCopyrightProfile.setAllowReplaceKeyword(myAllowReplaceTextField.getText());
+    myCopyrightProfile.setAllowReplaceKeyword(myAllowReplaceTextField.getText().trim());
     CopyrightManager.getInstance(myProject).replaceCopyright(myDisplayName, myCopyrightProfile);
     myDisplayName = myCopyrightProfile.getName();
     myModified = false;

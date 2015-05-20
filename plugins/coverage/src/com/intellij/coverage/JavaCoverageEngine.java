@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -71,6 +72,10 @@ import java.util.*;
  */
 public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
+
+  public static JavaCoverageEngine getInstance() {
+    return Extensions.findExtension(EP_NAME, JavaCoverageEngine.class);
+  }
 
   @Override
   public boolean isApplicableTo(@Nullable final RunConfigurationBase conf) {
@@ -232,12 +237,11 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   public static boolean isUnderFilteredPackages(final PsiClassOwner javaFile, final List<PsiPackage> packages) {
-    final String hisPackageName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        return javaFile.getPackageName();
+    final PsiPackage hisPackage = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage>() {
+      public PsiPackage compute() {
+        return JavaPsiFacade.getInstance(javaFile.getProject()).findPackage(javaFile.getPackageName());
       }
     });
-    PsiPackage hisPackage = JavaPsiFacade.getInstance(javaFile.getProject()).findPackage(hisPackageName);
     if (hisPackage == null) return false;
     for (PsiPackage aPackage : packages) {
       if (PsiTreeUtil.isAncestor(aPackage, hisPackage, false)) return true;
@@ -388,6 +392,15 @@ public class JavaCoverageEngine extends CoverageEngine {
       return buf.toString();
     }
     buf.append(lineData.getHits()).append("\n");
+
+
+    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+      String report = extension.generateBriefReport(editor, psiFile, lineNumber, startOffset, endOffset, lineData);
+      if (report != null) {
+        buf.append(report);
+        return report;
+      }
+    }
 
     final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
 
@@ -581,10 +594,11 @@ public class JavaCoverageEngine extends CoverageEngine {
           builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
           final SourceCodeProvider sourceCodeProvider = new SourceCodeProvider() {
             public String getSourceCode(@NotNull final String classname) throws IOException {
-              return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+              return DumbService.getInstance(project).runReadActionInSmartMode(new Computable<String>() {
                 public String compute() {
+                  if (project.isDisposed()) return "";
                   final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
-                  return psiClass != null ? psiClass.getContainingFile().getText() : "";
+                  return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
                 }
               });
             }
@@ -599,8 +613,9 @@ public class JavaCoverageEngine extends CoverageEngine {
                 final GlobalSearchScope productionScope = GlobalSearchScopes.projectProductionScope(project);
                 for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
                   final ClassInfo aClass = iterator.next();
-                  final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+                  final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(new Computable<PsiClass>() {
                     public PsiClass compute() {
+                      if (project.isDisposed()) return null;
                       return psiFacade.findClass(aClass.getFQName(), productionScope);
                     }
                   });
@@ -666,5 +681,14 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                            CoverageSuitesBundle suiteBundle,
                                                            CoverageViewManager.StateBean stateBean) {
     return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle, stateBean);
+  }
+
+  public boolean isSourceMapNeeded(RunConfigurationBase configuration) {
+    for (final JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+      if (extension.isSourceMapNeeded(configuration)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

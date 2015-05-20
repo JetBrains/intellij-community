@@ -26,7 +26,7 @@ import static com.intellij.openapi.editor.HighlighterColors.TEXT;
 
 /**
  * Auxiliary class for extracting data from YouTrack intellisense responses.
- * See http://confluence.jetbrains.com/display/YTD5/Intellisense+for+issue+search for format details.
+ * See https://confluence.jetbrains.com/display/YTD5/Intellisense+for+issue+search for format details.
  * <p/>
  * It also provides two additional classes to represent tokens highlighting and
  * available completion items from response: {@link com.intellij.tasks.youtrack.YouTrackIntellisense.HighlightRange}

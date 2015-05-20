@@ -300,14 +300,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     final String schemaLocationDeclaration = getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
 
     if (noNamespaceDeclaration != null) {
-      map = initializeSchema(XmlUtil.EMPTY_URI, null, noNamespaceDeclaration, null);
+      map = initializeSchema(XmlUtil.EMPTY_URI, null, noNamespaceDeclaration, null, myHasNamespaceDeclarations);
     }
     if (schemaLocationDeclaration != null) {
       final StringTokenizer tokenizer = new StringTokenizer(schemaLocationDeclaration);
       while (tokenizer.hasMoreTokens()) {
         final String uri = tokenizer.nextToken();
         if (tokenizer.hasMoreTokens()) {
-          map = initializeSchema(uri, getNSVersion(uri, this), tokenizer.nextToken(), map);
+          map = initializeSchema(uri, getNSVersion(uri, this), tokenizer.nextToken(), map, myHasNamespaceDeclarations);
         }
       }
     }
@@ -321,7 +321,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
           ns = getRealNs(ns);
 
           if (map == null || !map.containsKey(ns)) {
-            map = initializeSchema(ns, getNSVersion(ns, this), getNsLocation(ns), map);
+            map = initializeSchema(ns, getNSVersion(ns, this), getNsLocation(ns), map, true);
           }
         }
       }
@@ -332,7 +332,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(@NotNull final String namespace,
                                                                      @Nullable final String version,
                                                                      final String fileLocation,
-                                                                     Map<String, CachedValue<XmlNSDescriptor>> map) {
+                                                                     Map<String, CachedValue<XmlNSDescriptor>> map,
+                                                                     final boolean nsDecl) {
     if (map == null) map = new THashMap<String, CachedValue<XmlNSDescriptor>>();
 
     // We put cached value in any case to cause its value update on e.g. mapping change
@@ -344,7 +345,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
           return new Result<XmlNSDescriptor>(descriptor, ArrayUtil.append(descriptor.getDependences(), XmlTagImpl.this));
         }
 
-        XmlFile currentFile = retrieveFile(fileLocation, version, namespace);
+        XmlFile currentFile = retrieveFile(fileLocation, version, namespace, nsDecl);
         if (currentFile == null) {
           final XmlDocument document = XmlUtil.getContainingFile(XmlTagImpl.this).getDocument();
           if (document != null) {
@@ -401,7 +402,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   @Nullable
-  private XmlFile retrieveFile(final String fileLocation, final String version, String namespace) {
+  private XmlFile retrieveFile(final String fileLocation, final String version, String namespace, boolean nsDecl) {
     final String targetNs = XmlUtil.getTargetSchemaNsFromTag(this);
     if (fileLocation.equals(targetNs)) {
       return null;
@@ -413,7 +414,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       return (XmlFile)psiFile;
     }
 
-    return XmlNamespaceIndex.guessSchema(namespace, myLocalName, version, fileLocation, file);
+    return XmlNamespaceIndex.guessSchema(namespace, nsDecl ? null : myLocalName, version, fileLocation, file);
   }
 
   @Nullable

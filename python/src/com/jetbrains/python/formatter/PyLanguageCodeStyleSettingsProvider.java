@@ -85,7 +85,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                    "BLANK_LINES_AFTER_IMPORTS",
                                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
                                    "KEEP_BLANK_LINES_IN_CODE");
-      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS", "Around top-level classes and functions:",
+      consumer.showCustomOption(PyCodeStyleSettings.class, "BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS",
+                                "Around top-level classes and functions:",
                                 BLANK_LINES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
@@ -116,17 +117,14 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
     indentOptions.INDENT_SIZE = 4;
     defaultSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    defaultSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1;
     return defaultSettings;
   }
 
   @Override
   public DisplayPriority getDisplayPriority() {
     return PlatformUtils.isPyCharm() ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
-  }
-
-  @Override
-  public boolean isIndentBasedLanguageSemantics() {
-    return true;
   }
 
   @SuppressWarnings("FieldCanBeLocal")

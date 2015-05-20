@@ -6,7 +6,8 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.execution.NotSupportedException;
+import com.intellij.openapi.externalSystem.service.notification.*;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -189,6 +190,12 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
       result = doCancel();
       setState(result ? ExternalSystemTaskState.CANCELED : ExternalSystemTaskState.CANCELLATION_FAILED);
       return result;
+    }
+    catch (NotSupportedException e) {
+      NotificationData notification =
+        new NotificationData("Cancellation failed", e.getMessage(), NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
+      notification.setBalloonNotification(true);
+      ExternalSystemNotificationManager.getInstance(getIdeProject()).showNotification(getExternalSystemId(), notification);
     }
     catch (Throwable e) {
       setState(ExternalSystemTaskState.CANCELLATION_FAILED);

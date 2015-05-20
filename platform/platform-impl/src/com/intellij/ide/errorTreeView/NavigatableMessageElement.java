@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 public class NavigatableMessageElement extends ErrorTreeElement {
   private final GroupingElement myParent;
   private final String[] myMessage;
+  @NotNull
   private final Navigatable myNavigatable;
   private final String myExportText;
   private final String myRendererTextPrefix;
@@ -33,7 +34,7 @@ public class NavigatableMessageElement extends ErrorTreeElement {
   public NavigatableMessageElement(@NotNull ErrorTreeElementKind kind,
                                    @Nullable GroupingElement parent,
                                    String[] message,
-                                   Navigatable navigatable,
+                                   @NotNull Navigatable navigatable,
                                    String exportText,
                                    String rendererTextPrefix) {
     super(kind);
@@ -44,6 +45,7 @@ public class NavigatableMessageElement extends ErrorTreeElement {
     myRendererTextPrefix = rendererTextPrefix;
   }
 
+  @NotNull
   public Navigatable getNavigatable() {
     return myNavigatable;
   }

@@ -25,9 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -51,16 +49,15 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.ContinuationPause;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.Rethrow;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -1161,7 +1158,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   @NotNull
   public Collection<Change> getChangesIn(VirtualFile dir) {
-    return getChangesIn(new FilePathImpl(dir));
+    return getChangesIn(VcsUtil.getFilePath(dir));
   }
 
   @NotNull
@@ -1216,24 +1213,27 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       public void process(final AbstractVcs vcs, final List<VirtualFile> items) {
         final CheckinEnvironment environment = vcs.getCheckinEnvironment();
         if (environment != null) {
-          final Set<VirtualFile> descendant = new HashSet<VirtualFile>();
-          for (VirtualFile item : items) {
-            final Processor<VirtualFile> addProcessor = new Processor<VirtualFile>() {
-              @Override
-              public boolean process(VirtualFile file) {
-                if (statusChecker.value(getStatus(file))) {
-                  descendant.add(file);
-                }
-                return true;
+          final Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
+          Set<VirtualFile> parents =
+            vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.<VirtualFile>emptySet();
+
+          // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
+          // (inside the method) - so common add logic just needs to refresh statuses of parents
+          final List<VcsException> result = ContainerUtil.newArrayList();
+          ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding files to VCS...", true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              indicator.setIndeterminate(true);
+              List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+              if (exs != null) {
+                ContainerUtil.addAll(result, exs);
               }
-            };
-            VcsRootIterator.iterateVfUnderVcsRoot(myProject, item, addProcessor);
-          }
-          final List<VcsException> result = environment.scheduleUnversionedFilesForAddition(new ArrayList<VirtualFile>(descendant));
-          allProcessedFiles.addAll(descendant);
-          if (result != null) {
-            exceptions.addAll(result);
-          }
+            }
+          });
+
+          allProcessedFiles.addAll(descendants);
+          allProcessedFiles.addAll(parents);
+          exceptions.addAll(result);
         }
       }
     });
@@ -1286,6 +1286,43 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     else {
       myChangesViewManager.scheduleRefresh();
     }
+  }
+
+  @NotNull
+  private Set<VirtualFile> getUnversionedDescendantsRecursively(@NotNull List<VirtualFile> items,
+                                                                @NotNull final Condition<FileStatus> condition) {
+    final Set<VirtualFile> result = ContainerUtil.newHashSet();
+    Processor<VirtualFile> addToResultProcessor = new Processor<VirtualFile>() {
+      @Override
+      public boolean process(VirtualFile file) {
+        if (condition.value(getStatus(file))) {
+          result.add(file);
+        }
+        return true;
+      }
+    };
+
+    for (VirtualFile item : items) {
+      VcsRootIterator.iterateVfUnderVcsRoot(myProject, item, addToResultProcessor);
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private Set<VirtualFile> getUnversionedParents(@NotNull Collection<VirtualFile> items, @NotNull Condition<FileStatus> condition) {
+    HashSet<VirtualFile> result = ContainerUtil.newHashSet();
+
+    for (VirtualFile item : items) {
+      VirtualFile parent = item.getParent();
+
+      while (parent != null && condition.value(getStatus(parent))) {
+        result.add(parent);
+        parent = parent.getParent();
+      }
+    }
+
+    return result;
   }
 
   @Override
@@ -1646,7 +1683,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public void run() {
           final AbstractVcs vcs = getVcs(was);
           if (vcs != null) {
-            myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
+            myRevisionsCache.plus(Pair.create(was.getPath().getPath(), vcs));
           }
           // maybe define modify method?
           myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
@@ -1661,7 +1698,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public void run() {
           final AbstractVcs vcs = getVcs(baseRevision);
           if (vcs != null) {
-            myRevisionsCache.plus(Pair.create(baseRevision.getPath(), vcs));
+            myRevisionsCache.plus(Pair.create(baseRevision.getPath().getPath(), vcs));
           }
           myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
         }
@@ -1675,9 +1712,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         public void run() {
           final AbstractVcs vcs = getVcs(baseRevision);
           if (vcs != null) {
-            myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
+            myRevisionsCache.minus(Pair.create(baseRevision.getPath().getPath(), vcs));
           }
-          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
+          myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath().getPath());
         }
       });
     }
@@ -1686,7 +1723,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     private AbstractVcs getVcs(final BaseRevision baseRevision) {
       VcsKey vcsKey = baseRevision.getVcs();
       if (vcsKey == null) {
-        final String path = baseRevision.getPath();
+        FilePath path = baseRevision.getPath();
         vcsKey = findVcs(path);
         if (vcsKey == null) return null;
       }
@@ -1694,9 +1731,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     @Nullable
-    private VcsKey findVcs(final String path) {
+    private VcsKey findVcs(final FilePath path) {
       // does not matter directory or not
-      final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+      VirtualFile vf = path.getVirtualFile();
+      if (vf == null) {
+        vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.getIOFile());
+      }
       if (vf == null) return null;
       final AbstractVcs vcs = myVcsManager.getVcsFor(vf);
       return vcs == null ? null : vcs.getKeyInstanceMethod();

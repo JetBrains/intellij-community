@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2014 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -330,17 +330,7 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
         return false;
       }
       final PsiVariable targetVariable = (PsiVariable)target;
-      final PsiType type = targetVariable.getType();
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
-      if (aClass == null) {
-        return false;
-      }
-      final String className = aClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_UTIL_MAP.equals(className)) {
+      if (!TypeUtils.variableHasTypeOrSubtype(targetVariable, CommonClassNames.JAVA_UTIL_MAP)) {
         return false;
       }
       final GetValueFromMapChecker checker = new GetValueFromMapChecker(targetVariable, key);

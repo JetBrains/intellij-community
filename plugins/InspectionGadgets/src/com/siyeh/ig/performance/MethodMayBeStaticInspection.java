@@ -37,7 +37,9 @@ public class MethodMayBeStaticInspection extends MethodMayBeStaticInspectionBase
       @Override
       public void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiMethod element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
-        new MakeMethodStaticProcessor(element.getProject(), element, new Settings(m_replaceQualifier, null, null)).run();
+        if (element != null) {
+          new MakeMethodStaticProcessor(project, element, new Settings(m_replaceQualifier, null, null)).run();
+        }
       }
 
       @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,11 @@ public interface EditorEx extends Editor {
 
   JComponent getPermanentHeaderComponent();
 
+  /**
+   * shouldn't be called during Document update
+   */
+  void setViewer(boolean isViewer);
+
   void setPermanentHeaderComponent(JComponent component);
 
   void setHighlighter(@NotNull EditorHighlighter highlighter);
@@ -103,16 +108,12 @@ public interface EditorEx extends Editor {
 
   void reinitSettings();
 
+  void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable parentDisposable);
   void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   void removePropertyChangeListener(@NotNull PropertyChangeListener listener);
 
   int getMaxWidthInRange(int startOffset, int endOffset);
-
-  /**
-   * @deprecated Does nothing currently. To be removed in IDEA 15.
-   */
-  void stopOptimizedScrolling();
 
   boolean setCaretVisible(boolean b);
 

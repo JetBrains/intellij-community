@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,7 +36,7 @@ public class TextPanel extends JComponent {
 
   private boolean myDecorate = true;
   private float myAlignment;
-  private int myRightPadding = 20;
+  private int myRightPadding = JBUI.scale(14);
 
   protected TextPanel() {
     setOpaque(false);
@@ -41,7 +44,7 @@ public class TextPanel extends JComponent {
 
   @Override
   public Font getFont() {
-    return SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont();
+    return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label();
   }
 
   protected TextPanel(final boolean decorate) {
@@ -186,5 +189,56 @@ public class TextPanel extends JComponent {
 
   public void setExplicitSize(@Nullable Dimension explicitSize) {
     myExplicitSize = explicitSize;
+  }
+
+  public static class WithIconAndArrows extends TextPanel {
+    private final static int GAP = 2;
+    @Nullable private Icon myIcon;
+
+    @Override
+    protected void paintComponent(@NotNull final Graphics g) {
+      super.paintComponent(g);
+      if (getText() != null) {
+        Rectangle r = getBounds();
+        Insets insets = getInsets();
+        Icon arrows = AllIcons.Ide.Statusbar_arrows;
+        arrows.paintIcon(this, g, r.width - insets.right - arrows.getIconWidth() - 1,
+                         r.height / 2 - arrows.getIconHeight() / 2);
+        if (myIcon != null) {
+          myIcon.paintIcon(this, g, insets.left - GAP - myIcon.getIconWidth(), r.height / 2 - myIcon.getIconHeight() / 2);
+        }
+      }
+    }
+
+    @NotNull
+    @Override
+    public Insets getInsets() {
+      Insets insets = super.getInsets();
+      if (myIcon != null) {
+        insets.left += myIcon.getIconWidth() + GAP * 2;
+      }
+      return insets;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      final Dimension preferredSize = super.getPreferredSize();
+      int deltaWidth = AllIcons.Ide.Statusbar_arrows.getIconWidth();
+      if (myIcon != null) {
+        deltaWidth += myIcon.getIconWidth();
+      }
+      return new Dimension(preferredSize.width + deltaWidth, preferredSize.height);
+    }
+
+    public void setIcon(@Nullable Icon icon) {
+      myIcon = icon;
+    }
+  }
+
+  public static class ExtraSize extends TextPanel {
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      return new Dimension(size.width + 3, size.height);
+    }
   }
 }

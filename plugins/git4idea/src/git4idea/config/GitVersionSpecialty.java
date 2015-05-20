@@ -119,6 +119,27 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 3, 0));
     }
+  },
+
+  CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 2, 0));
+    }
+  },
+
+  FOLLOW_IS_BUGGY_IN_THE_LOG {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isOlderOrEqual(new GitVersion(1, 7, 2, 0));
+    }
+  },
+
+  FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY { // for some reason, even with "simplify-merges", it used to show a lot of merges in history
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 9, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

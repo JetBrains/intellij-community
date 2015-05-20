@@ -22,7 +22,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementTypeImpl;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
@@ -53,8 +53,8 @@ public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase {
 
 
   static {
-    fillMap(ATTRIBUTES, tGDOC_COMMENT_CONTENT, DefaultHighlighter.DOC_COMMENT_CONTENT);
-    fillMap(ATTRIBUTES, tGDOC_COMMENT_TAGS, DefaultHighlighter.DOC_COMMENT_TAG);
+    fillMap(ATTRIBUTES, tGDOC_COMMENT_CONTENT, GroovySyntaxHighlighter.DOC_COMMENT_CONTENT);
+    fillMap(ATTRIBUTES, tGDOC_COMMENT_TAGS, GroovySyntaxHighlighter.DOC_COMMENT_TAG);
   }
 
 

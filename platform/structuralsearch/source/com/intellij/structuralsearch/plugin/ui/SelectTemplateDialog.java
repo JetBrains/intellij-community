@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +154,17 @@ public class SelectTemplateDialog extends DialogWrapper {
 
     panel.add(BorderLayout.CENTER, myPreviewPanel);
 
-    panel.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("selecttemplate.template.preview")));
+    final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+    labelPanel.add(new JLabel(SSRBundle.message("selecttemplate.template.preview")));
+    labelPanel.add(UIUtil.createCompleteMatchInfo(new Producer<Configuration>() {
+      @Nullable
+      @Override
+      public Configuration produce() {
+        final Configuration[] configurations = getSelectedConfigurations();
+        return configurations.length != 1 ? null : configurations[0];
+      }
+    }));
+    panel.add(BorderLayout.NORTH, labelPanel);
     return centerPanel;
   }
 

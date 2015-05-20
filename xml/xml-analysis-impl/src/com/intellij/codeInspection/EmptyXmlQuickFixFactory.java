@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.QuickFixes;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import org.jetbrains.annotations.NotNull;
@@ -37,5 +38,11 @@ public class EmptyXmlQuickFixFactory extends XmlQuickFixFactory {
                                                        @NotNull String namespacePrefix,
                                                        @Nullable XmlToken token) {
     return QuickFixes.EMPTY_ACTION;
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement addAttributeValueFix(@NotNull XmlAttribute attribute) {
+    return QuickFixes.EMPTY_FIX;
   }
 }

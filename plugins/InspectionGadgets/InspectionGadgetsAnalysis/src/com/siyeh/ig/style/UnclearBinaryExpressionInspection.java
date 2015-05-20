@@ -25,12 +25,20 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnclearBinaryExpressionInspection extends BaseInspection {
+
+  @Pattern(VALID_ID_PATTERN)
+  @NotNull
+  @Override
+  public String getID() {
+    return "UnclearExpression";
+  }
 
   @Nls
   @NotNull

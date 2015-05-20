@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -29,7 +28,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
-import gnu.trove.THashMap;
 
 /**
  * @author mike
@@ -48,7 +46,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     super.setUp();
 
     IdeaTestApplication application = LightPlatformTestCase.initApplication();
-    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, new THashMap<String, InspectionToolWrapper>());
+    LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
     InjectedLanguageManagerImpl.pushInjectors(getProject());
 
     myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();

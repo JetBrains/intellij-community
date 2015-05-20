@@ -104,8 +104,9 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
   @Override
   public void apply() throws ConfigurationException {
     if (myEditor == null) return;
+    final boolean editorWasModified = myEditor.isModified();
     myEditor.apply();
-    if (myModifiableModel.isChanged()) {
+    if (editorWasModified) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {

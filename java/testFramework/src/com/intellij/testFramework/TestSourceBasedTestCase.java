@@ -15,7 +15,6 @@
  */
 package com.intellij.testFramework;
 
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -101,7 +100,6 @@ import java.io.File;
   }
   
   protected String getRootFiles() {
-    return " " + myModule.getModuleFile().getName() + "\n" +
-           " " + myProject.getName() + ProjectFileType.DOT_DEFAULT_EXTENSION + "\n";
+    return " " + myModule.getModuleFile().getName() + "\n";
   }
 }

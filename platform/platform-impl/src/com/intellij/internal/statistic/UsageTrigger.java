@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,28 +19,22 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * User: ksafonov
- */
 @State(
   name = "UsageTrigger",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/statistics.application.usages.xml", roamingType = RoamingType.DISABLED)}
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/statistics.application.usages.xml", roamingType = RoamingType.DISABLED)
 )
 public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State> {
-
-  public static class State {
+  final static class State {
     @Tag("counts")
     @MapAnnotation(surroundWithTag = false, keyAttributeName = "feature", valueAttributeName = "count")
     public Map<String, Integer> myValues = new HashMap<String, Integer>();
@@ -75,14 +69,13 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
     myState = state;
   }
 
-
-  public static class MyCollector extends UsagesCollector {
-
+  final static class MyCollector extends UsagesCollector {
     private static final GroupDescriptor GROUP = GroupDescriptor.create("features counts", GroupDescriptor.HIGHER_PRIORITY);
 
     @NotNull
-    public Set<UsageDescriptor> getUsages(@Nullable final Project project) {
-      final State state = UsageTrigger.getInstance().getState();
+    public Set<UsageDescriptor> getUsages() {
+      State state = getInstance().getState();
+      assert state != null;
       return ContainerUtil.map2Set(state.myValues.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
         public UsageDescriptor fun(final Map.Entry<String, Integer> e) {
           return new UsageDescriptor(e.getKey(), e.getValue());
@@ -95,5 +88,4 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
       return GROUP;
     }
   }
-
 }

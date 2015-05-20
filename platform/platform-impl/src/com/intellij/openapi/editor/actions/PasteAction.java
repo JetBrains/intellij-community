@@ -17,10 +17,10 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Producer;
@@ -38,17 +38,17 @@ public class PasteAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
+  private static class Handler extends BasePasteHandler {
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
-      Producer<Transferable> producer = TRANSFERABLE_PROVIDER.getData(dataContext);
-      if (!editor.getCaretModel().supportsMultipleCarets() && (editor.isColumnMode() || editor.getSelectionModel().hasBlockSelection())) {
-        EditorModificationUtil.pasteTransferableAsBlock(editor, producer);
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+      TextRange range = null;
+      if (myTransferable != null) {
+        TextRange[] ranges = EditorCopyPasteHelper.getInstance().pasteTransferable(editor, myTransferable);
+        if (ranges != null && ranges.length == 1) {
+          range = ranges[0];
+        }
       }
-      else {
-        TextRange range = EditorModificationUtil.pasteTransferable(editor, producer);
-        editor.putUserData(EditorEx.LAST_PASTED_REGION, range);
-      }
+      editor.putUserData(EditorEx.LAST_PASTED_REGION, range);
     }
   }
 }

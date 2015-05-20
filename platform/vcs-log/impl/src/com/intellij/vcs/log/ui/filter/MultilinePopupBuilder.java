@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -29,7 +30,6 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization;
 import com.intellij.ui.EditorCustomization;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.EditorTextFieldProvider;
@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -52,17 +51,20 @@ class MultilinePopupBuilder {
 
   @NotNull private final EditorTextField myTextField;
 
-  MultilinePopupBuilder(@NotNull Project project, @NotNull final Collection<String> values, @NotNull String initialValue) {
+  MultilinePopupBuilder(@NotNull Project project,
+                        @NotNull final Collection<String> values,
+                        @NotNull String initialValue,
+                        boolean supportsNegativeValues) {
     myTextField = createTextField(project);
-    new MyCompletionProvider(values).apply(myTextField);
+    new MyCompletionProvider(values, supportsNegativeValues).apply(myTextField);
     myTextField.setText(initialValue);
   }
 
   @NotNull
   private static EditorTextField createTextField(@NotNull Project project) {
     final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    List<EditorCustomization>
-      features = Arrays.<EditorCustomization>asList(SoftWrapsEditorCustomization.ENABLED, SpellCheckingEditorCustomization.DISABLED);
+    List<EditorCustomization> features = ContainerUtil.packNullables(SoftWrapsEditorCustomization.ENABLED,
+                                                                     SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization());
     EditorTextField textField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
     textField.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2), textField.getBorder()));
     textField.setOneLineMode(false);
@@ -107,17 +109,20 @@ class MultilinePopupBuilder {
   private static class MyCompletionProvider extends TextFieldCompletionProviderDumbAware {
 
     @NotNull private final Collection<String> myValues;
+    private final boolean mySupportsNegativeValues;
 
-    MyCompletionProvider(@NotNull Collection<String> values) {
+    MyCompletionProvider(@NotNull Collection<String> values, boolean supportsNegativeValues) {
       super(true);
       myValues = values;
+      mySupportsNegativeValues = supportsNegativeValues;
     }
 
     @NotNull
     @Override
     protected String getPrefix(@NotNull String currentTextPrefix) {
       final int separatorPosition = lastSeparatorPosition(currentTextPrefix);
-      return separatorPosition == -1 ? currentTextPrefix : currentTextPrefix.substring(separatorPosition + 1).trim();
+      String prefix = separatorPosition == -1 ? currentTextPrefix : currentTextPrefix.substring(separatorPosition + 1).trim();
+      return mySupportsNegativeValues && prefix.startsWith("-") ? prefix.substring(1) : prefix;
     }
 
     private static int lastSeparatorPosition(@NotNull String text) {

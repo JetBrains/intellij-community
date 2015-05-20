@@ -44,6 +44,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
 
   public GroovyCompletionContributor() {
+    GrMethodOverrideCompletionProvider.register(this);
     GrThisSuperCompletionProvider.register(this);
     MapArgumentCompletionProvider.register(this);
     GroovyConfigSlurperCompletionProvider.register(this);

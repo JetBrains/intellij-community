@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -512,16 +512,17 @@ public class PsiBuilderQuickTest extends LightPlatformLangTestCase {
     DiffTree.diff(
       new ASTStructure(root), builder2.getLightTree(),
       new ShallowNodeComparator<ASTNode, LighterASTNode>() {
+        @NotNull
         @Override
-        public ThreeState deepEqual(ASTNode oldNode, LighterASTNode newNode) {
+        public ThreeState deepEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
           return ThreeState.UNSURE;
   }
         @Override
-        public boolean typesEqual(ASTNode oldNode, LighterASTNode newNode) {
+        public boolean typesEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
           return true;
         }
         @Override
-        public boolean hashCodesEqual(ASTNode oldNode, LighterASTNode newNode) {
+        public boolean hashCodesEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
           return true;
         }
       },

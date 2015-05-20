@@ -25,13 +25,24 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
+ * Describes a source root of a build target.
+ *
  * @author nik
  */
 public abstract class BuildRootDescriptor {
+  /**
+   * Returns the serializable ID of the root, used for writing caches. May return simply the file path.
+   */
   public abstract String getRootId();
 
+  /**
+   * Returns the directory of the source root.
+   */
   public abstract File getRootFile();
 
+  /**
+   * Returns the target to which this source root belongs.
+   */
   public abstract BuildTarget<?> getTarget();
 
   /**
@@ -41,13 +52,16 @@ public abstract class BuildRootDescriptor {
     return null;
   }
 
+  /**
+   * Creates the file filter specifying which files under the specified root belong to this build target.
+   */
   @NotNull
   public FileFilter createFileFilter() {
     return FileUtilRt.ALL_FILES;
   }
 
   /**
-   * @return the set of excluded directories under this root
+   * @return the set of excluded directories under this root.
    */
   @NotNull
   public Set<File> getExcludedRoots() {

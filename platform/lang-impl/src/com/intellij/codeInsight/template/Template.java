@@ -19,10 +19,15 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.template.impl.Variable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.Map;
 
+/**
+ * Used to build and run a live template.
+ * @see TemplateManager
+ */
 public abstract class Template {
 
   public enum Property {
@@ -61,6 +66,7 @@ public abstract class Template {
   public abstract String getId();
   public abstract String getKey();
 
+  @Nullable
   public abstract String getDescription();
 
   public abstract boolean isToReformat();

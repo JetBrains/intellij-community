@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,19 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class AbstractMethodWithMissingImplementationsInspectionTest extends IGInspectionTestCase {
+public class AbstractMethodWithMissingImplementationsInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    final AbstractMethodWithMissingImplementationsInspection tool = new AbstractMethodWithMissingImplementationsInspection();
-    doTest("com/siyeh/igtest/inheritance/abstract_method_with_missing_implementations", tool);
+  public void testAbstractMethodWithMissingImplementations() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new AbstractMethodWithMissingImplementationsInspection();
   }
 }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.groovy;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -23,7 +24,7 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -46,13 +47,15 @@ class EclipseOutputParser {
 
   List<CompilerMessage> parseMessages(String input) throws IOException {
     if (input.contains("The type groovy.lang.GroovyObject cannot be resolved. It is indirectly referenced from required .class files")) {
-      return Arrays.asList(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR,
-                                               "Cannot compile Groovy files: no Groovy library is defined for module '" + myChunk.representativeTarget().getModule().getName() + "'"));
+      return Collections.singletonList(new CompilerMessage(myBuilderName, BuildMessage.Kind.ERROR,
+                                                           "Cannot compile Groovy files: no Groovy library is defined for module '" +
+                                                           myChunk.representativeTarget().getModule().getName() +
+                                                           "'"));
     }
 
     List<CompilerMessage> parsedMessages = new ArrayList<CompilerMessage>();
 
-    String[] msgs = input.split(PROB_SEPARATOR);
+    String[] msgs = StringUtil.convertLineSeparators(input).split(PROB_SEPARATOR);
     for (String msg : msgs) {
       if (msg.length() > 1) {
         // add the error bean

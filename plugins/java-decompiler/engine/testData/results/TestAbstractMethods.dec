@@ -1,0 +1,32 @@
+package pkg;
+
+public abstract class TestAbstractMethods {
+   public abstract void foo();
+
+   public int test(int var1) {
+      return var1;// 11
+   }
+
+   protected abstract void foo1();
+
+   public void test2(String var1) {
+      System.out.println(var1);// 17
+   }// 18
+}
+
+class 'pkg/TestAbstractMethods' {
+   method 'test (I)I' {
+      1      6
+   }
+
+   method 'test2 (Ljava/lang/String;)V' {
+      0      12
+      4      12
+      7      13
+   }
+}
+
+Lines mapping:
+11 <-> 7
+17 <-> 13
+18 <-> 14

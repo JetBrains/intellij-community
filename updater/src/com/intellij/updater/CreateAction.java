@@ -9,35 +9,40 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class CreateAction extends PatchAction {
-  public CreateAction(String path) {
-    super(path, -1);
+  public CreateAction(Patch patch, String path) {
+    super(patch, path, Digester.INVALID);
   }
 
-  public CreateAction(DataInputStream in) throws IOException {
-    super(in);
+  public CreateAction(Patch patch, DataInputStream in) throws IOException {
+    super(patch, in);
   }
 
+  @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
     Runner.logger.info("building PatchFile");
     patchOutput.putNextEntry(new ZipEntry(myPath));
-
-    writeExecutableFlag(patchOutput, newerFile);
-    Utils.copyFileToStream(newerFile, patchOutput);
+    if (!newerFile.isDirectory()) {
+      writeExecutableFlag(patchOutput, newerFile);
+      Utils.copyFileToStream(newerFile, patchOutput);
+    }
 
     patchOutput.closeEntry();
   }
 
   @Override
-  protected ValidationResult doValidate(File toFile) {
+  public ValidationResult validate(File toDir) {
+    File toFile = getFile(toDir);
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE);
     if (result != null) return result;
 
     if (toFile.exists()) {
-      return new ValidationResult(ValidationResult.Kind.CONFLICT,
-                                  myPath,
+      ValidationResult.Option[] options = myPatch.isStrict()
+                                          ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
+                                          : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
+      return new ValidationResult(ValidationResult.Kind.CONFLICT, myPath,
                                   ValidationResult.Action.CREATE,
                                   ValidationResult.ALREADY_EXISTS_MESSAGE,
-                                  ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP);
+                                  options);
     }
     return null;
   }
@@ -48,17 +53,24 @@ public class CreateAction extends PatchAction {
   }
 
   @Override
-  protected void doApply(ZipFile patchFile, File toFile) throws IOException {
+  protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
     prepareToWriteFile(toFile);
 
-    InputStream in = Utils.getEntryInputStream(patchFile, myPath);
-    try {
-      boolean executable = readExecutableFlag(in);
-      Utils.copyStreamToFile(in, toFile);
-      Utils.setExecutable(toFile, executable);
-    }
-    finally {
-      in.close();
+    ZipEntry entry = Utils.getZipEntry(patchFile, myPath);
+    if (entry.isDirectory()) {
+      if (!toFile.mkdir()) {
+        throw new IOException("Unable to create directory " + myPath);
+      }
+    } else {
+      InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry);
+      try {
+        boolean executable = readExecutableFlag(in);
+        Utils.copyStreamToFile(in, toFile);
+        Utils.setExecutable(toFile, executable);
+      }
+      finally {
+        in.close();
+      }
     }
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,10 +25,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}
+ * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}.
  *
  * @author Anton Katilin
  * @author Vladimir Kondratyev
+ * @see DumbAware
  */
 public interface FileEditorProvider {
   ExtensionPointName<FileEditorProvider> EP_FILE_EDITOR_PROVIDER = new ExtensionPointName<FileEditorProvider>("com.intellij.fileEditorProvider");

@@ -17,7 +17,6 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
@@ -43,6 +42,10 @@ import java.util.Set;
  * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
+  // Dev. notes:
+  // - Do not add language-specific options here, use CustomCodeStyleSettings instead.
+  // - A new options should be added to CodeStyleSettingsCustomizable as well.
+  // - Covered by CodeStyleConfigurationsTest.
 
   @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
 
@@ -73,38 +76,11 @@ public class CommonCodeStyleSettings {
     return myLanguage;
   }
 
-  void importOldIndentOptions(@NotNull CodeStyleSettings rootSettings) {
-    if (myFileType != null && myIndentOptions != null) {
-      if (getFileTypeIndentOptionsProvider() == null) {
-        IndentOptions fileTypeIdentOptions = rootSettings.getAdditionalIndentOptions(myFileType);
-        if (fileTypeIdentOptions != null) {
-          myIndentOptions.copyFrom(fileTypeIdentOptions);
-          rootSettings.unregisterAdditionalIndentOptions(myFileType);
-        }
-        else if (rootSettings.USE_SAME_INDENTS && !rootSettings.IGNORE_SAME_INDENTS_FOR_LANGUAGES) {
-          myIndentOptions.copyFrom(rootSettings.OTHER_INDENT_OPTIONS);
-        }
-      }
-    }
-  }
-
   @NotNull
   public IndentOptions initIndentOptions() {
     myIndentOptions = new IndentOptions();
     return myIndentOptions;
   }
-
-  @Nullable
-  private FileTypeIndentOptionsProvider getFileTypeIndentOptionsProvider() {
-    final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
-    for (FileTypeIndentOptionsProvider provider : providers) {
-      if (provider.getFileType().equals(myFileType)) {
-        return provider;
-      }
-    }
-    return null;
-  }
-
 
   @Nullable
   public FileType getFileType() {
@@ -412,6 +388,15 @@ public class CommonCodeStyleSettings {
 
   public boolean INDENT_CASE_FROM_SWITCH = true;
 
+  /**
+   * Controls "break" position realtive to "case".
+   * <pre>
+   * case 0:
+   * <--->break;
+   * </pre>
+   */
+  public boolean INDENT_BREAK_FROM_CASE = true;
+
   public boolean SPECIAL_ELSE_IF_TREATMENT = true;
 
   /**
@@ -452,6 +437,7 @@ public class CommonCodeStyleSettings {
    * int end   = 10;
    */
   public boolean ALIGN_GROUP_FIELD_DECLARATIONS = false;
+  public boolean ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = false;
 
 //----------------- SPACES --------------------
 
@@ -617,6 +603,13 @@ public class CommonCodeStyleSettings {
    * "int X[] {1, 3, 5}"
    */
   public boolean SPACE_WITHIN_ARRAY_INITIALIZER_BRACES = false;
+
+  /**
+   * "int X[] { }"
+   * or
+   * "int X[] {}"
+   */
+  public boolean SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES = false;
 
   public boolean SPACE_AFTER_TYPE_CAST = true;
 
@@ -819,6 +812,7 @@ public class CommonCodeStyleSettings {
   public int THROWS_KEYWORD_WRAP = DO_NOT_WRAP;
 
   public int METHOD_CALL_CHAIN_WRAP = DO_NOT_WRAP;
+  public boolean WRAP_FIRST_METHOD_IN_CALL_CHAIN = false;
 
   public boolean PARENTHESES_EXPRESSION_LPAREN_WRAP = false;
   public boolean PARENTHESES_EXPRESSION_RPAREN_WRAP = false;
@@ -909,7 +903,8 @@ public class CommonCodeStyleSettings {
     public boolean USE_RELATIVE_INDENTS = false;
     public boolean KEEP_INDENTS_ON_EMPTY_LINES = false;
 
-    private final static Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS");
+    private FileIndentOptionsProvider myFileIndentOptionsProvider;
+    private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
 
     @Override
     public void readExternal(Element element) throws InvalidDataException {
@@ -992,17 +987,22 @@ public class CommonCodeStyleSettings {
     }
 
     @Nullable
-    static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
-      if (documentManager != null) {
-        Document document = documentManager.getDocument(file);
-        if (document != null) return document.getUserData(INDENT_OPTIONS_KEY);
-      }
-      return null;
+    FileIndentOptionsProvider getFileIndentOptionsProvider() {
+      return myFileIndentOptionsProvider;
+    }
+
+    void setFileIndentOptionsProvider(@NotNull FileIndentOptionsProvider provider) {
+      myFileIndentOptionsProvider = provider;
     }
 
     void associateWithDocument(@NotNull Document document) {
       document.putUserData(INDENT_OPTIONS_KEY, this);
+    }
+
+    @Nullable
+    static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
+      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
     }
   }
 }

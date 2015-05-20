@@ -23,16 +23,18 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffAction;
-import com.intellij.openapi.vcs.changes.actions.ShowDiffUIContext;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,8 +74,9 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
 
     final String selectedUrl = VcsDataKeys.UPDATE_VIEW_SELECTED_PATH.getData(dc);
 
-    ShowDiffAction.showDiffForChange(new MyIterableWrapper(iterable.iterator(), before, after, project), new MySelectionMarker(selectedUrl),
-                                     project, new ShowDiffUIContext(true));
+    Iterable<Change> changes = new MyIterableWrapper(iterable.iterator(), before, after, project);
+    Condition<Change> selection = new MySelectionMarker(selectedUrl);
+    ShowDiffAction.showDiffForChange(project, changes, selection, new ShowDiffContext(DiffDialogHints.FRAME));
   }
 
   private static class MySelectionMarker implements Condition<Change> {
@@ -178,9 +181,9 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     public FilePath getFile() {
       final VirtualFile vf = myPointer.getFile();
       if (vf != null) {
-        return new FilePathImpl(vf);
+        return VcsUtil.getFilePath(vf);
       }
-      return new FilePathImpl(new File(myPointer.getPresentableUrl()), false);
+      return VcsUtil.getFilePath(new File(myPointer.getPresentableUrl()), false);
     }
 
     @NotNull

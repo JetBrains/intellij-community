@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -214,12 +215,12 @@ public class AboutPopup {
       Graphics2D g2 = (Graphics2D)g;
       UIUtil.applyRenderingHints(g);
 
-      Font labelFont = UIUtil.getLabelFont();
+      Font labelFont = JBUI.Fonts.label();
       if (SystemInfo.isWindows) {
-        labelFont = new Font("Tahoma", Font.PLAIN, 12);
+        labelFont = JBUI.Fonts.create("Tahoma", 12);
       }
 
-      for (int labelSize = 10; labelSize != 6; labelSize -= 1) {
+      for (int labelSize = JBUI.scale(10); labelSize != JBUI.scale(6); labelSize -= 1) {
         myLinks.clear();
         g2.setPaint(myColor);
         myImage.paintIcon(this, g2, 0, 0);
@@ -245,15 +246,15 @@ public class AboutPopup {
       if (appInfo instanceof ApplicationInfoImpl) {
         g2.setColor(((ApplicationInfoImpl)appInfo).getCopyrightForeground());
         if (SystemInfo.isMac) {
-          g2.setFont(UIUtil.getLabelFont(UIUtil.FontSize.MINI));
+          g2.setFont(JBUI.Fonts.miniFont());
         }
         else {
-          g2.setFont(new Font("Tahoma", Font.PLAIN, 10));
+          g2.setFont(JBUI.Fonts.create("Tahoma", 10));
         }
       } else {
         g2.setColor(JBColor.BLACK);
       }
-      g2.drawString("\u00A9 2000\u2013" + Calendar.getInstance().get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.", 30, 284);
+      g2.drawString("\u00A9 2000\u2013" + Calendar.getInstance().get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.", JBUI.scale(30), JBUI.scale(284));
     }
 
     public String getText() {
@@ -277,10 +278,10 @@ public class AboutPopup {
       public class OverflowException extends Exception { }
 
       public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
-        this.xBase = xBase;
-        this.yBase = yBase;
-        this.w = w;
-        this.h = h;
+        this.xBase = JBUI.scale(xBase);
+        this.yBase = JBUI.scale(yBase);
+        this.w = JBUI.scale(w);
+        this.h = JBUI.scale(h);
         this.g2 = g2;
 
         if (SystemInfo.isWindows) {

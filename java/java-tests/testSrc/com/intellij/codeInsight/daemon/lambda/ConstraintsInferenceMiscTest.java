@@ -20,9 +20,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * Created by anna on 1/31/14.
- */
 public class ConstraintsInferenceMiscTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/constraints";
 
@@ -55,6 +52,14 @@ public class ConstraintsInferenceMiscTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIntersectionTypeStrictSubtypingConstraint() throws Exception {
+    doTest(false);
+  }
+
+  public void testWildcardParameterizedReturnTypeConflictWithParameterTypes() throws Exception {
+    doTest(false);
+  }
+
+  public void testSubtypingConstraintWithSuperCapturedWildcard() throws Exception {
     doTest(false);
   }
 

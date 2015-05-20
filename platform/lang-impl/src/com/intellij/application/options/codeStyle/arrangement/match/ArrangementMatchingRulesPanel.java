@@ -112,6 +112,10 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     myControl.setRulesAliases(aliases);
   }
 
+  public void hideEditor() {
+    myControl.hideEditor();
+  }
+
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {

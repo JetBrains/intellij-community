@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,15 +27,16 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
   private final SimpleChangeSide[] mySides;
   private final ChangeList myChangeList;
 
-  public SimpleChange(@NotNull ChangeType type, @NotNull TextRange range1, @NotNull TextRange range2, @NotNull ChangeList changeList) {
+  SimpleChange(@NotNull ChangeType type, @NotNull TextRange range1, @NotNull TextRange range2, @NotNull ChangeList changeList) {
     mySides = new SimpleChangeSide[]{ createSide(changeList, range1, FragmentSide.SIDE1),
                                       createSide(changeList, range2, FragmentSide.SIDE2)};
     myType = type;
     myChangeList = changeList;
   }
 
+  @NotNull
   private SimpleChangeSide createSide(@NotNull ChangeList changeList, @NotNull TextRange range1, @NotNull FragmentSide side) {
-    return new SimpleChangeSide(side, new DiffRangeMarker((DocumentEx)changeList.getDocument(side), range1, this));
+    return new SimpleChangeSide(side, new DiffRangeMarker(changeList.getDocument(side), range1, this));
   }
 
   /**
@@ -55,19 +55,23 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
     }
   }
 
+  @Override
   protected void removeFromList() {
     myChangeList.remove(this);
   }
 
+  @Override
   @NotNull
   public ChangeSide getChangeSide(@NotNull FragmentSide side) {
     return mySides[side.getIndex()];
   }
 
+  @Override
   public ChangeType getType() {
     return myType;
   }
 
+  @Override
   public ChangeList getChangeList() {
     return myChangeList;
   }
@@ -83,6 +87,7 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
     myChangeList.apply(this);
   }
 
+  @Override
   public void onRemovedFromList() {
     for (int i = 0; i < mySides.length; i++) {
       SimpleChangeSide side = mySides[i];
@@ -92,16 +97,18 @@ class SimpleChange extends Change implements DiffRangeMarker.RangeInvalidListene
     }
   }
 
+  @Override
   public boolean isValid() {
     LOG.assertTrue((mySides[0] == null) == (mySides[1] == null));
     return mySides[0] != null;
   }
 
+  @Override
   public void onRangeInvalidated() {
     myChangeList.remove(this);
   }
 
-  public static Change fromRanges(@NotNull TextRange baseRange, @NotNull TextRange versionRange, @NotNull ChangeList changeList) {
+  static Change fromRanges(@NotNull TextRange baseRange, @NotNull TextRange versionRange, @NotNull ChangeList changeList) {
     ChangeType type = ChangeType.fromRanges(baseRange, versionRange);
     return new SimpleChange(type, baseRange, versionRange, changeList);
   }

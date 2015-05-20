@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
@@ -38,7 +37,7 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
   @NotNull
   @Override
   public VisibleGraph<Integer> createVisibleGraph(@NotNull SortType sortType, @Nullable Set<Integer> headsOfVisibleBranches,
-                                                  @Nullable Condition<Integer> filter) {
+                                                  @Nullable Set<Integer> filter) {
     return EmptyVisibleGraph.getInstance();
   }
 

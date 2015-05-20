@@ -20,23 +20,21 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class UiInfoUsageCollector extends UsagesCollector {
+class UiInfoUsageCollector extends UsagesCollector {
   @NotNull
   @Override
-  public Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException {
-    final HashSet<UsageDescriptor> set = new HashSet<UsageDescriptor>();
+  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
+    Set<UsageDescriptor> set = new THashSet<UsageDescriptor>();
 
     add(set, "Nav Bar visible", navbar() ? 1 : 0);
     add(set, "Nav Bar floating", navbar() ? 0 : 1);
@@ -72,7 +70,7 @@ public class UiInfoUsageCollector extends UsagesCollector {
     return GroupDescriptor.create("UI Features");
   }
 
-  private static void add(HashSet<UsageDescriptor> set, String key, int value) {
+  private static void add(Set<UsageDescriptor> set, String key, int value) {
     set.add(new UsageDescriptor(key, value));
   }
 

@@ -4,6 +4,7 @@ org.jetbrains.plugins.ruby
 com.jetbrains.php
 org.intellij.clojure
 NodeJS
+Pythonid
 com.jetbrains.lang.ejs
 com.jetbrains.twig
 Karma
@@ -15,3 +16,5 @@ com.jetbrains.chronon
 AngularJS
 org.jetbrains.plugins.vagrant
 com.jetbrains.plugins.ini4idea
+com.jetbrains.plugins.meteor
+AWSCloudFormation

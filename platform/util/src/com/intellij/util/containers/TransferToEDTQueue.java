@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -155,6 +156,12 @@ public class TransferToEDTQueue<T> {
   public int size() {
     synchronized (myQueue) {
       return myQueue.size();
+    }
+  }
+
+  public Collection<T> dump() {
+    synchronized (myQueue) {
+      return myQueue.toList();
     }
   }
 

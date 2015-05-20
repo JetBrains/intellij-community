@@ -78,7 +78,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
         
         // reset access status and notifications for files that became project files  
         for (VirtualFile each : new ArrayList<VirtualFile>(files.keySet())) {
-          if (isProjectFile(each)) {
+          if (isProjectFile(each, project)) {
             files.remove(each);
           }
         }
@@ -103,7 +103,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
       if (statuses.get(each) == AccessStatus.ALLOWED) continue;
 
       if (!(each.getFileSystem() instanceof LocalFileSystem)) continue; // do not block e.g., HttpFileSystem, LightFileSystem etc.  
-      if (isProjectFile(each)) {
+      if (isProjectFile(each, myProject)) {
         statuses.remove(each);
         continue;
       }
@@ -141,27 +141,34 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     return dialog.getUnlockOption();
   }
 
-  private boolean isProjectFile(@NotNull VirtualFile file) {
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
+  public static boolean isWriteAccessAllowedExplicitly(@NotNull VirtualFile file, @NotNull Project project) {
+    if (!(file.getFileSystem() instanceof LocalFileSystem)) return false;
+    Map<VirtualFile, AccessStatus> statuses = getRegisteredFiles(project);
+    return statuses.get(file) == AccessStatus.ALLOWED ||
+           isProjectFile(file, project);
+  }
+
+  private static boolean isProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
+    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     if (fileIndex.isInContent(file)) return true;
     if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
     
-    if (myProject instanceof ProjectEx) {
-      IProjectStore store = ((ProjectEx)myProject).getStateStore();
+    if (project instanceof ProjectEx) {
+      IProjectStore store = ((ProjectEx)project).getStateStore();
 
       if (store.getStorageScheme() == StorageScheme.DIRECTORY_BASED) {
-        VirtualFile baseDir = myProject.getBaseDir();
+        VirtualFile baseDir = project.getBaseDir();
         VirtualFile dotIdea = baseDir == null ? null : baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
         if (dotIdea != null && VfsUtilCore.isAncestor(dotIdea, file, false)) return true;
       }
 
       if (file.equals(store.getWorkspaceFile()) || file.equals(store.getProjectFile())) return true;
-      for (Module each : ModuleManager.getInstance(myProject).getModules()) {
+      for (Module each : ModuleManager.getInstance(project).getModules()) {
         if (file.equals(each.getModuleFile())) return true;
       }
     }
 
-    for (NonProjectFileWritingAccessExtension each : Extensions.getExtensions(NonProjectFileWritingAccessExtension.EP_NAME, myProject)) {
+    for (NonProjectFileWritingAccessExtension each : Extensions.getExtensions(NonProjectFileWritingAccessExtension.EP_NAME, project)) {
       if(each.isWritable(file)) return true;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.table.TableLayout;
@@ -34,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -43,28 +43,47 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  static final String TABS_SHORTEN_TITLE_IF_NEED = "tabs.shorten.title.if.need";
-  private JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
-  private JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
+  protected JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
+  protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
 
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
+    Registry.get(TABS_ALPHABETICAL_KEY).addListener(new RegistryValueListener.Adapter() {
+
+      @Override
+      public void afterValueChanged(RegistryValue value) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            resetTabsCache();
+            relayout(true, false);
+          }
+        });
+      }
+    }, parent);
   }
 
   @Override
   protected SingleRowLayout createSingleRowLayout() {
-    if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {
+    if (!UISettings.getInstance().HIDE_TABS_IF_NEED && supportsCompression()) {
+      return new CompressibleSingleRowLayout(this);
+    }
+    else if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {
       return new ScrollableSingleRowLayout(this);
     }
     return super.createSingleRowLayout();
   }
 
   @Override
-  protected TabLabel createTabLabel(TabInfo info) {
-    TabLabel label = super.createTabLabel(info);
-    label.putClientProperty(TABS_SHORTEN_TITLE_IF_NEED, Boolean.TRUE);
-    return label;
+  public boolean supportsCompression() {
+    return true;
+  }
+
+  @Nullable
+  public Rectangle getSelectedBounds() {
+    TabLabel label = getSelectedLabel();
+    return label != null ? label.getBounds() : null;
   }
 
   @Override
@@ -147,7 +166,7 @@ public class JBEditorTabs extends JBTabsImpl {
     return hasUnderline() ? super.getActiveTabUnderlineHeight() : 1;
   }
 
-  JBEditorTabsPainter getPainter() {
+  protected JBEditorTabsPainter getPainter() {
     return UIUtil.isUnderDarcula() ? myDarkPainter : myDefaultPainter;
   }
 
@@ -162,18 +181,11 @@ public class JBEditorTabs extends JBTabsImpl {
   @Override
   protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
     List<TabInfo> visibleInfos = getVisibleInfos();
-    if (isAlphabeticalMode()) {
-      Collections.sort(visibleInfos, new Comparator<TabInfo>() {
-        @Override
-        public int compare(TabInfo o1, TabInfo o2) {
-          return StringUtil.naturalCompare(o1.getText(), o2.getText());
-        }
-      });
-    }
     final boolean vertical = getTabsPosition() == JBTabsPosition.left || getTabsPosition() == JBTabsPosition.right;
 
     Insets insets = getTabsBorder().getEffectiveBorder();
 
+    int minOffset = vertical ? getHeight(): getWidth();
     int maxOffset = 0;
     int maxLength = 0;
 
@@ -182,18 +194,21 @@ public class JBEditorTabs extends JBTabsImpl {
       TabLabel tabLabel = myInfo2Label.get(visibleInfo);
       Rectangle r = tabLabel.getBounds();
       if (r.width == 0 || r.height == 0) continue;
-      maxOffset = vertical ? r.y + r.height : r.x + r.width;
+      minOffset = Math.min(vertical ? r.y : r.x, minOffset);
+      maxOffset = Math.max(vertical ? r.y + r.height : r.x + r.width, maxOffset);
       maxLength = vertical ? r.width : r.height;
-      break;
     }
 
+    minOffset--;
     maxOffset++;
 
-    Rectangle r2 = getBounds();
+    Rectangle r2 = new Rectangle(0, 0, getWidth(), getHeight());
 
-    Rectangle rectangle;
+    Rectangle beforeTabs;
+    Rectangle afterTabs;
     if (vertical) {
-      rectangle = new Rectangle(insets.left, maxOffset, getWidth(),
+      beforeTabs = new Rectangle(insets.left, insets.top, getWidth(), minOffset - insets.top);
+      afterTabs = new Rectangle(insets.left, maxOffset, getWidth(),
                                 r2.height - maxOffset - insets.top - insets.bottom);
     } else {
       int y = r2.y + insets.top;
@@ -201,17 +216,29 @@ public class JBEditorTabs extends JBTabsImpl {
       if (getTabsPosition() == JBTabsPosition.bottom) {
         y = r2.height - height - insets.top + getActiveTabUnderlineHeight();
       } else {
+        height++;
         height -= getActiveTabUnderlineHeight();
       }
+      y--;
 
-      rectangle = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
+      afterTabs = new Rectangle(maxOffset, y, r2.width - maxOffset - insets.left - insets.right, height);
+      beforeTabs = new Rectangle(0, y, minOffset, height);
     }
 
-    getPainter().doPaintBackground(g2d, clip, vertical, rectangle);
+    getPainter().doPaintBackground(g2d, clip, vertical, afterTabs);
+    if (isSingleRow()) {
+      g2d.setPaint(getEmptySpaceColor());
+      g2d.fill(beforeTabs);
+      g2d.fill(afterTabs);
+    }
+  }
+
+  protected Color getEmptySpaceColor() {
+    return getPainter().getEmptySpaceColor();
   }
 
   protected void paintSelectionAndBorder(Graphics2D g2d) {
-    if (getSelectedInfo() == null) return;
+    if (getSelectedInfo() == null || isHideTabs()) return;
 
     TabLabel label = getSelectedLabel();
     Rectangle r = label.getBounds();
@@ -243,13 +270,14 @@ public class JBEditorTabs extends JBTabsImpl {
     shape.labelPath = shape.path.createTransform(getSelectedLabel().getBounds());
 
     shape.labelBottomY = shape.labelPath.getMaxY() - shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1);
+    boolean isTop = getPosition() == JBTabsPosition.top;
+    boolean isBottom = getPosition() == JBTabsPosition.bottom;
     shape.labelTopY =
-      shape.labelPath.getY() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? shape.labelPath.deltaY(1) : 0) ;
-    shape.labelLeftX = shape.labelPath.getX() + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? 0 : shape.labelPath.deltaX(
-      1));
-    shape.labelRightX = shape.labelPath.getMaxX() - shape.labelPath.deltaX(1);
+      shape.labelPath.getY() + (isTop ? shape.labelPath.deltaY(1) : isBottom ? shape.labelPath.deltaY(-1) : 0) ;
+    shape.labelLeftX = shape.labelPath.getX() + (isTop || isBottom ? 0 : shape.labelPath.deltaX(1));
+    shape.labelRightX = shape.labelPath.getMaxX() /*- shape.labelPath.deltaX(1)*/;
 
-    int leftX = shape.insets.left + (getPosition() == JBTabsPosition.top || getPosition() == JBTabsPosition.bottom ? 0 : shape.labelPath.deltaX(1));
+    int leftX = shape.insets.left + (isTop || isBottom ? 0 : shape.labelPath.deltaX(1));
 
     shape.path.moveTo(leftX, shape.labelBottomY);
     shape.path.lineTo(shape.labelLeftX, shape.labelBottomY);

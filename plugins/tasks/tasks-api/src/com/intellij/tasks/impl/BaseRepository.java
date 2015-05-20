@@ -18,6 +18,7 @@ package com.intellij.tasks.impl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -40,6 +41,8 @@ public abstract class BaseRepository extends TaskRepository {
   protected boolean myUseProxy;
   protected boolean myUseHttpAuthentication;
   protected boolean myLoginAnonymously;
+  protected CustomTaskState myPreferredOpenTaskState;
+  protected CustomTaskState myPreferredCloseTaskState;
 
   public BaseRepository(TaskRepositoryType type) {
     super(type);
@@ -133,6 +136,28 @@ public abstract class BaseRepository extends TaskRepository {
 
   public void setLoginAnonymously(final boolean loginAnonymously) {
     myLoginAnonymously = loginAnonymously;
+  }
+
+  @Override
+  public void setPreferredOpenTaskState(@Nullable CustomTaskState state) {
+    myPreferredOpenTaskState = state;
+  }
+
+  @Nullable
+  @Override
+  public CustomTaskState getPreferredOpenTaskState() {
+    return myPreferredOpenTaskState;
+  }
+
+  @Override
+  public void setPreferredCloseTaskState(@Nullable CustomTaskState state) {
+    myPreferredCloseTaskState = state;
+  }
+
+  @Nullable
+  @Override
+  public CustomTaskState getPreferredCloseTaskState() {
+    return myPreferredCloseTaskState;
   }
 
   @Nullable

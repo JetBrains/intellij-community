@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
@@ -57,7 +56,7 @@ public class MavenIndices {
 
       try {
         MavenIndex index = new MavenIndex(myIndexer, each, myListener);
-        if (find(index.getRepositoryId(), index.getRepositoryPathOrUrl(), index.getKind()) != null) {
+        if (find(index.getRepositoryPathOrUrl(), index.getKind()) != null) {
           index.close(true);
           FileUtil.delete(each);
           continue;
@@ -83,8 +82,11 @@ public class MavenIndices {
   }
 
   public synchronized MavenIndex add(String repositoryId, String repositoryPathOrUrl, MavenIndex.Kind kind) throws MavenIndexException {
-    MavenIndex index = find(repositoryId, repositoryPathOrUrl, kind);
-    if (index != null) return index;
+    MavenIndex index = find(repositoryPathOrUrl, kind);
+    if (index != null) {
+      index.registerId(repositoryId);
+      return index;
+    }
 
     File dir = createNewIndexDir();
     index = new MavenIndex(myIndexer, dir, repositoryId, repositoryPathOrUrl, kind, myListener);
@@ -93,9 +95,9 @@ public class MavenIndices {
   }
 
   @Nullable
-  public MavenIndex find(String repositoryId, String repositoryPathOrUrl, MavenIndex.Kind kind) {
+  public MavenIndex find(String repositoryPathOrUrl, MavenIndex.Kind kind) {
     for (MavenIndex each : myIndices) {
-      if (each.isFor(kind, repositoryId, repositoryPathOrUrl)) return each;
+      if (each.isFor(kind, repositoryPathOrUrl)) return each;
     }
     return null;
   }

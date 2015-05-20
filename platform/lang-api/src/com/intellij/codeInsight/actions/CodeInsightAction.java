@@ -89,7 +89,16 @@ public abstract class CodeInsightAction extends AnAction {
     }
 
     final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-    presentation.setEnabled(file != null && isValidForFile(project, editor, file));
+    if (file == null) {
+      presentation.setEnabled(false);
+      return;
+    }
+
+    update(presentation, project, editor, file);
+  }
+
+  protected void update(@NotNull Presentation presentation, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    presentation.setEnabled(isValidForFile(project, editor, file));
   }
 
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {

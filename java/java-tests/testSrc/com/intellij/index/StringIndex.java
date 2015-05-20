@@ -48,10 +48,18 @@ public class StringIndex {
   }
   
   public void update(final String path, @Nullable String content, @Nullable String oldContent) throws StorageException {
-    myIndex.update(path.hashCode(), toInput(path, content)).compute();
+    myIndex.update(Math.abs(path.hashCode()), toInput(path, content)).compute();
   }
-  
-  @Nullable 
+
+  public void flush() throws StorageException {
+    myIndex.flush();
+  }
+
+  public void dispose() {
+    myIndex.dispose();
+  }
+
+  @Nullable
   private PathContentPair toInput(@NotNull String path, @Nullable String content) {
     return content != null ? new PathContentPair(path, content) : null;
   }

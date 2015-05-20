@@ -63,7 +63,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
               holder.registerProblem(
                 tag,
                 XmlBundle.message("xml.inspections.tag.empty.body"),
-                isCollapsableTag(tag) ? localQuickFix : null
+                isCollapsibleTag(tag) ? localQuickFix : null
               );
             }
           }
@@ -72,8 +72,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
     };
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static boolean isCollapsableTag(final XmlTag tag) {
+  private static boolean isCollapsibleTag(final XmlTag tag) {
     final String name = tag.getName().toLowerCase();
     return tag.getLanguage() == XMLLanguage.INSTANCE ||
            "link".equals(name) || "br".equals(name) || "meta".equals(name) || "img".equals(name) || "input".equals(name) || "hr".equals(name);

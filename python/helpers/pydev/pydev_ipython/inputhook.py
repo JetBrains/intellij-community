@@ -61,6 +61,7 @@ class InputHookManager(object):
         self._return_control_callback = None
         self._apps = {}
         self._reset()
+        self.pyplot_imported = False
 
     def _reset(self):
         self._callback_pyfunctype = None
@@ -396,6 +397,33 @@ class InputHookManager(object):
         """
         self.clear_inputhook()
 
+    def enable_mac(self, app=None):
+        """ Enable event loop integration with MacOSX.
+
+        We call function pyplot.pause, which updates and displays active
+        figure during pause. It's not MacOSX-specific, but it enables to
+        avoid inputhooks in native MacOSX backend.
+        Also we shouldn't import pyplot, until user does it. Cause it's
+        possible to choose backend before importing pyplot for the first
+        time only.
+        """
+        def inputhook_mac(app=None):
+            if self.pyplot_imported:
+                pyplot = sys.modules['matplotlib.pyplot']
+                try:
+                    pyplot.pause(0.01)
+                except:
+                    pass
+            else:
+                if 'matplotlib.pyplot' in sys.modules:
+                    self.pyplot_imported = True
+
+        self.set_inputhook(inputhook_mac)
+        self._current_gui = GUI_OSX
+
+    def disable_mac(self):
+        self.clear_inputhook()
+
     def current_gui(self):
         """Return a string indicating the currently active GUI or None."""
         return self._current_gui
@@ -416,6 +444,8 @@ enable_pyglet = inputhook_manager.enable_pyglet
 disable_pyglet = inputhook_manager.disable_pyglet
 enable_gtk3 = inputhook_manager.enable_gtk3
 disable_gtk3 = inputhook_manager.disable_gtk3
+enable_mac = inputhook_manager.enable_mac
+disable_mac = inputhook_manager.disable_mac
 clear_inputhook = inputhook_manager.clear_inputhook
 set_inputhook = inputhook_manager.set_inputhook
 current_gui = inputhook_manager.current_gui
@@ -458,7 +488,7 @@ def enable_gui(gui=None, app=None):
         raise ValueError("A return_control_callback must be supplied as a reference before a gui can be enabled")
 
     guis = {GUI_NONE: clear_inputhook,
-            GUI_OSX: lambda app = False: None,
+            GUI_OSX: enable_mac,
             GUI_TK: enable_tk,
             GUI_GTK: enable_gtk,
             GUI_WX: enable_wx,
@@ -512,6 +542,8 @@ __all__ = [
     "disable_pyglet",
     "enable_gtk3",
     "disable_gtk3",
+    "enable_mac",
+    "disable_mac",
     "clear_inputhook",
     "set_inputhook",
     "current_gui",

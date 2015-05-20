@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -44,11 +45,11 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   private static final boolean DEBUG_REGISTRATION = false;
 
-  private final AreaPicoContainerImpl myPicoContainer;
+  private final AreaPicoContainer myPicoContainer;
   private final Throwable myCreationTrace;
   private final Map<String, ExtensionPointImpl> myExtensionPoints = ContainerUtil.newConcurrentMap();
   private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new THashMap<String, Throwable>():null;
-  private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmartList();
+  private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = MultiMap.createSmart();
   private final List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
   private boolean myAvailabilityNotificationsActive = true;
 
@@ -59,7 +60,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     myCreationTrace = DEBUG_REGISTRATION ? new Throwable("Area creation trace") : null;
     myAreaClass = areaClass;
     myAreaInstance = areaInstance;
-    myPicoContainer = new AreaPicoContainerImpl(parentPicoContainer, areaInstance);
+    myPicoContainer = new DefaultPicoContainer(parentPicoContainer);
     myLogger = logger;
     initialize();
   }
@@ -79,10 +80,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @NotNull
   @Override
   public AreaPicoContainer getPicoContainer() {
-    return myPicoContainer;
-  }
-
-  MutablePicoContainer getMutablePicoContainer() {
     return myPicoContainer;
   }
 
@@ -143,19 +140,18 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     String epName = extractEPName(extensionElement);
 
     ExtensionComponentAdapter adapter;
-    final PicoContainer container = getPluginContainer(pluginId.getIdString());
     final ExtensionPointImpl extensionPoint = getExtensionPoint(epName);
     if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
       String implClass = extensionElement.getAttributeValue("implementation");
       if (implClass == null) {
         throw new RuntimeException("'implementation' attribute not specified for '" + epName + "' extension in '" + pluginId.getIdString() + "' plugin");
       }
-      adapter = new ExtensionComponentAdapter(implClass, extensionElement, container, pluginDescriptor, shouldDeserializeInstance(extensionElement));
+      adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
     }
     else {
-      adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, container, pluginDescriptor, true);
+      adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, myPicoContainer, pluginDescriptor, true);
     }
-    internalGetPluginContainer().registerComponent(adapter);
+    myPicoContainer.registerComponent(adapter);
     extensionPoint.registerExtensionAdapter(adapter);
   }
 
@@ -208,7 +204,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
     getExtensionPoint(EPAvailabilityListenerExtension.EXTENSION_POINT_NAME).addExtensionPointListener(new ExtensionPointListener() {
       @Override
-      @SuppressWarnings({"unchecked"})
       public void extensionRemoved(@NotNull Object extension, final PluginDescriptor pluginDescriptor) {
         EPAvailabilityListenerExtension epListenerExtension = (EPAvailabilityListenerExtension) extension;
         Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(epListenerExtension.getExtensionPointName());
@@ -300,7 +295,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  @SuppressWarnings({"unchecked"})
   private void notifyEPRegistered(final ExtensionPoint extensionPoint) {
     Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPoint.getName());
     for (final ExtensionPointAvailabilityListener listener : listeners) {
@@ -339,7 +333,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
   @NotNull
   @Override
-  @SuppressWarnings({"unchecked"})
   public <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName) {
     return getExtensionPoint(extensionPointName.getName());
   }
@@ -360,8 +353,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
-  @SuppressWarnings({"unchecked"})
-  private void notifyEPRemoved(final ExtensionPoint extensionPoint) {
+  private void notifyEPRemoved(@NotNull ExtensionPoint extensionPoint) {
     Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPoint.getName());
     for (final ExtensionPointAvailabilityListener listener : listeners) {
       notifyUnavailableListener(extensionPoint, listener);
@@ -410,11 +402,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     mySuspendedListenerActions.clear();
   }
 
-  @NotNull
-  public MutablePicoContainer[] getPluginContainers() {
-    return new MutablePicoContainer[0];
-  }
-
   public void removeAllComponents(final Set<ExtensionComponentAdapter> extensionAdapters) {
     for (final Object extensionAdapter : extensionAdapters) {
       ExtensionComponentAdapter componentAdapter = (ExtensionComponentAdapter)extensionAdapter;
@@ -422,4 +409,8 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
 
+  @Override
+  public String toString() {
+    return (myAreaClass == null ? "Root" : myAreaClass)+" Area";
+  }
 }

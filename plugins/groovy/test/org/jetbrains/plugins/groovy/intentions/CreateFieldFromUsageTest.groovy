@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
  */
 class CreateFieldFromUsageTest extends GrIntentionTestCase {
   CreateFieldFromUsageTest() {
-    super('Create Field', GrUnresolvedAccessInspection)
+    super('Create field', GrUnresolvedAccessInspection)
   }
 
   void testSimpleRef() {

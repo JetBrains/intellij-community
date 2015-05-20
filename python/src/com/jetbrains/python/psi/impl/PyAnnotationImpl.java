@@ -20,11 +20,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -43,24 +38,5 @@ public class PyAnnotationImpl extends PyBaseElementImpl<PyAnnotationStub> implem
   @Override
   public PyExpression getValue() {
     return findChildByClass(PyExpression.class);
-  }
-
-  @Nullable
-  @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    final PyExpression value = getValue();
-    if (value != null) {
-      final PyType type = context.getType(value);
-      if (type instanceof PyClassLikeType) {
-        final PyClassLikeType classType = (PyClassLikeType)type;
-        if (classType.isDefinition()) {
-          return classType.toInstance();
-        }
-      }
-      else if (type instanceof PyNoneType) {
-        return type;
-      }
-    }
-    return null;
   }
 }

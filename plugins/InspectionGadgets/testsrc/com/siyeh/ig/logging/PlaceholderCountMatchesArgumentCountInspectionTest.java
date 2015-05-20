@@ -16,6 +16,36 @@ public class PlaceholderCountMatchesArgumentCountInspectionTest extends LightIns
       "package org.slf4j; public class LoggerFactory { public static Logger getLogger(Class clazz) { return null; }}"};
   }
 
+  public void testOneExceptionArgument() {
+    doTest("import org.slf4j.*;" +
+           "class X {" +
+           "  void foo() {" +
+           "    RuntimeException e = new RuntimeException();" +
+           "    LoggerFactory.getLogger(X.class).info(/*Fewer arguments provided (0) than placeholders specified (1) in 'this: {}'*/\"this: {}\"/**/, e);" +
+           "  }" +
+           "}");
+  }
+
+  public void testExceptionTwoPlaceholders() {
+    doTest("import org.slf4j.*;" +
+           "class X {" +
+           "  void foo() {" +
+           "    RuntimeException e = new RuntimeException();" +
+           "    LoggerFactory.getLogger(X.class).info(\"1: {} e: {}\", 1, e);" +
+           "  }" +
+           "}");
+  }
+
+  public void testExceptionThreePlaceholder() {
+    doTest("import org.slf4j.*;" +
+           "class X {" +
+           "  void foo() {" +
+           "    RuntimeException e = new RuntimeException();" +
+           "    LoggerFactory.getLogger(X.class).info(/*Fewer arguments provided (1) than placeholders specified (3) in '1: {} {} {}'*/\"1: {} {} {}\"/**/, 1, e);" +
+           "  }" +
+           "}");
+  }
+
   public void testNoWarn() {
     doTest("import org.slf4j.*;\n" +
            "class X {\n" +

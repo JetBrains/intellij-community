@@ -2,7 +2,6 @@ package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -33,6 +32,7 @@ public class StructuralSearchUtil {
 
   @Contract("null -> false")
   public static boolean isIdentifier(PsiElement element) {
+    if (element == null) return false;
     final StructuralSearchProfile profile = getProfileByPsiElement(element);
     return profile != null && profile.isIdentifier(element);
   }
@@ -67,7 +67,7 @@ public class StructuralSearchUtil {
         ourDefaultFileType = StdFileTypes.XML;
       }
     }
-    assert isValidFileType(ourDefaultFileType) : "file type not valid for structural search: " + ourDefaultFileType.getName();
+    assert ourDefaultFileType instanceof LanguageFileType : "file type not valid for structural search: " + ourDefaultFileType.getName();
     return ourDefaultFileType;
   }
 
@@ -116,25 +116,12 @@ public class StructuralSearchUtil {
 
     List<FileType> result = new ArrayList<FileType>();
     for (FileType fileType : allFileTypes) {
-      if (isValidFileType(fileType)) {
+      if (fileType instanceof LanguageFileType) {
         result.add(fileType);
       }
     }
 
     return result.toArray(new FileType[result.size()]);
-  }
-
-  private static boolean isValidFileType(FileType fileType) {
-    return fileType != StdFileTypes.GUI_DESIGNER_FORM &&
-        fileType != StdFileTypes.IDEA_MODULE &&
-        fileType != StdFileTypes.IDEA_PROJECT &&
-        fileType != StdFileTypes.IDEA_WORKSPACE &&
-        fileType != FileTypes.ARCHIVE &&
-        fileType != FileTypes.UNKNOWN &&
-        fileType != FileTypes.PLAIN_TEXT &&
-        !(fileType instanceof AbstractFileType) &&
-        !fileType.isBinary() &&
-        !fileType.isReadOnly();
   }
 
   public static String shieldSpecialChars(String word) {

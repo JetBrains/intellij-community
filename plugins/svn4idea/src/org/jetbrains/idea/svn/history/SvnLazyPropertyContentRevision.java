@@ -26,11 +26,15 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.MarkerVcsContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.AbstractShowPropertiesDiffAction;
+import org.jetbrains.idea.svn.properties.PropertyData;
 import org.tmatesoft.svn.core.SVNURL;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -38,12 +42,12 @@ import org.tmatesoft.svn.core.SVNURL;
  * Date: 2/22/12
  * Time: 10:28 AM
  */
-public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVcsContentRevision {
+public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVcsContentRevision, PropertyRevision {
   private final FilePath myPath;
   private final VcsRevisionNumber myNumber;
   private final Project myProject;
   private final SVNURL myUrl;
-  private String myContent;
+  private List<PropertyData> myContent;
 
   public SvnLazyPropertyContentRevision(FilePath path, VcsRevisionNumber number, Project project, SVNURL url) {
     myPath = path;
@@ -52,17 +56,24 @@ public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVc
     myUrl = url;
   }
 
+  @Nullable
   @Override
-  public String getContent() throws VcsException {
+  public List<PropertyData> getProperties() throws VcsException {
     if (myContent == null) {
       myContent = loadContent();
     }
     return myContent;
   }
 
-  private String loadContent() {
+  @Override
+  public String getContent() throws VcsException {
+    return AbstractShowPropertiesDiffAction.toSortedStringPresentation(getProperties());
+  }
+
+  private List<PropertyData> loadContent() throws VcsException {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final Ref<String> ref = new Ref<String>();
+    final Ref<List<PropertyData>> ref = new Ref<List<PropertyData>>();
+    final Ref<VcsException> exceptionRef = new Ref<VcsException>();
     final Runnable runnable = new Runnable() {
       @Override
       public void run() {
@@ -70,24 +81,21 @@ public class SvnLazyPropertyContentRevision implements ContentRevision, MarkerVc
           ref.set(AbstractShowPropertiesDiffAction.getPropertyList(vcs, myUrl, ((SvnRevisionNumber)myNumber).getRevision()));
         }
         catch (VcsException e) {
-          // unknown node kind (node deleted)
-          /*if (e.getErrorMessage().getErrorCode().getCode() == 145000) {
-            return "";
-          }*/
-          ref.set("Can not get properties: " + e.getMessage());
+          exceptionRef.set(e);
         }
       }
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
       final boolean completed = ProgressManager.getInstance()
         .runProcessWithProgressSynchronously(runnable, SvnBundle.message("progress.title.loading.file.properties"), true, myProject);
-      if (! completed) {
-        return "Properties load for revision " + getRevisionNumber().asString() + " was canceled.";
+      if (!completed) {
+        throw new VcsException("Properties load for revision " + getRevisionNumber().asString() + " was canceled.");
       }
     }
     else {
       runnable.run();
     }
+    if (!exceptionRef.isNull()) throw exceptionRef.get();
     return ref.get();
   }
 

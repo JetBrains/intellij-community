@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 package com.intellij.psi.resolve
+
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -160,7 +162,7 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected boolean toAddSourceRoot() {
-    return false;
+    return name != "test do not build stubs in source jars";
   }
 
   public void "test do not build stubs in source jars"() {
@@ -197,4 +199,42 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     assert !StubTreeLoader.instance.canHaveStub(vfile)
     assert file.stub // from text
   }
+
+  public void "test directory with class files inside project content"() {
+    def testData = PathManagerEx.getTestDataPath() + "/codeInsight/interJarDependencies"
+    myFixture.setTestDataPath(testData)
+    PsiTestUtil.addLibrary(myModule, "lib2", testData, "lib2.jar");
+
+    myFixture.copyDirectoryToProject("lib1", "lib1")
+    PsiTestUtil.addLibrary(myModule, "lib1", myFixture.tempDirFixture.getFile("").path, "lib1");
+
+    myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("TestCase.java", """
+class Testcase {
+    public static void main( String[] args ) {
+        new B().<error descr="Cannot resolve method 'a()'">a</error>(); // should not work, because the A in lib1 has no method a
+        new B().a2(); // should work, because the A with this method is in lib1
+    }
+}
+""").virtualFile)
+    myFixture.checkHighlighting()
+  }
+
+  public void "test update method hierarchy on class file change"() {
+    myFixture.testDataPath = PathManagerEx.getTestDataPath() + "/libResolve/methodHierarchy"
+    myFixture.copyDirectoryToProject("", "lib")
+    PsiTestUtil.addLibrary(myModule, "lib", myFixture.tempDirFixture.getFile("").path, "lib");
+
+    def message = JavaPsiFacade.getInstance(project).findClass('com.google.protobuf.AbstractMessageLite',
+                                                               GlobalSearchScope.allScope(project))
+    assert message
+    def method = message.findMethodsByName("toByteArray", false)[0]
+    assert method
+    assert method.hierarchicalMethodSignature.superSignatures.size() == 1
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      message.interfaces[0].containingFile.virtualFile.delete(this)
+    }
+    assert method.hierarchicalMethodSignature.superSignatures.size() == 0
+  }
+
 }

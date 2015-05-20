@@ -17,6 +17,8 @@ package com.intellij.lang.properties.customizeActions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleManager;
@@ -24,16 +26,26 @@ import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
  */
 public class DissociateResourceBundleAction extends AnAction {
-  private static final String PRESENTATION_TEXT_TEMPLATE = "Dissociate Resource Bundle '%s'";
+  private static final String SINGLE_RB_PRESENTATION_TEXT_TEMPLATE = "Dissociate Resource Bundle '%s'";
+  private static final String MULTIPLE_RB_PRESENTATION_TEXT_TEMPLATE = "Dissociate %s Resource Bundles";
 
   public DissociateResourceBundleAction() {
     super(null, null, AllIcons.FileTypes.Properties);
@@ -41,40 +53,80 @@ public class DissociateResourceBundleAction extends AnAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final ResourceBundle resourceBundle = extractResourceBundle(e);
-    assert resourceBundle != null;
-    final Project project = resourceBundle.getProject();
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
-    for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
-      fileEditorManager.closeFile(propertiesFile.getVirtualFile());
+    final Project project = e.getProject();
+    if (project == null) {
+      return;
     }
-    ResourceBundleManager.getInstance(e.getProject()).dissociateResourceBundle(resourceBundle);
-    ProjectView.getInstance(project).refresh();
+    final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
+    assert resourceBundles.size() > 0;
+    dissociate(resourceBundles, project);
   }
 
   @Override
   public void update(final AnActionEvent e) {
-    final ResourceBundle resourceBundle = extractResourceBundle(e);
-    if (resourceBundle != null) {
-      e.getPresentation().setText(String.format(PRESENTATION_TEXT_TEMPLATE, resourceBundle.getBaseName()), false);
+    final Collection<ResourceBundle> resourceBundles = extractResourceBundles(e);
+    if (!resourceBundles.isEmpty()) {
+      final String actionText = resourceBundles.size() == 1 ?
+                                String.format(SINGLE_RB_PRESENTATION_TEXT_TEMPLATE, ContainerUtil.getFirstItem(resourceBundles).getBaseName()) :
+                                String.format(MULTIPLE_RB_PRESENTATION_TEXT_TEMPLATE, resourceBundles.size());
+      e.getPresentation().setText(actionText, false);
       e.getPresentation().setVisible(true);
     } else {
       e.getPresentation().setVisible(false);
     }
   }
 
-  @Nullable
-  private static ResourceBundle extractResourceBundle(final AnActionEvent event) {
-    final ResourceBundle[] data = event.getData(ResourceBundle.ARRAY_DATA_KEY);
-    if (data != null && data.length == 1 && data[0].getPropertiesFiles().size() > 1) {
-      return data[0];
+  public static void dissociate(final Collection<ResourceBundle> resourceBundles, final Project project) {
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    final Set<PsiFileSystemItem> toUpdateInProjectView = new HashSet<PsiFileSystemItem>();
+    for (ResourceBundle resourceBundle : resourceBundles) {
+      fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
+      for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
+        fileEditorManager.closeFile(propertiesFile.getVirtualFile());
+        PsiDirectory containingDirectory = propertiesFile.getContainingFile().getContainingDirectory();
+        if (containingDirectory != null) {
+          toUpdateInProjectView.add(containingDirectory);
+        }
+      }
+      ResourceBundleManager.getInstance(project).dissociateResourceBundle(resourceBundle);
     }
-    final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(event.getData(PlatformDataKeys.PSI_FILE));
-    if (propertiesFile == null) {
-      return null;
+    AbstractProjectViewPane currentProjectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
+    if (currentProjectViewPane == null) {
+      return;
     }
-    final ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
-    return resourceBundle.getPropertiesFiles().size() > 1 ? resourceBundle : null;
+    AbstractTreeBuilder treeBuilder = currentProjectViewPane.getTreeBuilder();
+    if (treeBuilder != null) {
+      for (PsiFileSystemItem item : toUpdateInProjectView) {
+        treeBuilder.queueUpdateFrom(item, false);
+      }
+    }
+  }
+
+  @NotNull
+  private static Collection<ResourceBundle> extractResourceBundles(final AnActionEvent event) {
+    final Set<ResourceBundle> targetResourceBundles = new HashSet<ResourceBundle>();
+    final ResourceBundle[] chosenResourceBundles = event.getData(ResourceBundle.ARRAY_DATA_KEY);
+    if (chosenResourceBundles != null) {
+      for (ResourceBundle resourceBundle : chosenResourceBundles) {
+        if (resourceBundle.getPropertiesFiles().size() > 1) {
+          targetResourceBundles.add(resourceBundle);
+        }
+      }
+    }
+    final PsiElement[] psiElements = event.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
+    if (psiElements != null) {
+      for (PsiElement element : psiElements) {
+        if (element instanceof PsiFile) {
+          final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile((PsiFile)element);
+          if (propertiesFile != null) {
+            final ResourceBundle bundle = propertiesFile.getResourceBundle();
+            if (bundle.getPropertiesFiles().size() > 1) {
+              targetResourceBundles.add(bundle);
+            }
+          }
+        }
+      }
+    }
+    return targetResourceBundles;
   }
 }

@@ -94,6 +94,14 @@ class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer 
     }
   }
 
+  public int getNumberOfProcessedSources() {
+    int total = 0;
+    for (BuildOutputConsumerImpl consumer : myTarget2Consumer.values()) {
+      total += consumer.getNumberOfProcessedSources();
+    }
+    return total;
+  }
+
   public void clear() {
     myTarget2Consumer.clear();
     myClasses.clear();

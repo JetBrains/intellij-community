@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.console.GroovyShellAction;
-import org.jetbrains.plugins.groovy.console.GroovyShellActionBase;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -38,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
+
+import static org.jetbrains.plugins.groovy.shell.GroovyShellRunnerImpl.GROOVY_SHELL_FILE;
 
 /**
  * @author peter
@@ -74,7 +74,7 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
       final GrExpression qualifier = ref.getQualifierExpression();
       if (qualifier == null) {
         if (isPossibleClosureParameter(ref)) return ThreeState.NO;
-        if (parameters.getOriginalFile().getUserData(GroovyShellActionBase.GROOVY_SHELL_FILE) == Boolean.TRUE) {
+        if (parameters.getOriginalFile().getUserData(GROOVY_SHELL_FILE) == Boolean.TRUE) {
           return ThreeState.NO;
         }
 
@@ -97,7 +97,7 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
-    if (CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS && psiFile.getUserData(GroovyShellAction.GROOVY_SHELL_FILE) == Boolean.TRUE) {
+    if (CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS && psiFile.getUserData(GROOVY_SHELL_FILE) == Boolean.TRUE) {
       return ThreeState.YES;
     }
 

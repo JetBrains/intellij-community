@@ -33,7 +33,7 @@ import javax.swing.*;
 public class TrelloRepositoryType extends BaseRepositoryType<TrelloRepository> {
   public static final String DEVELOPER_KEY = "d6ec3709f7141007e150de64d4701181";
   public static final String CLIENT_AUTHORIZATION_URL =
-    "https://trello.com/1/authorize?key=" + DEVELOPER_KEY +"&name=JetBrains&expiration=never&response_type=token";
+    "https://trello.com/1/authorize?key=" + DEVELOPER_KEY +"&name=JetBrains&expiration=never&response_type=token&scope=read,write";
 
   @NotNull
   @Override

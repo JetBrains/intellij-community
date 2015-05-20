@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,16 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +46,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -84,7 +84,7 @@ public class ExportToFileUtil {
             reader.close();
           }
         }
-        catch (IOException e) {
+        catch (IOException ignored) {
         }
       }
     }
@@ -112,8 +112,7 @@ public class ExportToFileUtil {
     private final Project myProject;
     private final ExporterToTextFile myExporter;
     protected Editor myTextArea;
-    protected JTextField myTfFile;
-    protected JButton myFileButton;
+    protected TextFieldWithBrowseButton myTfFile;
     private ChangeListener myListener;
 
     public ExportDialogBase(Project project, ExporterToTextFile exporter) {
@@ -121,10 +120,9 @@ public class ExportToFileUtil {
       myProject = project;
       myExporter = exporter;
 
-      myTfFile = new JTextField();
-      myFileButton = new FixedSizeButton(myTfFile);
+      myTfFile = new TextFieldWithBrowseButton();
+      myTfFile.addBrowseFolderListener(null, null, myProject, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
 
-      setHorizontalStretch(1.5f);
       setTitle(IdeBundle.message("title.export.preview"));
       setOKButtonText(IdeBundle.message("button.save"));
       setButtonsMargin(null);
@@ -157,7 +155,7 @@ public class ExportToFileUtil {
       final Document document = ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(true);
       ((DocumentImpl)document).setAcceptSlashR(true);
 
-      myTextArea = EditorFactory.getInstance().createEditor(document, myProject, StdFileTypes.PLAIN_TEXT, true);
+      myTextArea = EditorFactory.getInstance().createEditor(document, myProject, FileTypes.PLAIN_TEXT, true);
       final EditorSettings settings = myTextArea.getSettings();
       settings.setLineNumbersShown(false);
       settings.setLineMarkerAreaShown(false);
@@ -167,11 +165,12 @@ public class ExportToFileUtil {
       settings.setAdditionalColumnsCount(0);
       settings.setAdditionalPageAtBottom(false);
       ((EditorEx)myTextArea).setBackgroundColor(UIUtil.getInactiveTextFieldBackgroundColor());
+      myTextArea.getComponent().setPreferredSize(new Dimension(700, 400));
       return myTextArea.getComponent();
     }
 
     protected JComponent createNorthPanel() {
-      JPanel filePanel = createFilePanel(myTfFile, myFileButton);
+      JPanel filePanel = createFilePanel(myTfFile.getTextField(), myTfFile.getButton());
       JComponent settingsPanel = myExporter.getSettingsEditor();
       if (settingsPanel == null) {
         return filePanel;
@@ -191,11 +190,7 @@ public class ExportToFileUtil {
       gbConstraints.weightx = 0;
       panel.add(promptLabel, gbConstraints);
       gbConstraints.weightx = 1;
-      panel.add(textField, gbConstraints);
-      gbConstraints.fill = 0;
-      gbConstraints.weightx = 0;
-      gbConstraints.insets = new Insets(0, 0, 0, 0);
-      panel.add(button, gbConstraints);
+      panel.add(myTfFile, gbConstraints);
 
       String defaultFilePath = myExporter.getDefaultFilePath();
       if (! new File(defaultFilePath).isAbsolute()) {
@@ -203,28 +198,11 @@ public class ExportToFileUtil {
       } else {
         defaultFilePath = defaultFilePath.replace('/', File.separatorChar);
       }
-      textField.setText(defaultFilePath);
+      myTfFile.setText(defaultFilePath);
 
-      button.addActionListener(
-          new ActionListener() {
-          public void actionPerformed(ActionEvent e) {
-            browseFile();
-          }
-        }
-      );
+      panel.setBorder(JBUI.Borders.emptyBottom(5));
 
       return panel;
-    }
-
-    protected void browseFile() {
-      JFileChooser chooser = new JFileChooser();
-      if (myTfFile != null) {
-        chooser.setCurrentDirectory(new File(myTfFile.getText()));
-      }
-      chooser.showOpenDialog(WindowManager.getInstance().suggestParentWindow(myProject));
-      if (chooser.getSelectedFile() != null) {
-        myTfFile.setText(chooser.getSelectedFile().getAbsolutePath());
-      }
     }
 
     public String getText() {
@@ -251,7 +229,7 @@ public class ExportToFileUtil {
     protected class CopyToClipboardAction extends AbstractAction {
       public CopyToClipboardAction() {
         super(IdeBundle.message("button.copy"));
-        putValue(AbstractAction.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));
+        putValue(Action.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));
       }
 
       public void actionPerformed(ActionEvent e) {
@@ -259,5 +237,5 @@ public class ExportToFileUtil {
         CopyPasteManager.getInstance().setContents(new StringSelection(s));
       }
     }
-  };
+  }
 }

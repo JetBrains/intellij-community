@@ -47,7 +47,7 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   }
 
   @NotNull
-  protected abstract Collection<String> getValues(@Nullable Filter filter);
+  protected abstract Collection<String> getTextValues(@Nullable Filter filter);
 
   @NotNull
   protected abstract List<List<String>> getRecentValuesFromSettings();
@@ -97,6 +97,13 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
     return new SelectMultipleValuesAction();
   }
 
+  /**
+   * Return true if the filter supports "negative" values, i.e. values like "-value" which means "match anything but 'value'".
+   */
+  protected boolean supportsNegativeValues() {
+    return false;
+  }
+
   private class PredefinedValueAction extends DumbAwareAction {
 
     @NotNull private final Collection<String> myValues;
@@ -130,7 +137,8 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
       }
 
       Filter filter = myFilterModel.getFilter();
-      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants, getPopupText(getValues(filter)));
+      final MultilinePopupBuilder popupBuilder = new MultilinePopupBuilder(project, myVariants, getPopupText(getTextValues(filter)),
+                                                                           supportsNegativeValues());
       JBPopup popup = popupBuilder.createPopup();
       popup.addListener(new JBPopupAdapter() {
         @Override
@@ -149,7 +157,6 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
       });
       popup.showUnderneathOf(MultipleValueFilterPopupComponent.this);
     }
-
     @NotNull
     private String getPopupText(@Nullable Collection<String> selectedValues) {
       return selectedValues == null || selectedValues.isEmpty() ? "" : StringUtil.join(selectedValues, "\n");

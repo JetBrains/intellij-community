@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarilyQualifiedInnerClassAccessInspectionTest extends LightInspectionTestCase {
 
-  public void testTest() {
+  public void testUnnecessarilyQualifiedInnerClassAccess() {
     doTest();
   }
 

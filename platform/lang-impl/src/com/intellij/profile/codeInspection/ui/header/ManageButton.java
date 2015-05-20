@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,12 +36,11 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
   public ManageButton(final ManageButtonBuilder builder) {
     myBuilder = builder;
     getTemplatePresentation().setText("Manage");
+    setSmallVariant(false);
   }
 
   public JComponent build() {
-    final JComponent component = createCustomComponent(getTemplatePresentation());
-    component.setBorder(BorderFactory.createEmptyBorder(0, 0, 1, 0));
-    return component;
+    return createCustomComponent(getTemplatePresentation());
   }
 
   @NotNull

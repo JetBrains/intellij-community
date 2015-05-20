@@ -198,7 +198,7 @@ public class ProjectBytecodeAnalysis {
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
-  private PsiAnnotation getNotNullAnnotation() {
+  public PsiAnnotation getNotNullAnnotation() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, new CachedValueProvider<PsiAnnotation>() {
       @Nullable
       @Override
@@ -208,7 +208,7 @@ public class ProjectBytecodeAnalysis {
     });
   }
 
-  private PsiAnnotation getNullableAnnotation() {
+  public PsiAnnotation getNullableAnnotation() {
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, new CachedValueProvider<PsiAnnotation>() {
       @Nullable
       @Override

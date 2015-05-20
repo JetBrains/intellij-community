@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,34 +213,42 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   @NotNull
-  public static PsiFileImpl getFileCopy(PsiFileImpl originalFile, FileViewProvider providerCopy) {
+  public static PsiFileImpl getFileCopy(@NotNull PsiFileImpl originalFile, @NotNull FileViewProvider providerCopy) {
     FileViewProvider viewProvider = originalFile.getViewProvider();
     Language language = originalFile.getLanguage();
-    PsiFileImpl newFile = (PsiFileImpl)providerCopy.getPsi(language);
+
+    PsiFile file = providerCopy.getPsi(language);
+    if (file != null && !(file instanceof PsiFileImpl)) {
+      throw new RuntimeException("View provider " + viewProvider + " refused to provide PsiFileImpl for " + language + details(providerCopy, viewProvider));
+    }
+
+    PsiFileImpl newFile = (PsiFileImpl)file;
 
     if (newFile == null && language == PlainTextLanguage.INSTANCE && originalFile == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
       newFile = (PsiFileImpl)providerCopy.getPsi(providerCopy.getBaseLanguage());
     }
 
     if (newFile == null) {
-      throw new RuntimeException("View provider " + viewProvider + " refused to parse text with " + language +
-                                 "; languages: " + viewProvider.getLanguages() +
-                                 "; base: " + viewProvider.getBaseLanguage() +
-                                 "; copy: " + providerCopy +
-                                 "; copy.base: " + providerCopy.getBaseLanguage() +
-                                 "; vFile: " + viewProvider.getVirtualFile() +
-                                 "; copy.vFile: " + providerCopy.getVirtualFile() +
-                                 "; fileType: " + viewProvider.getVirtualFile().getFileType() +
-                                 "; copy.original(): " +
-                                 (providerCopy.getVirtualFile() instanceof LightVirtualFile ? ((LightVirtualFile)providerCopy.getVirtualFile()).getOriginalFile() : null));
+      throw new RuntimeException("View provider " + viewProvider + " refused to parse text with " + language + details(providerCopy, viewProvider));
     }
 
     return newFile;
   }
 
+  private static String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
+    return "; languages: " + viewProvider.getLanguages() +
+           "; base: " + viewProvider.getBaseLanguage() +
+           "; copy: " + providerCopy +
+           "; copy.base: " + providerCopy.getBaseLanguage() +
+           "; vFile: " + viewProvider.getVirtualFile() +
+           "; copy.vFile: " + providerCopy.getVirtualFile() +
+           "; fileType: " + viewProvider.getVirtualFile().getFileType() +
+           "; copy.original(): " +
+           (providerCopy.getVirtualFile() instanceof LightVirtualFile ? ((LightVirtualFile)providerCopy.getVirtualFile()).getOriginalFile() : null);
+  }
+
   @NotNull
-  private static DiffLog replaceElementWithEvents(final CompositeElement oldRoot,
-                                                  final CompositeElement newRoot) {
+  private static DiffLog replaceElementWithEvents(@NotNull CompositeElement oldRoot, @NotNull CompositeElement newRoot) {
     DiffLog diffLog = new DiffLog();
     diffLog.appendReplaceElementWithEvents(oldRoot, newRoot);
     return diffLog;

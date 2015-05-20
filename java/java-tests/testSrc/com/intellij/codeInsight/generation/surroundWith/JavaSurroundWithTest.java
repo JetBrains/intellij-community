@@ -17,6 +17,9 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.java.JavaLanguage;
@@ -94,11 +97,11 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   }
 
   public void testSurroundNonExpressionWithParenthesis() throws Exception {
-    doTest(getTestName(false), new JavaWithParenthesesSurrounder());
+    doTest(new JavaWithParenthesesSurrounder());
   }
 
   public void testSurroundNonExpressionWithCast() throws Exception {
-    doTest(getTestName(false), new JavaWithCastSurrounder());
+    doTest(new JavaWithCastSurrounder());
   }
 
   public void testSurroundExpressionWithCastEmptyLineAfter() throws Exception {
@@ -110,52 +113,52 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   }
 
   public void testSurroundNonExpressionWithNot() throws Exception {
-    doTest(getTestName(false), new JavaWithNotSurrounder());
+    doTest(new JavaWithNotSurrounder());
   }
 
   public void testSurroundBinaryWithCast() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithCastSurrounder());
+    doTest(new JavaWithCastSurrounder());
   }
 
   public void testSurroundConditionalWithCast() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithCastSurrounder());
+    doTest(new JavaWithCastSurrounder());
   }
 
   public void testSurroundAssignmentWithCast() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithCastSurrounder());
+    doTest(new JavaWithCastSurrounder());
   }
 
   public void testSurroundWithNotNullCheck() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithNullCheckSurrounder());
+    doTest(new JavaWithNullCheckSurrounder());
   }
   
   public void testSurroundExpressionWithIf() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithIfExpressionSurrounder());
+    doTest(new JavaWithIfExpressionSurrounder());
   }
 
   public void testSurroundExpressionWithIfForBoxedBooleans() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithIfExpressionSurrounder());
+    doTest(new JavaWithIfExpressionSurrounder());
   }
   
   public void testSurroundExpressionWithNotForBoxedBooleans() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithNotSurrounder());
+    doTest(new JavaWithNotSurrounder());
   }
   
   public void testSurroundExpressionWithElseIf() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithIfExpressionSurrounder());
+    doTest(new JavaWithIfExpressionSurrounder());
   }
   
   public void testSurroundExpressionWithElseIfElse() {
     TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-    doTest(getTestName(false), new JavaWithIfElseExpressionSurrounder());
+    doTest(new JavaWithIfElseExpressionSurrounder());
   }
 
   public void testSurroundWithTryFinallyUsingIndents() {
@@ -163,13 +166,38 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     boolean oldUseTabs = indentOptions.USE_TAB_CHARACTER;
     try {
       indentOptions.USE_TAB_CHARACTER = true;
-      doTest(getTestName(false), new JavaWithTryFinallySurrounder());
+      doTest(new JavaWithTryFinallySurrounder());
     }
     finally {
       indentOptions.USE_TAB_CHARACTER = oldUseTabs;
     }
   }
 
+  public void testSurroundWithTryCatchFunctionalExpression() {
+    doTest(new JavaWithTryCatchSurrounder());
+  }
+
+  public void testSurroundWithTryCatchProperties() {
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    String old = template.getText();
+    template.setText("// ${DS} \n" +
+                     "${EXCEPTION}.printStackTrace();");
+    try {
+      doTest(new JavaWithTryCatchSurrounder());
+    }
+    finally {
+      template.setText(old);
+    }
+  }
+
+  public void testSurroundIfBranchWithNoBracesAndComment() {
+    doTest(new JavaWithBlockSurrounder());
+  }
+
+  private void doTest(Surrounder surrounder) {
+    doTest(getTestName(false), surrounder);
+  }
+  
   private void doTest(@NotNull String fileName, final Surrounder surrounder) {
     configureByFile(BASE_PATH + fileName + ".java");
     

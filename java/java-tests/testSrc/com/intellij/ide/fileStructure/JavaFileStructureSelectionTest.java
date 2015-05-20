@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ public class JavaFileStructureSelectionTest extends JavaFileStructureTestCase {
     return "selection";
   }
 
-  public void testField()                 throws Exception {checkTree();}
-  public void testMethod()                throws Exception {checkTree();}
-  public void testConstructor()           throws Exception {checkTree();}
-  public void testInsideClass()           throws Exception {checkTree();}
-  public void testAnonymous()             throws Exception {checkTree();}
-  public void testAnonymousInAnonymous()  throws Exception {checkTree();}
+  public void testField()                 {checkTree();}
+  public void testMethod()                {checkTree();}
+  public void testConstructor()           {checkTree();}
+  public void testInsideClass()           {checkTree();}
+  public void testAnonymous()             {checkTree();}
+  public void testAnonymousInAnonymous()  {checkTree();}
 }

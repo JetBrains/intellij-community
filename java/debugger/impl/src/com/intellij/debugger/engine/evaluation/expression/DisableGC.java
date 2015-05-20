@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.ObjectReference;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,7 +27,7 @@ import com.sun.jdi.ObjectReference;
 public class DisableGC implements Evaluator{
   private final Evaluator myDelegate;
 
-  public DisableGC(Evaluator delegate) {
+  public DisableGC(@NotNull Evaluator delegate) {
     myDelegate = delegate;
   }
 
@@ -44,5 +45,10 @@ public class DisableGC implements Evaluator{
 
   public Modifier getModifier() {
     return myDelegate.getModifier();
+  }
+
+  @Override
+  public String toString() {
+    return "NoGC -> " + myDelegate;
   }
 }

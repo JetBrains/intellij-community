@@ -19,6 +19,7 @@ package org.jetbrains.idea.maven;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -63,6 +64,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   @Override
   protected void setUp() throws Exception {
+    VfsRootAccess.allowRootAccess(PathManager.getOptionsPath());
     super.setUp();
     myGlobalSettingsFile =
       MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
@@ -84,6 +86,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       if (myGlobalSettingsFile != null) {
         VfsRootAccess.disallowRootAccess(myGlobalSettingsFile.getAbsolutePath());
       }
+      VfsRootAccess.disallowRootAccess(PathManager.getOptionsPath());
       Messages.setTestDialog(TestDialog.DEFAULT);
       myProjectsManager.projectClosed();
       removeFromLocalRepository("test");

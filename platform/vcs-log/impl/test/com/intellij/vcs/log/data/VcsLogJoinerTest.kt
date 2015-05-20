@@ -417,6 +417,29 @@ class VcsLogJoinerTest {
     fail()
   }
 
+  Test fun illegalStateExceptionTest2() {
+    try {
+      runTest {
+        fullLog {
+          +"2|-a2|-a1"
+          +"1|-a1|-"
+        }
+        recentCommits {
+          +"3|-a3|-a1"
+          +"1|-a1|-"
+        }
+        oldRefs {
+        }
+        newRefs {
+          +"a3"
+        }
+      }
+    } catch (e: IllegalStateException) {
+      return
+    }
+    fail()
+  }
+
   Test fun removeParallelBranch() {
     runTest {
       fullLog {

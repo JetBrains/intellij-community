@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import java.util.Set;
 public class NewExprent extends Exprent {
 
   private InvocationExprent constructor;
-  private VarType newType;
+  private final VarType newType;
   private List<Exprent> lstDims = new ArrayList<Exprent>();
   private List<Exprent> lstArrayElements = new ArrayList<Exprent>();
   private boolean directArrayInit;
@@ -176,8 +176,8 @@ public class NewExprent extends Exprent {
 
         List<VarVersionPair> sigFields = null;
         if (newnode != null) { // own class
-          if (newnode.wrapper != null) {
-            sigFields = newnode.wrapper.getMethodWrapper("<init>", invsuper.getStringDescriptor()).signatureFields;
+          if (newnode.getWrapper() != null) {
+            sigFields = newnode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, invsuper.getStringDescriptor()).signatureFields;
           }
           else {
             if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&
@@ -252,12 +252,16 @@ public class NewExprent extends Exprent {
           buf.setLength(0);  // remove the usual 'new <class>()', it will be replaced with lambda style '() ->'
         }
         Exprent methodObject = constructor == null ? null : constructor.getInstance();
-        new ClassWriter().classLambdaToJava(child, buf, methodObject, indent);
-        tracer.incrementCurrentSourceLine(buf.countLines());
+        TextBuffer clsBuf = new TextBuffer();
+        new ClassWriter().classLambdaToJava(child, clsBuf, methodObject, indent, tracer);
+        buf.append(clsBuf);
+        tracer.incrementCurrentSourceLine(clsBuf.countLines());
       }
       else {
-        new ClassWriter().classToJava(child, buf, indent, tracer);
-        tracer.incrementCurrentSourceLine(buf.countLines());
+        TextBuffer clsBuf = new TextBuffer();
+        new ClassWriter().classToJava(child, clsBuf, indent, tracer);
+        buf.append(clsBuf);
+        tracer.incrementCurrentSourceLine(clsBuf.countLines());
       }
     }
     else if (directArrayInit) {
@@ -282,8 +286,8 @@ public class NewExprent extends Exprent {
 
           List<VarVersionPair> sigFields = null;
           if (newnode != null) { // own class
-            if (newnode.wrapper != null) {
-              sigFields = newnode.wrapper.getMethodWrapper("<init>", constructor.getStringDescriptor()).signatureFields;
+            if (newnode.getWrapper() != null) {
+              sigFields = newnode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).signatureFields;
             }
             else {
               if (newnode.type == ClassNode.CLASS_MEMBER && (newnode.access & CodeConstants.ACC_STATIC) == 0 &&
@@ -389,7 +393,8 @@ public class NewExprent extends Exprent {
   private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent, BytecodeMappingTracer tracer) {
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 
-    if (node != null && node.type != ClassNode.CLASS_ROOT && (node.access & CodeConstants.ACC_STATIC) == 0) {
+    if (node != null && node.type != ClassNode.CLASS_ROOT && node.type != ClassNode.CLASS_LOCAL
+        && (node.access & CodeConstants.ACC_STATIC) == 0) {
       if (!lstParams.isEmpty()) {
         Exprent enclosing = lstParams.get(0);
 

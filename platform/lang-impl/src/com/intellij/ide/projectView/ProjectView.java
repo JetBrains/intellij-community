@@ -38,6 +38,9 @@ public abstract class ProjectView {
   @NotNull
   public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
+  @NotNull
+  public abstract ActionCallback changeViewCB(@NotNull String viewId, String subId);
+
   @Nullable
   public abstract PsiElement getParentOfCurrentSelection();
 

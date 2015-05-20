@@ -75,7 +75,7 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
   }
 
   public void testTest() {
-    doTest();
+    doMultiFileTest();
   }
 
   public void testOverrideFromModule() {
@@ -90,4 +90,12 @@ public class PyPep8NamingInspectionTest extends PyTestCase {
     myFixture.enableInspections(PyPep8NamingInspection.class);
     myFixture.checkHighlighting(false, false, true);
   }
+
+  private void doMultiFileTest() {
+    myFixture.copyDirectoryToProject("inspections/PyPep8NamingInspection/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.enableInspections(PyPep8NamingInspection.class);
+    myFixture.checkHighlighting(false, false, true);
+  }
+
 }

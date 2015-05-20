@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFile;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Set;
 
 public class JarFileSystemImpl extends JarFileSystem {
@@ -105,25 +103,19 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   @NotNull
   @Override
-  protected String convertLocalToRootPath(@NotNull String localPath) {
+  protected String composeRootPath(@NotNull String localPath) {
     return localPath + JAR_SEPARATOR;
   }
 
   @NotNull
   @Override
   protected JarHandler getHandler(@NotNull VirtualFile entryFile) {
-    return VfsImplUtil.getHandler(entryFile, this, new Function<String, JarHandler>() {
+    return VfsImplUtil.getHandler(this, entryFile, new Function<String, JarHandler>() {
       @Override
-      public JarHandler fun(String rootPath) {
-        return new JarHandler(extractLocalPath(rootPath));
+      public JarHandler fun(String localPath) {
+        return new JarHandler(localPath);
       }
     });
-  }
-
-  @Nullable
-  @Override
-  public VirtualFile getRootByLocal(@NotNull VirtualFile file) {
-    return findFileByPath(convertLocalToRootPath(file.getPath()));
   }
 
   @Override
@@ -144,12 +136,5 @@ public class JarFileSystemImpl extends JarFileSystem {
   @Override
   public void refresh(boolean asynchronous) {
     VfsImplUtil.refresh(this, asynchronous);
-  }
-
-  /** @deprecated to be removed in IDEA 15 */
-  @SuppressWarnings("deprecation")
-  @Override
-  public JarFile getJarFile(@NotNull VirtualFile entryVFile) throws IOException {
-    return getHandler(entryVFile).getJar();
   }
 }

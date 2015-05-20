@@ -17,14 +17,15 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 public class NotExpressionPostfixTemplate extends NotPostfixTemplate {
 
   public NotExpressionPostfixTemplate() {
-    super(JAVA_PSI_INFO, IS_BOOLEAN);
+    super(JAVA_PSI_INFO, selectorAllExpressionsWithCurrentOffset(IS_BOOLEAN));
   }
 
   public NotExpressionPostfixTemplate(String alias) {
-    super(alias, alias, "!expr", JAVA_PSI_INFO, IS_BOOLEAN);
+    super(alias, alias, "!expr", JAVA_PSI_INFO, selectorAllExpressionsWithCurrentOffset(IS_BOOLEAN));
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -106,7 +107,17 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
 
   @Override
   public void navigate(@Nullable final MouseEvent event, @Nullable final PsiElement elt) {
-    final List<PsiElement> list = getTargetElements();
+    final List<PsiElement> list;
+
+    DumbService dumbService = elt != null ? DumbService.getInstance(elt.getProject()) : null;
+    if (dumbService != null) dumbService.setAlternativeResolveEnabled(true);
+    try {
+      list = getTargetElements();
+    }
+    finally {
+      if (dumbService != null) dumbService.setAlternativeResolveEnabled(false);
+    }
+    
     if (list.isEmpty()) {
       if (myEmptyText != null) {
         if (event != null) {

@@ -36,9 +36,9 @@ import static com.intellij.tasks.trello.model.TrelloLabel.LabelColor;
 @SuppressWarnings("UnusedDeclaration")
 public class TrelloCard extends TrelloModel {
 
-  public static final String REQUIRED_FIELDS = "closed,desc,idMembers,idBoard,idList,labels,name,url,dateLastActivity";
+  public static final String REQUIRED_FIELDS = "closed,desc,idMembers,idBoard,idList,idShort,labels,name,url,dateLastActivity";
 
-  private String idBoard, idList;
+  private String idBoard, idList, idShort;
   private List<String> idMembers;
   private String name;
   @SerializedName("desc")
@@ -75,6 +75,11 @@ public class TrelloCard extends TrelloModel {
   @NotNull
   public String getIdList() {
     return idList;
+  }
+
+  @NotNull
+  public String getIdShort() {
+    return idShort;
   }
 
   @NotNull
@@ -118,15 +123,19 @@ public class TrelloCard extends TrelloModel {
     return comments;
   }
 
+  /**
+   * @return colors of labels with special {@link LabelColor#NO_COLOR} value excluded
+   */
   @NotNull
   public Set<LabelColor> getColors() {
     if (labels == null || labels.isEmpty()) {
       return EnumSet.noneOf(LabelColor.class);
     }
-    return EnumSet.copyOf(ContainerUtil.map(labels, new Function<TrelloLabel, LabelColor>() {
+    return EnumSet.copyOf(ContainerUtil.mapNotNull(labels, new Function<TrelloLabel, LabelColor>() {
       @Override
       public LabelColor fun(TrelloLabel label) {
-        return label.getColor();
+        final LabelColor color = label.getColor();
+        return color == LabelColor.NO_COLOR ? null : color;
       }
     }));
   }

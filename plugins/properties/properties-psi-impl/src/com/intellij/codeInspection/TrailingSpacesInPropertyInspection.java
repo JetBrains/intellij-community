@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
@@ -24,19 +25,27 @@ import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
  * @author cdr
  */
 public class TrailingSpacesInPropertyInspection extends PropertySuppressableInspectionBase {
+  public boolean myIgnoreVisibleSpaces;
+
   @NotNull
   public String getDisplayName() {
     return PropertiesBundle.message("trail.spaces.property.inspection.display.name");
@@ -47,42 +56,69 @@ public class TrailingSpacesInPropertyInspection extends PropertySuppressableInsp
     return "TrailingSpacesInProperty";
   }
 
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    if (myIgnoreVisibleSpaces) {
+      node.setAttribute("ignoreVisibleSpaces", Boolean.TRUE.toString());
+    }
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    final String attributeValue = node.getAttributeValue("ignoreVisibleSpaces");
+    if (attributeValue != null) {
+      myIgnoreVisibleSpaces = Boolean.valueOf(attributeValue);
+    }
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+     return new SingleCheckboxOptionsPanel(PropertiesBundle.message("trailing.spaces.in.property.inspection.ignore.visible.spaces"), this, "myIgnoreVisibleSpaces");
+  }
+
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     if (!(file instanceof PropertiesFile)) return null;
     final List<IProperty> properties = ((PropertiesFile)file).getProperties();
     final List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
-
     for (IProperty property : properties) {
       ProgressManager.checkCanceled();
-
-      ASTNode keyNode = ((PropertyImpl)property).getKeyNode();
-      if (keyNode != null) {
-        PsiElement key = keyNode.getPsi();
-        TextRange textRange = getTrailingSpaces(key);
-        if (textRange != null) {
-          descriptors.add(manager.createProblemDescriptor(key, textRange, "Trailing Spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, RemoveTrailingSpacesFix.INSTANCE));
-        }
-      }
-      ASTNode valueNode = ((PropertyImpl)property).getValueNode();
-      if (valueNode != null) {
-        PsiElement value = valueNode.getPsi();
-        TextRange textRange = getTrailingSpaces(value);
-        if (textRange != null) {
-          descriptors.add(manager.createProblemDescriptor(value, textRange, "Trailing Spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, RemoveTrailingSpacesFix.INSTANCE));
+      final PropertyImpl propertyImpl = (PropertyImpl)property;
+      for (ASTNode node : ContainerUtil.ar(propertyImpl.getKeyNode(), propertyImpl.getValueNode())) {
+        if (node != null) {
+          PsiElement key = node.getPsi();
+          TextRange textRange = getTrailingSpaces(key, myIgnoreVisibleSpaces);
+          if (textRange != null) {
+            descriptors.add(manager.createProblemDescriptor(key, textRange, "Trailing spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
+          }
         }
       }
     }
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
-  private static TextRange getTrailingSpaces(PsiElement element) {
+  @Nullable
+  private static TextRange getTrailingSpaces(PsiElement element, boolean ignoreVisibleTrailingSpaces) {
     String key = element.getText();
-
-    return PropertyImpl.trailingSpaces(key);
+    if (ignoreVisibleTrailingSpaces) {
+      for (int i = key.length() - 1; i > -1; i--) {
+        if (key.charAt(i) != ' ' && key.charAt(i) != '\t') {
+          return i == key.length() - 1 ? null : new TextRange(i + 1, key.length());
+        }
+      }
+      return element.getTextRange();
+    } else {
+      return PropertyImpl.trailingSpaces(key);
+    }
   }
 
   private static class RemoveTrailingSpacesFix implements LocalQuickFix {
-    private static final RemoveTrailingSpacesFix INSTANCE = new RemoveTrailingSpacesFix();
+    private final boolean myIgnoreVisibleSpaces;
+
+    private RemoveTrailingSpacesFix(boolean ignoreVisibleSpaces) {
+      myIgnoreVisibleSpaces = ignoreVisibleSpaces;
+    }
+
     @NotNull
     public String getName() {
       return "Remove Trailing Spaces";
@@ -97,7 +133,7 @@ public class TrailingSpacesInPropertyInspection extends PropertySuppressableInsp
       PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element == null ? null : element.getParent();
       if (!(parent instanceof PropertyImpl)) return;
-      TextRange textRange = getTrailingSpaces(element);
+      TextRange textRange = getTrailingSpaces(element, myIgnoreVisibleSpaces);
       if (textRange != null) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(element.getContainingFile());
         TextRange docRange = textRange.shiftRight(element.getTextRange().getStartOffset());

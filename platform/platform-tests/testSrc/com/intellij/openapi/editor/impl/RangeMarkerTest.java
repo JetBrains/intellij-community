@@ -1040,6 +1040,17 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertTrue(marker.isValid());
   }
 
+  public void testPersistentMarkerDoesntImpactNormalMarkers() {
+    Document doc = new DocumentImpl("text");
+    RangeMarker normal = doc.createRangeMarker(1, 3);
+    RangeMarker persistent = doc.createRangeMarker(1, 3, true);
+
+    doc.replaceString(0, 4, "before\ntext\nafter");
+
+    assertTrue(persistent.isValid());
+    assertFalse(normal.isValid());
+  }
+
   public void testMoveTextRetargetsMarkers() throws Exception {
     RangeMarkerEx marker1 = createMarker("01234567890", 1, 3);
     DocumentEx document = (DocumentEx)marker1.getDocument();

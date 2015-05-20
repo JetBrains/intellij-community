@@ -26,10 +26,7 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.KeyMapBundle;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.*;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
@@ -47,10 +44,14 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeFocusManagerImpl;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.DoubleClickListener;
@@ -59,6 +60,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -89,6 +91,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private JButton myCopyButton;
   private JButton myDeleteButton;
   private JButton myResetToDefault;
+  private JCheckBox myNonEnglishKeyboardSupportOption;
 
   private JLabel myBaseKeymapLabel;
 
@@ -231,7 +234,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     final JPanel panel = new JPanel();
     panel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
     panel.setLayout(new GridBagLayout());
-    myCopyButton = new JButton(KeyMapBundle.message("copy.keymap.button"));
+    myCopyButton = new JButton(new AbstractAction(KeyMapBundle.message("copy.keymap.button")) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+            copyKeymap();
+      }
+    });
     Insets insets = new Insets(2, 2, 2, 2);
     myCopyButton.setMargin(insets);
     final GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0);
@@ -239,19 +247,28 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     myResetToDefault = new JButton(CommonBundle.message("button.reset"));
     myResetToDefault.setMargin(insets);
     panel.add(myResetToDefault, gc);
-    myDeleteButton = new JButton(KeyMapBundle.message("delete.keymap.button"));
+    myDeleteButton = new JButton(new AbstractAction(KeyMapBundle.message("delete.keymap.button")) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        deleteKeymap();
+      }
+    });
     myDeleteButton.setMargin(insets);
     gc.weightx = 1;
     panel.add(myDeleteButton, gc);
-
-    myCopyButton.addActionListener(
-      new ActionListener() {
+    IdeFrame ideFrame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+    if (ideFrame != null && KeyboardSettingsExternalizable.isSupportedKeyboardLayout( ideFrame.getComponent()))
+    {
+      String displayLanguage = ideFrame.getComponent().getInputContext().getLocale().getDisplayLanguage();
+      myNonEnglishKeyboardSupportOption = new JCheckBox(new AbstractAction(displayLanguage + " " + KeyMapBundle.message("use.non.english.keyboard.layout.support")) {
         @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          copyKeymap();
+        public void actionPerformed(ActionEvent e) {
+          KeyboardSettingsExternalizable.getInstance().setNonEnglishKeyboardSupportEnabled(myNonEnglishKeyboardSupportOption.isSelected());
         }
-      }
-    );
+      });
+      myNonEnglishKeyboardSupportOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
+      panel.add(myNonEnglishKeyboardSupportOption, gc);
+    }
 
     myResetToDefault.addActionListener(new ActionListener() {
       @Override
@@ -260,16 +277,6 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
 
     });
-
-    myDeleteButton.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          deleteKeymap();
-        }
-      }
-    );
-
     return panel;
   }
 
@@ -788,6 +795,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   @Override
   public void reset() {
+
+    if (myNonEnglishKeyboardSupportOption != null) {
+      KeyboardSettingsExternalizable.getInstance().setNonEnglishKeyboardSupportEnabled(false);
+      myNonEnglishKeyboardSupportOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
+    }
+
     myKeymapListModel.removeAllElements();
     KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     Keymap[] keymaps = keymapManager.getAllKeymaps();
@@ -812,6 +825,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     myKeymapList.setSelectedItem(mySelectedKeymap);
+    myActionsTree.reset(mySelectedKeymap, getCurrentQuickListIds());
   }
 
   @Override
@@ -858,7 +872,12 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (!Comparing.equal(mySelectedKeymap, keymapManager.getActiveKeymap())) {
       return true;
     }
-    Keymap[] managerKeymaps = keymapManager.getAllKeymaps();
+    Keymap[] managerKeymaps = ContainerUtil.filter(keymapManager.getAllKeymaps(), new Condition<Keymap>() {
+      @Override
+      public boolean value(Keymap keymap) {
+        return !SystemInfo.isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+      }
+    }).toArray(new Keymap[]{});
     Keymap[] panelKeymaps = new Keymap[myKeymapListModel.getSize()];
     for(int i = 0; i < myKeymapListModel.getSize(); i++){
       panelKeymaps[i] = (Keymap)myKeymapListModel.getElementAt(i);

@@ -91,21 +91,18 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
   }
 
   private void doNavigate(DataContext dataContext, Project project) {
-    VirtualFile selectedFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    navigateImpl(dataContext, project, selectedFile, myDir);
-  }
-
-  public static void navigateImpl(final DataContext dataContext, Project project, VirtualFile selectedFile, final int dir) {
-    LOG.assertTrue (dir == 1 || dir == -1);
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
     EditorWindow currentWindow = EditorWindow.DATA_KEY.getData(dataContext);
     if (currentWindow == null){
       currentWindow = editorManager.getCurrentWindow ();
     }
+    VirtualFile selectedFile = currentWindow.getSelectedFile();
+    if (selectedFile == null) {
+      selectedFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    }
     final VirtualFile[] files = currentWindow.getFiles();
     int index = ArrayUtil.find(files, selectedFile);
     LOG.assertTrue(index != -1);
-    editorManager.openFile(files[(index + files.length + dir) % files.length], true);
+    editorManager.openFile(files[(index + files.length + myDir) % files.length], true);
   }
-
 }

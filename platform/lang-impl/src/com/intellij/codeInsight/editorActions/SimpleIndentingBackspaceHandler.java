@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.psi.PsiFile;
@@ -24,7 +23,7 @@ public class SimpleIndentingBackspaceHandler extends AbstractIndentingBackspaceH
   private LogicalPosition myTargetPosition;
 
   public SimpleIndentingBackspaceHandler() {
-    super(CodeInsightSettings.INDENT);
+    super(SmartBackspaceMode.INDENT);
   }
 
   @Override

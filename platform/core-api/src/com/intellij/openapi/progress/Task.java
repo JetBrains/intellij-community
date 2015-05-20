@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  * }.setCancelText("Stop loading").queue();
  * </pre>
  *
- * @see com.intellij.openapi.progress.ProgressManager#run(Task)
+ * @see ProgressManager#run(Task)
  */
 public abstract class Task implements TaskInfo, Progressive {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.Task");
@@ -49,7 +50,7 @@ public abstract class Task implements TaskInfo, Progressive {
   private String myCancelText = CommonBundle.getCancelButtonText();
   private String myCancelTooltipText = CommonBundle.getCancelButtonText();
 
-  public Task(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
+  public Task(@Nullable final Project project,@Nls(capitalization = Nls.Capitalization.Title) @NotNull final String title, final boolean canBeCancelled) {
     myProject = project;
     myTitle = title;
     myCanBeCancelled = canBeCancelled;
@@ -85,7 +86,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setTitle(@NotNull String title) {
+  public final Task setTitle(@Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
     myTitle = title;
     return this;
   }
@@ -152,7 +153,10 @@ public abstract class Task implements TaskInfo, Progressive {
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
     protected final PerformInBackgroundOption myBackgroundOption;
 
-    public Backgroundable(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled, @Nullable final PerformInBackgroundOption backgroundOption) {
+    public Backgroundable(@Nullable final Project project,
+                          @Nls(capitalization = Nls.Capitalization.Title) @NotNull final String title,
+                          final boolean canBeCancelled,
+                          @Nullable final PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled);
       myBackgroundOption = backgroundOption;
       if (StringUtil.isEmptyOrSpaces(title)) {
@@ -160,11 +164,13 @@ public abstract class Task implements TaskInfo, Progressive {
       }
     }
 
-    public Backgroundable(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {
+    public Backgroundable(@Nullable final Project project,
+                          @Nls(capitalization = Nls.Capitalization.Title) @NotNull final String title,
+                          final boolean canBeCancelled) {
       this(project, title, canBeCancelled, null);
     }
 
-    public Backgroundable(@Nullable final Project project, @NotNull final String title) {
+    public Backgroundable(@Nullable final Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull final String title) {
       this(project, title, true);
     }
 
@@ -189,6 +195,10 @@ public abstract class Task implements TaskInfo, Progressive {
       return false;
     }
 
+    /**
+     * to remove in IDEA 16
+     */
+    @Deprecated
     @NotNull
     public DumbModeAction getDumbModeAction() {
       return DumbModeAction.NOTHING;

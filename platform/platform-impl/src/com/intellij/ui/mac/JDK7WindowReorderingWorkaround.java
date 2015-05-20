@@ -43,16 +43,35 @@ public class JDK7WindowReorderingWorkaround {
     }
   };
 
+  private static final Callback canBecomeMainWindowCallback = new Callback() {
+    @SuppressWarnings("UnusedDeclaration") // this is a native up-call
+    public void callback(ID self)
+    {
+      if (requestorCount.intValue() == 0) {
+        invoke(self, "oldCanBecomeMainWindow");
+      }
+    }
+  };
+
   static {
     if (SystemInfo.isJavaVersionAtLeast("1.7")) {
       ID awtWindow = Foundation.getObjcClass("AWTWindow");
 
-      Pointer windowWillEnterFullScreenMethod = Foundation.createSelector("windowDidBecomeMain:");
-      ID originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
+      Pointer windowDidBecomeMainMethod = Foundation.createSelector("windowDidBecomeMain:");
+      ID originalWindowDidBecomeMain = Foundation.class_replaceMethod(awtWindow, windowDidBecomeMainMethod,
                                                                             windowDidBecomeMainCallback, "v@::@");
 
       Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowDidBecomeMain:"),
-                               originalWindowWillEnterFullScreen, "v@::@");
+                               originalWindowDidBecomeMain, "v@::@");
+
+      if (SystemInfo.isJavaVersionAtLeast("1.8")) {
+        Pointer canBecomeMainWindowMethod = Foundation.createSelector("canBecomeMainWindow");
+        ID originalCanBecomeMainWindow = Foundation.class_replaceMethod(awtWindow, canBecomeMainWindowMethod,
+                                                                        canBecomeMainWindowCallback, "v@B");
+
+        Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldCanBecomeMainWindow"),
+                                 originalCanBecomeMainWindow, "v@B");
+      }
     }
   }
 

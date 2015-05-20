@@ -33,21 +33,16 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
 public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentListener {
@@ -57,11 +52,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   private final EditorImpl myEditor;
 
   private TextAttributes myTextAttributes;
-
-  private LogicalPosition myBlockStart;
-  private LogicalPosition myBlockEnd;
-  private int[] myBlockSelectionStarts;
-  private int[] myBlockSelectionEnds;
 
   private DocumentEvent myIsInUpdate;
 
@@ -187,8 +177,8 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   private void repaintBySelectionChange(int oldSelectionStart, int startOffset, int oldSelectionEnd, int endOffset) {
-    myEditor.repaint(Math.min(oldSelectionStart, startOffset), Math.max(oldSelectionStart, startOffset));
-    myEditor.repaint(Math.min(oldSelectionEnd, endOffset), Math.max(oldSelectionEnd, endOffset));
+    myEditor.repaint(Math.min(oldSelectionStart, startOffset), Math.max(oldSelectionStart, startOffset), false);
+    myEditor.repaint(Math.min(oldSelectionEnd, endOffset), Math.max(oldSelectionEnd, endOffset), false);
   }
 
   @Override
@@ -210,255 +200,61 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
 
   @Override
   public void setBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
-    if (myEditor.getCaretModel().supportsMultipleCarets()) {
-      int startLine = Math.max(Math.min(blockStart.line, myEditor.getDocument().getLineCount() - 1), 0);
-      int endLine = Math.max(Math.min(blockEnd.line, myEditor.getDocument().getLineCount() - 1), 0);
-      int step = endLine < startLine ? -1 : 1;
-      int count = 1 + Math.abs(endLine - startLine);
-      List<CaretState> caretStates = new LinkedList<CaretState>();
-      boolean hasSelection = false;
-      for (int line = startLine, i = 0; i < count; i++, line += step) {
-        int startColumn = blockStart.column;
-        int endColumn = blockEnd.column;
-        int lineEndOffset = myEditor.getDocument().getLineEndOffset(line);
-        LogicalPosition lineEndPosition = myEditor.offsetToLogicalPosition(lineEndOffset);
-        int lineWidth = lineEndPosition.column;
-        if (startColumn > lineWidth && endColumn > lineWidth && !myEditor.isColumnMode()) {
-          LogicalPosition caretPos = new LogicalPosition(line, Math.min(startColumn, endColumn));
-          caretStates.add(new CaretState(caretPos,
-                                         lineEndPosition,
-                                         lineEndPosition));
-        }
-        else {
-          LogicalPosition startPos = new LogicalPosition(line, myEditor.isColumnMode() ? startColumn : Math.min(startColumn, lineWidth));
-          LogicalPosition endPos = new LogicalPosition(line, myEditor.isColumnMode() ? endColumn : Math.min(endColumn, lineWidth));
-          int startOffset = myEditor.logicalPositionToOffset(startPos);
-          int endOffset = myEditor.logicalPositionToOffset(endPos);
-          caretStates.add(new CaretState(endPos, startPos, endPos));
-          hasSelection |= startOffset != endOffset;
-        }
-      }
-      if (hasSelection && !myEditor.isColumnMode()) { // filtering out lines without selection
-        Iterator<CaretState> caretStateIterator = caretStates.iterator();
-        while(caretStateIterator.hasNext()) {
-          CaretState state = caretStateIterator.next();
-          //noinspection ConstantConditions
-          if (state.getSelectionStart().equals(state.getSelectionEnd())) {
-            caretStateIterator.remove();
-          }
-        }
-      }
-      myEditor.getCaretModel().setCaretsAndSelections(caretStates);
-    }
-    else {
-      removeSelection();
-
-      int oldStartLine = 0;
-      int oldEndLine = 0;
-
-      if (hasBlockSelection()) {
-        oldStartLine = myBlockStart.line;
-        oldEndLine = myBlockEnd.line;
-        if (oldStartLine > oldEndLine) {
-          int t = oldStartLine;
-          oldStartLine = oldEndLine;
-          oldEndLine = t;
-        }
-      }
-
-      int newStartLine = blockStart.line;
-      int newEndLine = blockEnd.line;
-
-      if (newStartLine > newEndLine) {
-        int t = newStartLine;
-        newStartLine = newEndLine;
-        newEndLine = t;
-      }
-
-      myEditor.repaintLines(Math.min(oldStartLine, newStartLine), Math.max(newEndLine, oldEndLine));
-
-      final int[] oldStarts = getBlockSelectionStarts();
-      final int[] oldEnds = getBlockSelectionEnds();
-
-      myBlockStart = blockStart;
-      myBlockEnd = blockEnd;
-      recalculateBlockOffsets();
-
-      final int[] newStarts = getBlockSelectionStarts();
-      final int[] newEnds = getBlockSelectionEnds();
-
-      broadcastSelectionEvent(new SelectionEvent(myEditor, oldStarts, oldEnds, newStarts, newEnds));
-    }
+    List<CaretState> caretStates = EditorModificationUtil.calcBlockSelectionState(myEditor, blockStart, blockEnd);
+    myEditor.getCaretModel().setCaretsAndSelections(caretStates);
   }
 
   @Override
   public void removeBlockSelection() {
-    if (!myEditor.getCaretModel().supportsMultipleCarets()) {
-      myEditor.getCaretModel().getCurrentCaret().setUnknownDirection(false);
-      if (hasBlockSelection()) {
-        myEditor.repaint(0, myEditor.getDocument().getTextLength());
-
-        final int[] oldStarts = getBlockSelectionStarts();
-        final int[] oldEnds = getBlockSelectionEnds();
-
-        myBlockStart = null;
-        myBlockEnd = null;
-
-        final int[] newStarts = getBlockSelectionStarts();
-        final int[] newEnds = getBlockSelectionEnds();
-
-        broadcastSelectionEvent(new SelectionEvent(myEditor, oldStarts, oldEnds, newStarts, newEnds));
-      }
-    }
   }
 
   @Override
   public boolean hasBlockSelection() {
-    return myBlockStart != null;
+    return false;
   }
 
   @Override
   public LogicalPosition getBlockStart() {
-    return myBlockStart;
+    return null;
   }
 
   @Override
   public LogicalPosition getBlockEnd() {
-    return myBlockEnd;
+    return null;
   }
 
   @Override
   public boolean isBlockSelectionGuarded() {
-    if (!hasBlockSelection()) return false;
-    int[] starts = getBlockSelectionStarts();
-    int[] ends = getBlockSelectionEnds();
-    Document doc = myEditor.getDocument();
-    for (int i = 0; i < starts.length; i++) {
-      int start = starts[i];
-      int end = ends[i];
-      if (start == end && doc.getOffsetGuard(start) != null || start != end && doc.getRangeGuard(start, end) != null) {
-        return true;
-      }
-    }
     return false;
   }
 
   @Override
   public RangeMarker getBlockSelectionGuard() {
-    if (!hasBlockSelection()) return null;
-
-    int[] starts = getBlockSelectionStarts();
-    int[] ends = getBlockSelectionEnds();
-    Document doc = myEditor.getDocument();
-    for (int i = 0; i < starts.length; i++) {
-      int start = starts[i];
-      int end = ends[i];
-      if (start == end) {
-        RangeMarker guard = doc.getOffsetGuard(start);
-        if (guard != null) return guard;
-      }
-      if (start != end) {
-        RangeMarker guard = doc.getRangeGuard(start, end);
-        if (guard != null) return guard;
-      }
-    }
-
     return null;
-  }
-
-  private void recalculateBlockOffsets() {
-    TIntArrayList startOffsets = new TIntArrayList();
-    TIntArrayList endOffsets = new TIntArrayList();
-    final int startLine = Math.min(myBlockStart.line, myBlockEnd.line);
-    final int endLine = Math.max(myBlockStart.line, myBlockEnd.line);
-    final int startColumn = Math.min(myBlockStart.column, myBlockEnd.column);
-    final int endColumn = Math.max(myBlockStart.column, myBlockEnd.column);
-    FoldingModelImpl foldingModel = myEditor.getFoldingModel();
-    DocumentEx document = myEditor.getDocument();
-    boolean insideFoldRegion = false;
-    for (int line = startLine; line <= endLine; line++) {
-      int startOffset = myEditor.logicalPositionToOffset(new LogicalPosition(line, startColumn));
-      FoldRegion startRegion = foldingModel.getCollapsedRegionAtOffset(startOffset);
-      boolean startInsideFold = startRegion != null && startRegion.getStartOffset() < startOffset;
-
-      int endOffset = myEditor.logicalPositionToOffset(new LogicalPosition(line, endColumn));
-      FoldRegion endRegion = foldingModel.getCollapsedRegionAtOffset(endOffset);
-      boolean endInsideFold = endRegion != null && endRegion.getStartOffset() < endOffset;
-
-      if (!startInsideFold && !endInsideFold) {
-        startOffsets.add(startOffset);
-        endOffsets.add(endOffset);
-      }
-      else if (startInsideFold && endInsideFold) {
-        if (insideFoldRegion) {
-          startOffsets.add(Math.max(document.getLineStartOffset(line), startRegion.getStartOffset()));
-          endOffsets.add(Math.min(document.getLineEndOffset(line), endRegion.getEndOffset()));
-        }
-      }
-      else if (startInsideFold && !endInsideFold) {
-        if (startRegion.getEndOffset() < endOffset) {
-          startOffsets.add(Math.max(document.getLineStartOffset(line), startRegion.getStartOffset()));
-          endOffsets.add(endOffset);
-        }
-        insideFoldRegion = false;
-      }
-      else {
-        startOffsets.add(startOffset);
-        endOffsets.add(Math.min(document.getLineEndOffset(line), endRegion.getEndOffset()));
-        insideFoldRegion = true;
-      }
-    }
-
-    myBlockSelectionStarts = startOffsets.toNativeArray();
-    myBlockSelectionEnds = endOffsets.toNativeArray();
   }
 
   @Override
   @NotNull
   public int[] getBlockSelectionStarts() {
-    if (myEditor.getCaretModel().supportsMultipleCarets()) {
-      Collection<Caret> carets = myEditor.getCaretModel().getAllCarets();
-      int[] result = new int[carets.size()];
-      int i = 0;
-      for (Caret caret : carets) {
-        result[i++] = caret.getSelectionStart();
-      }
-      return result;
-    } else {
-      if (hasSelection()) {
-        return new int[]{getSelectionStart()};
-      }
-      else if (!hasBlockSelection() || myBlockSelectionStarts == null) {
-        return ArrayUtil.EMPTY_INT_ARRAY;
-      }
-      else {
-        return myBlockSelectionStarts;
-      }
+    Collection<Caret> carets = myEditor.getCaretModel().getAllCarets();
+    int[] result = new int[carets.size()];
+    int i = 0;
+    for (Caret caret : carets) {
+      result[i++] = caret.getSelectionStart();
     }
+    return result;
   }
 
   @Override
   @NotNull
   public int[] getBlockSelectionEnds() {
-    if (myEditor.getCaretModel().supportsMultipleCarets()) {
-      Collection<Caret> carets = myEditor.getCaretModel().getAllCarets();
-      int[] result = new int[carets.size()];
-      int i = 0;
-      for (Caret caret : carets) {
-        result[i++] = caret.getSelectionEnd();
-      }
-      return result;
-    } else {
-      if (hasSelection()) {
-        return new int[]{getSelectionEnd()};
-      }
-      else if (!hasBlockSelection() || myBlockSelectionEnds == null) {
-        return ArrayUtil.EMPTY_INT_ARRAY;
-      }
-      else {
-        return myBlockSelectionEnds;
-      }
+    Collection<Caret> carets = myEditor.getCaretModel().getAllCarets();
+    int[] result = new int[carets.size()];
+    int i = 0;
+    for (Caret caret : carets) {
+      result[i++] = caret.getSelectionEnd();
     }
+    return result;
   }
 
   @Override
@@ -491,21 +287,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   public String getSelectedText(boolean allCarets) {
     validateContext(false);
 
-    if (hasBlockSelection()) {
-      CharSequence text = myEditor.getDocument().getCharsSequence();
-      int[] starts = getBlockSelectionStarts();
-      int[] ends = getBlockSelectionEnds();
-      int width = myEditor.getCaretModel().supportsMultipleCarets() ? 0 : Math.abs(myBlockEnd.column - myBlockStart.column);
-      final StringBuilder buf = new StringBuilder();
-      for (int i = 0; i < starts.length; i++) {
-        if (i > 0) buf.append('\n');
-        final int len = ends[i] - starts[i];
-        appendCharSequence(buf, text, starts[i], len);
-        for (int j = len; j < width; j++) buf.append(' ');
-      }
-      return buf.toString();
-    }
-    else if (myEditor.getCaretModel().supportsMultipleCarets() && allCarets) {
+    if (myEditor.getCaretModel().supportsMultipleCarets() && allCarets) {
       final StringBuilder buf = new StringBuilder();
       String separator = "";
       for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
@@ -520,19 +302,6 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     }
     else {
       return myEditor.getCaretModel().getCurrentCaret().getSelectedText();
-    }
-  }
-
-  private static void appendCharSequence(@NotNull StringBuilder buf, @NotNull CharSequence s, int srcOffset, int len) {
-    if (srcOffset < 0 || len < 0 || srcOffset > s.length() - len) {
-      throw new IndexOutOfBoundsException("srcOffset " + srcOffset + ", len " + len + ", s.length() " + s.length());
-    }
-    if (len == 0) {
-      return;
-    }
-    final int limit = srcOffset + len;
-    for (int i = srcOffset; i < limit; i++) {
-      buf.append(s.charAt(i));
     }
   }
 

@@ -25,27 +25,26 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNamespaceHelper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
 */
 public class ImportNSAction implements QuestionAction {
-  private final Set<String> myNamespaces;
+  private final List<String> myNamespaces;
   private final XmlFile myFile;
   private final PsiElement myElement;
   private final Editor myEditor;
   private final String myTitle;
 
-  public ImportNSAction(final Set<String> namespaces, XmlFile file, @NotNull PsiElement element, Editor editor, final String title) {
-
+  public ImportNSAction(final List<String> namespaces, XmlFile file, @NotNull PsiElement element, Editor editor, final String title) {
     myNamespaces = namespaces;
     myFile = file;
     myElement = element;
@@ -55,9 +54,8 @@ public class ImportNSAction implements QuestionAction {
 
   @Override
   public boolean execute() {
-    final Object[] objects = myNamespaces.toArray();
-    Arrays.sort(objects);
-    final JList list = new JBList(objects);
+    final String[] strings = ArrayUtil.toStringArray(myNamespaces);
+    final JList list = new JBList(strings);
     list.setCellRenderer(XmlNSRenderer.INSTANCE);
     list.setSelectedIndex(0);
     final int offset = myElement.getTextOffset();

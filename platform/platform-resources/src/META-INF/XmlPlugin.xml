@@ -1,16 +1,30 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="/componentSets/Xml.xml" xpointer="xpointer(/components/*)">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/component/*)"/>
-  <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/relaxng-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/relaxng-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <application-components>
     <component>
       <implementation-class>com.intellij.javaee.DefaultHtmlDoctypeInitialConfigurator</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer</implementation-class>
+    </component>
   </application-components>
 
   <extensionPoints>
+
+    <!-- EP to block language injection into script tag-->
+    <extensionPoint name="html.htmlScriptInjectionBlocker" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.source.html.HtmlScriptInjectionBlocker"/>
+    </extensionPoint>
 
     <extensionPoint name="xml.startTagEndToken"
                     interface="com.intellij.psi.xml.StartTagEndTokenProvider"/>
@@ -89,10 +103,6 @@
     </extensionPoint>
 
     <extensionPoint name="xml.undefinedElementFixProvider" interface="com.intellij.xml.XmlUndefinedElementFixProvider"/>
-
-    <extensionPoint qualifiedName="org.jetbrains.webServerPathHandler" interface="org.jetbrains.builtInWebServer.WebServerPathHandler"/>
-    <extensionPoint qualifiedName="org.jetbrains.webServerFileHandler" interface="org.jetbrains.builtInWebServer.WebServerFileHandler"/>
-    <extensionPoint qualifiedName="org.jetbrains.webServerRootsProvider" interface="org.jetbrains.builtInWebServer.WebServerRootsProvider"/>
   </extensionPoints>
 
   <project-components>
@@ -100,21 +110,18 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
-    <component>
-      <implementation-class>com.intellij.xml.XmlPsiManager</implementation-class>
-      <skipForDefaultProject/>
-    </component>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.treeChangePreprocessor implementation="com.intellij.xml.XmlPsiTreeChangePreprocessor"/>
     <tipAndTrick file="TagNameCompletion.html"/>
 
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
 
-    <lang.syntaxHighlighterFactory key="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>
-    <lang.syntaxHighlighterFactory key="HTML" implementationClass="com.intellij.lang.html.HtmlSyntaxHighlighterFactory"/>
-    <lang.syntaxHighlighterFactory key="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory"/>
-    <lang.syntaxHighlighterFactory key="DTD" implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="XML" implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="HTML" implementationClass="com.intellij.lang.html.HtmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="DTD" implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
 
     <annotator language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlNsPrefixAnnotator"/>
     <annotator language="XML" implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlNamespaceAnnotator"/>
@@ -128,6 +135,7 @@
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlNonFirstCompletionContributor" id="xmlNonFirst" order="after xml"/>
 
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="before xmlNonFirst"/>
+    <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlLocationCompletionContributor"/>
 
     <completion.confidence language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="xml"/>
     <completion.confidence language="HTML" implementationClass="com.intellij.codeInsight.completion.XmlNameCompletionConfidence" id="html"/>
@@ -152,7 +160,10 @@
     <codeInsight.lineMarkerProvider language="XHTML" implementationClass="com.intellij.html.HtmlLineMarkerProvider"/>
 
     <breadcrumbsInfoProvider implementation="com.intellij.xml.breadcrumbs.XmlLanguageBreadcrumbsInfoProvider"/>
-    <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
+    <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"
+                                 id="editor.preferences.webOptions"
+                                 key="web.editor.configuration.title"
+                                 bundle="messages.XmlBundle"/>
     <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"
                                   id="WebEditorAppearanceConfigurable"/>
 
@@ -184,7 +195,8 @@
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
 
-    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
+    <applicationConfigurable groupId="editor" key="emmet.configuration.title" bundle="messages.XmlBundle" id="reference.idesettings.emmet"
+                             dynamic="true" provider="com.intellij.application.options.emmet.EmmetConfigurableProvider"/>
     <applicationService serviceImplementation="com.intellij.application.options.emmet.EmmetOptions"/>
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.XmlFoldingSettings"/>
@@ -241,6 +253,8 @@
     <lang.unwrapDescriptor language="XHTML" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
     <lang.unwrapDescriptor language="JSP" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
     <lang.unwrapDescriptor language="JSPX" implementationClass="com.intellij.lang.xml.XmlUnwrapDescriptor"/>
+
+    <targetElementEvaluator language="XML" implementationClass="com.intellij.codeInsight.XmlTargetElementEvaluator"/>
 
     <lang.findUsagesProvider language="DTD" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
     <lang.findUsagesProvider language="XML" implementationClass="com.intellij.lang.xml.XmlFindUsagesProvider"/>
@@ -314,6 +328,7 @@
 
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlSlashTypedHandler" id="xmlSlash"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlEqTypedHandler" id="xmlEq"/>
+    <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlPiTypedHandler" id="xmlDecl"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlGtTypedHandler" id="xmlGt"/>
     <typedHandler implementation="com.intellij.codeInsight.editorActions.XmlAutoPopupHandler" id="xmlAuto"/>
 
@@ -412,6 +427,9 @@
     <localInspection language="XML" shortName="HtmlUnknownAttribute" bundle="messages.XmlBundle" key="html.inspections.unknown.attribute" groupName="HTML"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection"/>
+    <localInspection language="XML" bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute" groupName="HTML"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
     <localInspection language="XML" shortName="XmlUnboundNsPrefix" bundle="messages.XmlBundle" key="xml.inspections.unbound.prefix"
                      groupKey="xml.inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection"/>
@@ -464,6 +482,10 @@
     <intentionAction>
       <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction</className>
     </intentionAction>
 
     <intentionAction>
@@ -525,20 +547,9 @@
     <applicationConfigurable groupId="tools" groupWeight="160" instance="com.intellij.ide.browsers.BrowserSettings" id="reference.settings.ide.settings.web.browsers"
                              key="browsers.settings" bundle="messages.IdeBundle"/>
     <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
-
-    <httpRequestHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer"/>
-    <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider" order="last"/>
-
-    <customPortServerManager implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$MyCustomPortServerManager"/>
-    <xdebugger.configurableProvider implementation="org.jetbrains.builtInWebServer.BuiltInServerOptions$BuiltInServerDebuggerConfigurableProvider"/>
-
-    <applicationService serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
-    <projectService serviceImplementation="org.jetbrains.builtInWebServer.WebServerPathToFileManager"/>
+    <smartPointer.anchorProvider implementation="com.intellij.psi.impl.smartPointers.XmlAnchorProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
-    <webServerPathHandler implementation="org.jetbrains.builtInWebServer.DefaultWebServerPathHandler" order="last"/>
-    <webServerFileHandler implementation="org.jetbrains.builtInWebServer.BuiltInWebServer$StaticFileHandler" order="last"/>
-    <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.DefaultWebServerRootsProvider"/>
   </extensions>
 </idea-plugin>

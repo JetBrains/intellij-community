@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.util.*;
 
 /**
  * A base class for immutable list implementations.
- *
+ * <p/>
  * Copied from {@link java.util.AbstractList} with modCount field removed, because the implementations are supposed to be immutable, so
  * it makes no sense to waste memory on modCount.
  */
@@ -55,14 +55,19 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
 
   public int indexOf(Object o) {
     ListIterator<E> it = listIterator();
-    if (o==null) {
-      while (it.hasNext())
-        if (it.next()==null)
+    if (o == null) {
+      while (it.hasNext()) {
+        if (it.next() == null) {
           return it.previousIndex();
-    } else {
-      while (it.hasNext())
-        if (o.equals(it.next()))
+        }
+      }
+    }
+    else {
+      while (it.hasNext()) {
+        if (o.equals(it.next())) {
           return it.previousIndex();
+        }
+      }
     }
     return -1;
   }
@@ -70,14 +75,19 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   @Override
   public int lastIndexOf(Object o) {
     ListIterator<E> it = listIterator(size());
-    if (o==null) {
-      while (it.hasPrevious())
-        if (it.previous()==null)
+    if (o == null) {
+      while (it.hasPrevious()) {
+        if (it.previous() == null) {
           return it.nextIndex();
-    } else {
-      while (it.hasPrevious())
-        if (o.equals(it.previous()))
+        }
+      }
+    }
+    else {
+      while (it.hasPrevious()) {
+        if (o.equals(it.previous())) {
           return it.nextIndex();
+        }
+      }
     }
     return -1;
   }
@@ -98,6 +108,36 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   @Override
   public List<E> subList(int fromIndex, int toIndex) {
     return new SubList<E>(this, fromIndex, toIndex);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof List)) {
+      return false;
+    }
+
+    ListIterator<E> e1 = listIterator();
+    ListIterator e2 = ((List)o).listIterator();
+    while (e1.hasNext() && e2.hasNext()) {
+      E o1 = e1.next();
+      Object o2 = e2.next();
+      if (!(o1 == null ? o2 == null : o1.equals(o2))) {
+        return false;
+      }
+    }
+    return !(e1.hasNext() || e2.hasNext());
+  }
+
+  @Override
+  public int hashCode() {
+    int hashCode = 1;
+    for (E e : this) {
+      hashCode = 31 * hashCode + (e == null ? 0 : e.hashCode());
+    }
+    return hashCode;
   }
 
   private class Itr implements Iterator<E> {
@@ -124,7 +164,8 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
         lastRet = i;
         cursor = i + 1;
         return next;
-      } catch (IndexOutOfBoundsException e) {
+      }
+      catch (IndexOutOfBoundsException e) {
         throw new NoSuchElementException();
       }
     }
@@ -132,7 +173,6 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     public void remove() {
       throw new UnsupportedOperationException();
     }
-
   }
 
   private class ListItr extends Itr implements ListIterator<E> {
@@ -150,7 +190,8 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
         E previous = get(i);
         lastRet = cursor = i;
         return previous;
-      } catch (IndexOutOfBoundsException e) {
+      }
+      catch (IndexOutOfBoundsException e) {
         throw new NoSuchElementException();
       }
     }
@@ -160,7 +201,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     }
 
     public int previousIndex() {
-      return cursor-1;
+      return cursor - 1;
     }
 
     public void set(E e) {
@@ -178,13 +219,16 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     private int size;
 
     SubList(List<E> list, int fromIndex, int toIndex) {
-      if (fromIndex < 0)
+      if (fromIndex < 0) {
         throw new IndexOutOfBoundsException("fromIndex = " + fromIndex);
-      if (toIndex > list.size())
+      }
+      if (toIndex > list.size()) {
         throw new IndexOutOfBoundsException("toIndex = " + toIndex);
-      if (fromIndex > toIndex)
+      }
+      if (fromIndex > toIndex) {
         throw new IllegalArgumentException("fromIndex(" + fromIndex +
                                            ") > toIndex(" + toIndex + ")");
+      }
       l = list;
       offset = fromIndex;
       size = toIndex - fromIndex;
@@ -201,6 +245,5 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
       return size;
     }
   }
-
 }
 

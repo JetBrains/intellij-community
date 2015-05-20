@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -145,6 +146,7 @@ public class Executor {
     boolean dirMade = file.mkdir();
     assert dirMade;
     debug("# mkdir " + dirName);
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     return file;
   }
 
@@ -203,7 +205,7 @@ public class Executor {
     return stdout;
   }
 
-  protected static List<String> splitCommandInParameters(String command) {
+  public static List<String> splitCommandInParameters(String command) {
     List<String> split = new ArrayList<String>();
 
     boolean insideParam = false;
@@ -261,7 +263,7 @@ public class Executor {
                                                                                " executable." : ""));
   }
 
-  protected static String findEnvValue(String programNameForLog, Collection<String> envs) {
+  public static String findEnvValue(String programNameForLog, Collection<String> envs) {
     for (String env : envs) {
       String val = System.getenv(env);
       if (val != null && new File(val).canExecute()) {
@@ -272,7 +274,7 @@ public class Executor {
     return null;
   }
 
-  protected static void debug(String msg) {
+  public static void debug(String msg) {
     if (!StringUtil.isEmptyOrSpaces(msg)) {
       LOG.info(msg);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInsight.JavaContainerProvider;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsBase;
 import com.intellij.codeInsight.folding.impl.JavaFoldingBuilderBase;
-import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -31,26 +30,24 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.PlainTextParserDefinition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
-import com.intellij.psi.augment.PsiAugmentProvider;
-import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiExpressionEvaluator;
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
-import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy;
-import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
+import com.intellij.psi.impl.search.MethodSuperSearcher;
 import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
 import com.intellij.psi.impl.source.tree.PlainTextASTFactory;
 import com.intellij.psi.presentation.java.*;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -76,11 +73,6 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     addExplicitExtension(LanguageParserDefinitions.INSTANCE, JavaLanguage.INSTANCE, new JavaParserDefinition());
     addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, JavaLanguage.INSTANCE, new PsiExpressionEvaluator());
 
-    registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
-    registerExtensionPoint(Extensions.getRootArea(), PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
-    registerExtensionPoint(Extensions.getRootArea(), JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
-
-    registerExtensionPoint(Extensions.getRootArea(), ContainerProvider.EP_NAME, ContainerProvider.class);
     addExtension(ContainerProvider.EP_NAME, new JavaContainerProvider());
 
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());
@@ -109,8 +101,8 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
       }
     });
 
-    registerExtensionPoint(Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
-    registerExtensionPoint(Extensions.getRootArea(), ClassFileDecompilers.EP_NAME, ClassFileDecompilers.Decompiler.class);
+    registerApplicationExtensionPoint(SuperMethodsSearch.EP_NAME, QueryExecutor.class);
+    addExtension(SuperMethodsSearch.EP_NAME, new MethodSuperSearcher());
   }
 
   @SuppressWarnings("MethodMayBeStatic") // overridden in upsource

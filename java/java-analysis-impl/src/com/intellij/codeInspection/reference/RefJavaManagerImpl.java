@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataCache;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -164,20 +161,19 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public RefParameter getParameterReference(PsiParameter param, int index) {
+  public RefParameter getParameterReference(final PsiParameter param, final int index) {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
-    RefElement ref = myRefManager.getFromRefTable(param);
-
-    if (ref == null) {
-      ref = new RefParameterImpl(param, index, myRefManager);
-      ((RefParameterImpl)ref).initialize();
-      myRefManager.putToRefTable(param, ref);
-    }
-
-    return (RefParameter)ref;
+    
+    return myRefManager.getFromRefTableOrCache(param, new NullableFactory<RefParameter>() {
+      @Nullable
+      @Override
+      public RefParameter create() {
+        RefParameter ref = new RefParameterImpl(param, index, myRefManager);
+        ((RefParameterImpl)ref).initialize();
+        return ref;
+      }
+    });
   }
-
-
 
   @Override
   public void iterate(@NotNull final RefVisitor visitor) {
@@ -214,7 +210,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void removeReference(final RefElement refElement) {
+  public void removeReference(@NotNull final RefElement refElement) {
     if (refElement instanceof RefMethod) {
       RefMethod refMethod = (RefMethod)refElement;
       RefParameter[] params = refMethod.getParameters();

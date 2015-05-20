@@ -16,7 +16,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vcs.CalledInAwt;
+import org.jetbrains.annotations.CalledInAwt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Continuation;
@@ -49,7 +49,6 @@ public class QuickMerge {
 
     final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
     tasks.add(new MergeInitChecksTask(myMergeContext, myInteraction));
-    tasks.add(new SourceUrlCorrectionTask(myMergeContext, myInteraction));
     tasks.add(new CheckRepositorySupportsMergeInfoTask(myMergeContext, myInteraction));
     if (finalTasks.length > 0) {
       tasks.addAll(Arrays.asList(finalTasks));

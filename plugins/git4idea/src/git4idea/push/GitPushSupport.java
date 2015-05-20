@@ -18,7 +18,6 @@ package git4idea.push;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -40,14 +39,13 @@ import java.util.Collection;
 
 public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, GitPushTarget> {
 
-  private static final Logger LOG = Logger.getInstance(GitPushSupport.class);
-
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final GitVcs myVcs;
   @NotNull private final Pusher<GitRepository, GitPushSource, GitPushTarget> myPusher;
   @NotNull private final OutgoingCommitsProvider<GitRepository, GitPushSource, GitPushTarget> myOutgoingCommitsProvider;
   @NotNull private final GitVcsSettings mySettings;
   private final GitSharedSettings mySharedSettings;
+  @NotNull private final PushSettings myCommonPushSettings;
 
   // instantiated from plugin.xml
   @SuppressWarnings("UnusedDeclaration")
@@ -58,6 +56,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     myPusher = new GitPusher(project, mySettings, this);
     myOutgoingCommitsProvider = new GitOutgoingCommitsProvider(project);
     mySharedSettings = ServiceManager.getService(project, GitSharedSettings.class);
+    myCommonPushSettings = ServiceManager.getService(project, PushSettings.class);
   }
 
   @NotNull
@@ -92,6 +91,11 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     GitPushTarget persistedTarget = getPersistedTarget(repository, currentBranch);
     if (persistedTarget != null) {
       return persistedTarget;
+    }
+
+    GitPushTarget pushSpecTarget = GitPushTarget.getFromPushSpec(repository, currentBranch);
+    if (pushSpecTarget != null) {
+      return pushSpecTarget;
     }
 
     GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, currentBranch);
@@ -153,7 +157,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @NotNull
   @Override
   public PushTargetPanel<GitPushTarget> createTargetPanel(@NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
-    return new GitPushTargetPanel(repository, defaultTarget);
+    return new GitPushTargetPanel(this, repository, defaultTarget);
   }
 
   @Override
@@ -176,5 +180,21 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Override
   public VcsPushOptionsPanel createOptionsPanel() {
     return new GitPushTagPanel(mySettings.getPushTagMode(), GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs.getVersion()));
+  }
+
+  @Override
+  public boolean isSilentForcePushAllowed(@NotNull GitPushTarget target) {
+    return myCommonPushSettings.containsForcePushTarget(target.getBranch().getRemote().getName(),
+                                                        target.getBranch().getNameForRemoteOperations());
+  }
+
+  @Override
+  public void saveSilentForcePushTarget(@NotNull GitPushTarget target) {
+    myCommonPushSettings.addForcePushTarget(target.getBranch().getRemote().getName(), target.getBranch().getNameForRemoteOperations());
+  }
+
+  @Override
+  public boolean mayChangeTargetsSync() {
+    return true;
   }
 }

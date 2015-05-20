@@ -197,4 +197,42 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
     setPathMappings(PathMappingSettings.readExternal(element));
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    RemoteSdkPropertiesHolder holder = (RemoteSdkPropertiesHolder)o;
+
+    if (myHelpersVersionChecked != holder.myHelpersVersionChecked) return false;
+    if (myInitialized != holder.myInitialized) return false;
+    if (myValid != holder.myValid) return false;
+    if (myHelpersDefaultDirName != null
+        ? !myHelpersDefaultDirName.equals(holder.myHelpersDefaultDirName)
+        : holder.myHelpersDefaultDirName != null) {
+      return false;
+    }
+    if (myHelpersPath != null ? !myHelpersPath.equals(holder.myHelpersPath) : holder.myHelpersPath != null) return false;
+    if (myInterpreterPath != null ? !myInterpreterPath.equals(holder.myInterpreterPath) : holder.myInterpreterPath != null) return false;
+    if (!myPathMappings.equals(holder.myPathMappings)) return false;
+    if (myRemoteRoots != null ? !myRemoteRoots.equals(holder.myRemoteRoots) : holder.myRemoteRoots != null) return false;
+    if (mySdkId != null ? !mySdkId.equals(holder.mySdkId) : holder.mySdkId != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = mySdkId != null ? mySdkId.hashCode() : 0;
+    result = 31 * result + (myInterpreterPath != null ? myInterpreterPath.hashCode() : 0);
+    result = 31 * result + (myHelpersPath != null ? myHelpersPath.hashCode() : 0);
+    result = 31 * result + (myHelpersDefaultDirName != null ? myHelpersDefaultDirName.hashCode() : 0);
+    result = 31 * result + (myHelpersVersionChecked ? 1 : 0);
+    result = 31 * result + (myRemoteRoots != null ? myRemoteRoots.hashCode() : 0);
+    result = 31 * result + (myInitialized ? 1 : 0);
+    result = 31 * result + (myValid ? 1 : 0);
+    result = 31 * result + myPathMappings.hashCode();
+    return result;
+  }
 }

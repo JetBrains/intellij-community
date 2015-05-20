@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsContent;
 
-import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
@@ -31,8 +30,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
@@ -45,15 +44,6 @@ import java.util.Collections;
 
 @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
 public class GetFileContentOperation extends LocalPathIndifferentOperation {
-  public String getRevisionString() {
-    if (myCvsRevisionNumber != null) {
-      return myCvsRevisionNumber.asString();
-    } else if (myRevisionOrDate != null){
-      return myRevisionOrDate.toString();
-    } else {
-      return CvsBundle.message("cvs.unknown.revision.presentation");
-    }
-  }
 
   @NonNls private static final String VERS_PREFIX = "VERS:";
 
@@ -199,6 +189,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
 
   public synchronized byte[] getFileBytes() {
     if (myFileBytes == null) {
+      if (myState == DELETED) return ArrayUtil.EMPTY_BYTE_ARRAY;
       myFileBytes = loadFileBytes();
     }
     return myFileBytes;
@@ -225,7 +216,7 @@ public class GetFileContentOperation extends LocalPathIndifferentOperation {
     }
     if (myReader.isEmpty()) {
       myState = DELETED;
-      return null;
+      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
     else {
       myState = SUCCESSFULLY_LOADED;

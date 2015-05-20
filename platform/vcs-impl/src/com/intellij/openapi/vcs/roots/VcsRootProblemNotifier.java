@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,10 +79,6 @@ public class VcsRootProblemNotifier {
   }
 
   public void rescanAndNotifyIfNeeded() {
-    if (!mySettings.SHOW_VCS_ERROR_NOTIFICATIONS) {
-      return;
-    }
-
     Collection<VcsRootError> errors = scan();
     if (errors.isEmpty()) {
       synchronized (NOTIFICATION_LOCK) {
@@ -198,13 +194,13 @@ public class VcsRootProblemNotifier {
   private static String makeTitle(@NotNull Collection<VcsRootError> unregisteredRoots, @NotNull Collection<VcsRootError> invalidRoots) {
     String title;
     if (unregisteredRoots.isEmpty()) {
-      title = "Invalid Vcs root " + pluralize("mapping", invalidRoots.size());
+      title = "Invalid VCS root " + pluralize("mapping", invalidRoots.size());
     }
     else if (invalidRoots.isEmpty()) {
-      title = "Unregistered Vcs " + pluralize("root", unregisteredRoots.size()) + " detected";
+      title = "Unregistered VCS " + pluralize("root", unregisteredRoots.size()) + " detected";
     }
     else {
-      title = "Vcs root configuration problems";
+      title = "VCS root configuration problems";
     }
     return title;
   }

@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -28,12 +29,15 @@ import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -87,45 +91,69 @@ public abstract class IntroduceFieldCentralPanel {
     myTypeSelectorManager = typeSelectorManager;
   }
 
-  protected boolean setEnabledInitializationPlaces(PsiElement initializerPart, PsiElement initializer) {
-    if (initializerPart instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression)initializerPart;
-      if (refExpr.getQualifierExpression() == null) {
-        PsiElement refElement = refExpr.resolve();
-        if (refElement == null ||
-            (refElement instanceof PsiLocalVariable ||
-             refElement instanceof PsiParameter ||
-             (refElement instanceof PsiField && !((PsiField)refElement).hasInitializer())) &&
-            !PsiTreeUtil.isAncestor(initializer, refElement, true)) {
-          return updateInitializationPlaceModel(initializedInSetUp(refElement));
+  protected boolean setEnabledInitializationPlaces(@NotNull final PsiElement initializer) {
+    final Set<PsiField> fields = new HashSet<PsiField>();
+    final Ref<Boolean> refsLocal = new Ref<Boolean>(false);
+    initializer.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        if (expression.getQualifierExpression() == null) {
+          final PsiElement resolve = expression.resolve();
+          if (resolve == null || 
+              resolve instanceof PsiVariable && !PsiTreeUtil.isAncestor(initializer, resolve, true)) {
+            if (resolve instanceof PsiField) {
+              if (!((PsiField)resolve).hasInitializer()) {
+                fields.add((PsiField)resolve);
+              }
+            }
+            else {
+              refsLocal.set(true);
+              stopWalking();
+            }
+          }
         }
       }
+    });
+
+    final boolean locals = refsLocal.get();
+    if (!locals && fields.isEmpty()) {
+      return true;
     }
-    PsiElement[] children = initializerPart.getChildren();
-    for (PsiElement child : children) {
-      if (!setEnabledInitializationPlaces(child, initializer)) return false;
+    return updateInitializationPlaceModel(!locals && initializedInSetUp(fields),
+                                          !locals && initializedInConstructor(fields));
+  }
+
+  private static boolean initializedInConstructor(Set<PsiField> fields) {
+    for (PsiField field : fields) {
+      if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+        return false;
+      }
     }
     return true;
   }
 
-  private boolean initializedInSetUp(PsiElement refElement) {
-    if (refElement instanceof PsiField && hasSetUpChoice()) {
-      final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod(((PsiField)refElement).getContainingClass());
-      if (setUpMethod != null) {
-        final Processor<PsiReference> initializerSearcher = new Processor<PsiReference>() {
-          @Override
-          public boolean process(PsiReference reference) {
-            final PsiElement referenceElement = reference.getElement();
-            if (referenceElement instanceof PsiExpression) {
-              return !PsiUtil.isAccessedForWriting((PsiExpression)referenceElement);
+  private boolean initializedInSetUp(Set<PsiField> fields) {
+    if (hasSetUpChoice()) {
+      for (PsiField field : fields) {
+        final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod((field).getContainingClass());
+        if (setUpMethod != null) {
+          final Processor<PsiReference> initializerSearcher = new Processor<PsiReference>() {
+            @Override
+            public boolean process(PsiReference reference) {
+              final PsiElement referenceElement = reference.getElement();
+              if (referenceElement instanceof PsiExpression) {
+                return !PsiUtil.isAccessedForWriting((PsiExpression)referenceElement);
+              }
+              return true;
             }
-            return true;
+          };
+          if (ReferencesSearch.search(field, new LocalSearchScope(setUpMethod)).forEach(initializerSearcher)) {
+            return false;
           }
-        };
-        if (!ReferencesSearch.search(refElement, new LocalSearchScope(setUpMethod)).forEach(initializerSearcher)) {
-          return true;
         }
       }
+      return true;
     }
     return false;
   }
@@ -305,7 +333,7 @@ public abstract class IntroduceFieldCentralPanel {
     }
   }
 
-  protected abstract boolean updateInitializationPlaceModel(boolean initializedInsetup);
+  protected abstract boolean updateInitializationPlaceModel(boolean initializedInsetup, boolean initializedInConstructor);
 
   protected abstract boolean hasSetUpChoice();
 }

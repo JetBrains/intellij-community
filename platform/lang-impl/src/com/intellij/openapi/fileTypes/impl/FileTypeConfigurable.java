@@ -219,7 +219,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
   }
 
   private static boolean canBeModified(FileType fileType) {
-    return fileType instanceof AbstractFileType && !(fileType instanceof ImportedFileType); //todo: add API for canBeModified
+    return fileType instanceof AbstractFileType; //todo: add API for canBeModified
   }
 
   private void addFileType() {

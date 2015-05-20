@@ -31,7 +31,10 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.util.*;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.ProcessingContext;
@@ -118,7 +121,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     final Project project = file.getProject();
     final XmlTag rootTag = ApplicationManager.getApplication().runReadAction(new Computable<XmlTag>() {
       public XmlTag compute() {
-        final XmlFile xmlFile = (XmlFile) PsiFileFactory.getInstance(project).createFileFromText("a.xml", XmlFileType.INSTANCE, file.getText());
+        final XmlFile xmlFile = (XmlFile) PsiFileFactory.getInstance(project).createFileFromText("a.xml", XmlFileType.INSTANCE, file.getViewProvider().getContents());
         return xmlFile.getRootTag();
       }
     });

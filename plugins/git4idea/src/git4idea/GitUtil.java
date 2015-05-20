@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -180,7 +181,8 @@ public class GitUtil {
     throws VcsException {
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<VirtualFile, List<VirtualFile>>();
     for (VirtualFile file : virtualFiles) {
-      final VirtualFile vcsRoot = gitRootOrNull(file);
+      // directory is reported only when it is a submodule => it should be treated in the context of super-root
+      final VirtualFile vcsRoot = gitRootOrNull(file.isDirectory() ? file.getParent() : file);
       if (vcsRoot == null) {
         if (ignoreNonGit) {
           continue;
@@ -329,7 +331,7 @@ public class GitUtil {
   }
 
   public static boolean isGitRoot(final File file) {
-    return file != null && file.exists() && file.isDirectory() && new File(file, DOT_GIT).exists();
+    return file != null && file.exists() && new File(file, DOT_GIT).exists();
   }
 
   /**
@@ -623,6 +625,8 @@ public class GitUtil {
                 //noinspection AssignmentToForLoopParameter
                 i++;
               }
+              //noinspection AssignmentToForLoopParameter
+              i--;
               assert n == b.length;
               // add them to string
               final String encoding = GitConfigUtil.getFileNameEncoding();
@@ -682,8 +686,16 @@ public class GitUtil {
     });
   }
 
+  @NotNull
+  public static GitRemoteBranch findOrCreateRemoteBranch(@NotNull GitRepository repository,
+                                                         @NotNull GitRemote remote,
+                                                         @NotNull String branchName) {
+    GitRemoteBranch remoteBranch = findRemoteBranch(repository, remote, branchName);
+    return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName, GitBranch.DUMMY_HASH));
+  }
+
   @Nullable
-  private static GitRemote findOrigin(Collection<GitRemote> remotes) {
+  public static GitRemote findOrigin(Collection<GitRemote> remotes) {
     for (GitRemote remote : remotes) {
       if (remote.getName().equals("origin")) {
         return remote;

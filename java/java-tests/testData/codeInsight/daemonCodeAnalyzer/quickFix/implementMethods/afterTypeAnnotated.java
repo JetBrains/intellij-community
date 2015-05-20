@@ -1,4 +1,4 @@
-// "Implement Methods" "true"
+// "Implement methods" "true"
 import java.lang.annotation.*;
 import java.util.*;
 

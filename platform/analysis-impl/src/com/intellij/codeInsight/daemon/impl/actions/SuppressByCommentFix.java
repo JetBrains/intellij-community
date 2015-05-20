@@ -30,7 +30,11 @@ public class SuppressByCommentFix extends AbstractBatchSuppressByNoInspectionCom
   protected Class<? extends PsiElement> mySuppressionHolderClass;
 
   public SuppressByCommentFix(@NotNull HighlightDisplayKey key, @NotNull Class<? extends PsiElement> suppressionHolderClass) {
-    this(key.getID());
+    this(key.getID(), suppressionHolderClass);
+  }
+  
+  public SuppressByCommentFix(@NotNull String toolId, @NotNull Class<? extends PsiElement> suppressionHolderClass) {
+    this(toolId);
     mySuppressionHolderClass = suppressionHolderClass;
   }
 

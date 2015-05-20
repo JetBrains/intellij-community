@@ -15,6 +15,8 @@
  */
 package org.jetbrains.ether;
 
+import com.intellij.openapi.util.SystemInfo;
+
 /**
  * @author: db
  * Date: 05.10.11
@@ -30,6 +32,42 @@ public class MethodPropertyTest extends IncrementalTestCase {
 
   public void testChangeReturnType() throws Exception {
     doTest();
+  }
+
+  public void testChangeMethodRefReturnType() throws Exception {
+    if (SystemInfo.isJavaVersionAtLeast("1.8")) {
+      doTest();
+    }
+    else {
+      System.err.println("Skipping test " + getTestName(true) + ": java version 8 or higher required to run it");
+    }
+  }
+
+  public void testChangeLambdaTargetReturnType() throws Exception {
+    if (SystemInfo.isJavaVersionAtLeast("1.8")) {
+      doTest();
+    }
+    else {
+      System.err.println("Skipping test " + getTestName(true) + ": java version 8 or higher required to run it");
+    }
+  }
+
+  public void testChangeSAMMethodSignature() throws Exception {
+    if (SystemInfo.isJavaVersionAtLeast("1.8")) {
+      doTest();
+    }
+    else {
+      System.err.println("Skipping test " + getTestName(true) + ": java version 8 or higher required to run it");
+    }
+  }
+
+  public void testChangeLambdaSAMMethodSignature() throws Exception {
+    if (SystemInfo.isJavaVersionAtLeast("1.8")) {
+      doTest();
+    }
+    else {
+      System.err.println("Skipping test " + getTestName(true) + ": java version 8 or higher required to run it");
+    }
   }
 
   public void testChangeReturnType1() throws Exception {

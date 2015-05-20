@@ -6,7 +6,7 @@ import traceback  # @Reimport
 import pydev_log
 from pydevd_breakpoints import get_exception_breakpoint, get_exception_name
 from pydevd_comm import CMD_STEP_CAUGHT_EXCEPTION, CMD_STEP_RETURN, CMD_STEP_OVER, CMD_SET_BREAK, \
-    CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT
+    CMD_STEP_INTO, CMD_SMART_STEP_INTO, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_STEP_INTO_MY_CODE
 from pydevd_constants import *  # @UnusedWildImport
 from pydevd_file_utils import GetFilenameAndBase
 
@@ -74,20 +74,28 @@ class PyDBFrame:
                     exception, mainDebugger.break_on_caught_exceptions)
 
                 if exception_breakpoint is not None:
-                    if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
-                        # print frame.f_code.co_name
-                        add_exception_to_frame(frame, (exception, value, trace))
-                        thread.additionalInfo.message = exception_breakpoint.qname
-                        flag = True
+                    if exception_breakpoint.ignore_libraries:
+                        if exception_breakpoint.notify_on_first_raise_only:
+                            if mainDebugger.first_appearance_in_scope(trace):
+                                add_exception_to_frame(frame, (exception, value, trace))
+                                thread.additionalInfo.message = exception_breakpoint.qname
+                                flag = True
+                            else:
+                                pydev_log.debug("Ignore exception %s in library %s" % (exception, frame.f_code.co_filename))
+                                flag = False
                     else:
-                        flag = False
+                        if not exception_breakpoint.notify_on_first_raise_only or just_raised(trace):
+                            add_exception_to_frame(frame, (exception, value, trace))
+                            thread.additionalInfo.message = exception_breakpoint.qname
+                            flag = True
+                        else:
+                            flag = False
                 else:
                     try:
                         if mainDebugger.plugin is not None:
                             result = mainDebugger.plugin.exception_break(mainDebugger, self, frame, self._args, arg)
                             if result:
                                 (flag, frame) = result
-
                     except:
                         flag = False
 
@@ -426,6 +434,10 @@ class PyDBFrame:
                         result = plugin_manager.cmd_step_into(main_debugger, frame, event, self._args, stop_info, stop)
                         if result:
                             stop, plugin_stop = result
+
+                elif step_cmd == CMD_STEP_INTO_MY_CODE:
+                    if not main_debugger.not_in_scope(frame.f_code.co_filename):
+                        stop = event == 'line'
 
                 elif step_cmd == CMD_STEP_OVER:
                     stop = stop_frame is frame and event in ('line', 'return')

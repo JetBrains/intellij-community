@@ -55,7 +55,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   public GithubRepository(GithubRepositoryType type) {
     super(type);
-    setUrl(GithubApiUtil.DEFAULT_GITHUB_HOST);
+    setUrl("https://" + GithubApiUtil.DEFAULT_GITHUB_HOST);
   }
 
   @NotNull
@@ -259,9 +259,20 @@ public class GithubRepository extends BaseRepositoryImpl {
   @Nullable
   @Override
   public Task findTask(@NotNull String id) throws Exception {
+    final int index = id.lastIndexOf("-");
+    if (index < 0) {
+      return null;
+    }
+    final String numericId = id.substring(index + 1);
     GithubConnection connection = getConnection();
     try {
-      return createTask(GithubApiUtil.getIssue(connection, getRepoAuthor(), getRepoName(), id));
+      return createTask(GithubApiUtil.getIssue(connection, getRepoAuthor(), getRepoName(), numericId));
+    }
+    catch (GithubStatusCodeException e) {
+      if (e.getStatusCode() == 404) {
+        return null;
+      }
+      throw e;
     }
     finally {
       connection.close();
@@ -303,7 +314,7 @@ public class GithubRepository extends BaseRepositoryImpl {
 
   public void setRepoName(@NotNull String repoName) {
     myRepoName = repoName;
-    myPattern = Pattern.compile("(" + StringUtil.escapeToRegexp(repoName) + "\\-\\d+):\\s+");
+    myPattern = Pattern.compile("(" + StringUtil.escapeToRegexp(repoName) + "\\-\\d+)");
   }
 
   @NotNull

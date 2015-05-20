@@ -46,6 +46,11 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   public abstract void appendCoverageArgument(final String sessionDataFilePath, @Nullable final String[] patterns, final SimpleJavaParameters parameters,
                                               final boolean collectLineInfo, final boolean isSampling);
 
+  public void appendCoverageArgument(final String sessionDataFilePath, @Nullable final String[] patterns, final SimpleJavaParameters parameters,
+                                     final boolean collectLineInfo, final boolean isSampling, String sourceMapPath) {
+    appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling);
+  }
+
   protected static String handleSpacesInPath(String agentPath) {
     final String userDefined = System.getProperty(COVERAGE_AGENT_PATH);
     if (userDefined != null && new File(userDefined).exists()) {

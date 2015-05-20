@@ -96,6 +96,7 @@ public class PsiTestUtil {
 
     final VirtualFile vDir =
       LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
+    PlatformTestCase.synchronizeTempDirVfs(vDir);
     assert vDir != null && vDir.isDirectory() : dir;
 
     Project project = module != null ? module.getProject() : null;

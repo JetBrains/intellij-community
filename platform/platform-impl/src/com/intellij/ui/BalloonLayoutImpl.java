@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
       relayout();
     }
   };
-  @NotNull private final JRootPane myParent;
+  private final JRootPane myParent;
 
   public BalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
     myParent = parent;
@@ -72,7 +73,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
   }
 
 
-  private void queueRelayout() {
+  public void queueRelayout() {
     myRelayoutAlarm.cancelAllRequests();
     myRelayoutAlarm.addRequest(myRelayoutRunnable, 200);
   }
@@ -80,8 +81,7 @@ public class BalloonLayoutImpl implements BalloonLayout {
   private void relayout() {
     final Dimension size = myLayeredPane.getSize();
 
-    size.width -= myInsets.left + myInsets.right;
-    size.height -= myInsets.top + myInsets.bottom;
+    JBInsets.removeFrom(size, myInsets);
 
     final Rectangle layoutRec = new Rectangle(new Point(myInsets.left, myInsets.top), size);
 

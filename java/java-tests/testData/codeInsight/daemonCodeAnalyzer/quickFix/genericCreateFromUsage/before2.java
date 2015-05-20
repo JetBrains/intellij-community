@@ -1,4 +1,4 @@
-// "Create Method 'get'" "true"
+// "Create method 'get'" "true"
 class Generic<T> {
 }
 

@@ -32,9 +32,10 @@ public class TaskData extends AbstractExternalEntityData implements ExternalConf
   private static final long serialVersionUID = 1L;
 
   @NotNull private final String myName;
-  @NotNull private final String myLinkedExternalProjectPath;
-
   @Nullable private final String myDescription;
+  @NotNull private final String myLinkedExternalProjectPath;
+  @Nullable private String myGroup;
+  private boolean myInherited;
 
   public TaskData(@NotNull ProjectSystemId owner, @NotNull String name, @NotNull String path, @Nullable String description) {
     super(owner);
@@ -58,14 +59,34 @@ public class TaskData extends AbstractExternalEntityData implements ExternalConf
     return myDescription;
   }
 
+  @Nullable
+  public String getGroup() {
+    return myGroup;
+  }
+
+  public void setGroup(@Nullable String group) {
+    myGroup = group;
+  }
+
+  public boolean isInherited() {
+    return myInherited;
+  }
+
+  public void setInherited(boolean inherited) {
+    myInherited = inherited;
+  }
+
   @Override
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + myName.hashCode();
+    result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
     result = 31 * result + myLinkedExternalProjectPath.hashCode();
+    result = 31 * result + (myInherited ? 1 : 0);
     result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
     return result;
   }
+
 
   @Override
   public boolean equals(Object o) {
@@ -75,9 +96,11 @@ public class TaskData extends AbstractExternalEntityData implements ExternalConf
 
     TaskData data = (TaskData)o;
 
-    if (myDescription != null ? !myDescription.equals(data.myDescription) : data.myDescription != null) return false;
-    if (!myLinkedExternalProjectPath.equals(data.myLinkedExternalProjectPath)) return false;
+    if (myInherited != data.myInherited) return false;
     if (!myName.equals(data.myName)) return false;
+    if (myGroup != null ? !myGroup.equals(data.myGroup) : data.myGroup != null) return false;
+    if (!myLinkedExternalProjectPath.equals(data.myLinkedExternalProjectPath)) return false;
+    if (myDescription != null ? !myDescription.equals(data.myDescription) : data.myDescription != null) return false;
 
     return true;
   }

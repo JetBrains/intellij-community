@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import com.intellij.ui.navigation.ForwardAction;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -198,8 +199,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     toolbar.setTargetComponent(myComponent);
     myToolbarComponent = toolbar.getComponent();
     if (Registry.is("ide.new.project.settings")) {
-      left.setBackground(UIUtil.getSidePanelColor());
-      myToolbarComponent.setBackground(UIUtil.getSidePanelColor());
+      left.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+      myToolbarComponent.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     }
     left.add(myToolbarComponent, BorderLayout.NORTH);
     left.add(mySidePanel, BorderLayout.CENTER);
@@ -672,7 +673,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(1024, 768);
+      return JBUI.size(1024, 768);
     }
   }
 

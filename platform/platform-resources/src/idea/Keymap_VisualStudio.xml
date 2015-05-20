@@ -78,6 +78,9 @@
     <action id="GotoClass">
       <keyboard-shortcut first-keystroke="control COMMA"/>
     </action>
+    <action id="GotoChangedFile">
+      <keyboard-shortcut first-keystroke="control COMMA"/>
+    </action>
     <action id="$Redo">
       <keyboard-shortcut first-keystroke="control Y"/>
       <keyboard-shortcut first-keystroke="shift control Z"/>

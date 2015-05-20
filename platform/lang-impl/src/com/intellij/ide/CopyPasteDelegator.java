@@ -19,7 +19,6 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -143,7 +142,9 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
       final boolean[] isCopied = new boolean[1];
       final PsiElement[] elements = PsiCopyPasteManager.getInstance().getElements(isCopied);
       if (elements == null) return false;
+      
       PsiDirectory targetDirectory = null;
+      DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
       try {
         PsiElement target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
         final Module module = LangDataKeys.MODULE.getData(dataContext);
@@ -180,6 +181,7 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
         }
       }
       finally {
+        DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
         updateView();
         if (targetDirectory != null) {
           targetDirectory.putCopyableUserData(SHOW_CHOOSER_KEY, null);

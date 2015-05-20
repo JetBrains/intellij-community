@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
@@ -25,11 +27,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Interface for actions activated by keystrokes in the editor.
  * Implementations should override
- * {@link #execute(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+ * {@link #execute(Editor, Caret, DataContext)}
  * .
  * <p>
  * Two types of handlers are supported: the ones which are executed once, and the ones which are executed for each caret. The latter can be
- * created using {@link com.intellij.openapi.editor.actionSystem.EditorActionHandler#EditorActionHandler(boolean)} constructor.
+ * created using {@link EditorActionHandler#EditorActionHandler(boolean)} constructor.
  *
  * @see EditorActionManager#setActionHandler(String, EditorActionHandler)
  */
@@ -49,10 +51,10 @@ public abstract class EditorActionHandler {
 
   /**
    * @deprecated Implementations should override
-   * {@link #isEnabledForCaret(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+   * {@link #isEnabledForCaret(Editor, Caret, DataContext)}
    * instead,
    * client code should invoke
-   * {@link #isEnabled(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}
+   * {@link #isEnabled(Editor, Caret, DataContext)}
    * instead.
    */
   public boolean isEnabled(Editor editor, final DataContext dataContext) {
@@ -135,9 +137,9 @@ public abstract class EditorActionHandler {
   }
   /**
    * @deprecated To implement action logic, override
-   * {@link #doExecute(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)},
+   * {@link #doExecute(Editor, Caret, DataContext)},
    * to invoke the handler, call
-   * {@link #execute(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext)}.
+   * {@link #execute(Editor, Caret, DataContext)}.
    */
   public void execute(Editor editor, DataContext dataContext) {
     if (inExecution) {
@@ -205,7 +207,7 @@ public abstract class EditorActionHandler {
             }
           });
         }
-      }, true);
+      });
     }
     else {
       if (contextCaret == null) {

@@ -31,8 +31,6 @@ import java.util.List;
  * @author Dmitry Batkovich
  */
 public class MultiScopeSeverityIcon implements Icon {
-  private final static int SIZE = 12;
-
   private final LinkedHashMap<String, HighlightDisplayLevel> myScopeToAverageSeverityMap;
   private final String myDefaultScopeName;
 
@@ -87,11 +85,11 @@ public class MultiScopeSeverityIcon implements Icon {
 
   @Override
   public int getIconWidth() {
-    return SIZE;
+    return HighlightDisplayLevel.getEmptyIconDim();
   }
 
   @Override
   public int getIconHeight() {
-    return SIZE;
+    return HighlightDisplayLevel.getEmptyIconDim();
   }
 }

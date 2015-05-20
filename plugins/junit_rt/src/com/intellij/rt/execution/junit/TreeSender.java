@@ -26,12 +26,13 @@ public class TreeSender {
   }
 
   public static void sendTree(IdeaTestRunner runner, Object suite, boolean sendTree) {
-    Packet packet = runner.getRegistry().createPacket();
-    packet.addString(PoolOfDelimiters.TREE_PREFIX);
-    Set objects = new HashSet();
-    sendNode(runner, suite, packet, objects);
     if (sendTree) {
-      for (Iterator iterator = objects.iterator(); iterator.hasNext();) {
+      Packet packet = runner.getRegistry().createPacket();
+      packet.addString(PoolOfDelimiters.TREE_PREFIX);
+      Set objects = new HashSet();
+      sendNode(runner, suite, packet, objects);
+
+      for (Iterator iterator = objects.iterator(); iterator.hasNext(); ) {
         ((Packet)iterator.next()).send();
       }
       packet.addString("\n");

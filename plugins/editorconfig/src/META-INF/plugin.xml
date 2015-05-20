@@ -18,6 +18,7 @@
     <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
     <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" />
+    <editorNotificationProvider implementation="org.editorconfig.plugincomponents.EditorConfigNotifierProvider"/>
   </extensions>
 
   <application-components>

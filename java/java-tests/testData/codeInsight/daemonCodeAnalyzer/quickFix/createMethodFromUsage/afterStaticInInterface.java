@@ -1,4 +1,4 @@
-// "Create Method 'f'" "true"
+// "Create method 'f'" "true"
 interface X {
   public static void m() {
     f();

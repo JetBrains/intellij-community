@@ -31,7 +31,7 @@ import com.intellij.util.QueryExecutor;
  * @author max
  */
 public class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMethod, OverridingMethodsSearch.SearchParameters> {
-  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.overridingMethodsSearch");
+  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.overridingMethodsSearch");
   public static final OverridingMethodsSearch INSTANCE = new OverridingMethodsSearch();
 
   public static class SearchParameters {

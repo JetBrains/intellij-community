@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,7 @@ import java.util.Map;
  * @author nik
  */
 public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
-  private final Map<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>> myCache = new HashMap<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>>();
+  private final Map<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>> myCache = Collections.synchronizedMap(new HashMap<List<VirtualFile>, List<Pair<LibraryKind, LibraryProperties>>>());
   
   @Override
   public boolean processProperties(@NotNull List<VirtualFile> files, @NotNull LibraryPropertiesProcessor processor) {

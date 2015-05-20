@@ -84,7 +84,7 @@ public class DocumentMarkupModel {
     if (create && model == null) {
       MarkupModelImpl newModel = new MarkupModelImpl((DocumentEx)document);
       if ((model = ConcurrencyUtil.cacheOrGet(markupModelMap, project, newModel)) == newModel) {
-        documentMarkupModelManager.registerDocument((DocumentImpl)document);
+        documentMarkupModelManager.registerDocument(document);
       }
       else {
         newModel.dispose();

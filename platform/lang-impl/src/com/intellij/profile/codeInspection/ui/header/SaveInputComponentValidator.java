@@ -26,6 +26,8 @@ public interface SaveInputComponentValidator {
 
   boolean checkValid(@NotNull String text);
 
+  void cancel();
+
   class Wrapper implements SaveInputComponentValidator {
     private SaveInputComponentValidator myDelegate;
     private boolean myActive;
@@ -47,6 +49,13 @@ public interface SaveInputComponentValidator {
     @Override
     public boolean checkValid(@NotNull String text) {
       return myActive && myDelegate != null && myDelegate.checkValid(text.trim());
+    }
+
+    @Override
+    public void cancel() {
+      if (myActive && myDelegate != null) {
+        myDelegate.cancel();
+      }
     }
   }
 }

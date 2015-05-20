@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
@@ -31,16 +30,17 @@ import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
@@ -49,9 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -59,15 +57,11 @@ import java.util.Set;
  */
 public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ProjectManagerComponent");
-  private static final boolean ourScheduleCacheUpdateInDumbMode = SystemProperties.getBooleanProperty(
-    "idea.schedule.cache.update.in.dumb.mode", true);
+
   private boolean myPointerChangesDetected = false;
   private int myInsideRefresh = 0;
   private final BatchUpdateListener myHandler;
   private final MessageBusConnection myConnection;
-
-  protected final List<CacheUpdater> myRootsChangeUpdaters = new ArrayList<CacheUpdater>();
-  protected final List<CacheUpdater> myRefreshCacheUpdaters = new ArrayList<CacheUpdater>();
 
   private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<LocalFileSystem.WatchRequest>();
   private final boolean myDoLogCachesUpdate;
@@ -120,24 +114,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     myDoLogCachesUpdate = ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  public void registerRootsChangeUpdater(CacheUpdater updater) {
-    myRootsChangeUpdaters.add(updater);
-  }
-
-  public void unregisterRootsChangeUpdater(CacheUpdater updater) {
-    boolean removed = myRootsChangeUpdaters.remove(updater);
-    LOG.assertTrue(removed);
-  }
-
-  public void registerRefreshUpdater(CacheUpdater updater) {
-    myRefreshCacheUpdaters.add(updater);
-  }
-
-  public void unregisterRefreshUpdater(CacheUpdater updater) {
-    boolean removed = myRefreshCacheUpdaters.remove(updater);
-    LOG.assertTrue(removed);
-  }
-
   @Override
   public void initComponent() {
     super.initComponent();
@@ -187,17 +163,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     DumbModeTask task = FileBasedIndexProjectHandler.createChangedFilesIndexingTask(myProject);
     if (task != null) {
       dumbService.queueTask(task);
-    }
-
-    if (myRefreshCacheUpdaters.size() == 0) {
-      return;
-    }
-
-    if (ourScheduleCacheUpdateInDumbMode) {
-      dumbService.queueCacheUpdateInDumbMode(myRefreshCacheUpdaters);
-    }
-    else {
-      dumbService.queueCacheUpdate(myRefreshCacheUpdaters);
     }
   }
 
@@ -261,9 +226,10 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
     }
     else {
       flat.add(projectFilePath);
-      final VirtualFile workspaceFile = myProject.getWorkspaceFile();
+      // may be not existing yet
+      final String workspaceFile = ((ProjectImpl)myProject).getStateStore().getWorkspaceFilePath();
       if (workspaceFile != null) {
-        flat.add(workspaceFile.getPath());
+        flat.add(workspaceFile);
       }
     }
 
@@ -273,51 +239,28 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
 
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
+      flat.add(module.getModuleFilePath());
+
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
       addRootsToTrack(moduleRootManager.getContentRootUrls(), recursive, flat);
+
       if (includeSourceRoots) {
         addRootsToTrack(moduleRootManager.getSourceRootUrls(), recursive, flat);
       }
-      flat.add(module.getModuleFilePath());
 
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       for (OrderEntry entry : orderEntries) {
-        if (entry instanceof LibraryOrderEntry) {
-          final Library library = ((LibraryOrderEntry)entry).getLibrary();
-          if (library != null) {
-            for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-              addRootsToTrack(library.getUrls(orderRootType), recursive, flat);
-            }
-          }
-        }
-        else if (entry instanceof JdkOrderEntry) {
+        if (entry instanceof LibraryOrSdkOrderEntry) {
+          final LibraryOrSdkOrderEntry libSdkEntry = (LibraryOrSdkOrderEntry)entry;
           for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-            addRootsToTrack(((JdkOrderEntry)entry).getRootUrls(orderRootType), recursive, flat);
+            addRootsToTrack(libSdkEntry.getRootUrls(orderRootType), recursive, flat);
           }
         }
       }
     }
 
     return Pair.create(recursive, flat);
-  }
-
-  @Override
-  protected void doSynchronizeRoots() {
-    if (!myStartupActivityPerformed) return;
-
-    if (myDoLogCachesUpdate) LOG.info(new Throwable("sync roots"));
-
-    DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
-    dumbService.queueTask(new UnindexedFilesUpdater(myProject, false));
-
-    if (myRootsChangeUpdaters.isEmpty()) return;
-
-    if (ourScheduleCacheUpdateInDumbMode) {
-      dumbService.queueCacheUpdateInDumbMode(myRootsChangeUpdaters);
-    } else {
-      dumbService.queueCacheUpdate(myRootsChangeUpdaters);
-    }
   }
 
   private static void addRootsToTrack(final String[] urls, final Collection<String> recursive, final Collection<String> flat) {
@@ -330,7 +273,23 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl {
         else if (JarFileSystem.PROTOCOL.equals(protocol)) {
           flat.add(extractLocalPath(url));
         }
+        else if (StandardFileSystems.JRT_PROTOCOL.equals(protocol)) {
+          recursive.add(extractLocalPath(url));
+        }
       }
+    }
+  }
+
+  @Override
+  protected void doSynchronizeRoots() {
+    if (!myStartupActivityPerformed) return;
+
+    if (myDoLogCachesUpdate) LOG.info(new Throwable("sync roots"));
+    else LOG.info("project roots have changed");
+
+    DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
+    if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
+      dumbService.queueTask(new UnindexedFilesUpdater(myProject, false));
     }
   }
 

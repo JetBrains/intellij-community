@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -152,7 +153,7 @@ public class SvnHistoryTest extends Svn17TestCase {
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    provider.reportAppendableHistory(new FilePathImpl(tree.myS1File), new VcsAppendableHistorySessionPartner() {
+    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myS1File), new VcsAppendableHistorySessionPartner() {
       @Override
       public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
       }
@@ -205,7 +206,7 @@ public class SvnHistoryTest extends Svn17TestCase {
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    provider.reportAppendableHistory(new FilePathImpl(tree.myS1File), new VcsAppendableHistorySessionPartner() {
+    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myS1File), new VcsAppendableHistorySessionPartner() {
       @Override
       public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
       }
@@ -259,7 +260,7 @@ public class SvnHistoryTest extends Svn17TestCase {
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    provider.reportAppendableHistory(new FilePathImpl(tree.myS1File), new VcsAppendableHistorySessionPartner() {
+    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myS1File), new VcsAppendableHistorySessionPartner() {
       @Override
       public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
       }
@@ -293,7 +294,7 @@ public class SvnHistoryTest extends Svn17TestCase {
 
     myCnt = 0;
     semaphore.down();
-    provider.reportAppendableHistory(new FilePathImpl(tree.myTargetDir), new VcsAppendableHistorySessionPartner() {
+    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myTargetDir), new VcsAppendableHistorySessionPartner() {
       @Override
       public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
       }
@@ -326,7 +327,7 @@ public class SvnHistoryTest extends Svn17TestCase {
 
     myCnt = 0;
     semaphore.down();
-    provider.reportAppendableHistory(new FilePathImpl(tree.myTargetFiles.get(0)), new VcsAppendableHistorySessionPartner() {
+    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myTargetFiles.get(0)), new VcsAppendableHistorySessionPartner() {
       @Override
       public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
       }

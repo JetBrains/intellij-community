@@ -27,10 +27,10 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
@@ -146,6 +146,10 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
+    if (DumbService.isDumb(project)) {
+      return null;
+    }
+
     GlobalSearchScope scope = null;
     if (moduleName != null) {
       final Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);

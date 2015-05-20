@@ -130,6 +130,11 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     return false;
   }
 
+  @Override
+  public PsiType getReturnType() {
+    return null;
+  }
+
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
@@ -234,6 +239,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
         myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
         myParametersTableContainer.removeAll();
         myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
+        myParametersTableContainer.revalidate();
         updateSignature();
         updateVarargsEnabled();
       }

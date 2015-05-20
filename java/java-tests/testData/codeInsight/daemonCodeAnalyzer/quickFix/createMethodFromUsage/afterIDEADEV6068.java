@@ -1,4 +1,4 @@
-// "Create Method 'toMulti'" "true"
+// "Create method 'toMulti'" "true"
 import java.util.Map;
 
 class BrokenCreateMethod {

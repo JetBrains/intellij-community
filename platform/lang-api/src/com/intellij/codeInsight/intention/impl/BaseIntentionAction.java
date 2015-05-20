@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,7 +32,7 @@ public abstract class BaseIntentionAction implements IntentionAction {
     return myText;
   }
 
-  protected void setText(@NotNull String text) {
+  protected void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text) {
     myText = text;
   }
 

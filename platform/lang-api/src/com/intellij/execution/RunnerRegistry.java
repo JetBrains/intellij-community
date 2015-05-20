@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,24 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class RunnerRegistry implements ApplicationComponent {
+public abstract class RunnerRegistry {
   public static RunnerRegistry getInstance() {
-    return ApplicationManager.getApplication().getComponent(RunnerRegistry.class);
+    return ServiceManager.getService(RunnerRegistry.class);
   }
 
-  public abstract boolean hasRunner(@NotNull final String executorId, @NotNull final RunProfile settings);
+  @SuppressWarnings("unused")
+  @Deprecated
+  public abstract boolean hasRunner(@NotNull String executorId, @NotNull RunProfile settings);
 
   @Nullable
   public abstract ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings);
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public abstract ProgramRunner[] getRegisteredRunners();
 
   @Nullable

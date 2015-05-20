@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.introduceParameter;
 
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -100,7 +101,7 @@ public class Util {
 
         if (e instanceof PsiField) {
           PsiField psiField = (PsiField)e;
-          PsiMethod getterPrototype = PropertyUtil.generateGetterPrototype(psiField);
+          PsiMethod getterPrototype = GenerateMembersUtil.generateGetterPrototype(psiField);
 
           PsiMethod getter = psiField.getContainingClass().findMethodBySignature(getterPrototype, true);
 

@@ -40,15 +40,6 @@ public abstract class GroovyUtils {
     return LibrariesUtil.getFilesInDirectoryByPattern(dirPath, pattern);
   }
 
-  public static <E> List<E> flatten(Collection<? extends Collection<E>> collections) {
-    List<E> result = new ArrayList<E>();
-    for (Collection<E> list : collections) {
-      result.addAll(list);
-    }
-
-    return result;
-  }
-
   @Nullable
   public static GrTypeDefinition getPublicClass(@Nullable VirtualFile virtualFile, PsiManager manager) {
     if (virtualFile == null) return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,13 +106,13 @@ public class ModuleVcsDetector implements ProjectComponent {
     }
 
     @Override
-    public void moduleAdded(final Project project, final Module module) {
+    public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
       myMappingsForRemovedModules.removeAll(getMappings(module));
       autoDetectModuleVcsMapping(module);
     }
 
     @Override
-    public void beforeModuleRemoved(final Project project, final Module module) {
+    public void beforeModuleRemoved(@NotNull final Project project, @NotNull final Module module) {
       myMappingsForRemovedModules.addAll(getMappings(module));
     }
   }

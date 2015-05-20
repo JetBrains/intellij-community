@@ -23,6 +23,7 @@ import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -134,6 +135,9 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
   @Nullable
   private static PsiElement findCommonAncestorForWholeRange(@NotNull PsiElement start, @NotNull PsiElement end) {
+    if (start.getContainingFile() != end.getContainingFile()) {
+      return null;
+    }
     final PsiElement parent = PsiTreeUtil.findCommonParent(start, end);
     if (parent == null) {
       return null;
@@ -239,6 +243,9 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     @Override
     public boolean isApplicable(@NotNull PsiElement[] elements) {
       if (elements.length == 0) return false;
+      if (elements[0].getContainingFile() instanceof PsiCodeFragment) {
+        return false;
+      }
       for (FoldingBuilder each : LanguageFolding.INSTANCE.allForLanguage(elements[0].getLanguage())) {
         if (each instanceof CustomFoldingBuilder) return true;
       }
@@ -264,26 +271,27 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
       final String startIndent = document.getText(new TextRange(document.getLineStartOffset(startLineNumber), startOffset));
       int endOffset = lastElement.getTextRange().getEndOffset();
       int delta = 0;
-      TextRange rangeToSelect = new TextRange(startOffset, startOffset);
+      TextRange rangeToSelect = TextRange.create(startOffset, startOffset);
       String startText = myProvider.getStartString();
       int descPos = startText.indexOf("?");
       if (descPos >= 0) {
         startText = startText.replace("?", DEFAULT_DESC_TEXT);
-        rangeToSelect = new TextRange(startOffset + descPos, startOffset + descPos + DEFAULT_DESC_TEXT.length());
+        rangeToSelect = TextRange.from(startOffset + descPos, DEFAULT_DESC_TEXT.length());
       }
+
       String startString = linePrefix + startText + "\n" + startIndent;
       String endString = "\n" + linePrefix + myProvider.getEndString();
       document.insertString(endOffset, endString);
       delta += endString.length();
       document.insertString(startOffset, startString);
       delta += startString.length();
-      rangeToSelect = rangeToSelect.shiftRight(prefixLength);
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      documentManager.commitDocument(documentManager.getDocument(psiFile));
-      adjustLineIndent(project, psiFile, language,
-                       new TextRange(endOffset + delta - endString.length(), endOffset + delta));
-      adjustLineIndent(project, psiFile, language,
-                       new TextRange(startOffset, startOffset + startString.length()));
+      
+      RangeMarker rangeMarkerToSelect = document.createRangeMarker(rangeToSelect.shiftRight(prefixLength));
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      adjustLineIndent(project, psiFile, language, TextRange.from(endOffset + delta - endString.length(), endString.length()));
+      adjustLineIndent(project, psiFile, language, TextRange.from(startOffset, startString.length()));
+      rangeToSelect = TextRange.create(rangeMarkerToSelect.getStartOffset(), rangeMarkerToSelect.getEndOffset());
+      rangeMarkerToSelect.dispose();
       return rangeToSelect;
     }
 

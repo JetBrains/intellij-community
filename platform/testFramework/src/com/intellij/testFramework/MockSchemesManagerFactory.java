@@ -5,17 +5,18 @@ import com.intellij.openapi.options.*;
 import org.jetbrains.annotations.NotNull;
 
 public class MockSchemesManagerFactory extends SchemesManagerFactory {
+  private static final SchemesManager EMPTY = new EmptySchemesManager();
+
   @NotNull
   @Override
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String fileSpec,
                                                                                                       @NotNull SchemeProcessor<E> processor,
                                                                                                       @NotNull RoamingType roamingType) {
     //noinspection unchecked
-    return SchemesManager.EMPTY;
+    return EMPTY;
   }
 
   @Override
   public void updateConfigFilesFromStreamProviders() {
-
   }
 }

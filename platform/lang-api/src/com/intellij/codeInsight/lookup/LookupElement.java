@@ -80,6 +80,10 @@ public abstract class LookupElement extends UserDataHolderBase {
   public void handleInsert(InsertionContext context) {
   }
 
+  public AutoCompletionPolicy getAutoCompletionPolicy() {
+    return AutoCompletionPolicy.SETTINGS_DEPENDENT;
+  }
+
   @Override
   public String toString() {
     return getLookupString();

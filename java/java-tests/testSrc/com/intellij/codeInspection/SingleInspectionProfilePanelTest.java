@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileTest;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.project.Project;
@@ -30,22 +31,17 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 5/10/12
  */
 public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
-
   // see IDEA-85700
   public void testSettingsModification() throws Exception {
-
     Project project = ProjectManager.getInstance().getDefaultProject();
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
     profile.initInspectionTools(project);
-    assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
 
     InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
-    assertEquals(0, InspectionProfileTest.countInitializedTools(model));
-    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model);
+    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model, profile);
     panel.setVisible(true);
     panel.reset();
-    assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 0, InspectionProfileTest.countInitializedTools(model));
 
     JavaDocLocalInspection tool = getInspection(model);
     assertEquals("", tool.myAdditionalJavadocTags);
@@ -63,14 +59,13 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
     profile.initInspectionTools(project);
-    assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
 
     JavaDocLocalInspection originalTool = getInspection(profile);
     originalTool.myAdditionalJavadocTags = "foo";
 
     InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
 
-    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model);
+    SingleInspectionProfilePanel panel = new SingleInspectionProfilePanel(profileManager, PROFILE, model, profile);
     panel.setVisible(true);
     panel.reset();
     assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 1, InspectionProfileTest.countInitializedTools(model));
@@ -91,7 +86,6 @@ public class SingleInspectionProfilePanelTest extends LightIdeaTestCase {
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl profile = (InspectionProfileImpl)profileManager.getProfile(PROFILE);
     profile.initInspectionTools(project);
-    assertEquals(0, InspectionProfileTest.countInitializedTools(profile));
 
     JavaDocLocalInspection originalTool = getInspection(profile);
     assertEquals("", originalTool.myAdditionalJavadocTags);

@@ -126,12 +126,11 @@ public class SoftWrapsStorage {
    * Inserts given soft wrap to {@link #myWraps} collection at the given index.
    *
    * @param softWrap          soft wrap to store
-   * @param notifyListeners   flag that indicates if registered listeners should be notified about soft wrap registration
    * @return                  previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
    */
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
   @Nullable
-  public SoftWrap storeOrReplace(SoftWrapImpl softWrap, boolean notifyListeners) {
+  public SoftWrap storeOrReplace(SoftWrapImpl softWrap) {
     int i = getSoftWrapIndex(softWrap.getStart());
     if (i >= 0) {
       return myWraps.set(i, softWrap);
@@ -139,47 +138,47 @@ public class SoftWrapsStorage {
 
     i = -i - 1;
     myWraps.add(i, softWrap);
-    if (notifyListeners) {
-      // Use explicit loop as profiling shows that iterator-based processing is quite slow.
-      for (int j = 0; j < myListeners.size(); j++) {
-        SoftWrapChangeListener listener = myListeners.get(j);
-        listener.softWrapAdded(softWrap);
-      }
-    }
     return null;
   }
 
+  public void remove(SoftWrapImpl softWrap) {
+    if (myWraps.isEmpty()) return;
+    int i = myWraps.size() - 1; // expected use case is removing of last soft wrap, so we have a fast path here for that case
+    if (myWraps.get(i).getStart() != softWrap.getStart()) {
+      i = getSoftWrapIndex(softWrap.getStart());
+    }
+    if (i >= 0) {
+      myWraps.remove(i);
+    }
+  }
+
   /**
-   * Allows to remove all soft wraps registered at the current storage with offsets from <code>[start; end)</code> range if any.
-   *
-   * @param startOffset   start offset to use (inclusive)
-   * @param endOffset     end offset to use (exclusive)
+   * Removes soft wraps with offsets equal or larger than a given offset from storage.
+   * 
+   * @return soft wraps that were removed, ordered by offset
    */
-  public void removeInRange(int startOffset, int endOffset) {
-    //CachingSoftWrapDataMapper.log(String.format("xxxxxxxxxx SoftWrapsStorage.removeInRange(%d, %d). Current number: %d", startOffset, endOffset, myWraps.size()));
-    int startIndex = getSoftWrapIndex(startOffset);
+  public List<SoftWrapImpl> removeStartingFrom(int offset) {
+    int startIndex = getSoftWrapIndex(offset);
     if (startIndex < 0) {
       startIndex = -startIndex - 1;
     }
 
     if (startIndex >= myWraps.size()) {
-      return;
+      return Collections.emptyList();
     }
 
-    int endIndex = startIndex;
-    for (; endIndex < myWraps.size(); endIndex++) {
-      SoftWrap softWrap = myWraps.get(endIndex);
-      if (softWrap.getStart() >= endOffset) {
-        break;
-      }
-    }
+    List<SoftWrapImpl> tail = myWraps.subList(startIndex, myWraps.size());
+    List<SoftWrapImpl> result = new ArrayList<SoftWrapImpl>(tail);
+    tail.clear();
+    return result;
+  }
 
-    if (endIndex > startIndex) {
-      myWraps.subList(startIndex, endIndex).clear();
-      notifyListenersAboutRemoval();
-    }
-    
-    //CachingSoftWrapDataMapper.log(String.format("xxxxxxxxxx SoftWrapsStorage.removeInRange(%d, %d). Remaining: %d", startOffset, endOffset, myWraps.size()));
+  /**
+   * Adds soft wraps to storage. They are supposed to be sorted by their offsets, and have offsets larger than offsets for soft wraps 
+   * existing in storage at the moment.
+   */
+  public void addAll(List<SoftWrapImpl> softWraps) {
+    myWraps.addAll(softWraps);
   }
 
   /**
@@ -187,7 +186,7 @@ public class SoftWrapsStorage {
    */
   public void removeAll() {
     myWraps.clear();
-    notifyListenersAboutRemoval();
+    notifyListenersAboutChange();
   }
 
   /**
@@ -200,9 +199,9 @@ public class SoftWrapsStorage {
     return myListeners.add(listener);
   }
 
-  private void notifyListenersAboutRemoval() {
+  public void notifyListenersAboutChange() {
     for (SoftWrapChangeListener listener : myListeners) {
-      listener.softWrapsRemoved();
+      listener.softWrapsChanged();
     }
   }
 }

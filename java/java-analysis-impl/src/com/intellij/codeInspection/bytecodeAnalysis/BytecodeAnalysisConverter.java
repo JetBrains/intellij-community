@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,8 +42,24 @@ public class BytecodeAnalysisConverter {
   public static final int SIGNATURE_HASH_SIZE = 4;
   public static final int HASH_SIZE = CLASS_HASH_SIZE + SIGNATURE_HASH_SIZE;
 
+  private static final ThreadLocalCachedValue<MessageDigest> HASHER_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
+    @Override
+    public MessageDigest create() {
+      try {
+        return MessageDigest.getInstance("MD5");
+      } catch (NoSuchAlgorithmException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+
+    @Override
+    protected void init(MessageDigest value) {
+      value.reset();
+    }
+  };
+
   public static MessageDigest getMessageDigest() throws NoSuchAlgorithmException {
-    return MessageDigest.getInstance("MD5");
+    return HASHER_CACHE.getValue();
   }
 
   /**

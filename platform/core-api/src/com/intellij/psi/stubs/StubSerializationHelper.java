@@ -78,7 +78,17 @@ public class StubSerializationHelper {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(true);
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
 
-    doSerialize(rootStub, stubOutputStream);
+    if (rootStub instanceof PsiFileStub) {
+      final PsiFileStub[] roots = ((PsiFileStub)rootStub).getStubRoots();
+      DataInputOutputUtil.writeINT(stubOutputStream, roots.length);
+      for (PsiFileStub root : roots) {
+        doSerialize(root, stubOutputStream);
+      }
+    }
+    else {
+      DataInputOutputUtil.writeINT(stubOutputStream, 1);
+      doSerialize(rootStub, stubOutputStream);
+    }
     DataOutputStream resultStream = new DataOutputStream(stream);
     DataInputOutputUtil.writeINT(resultStream, storage.myStrings.size());
     byte[] buffer = IOUtil.allocReadWriteUTFBuffer();
@@ -111,7 +121,24 @@ public class StubSerializationHelper {
       ++i;
     }
 
-    return deserialize(inputStream, null);
+    int stubFilesCount = DataInputOutputUtil.readINT(inputStream);
+    if (stubFilesCount > 1) {
+      final List<PsiFileStub> stubs = new ArrayList<PsiFileStub>(stubFilesCount);
+      while (stubFilesCount-- > 0) {
+        final PsiFileStub fileStub = (PsiFileStub)deserialize(inputStream, null);
+        stubs.add(fileStub);
+      }
+      final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
+      for (PsiFileStub stub : stubsArray) {
+        if (stub instanceof PsiFileStubImpl) {
+          ((PsiFileStubImpl)stub).setStubRoots(stubsArray);
+        }
+      }
+      return stubsArray[0];
+    }
+    else {
+      return deserialize(inputStream, null);
+    }
   }
 
   String intern(String str) {
@@ -123,7 +150,11 @@ public class StubSerializationHelper {
     final int id = DataInputOutputUtil.readINT(stream);
     final ObjectStubSerializer serializer = getClassById(id);
     if (serializer == null) {
-      throw new SerializerNotFoundException("No serializer registered for stub: ID=" + id + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null"));
+      String externalId = null;
+      try {
+        externalId = myNameStorage.valueOf(id);
+      } catch (Throwable ignore) {}
+      throw new SerializerNotFoundException("No serializer registered for stub: ID=" + id + ", externalId:" + externalId + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null"));
     }
 
     Stub stub = serializer.deserialize(stream, parentStub);

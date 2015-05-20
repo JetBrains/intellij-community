@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,6 +62,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInNonJavaFiles;
   private NonCodeUsageInfo[] myNonCodeUsages;
   private final MoveCallback myMoveCallback;
+  private boolean myOpenInEditor;
 
   public MoveClassToInnerProcessor(Project project,
                                    final PsiClass[] classesToMove,
@@ -165,6 +168,13 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       for (PsiElement element : importStatements) {
         if (element.isValid()) {
           element.delete();
+        }
+      }
+
+      if (myOpenInEditor && !oldToNewElementsMapping.isEmpty()) {
+        final PsiElement item = ContainerUtil.getFirstItem(oldToNewElementsMapping.values());
+        if (item != null) {
+          EditorHelper.openInEditor(item);
         }
       }
     }
@@ -322,6 +332,10 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
         return false;
       }
     });
+  }
+
+  public void setOpenInEditor(boolean openInEditor) {
+    myOpenInEditor = openInEditor;
   }
 
   private static class ConflictsCollector {

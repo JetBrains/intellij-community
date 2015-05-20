@@ -7,9 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="JUnit3" level="project" />
-    <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit3" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
   </component>
 </module>
-

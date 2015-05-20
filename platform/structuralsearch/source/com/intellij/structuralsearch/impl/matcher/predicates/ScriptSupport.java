@@ -62,6 +62,8 @@ public class ScriptSupport {
       return String.valueOf(o);
     } catch (GroovyRuntimeException ex) {
       throw new StructuralSearchException(SSRBundle.message("groovy.script.error", ex.getMessage()));
+    } finally {
+      script.setBinding(null);
     }
   }
 

@@ -14,7 +14,7 @@ class Test {
   void foo() { <caret>CONST.someMethod(); }
 }
 '''
-    myFixture.launchAction(myFixture.findSingleIntention("Create Constant Field"))
+    myFixture.launchAction(myFixture.findSingleIntention("Create constant field"))
     myFixture.checkResult '''import foo.Foo;
 
 class Test {
@@ -35,7 +35,7 @@ class Test {
   void foo() { <caret>CONST.someMethod(); }
 }
 '''
-    myFixture.launchAction(myFixture.findSingleIntention("Create Constant Field"))
+    myFixture.launchAction(myFixture.findSingleIntention("Create constant field"))
     myFixture.checkResult '''
 class Test {
     private static final <selection>Bar</selection> CONST = ;

@@ -32,6 +32,9 @@ public interface Foo extends DomElement {
   GenericDomValue<String> getId();
 
   @Stubbed
+  List<GenericDomValue<String>> getLists();
+
+  @Stubbed
   List<Bar> getBars();
 
   Bar addBar();

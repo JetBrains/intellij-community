@@ -48,12 +48,6 @@ public class RerunFailedTestsAction extends JavaRerunFailedTestsAction {
         testMethods.clear();
         return testMethods;
       }
-
-      @Override
-      public void clear() {
-        testMethods.clear();
-        super.clear();
-      }
     };
   }
 }

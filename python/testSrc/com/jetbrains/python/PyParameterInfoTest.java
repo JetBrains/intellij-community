@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
@@ -32,6 +33,7 @@ import com.jetbrains.python.psi.CallArgumentsMapping;
 import com.jetbrains.python.psi.PyArgumentList;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.EnumSet;
@@ -453,6 +455,10 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       myTexts = texts;
       myFlags = flags;
       return StringUtil.join(texts, "");
+    }
+
+    @Override
+    public void setEscapeFunction(@Nullable Function<String, String> escapeFunction) {
     }
 
     @Override

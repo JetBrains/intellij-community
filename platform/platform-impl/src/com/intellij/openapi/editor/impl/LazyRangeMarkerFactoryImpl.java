@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,11 +118,12 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
       public RangeMarker compute() {
         final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
         if (document != null) {
-          final int offset = calculateOffset(myProject, file, document, line, column);
+          int myTabSize = CodeStyleFacade.getInstance(myProject).getTabSize(file.getFileType());
+          final int offset = calculateOffset(document, line, column, myTabSize);
           return document.createRangeMarker(offset, offset, persistent);
         }
 
-        final LazyMarker marker = new LineColumnLazyMarker(file, line, column);
+        final LazyMarker marker = new LineColumnLazyMarker(myProject, file, line, column);
         addToLazyMarkersList(marker, file);
         return marker;
       }
@@ -149,7 +150,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
     }
 
     @Nullable
-    protected final RangeMarker getOrCreateDelegate() {
+    final RangeMarker getOrCreateDelegate() {
       if (myDelegate == null) {
         Document document = FileDocumentManager.getInstance().getDocument(myFile);
         if (document == null) {
@@ -254,14 +255,16 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
     }
   }
 
-  private class LineColumnLazyMarker extends LazyMarker {
+  private static class LineColumnLazyMarker extends LazyMarker {
     private final int myLine;
     private final int myColumn;
+    private final int myTabSize;
 
-    private LineColumnLazyMarker(@NotNull VirtualFile file, int line, int column) {
+    private LineColumnLazyMarker(@NotNull Project project, @NotNull VirtualFile file, int line, int column) {
       super(file, -1);
       myLine = line;
       myColumn = column;
+      myTabSize = CodeStyleFacade.getInstance(project).getTabSize(file.getFileType());
     }
 
     @Override
@@ -271,7 +274,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
         return null;
       }
 
-      int offset = calculateOffset(myProject, file, document, myLine, myColumn);
+      int offset = calculateOffset(document, myLine, myColumn, myTabSize);
       return document.createRangeMarker(offset, offset);
     }
 
@@ -299,13 +302,15 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
     }
   }
 
-  private static int calculateOffset(@NotNull Project project, @NotNull VirtualFile file, @NotNull Document document, final int line, final int column) {
+  private static int calculateOffset(@NotNull Document document,
+                                     final int line,
+                                     final int column,
+                                     int tabSize) {
     int offset;
-    if (line < document.getLineCount()) {
+    if (0 <= line && line < document.getLineCount()) {
       final int lineStart = document.getLineStartOffset(line);
       final int lineEnd = document.getLineEndOffset(line);
       final CharSequence docText = document.getCharsSequence();
-      final int tabSize = CodeStyleFacade.getInstance(project).getTabSize(file.getFileType());
 
       offset = lineStart;
       int col = 0;

@@ -81,7 +81,7 @@ public abstract class ActionPlaces {
   public static final String ANT_MESSAGES_TOOLBAR = "AntMessagesToolbar";
   public static final String ANT_EXPLORER_POPUP = "AntExplorerPopup";
   public static final String ANT_EXPLORER_TOOLBAR = "AntExplorerToolbar";
-  public static final String GULP_VIEW_POPUP = "JavaScriptGulpPopup";
+  public static final String JS_BUILD_TOOL_POPUP = "JavaScriptBuildTool";
 
   //todo: probably these context should be splitted into several contexts
   public static final String CODE_INSPECTION = "CodeInspection";
@@ -120,6 +120,11 @@ public abstract class ActionPlaces {
   public static final String PHING_MESSAGES_TOOLBAR = "PhingMessagesToolbar";
 
   public static final String CHANGES_LOCAL_DIFF_SETTINGS = "CHANGES_LOCAL_DIFF_SETTINGS";
+  public static final String DIFF_TOOLBAR = "DiffPopup";
+
+  public static final String V8_CPU_PROFILING_POPUP = "V8_CPU_PROFILING_POPUP";
+  public static final String V8_HEAP_PROFILING_POPUP = "V8_HEAP_PROFILING_POPUP";
+  public static final String V8_HEAP_DIFF_PROFILING_POPUP = "V8_HEAP_DIFF_PROFILING_POPUP";
 
   private static final String[] ourToolbarPlaces = {EDITOR_TOOLBAR, PROJECT_VIEW_TOOLBAR, TESTTREE_VIEW_TOOLBAR, MAIN_TOOLBAR,
     ANT_EXPLORER_TOOLBAR, ANT_MESSAGES_TOOLBAR, COMPILER_MESSAGES_TOOLBAR, TODO_VIEW_TOOLBAR, STRUCTURE_VIEW_TOOLBAR, USAGE_VIEW_TOOLBAR,
@@ -143,7 +148,8 @@ public abstract class ActionPlaces {
     FILEVIEW_POPUP, CHECKOUT_POPUP, LVCS_DIRECTORY_HISTORY_POPUP, GUI_DESIGNER_EDITOR_POPUP, GUI_DESIGNER_COMPONENT_TREE_POPUP,
     GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
     CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
-    ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, GULP_VIEW_POPUP
+    ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP, DIFF_TOOLBAR,
+    V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP
   };
 
   public static boolean isPopupPlace(@NotNull String place) {

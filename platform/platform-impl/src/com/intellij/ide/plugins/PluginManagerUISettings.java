@@ -20,10 +20,8 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import gnu.trove.THashSet;
 
 import javax.swing.*;
-import java.util.Set;
 
 @State(
   name = "PluginManagerConfigurable",
@@ -37,9 +35,6 @@ public class PluginManagerUISettings implements PersistentStateComponent<PluginM
 
   public boolean UPDATE_IN_BACKGROUND;
 
-  // not stored
-  private final Set<String> myInstalledPlugins = new THashSet<String>();
-
   @Attribute(converter = SplitterProportionsDataImpl.SplitterProportionsConverter.class)
   public SplitterProportionsDataImpl installedProportions = new SplitterProportionsDataImpl();
   @Attribute(converter = SplitterProportionsDataImpl.SplitterProportionsConverter.class)
@@ -49,10 +44,6 @@ public class PluginManagerUISettings implements PersistentStateComponent<PluginM
     Float defaultProportion = new Float(0.5);
     installedProportions.getProportions().add(defaultProportion);
     availableProportions.getProportions().add(defaultProportion);
-  }
-
-  public Set<String> getInstalledPlugins() {
-    return myInstalledPlugins;
   }
 
   public static PluginManagerUISettings getInstance() {

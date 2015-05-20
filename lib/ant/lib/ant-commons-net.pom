@@ -26,19 +26,20 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.8.2</version>
+    <version>1.9.4</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
+  <url>http://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-commons-net</artifactId>
-  <version>1.8.2</version>
+  <version>1.9.4</version>
   <name>Apache Ant + Commons Net</name>
   <description>ftp, rexec and telnet tasks</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.8.2</version>
+      <version>1.9.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -54,8 +55,6 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.4</source>
-          <target>1.4</target>
           <includes>
             <include>org/apache/tools/ant/taskdefs/optional/net/FTP*</include>
             <include>org/apache/tools/ant/taskdefs/optional/net/RExec*</include>

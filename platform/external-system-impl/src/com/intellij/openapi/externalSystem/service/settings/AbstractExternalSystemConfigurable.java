@@ -83,6 +83,11 @@ public abstract class AbstractExternalSystemConfigurable<
     myExternalSystemId = externalSystemId;
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   @Nullable
   @Override
   public Runnable enableSearch(String option) {
@@ -142,6 +147,9 @@ public abstract class AbstractExternalSystemConfigurable<
       control.fillUi(myComponent, 1);
       myProjectsModel.addElement(getProjectName(setting.getExternalProjectPath()));
       myProjectSettingsControls.add(control);
+      if (control instanceof AbstractExternalProjectSettingsControl<?>) {
+        ((AbstractExternalProjectSettingsControl)control).setCurrentProject(myProject);
+      }
       control.showUi(false);
     }
 
@@ -168,6 +176,10 @@ public abstract class AbstractExternalSystemConfigurable<
     if (!myProjectsModel.isEmpty()) {
       myProjectsList.setSelectedIndex(0);
     }
+  }
+
+  public void selectProject(@NotNull String linkedProjectPath) {
+    myProjectsList.setSelectedValue(getProjectName(linkedProjectPath), true);
   }
   
   private void addTitle(@NotNull String title) {

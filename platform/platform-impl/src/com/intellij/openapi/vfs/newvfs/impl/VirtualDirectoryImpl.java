@@ -206,7 +206,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @NotNull
   public VirtualFileSystemEntry createChild(String name, int id, @NotNull NewVirtualFileSystem delegate) {
-    return createChild(FileNameCache.storeName(name), id, delegate);
+    synchronized (myData) {
+      return createChild(FileNameCache.storeName(name), id, delegate);
+    }
   }
 
   @NotNull
@@ -452,6 +454,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
   private void setChildrenLoaded() {
     setFlagInt(CHILDREN_CACHED, true);
+    myData.clearAdoptedNames();
   }
 
   @NotNull

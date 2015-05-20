@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph;
 
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ public interface PermanentGraph<CommitId> {
   @NotNull
   VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                             @Nullable Set<CommitId> headsOfVisibleBranches,
-                                            @Nullable Condition<CommitId> filter);
+                                            @Nullable Set<CommitId> matchedCommits);
 
   @NotNull
   List<GraphCommit<CommitId>> getAllCommits();
@@ -45,8 +44,27 @@ public interface PermanentGraph<CommitId> {
   @NotNull
   Set<CommitId> getContainingBranches(@NotNull CommitId commit);
 
-  enum SortType{
-    Normal,
-    Bek
+  enum SortType {
+    Normal("Off", "Sort commits topologically and by date"),
+    Bek("Standard", "In case of merge show incoming commits first (directly below merge commit)"),
+    LinearBek("Linear", "In case of merge show incoming commits on top of main branch commits as if they were rebased");
+
+    @NotNull private final String myPresentation;
+    @NotNull private final String myDescription;
+
+    SortType(@NotNull String presentation, @NotNull String description) {
+      myPresentation = presentation;
+      myDescription = description;
+    }
+
+    @NotNull
+    public String getName() {
+      return myPresentation;
+    }
+
+    @NotNull
+    public String getDescription() {
+      return myDescription;
+    }
   }
 }

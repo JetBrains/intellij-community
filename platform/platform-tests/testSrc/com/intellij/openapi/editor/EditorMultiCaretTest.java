@@ -17,12 +17,12 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.TestFileType;
 import com.intellij.util.ThrowableRunnable;
 
 import java.awt.event.InputEvent;
@@ -43,11 +43,10 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCaretAddingAndRemoval() throws Exception {
-    init("some <selection>t<caret>ext</selection>\n" +
-         "another line",
-         TestFileType.TEXT);
+    initText("some <selection>t<caret>ext</selection>\n" +
+             "another line");
 
-    mouse().alt().shift().clickAt(1,1); // alt-shift-click in a 'free space'
+    mouse().alt().shift().clickAt(1, 1); // alt-shift-click in a 'free space'
     checkResultByText("some <selection>t<caret>ext</selection>\n" +
                       "a<caret>nother line");
 
@@ -76,7 +75,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     doWithAltClickShortcut(new ThrowableRunnable() {
       @Override
       public void run() throws IOException {
-        init("<caret>text", TestFileType.TEXT);
+        initText("<caret>text");
         mouse().alt().clickAt(0, 2);
         checkResultByText("<caret>te<caret>xt");
       }
@@ -87,7 +86,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     doWithAltClickShortcut(new ThrowableRunnable() {
       @Override
       public void run() throws IOException {
-        init("<selection>some<caret></selection> text", TestFileType.TEXT);
+        initText("<selection>some<caret></selection> text");
         mouse().alt().clickAt(0, 6);
         mouse().alt().clickAt(0, 6);
         checkResultByText("<selection>some<caret></selection> text");
@@ -96,12 +95,11 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testAltDragStartingFromWithinLine() throws Exception {
-    init("<caret>line\n" +
-         "long line\n" +
-         "very long line\n" +
-         "long line\n" +
-         "line",
-         TestFileType.TEXT);
+    initText("<caret>line\n" +
+             "long line\n" +
+             "very long line\n" +
+             "long line\n" +
+             "line");
     setEditorVisibleSize(1000, 1000);
 
     mouse().alt().pressAt(1, 6);
@@ -134,12 +132,11 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testMiddleButtonDragStartingFromVirtualSpace() throws Exception {
-    init("<caret>line\n" +
-         "long line\n" +
-         "very long line\n" +
-         "long line\n" +
-         "line",
-         TestFileType.TEXT);
+    initText("<caret>line\n" +
+             "long line\n" +
+             "very long line\n" +
+             "long line\n" +
+             "line");
     setEditorVisibleSize(1000, 1000);
 
     mouse().middle().pressAt(1, 17);
@@ -172,13 +169,12 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testAltOnOffWhileDragging() throws Exception {
-    init("line1\n" +
-         "line2\n" +
-         "line3",
-         TestFileType.TEXT);
+    initText("line1\n" +
+             "line2\n" +
+             "line3");
     setEditorVisibleSize(1000, 1000);
 
-    mouse().clickAt(0, 1).dragTo(1, 2);
+    mouse().pressAt(0, 1).dragTo(1, 2);
     checkResultByText("l<selection>ine1\n" +
                       "li<caret></selection>ne2\n" +
                       "line3");
@@ -193,11 +189,9 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testTyping() throws Exception {
-    init("some<caret> text<caret>\n" +
-         "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
-         "<selection>ano<caret>ther</selection> line",
-         TestFileType.TEXT
-    );
+    initText("some<caret> text<caret>\n" +
+             "some <selection><caret>other</selection> <selection>text<caret></selection>\n" +
+             "<selection>ano<caret>ther</selection> line");
     type('A');
     checkResultByText("someA<caret> textA<caret>\n" +
                       "some A<caret> A<caret>\n" +
@@ -205,9 +199,8 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCopyPaste() throws Exception {
-    init("<selection><caret>one</selection> two \n" +
-         "<selection><caret>three</selection> four ",
-         TestFileType.TEXT);
+    initText("<selection><caret>one</selection> two \n" +
+             "<selection><caret>three</selection> four ");
     executeAction("EditorCopy");
     executeAction("EditorLineEnd");
     executeAction("EditorPaste");
@@ -216,10 +209,8 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCutAndPaste() throws Exception {
-    init("<selection>one<caret></selection> two \n" +
-         "<selection>three<caret></selection> four ",
-         TestFileType.TEXT
-    );
+    initText("<selection>one<caret></selection> two \n" +
+             "<selection>three<caret></selection> four ");
     executeAction("EditorCut");
     executeAction("EditorLineEnd");
     executeAction("EditorPaste");
@@ -228,9 +219,8 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testPasteSingleItem() throws Exception {
-    init("<selection>one<caret></selection> two \n" +
-         "three four ",
-         TestFileType.TEXT);
+    initText("<selection>one<caret></selection> two \n" +
+             "three four ");
     executeAction("EditorCopy");
     executeAction("EditorCloneCaretBelow");
     executeAction("EditorLineEnd");
@@ -240,12 +230,10 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCutAndPasteMultiline() throws Exception {
-    init("one <selection>two \n" +
-         "three<caret></selection> four \n" +
-         "five <selection>six \n" +
-         "seven<caret></selection> eight",
-         TestFileType.TEXT
-    );
+    initText("one <selection>two \n" +
+             "three<caret></selection> four \n" +
+             "five <selection>six \n" +
+             "seven<caret></selection> eight");
     executeAction("EditorCut");
     executeAction("EditorLineEnd");
     executeAction("EditorPaste");
@@ -256,11 +244,10 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCopyMultilineFromOneCaretPasteIntoTwo() throws Exception {
-    init("<selection>one\n" +
-         "two<caret></selection>\n" +
-         "three\n" +
-         "four",
-         TestFileType.TEXT);
+    initText("<selection>one\n" +
+             "two<caret></selection>\n" +
+             "three\n" +
+             "four");
     executeAction("EditorCopy");
     executeAction("EditorTextStart");
     executeAction("EditorCloneCaretBelow");
@@ -274,11 +261,10 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCopyPasteDoesNothingWithUnevenSelection() throws Exception {
-    init("<selection>one\n" +
-         "two<caret></selection>\n" +
-         "<selection>three<caret></selection>\n" +
-         "four",
-         TestFileType.TEXT);
+    initText("<selection>one\n" +
+             "two<caret></selection>\n" +
+             "<selection>three<caret></selection>\n" +
+             "four");
     executeAction("EditorCopy");
     executeAction("EditorPaste");
     checkResultByText("one\n" +
@@ -288,50 +274,43 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testEscapeAfterDragDown() throws Exception {
-    init("line1\n" +
-         "line2",
-         TestFileType.TEXT
-    );
+    initText("line1\n" +
+             "line2");
     setEditorVisibleSize(1000, 1000);
 
-    mouse().alt().clickAt(0, 1).dragTo(1, 2).release();
+    mouse().alt().pressAt(0, 1).dragTo(1, 2).release();
     executeAction("EditorEscape");
     checkResultByText("li<caret>ne1\n" +
                       "line2");
   }
 
   public void testEscapeAfterDragUp() throws Exception {
-    init("line1\n" +
-         "line2",
-         TestFileType.TEXT);
+    initText("line1\n" +
+             "line2");
     setEditorVisibleSize(1000, 1000);
 
-    mouse().alt().clickAt(1, 1).dragTo(0, 2).release();
+    mouse().alt().pressAt(1, 1).dragTo(0, 2).release();
     executeAction("EditorEscape");
     checkResultByText("line1\n" +
                       "li<caret>ne2");
   }
 
   public void testAltShiftDoubleClick() throws Exception {
-    init("q<caret>uick brown fox",
-         TestFileType.TEXT);
+    initText("q<caret>uick brown fox");
     mouse().alt().shift().doubleClickAt(0, 8);
     checkResultByText("q<caret>uick <selection>brown<caret></selection> fox");
   }
 
   public void testAltShiftDoubleClickAtExistingCaret() throws Exception {
-    init("q<caret>uick br<caret>own fox",
-         TestFileType.TEXT);
+    initText("q<caret>uick br<caret>own fox");
     mouse().alt().shift().doubleClickAt(0, 8);
     checkResultByText("q<caret>uick brown fox");
   }
 
   public void testAltShiftTripleClick() throws Exception {
-    init("q<caret>uick\n" +
-         "brown\n" +
-         "fox",
-         TestFileType.TEXT
-    );
+    initText("q<caret>uick\n" +
+             "brown\n" +
+             "fox");
     mouse().alt().shift().tripleClickAt(1, 2);
     checkResultByText("q<caret>uick\n" +
                       "<selection>br<caret>own\n" +
@@ -339,10 +318,9 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testAltShiftTripleClickAtExistingCaret() throws Exception {
-    init("q<caret>uick\n" +
-         "br<caret>own\n" +
-         "fox",
-         TestFileType.TEXT);
+    initText("q<caret>uick\n" +
+             "br<caret>own\n" +
+             "fox");
     mouse().alt().shift().tripleClickAt(1, 2);
     checkResultByText("q<caret>uick\n" +
                       "brown\n" +
@@ -350,9 +328,9 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCaretPositionsRecalculationOnDocumentChange() throws Exception {
-    init("\n" +
-         "<selection><caret>word</selection>\n" +
-         "some long prefix <selection><caret>word</selection>-suffix", TestFileType.TEXT);
+    initText("\n" +
+             "<selection><caret>word</selection>\n" +
+             "some long prefix <selection><caret>word</selection>-suffix");
     EditorTestUtil.configureSoftWraps(myEditor, 17); // wrapping right before 'word-suffix'
 
     delete();
@@ -364,18 +342,56 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCreateRectangularSelectionWithMouseClicks() throws Exception {
-    init("<caret>line\n" +
-         "long line\n" +
-         "very long line\n" +
-         "long line\n" +
-         "line",
-         TestFileType.TEXT);
+    initText("<caret>line\n" +
+             "long line\n" +
+             "very long line\n" +
+             "long line\n" +
+             "line");
     mouse().alt().shift().middle().clickAt(2, 2);
     checkResultByText("<selection>li<caret></selection>ne\n" +
                       "<selection>lo<caret></selection>ng line\n" +
                       "<selection>ve<caret></selection>ry long line\n" +
                       "long line\n" +
                       "line");
+  }
+
+  public void testAddingMultipleSelectionsUsingMouse() throws Exception {
+    initText("s<selection>om<caret></selection>e text\nother text");
+    setEditorVisibleSize(1000, 1000);
+    mouse().alt().shift().pressAt(0, 5).dragTo(1, 2).release();
+    checkResultByText("s<selection>om<caret></selection>e <selection>text\not<caret></selection>her text");
+  }
+
+  public void testAddingMultipleSelectionsUsingMouseInColumnSelectionMode() throws Exception {
+    initText("s<selection>om<caret></selection>e text\nother text");
+    setEditorVisibleSize(1000, 1000);
+    ((EditorEx)myEditor).setColumnMode(true);
+    mouse().alt().shift().pressAt(0, 5).dragTo(1, 2).release();
+    checkResultByText("s<selection>om<caret></selection>e <selection>text\not<caret></selection>her text");
+  }
+
+  public void testAltShiftDragAfterRemovingCaret() throws Exception {
+    initText("<selection>a<caret></selection>b<caret>racadabra");
+    setEditorVisibleSize(1000, 1000);
+    mouse().alt().shift().pressAt(0, 2).dragTo(0, 3).release();
+    checkResultByText("<selection>a<caret></selection>bracadabra");
+  }
+
+  public void testAddingRectangualSelectionUsingMouse() throws Exception {
+    initText("s<selection>om<caret></selection>e text\nother text");
+    setEditorVisibleSize(1000, 1000);
+    mouse().ctrl().alt().shift().pressAt(0, 7).dragTo(1, 5).release();
+    checkResultByText("s<selection>om<caret></selection>e <selection><caret>te</selection>xt\nother<selection><caret> t</selection>ext");
+  }
+  
+  public void testCaretPositionUpdateOnFolding() throws Exception {
+    initText("line1\n" +
+             "line2\n" +
+             "l<caret>ine3\n" +
+             "line<caret>4");
+    addCollapsedFoldRegion(0, 6, "...");
+    verifyCaretsAndSelections(1, 1, 1, 1,
+                              2, 4, 4, 4);
   }
 
   private static void doWithAltClickShortcut(ThrowableRunnable runnable) throws Throwable {

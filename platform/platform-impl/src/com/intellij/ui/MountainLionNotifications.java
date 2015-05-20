@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 import static com.intellij.ui.mac.foundation.Foundation.nsString;
@@ -60,7 +58,7 @@ class MountainLionNotifications implements SystemNotificationsImpl.Notifier {
   }
 
   @Override
-  public void notify(@NotNull Set<String> allNames, @NotNull String name, @NotNull String title, @NotNull String description) {
+  public void notify(@NotNull String name, @NotNull String title, @NotNull String description) {
     final ID notification = invoke(Foundation.getObjcClass("NSUserNotification"), "new");
     invoke(notification, "setTitle:", nsString(StringUtil.stripHtml(title, true).replace("%", "%%")));
     invoke(notification, "setInformativeText:", nsString(StringUtil.stripHtml(description, true).replace("%", "%%")));

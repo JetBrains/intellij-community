@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +44,7 @@ public class HgRegularUpdater implements HgUpdater {
   @NotNull private final Project project;
   @NotNull private final VirtualFile repoRoot;
   @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
+  private static final Logger LOG = Logger.getInstance(HgRegularUpdater.class);
 
   public HgRegularUpdater(@NotNull Project project, @NotNull VirtualFile repository, @NotNull HgUpdateConfigurationSettings configuration) {
     this.project = project;
@@ -185,18 +187,30 @@ public class HgRegularUpdater implements HgUpdater {
   private void commitOrWarnAboutConflicts(List<VcsException> exceptions, HgCommandResult mergeResult) throws VcsException {
     if (mergeResult.getExitValue() == 0) { //operation successful and no conflicts
       try {
-        new HgCommitCommand(project, repoRoot, "Automated merge").execute();
-      } catch (HgCommandException e) {
+        HgRepository hgRepository = HgUtil.getRepositoryForFile(project, repoRoot);
+        if (hgRepository == null) {
+          LOG.warn("Couldn't find repository info for " + repoRoot.getName());
+          return;
+        }
+        new HgCommitCommand(project, hgRepository, "Automated merge").execute();
+      }
+      catch (HgCommandException e) {
         throw new VcsException(e);
       }
-    } else {
-        reportWarning(exceptions, HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repoRoot.getPath()));
-      }
     }
+    else {
+      reportWarning(exceptions, HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repoRoot.getPath()));
+    }
+  }
 
   private HgCommandResult doMerge(ProgressIndicator indicator) throws VcsException {
     indicator.setText2(HgVcsMessages.message("hg4idea.update.progress.merging"));
-    HgMergeCommand mergeCommand = new HgMergeCommand(project, repoRoot);
+    HgRepository repository = HgUtil.getRepositoryManager(project).getRepositoryForRoot(repoRoot);
+    if (repository == null) {
+      LOG.error("Couldn't find repository for " + repoRoot.getName());
+      return null;
+    }
+    HgMergeCommand mergeCommand = new HgMergeCommand(project, repository);
     //do not explicitly set the revision, that way mercurial itself checks that there are exactly
     //two heads in this branch
     //    mergeCommand.setRevision(headToMerge.getRevision());
@@ -246,8 +260,7 @@ public class HgRegularUpdater implements HgUpdater {
     return statusCommand.execute(repoRoot);
   }
 
-  private HgCommandExitCode pull(VirtualFile repo, ProgressIndicator indicator)
-    throws VcsException {
+  private HgCommandExitCode pull(@NotNull VirtualFile repo, @NotNull ProgressIndicator indicator) {
     indicator.setText2(HgVcsMessages.message("hg4idea.progress.pull.with.update"));
     HgPullCommand hgPullCommand = new HgPullCommand(project, repo);
     final String defaultPath = HgUtil.getRepositoryDefaultPath(project, repo);

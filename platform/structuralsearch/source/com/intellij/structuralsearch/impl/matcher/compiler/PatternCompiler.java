@@ -110,7 +110,7 @@ public class PatternCompiler {
       element.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {
-          if (element instanceof PsiComment) {
+          if (element.getUserData(CompiledPattern.HANDLER_KEY) != null) {
             return;
           }
           super.visitElement(element);
@@ -466,7 +466,8 @@ public class PatternCompiler {
       );
 
       if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
-        MatchPredicate predicate = new WithinPredicate(Configuration.CONTEXT_VAR_NAME, constraint.getWithinConstraint(), project);
+        MatchPredicate predicate =
+          new WithinPredicate(Configuration.CONTEXT_VAR_NAME, constraint.getWithinConstraint(), options.getFileType(), project);
         if (constraint.isInvertWithinConstraint()) {
           predicate = new NotPredicate(predicate);
         }

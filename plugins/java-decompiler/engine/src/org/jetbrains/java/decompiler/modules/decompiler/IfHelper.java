@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,8 +252,7 @@ public class IfHelper {
 
             List<Exprent> lstOperands = new ArrayList<Exprent>();
             lstOperands.add(statexpr.getCondition());
-            lstOperands.add(new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT,
-                                                Arrays.asList(ifchild.getHeadexprent().getCondition()), null));
+            lstOperands.add(new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, ifchild.getHeadexprent().getCondition(), null));
             statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_CADD, lstOperands, null));
             statexpr.addBytecodeOffsets(ifchild.getHeadexprent().bytecode);
 
@@ -310,8 +309,7 @@ public class IfHelper {
             lstOperands.add(firstif.getHeadexprent().getCondition());
 
             if (path == 2) {
-              lstOperands.set(0, new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT,
-                                                     Arrays.asList(lstOperands.get(0)), null));
+              lstOperands.set(0, new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, lstOperands.get(0), null));
             }
 
             lstOperands.add(statexpr.getCondition());
@@ -361,7 +359,7 @@ public class IfHelper {
           // negate the if condition
           IfExprent statexpr = firstif.getHeadexprent();
           statexpr
-            .setCondition(new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, Arrays.asList(statexpr.getCondition()), null));
+            .setCondition(new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, statexpr.getCondition(), null));
 
           return true;
         }
@@ -556,7 +554,7 @@ public class IfHelper {
 
       // negate the if condition
       IfExprent statexpr = ifstat.getHeadexprent();
-      statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, Arrays.asList(statexpr.getCondition()), null));
+      statexpr.setCondition(new FunctionExprent(FunctionExprent.FUNCTION_BOOL_NOT, statexpr.getCondition(), null));
 
       if (noelsestat) {
         StatEdge ifedge = ifstat.getIfEdge();
@@ -735,10 +733,10 @@ public class IfHelper {
   }
 
   private static class IfNode {
-    public Statement value;
+    public final Statement value;
 
-    public List<IfNode> succs = new ArrayList<IfNode>();
-    public List<Integer> edgetypes = new ArrayList<Integer>();
+    public final List<IfNode> succs = new ArrayList<IfNode>();
+    public final List<Integer> edgetypes = new ArrayList<Integer>();
 
     public IfNode(Statement value) {
       this.value = value;

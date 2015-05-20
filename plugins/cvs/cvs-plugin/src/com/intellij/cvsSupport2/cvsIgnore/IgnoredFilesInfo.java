@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.cvsSupport2.cvsIgnore;
 
+import com.intellij.openapi.vfs.VirtualFile;
+
 /**
  * author: lesya
  */
@@ -24,13 +26,24 @@ public interface IgnoredFilesInfo {
     public boolean shouldBeIgnored(String fileName) {
       return false;
     }
+
+    public boolean shouldBeIgnored(VirtualFile file) {
+      return false;
+    }
   };
 
   IgnoredFilesInfo IGNORE_ALL = new IgnoredFilesInfo() {
     public boolean shouldBeIgnored(String fileName) {
       return true;
     }
+
+    @Override
+    public boolean shouldBeIgnored(VirtualFile file) {
+      return true;
+    }
   };
 
   boolean shouldBeIgnored(String fileName);
+
+  boolean shouldBeIgnored(VirtualFile file);
 }

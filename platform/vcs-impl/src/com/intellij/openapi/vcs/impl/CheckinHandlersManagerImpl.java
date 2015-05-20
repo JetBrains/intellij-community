@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,27 +52,5 @@ public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
       }
     }
     return list;
-  }
-
-  @Override
-  public List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull List<AbstractVcs> vcsList) {
-    final List<VcsCheckinHandlerFactory> result = new SmartList<VcsCheckinHandlerFactory>();
-    for (AbstractVcs vcs : vcsList) {
-      final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
-      if (!factories.isEmpty()) {
-        result.addAll(factories);
-      }
-    }
-    return result;
-  }
-
-  @Override
-  public void registerCheckinHandlerFactory(BaseCheckinHandlerFactory factory) {
-    myRegisteredBeforeCheckinHandlers.add(factory);
-  }
-
-  @Override
-  public void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory handler) {
-    myRegisteredBeforeCheckinHandlers.remove(handler);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Restarter;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,13 +33,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "MethodNamesDifferingOnlyByCase"})
+import static java.io.File.pathSeparator;
+
 public class Main {
-  public static final int UPDATE_FAILED = 1;
-  public static final int STARTUP_EXCEPTION = 2;
-  public static final int STARTUP_IMPOSSIBLE = 3;
-  public static final int LICENSE_ERROR = 4;
-  public static final int PLUGIN_ERROR = 5;
+  public static final int NO_GRAPHICS = 1;
+  public static final int UPDATE_FAILED = 2;
+  public static final int STARTUP_EXCEPTION = 3;
+  public static final int JDK_CHECK_FAILED = 4;
+  public static final int DIR_CHECK_FAILED = 5;
+  public static final int INSTANCE_CHECK_FAILED = 6;
+  public static final int LICENSE_ERROR = 7;
+  public static final int PLUGIN_ERROR = 8;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
@@ -48,6 +54,7 @@ public class Main {
 
   private Main() { }
 
+  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(String[] args) {
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
@@ -58,19 +65,17 @@ public class Main {
     if (isHeadless()) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-    else {
-      if (GraphicsEnvironment.isHeadless()) {
-        throw new HeadlessException("Unable to detect graphics environment");
+    else if (GraphicsEnvironment.isHeadless()) {
+      showMessage("Startup Error", "Unable to detect graphics environment", true);
+      System.exit(NO_GRAPHICS);
+    }
+    else if (args.length == 0) {
+      try {
+        installPatch();
       }
-
-      if (args.length == 0) {
-        try {
-          installPatch();
-        }
-        catch (Throwable t) {
-          showMessage("Update Failed", t);
-          System.exit(UPDATE_FAILED);
-        }
+      catch (Throwable t) {
+        showMessage("Update Failed", t);
+        System.exit(UPDATE_FAILED);
       }
     }
 
@@ -164,9 +169,13 @@ public class Main {
       //noinspection SpellCheckingInspection
       Collections.addAll(args,
                          System.getProperty("java.home") + "/bin/java",
-                         "-Xmx500m",
+                         "-Xmx750m",
+                         "-Djna.nosys=true",
+                         "-Djna.boot.library.path=",
+                         "-Djna.debug_load=true",
+                         "-Djna.debug_load.jna=true",
                          "-classpath",
-                         patchCopy.getPath() + File.pathSeparator + log4jCopy.getPath() + File.pathSeparator + jnaCopy.getPath() + File.pathSeparator + jnaUtilsCopy.getPath(),
+                         patchCopy.getPath() + pathSeparator + log4jCopy.getPath() + pathSeparator + jnaCopy.getPath() + pathSeparator + jnaUtilsCopy.getPath(),
                          "-Djava.io.tmpdir=" + tempDir,
                          "-Didea.updater.log=" + PathManager.getLogPath(),
                          "-Dswing.defaultlaf=" + UIManager.getSystemLookAndFeelClassName(),
@@ -200,7 +209,7 @@ public class Main {
 
   public static void showMessage(String title, Throwable t) {
     StringWriter message = new StringWriter();
-    message.append("Internal error. Please report to http://");
+    message.append("Internal error. Please report to https://");
     boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
     message.append(studio ? "code.google.com/p/android/issues" : "youtrack.jetbrains.com");
     message.append("\n\n");
@@ -208,34 +217,41 @@ public class Main {
     showMessage(title, message.toString(), true);
   }
 
-  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage"})
+  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
   public static void showMessage(String title, String message, boolean error) {
-    if (isCommandLine()) {
-      PrintStream stream = error ? System.err : System.out;
-      stream.println("\n" + title + ": " + message);
-    }
-    else {
+    PrintStream stream = error ? System.err : System.out;
+    stream.println("\n" + title + ": " + message);
+
+    boolean headless = isCommandLine() || GraphicsEnvironment.isHeadless();
+    if (!headless) {
       try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
       catch (Throwable ignore) { }
 
-      JTextPane textPane = new JTextPane();
-      textPane.setEditable(false);
-      textPane.setText(message.replaceAll("\t", "    "));
-      textPane.setBackground(Color.white);
-      textPane.setCaretPosition(0);
-      JScrollPane scrollPane = new JScrollPane(
-        textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      try {
+        JTextPane textPane = new JTextPane();
+        textPane.setEditable(false);
+        textPane.setText(message.replaceAll("\t", "    "));
+        textPane.setBackground(UIUtil.getPanelBackground());
+        textPane.setCaretPosition(0);
+        JScrollPane scrollPane = new JScrollPane(
+          textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(null);
 
-      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height - 150;
-      Dimension component = scrollPane.getPreferredSize();
-      if (component.height >= maxHeight) {
-        Object setting = UIManager.get("ScrollBar.width");
-        int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
-        scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+        int maxHeight = Math.min(JBUI.scale(600), Toolkit.getDefaultToolkit().getScreenSize().height - 150);
+        Dimension component = scrollPane.getPreferredSize();
+        if (component.height >= maxHeight) {
+          Object setting = UIManager.get("ScrollBar.width");
+          int width = setting instanceof Integer ? ((Integer)setting).intValue() : 20;
+          scrollPane.setPreferredSize(new Dimension(component.width + width, maxHeight));
+        }
+
+        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
+        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
       }
-
-      int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE;
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
+      catch (Throwable t) {
+        stream.println("\nAlso, an UI exception occurred on attempt to show above message:");
+        t.printStackTrace(stream);
+      }
     }
   }
 }

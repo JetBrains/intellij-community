@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.branch;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.RootAction;
@@ -80,8 +81,9 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
                                                  @NotNull AbstractRepositoryManager<HgRepository> repositoryManager) {
     List<HgRepository> allRepositories = repositoryManager.getRepositories();
     popupGroup.add(new HgBranchPopupActions.HgNewBranchAction(myProject, allRepositories, myCurrentRepository));
-    popupGroup.addAction(new HgBranchPopupActions.HgNewBookmarkAction(myProject, allRepositories, myCurrentRepository));
-    popupGroup.addAction(new HgBranchPopupActions.HgShowUnnamedHeadsForCurrentBranchAction(myProject, myCurrentRepository));
+    popupGroup.addAction(new HgBranchPopupActions.HgNewBookmarkAction(allRepositories, myCurrentRepository));
+    popupGroup.addAction(new HgBranchPopupActions.HgCloseBranchAction(allRepositories, myCurrentRepository));
+    popupGroup.addAction(new HgBranchPopupActions.HgShowUnnamedHeadsForCurrentBranchAction(myCurrentRepository));
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Branches");
@@ -104,7 +106,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   protected DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    for (HgRepository repository : myRepositoryManager.getRepositories()) {
+    for (HgRepository repository : DvcsUtil.sortRepositories(myRepositoryManager.getRepositories())) {
       popupGroup.add(new RootAction<HgRepository>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
                                                   new HgBranchPopupActions(repository.getProject(), repository).createActions(null),
                                                   HgUtil.getDisplayableBranchOrBookmarkText(repository)));

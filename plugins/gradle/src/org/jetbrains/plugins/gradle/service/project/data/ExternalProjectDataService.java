@@ -17,15 +17,17 @@ package org.jetbrains.plugins.gradle.service.project.data;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +47,14 @@ public class ExternalProjectDataService implements ProjectDataService<ExternalPr
 
   @NotNull private final Map<Pair<ProjectSystemId, File>, ExternalProject> myExternalRootProjects;
 
-  @NotNull private ProjectDataManager myProjectDataManager;
-
-  public ExternalProjectDataService(@NotNull ProjectDataManager projectDataManager) {
-    myProjectDataManager = projectDataManager;
+  public ExternalProjectDataService() {
     myExternalRootProjects = new ConcurrentFactoryMap<Pair<ProjectSystemId, File>, ExternalProject>() {
+
+      @Override
+      protected Map<Pair<ProjectSystemId, File>, ExternalProject> createMap() {
+        return ContainerUtil.newConcurrentMap(ExternalSystemUtil.HASHING_STRATEGY);
+      }
+
       @Nullable
       @Override
       protected ExternalProject create(Pair<ProjectSystemId, File> key) {
@@ -86,7 +91,21 @@ public class ExternalProjectDataService implements ProjectDataService<ExternalPr
 
   @Nullable
   public ExternalProject getRootExternalProject(@NotNull ProjectSystemId systemId, @NotNull File projectRootDir) {
-    return myExternalRootProjects.get(Pair.create(systemId, projectRootDir));
+    ExternalProject externalProject = myExternalRootProjects.get(Pair.create(systemId, projectRootDir));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Can not find data for project at: " + projectRootDir);
+      LOG.debug("Existing imported projects paths: " + ContainerUtil.map(
+        myExternalRootProjects.entrySet(),
+        new Function<Map.Entry<Pair<ProjectSystemId, File>, ExternalProject>, Object>() {
+          @Override
+          public Object fun(Map.Entry<Pair<ProjectSystemId, File>, ExternalProject> entry) {
+            //noinspection ConstantConditions
+            if (!(entry.getValue() instanceof ExternalProject)) return null;
+            return Pair.create(entry.getKey(), entry.getValue().getProjectDir());
+          }
+        }));
+    }
+    return externalProject;
   }
 
   public void saveExternalProject(@NotNull ExternalProject externalProject) {

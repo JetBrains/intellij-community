@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,17 +66,17 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
   }
 
   @Override
-  public void addListener(Listener listener) {
+  public void addListener(@NotNull Listener listener) {
     myDispatcher.addListener(listener);
   }
 
   @Override
-  public void addListener(Listener listener, Disposable parentDisposable) {
+  public void addListener(@NotNull Listener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
-  public void removeListener(Listener listener) {
+  public void removeListener(@NotNull Listener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -107,6 +107,7 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
     }
   }
 
+  @NotNull
   @Override
   public ModifiableModel getModifiableModel() {
     return new JpsLibrariesModel(myModel.myJpsLibraries);

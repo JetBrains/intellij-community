@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * User: anna
@@ -41,7 +41,7 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
   public JComponent createOptionsPanel() {
     final ListEditForm form = new ListEditForm("Ignore suppressions", myAllowedSuppressions);
     final JComponent panel = form.getContentPanel();
-    panel.setPreferredSize(new Dimension(150, 100));
+    panel.setPreferredSize(JBUI.size(150, 100));
     return panel;
   }
 

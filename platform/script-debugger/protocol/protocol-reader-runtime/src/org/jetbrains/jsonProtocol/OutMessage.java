@@ -1,21 +1,42 @@
+/*
+ * Copyright 2000-2015 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.jsonProtocol;
 
 import com.google.gson.stream.JsonWriter;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufUtf8Writer;
+import io.netty.buffer.ByteBufUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonUtil;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public abstract class OutMessage {
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private final StringWriter stringWriter = new StringWriter();
-  public final JsonWriter writer = new JsonWriter(stringWriter);
+  // todo don't want to risk - are we really can release it properly? heap buffer for now
+  private final ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer();
+  public final JsonWriter writer = new JsonWriter(new ByteBufUtf8Writer(buffer));
 
   private boolean finalized;
 
@@ -31,7 +52,7 @@ public abstract class OutMessage {
   protected void beginArguments() throws IOException {
   }
 
-  protected final void writeEnum(String name, Enum<?> value) {
+  public final void writeEnum(String name, Enum<?> value) {
     try {
       beginArguments();
       writer.name(name).value(value.toString());
@@ -41,7 +62,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeMap(String name, Map<String, String> value) {
+  public final void writeMap(String name, Map<String, String> value) {
     try {
       beginArguments();
       writer.name(name);
@@ -56,7 +77,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeInt(String name, int value) {
+  public final void writeInt(String name, int value) {
     try {
       beginArguments();
       writer.name(name).value(value);
@@ -81,7 +102,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeDoubleArray(String name, double[] value) {
+  public final void writeDoubleArray(String name, double[] value) {
     try {
       beginArguments();
       writer.name(name);
@@ -96,7 +117,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeIntArray(@NotNull String name, @NotNull int[] value) {
+  public final void writeIntArray(@NotNull String name, @NotNull int[] value) {
     try {
       beginArguments();
       writer.name(name);
@@ -111,7 +132,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeIntSet(@NotNull String name, @NotNull TIntHashSet value) {
+  public final void writeIntSet(@NotNull String name, @NotNull TIntHashSet value) {
     try {
       beginArguments();
       writer.name(name);
@@ -136,7 +157,7 @@ public abstract class OutMessage {
 
   }
 
-  protected final void writeIntList(@NotNull String name, @NotNull TIntArrayList value) {
+  public final void writeIntList(@NotNull String name, @NotNull TIntArrayList value) {
     try {
       beginArguments();
       writer.name(name);
@@ -151,7 +172,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeSingletonIntArray(@NotNull String name, int value) {
+  public final void writeSingletonIntArray(@NotNull String name, int value) {
     try {
       beginArguments();
       writer.name(name);
@@ -164,7 +185,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final <E extends OutMessage> void writeList(String name, List<E> value) {
+  public final <E extends OutMessage> void writeList(String name, List<E> value) {
     if (value == null || value.isEmpty()) {
       return;
     }
@@ -176,13 +197,12 @@ public abstract class OutMessage {
       boolean isNotFirst = false;
       for (OutMessage item : value) {
         if (isNotFirst) {
-          stringWriter.append(',').append(' ');
+          buffer.writeByte(',').writeByte(' ');
         }
         else {
           isNotFirst = true;
         }
 
-        StringBuilder buffer = item.stringWriter.getBuffer();
         if (!item.finalized) {
           item.finalized = true;
           try {
@@ -190,7 +210,7 @@ public abstract class OutMessage {
           }
           catch (IllegalStateException e) {
             if ("Nesting problem.".equals(e.getMessage())) {
-              throw new RuntimeException(item.stringWriter.getBuffer() + "\nparent:\n" + stringWriter.getBuffer(), e);
+              throw new RuntimeException(item.buffer.toString(CharsetToolkit.UTF8_CHARSET) + "\nparent:\n" + buffer.toString(CharsetToolkit.UTF8_CHARSET), e);
             }
             else {
               throw e;
@@ -198,7 +218,7 @@ public abstract class OutMessage {
           }
         }
 
-        stringWriter.append(buffer);
+        buffer.writeBytes(item.buffer);
       }
       writer.endArray();
     }
@@ -207,7 +227,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeStringList(String name, List<String> value) {
+  public final void writeStringList(@NotNull String name, @NotNull Collection<String> value) {
     try {
       beginArguments();
       JsonWriters.writeStringList(writer, name, value);
@@ -217,26 +237,39 @@ public abstract class OutMessage {
     }
   }
 
-  public static void prepareWriteRaw(OutMessage message, String name) throws IOException {
+  public final void writeEnumList(@NotNull String name, @NotNull Collection<? extends Enum<?>> values) {
+    try {
+      beginArguments();
+      writer.name(name).beginArray();
+      for (Enum<?> item : values) {
+        writer.value(item.toString());
+      }
+      writer.endArray();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static void prepareWriteRaw(@NotNull OutMessage message, @NotNull String name) throws IOException {
     message.writer.name(name).nullValue();
-    StringBuilder myBuffer = message.stringWriter.getBuffer();
-    myBuffer.delete(myBuffer.length() - "null".length(), myBuffer.length());
+    ByteBuf itemBuffer = message.buffer;
+    itemBuffer.writerIndex(itemBuffer.writerIndex() - "null".length());
   }
 
-  public static void doWriteRaw(OutMessage message, String rawValue) {
-    message.stringWriter.append(rawValue);
+  public static void doWriteRaw(@NotNull OutMessage message, @NotNull String rawValue) {
+    ByteBufUtilEx.writeUtf8(message.buffer, rawValue);
   }
 
-  protected final void writeMessage(String name, OutMessage value) {
+  public final void writeMessage(@NotNull String name, @NotNull OutMessage value) {
     try {
       beginArguments();
       prepareWriteRaw(this, name);
 
-      StringBuilder buffer = value.stringWriter.getBuffer();
       if (!value.finalized) {
         value.close();
       }
-      stringWriter.append(buffer);
+      buffer.writeBytes(value.buffer);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -260,7 +293,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeDouble(String name, double value) {
+  public final void writeDouble(String name, double value) {
     try {
       beginArguments();
       writer.name(name).value(value);
@@ -270,7 +303,7 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeBoolean(String name, boolean value) {
+  public final void writeBoolean(String name, boolean value) {
     try {
       beginArguments();
       writer.name(name).value(value);
@@ -280,17 +313,18 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeString(@NotNull String name, @Nullable String value) {
+  public final void writeString(@NotNull String name, @Nullable String value) {
     if (value != null) {
       writeNullableString(name, value);
     }
   }
 
-  protected final void writeString(String name, CharSequence value) {
+  public final void writeString(@NotNull String name, CharSequence value) {
     if (value != null) {
       try {
+        beginArguments();
         prepareWriteRaw(this, name);
-        JsonUtil.escape(value, stringWriter.getBuffer());
+        JsonUtil.escape(value, buffer);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -298,10 +332,10 @@ public abstract class OutMessage {
     }
   }
 
-  protected final void writeNullableString(@NotNull String name, @Nullable String value) {
+  public final void writeNullableString(@NotNull String name, @Nullable CharSequence value) {
     try {
       beginArguments();
-      writer.name(name).value(value);
+      writer.name(name).value(value.toString());
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -310,7 +344,7 @@ public abstract class OutMessage {
 
   @NotNull
   @SuppressWarnings("UnusedDeclaration")
-  public final CharSequence toJson() {
-    return stringWriter.getBuffer();
+  public final ByteBuf getBuffer() {
+    return buffer;
   }
 }

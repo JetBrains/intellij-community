@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,14 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.NonFocusableCheckBox;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -63,14 +65,15 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   private SmartPsiElementPointer<PsiDeclarationStatement> myPointer;
 
   private JCheckBox myCanBeFinalCb;
-  private IntroduceVariableSettings mySettings;
-  private SmartPsiElementPointer<PsiElement> myChosenAnchor;
+  private final IntroduceVariableSettings mySettings;
+  private final SmartPsiElementPointer<PsiElement> myChosenAnchor;
   private final boolean myCantChangeFinalModifier;
-  private boolean myHasTypeSuggestion;
+  private final boolean myHasTypeSuggestion;
   private ResolveSnapshotProvider.ResolveSnapshot myConflictResolver;
-  private TypeExpression myExpression;
-  private boolean myReplaceSelf;
+  private final TypeExpression myExpression;
+  private final boolean myReplaceSelf;
   private boolean myDeleteSelf = true;
+  private final boolean mySkipTypeExpressionOnStart;
 
   public JavaVariableInplaceIntroducer(final Project project,
                                        IntroduceVariableSettings settings, PsiElement chosenAnchor, final Editor editor,
@@ -93,10 +96,18 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        rangeMarkers.toArray(new RangeMarker[rangeMarkers.size()]));
     myReplaceSelf = myExpr.getParent() instanceof PsiExpressionStatement;
+    mySkipTypeExpressionOnStart = !(myExpr instanceof PsiFunctionalExpression && myReplaceSelf);
   }
 
   @Override
   protected void beforeTemplateStart() {
+    if (!mySkipTypeExpressionOnStart) {
+      final PsiVariable variable = getVariable();
+      final PsiTypeElement typeElement = variable != null ? variable.getTypeElement() : null;
+      if (typeElement != null) {
+        myEditor.getCaretModel().moveToOffset(typeElement.getTextOffset());
+      }
+    }
     super.beforeTemplateStart();
     final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
     myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
@@ -118,7 +129,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Override
-  protected void restoreState(PsiVariable psiField) {
+  protected String getRefactoringId() {
+    return "refactoring.extractVariable";
+  }
+
+  @Override
+  protected void restoreState(@NotNull PsiVariable psiField) {
     if (myDeleteSelf) return;
     super.restoreState(psiField);
   }
@@ -132,7 +148,10 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   @Override
   protected void performCleanup() {
     super.performCleanup();
-    super.restoreState(getVariable());
+    PsiVariable variable = getVariable();
+    if (variable != null) {
+      super.restoreState(variable);
+    }
   }
 
   @Override
@@ -143,6 +162,15 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     } else {
       super.deleteTemplateField(variable);
     }
+  }
+
+  @Override
+  protected PsiExpression getBeforeExpr() {
+    final PsiVariable variable = getVariable();
+    if (variable != null) {
+      return variable.getInitializer();
+    }
+    return super.getBeforeExpr();
   }
 
   @Override
@@ -244,7 +272,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (variable != null) {
       final PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement != null) {
-        builder.replaceElement(typeElement, "Variable_Type", AbstractJavaInplaceIntroducer.createExpression(myExpression, typeElement.getText()), true, true);
+        builder.replaceElement(typeElement, "Variable_Type", AbstractJavaInplaceIntroducer.createExpression(myExpression, typeElement.getText()), true, mySkipTypeExpressionOnStart);
       }
     }
   }
@@ -261,6 +289,14 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       LOG.assertTrue(expr.isValid(), expr.getText());
       stringUsages.add(Pair.<PsiElement, TextRange>create(expr, new TextRange(0, expr.getTextLength())));
     }
+  }
+
+  @Override
+  protected void addReferenceAtCaret(Collection<PsiReference> refs) {
+    if (!isReplaceAllOccurrences() && getExpr() == null && !myReplaceSelf) {
+      return;
+    }
+    super.addReferenceAtCaret(refs);
   }
 
   private static void appendTypeCasts(List<RangeMarker> occurrenceMarkers,
@@ -381,6 +417,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
       }
     }
     return super.getCaretOffset();
+  }
+
+  @Override
+  public void finish(boolean success) {
+    super.finish(success);
+    myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, null);
   }
 
   @Override

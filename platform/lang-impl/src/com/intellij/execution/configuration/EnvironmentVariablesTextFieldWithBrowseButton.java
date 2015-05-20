@@ -17,10 +17,13 @@ package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,16 +33,17 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
 
+  // immutable map instance with reliable user-specified iteration order
   private Map<String, String> myEnvs = Collections.emptyMap();
   private boolean myPassParentEnvs;
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -115,6 +119,31 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     }
   }
 
+  public static void showParentEnvironmentDialog(@NotNull Component parent) {
+    EnvVariablesTable table = new EnvVariablesTable();
+    table.setValues(convertToVariables(new TreeMap<String, String>(new GeneralCommandLine().getParentEnvironment()), true));
+    table.getActionsPanel().setVisible(false);
+    DialogBuilder builder = new DialogBuilder(parent);
+    builder.setTitle(ExecutionBundle.message("environment.variables.system.dialog.title"));
+    builder.centerPanel(table.getComponent());
+    builder.addCloseButton();
+    builder.show();
+  }
+
+  private static List<EnvironmentVariable> convertToVariables(Map<String, String> map, final boolean readOnly) {
+    return ContainerUtil.map(map.entrySet(), new Function<Map.Entry<String, String>, EnvironmentVariable>() {
+      @Override
+      public EnvironmentVariable fun(Map.Entry<String, String> entry) {
+        return new EnvironmentVariable(entry.getKey(), entry.getValue(), readOnly) {
+          @Override
+          public boolean getNameIsWriteable() {
+            return !readOnly;
+          }
+        };
+      }
+    });
+  }
+
   private class MyEnvironmentVariablesDialog extends DialogWrapper {
     private final EnvVariablesTable myEnvVariablesTable;
     private final JCheckBox myUseDefaultCb = new JCheckBox(ExecutionBundle.message("env.vars.checkbox.title"));
@@ -123,16 +152,24 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     protected MyEnvironmentVariablesDialog() {
       super(EnvironmentVariablesTextFieldWithBrowseButton.this, true);
       myEnvVariablesTable = new EnvVariablesTable();
-      List<EnvironmentVariable> envVariables = ContainerUtil.map(myEnvs.entrySet(), new Function<Map.Entry<String, String>, EnvironmentVariable>() {
-        @Override
-        public EnvironmentVariable fun(Map.Entry<String, String> entry) {
-          return new EnvironmentVariable(entry.getKey(), entry.getValue(), false);
-        }
-      });
-      myEnvVariablesTable.setValues(envVariables);
+      myEnvVariablesTable.setValues(convertToVariables(myEnvs, false));
+
       myUseDefaultCb.setSelected(isPassParentEnvs());
       myWholePanel.add(myEnvVariablesTable.getComponent(), BorderLayout.CENTER);
-      myWholePanel.add(myUseDefaultCb, BorderLayout.SOUTH);
+      JPanel useDefaultPanel = new JPanel(new BorderLayout());
+      useDefaultPanel.add(myUseDefaultCb, BorderLayout.CENTER);
+      HyperlinkLabel showLink = new HyperlinkLabel(ExecutionBundle.message("env.vars.show.system"));
+      useDefaultPanel.add(showLink, BorderLayout.EAST);
+      showLink.addHyperlinkListener(new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            showParentEnvironmentDialog(MyEnvironmentVariablesDialog.this.getWindow());
+          }
+        }
+      });
+
+      myWholePanel.add(useDefaultPanel, BorderLayout.SOUTH);
       setTitle(ExecutionBundle.message("environment.variables.dialog.title"));
       init();
     }

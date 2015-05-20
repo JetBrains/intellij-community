@@ -39,8 +39,10 @@ public class SuppressManagerImpl extends SuppressManager {
 
   @NotNull
   @Override
-  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolShortName) {
-    return createBatchSuppressActions(HighlightDisplayKey.find(toolShortName));
+  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+    final HighlightDisplayKey displayKey = HighlightDisplayKey.findById(toolId);
+    assert displayKey != null : toolId;
+    return createBatchSuppressActions(displayKey);
   }
 
   @Override

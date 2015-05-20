@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -472,10 +473,8 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
             final ReferenceType thisRefType = thisObjectReference.referenceType();
             if (thisRefType instanceof ClassType && thisRefType.equals(location.declaringType()) && thisRefType.name().contains("$")) { // makes sense for nested classes only
               final ClassType clsType = (ClassType)thisRefType;
-              final DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
-              final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
               for (Field field : clsType.fields()) {
-                if ((!vm.canGetSyntheticAttribute() || field.isSynthetic()) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+                if (DebuggerUtils.isSynthetic(field) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
                   final FieldDescriptorImpl fieldDescriptor = myNodeManager.getFieldDescriptor(stackDescriptor, thisObjectReference, field);
                   myChildren.add(myNodeManager.createNode(fieldDescriptor, evaluationContext));
                 }

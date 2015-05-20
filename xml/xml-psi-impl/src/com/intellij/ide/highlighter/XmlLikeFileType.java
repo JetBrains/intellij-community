@@ -37,7 +37,7 @@ public abstract class XmlLikeFileType extends LanguageFileType {
   }
 
   @Override
-  public Charset extractCharsetFromFileContent(final Project project, @Nullable final VirtualFile file, @NotNull final String content) {
+  public Charset extractCharsetFromFileContent(final Project project, @Nullable final VirtualFile file, @NotNull final CharSequence content) {
     String name = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
     return charset == null ? CharsetToolkit.UTF8_CHARSET : charset;

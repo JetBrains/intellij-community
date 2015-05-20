@@ -16,10 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerBase;
-import com.intellij.lexer.LookAheadLexer;
-import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.lexer.*;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -100,7 +97,7 @@ public class GroovyDocLexer extends MergingLexerAdapter {
 
     @Override
     public int getState() {
-      return myState;
+      return getTokenStart() == 0 ? 0 : myState;
     }
 
     @Override

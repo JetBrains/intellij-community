@@ -17,23 +17,14 @@ package com.jetbrains.python.console;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -63,92 +54,49 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 
 /**
  * @author traff
  */
-public class PythonConsoleView extends JPanel implements LanguageConsoleView, ObservableConsoleView, PyCodeExecutor {
+public class PythonConsoleView extends LanguageConsoleImpl implements ObservableConsoleView, PyCodeExecutor {
 
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
 
-  private final Project myProject;
   private PydevConsoleExecuteActionHandler myExecuteActionHandler;
   private PyConsoleSourceHighlighter mySourceHighlighter;
-  private boolean myIsIPythonOutput = false;
+  private boolean myIsIPythonOutput;
   private final PyHighlighter myPyHighlighter;
   private final EditorColorsScheme myScheme;
   private boolean myHyperlink;
 
-  private final LanguageConsoleViewImpl myLanguageConsoleView;
-
-  private Disposable mySplitDisposable;
+  private XStandaloneVariablesView mySplitView;
 
   public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
-    super(new BorderLayout());
+    super(project, title, PythonLanguage.getInstance());
 
-    LanguageConsoleImpl languageConsole = new LanguageConsoleImpl(project, title, PythonLanguage.getInstance(), false);
-    if (languageConsole.getFile().getVirtualFile() != null) {
-      languageConsole.getFile().getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
-    }
+    getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
     // Mark editor as console one, to prevent autopopup completion
-    languageConsole.getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
-    languageConsole.setShowSeparatorLine(PyConsoleOptions.getInstance(project).isShowSeparatorLine());
-    languageConsole.initComponents();
+    getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
 
-    myLanguageConsoleView = new LanguageConsoleViewImpl(languageConsole);
-    Disposer.register(this, myLanguageConsoleView);
-
-    add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
-
-    addSaveContentFocusListener(getLanguageConsole().getConsoleEditor().getContentComponent());
-
-    getPythonLanguageConsole().setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
-    myLanguageConsoleView.setUpdateFoldingsEnabled(false);
-    myProject = project;
+    setPrompt(PyConsoleUtil.ORDINARY_PROMPT);
+    setUpdateFoldingsEnabled(false);
     //noinspection ConstantConditions
     myPyHighlighter = new PyHighlighter(
       sdk != null && sdk.getVersionString() != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
-    myScheme = getPythonLanguageConsole().getConsoleEditor().getColorsScheme();
+    myScheme = getConsoleEditor().getColorsScheme();
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
-    getPythonLanguageConsole().getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
+    getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_KEY, communication);
   }
 
   public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
-  private void addSaveContentFocusListener(JComponent component) {
-    component.addFocusListener(new FocusListener() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-          FileDocumentManager.getInstance().saveAllDocuments();
-        }
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-      }
-    });
-  }
-
   @Override
   public void requestFocus() {
-    IdeFocusManager.findInstance().requestFocus(getPythonLanguageConsole().getConsoleEditor().getContentComponent(), true);
-    myLanguageConsoleView.updateUI();
-    getLanguageConsole().getHistoryViewer().getComponent().updateUI();
-  }
-
-  private LanguageConsoleImpl getPythonLanguageConsole() {
-    return getLanguageConsole();
-  }
-
-  public LanguageConsoleImpl getLanguageConsole() {
-    return myLanguageConsoleView.getConsole();
+    IdeFocusManager.findInstance().requestFocus(getConsoleEditor().getContentComponent(), true);
   }
 
   @Override
@@ -187,8 +135,8 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   }
 
   private void showConsole(@NotNull Runnable runnable) {
-    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
-    if (toolWindow != null && !toolWindow.getToolWindow().isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(getProject());
+    if (toolWindow != null && toolWindow.getToolWindow() != null && !toolWindow.getToolWindow().isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
       toolWindow.getToolWindow().activate(runnable);
     }
     else {
@@ -206,13 +154,13 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        String text = getPythonLanguageConsole().getConsoleEditor().getDocument().getText();
+        String text = getConsoleEditor().getDocument().getText();
 
-        getPythonLanguageConsole().setInputText(code);
-        myExecuteActionHandler.runExecuteAction(myLanguageConsoleView);
+        setInputText(code);
+        myExecuteActionHandler.runExecuteAction(PythonConsoleView.this);
 
         if (!StringUtil.isEmpty(text)) {
-          getPythonLanguageConsole().setInputText(text);
+          setInputText(text);
         }
       }
     });
@@ -225,10 +173,6 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
   public void print(String text, @NotNull final Key attributes) {
     print(text, outputTypeForAttributes(attributes));
-  }
-
-  public void printText(String text, final ConsoleViewContentType outputType) {
-    myLanguageConsoleView.print(text, outputType);
   }
 
   @Override
@@ -248,7 +192,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
         }
         else {
           //Print text normally with converted attributes
-          myLanguageConsoleView.print(text, outputType);
+          super.print(text, outputType);
         }
         myHyperlink = detectHyperlink(text);
         if (mySourceHighlighter == null && myIsIPythonOutput && PyConsoleUtil.detectSourcePrinting(text)) {
@@ -266,94 +210,17 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     }
   }
 
-  @Override
-  public void clear() {
-    myLanguageConsoleView.clear();
-  }
-
-  @Override
-  public void scrollTo(int offset) {
-    myLanguageConsoleView.scrollTo(offset);
-  }
-
-  @Override
-  public void attachToProcess(ProcessHandler processHandler) {
-    myLanguageConsoleView.attachToProcess(processHandler);
-  }
-
-  @Override
-  public void setOutputPaused(boolean value) {
-    myLanguageConsoleView.setOutputPaused(value);
-  }
-
-  @Override
-  public boolean isOutputPaused() {
-    return myLanguageConsoleView.isOutputPaused();
-  }
-
-  @Override
-  public boolean hasDeferredOutput() {
-    return myLanguageConsoleView.hasDeferredOutput();
-  }
-
-  @Override
-  public void performWhenNoDeferredOutput(Runnable runnable) {
-    myLanguageConsoleView.performWhenNoDeferredOutput(runnable);
-  }
-
-  @Override
-  public void setHelpId(String helpId) {
-    myLanguageConsoleView.setHelpId(helpId);
-  }
-
-  @Override
-  public void addMessageFilter(Filter filter) {
-    myLanguageConsoleView.addMessageFilter(filter);
-  }
-
-  @Override
-  public void printHyperlink(String hyperlinkText, HyperlinkInfo info) {
-    myLanguageConsoleView.printHyperlink(hyperlinkText, info);
-  }
-
-  @Override
-  public int getContentSize() {
-    return myLanguageConsoleView.getContentSize();
-  }
-
-  @Override
-  public boolean canPause() {
-    return myLanguageConsoleView.canPause();
-  }
-
-  @NotNull
-  @Override
-  public AnAction[] createConsoleActions() {
-    return myLanguageConsoleView.createConsoleActions();
-  }
-
-  @Override
-  public void allowHeavyFilters() {
-    myLanguageConsoleView.allowHeavyFilters();
-  }
-
   public void detectIPython(String text, final ConsoleViewContentType outputType) {
-    VirtualFile file = getConsoleVirtualFile();
-    if (file != null) {
-      if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
-        PyConsoleUtil.markIPython(file);
-      }
-      if (PyConsoleUtil.detectIPythonAutomagicOn(text)) {
-        PyConsoleUtil.setIPythonAutomagic(file, true);
-      }
-      if (PyConsoleUtil.detectIPythonAutomagicOff(text)) {
-        PyConsoleUtil.setIPythonAutomagic(file, false);
-      }
+    VirtualFile file = getVirtualFile();
+    if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
+      PyConsoleUtil.markIPython(file);
     }
-  }
-
-  public VirtualFile getConsoleVirtualFile() {
-    return getLanguageConsole().getFile().getVirtualFile();
+    if (PyConsoleUtil.detectIPythonAutomagicOn(text)) {
+      PyConsoleUtil.setIPythonAutomagic(file, true);
+    }
+    if (PyConsoleUtil.detectIPythonAutomagicOff(text)) {
+      PyConsoleUtil.setIPythonAutomagic(file, false);
+    }
   }
 
   private boolean detectHyperlink(@NotNull String text) {
@@ -365,12 +232,12 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(text.trim());
 
       if (vFile != null) {
-        OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(myProject, vFile, -1);
+        OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(getProject(), vFile, -1);
 
-        myLanguageConsoleView.printHyperlink(text, hyperlink);
+        super.printHyperlink(text, hyperlink);
       }
       else {
-        myLanguageConsoleView.print(text, contentType);
+        super.print(text, contentType);
       }
     }
   }
@@ -391,44 +258,12 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   }
 
   public void setSdk(Sdk sdk) {
-    getPythonLanguageConsole().getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
-  }
-
-  @Override
-  public JComponent getComponent() {
-    return this;
-  }
-
-  @Override
-  public JComponent getPreferredFocusableComponent() {
-    return myLanguageConsoleView.getPreferredFocusableComponent();
-  }
-
-  @Override
-  public void dispose() {
-    Disposer.dispose(this);
-  }
-
-  @Override
-  public void addChangeListener(@NotNull ChangeListener listener, @NotNull Disposable parent) {
-    myLanguageConsoleView.addChangeListener(listener, parent);
-  }
-
-  @NotNull
-  @Override
-  public LanguageConsoleImpl getConsole() {
-    return myLanguageConsoleView.getConsole();
-  }
-
-  @NotNull
-  @Override
-  public Project getProject() {
-    return myProject;
+    getFile().putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
   }
 
   public void showVariables(PydevConsoleCommunication consoleCommunication) {
-    PyStackFrame stackFrame = new PyStackFrame(myProject, consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
-    final XStandaloneVariablesView view = new XStandaloneVariablesView(myProject, new PyDebuggerEditorsProvider(), stackFrame);
+    PyStackFrame stackFrame = new PyStackFrame(getProject(), consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
+    final XStandaloneVariablesView view = new XStandaloneVariablesView(getProject(), new PyDebuggerEditorsProvider(), stackFrame);
     consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
       public void commandExecuted(boolean more) {
@@ -439,30 +274,33 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
       public void inputRequested() {
       }
     });
-    splitWindow(view.getPanel(), view);
+    mySplitView = view;
+    Disposer.register(this, view);
+    splitWindow();
   }
 
-  private void splitWindow(JComponent component, Disposable componentDisposable) {
+  private void splitWindow() {
+    Component console = getComponent(0);
     removeAll();
     JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-    p.add(myLanguageConsoleView.getComponent(), JSplitPane.LEFT);
-    mySplitDisposable = componentDisposable;
-    p.add(component, JSplitPane.RIGHT);
+    p.setBorder(BorderFactory.createEmptyBorder());
+    p.add(console, JSplitPane.LEFT);
+    p.add(mySplitView.getPanel(), JSplitPane.RIGHT);
     p.setDividerLocation((int)getSize().getWidth() * 2 / 3);
     add(p, BorderLayout.CENTER);
-
     validate();
     repaint();
   }
 
   public void restoreWindow() {
+    JSplitPane pane = (JSplitPane)getComponent(0);
     removeAll();
-    add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
+    if (mySplitView != null) {
+      Disposer.dispose(mySplitView);
+      mySplitView = null;
+    }
+    add(pane.getLeftComponent(), BorderLayout.CENTER);
     validate();
     repaint();
-    if (mySplitDisposable != null) {
-      Disposer.dispose(mySplitDisposable);
-      mySplitDisposable = null;
-    }
   }
 }

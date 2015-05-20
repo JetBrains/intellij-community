@@ -125,7 +125,7 @@ public class ConsoleBuffer {
   }
 
   public static int getCycleBufferSize() {
-    final String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
+    String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
     if (cycleBufferSizeProperty == null) return 1024 * 1024;
     try {
       return Integer.parseInt(cycleBufferSizeProperty) * 1024;

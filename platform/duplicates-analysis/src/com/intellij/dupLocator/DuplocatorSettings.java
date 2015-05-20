@@ -24,10 +24,9 @@ import java.util.Set;
 @State(
   name = "DuplocatorSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/duplocatorSettings.xml")
-  },
-  storageChooser = LastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/duplocatorSettings.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class DuplocatorSettings implements PersistentStateComponent<DuplocatorSettings> {
   public boolean DISTINGUISH_VARIABLES = false;

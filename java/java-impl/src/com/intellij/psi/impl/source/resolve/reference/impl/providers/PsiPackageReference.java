@@ -54,7 +54,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
   public Object[] getVariants() {
     Set<PsiPackage> subPackages = new HashSet<PsiPackage>();
     for (PsiPackage psiPackage : getContext()) {
-         subPackages.addAll(Arrays.asList(psiPackage.getSubPackages()));
+         subPackages.addAll(Arrays.asList(psiPackage.getSubPackages(myReferenceSet.getResolveScope())));
     }
 
     return subPackages.toArray();

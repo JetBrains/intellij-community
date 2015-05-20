@@ -89,6 +89,8 @@ public class GradleResourceFileProcessor {
   }
 
   private static InputStream transform(List<ResourceRootFilter> filters, FileInputStream original, Ref<File> outputFileRef, CompileContext context) {
-    return new ReaderInputStream(new ChainingFilterTransformer(context, filters, outputFileRef).transform(new InputStreamReader(original)));
+    final InputStreamReader streamReader = new InputStreamReader(original);
+    final Reader newReader = new ChainingFilterTransformer(context, filters, outputFileRef).transform(streamReader);
+    return streamReader == newReader ? original : new ReaderInputStream(newReader);
   }
 }

@@ -20,8 +20,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
@@ -33,6 +35,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,7 +48,19 @@ import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filter
  * @author peter
  */
 public class LiveTemplateCompletionContributor extends CompletionContributor {
-  public static boolean ourShowTemplatesInTests = false;
+  private static boolean ourShowTemplatesInTests = false;
+  
+  @TestOnly
+  public static void setShowTemplatesInTests(boolean show, @NotNull Disposable parentDisposable) {
+    ourShowTemplatesInTests = show;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourShowTemplatesInTests = false;
+      }
+    });
+  }
 
   public static boolean shouldShowAllTemplates() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -76,7 +91,9 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
             @Override
             public void consume(CompletionResult completionResult) {
               finalResult.passResult(completionResult);
-              ensureTemplatesShown(templatesShown, templates, parameters, finalResult);
+              if (completionResult.isStartMatch()) {
+                ensureTemplatesShown(templatesShown, templates, parameters, finalResult);
+              }
             }
           });
 

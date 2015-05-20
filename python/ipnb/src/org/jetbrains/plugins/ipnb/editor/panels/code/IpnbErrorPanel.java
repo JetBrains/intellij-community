@@ -82,6 +82,7 @@ public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
           }
           else {
             substring = addString.substring(position, mIndex + 1);
+            //noinspection AssignmentToStaticFieldFromInstanceMethod
             currentColor = getANSIColor(substring);
           }
           position = mIndex + 1;

@@ -7,9 +7,8 @@ import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
+import java.util.ArrayList;
 
 /**
  *
@@ -50,10 +49,9 @@ public class WebSocketConnectionTest extends TestCase {
 
       @Override
       public void onOutput(@NotNull IpnbConnection connection,
-                           @NotNull String parentMessageId,
-                           @NotNull List<IpnbOutputCell> outputs,
-                           Integer execCount) {
+                           @NotNull String parentMessageId) {
         if (myMessageId.equals(parentMessageId)) {
+          final ArrayList<IpnbOutputCell> outputs = connection.getOutput();
           assertEquals(outputs.size(), 1);
           assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);
           final String[] text = outputs.get(0).getText();
@@ -86,10 +84,9 @@ public class WebSocketConnectionTest extends TestCase {
 
       @Override
       public void onOutput(@NotNull IpnbConnection connection,
-                           @NotNull String parentMessageId,
-                           @NotNull List<IpnbOutputCell> outputs,
-                           Integer execCount) {
+                           @NotNull String parentMessageId) {
         if (myMessageId.equals(parentMessageId)) {
+          final ArrayList<IpnbOutputCell> outputs = connection.getOutput();
           assertEquals(outputs.size(), 1);
           assertEquals(outputs.get(0).getClass(), IpnbOutOutputCell.class);
           final String[] text = outputs.get(0).getText();
@@ -105,12 +102,7 @@ public class WebSocketConnectionTest extends TestCase {
   }
 
   @NotNull
-  public static URI getTestServerURI() {
-    try {
-      return new URI("http://127.0.0.1:8888");
-    }
-    catch (URISyntaxException e) {
-      throw new RuntimeException(e);
-    }
+  public static String getTestServerURI() {
+    return "http://127.0.0.1:8888";
   }
 }

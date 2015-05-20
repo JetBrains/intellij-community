@@ -17,38 +17,37 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
- * Interface provides method used in {@link com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithExpressionSelector}
- *
- * You should implement the interface if you have non-trivial logic how to determine expression for next processing in postfix template
- * Otherwise, you can use one of existing simple implementations:
- *
- * 1) {@link com.intellij.codeInsight.template.postfix.templates.ChooserExpressionSelector} - The selector get all expression
- * in the current position and show to user chooser for these expressions.
- *
- * 2) {@link com.intellij.codeInsight.template.postfix.templates.TopmostExpressionSelector} - The selector pass to postfix template
- * top most expression in the current position
- *
- *
+ * Interface provides method used in {@link PostfixTemplateWithExpressionSelector}
  */
 public interface PostfixTemplateExpressionSelector {
 
   /**
    * Check that we can select not-null expression(PsiElement) in current context
    */
-  boolean hasExpression(@NotNull final PostfixTemplateWithExpressionSelector postfixTemplate,
-                        @NotNull PsiElement context,
+  boolean hasExpression(@NotNull PsiElement context,
                         @NotNull Document copyDocument,
                         int newOffset);
 
   /**
-   * Select expression(PsiElement)  and call postfixTemplate.expandForChooseExpression for selected expression
+   * Return list of all possible expressions in the current position.
+   * Postfix template implementation shows popup chooser (if size > 1)
    */
-  void expandTemplate(@NotNull final PostfixTemplateWithExpressionSelector postfixTemplate,
-                      @NotNull PsiElement context,
-                      @NotNull final Editor editor);
+  @NotNull
+  List<PsiElement> getExpressions(@NotNull PsiElement context,
+                                  @NotNull Document document,
+                                  int offset);
+
+  /**
+   * returns renderer for expressions from  {@link #getExpressions}.
+   * Renderer is used for showing popup chooser
+   */
+  @NotNull
+  Function<PsiElement, String> getRenderer();
 }

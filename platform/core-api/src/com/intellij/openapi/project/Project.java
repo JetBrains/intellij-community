@@ -59,6 +59,7 @@ public interface Project extends ComponentManager, AreaInstance {
    *
    * @return a path to a project base directory, or <code>null</code> for default project
    */
+  @Nullable
   @NonNls
   String getBasePath();
 

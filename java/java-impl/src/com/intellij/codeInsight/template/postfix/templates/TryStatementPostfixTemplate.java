@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,18 @@ public class TryStatementPostfixTemplate extends PostfixTemplate {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
-    return null != PsiTreeUtil.getNonStrictParentOfType(context, PsiStatement.class);
+    PsiStatement statementParent = PsiTreeUtil.getNonStrictParentOfType(context, PsiStatement.class);
+    if (statementParent == null ||
+        newOffset != statementParent.getTextRange().getEndOffset()) return false;
+
+    if (statementParent instanceof PsiDeclarationStatement) return true;
+
+    if (statementParent instanceof PsiExpressionStatement) {
+      PsiExpression expression = ((PsiExpressionStatement)statementParent).getExpression();
+      return null != expression.getType();
+    }
+
+    return false;
   }
 
   @Override

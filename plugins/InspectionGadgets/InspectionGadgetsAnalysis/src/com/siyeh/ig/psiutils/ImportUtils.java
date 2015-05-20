@@ -60,6 +60,9 @@ public final class ImportUtils {
     }
     final String containingPackageName = javaFile.getPackageName();
     @NonNls final String packageName = ClassUtil.extractPackageName(qualifiedName);
+    if (CommonClassNames.DEFAULT_PACKAGE.equals(packageName)) {
+      return;
+    }
     if (containingPackageName.equals(packageName) || importList.findSingleClassImportStatement(qualifiedName) != null) {
       return;
     }

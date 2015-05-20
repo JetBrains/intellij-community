@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,11 @@ import java.util.List;
 public class PurityInference {
 
   public static boolean inferPurity(@NotNull final PsiMethod method) {
-    if (ContractInference.isLibraryCode(method) || method.getReturnType() == PsiType.VOID || method.getBody() == null || method.isConstructor()) {
+    if (!InferenceFromSourceUtil.shouldInferFromSource(method) ||
+        method.getReturnType() == PsiType.VOID ||
+        method.getBody() == null ||
+        method.isConstructor() || 
+        PropertyUtil.isSimpleGetter(method)) {
       return false;
     }
 

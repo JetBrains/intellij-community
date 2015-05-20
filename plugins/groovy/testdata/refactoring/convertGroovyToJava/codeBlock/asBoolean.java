@@ -1,5 +1,5 @@
 java.lang.String a = "foo";
-if (org.codehaus.groovy.runtime.DefaultGroovyMethods.asBoolean(a)){
+if (org.codehaus.groovy.runtime.StringGroovyMethods.asBoolean(a)){
 print(a);
 }
  else {

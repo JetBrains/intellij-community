@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -669,7 +669,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "<version>1</version>");
 
     assertModules("project");
-    assertNull(getLanguageLevelForModule());
+    assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule());
   }
 
   public void testLanguageLevelWhenConfigurationIsNotSpecified() throws Exception {
@@ -687,7 +687,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertNull(getLanguageLevelForModule());
+    assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule());
   }
 
   public void testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() throws Exception {
@@ -707,7 +707,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertNull(getLanguageLevelForModule());
+    assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule());
   }
 
   public void testLanguageLevelFromPluginManagementSection() throws Exception {

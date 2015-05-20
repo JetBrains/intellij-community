@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.Location;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,23 +98,26 @@ public class ContextUtil {
       return element;
     }
 
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
       List<LocalVariableProxyImpl> list = frameProxy.visibleVariables();
 
       PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
-      buf.append('{');
+      StringBuilder buf = null;
       for (LocalVariableProxyImpl localVariable : list) {
         final String varName = localVariable.name();
         if (resolveHelper.resolveReferencedVariable(varName, element) == null) {
+          if (buf == null) {
+            buf = new StringBuilder("{");
+          }
           buf.append(localVariable.getVariable().typeName()).append(" ").append(varName).append(";");
         }
       }
-      buf.append('}');
-
-      if (buf.length() <= 2) {
+      if (buf == null) {
         return element;
       }
+
+      buf.append('}');
+
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
       final PsiCodeBlock codeBlockFromText = elementFactory.createCodeBlockFromText(buf.toString(), element);
 
@@ -136,9 +138,6 @@ public class ContextUtil {
     }
     catch (EvaluateException ignored) {
       return element;
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
     }
   }
 

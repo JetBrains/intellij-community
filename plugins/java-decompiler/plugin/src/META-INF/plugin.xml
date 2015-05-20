@@ -7,11 +7,11 @@
     no more dull "{ /* compiled code */ }" in method bodies!
   </description>
   <version>0.1</version>
-  <vendor email="support@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
+  <vendor email="support@jetbrains.com" url="https://www.jetbrains.com">JetBrains</vendor>
 
   <idea-version since-build="135"/>
 
-  <module value="com.intellij.modules.java"/>
+  <depends>com.intellij.modules.java</depends>
 
   <resource-bundle>messages.Decompiler</resource-bundle>
 

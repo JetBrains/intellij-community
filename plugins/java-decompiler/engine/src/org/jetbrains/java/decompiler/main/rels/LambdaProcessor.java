@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,29 +35,23 @@ import java.io.IOException;
 import java.util.*;
 
 public class LambdaProcessor {
-
-  private static final String JAVAC_LAMBDA_CLASS = "java/lang/invoke/LambdaMetafactory";
-  private static final String JAVAC_LAMBDA_METHOD = "metafactory";
-  private static final String JAVAC_LAMBDA_METHOD_DESCRIPTOR =
-    "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;";
+  @SuppressWarnings("SpellCheckingInspection") private static final String JAVAC_LAMBDA_CLASS = "java/lang/invoke/LambdaMetafactory";
+  @SuppressWarnings("SpellCheckingInspection") private static final String JAVAC_LAMBDA_METHOD = "metafactory";
+  @SuppressWarnings("SpellCheckingInspection") private static final String JAVAC_LAMBDA_ALT_METHOD = "altMetafactory";
 
   public void processClass(ClassNode node) throws IOException {
-
     for (ClassNode child : node.nested) {
       processClass(child);
     }
 
-    if (node.nested.isEmpty()) {
-      hasLambda(node);
-    }
+    hasLambda(node);
   }
 
   public boolean hasLambda(ClassNode node) throws IOException {
-
-    ClassesProcessor clprocessor = DecompilerContext.getClassProcessor();
+    ClassesProcessor clProcessor = DecompilerContext.getClassProcessor();
     StructClass cl = node.classStruct;
 
-    if (cl.getBytecodeVersion() < CodeConstants.BYTECODE_JAVA_8) { // lamda beginning with Java 8
+    if (cl.getBytecodeVersion() < CodeConstants.BYTECODE_JAVA_8) { // lambda beginning with Java 8
       return false;
     }
 
@@ -67,17 +61,16 @@ public class LambdaProcessor {
       return false; // no bootstrap constants in pool
     }
 
-    Set<Integer> lambda_methods = new HashSet<Integer>();
+    BitSet lambda_methods = new BitSet();
 
     // find lambda bootstrap constants
     for (int i = 0; i < bootstrap.getMethodsNumber(); ++i) {
       LinkConstant method_ref = bootstrap.getMethodReference(i); // method handle
 
+      // FIXME: extend for Eclipse etc. at some point
       if (JAVAC_LAMBDA_CLASS.equals(method_ref.classname) &&
-          JAVAC_LAMBDA_METHOD.equals(method_ref.elementname) &&
-          JAVAC_LAMBDA_METHOD_DESCRIPTOR
-            .equals(method_ref.descriptor)) {  // check for javac lambda structure. FIXME: extend for Eclipse etc. at some point
-        lambda_methods.add(i);
+          (JAVAC_LAMBDA_METHOD.equals(method_ref.elementname) || JAVAC_LAMBDA_ALT_METHOD.equals(method_ref.elementname))) {
+        lambda_methods.set(i);
       }
     }
 
@@ -101,7 +94,7 @@ public class LambdaProcessor {
           if (instr.opcode == CodeConstants.opc_invokedynamic) {
             LinkConstant invoke_dynamic = cl.getPool().getLinkConstant(instr.getOperand(0));
 
-            if (lambda_methods.contains(invoke_dynamic.index1)) { // lambda invocation found
+            if (lambda_methods.get(invoke_dynamic.index1)) { // lambda invocation found
 
               List<PooledConstant> bootstrap_arguments = bootstrap.getMethodArguments(invoke_dynamic.index1);
               MethodDescriptor md = MethodDescriptor.parseDescriptor(invoke_dynamic.descriptor);
@@ -121,7 +114,7 @@ public class LambdaProcessor {
               node.nested.add(node_lambda);
               node_lambda.parent = node;
 
-              clprocessor.getMapRootClasses().put(node_lambda.simpleName, node_lambda);
+              clProcessor.getMapRootClasses().put(node_lambda.simpleName, node_lambda);
               mapMethodsLambda.put(node_lambda.lambdaInformation.content_method_key, node_lambda.simpleName);
             }
           }
@@ -136,7 +129,7 @@ public class LambdaProcessor {
       if (nd.type == ClassNode.CLASS_LAMBDA) {
         String parent_class_name = mapMethodsLambda.get(nd.enclosingMethod);
         if (parent_class_name != null) {
-          ClassNode parent_class = clprocessor.getMapRootClasses().get(parent_class_name);
+          ClassNode parent_class = clProcessor.getMapRootClasses().get(parent_class_name);
 
           parent_class.nested.add(nd);
           nd.parent = parent_class;

@@ -16,21 +16,24 @@
 package com.intellij.ide.util.projectWizard;
 
 
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +131,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
         canonicalPath = myCompilerOutputPath;
       }
       compilerModuleExtension
-        .setCompilerOutputPath(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
+        .setCompilerOutputPath(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
     }
     else {
       compilerModuleExtension.inheritCompilerOutputPath(true);
@@ -146,6 +149,22 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
       }
       modifiableModel.commit();
     }
+  }
+
+  @Nullable
+  @Override
+  public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
+    Boolean aDefault = extension.getDefault();
+    LanguageLevelProjectExtension instance = LanguageLevelProjectExtension.getInstance(project);
+    if (aDefault != null && !aDefault) {
+      instance.setLanguageLevel(extension.getLanguageLevel());
+      instance.setDefault(false);
+    }
+    else {
+      instance.setDefault(true);
+    }
+    return super.commit(project, model, modulesProvider);
   }
 
   private static String getUrlByPath(final String path) {

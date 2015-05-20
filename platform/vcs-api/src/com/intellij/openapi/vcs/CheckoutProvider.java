@@ -32,6 +32,9 @@ import static com.intellij.ui.GuiUtils.getTextWithoutMnemonicEscaping;
 public interface CheckoutProvider {
   @NonNls ExtensionPointName<CheckoutProvider> EXTENSION_POINT_NAME = new ExtensionPointName<CheckoutProvider>("com.intellij.checkoutProvider");
 
+  /**
+   * @param project current project or default project if no project is open.
+   */
   void doCheckout(@NotNull final Project project, @Nullable Listener listener);
   @NonNls String getVcsName();
 

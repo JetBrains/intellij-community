@@ -25,6 +25,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,6 +39,7 @@ import java.util.*;
  */
 public class CommonActionsPanel extends JPanel {
   private final boolean myDecorateButtons;
+  private final ActionToolbarPosition myPosition;
 
   public enum Buttons {
     ADD, REMOVE, EDIT,  UP, DOWN;
@@ -102,6 +104,7 @@ public class CommonActionsPanel extends JPanel {
                      String addName, String removeName, String moveUpName, String moveDownName, String editName,
                      Icon addIcon, Buttons... buttons) {
     super(new BorderLayout());
+    myPosition = position;
     final Listener listener = factory.createListener(this);
     AnActionButton[] actions = new AnActionButton[buttons.length + (additionalActions == null ? 0 : additionalActions.length)];
     for (int i = 0; i < buttons.length; i++) {
@@ -196,6 +199,11 @@ public class CommonActionsPanel extends JPanel {
       }
 
       @Override
+      public boolean isDumbAware() {
+        return removeButton.isDumbAware();
+      }
+
+      @Override
       public void update(AnActionEvent e) {
         final JComponent contextComponent = removeButton.getContextComponent();
         if (contextComponent instanceof JTable && ((JTable)contextComponent).isEditing()) {
@@ -217,6 +225,11 @@ public class CommonActionsPanel extends JPanel {
     if (b != null) {
       b.setEnabled(enabled);
     }
+  }
+
+  @NotNull
+  public ActionToolbarPosition getPosition() {
+    return myPosition;
   }
 
   static class MyActionButton extends AnActionButton implements DumbAware {

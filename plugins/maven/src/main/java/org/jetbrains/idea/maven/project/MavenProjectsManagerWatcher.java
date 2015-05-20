@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class MavenProjectsManagerWatcher {
 
     myBusConnection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
       @Override
-      public void moduleRemoved(Project project, Module module) {
+      public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
         MavenProject mavenProject = myManager.findProject(module);
         if (mavenProject != null && !myManager.isIgnored(mavenProject)) {
           VirtualFile file = mavenProject.getFile();
@@ -127,7 +127,7 @@ public class MavenProjectsManagerWatcher {
       }
 
       @Override
-      public void moduleAdded(final Project project, final Module module) {
+      public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
         // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
         if (myManager.isMavenizedModule(module)) {
           MavenProject mavenProject = myManager.findProject(module);

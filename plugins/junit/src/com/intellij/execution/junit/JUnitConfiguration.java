@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -41,6 +42,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.execution.junit.RepeatCount;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +58,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
   @NonNls public static final String TEST_DIRECTORY = "directory";
   @NonNls public static final String TEST_CATEGORY = "category";
   @NonNls public static final String TEST_METHOD = "method";
+
+  //fork modes
+  @NonNls public static final String FORK_NONE = "none";
+  @NonNls public static final String FORK_METHOD = "method";
+  @NonNls public static final String FORK_KLASS = "class";
+
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
 
@@ -324,6 +332,19 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         setForkMode(mode);
       }
     }
+    final String count = element.getAttributeValue("repeat_count");
+    if (count != null) {
+      try {
+        setRepeatCount(Integer.parseInt(count));
+      }
+      catch (NumberFormatException e) {
+        setRepeatCount(1);
+      }
+    }
+    final String repeatMode = element.getAttributeValue("repeat_mode");
+    if (repeatMode != null) {
+      setRepeatMode(repeatMode);
+    }
     final Element dirNameElement = element.getChild("dir");
     if (dirNameElement != null) {
       final String dirName = dirNameElement.getAttributeValue("value");
@@ -372,20 +393,14 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       forkModeElement.setAttribute("value", forkMode);
       element.addContent(forkModeElement);
     }
+    if (getRepeatCount() != 1) {
+      element.setAttribute("repeat_count", String.valueOf(getRepeatCount()));
+    }
+    final String repeatMode = getRepeatMode();
+    if (!RepeatCount.ONCE.equals(repeatMode)) {
+      element.setAttribute("repeat_mode", repeatMode);
+    }
     element.addContent(patternsElement);
-    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
-  }
-
-  public void configureClasspath(final JavaParameters javaParameters) throws CantRunException {
-    RunConfigurationModule module = getConfigurationModule();
-    final String jreHome = isAlternativeJrePathEnabled() ? getAlternativeJrePath() : null;
-    final int pathType = JavaParameters.JDK_AND_CLASSES_AND_TESTS;
-    if (myData.getScope() == TestSearchScope.WHOLE_PROJECT) {
-      JavaParametersUtil.configureProject(module.getProject(), javaParameters, pathType, jreHome);
-    }
-    else {
-      JavaParametersUtil.configureModule(module, javaParameters, pathType, jreHome);
-    }
   }
 
   public void setForkMode(@NotNull String forkMode) {
@@ -415,7 +430,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSufiix);
     }
     myData.setPatterns(patterns);
-    final Module module = PatternConfigurationProducer.findModule(this, getConfigurationModule().getModule(), patterns);
+    final Module module = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).findModule(this, getConfigurationModule()
+      .getModule(), patterns);
     if (module == null) {
       myData.setScope(TestSearchScope.WHOLE_PROJECT);
       setModule(null);
@@ -423,6 +439,22 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       setModule(module);
     }
     setGeneratedName();
+  }
+
+  public void setRepeatCount(int repeatCount) {
+    myData.REPEAT_COUNT = repeatCount;
+  }
+
+  public int getRepeatCount() {
+    return myData.REPEAT_COUNT;
+  }
+
+  public void setRepeatMode(String repeatMode) {
+    myData.REPEAT_MODE = repeatMode;
+  }
+
+  public String getRepeatMode() {
+    return myData.REPEAT_MODE;
   }
 
   public static class Data implements Cloneable {
@@ -436,6 +468,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
     private String FORK_MODE = "none";
+    private int REPEAT_COUNT = 1;
+    private String REPEAT_MODE = RepeatCount.ONCE;
 
     private LinkedHashSet<String> myPattern = new LinkedHashSet<String>();
     //iws/ipr compatibility
@@ -458,7 +492,9 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.equal(myPattern, second.myPattern) &&
              Comparing.equal(FORK_MODE, second.FORK_MODE) &&
              Comparing.equal(DIR_NAME, second.DIR_NAME) &&
-             Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME);
+             Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME) &&
+             Comparing.equal(REPEAT_MODE, second.REPEAT_MODE) &&
+             REPEAT_COUNT == second.REPEAT_COUNT;
     }
 
     public int hashCode() {
@@ -472,7 +508,9 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.hashcode(myPattern) ^
              Comparing.hashcode(FORK_MODE) ^
              Comparing.hashcode(DIR_NAME) ^
-             Comparing.hashcode(CATEGORY_NAME);
+             Comparing.hashcode(CATEGORY_NAME) ^
+             Comparing.hashcode(REPEAT_MODE) ^
+             Comparing.hashcode(REPEAT_COUNT);
     }
 
     public TestSearchScope getScope() {

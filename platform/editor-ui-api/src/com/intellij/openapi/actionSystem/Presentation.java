@@ -114,6 +114,7 @@ public final class Presentation implements Cloneable {
     myChangeSupport.removePropertyChangeListener(l);
   }
 
+  @Nullable
   public String getText(){
     return myText;
   }

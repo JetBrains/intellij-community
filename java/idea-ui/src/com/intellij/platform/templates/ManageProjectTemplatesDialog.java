@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.ui.CollectionListModel;
@@ -26,6 +27,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +37,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.net.URL;
 import java.util.Arrays;
 
 /**
@@ -53,20 +54,18 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
     setTitle("Manage Project Templates");
     final ProjectTemplate[] templates =
       new ArchivedTemplatesFactory().createTemplates(ProjectTemplatesFactory.CUSTOM_GROUP, new WizardContext(null));
-    final CollectionListModel<ProjectTemplate> model = new CollectionListModel<ProjectTemplate>(Arrays.asList(templates)) {
+    myTemplatesList = new JBList(new CollectionListModel<ProjectTemplate>(Arrays.asList(templates)) {
       @Override
       public void remove(int index) {
         ProjectTemplate template = getElementAt(index);
         super.remove(index);
         if (template instanceof LocalArchivedTemplate) {
-          URL path = ((LocalArchivedTemplate)template).getArchivePath();
-          new File(path.getPath()).delete();
+          FileUtil.delete(new File(((LocalArchivedTemplate)template).getArchivePath().getPath()));
         }
       }
-    };
-    myTemplatesList = new JBList(model);
+    });
     myTemplatesList.setEmptyText("No user-defined project templates");
-    myTemplatesList.setPreferredSize(new Dimension(300, 100));
+    myTemplatesList.setPreferredSize(JBUI.size(300, 100));
     myTemplatesList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -85,7 +84,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
     myPanel.add(ToolbarDecorator.createDecorator(myTemplatesList).disableUpDownActions().createPanel());
 
     myDescriptionPane = new JTextPane();
-    myDescriptionPane.setPreferredSize(new Dimension(300, 50));
+    myDescriptionPane.setPreferredSize(JBUI.size(300, 50));
     Messages.installHyperlinkSupport(myDescriptionPane);
     myPanel.add(ScrollPaneFactory.createScrollPane(myDescriptionPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                                                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.SOUTH);

@@ -135,10 +135,21 @@ public class RefactoringConflictsUtil {
   }
 
   public static void checkUsedElements(PsiMember member,
+                                     PsiElement scope,
+                                     @NotNull Set<PsiMember> membersToMove,
+                                     @Nullable Set<PsiMethod> abstractMethods,
+                                     @Nullable PsiClass targetClass,
+                                     @NotNull PsiElement context,
+                                     MultiMap<PsiElement, String> conflicts) {
+    checkUsedElements(member, scope, membersToMove, abstractMethods, targetClass, null, context, conflicts);
+  }
+
+  public static void checkUsedElements(PsiMember member,
                                        PsiElement scope,
                                        @NotNull Set<PsiMember> membersToMove,
                                        @Nullable Set<PsiMethod> abstractMethods,
                                        @Nullable PsiClass targetClass,
+                                       PsiClass accessClass,
                                        @NotNull PsiElement context,
                                        MultiMap<PsiElement, String> conflicts) {
     final Set<PsiMember> moving = new HashSet<PsiMember>(membersToMove);
@@ -150,10 +161,10 @@ public class RefactoringConflictsUtil {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         PsiExpression qualifier = refExpr.getQualifierExpression();
-        PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(qualifier).getElement() : null);
+        PsiClass qualifierAccessClass = (PsiClass)(qualifier != null && !(qualifier instanceof PsiSuperExpression) ? PsiUtil.getAccessObjectClass(qualifier).getElement() : accessClass);
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false) &&
-            (accessClass == null || !RefactoringHierarchyUtil.willBeInTargetClass(accessClass, moving, targetClass, false))) {
-          checkAccessibility((PsiMember)refElement, context, accessClass, member, conflicts);
+            (qualifierAccessClass == null || !RefactoringHierarchyUtil.willBeInTargetClass(qualifierAccessClass, moving, targetClass, false))) {
+          checkAccessibility((PsiMember)refElement, context, qualifierAccessClass, member, conflicts);
         }
       }
     }
@@ -169,7 +180,7 @@ public class RefactoringConflictsUtil {
         final PsiMethod refElement = newExpression.resolveConstructor();
         if (refElement != null) {
           if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-            checkAccessibility(refElement, context, null, member, conflicts);
+            checkAccessibility(refElement, context, accessClass, member, conflicts);
           }
         }
       }
@@ -179,14 +190,14 @@ public class RefactoringConflictsUtil {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-          checkAccessibility((PsiMember)refElement, context, null, member, conflicts);
+          checkAccessibility((PsiMember)refElement, context, accessClass, member, conflicts);
         }
       }
     }
 
     for (PsiElement child : scope.getChildren()) {
       if (child instanceof PsiWhiteSpace || child instanceof PsiComment) continue;
-      checkUsedElements(member, child, membersToMove, abstractMethods, targetClass, context, conflicts);
+      checkUsedElements(member, child, membersToMove, abstractMethods, targetClass, child instanceof PsiClass ? (PsiClass)child : accessClass, context, conflicts);
     }
   }
 
@@ -249,6 +260,11 @@ public class RefactoringConflictsUtil {
               !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
               !PsiSearchScopeUtil.isInScope(resolveScope, resolved) && 
               !(resolved instanceof LightElement)) {
+            if (resolved instanceof PsiMethod) {
+              for (PsiMethod superMethod : ((PsiMethod)resolved).findDeepestSuperMethods()) {
+                if (PsiSearchScopeUtil.isInScope (resolveScope, superMethod)) return;
+              }
+            }
             final String scopeDescription = RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true);
             final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
                                                              RefactoringUIUtil.getDescription(resolved, true),

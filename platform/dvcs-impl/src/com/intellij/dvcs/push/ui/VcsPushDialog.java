@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 package com.intellij.dvcs.push.ui;
 
-import com.intellij.CommonBundle;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.util.ui.JBUI;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,13 +38,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.ui.Messages.OK;
-
 public class VcsPushDialog extends DialogWrapper {
 
   private static final String ID = "Vcs.Push.Dialog";
 
-  @NotNull private final Project myProject;
   private final PushLog myListPanel;
   private final PushController myController;
   private final Map<PushSupport, VcsPushOptionsPanel> myAdditionalPanels;
@@ -52,13 +53,12 @@ public class VcsPushDialog extends DialogWrapper {
                        @NotNull List<? extends Repository> selectedRepositories,
                        @Nullable Repository currentRepo) {
     super(project);
-    myProject = project;
     myController = new PushController(project, this, selectedRepositories, currentRepo);
     myAdditionalPanels = myController.createAdditionalPanels();
     myListPanel = myController.getPushPanelLog();
 
     init();
-    enableOkActions(myController.isPushAllowed());
+    updateOkActions();
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
     setTitle("Push Commits");
@@ -66,14 +66,44 @@ public class VcsPushDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    JComponent rootPanel = new JPanel(new BorderLayout(0, 15));
+    JComponent rootPanel = new JPanel(new BorderLayout(0, JBUI.scale(2)));
     rootPanel.add(myListPanel, BorderLayout.CENTER);
     JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowx"));
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       optionsPanel.add(panel);
     }
-    rootPanel.add(optionsPanel, BorderLayout.SOUTH);
+    optionsPanel.setBorder(JBUI.Borders.emptyTop(6));
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(optionsPanel);
+    if (!myController.isForcePushEnabled()) {
+      panel.add(createForcePushInfoLabel(), BorderLayout.NORTH);
+    }
+    rootPanel.add(panel, BorderLayout.SOUTH);
     return rootPanel;
+  }
+
+  @NotNull
+  private JComponent createForcePushInfoLabel() {
+    JPanel text = new JPanel();
+    text.setLayout(new BoxLayout(text, BoxLayout.X_AXIS));
+    JLabel label = new JLabel("You can enable and configure Force Push in " + ShowSettingsUtil.getSettingsMenuName() + ".");
+    label.setEnabled(false);
+    label.setFont(JBUI.Fonts.smallFont());
+    text.add(label);
+    ActionLink here = new ActionLink("Configure", new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        Project project = myController.getProject();
+        VcsPushDialog.this.doCancelAction(e.getInputEvent());
+        ShowSettingsUtilImpl.showSettingsDialog(project, "", "force push");
+      }
+    });
+    here.setFont(JBUI.Fonts.smallFont());
+    text.add(here);
+    JPanel wrap = new JPanel(new BorderLayout());
+    wrap.add(text, BorderLayout.EAST);
+    wrap.setBorder(JBUI.Borders.emptyBottom(4));
+    return wrap;
   }
 
   @Override
@@ -84,7 +114,7 @@ public class VcsPushDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    enableOkActions(myController.isPushAllowed());
+    updateOkActions();
     return null;
   }
 
@@ -94,12 +124,24 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   @Override
+  protected void doOKAction() {
+    myController.push(false);
+    close(OK_EXIT_CODE);
+  }
+
+  @Override
   @NotNull
   protected Action[] createActions() {
     final List<Action> actions = new ArrayList<Action>();
     myForcePushAction = new ForcePushAction();
     myForcePushAction.setEnabled(canForcePush());
-    myPushAction = new ComplexPushAction(myForcePushAction);
+    myForcePushAction.putValue(Action.NAME, "&Force Push");
+    if (myController.isForcePushEnabled()) {
+      myPushAction = new ComplexPushAction(myForcePushAction);
+    } else {
+      myPushAction = new OkAction() {};
+      myPushAction.putValue(Action.NAME, "&Push");
+    }
     myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     actions.add(myPushAction);
     actions.add(getCancelAction());
@@ -107,8 +149,12 @@ public class VcsPushDialog extends DialogWrapper {
     return actions.toArray(new Action[actions.size()]);
   }
 
+  private boolean canPush() {
+    return myController.isPushAllowed(false);
+  }
+
   private boolean canForcePush() {
-    return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null;
+    return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null && myController.isPushAllowed(true);
   }
 
   @Nullable
@@ -127,11 +173,12 @@ public class VcsPushDialog extends DialogWrapper {
   protected String getHelpId() {
     return ID;
   }
-  public void enableOkActions(boolean isEnabled) {
-    myPushAction.setEnabled(isEnabled);
+
+  public void updateOkActions() {
+    myPushAction.setEnabled(canPush());
     if (myForcePushAction != null) {
       boolean canForcePush = canForcePush();
-      myForcePushAction.setEnabled(isEnabled && canForcePush);
+      myForcePushAction.setEnabled(canForcePush);
       String tooltip = null;
       if (!canForcePush) {
         PushTarget target = myController.getProhibitedTarget();
@@ -141,6 +188,10 @@ public class VcsPushDialog extends DialogWrapper {
       }
       myForcePushAction.putValue(Action.SHORT_DESCRIPTION, tooltip);
     }
+  }
+
+  public void disableOkActions() {
+    myPushAction.setEnabled(false);
   }
 
   @Nullable
@@ -156,10 +207,7 @@ public class VcsPushDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      int answer = Messages.showOkCancelDialog(myProject,
-                                  "You're going to force push. It will overwrite commits at the remote. Are you sure you want to proceed?",
-                                  "Force Push", "&Force Push", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-      if (answer == OK) {
+      if (myController.ensureForcePushIsNeeded()) {
         myController.push(true);
         close(OK_EXIT_CODE);
       }

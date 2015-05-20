@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,8 +38,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
@@ -47,8 +46,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -160,7 +161,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.write(element, "workDir", ExternalizablePath.urlValue(workDir));
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
     JDOMExternalizer.writeMap(element, envs, null, "env");
-    PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
   }
 
   @Override
@@ -175,7 +175,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       throw new CantRunException("Unknown script type " + scriptPath);
     }
 
-    final Module module = getModule();
+    final Module module = ObjectUtils.chooseNotNull(getModule(), ContainerUtil.getFirstItem(getValidModules()));
     if (!scriptRunner.ensureRunnerConfigured(module, this, executor, getProject())) {
       return null;
     }
@@ -231,7 +231,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
         protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
           if (newElement instanceof GroovyFile) {
             GroovyFile file = (GroovyFile)newElement;
-            setScriptPath(file.getVirtualFile().getPath());
+            setScriptPath(ScriptFileUtil.getScriptFilePath(file.getVirtualFile()));
           }
         }
 
@@ -284,8 +284,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
 
   @Nullable
   private VirtualFile getScriptFile() {
-    if (scriptPath == null) return null;
-    return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(scriptPath));
+    return ScriptFileUtil.findScriptFileByPath(scriptPath);
   }
 
   @Nullable
@@ -339,6 +338,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
   @Override
   public String getAlternativeJrePath() {
     throw new UnsupportedOperationException();

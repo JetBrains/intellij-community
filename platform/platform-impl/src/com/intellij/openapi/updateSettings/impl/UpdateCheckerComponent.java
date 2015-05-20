@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,19 @@
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.IdeBundle;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,12 +54,20 @@ public class UpdateCheckerComponent implements ApplicationComponent {
 
   public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
     mySettings = settings;
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
-      @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-        scheduleOnStartCheck();
-      }
-    });
+
+    if (mySettings.isSecureConnection() && !NetUtils.isSniEnabled()) {
+      app.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          String title = IdeBundle.message("update.notifications.title");
+          boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
+          String message = IdeBundle.message(tooOld ? "update.sni.not.available.notification" : "update.sni.disabled.notification");
+          UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.ERROR, null).notify(null);
+        }
+      }, ModalityState.NON_MODAL);
+    }
+
+    scheduleOnStartCheck(app);
   }
 
   @Override
@@ -62,20 +75,25 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     PluginsAdvertiser.ensureDeleted();
   }
 
-  private void scheduleOnStartCheck() {
-    if (!mySettings.CHECK_NEEDED) {
+  private void scheduleOnStartCheck(@NotNull Application app) {
+    if (!mySettings.isCheckNeeded() || mySettings.isSecureConnection() && !NetUtils.isSniEnabled()) {
       return;
     }
 
-    String currentBuild = ApplicationInfo.getInstance().getBuild().asString();
-    long timeToNextCheck = mySettings.LAST_TIME_CHECKED + CHECK_INTERVAL - System.currentTimeMillis();
+    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      @Override
+      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+        String currentBuild = ApplicationInfo.getInstance().getBuild().asString();
+        long timeToNextCheck = mySettings.getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
 
-    if (StringUtil.compareVersionNumbers(mySettings.LAST_BUILD_CHECKED, currentBuild) < 0 || timeToNextCheck <= 0) {
-      myCheckRunnable.run();
-    }
-    else {
-      queueNextCheck(timeToNextCheck);
-    }
+        if (StringUtil.compareVersionNumbers(mySettings.getLasBuildChecked(), currentBuild) < 0 || timeToNextCheck <= 0) {
+          myCheckRunnable.run();
+        }
+        else {
+          queueNextCheck(timeToNextCheck);
+        }
+      }
+    });
   }
 
   private void queueNextCheck(long interval) {

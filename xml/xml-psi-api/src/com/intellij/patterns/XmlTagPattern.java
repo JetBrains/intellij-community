@@ -91,7 +91,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
         final XmlTag parent = xmlTag.getParentTag();
         return parent != null &&
-               pattern.getCondition().accepts(parent, context) && parent.getSubTags()[0] == xmlTag;
+               pattern.accepts(parent, context) && parent.getSubTags()[0] == xmlTag;
       }
     });
   }
@@ -104,7 +104,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
     return with(new PatternCondition<XmlTag>("withSubTags") {
       @Override
       public boolean accepts(@NotNull final XmlTag xmlTag, final ProcessingContext context) {
-        return pattern.getCondition().accepts(Arrays.asList(xmlTag.getSubTags()), context);
+        return pattern.accepts(Arrays.asList(xmlTag.getSubTags()), context);
       }
     });
   }

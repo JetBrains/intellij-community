@@ -37,7 +37,7 @@ public class SurroundWithQuotesAnnotationParameterValueFix implements IntentionA
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myValue.isValid() || !(myExpectedType instanceof PsiClassType)) {
+    if (!myValue.isValid() || !myExpectedType.isValid() || !(myExpectedType instanceof PsiClassType)) {
       return false;
     }
     final PsiClass resolvedType = ((PsiClassType)myExpectedType).resolve();

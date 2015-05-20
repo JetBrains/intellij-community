@@ -1,0 +1,37 @@
+<products>
+    <product name="IntelliJ IDEA">
+        <code>IU</code>
+        <code>IC</code>
+
+        <channel id="IDEA14" name="IntelliJ IDEA 14" status="release"
+                 url="https://www.jetbrains.com/idea/download"
+                 feedback="http://youtrack.jetbrains.net"
+                 majorVersion="14">
+            <build number="139.659" version="14.0.2" releaseDate="20141103">
+                <message>IntelliJ IDEA 14.0.2 build 139.659 is available.</message>
+                <button name="Download" url="https://www.jetbrains.com/idea/download" download="true"/>
+                <button name="What's New" url="https://www.jetbrains.com/idea/whatsnew/index.html"/>
+                <button name="Release Notes" url="https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+14.0.2+Release+Notes"/>
+                <patch from="139.224" size="30" />
+                <patch from="139.225" size="30" />
+            </build>
+        </channel>
+
+        <channel id="IDEA_14_EAP" name="IntelliJ IDEA 14 EAP" status="eap"
+                 url="https://confluence.jetbrains.com/display/IDEADEV/IDEA+14+EAP"
+                 feedback="http://youtrack.jetbrains.net"
+                 majorVersion="14">
+            <build number="139.659" version="14.0.2" releaseDate="20141103">
+                <message>IntelliJ IDEA 14.0.2 build 139.659 is available.</message>
+                <button name="Download" url="https://confluence.jetbrains.com/display/IDEADEV/IDEA+14+EAP" download="true"/>
+                <button name="Release Notes" url="https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+14+139.659.2+Release+Notes"/>
+                <patch from="139.658" size="10" />
+                <patch from="139.224" size="30" />
+                <patch from="139.225" size="30" />
+            </build>
+        </channel>
+
+    </product>
+
+
+</products>

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
@@ -38,12 +37,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -77,7 +75,22 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       WriteCommandAction.runWriteCommandAction(project, new Runnable() {
         @Override
         public void run() {
-          doGenerate(project, editor, aClass, members);
+          final int offset = editor.getCaretModel().getOffset();
+          try {
+            doGenerate(project, editor, aClass, members);
+          }
+          catch (GenerateCodeException e) {
+            final String message = e.getMessage();
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (!editor.isDisposed()) {
+                  editor.getCaretModel().moveToOffset(offset);
+                  HintManager.getInstance().showErrorHint(editor, message);
+                }
+              }
+            }, project.getDisposed());
+          }
         }
       });
     }
@@ -241,10 +254,25 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
                                                             boolean allowEmptySelection,
                                                             boolean copyJavadocCheckbox,
                                                             Project project) {
-    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project);
+    MemberChooser<ClassMember> chooser = new MemberChooser<ClassMember>(members, allowEmptySelection, true, project, false, getHeaderPanel(project)) {
+      @Nullable
+      @Override
+      protected String getHelpId() {
+        return GenerateMembersHandlerBase.this.getHelpId();
+      }
+    };
     chooser.setTitle(myChooserTitle);
     chooser.setCopyJavadocVisible(copyJavadocCheckbox);
     return chooser;
+  }
+
+  @Nullable
+  protected JComponent getHeaderPanel(Project project) {
+    return null;
+  }
+
+  protected String getHelpId() {
+    return null;
   }
 
   @NotNull

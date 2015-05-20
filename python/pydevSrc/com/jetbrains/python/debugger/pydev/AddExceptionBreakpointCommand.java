@@ -17,23 +17,21 @@ public class AddExceptionBreakpointCommand extends ExceptionBreakpointCommand {
   @Override
   protected void buildPayload(Payload payload) {
     super.buildPayload(payload);
-    payload.add(myNotifyPolicy.isNotifyAlways() ? 1 : myNotifyPolicy.isNotifyOnlyOnFirst() ? 2 : 0)
-      .add(myNotifyPolicy.isNotifyOnTerminate());
+    payload.add(myNotifyPolicy.isNotifyOnlyOnFirst() ? 2 : 0)
+      .add(myNotifyPolicy.isNotifyOnTerminate())
+      .add(myNotifyPolicy.isIgnoreLibraries());
   }
 
   public static class ExceptionBreakpointNotifyPolicy {
-    private final boolean myNotifyAlways;
     private final boolean myNotifyOnTerminate;
     private final boolean myNotifyOnlyOnFirst;
+    private final boolean myIgnoreLibraries;
 
-    public ExceptionBreakpointNotifyPolicy(boolean notifyAlways, boolean notifyOnTerminate, boolean notifyOnlyOnFirst) {
-      myNotifyAlways = notifyAlways;
+    public ExceptionBreakpointNotifyPolicy(boolean notifyOnTerminate, boolean notifyOnlyOnFirst,
+                                           boolean ignoreLibraries) {
       myNotifyOnTerminate = notifyOnTerminate;
       myNotifyOnlyOnFirst = notifyOnlyOnFirst;
-    }
-
-    public boolean isNotifyAlways() {
-      return myNotifyAlways;
+      myIgnoreLibraries = ignoreLibraries;
     }
 
     public boolean isNotifyOnTerminate() {
@@ -42,6 +40,10 @@ public class AddExceptionBreakpointCommand extends ExceptionBreakpointCommand {
 
     public boolean isNotifyOnlyOnFirst() {
       return myNotifyOnlyOnFirst;
+    }
+
+    public boolean isIgnoreLibraries() {
+      return myIgnoreLibraries;
     }
   }
 }

@@ -1,7 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -146,7 +146,7 @@ public class ChangeSignaturePropagationTest extends LightRefactoringTestCase  {
   private PsiMethod getPrimaryMethod() throws Exception {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     configureByFile(filePath);
-    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     return (PsiMethod) targetElement;
   }

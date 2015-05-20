@@ -59,7 +59,7 @@ public class ChangeType {
 
   @Nullable
   public RangeHighlighter addMarker(ChangeSide changeSide, ChangeHighlighterHolder markup) {
-    String text = changeSide.getText();
+    CharSequence text = changeSide.getText();
     if (text != null && text.length() > 0) {
       return addBlock(text, changeSide, markup, myDiffType);
     }
@@ -79,7 +79,7 @@ public class ChangeType {
   }
 
   @Nullable
-  private RangeHighlighter addBlock(String text, ChangeSide changeSide, final ChangeHighlighterHolder markup, TextDiffType diffType) {
+  private RangeHighlighter addBlock(CharSequence text, ChangeSide changeSide, final ChangeHighlighterHolder markup, TextDiffType diffType) {
     EditorColorsScheme colorScheme = markup.getEditor().getColorsScheme();
     Color separatorColor = getSeparatorColor(diffType.getLegendColor(colorScheme));
 
@@ -95,6 +95,10 @@ public class ChangeType {
         Color color = myDiffType.getPolygonColor(markup.getEditor());
         if (color != null) {
           if (myApplied) {
+            Rectangle bounds = g.getClipBounds();
+            x1 = Math.max(x1, bounds.x); // do not paint line behind clip bounds - it's very slow for dotted line
+            if (x1 >= x2) return;
+
             UIUtil.drawBoldDottedLine(g2, x1, x2, y, null, color, false);
           }
           else {
@@ -137,6 +141,10 @@ public class ChangeType {
         Color color = myDiffType.getPolygonColor(markup.getEditor());
         if (color != null) {
           if (type.isApplied()) {
+            Rectangle bounds = g.getClipBounds();
+            x1 = Math.max(x1, bounds.x); // do not paint line behind clip bounds - it's very slow for dotted line
+            if (x1 >= x2) return;
+
             UIUtil.drawBoldDottedLine(g2, x1, x2, y, null, color, false);
           }
           else {

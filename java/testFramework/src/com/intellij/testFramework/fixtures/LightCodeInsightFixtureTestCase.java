@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -79,7 +80,6 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected LightCodeInsightFixtureTestCase() {
-    IdeaTestCase.initPlatformPrefix();
   }
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
@@ -153,6 +153,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
   }
 
   protected PsiFile getFile() { return myFixture.getFile(); }
+
+  protected Editor getEditor() { return myFixture.getEditor(); }
 
   protected PsiManager getPsiManager() {
     return PsiManager.getInstance(getProject());

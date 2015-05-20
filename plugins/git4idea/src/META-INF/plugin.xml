@@ -15,7 +15,9 @@
    </description>
   <version>8.1</version>
   <category>VCS Integration</category>
-  <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/" logo="/general/ijLogo.png">JetBrains</vendor>
+  <vendor url="http://svn.jetbrains.org/idea/Trunk/bundled/git4idea/">JetBrains</vendor>
+
+  <resource-bundle>git4idea.i18n.GitBundle</resource-bundle>
 
   <depends>com.intellij.modules.vcs</depends>
   <xi:include href="/META-INF/remote-servers-git.xml" xpointer="xpointer(/idea-plugin/*)">
@@ -50,7 +52,7 @@
     </group>
 
     <group id="GitRepositoryActions">
-      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="Git4ideaIcons.Branch"/>
+      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="VcsLogIcons.Branch"/>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Vcs.MergeSourcesTree"/>
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
@@ -59,9 +61,7 @@
       <separator/>
       <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch"/>
       <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull..." icon="AllIcons.Actions.CheckOut"/>
-      <action id="Git.Push" class="git4idea.actions.GitPushAction" icon="AllIcons.Actions.Commit" text="Push...">
-        <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
-      </action>
+      <reference ref="Vcs.Push"/>
       <separator/>
       <action id="Git.Rebase" class="git4idea.actions.GitRebase" text="Rebase..."/>
       <action id="Git.Rebase.Abort" class="git4idea.actions.GitRebaseAbort" text="Abort Rebasing"/>
@@ -92,7 +92,6 @@
       <separator/>
     </group>
 
-    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" icon="Git4ideaIcons.CherryPick"/>
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
             description="Create new branch starting from the selected commit"/>
@@ -102,7 +101,6 @@
 
     <group id="Git.Log.ContextMenu">
       <separator/>
-      <reference id="Git.CherryPick" />
       <reference id="Git.CheckoutRevision"/>
       <reference id="Git.CreateNewBranch" />
       <reference id="Git.CreateNewTag" />
@@ -112,7 +110,6 @@
     </group>
 
     <group id="Git.Log.Toolbar">
-      <reference id="Git.CherryPick"/>
       <action id="Git.Log.DeepCompare" class="git4idea.branch.DeepCompareAction" text="Highlight non-picked commits"
               icon="Git4ideaIcons.DeepCompare"
               description="Dims those commits which have equivalent changes in the current branch"/>
@@ -122,14 +119,6 @@
 
   </actions>
 
-  <project-components>
-    <component>
-      <interface-class>git4idea.repo.GitRepositoryManager</interface-class>
-      <implementation-class>git4idea.repo.GitRepositoryManager</implementation-class>
-      <headless-implementation-class>git4idea.test.GitTestRepositoryManager</headless-implementation-class>
-    </component>
-  </project-components>
-
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <search.topHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
@@ -137,13 +126,16 @@
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
     <vcs.checkoutProcessor implementation="git4idea.checkout.GitCheckoutProcessor"/>
     <vcsRootChecker implementation="git4idea.roots.GitRootChecker"/>
+    <vcsRepositoryCreator implementation="git4idea.repo.GitRepositoryCreator"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
-    
+    <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
+
+    <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>
@@ -165,10 +157,8 @@
     <projectService
         serviceInterface="git4idea.config.GitVcsSettings"
         serviceImplementation="git4idea.config.GitVcsSettings"/>
+    <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
-    <projectService
-        serviceInterface="git4idea.settings.GitPushSettings"
-        serviceImplementation="git4idea.settings.GitPushSettings"/>
     <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>

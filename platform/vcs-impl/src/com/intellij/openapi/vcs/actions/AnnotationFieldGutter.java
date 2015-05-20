@@ -45,14 +45,13 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   protected final LineAnnotationAspect myAspect;
   private final TextAnnotationPresentation myPresentation;
   private final boolean myIsGutterAction;
-  private Couple<Map<String, Color>> myColorScheme;
-  private boolean myShowAdditionalInfo = false;
+  private Couple<Map<VcsRevisionNumber, Color>> myColorScheme;
 
   AnnotationFieldGutter(FileAnnotation annotation,
                         Editor editor,
                         LineAnnotationAspect aspect,
                         final TextAnnotationPresentation presentation,
-                        Couple<Map<String, Color>> colorScheme) {
+                        Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
     myAnnotation = annotation;
     myEditor = editor;
     myAspect = aspect;
@@ -147,19 +146,15 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   @Nullable
   public Color getBgColor(int line, Editor editor) {
     ColorMode type = ShowAnnotationColorsAction.getType();
-    Map<String, Color> colorMap = type == ColorMode.AUTHOR ? myColorScheme.second : myColorScheme.first;
+    Map<VcsRevisionNumber, Color> colorMap = type == ColorMode.AUTHOR ? myColorScheme.second : myColorScheme.first;
     if (colorMap == null || type == ColorMode.NONE) return null;
     final VcsRevisionNumber number = myAnnotation.getLineRevisionNumber(line);
     if (number == null) return null;
-    return colorMap.get(number.asString());
-  }
-
-  public void setShowAdditionalInfo(boolean show) {
-    myShowAdditionalInfo = show;
+    return colorMap.get(number);
   }
 
   public boolean isAvailable() {
-    return myShowAdditionalInfo || VcsUtil.isAspectAvailableByDefault(getID());
+    return VcsUtil.isAspectAvailableByDefault(getID());
   }
 
   @Nullable

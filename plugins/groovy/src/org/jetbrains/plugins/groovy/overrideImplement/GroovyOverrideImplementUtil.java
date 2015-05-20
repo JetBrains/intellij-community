@@ -75,7 +75,7 @@ public class GroovyOverrideImplementUtil {
     final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     String templName = isAbstract ? JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
-    final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
+    final FileTemplate template = FileTemplateManager.getInstance(method.getProject()).getCodeTemplate(templName);
     final GrMethod result = (GrMethod)GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
 
     setupModifierList(result);
@@ -172,7 +172,7 @@ public class GroovyOverrideImplementUtil {
     if (returnType != null) {
       returnTypeText = returnType.getPresentableText();
     }
-    Properties properties = FileTemplateManager.getInstance().getDefaultProperties(project);
+    Properties properties = FileTemplateManager.getInstance(project).getDefaultProperties();
 
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnTypeText);
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));

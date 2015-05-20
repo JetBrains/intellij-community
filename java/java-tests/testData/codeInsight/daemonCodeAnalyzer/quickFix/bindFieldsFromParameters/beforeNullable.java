@@ -1,4 +1,4 @@
-// "Bind Constructor Parameters to Fields" "true"
+// "Bind constructor parameters to fields" "true"
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

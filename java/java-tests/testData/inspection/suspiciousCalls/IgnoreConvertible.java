@@ -11,6 +11,6 @@ class Clazz {
   }
 
   void foo(List<? extends Number> c) {
-    c.contains(<warning descr="'List<? extends Number>' may not contain objects of type 'String'">""</warning>);
+    c.contains(<warning descr="'List<capture of ? extends Number>' may not contain objects of type 'String'">""</warning>);
   }
 }

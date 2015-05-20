@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedFiles = new ArrayList<FilePath>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<FilePath>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
-  protected final List<VirtualFile> myDirtyFiles = new ArrayList<VirtualFile>();
+  protected final LinkedHashSet<VirtualFile> myDirtyFiles = ContainerUtil.newLinkedHashSet();
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  * <code>'problem tests'</code> etc.
  * <p/>
  * I.e. assumed usage scenario is to create object of this class with necessary filtering criteria and use it's
- * {@link #matches(String)} method for determining if particular test should be executed.
+ * {@link TestClassesFilter#matches(String, String)} method for determining if particular test should be executed.
  * <p/>
  * The filtering is performed by fully-qualified test class name. There are two ways to define the criteria at the moment:
  * <ul>
@@ -48,7 +48,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   /**
    * Holds reserved test group name that serves as a negation of matching result.
    *
-   * @see #matches(String)
+   * @see TestClassesFilter#matches(String, String)
    */
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
 
@@ -116,7 +116,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    * @param reader   reader that points to the target test groups config
    * @param testGroupNames
    * @return newly created {@link GroupBasedTestClassFilter} object with the data contained at the given reader
-   * @see #matches(String)
+   * @see TestClassesFilter#matches(String, String)
    */
   @NotNull
   public static TestClassesFilter createOn(@NotNull Reader reader, @NotNull List<String> testGroupNames) throws IOException {
@@ -150,6 +150,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    * returns <code>true</code> only if all registered patterns (for all test groups) don't match given test class name.
    *
    * @param className   target test class name to check
+   * @param moduleName
    * @return            <code>true</code> if given test group name is defined (not <code>null</code>) and test class with given
    *                    name belongs to the test group with given name;
    *                    <code>true</code> if given group if undefined or equal to {@link #ALL_EXCLUDE_DEFINED} and given test
@@ -157,7 +158,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    *                    <code>false</code> otherwise
    */
   @Override
-  public boolean matches(String className) {
+  public boolean matches(String className, String moduleName) {
     if (matchesAnyPattern(myTestGroupPatterns, className)) {
       return true;
     }

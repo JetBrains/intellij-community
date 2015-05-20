@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class ElementOnlyUsedFromTestCodeInspection
     @NotNull RefEntity refEntity, @NotNull AnalysisScope scope, @NotNull InspectionManager manager,
     @NotNull GlobalInspectionContext globalContext,
     @NotNull ProblemDescriptionsProcessor processor) {
-    if (!isOnlyUsedFromTestCode(refEntity)) {
+    if (!isOnlyUsedFromTestCode(refEntity, false)) {
       return null;
     }
     if (!(refEntity instanceof RefJavaElement)) {
@@ -62,6 +62,19 @@ public class ElementOnlyUsedFromTestCodeInspection
     final RefJavaElement javaElement = (RefJavaElement)refEntity;
     if (!javaElement.isReferenced()) {
       return null;
+    }
+    if (refEntity instanceof RefMethod) {
+      final RefMethod refMethod = (RefMethod)refEntity;
+      for (RefMethod superMethod : refMethod.getSuperMethods()) {
+        if (!isOnlyUsedFromTestCode(superMethod, true)) {
+          return null;
+        }
+      }
+      for (RefMethod derivedMethod : refMethod.getDerivedMethods()) {
+        if (!isOnlyUsedFromTestCode(derivedMethod, true)) {
+          return null;
+        }
+      }
     }
     final PsiElement element = javaElement.getElement();
     if (element instanceof PsiClass) {
@@ -119,7 +132,7 @@ public class ElementOnlyUsedFromTestCodeInspection
   @Nullable
   public static PsiClass getTopLevelParentClass(PsiElement e) {
     PsiClass result = null;
-    PsiElement parent = e.getParent();
+    PsiElement parent = e;
     while (parent != null && !(parent instanceof PsiFile)) {
       if (parent instanceof PsiClass) {
         result = (PsiClass)parent;
@@ -129,10 +142,12 @@ public class ElementOnlyUsedFromTestCodeInspection
     return result;
   }
 
-  private static boolean isOnlyUsedFromTestCode(RefEntity refElement) {
-    final Boolean usedFromTestCode =
-      refElement.getUserData(ONLY_USED_FROM_TEST_CODE);
-    return usedFromTestCode != null && usedFromTestCode.booleanValue();
+  private static boolean isOnlyUsedFromTestCode(RefEntity refElement, boolean orNotUsed) {
+    final Boolean usedFromTestCode = refElement.getUserData(ONLY_USED_FROM_TEST_CODE);
+    if (usedFromTestCode != null) {
+      return usedFromTestCode.booleanValue();
+    }
+    return orNotUsed;
   }
 
   private static class ElementOnlyUsedFromTestCodeAnnotator

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Manages the background highlighting and auto-import for files displayed in editors.
+ */
 public abstract class DaemonCodeAnalyzer {
   public static DaemonCodeAnalyzer getInstance(Project project) {
     return project.getComponent(DaemonCodeAnalyzer.class);
@@ -46,9 +49,14 @@ public abstract class DaemonCodeAnalyzer {
   public abstract boolean isAutohintsAvailable(@Nullable PsiFile file);
 
   /**
-   * Force rehighlighting for all files
+   * Force rehighlighting for all files.
    */
   public abstract void restart();
+
+  /**
+   * Force rehighlighting for a specific file.
+   * @param file the file to rehighlight.
+   */
   public abstract void restart(@NotNull PsiFile file);
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
@@ -57,10 +65,16 @@ public abstract class DaemonCodeAnalyzer {
 
   public interface DaemonListener {
     void daemonFinished();
-    void daemonCancelEventOccurred();
+    void daemonCancelEventOccurred(@NotNull String reason);
   }
+
   public abstract static class DaemonListenerAdapter implements DaemonListener {
-    @Override public void daemonFinished() {}
-    @Override public void daemonCancelEventOccurred() {}
+    @Override
+    public void daemonFinished() {
+    }
+
+    @Override
+    public void daemonCancelEventOccurred(@NotNull String reason) {
+    }
   }
 }

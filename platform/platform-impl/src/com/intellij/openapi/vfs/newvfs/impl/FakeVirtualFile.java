@@ -38,6 +38,11 @@ public class FakeVirtualFile extends StubVirtualFile {
     return myParent;
   }
 
+  @Override
+  public boolean isDirectory() {
+    return false;
+  }
+
   @NotNull
   @Override
   public String getPath() {

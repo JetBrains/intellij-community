@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-class MockFileTypeManager extends FileTypeManager {
+public class MockFileTypeManager extends FileTypeManager {
   @Override
   public void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations) {
     throw new UnsupportedOperationException();

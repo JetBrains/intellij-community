@@ -19,14 +19,15 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
-public class MaximizeToolWindowAction extends AnAction {
+public class MaximizeToolWindowAction extends AnAction implements DumbAware {
   public MaximizeToolWindowAction() {
-    super();
+    super(ActionsBundle.message("action.ResizeToolWindowMaximize.text"));
   }
 
   @Override

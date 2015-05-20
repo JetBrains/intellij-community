@@ -244,15 +244,9 @@ public class TableUtil {
     column.setMinWidth(checkboxWidth);
   }
 
-  public static void updateScroller(@NotNull JTable table, boolean temporaryHideVerticalScrollBar) {
+  public static void updateScroller(@NotNull JTable table) {
     JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
     if (scrollPane != null) {
-      if (temporaryHideVerticalScrollBar) {
-        final JScrollBar bar = scrollPane.getVerticalScrollBar();
-        if (bar == null || !bar.isVisible()) {
-          scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        }
-      }
       scrollPane.revalidate();
       scrollPane.repaint();
     }

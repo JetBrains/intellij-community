@@ -10,24 +10,26 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.LocationAwareExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
+import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.NonNavigatable;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -111,7 +113,8 @@ public class ExternalSystemNotificationManager {
         filePath, ObjectUtils.notNull(line, -1), ObjectUtils.notNull(column, -1), false);
 
     for (ExternalSystemNotificationExtension extension : ExternalSystemNotificationExtension.EP_NAME.getExtensions()) {
-      if (!externalSystemId.equals(extension.getTargetExternalSystemId())) {
+      final ProjectSystemId targetExternalSystemId = extension.getTargetExternalSystemId();
+      if (!externalSystemId.equals(targetExternalSystemId) && !targetExternalSystemId.equals(ProjectSystemId.IDE)) {
         continue;
       }
       extension.customize(notificationData, myProject, error);
@@ -148,8 +151,16 @@ public class ExternalSystemNotificationManager {
           }
         }
 
-        final NotificationGroup group = ExternalSystemUtil.getToolWindowElement(
-          NotificationGroup.class, myProject, ExternalSystemDataKeys.NOTIFICATION_GROUP, externalSystemId);
+        NotificationGroup group;
+        if (notificationData.getBalloonGroup() == null) {
+          ExternalProjectsView externalProjectsView = ExternalProjectsManager.getInstance(myProject).getExternalProjectsView(externalSystemId);
+          group = externalProjectsView instanceof ExternalProjectsViewImpl ?
+                  ((ExternalProjectsViewImpl)externalProjectsView).getNotificationGroup() : null;
+        }
+        else {
+          final NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationData.getBalloonGroup());
+          group = registeredGroup != null ? registeredGroup : NotificationGroup.balloonGroup(notificationData.getBalloonGroup());
+        }
         if (group == null) return;
 
         final Notification notification = group.createNotification(
@@ -241,7 +252,7 @@ public class ExternalSystemNotificationManager {
                           @NotNull final ProjectSystemId externalSystemId,
                           @NotNull final NotificationData notificationData) {
     final VirtualFile virtualFile =
-      notificationData.getFilePath() != null ? ExternalSystemUtil.waitForTheFile(notificationData.getFilePath()) : null;
+      notificationData.getFilePath() != null ? ExternalSystemUtil.findLocalFileByPath(notificationData.getFilePath()) : null;
     final String groupName = virtualFile != null ? virtualFile.getPresentableUrl() : notificationData.getTitle();
 
     myMessageCounter
@@ -255,7 +266,7 @@ public class ExternalSystemNotificationManager {
 
     final Navigatable navigatable = notificationData.getNavigatable() != null
                                     ? notificationData.getNavigatable()
-                                    : virtualFile != null ? new OpenFileDescriptor(myProject, virtualFile, line, column) : null;
+                                    : virtualFile != null ? new OpenFileDescriptor(myProject, virtualFile, line, column) : NonNavigatable.INSTANCE;
 
     final ErrorTreeElementKind kind =
       ErrorTreeElementKind.convertMessageFromCompilerErrorType(notificationData.getNotificationCategory().getMessageCategory());
@@ -359,6 +370,10 @@ public class ExternalSystemNotificationManager {
       case PROJECT_SYNC:
         contentDisplayName =
           ExternalSystemBundle.message("notification.messages.project.sync.tab.name", externalSystemId.getReadableName());
+        break;
+      case TASK_EXECUTION:
+        contentDisplayName =
+          ExternalSystemBundle.message("notification.messages.task.execution.tab.name", externalSystemId.getReadableName());
         break;
       default:
         throw new AssertionError("unsupported notification source found: " + notificationSource);

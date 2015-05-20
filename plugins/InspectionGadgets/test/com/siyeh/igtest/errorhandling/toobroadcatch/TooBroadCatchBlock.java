@@ -15,7 +15,7 @@ public class TooBroadCatchBlock{
             }
         } catch(FileNotFoundException e){
             e.printStackTrace();
-        } catch(IOException e){
+        } catch(<warning descr="'catch' of 'IOException' is too broad, masking exception 'EOFException'">IOException</warning> e){
             e.printStackTrace();
         }
     }
@@ -28,9 +28,9 @@ public class TooBroadCatchBlock{
         try {
             new URL(null);
             throw new NullPointerException();
-        } catch (IOException e) {
+        } catch (<warning descr="'catch' of 'IOException' is too broad, masking exception 'MalformedURLException'">IOException</warning> e) {
 
-        } catch (RuntimeException e) {
+        } catch (<warning descr="'catch' of 'RuntimeException' is too broad, masking exception 'NullPointerException'">RuntimeException</warning> e) {
 
         }
     }
@@ -46,7 +46,7 @@ public class TooBroadCatchBlock{
       if (c) {
         throw new IOException();
       }
-    } catch (ObjectStreamException e) {
+    } catch (<warning descr="'catch' of 'ObjectStreamException' is too broad, masking exceptions 'NotActiveException' and 'StreamCorruptedException'">ObjectStreamException</warning> e) {
       // Deal with ObjectStreamException (a subclass of IOException)...
     } catch (IOException e) {
       // Deal with IOException...
@@ -60,7 +60,10 @@ public class TooBroadCatchBlock{
   void test() {
     try {
       try (java.io.FileInputStream in = new java.io.FileInputStream("asdf")) {}
-    } catch (IOException e) {}
+    } catch (<warning descr="'catch' of 'IOException' is too broad, masking exception 'FileNotFoundException'">IOException</warning> e) {}
+    try (java.io.InputStream in = new java.io.FileInputStream("")) {
+
+    } catch (<warning descr="'catch' of 'Exception' is too broad, masking exceptions 'IOException' and 'FileNotFoundException'">Exception</warning> e) {}
   }
 
   boolean m() {
@@ -69,7 +72,7 @@ public class TooBroadCatchBlock{
       return new java.io.File("can_reset").isFile();
     } catch (FileNotFoundException e) {
       return false;
-    } catch (Exception e ) {
+    } catch (<warning descr="'catch' of 'Exception' is too broad, masking exception 'RuntimeException'">Exception</warning> e ) {
       return false;
     }
   }
@@ -78,8 +81,37 @@ public class TooBroadCatchBlock{
     try {
       new java.io.FileInputStream("");
       return new java.io.File("can_reset").isFile();
-    } catch (Exception e ) {
+    } catch (<warning descr="'catch' of 'Exception' is too broad, masking exception 'FileNotFoundException'">Exception</warning> e ) {
       return false;
+    }
+  }
+
+  void m3() {
+    try {
+      new Object() {
+        void f() throws FileNotFoundException {
+          throw new FileNotFoundException();
+        }
+      };
+      throw new IOException();
+    } catch (IOException e) {}
+    try {
+      System.out.println();
+    } catch (<warning descr="'catch' of 'Exception' is too broad, masking exception 'RuntimeException'">Exception</warning> e) {
+
+    }
+    try {
+      System.out.println();
+    } catch (RuntimeException e) {
+
+    } catch (Exception e) {
+
+    }
+    try {
+      System.out.println();
+      throw new NumberFormatException();
+    } catch (<warning descr="'catch' of 'IllegalArgumentException' is too broad, masking exception 'NumberFormatException'">IllegalArgumentException</warning> | NullPointerException e) {
+
     }
   }
 }

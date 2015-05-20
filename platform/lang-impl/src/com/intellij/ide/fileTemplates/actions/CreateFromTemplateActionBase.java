@@ -43,10 +43,9 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     if (view == null) {
       return;
     }
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-
     PsiDirectory dir = getTargetDirectory(dataContext, view);
     if (dir == null) return;
+    Project project = dir.getProject();
 
     FileTemplate selectedTemplate = getTemplate(project, dir);
     if(selectedTemplate != null){
@@ -55,7 +54,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
         action.actionPerformed(e);
       }
       else {
-        FileTemplateManager.getInstance().addRecentName(selectedTemplate.getName());
+        FileTemplateManager.getInstance(project).addRecentName(selectedTemplate.getName());
         final AttributesDefaults defaults = getAttributesDefaults(dataContext);
         final CreateFromTemplateDialog dialog = new CreateFromTemplateDialog(project, dir, selectedTemplate, defaults,
                                                                              defaults != null ? defaults.getDefaultProperties() : null);

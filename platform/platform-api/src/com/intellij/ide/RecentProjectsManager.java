@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 public abstract class RecentProjectsManager {
   public static RecentProjectsManager getInstance() {
@@ -41,4 +44,12 @@ public abstract class RecentProjectsManager {
    * @param addClearListItem whether the "Clear List" action should be added to the end of the list.
    */
   public abstract AnAction[] getRecentProjectsActions(boolean addClearListItem);
+
+  public AnAction[] getRecentProjectsActions(boolean addClearListItem, boolean useGroups) {
+    return getRecentProjectsActions(addClearListItem);
+  }
+
+  public List<ProjectGroup> getGroups() {return Collections.emptyList();}
+  public void addGroup(ProjectGroup group) {}
+  public void removeGroup(ProjectGroup group) {}
 }

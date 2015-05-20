@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.io.IOException;
 
 public class BIPUSH extends Instruction {
 
-  private static int[] opcodes =
+  private static final int[] opcodes =
     new int[]{opc_iconst_m1, opc_iconst_0, opc_iconst_1, opc_iconst_2, opc_iconst_3, opc_iconst_4, opc_iconst_5};
 
   public void writeToStream(DataOutputStream out, int offset) throws IOException {

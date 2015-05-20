@@ -23,6 +23,8 @@ public interface LineStatusTrackerManagerI {
   @Nullable
   LineStatusTracker getLineStatusTracker(Document document);
 
+  void updateSettings();
+
   class Dummy implements LineStatusTrackerManagerI {
     private final static Dummy ourInstance = new Dummy();
 
@@ -33,6 +35,10 @@ public interface LineStatusTrackerManagerI {
     @Override
     public LineStatusTracker getLineStatusTracker(final Document document) {
       return null;
+    }
+
+    @Override
+    public void updateSettings() {
     }
   }
 }

@@ -15,8 +15,7 @@
  */
 package git4idea.repo;
 
-  import com.intellij.dvcs.repo.RepoStateException;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
+  import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -27,7 +26,6 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitRemoteBranch;
-import git4idea.GitSvnRemoteBranch;
 import git4idea.branch.GitBranchUtil;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
@@ -41,28 +39,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * <p>Reads information from the {@code .git/config} file, and parses it to actual objects.</p>
- *
- * <p>Currently doesn't read all the information: general information about remotes and branch tracking</p>
- *
- * <p>Parsing is performed with the help of <a href="http://ini4j.sourceforge.net/">ini4j</a> library.</p>
+ * Reads information from the {@code .git/config} file, and parses it to actual objects.
+ * <p/>
+ * Currently doesn't read all the information: just general information about remotes and branch tracking.
+ * <p/>
+ * Parsing is performed with the help of <a href="http://ini4j.sourceforge.net/">ini4j</a> library.
  *
  * TODO: note, that other git configuration files (such as ~/.gitconfig) are not handled yet.
- * 
- * @author Kirill Likhodedov
  */
 public class GitConfig {
-
-  /**
-   * Special remote typical for git-svn configuration:
-   * <pre>[branch "trunk]
-   *   remote = .
-   *   merge = refs/remotes/trunk
-   * </pre>
-   * @deprecated Use {@link GitSvnRemoteBranch}
-   */
-  @Deprecated
-  public static final String DOT_REMOTE = ".";
 
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
@@ -108,7 +93,7 @@ public class GitConfig {
   private static GitRemote convertRemoteToGitRemote(@NotNull Collection<Url> urls, @NotNull Remote remote) {
     UrlsAndPushUrls substitutedUrls = substituteUrls(urls, remote);
     return new GitRemote(remote.myName, substitutedUrls.getUrls(), substitutedUrls.getPushUrls(),
-                         remote.getFetchSpecs(), computePushSpec(remote));
+                         remote.getFetchSpecs(), remote.getPushSpec());
   }
 
   /**
@@ -130,8 +115,8 @@ public class GitConfig {
 
   /**
    * Creates an instance of GitConfig by reading information from the specified {@code .git/config} file.
-   * @throws RepoStateException if {@code .git/config} couldn't be read or has invalid format.<br/>
-   *         If in general it has valid format, but some sections are invalid, it skips invalid sections, but reports an error.
+   * <p/>
+   * If some section is invalid, it is skipped, and a warning is reported.
    */
   @NotNull
   static GitConfig read(@NotNull GitPlatformFacade platformFacade, @NotNull File configFile) {
@@ -149,7 +134,7 @@ public class GitConfig {
       ini.load(configFile);
     }
     catch (IOException e) {
-      LOG.warn(new RepoStateException("Couldn't load .git/config file at " + configFile.getPath(), e));
+      LOG.warn("Couldn't load .git/config file at " + configFile.getPath(), e);
       return emptyConfig;
     }
 
@@ -200,7 +185,7 @@ public class GitConfig {
     }
 
     boolean merge = mergeName != null;
-    final String remoteBranchName = (merge ? mergeName : rebaseName);
+    final String remoteBranchName = StringUtil.unquoteString(merge ? mergeName : rebaseName);
 
     GitLocalBranch localBranch = findLocalBranch(branchName, localBranches);
     GitRemoteBranch remoteBranch = findRemoteBranch(remoteBranchName, remoteName, remoteBranches);
@@ -273,12 +258,6 @@ public class GitConfig {
       }
     }
     return Pair.create(remotes, urls);
-  }
-
-  @NotNull
-  private static List<String> computePushSpec(@NotNull Remote remote) {
-    List<String> pushSpec = remote.getPushSpec();
-    return pushSpec == null ? remote.getFetchSpecs() : pushSpec;
   }
 
   /**
@@ -429,11 +408,10 @@ public class GitConfig {
       return nonNullCollection(myRemoteBean.getPushUrl());
     }
 
-    @Nullable
-    // no need in wrapping null here - we check for it in #computePushSpec 
+    @NotNull
     private List<String> getPushSpec() {
       String[] push = myRemoteBean.getPush();
-      return push == null ? null : Arrays.asList(push);
+      return push == null ? Collections.<String>emptyList() : Arrays.asList(push);
     }
 
     @NotNull

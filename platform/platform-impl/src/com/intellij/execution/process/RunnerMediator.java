@@ -31,12 +31,13 @@ import java.io.PrintWriter;
  * @author traff
  */
 public class RunnerMediator {
-  public static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.RunnerMediator");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.RunnerMediator");
 
   private static final char IAC = (char)5;
   private static final char BRK = (char)3;
   private static final char C = (char)5;
   private static final String STANDARD_RUNNERW = "runnerw.exe";
+  private static final String IDEA_RUNNERW = "IDEA_RUNNERW";
 
   /**
    * Creates default runner mediator
@@ -74,35 +75,37 @@ public class RunnerMediator {
       injectRunnerCommand(commandLine);
     }
 
-    Process process = commandLine.createProcess();
-
-    return new CustomDestroyProcessHandler(process, commandLine, useSoftKill);
+    return new CustomDestroyProcessHandler(commandLine, useSoftKill);
   }
 
   @Nullable
   private static String getRunnerPath() {
-    if (SystemInfo.isWindows) {
-      final String path = System.getenv("IDEA_RUNNERW");
-      if (path != null && new File(path).exists()) {
-        return path;
-      }
-      File runnerw = new File(PathManager.getBinPath(), STANDARD_RUNNERW);
-      if (runnerw.exists()) {
-        return runnerw.getPath();
-      }
-      return null;
-    }
-    else {
+    if (!SystemInfo.isWindows) {
       throw new IllegalStateException("There is no need of runner under unix based OS");
     }
+    final String path = System.getenv(IDEA_RUNNERW);
+    if (path != null) {
+      if (new File(path).exists()) {
+        return path;
+      }
+      LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by " + IDEA_RUNNERW + " environment variable (" + path + ")");
+    }
+    File runnerw = new File(PathManager.getBinPath(), STANDARD_RUNNERW);
+    if (runnerw.exists()) {
+      return runnerw.getPath();
+    }
+    LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by default path (" + runnerw.getAbsolutePath() + ")");
+    return null;
   }
 
-  static void injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
+  static boolean injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
     final String path = getRunnerPath();
     if (path != null) {
       commandLine.getParametersList().addAt(0, commandLine.getExePath());
       commandLine.setExePath(path);
+      return true;
     }
+    return false;
   }
 
   /**
@@ -144,11 +147,29 @@ public class RunnerMediator {
   public static class CustomDestroyProcessHandler extends ColoredProcessHandler {
     private final boolean mySoftKill;
 
+    /**
+     * @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine)
+     * @deprecated remove in IDEA 16
+     */
     public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
       this(process, commandLine, false);
     }
+
+    /**
+     * @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine, boolean softKill)
+     * @deprecated remove in IDEA 16
+     */
     public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, final boolean softKill) {
       super(process, commandLine.getCommandLineString());
+      mySoftKill = softKill;
+    }
+
+    public CustomDestroyProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+      this(commandLine, false);
+    }
+
+    public CustomDestroyProcessHandler(@NotNull GeneralCommandLine commandLine, final boolean softKill) throws ExecutionException {
+      super(commandLine);
       mySoftKill = softKill;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageOperation;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.StateStorageManagerImpl;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.util.Disposer;
@@ -39,7 +37,9 @@ public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
   @Override
   public final void setUp() throws Exception {
     super.setUp();
-    myStateStorageManager = new StateStorageManagerImpl(null, "foo", null, ApplicationManager.getApplication().getPicoContainer()) {
+    TrackingPathMacroSubstitutor substitutor = PathMacroManager.getInstance(getProject()).createTrackingSubstitutor();
+    myStateStorageManager = new StateStorageManagerImpl(substitutor, "foo", myTestRootDisposable, ApplicationManager.getApplication().getPicoContainer()) {
+      @NotNull
       @Override
       protected StorageData createStorageData(@NotNull String fileSpec, @NotNull String filePath) {
         throw new UnsupportedOperationException("Method createStorageData not implemented in " + getClass());

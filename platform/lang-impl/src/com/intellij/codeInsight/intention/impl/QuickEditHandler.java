@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -293,11 +294,23 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     }
     else if (e.getDocument() == myNewDocument) {
       commitToOriginal(e);
-      if (!isValid()) closeEditor();
+      if (!isValid()) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            closeEditor();
+          }
+        }, myProject.getDisposed());
+      }
     }
     else if (e.getDocument() == myOrigDocument) {
       if (myCommittingToOriginal || myAltFullRange != null && myAltFullRange.isValid()) return;
-      closeEditor();
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          closeEditor();
+        }
+      }, myProject.getDisposed());
     }
   }
 
@@ -382,6 +395,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
             commitToOriginalInner();
           }
         });
+        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
       }
     }
     finally {

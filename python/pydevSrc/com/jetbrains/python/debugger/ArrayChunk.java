@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

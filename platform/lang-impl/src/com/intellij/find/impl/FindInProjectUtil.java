@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,31 +29,33 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileProvider;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
@@ -63,7 +65,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class FindInProjectUtil {
@@ -78,9 +83,9 @@ public class FindInProjectUtil {
     if (project != null && !DumbServiceImpl.getInstance(project).isDumb()) {
       try {
         psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-      } catch (IndexNotReadyException ignore) {}
+      }
+      catch (IndexNotReadyException ignore) {}
     }
-
 
     String directoryName = null;
 
@@ -102,6 +107,9 @@ public class FindInProjectUtil {
     if (model.getModuleName() == null || editor == null) {
       model.setDirectoryName(directoryName);
       model.setProjectScope(directoryName == null && module == null && !model.isCustomScope() || editor != null);
+      if (directoryName != null) {
+        model.setCustomScope(false); // to select "Directory: " radio button
+      }
 
       // for convenience set directory name to directory of current file, note that we doesn't change default projectScope
       if (directoryName == null) {
@@ -202,7 +210,7 @@ public class FindInProjectUtil {
     TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
     do {
       tooManyUsagesStatus.pauseProcessingIfTooManyUsages(); // wait for user out of read action
-      found = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
+      found = DumbService.getInstance(psiFile.getProject()).runReadActionInSmartMode(new Computable<Integer>() {
         @Override
         @NotNull
         public Integer compute() {
@@ -325,7 +333,7 @@ public class FindInProjectUtil {
     return processPresentation;
   }
 
-  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation {
+  public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, TypeSafeDataProvider {
     @NotNull protected final Project myProject;
     @NotNull protected final FindModel myFindModel;
 
@@ -424,5 +432,57 @@ public class FindInProjectUtil {
     public KeyboardShortcut getShortcut() {
       return ActionManager.getInstance().getKeyboardShortcut("FindInPath");
     }
+
+    @Override
+    public void calcData(DataKey key, DataSink sink) {
+      if (UsageView.USAGE_SCOPE.equals(key)) {
+        SearchScope scope = getScopeFromModel(myProject, myFindModel);
+        sink.put(UsageView.USAGE_SCOPE, scope);
+      }
+    }
+  }
+
+  private static void addSourceDirectoriesFromLibraries(@NotNull Project project,
+                                                        @NotNull VirtualFile file,
+                                                        @NotNull Collection<VirtualFile> outSourceRoots) {
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    VirtualFile classRoot = index.getClassRootForFile(file);
+    if (classRoot == null) return;
+    String relativePath = VfsUtil.getRelativePath(file, classRoot);
+    if (relativePath == null) return;
+    for (OrderEntry orderEntry : index.getOrderEntriesForFile(file)) {
+      for (VirtualFile sourceRoot : orderEntry.getFiles(OrderRootType.SOURCES)) {
+        VirtualFile sourceFile = sourceRoot.findFileByRelativePath(relativePath);
+        if (sourceFile != null) {
+          outSourceRoots.add(sourceFile);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  static SearchScope getScopeFromModel(@NotNull Project project, @NotNull FindModel findModel) {
+    SearchScope customScope = findModel.getCustomScope();
+    PsiDirectory psiDir = getPsiDirectory(findModel, project);
+    VirtualFile directory = psiDir == null ? null : psiDir.getVirtualFile();
+    Module module = findModel.getModuleName() == null ? null : ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName());
+    return findModel.isCustomScope() && customScope != null ? customScope :
+           // we don't have to check for myProjectFileIndex.isExcluded(file) here like FindInProjectTask.collectFilesInScope() does
+           // because all found usages are guaranteed to be not in excluded dir
+           directory != null ? forDirectory(project, findModel.isWithSubdirectories(), directory) :
+           module != null ? module.getModuleContentScope() :
+           findModel.isProjectScope() ? ProjectScope.getContentScope(project) :
+           GlobalSearchScope.allScope(project);
+  }
+
+  @NotNull
+  private static GlobalSearchScope forDirectory(@NotNull Project project,
+                                                boolean withSubdirectories,
+                                                @NotNull VirtualFile directory) {
+    Set<VirtualFile> result = new LinkedHashSet<VirtualFile>();
+    result.add(directory);
+    addSourceDirectoriesFromLibraries(project, directory, result);
+    VirtualFile[] array = result.toArray(new VirtualFile[result.size()]);
+    return GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, array);
   }
 }

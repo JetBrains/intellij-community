@@ -34,10 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @State(
   name = "DependencyValidationManager",
@@ -214,6 +211,22 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     }
 
     super.loadState(element);
+    final NamedScope[] scopes = getEditableScopes();
+    Arrays.sort(scopes, new Comparator<NamedScope>() {
+      @Override
+      public int compare(NamedScope s1, NamedScope s2) {
+        final String name1 = s1.getName();
+        final String name2 = s2.getName();
+        if (Comparing.equal(name1, name2)){
+          return 0;
+        }
+        final List<String> order = myNamedScopeManager.myOrderState.myOrder;
+        final int i1 = order.indexOf(name1);
+        final int i2 = order.indexOf(name2);
+        return i1 > i2 ? 1 : -1;
+      }
+    });
+    super.setScopes(scopes);
     myUnnamedScopes.clear();
     final List unnamedScopes = element.getChildren(UNNAMED_SCOPE);
     final PackageSetFactory packageSetFactory = PackageSetFactory.getInstance();
@@ -364,5 +377,15 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   public void fireScopeListeners() {
     super.fireScopeListeners();
     reloadScopes();
+  }
+
+  @Override
+  public void setScopes(NamedScope[] scopes) {
+    super.setScopes(scopes);
+    final List<String> order = myNamedScopeManager.myOrderState.myOrder;
+    order.clear();
+    for (NamedScope scope : scopes) {
+      order.add(scope.getName());
+    }
   }
 }

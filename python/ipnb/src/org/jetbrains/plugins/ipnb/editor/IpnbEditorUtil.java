@@ -16,10 +16,10 @@
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -29,6 +29,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodeSourcePanel;
 import org.jetbrains.plugins.ipnb.psi.IpnbPyFragment;
 
@@ -63,7 +64,15 @@ public class IpnbEditorUtil {
     editor.setBackgroundColor(getEditablePanelBackground());
     noScrolling(editor);
     editor.getScrollPane().setBorder(null);
-    ConsoleViewUtil.setupConsoleEditor(editor, false, false);
+    final EditorSettings editorSettings = editor.getSettings();
+    editorSettings.setLineMarkerAreaShown(false);
+    editorSettings.setIndentGuidesShown(false);
+    editorSettings.setLineNumbersShown(false);
+    editorSettings.setFoldingOutlineShown(false);
+    editorSettings.setAdditionalPageAtBottom(false);
+    editorSettings.setAdditionalColumnsCount(0);
+    editorSettings.setAdditionalLinesCount(0);
+    editorSettings.setRightMarginShown(false);
   }
 
   public static Color getEditablePanelBackground() {
@@ -91,7 +100,7 @@ public class IpnbEditorUtil {
     }
   }
 
-  public static JComponent createPromptComponent(Integer promptNumber, @NotNull final PromptType type) {
+  public static JComponent createPromptComponent(@Nullable Integer promptNumber, @NotNull final PromptType type) {
     final String promptText = prompt(promptNumber, type);
     JLabel promptLabel = new JLabel(promptText);
     promptLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -106,7 +115,7 @@ public class IpnbEditorUtil {
     return promptLabel;
   }
 
-  protected static String prompt(Integer promptNumber, @NotNull final PromptType type) {
+  protected static String prompt(@Nullable Integer promptNumber, @NotNull final PromptType type) {
     if (type == PromptType.In)
       return promptNumber == null ? type + " [ ]:" : promptNumber > 0 ? String.format(type + " [%d]:", promptNumber) : type + " [*]:";
     else if (type == PromptType.Out)

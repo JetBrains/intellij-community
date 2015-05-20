@@ -107,33 +107,19 @@ class AlignmentImpl extends Alignment {
     }
     LeafBlockWrapper result = null;
     if (myOffsetRespBlocks != EMPTY) {
-      LeafBlockWrapper firstBlockAfterLineFeed = null;
       LeafBlockWrapper firstAlignedBlock = null;
       LeafBlockWrapper lastAlignedBlock = null;
       for (final LeafBlockWrapper current : myOffsetRespBlocks) {
         if (block == null || current.getStartOffset() < block.getStartOffset()) {
-          if (!onDifferentLines(current, block)) {
-            continue;
-          }
           if (firstAlignedBlock == null || firstAlignedBlock.getStartOffset() > current.getStartOffset()) {
             firstAlignedBlock = current;
           }
-
           if (lastAlignedBlock == null || lastAlignedBlock.getStartOffset() < current.getStartOffset()) {
             lastAlignedBlock = current;
           }
-
-          if (firstBlockAfterLineFeed == null && current.getWhiteSpace().containsLineFeeds()) {
-            firstBlockAfterLineFeed = current;
-          }
-
         }
-        //each.remove();
       }
-      if (firstBlockAfterLineFeed != null) {
-        result = firstBlockAfterLineFeed;
-      }
-      else if (firstAlignedBlock != null) {
+      if (firstAlignedBlock != null) {
         result = firstAlignedBlock;
       }
       else {

@@ -94,6 +94,13 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   @Override
+  @Nullable
+  public OpenFileDescriptor getOpenFileDescriptor(@Nullable Project project) {
+    if (project == null || project.isDefault()) return null;
+    return new OpenFileDescriptor(project, myFile);
+  }
+
+  @Override
   public VirtualFileDiffElement[] getChildren() {
     if (myFile.is(VFileProperty.SYMLINK)) {
       return new VirtualFileDiffElement[0];

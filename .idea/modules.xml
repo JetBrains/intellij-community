@@ -14,6 +14,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" filepath="$PROJECT_DIR$/platform/analysis-api/analysis-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-impl/analysis-impl.iml" filepath="$PROJECT_DIR$/platform/analysis-impl/analysis-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/android/android.iml" filepath="$PROJECT_DIR$/android/android/android.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" filepath="$PROJECT_DIR$/android/tools-base/annotations/android-annotations.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android/common/android-common.iml" filepath="$PROJECT_DIR$/android/android/common/android-common.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android-gradle-jps/android-gradle-jps.iml" filepath="$PROJECT_DIR$/android/android-gradle-jps/android-gradle-jps.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/android/android/jps-plugin/android-jps-plugin.iml" filepath="$PROJECT_DIR$/android/android/jps-plugin/android-jps-plugin.iml" group="android" />
@@ -27,6 +28,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/boot/boot.iml" filepath="$PROJECT_DIR$/platform/boot/boot.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/bootstrap/bootstrap.iml" filepath="$PROJECT_DIR$/platform/bootstrap/bootstrap.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/build/build.iml" filepath="$PROJECT_DIR$/build/build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/built-in-server/built-in-server.iml" filepath="$PROJECT_DIR$/platform/built-in-server/built-in-server.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" filepath="$PROJECT_DIR$/platform/built-in-server-api/built-in-server-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/colorSchemes/colorSchemes.iml" filepath="$PROJECT_DIR$/colorSchemes/colorSchemes.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/commander.iml" filepath="$PROJECT_DIR$/plugins/commander/commander.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/common/common.iml" filepath="$PROJECT_DIR$/android/tools-base/common/common.iml" group="android/sdktools" />
@@ -40,10 +43,11 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/copyright/copyright.iml" filepath="$PROJECT_DIR$/plugins/copyright/copyright.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-api/core-api.iml" filepath="$PROJECT_DIR$/platform/core-api/core-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-impl/core-impl.iml" filepath="$PROJECT_DIR$/platform/core-impl/core-impl.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/python/edu/course-creator/course-creator.iml" filepath="$PROJECT_DIR$/python/edu/course-creator/course-creator.iml" group="python/educational" />
+      <module fileurl="file://$PROJECT_DIR$/python/educational/course-creator/course-creator.iml" filepath="$PROJECT_DIR$/python/educational/course-creator/course-creator.iml" group="plugins/python/educational/educational-core" />
+      <module fileurl="file://$PROJECT_DIR$/python/edu/course-creator-python/course-creator-python.iml" filepath="$PROJECT_DIR$/python/edu/course-creator-python/course-creator-python.iml" group="plugins/python/educational/python-educational" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage.iml" group="plugins/coverage" />
       <module fileurl="file://$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" filepath="$PROJECT_DIR$/plugins/coverage-common/coverage-common.iml" group="plugins/coverage" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/covergae_rt/coverage_rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/covergae_rt/coverage_rt.iml" group="plugins/coverage" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/coverage/coverage_rt/coverage_rt.iml" filepath="$PROJECT_DIR$/plugins/coverage/coverage_rt/coverage_rt.iml" group="plugins/coverage" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cucumber-jvm-formatter/cucumber-jvm-formatter.iml" filepath="$PROJECT_DIR$/plugins/cucumber-jvm-formatter/cucumber-jvm-formatter.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/build/cucumber-test-runner/cucumber-test-runner.iml" filepath="$PROJECT_DIR$/build/cucumber-test-runner/cucumber-test-runner.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/cvs-core/cvs-core.iml" filepath="$PROJECT_DIR$/plugins/cvs/cvs-core/cvs-core.iml" group="plugins/VCS/cvs" />
@@ -53,6 +57,8 @@
       <module fileurl="file://$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" filepath="$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/jps-plugin/devkit-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/devkit/jps-plugin/devkit-jps-plugin.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/platform/diff-api/diff-api.iml" filepath="$PROJECT_DIR$/platform/diff-api/diff-api.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/diff-impl/diff-impl.iml" filepath="$PROJECT_DIR$/platform/diff-impl/diff-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/xml/dom-impl/dom-impl.iml" filepath="$PROJECT_DIR$/xml/dom-impl/dom-impl.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/dom-openapi/dom-openapi.iml" filepath="$PROJECT_DIR$/xml/dom-openapi/dom-openapi.iml" group="xml" />
       <module fileurl="file://$PROJECT_DIR$/xml/dom-tests/dom-tests.iml" filepath="$PROJECT_DIR$/xml/dom-tests/dom-tests.iml" group="xml" />
@@ -66,6 +72,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" filepath="$PROJECT_DIR$/platform/editor-ui-api/editor-ui-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" filepath="$PROJECT_DIR$/platform/editor-ui-ex/editor-ui-ex.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/editorconfig/editorconfig.iml" filepath="$PROJECT_DIR$/plugins/editorconfig/editorconfig.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/python/educational/educational.iml" filepath="$PROJECT_DIR$/python/educational/educational.iml" group="plugins/python/educational/educational-core" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/impl/execution-impl.iml" filepath="$PROJECT_DIR$/java/execution/impl/execution-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" filepath="$PROJECT_DIR$/java/execution/openapi/execution-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/extensions/extensions.iml" filepath="$PROJECT_DIR$/platform/extensions/extensions.iml" group="platform" />
@@ -94,6 +101,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" filepath="$PROJECT_DIR$/platform/indexing-impl/indexing-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" filepath="$PROJECT_DIR$/java/compiler/instrumentation-util/instrumentation-util.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellilang-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/IntelliLang/intellilang-jps-plugin/intellilang-jps-plugin.iml" group="jps" />
+      <module fileurl="file://$PROJECT_DIR$/python/educational/interactive-learning/interactive-learning.iml" filepath="$PROJECT_DIR$/python/educational/interactive-learning/interactive-learning.iml" group="plugins/python/educational/educational-core" />
+      <module fileurl="file://$PROJECT_DIR$/python/edu/interactive-learning-python/interactive-learning-python.iml" filepath="$PROJECT_DIR$/python/edu/interactive-learning-python/interactive-learning-python.iml" group="plugins/python/educational/python-educational" />
       <module fileurl="file://$PROJECT_DIR$/python/ipnb/ipnb.iml" filepath="$PROJECT_DIR$/python/ipnb/ipnb.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-api/java-analysis-api.iml" filepath="$PROJECT_DIR$/java/java-analysis-api/java-analysis-api.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-impl/java-analysis-impl.iml" filepath="$PROJECT_DIR$/java/java-analysis-impl/java-analysis-impl.iml" group="java" />
@@ -134,7 +143,6 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lang-api/lang-api.iml" filepath="$PROJECT_DIR$/platform/lang-api/lang-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" filepath="$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/layoutlib-api/layoutlib-api.iml" filepath="$PROJECT_DIR$/android/tools-base/layoutlib-api/layoutlib-api.iml" group="android/sdktools" />
-      <module fileurl="file://$PROJECT_DIR$/python/edu/learn-python/learn-python.iml" filepath="$PROJECT_DIR$/python/edu/learn-python/learn-python.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/lint/libs/lint-api/lint-api.iml" filepath="$PROJECT_DIR$/android/tools-base/lint/libs/lint-api/lint-api.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/lint/libs/lint-checks/lint-checks.iml" filepath="$PROJECT_DIR$/android/tools-base/lint/libs/lint-checks/lint-checks.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
@@ -152,7 +160,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps-plugin/maven-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/maven/jps-plugin/maven-jps-plugin.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-server-api/maven-server-api.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-server-api/maven-server-api.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven2-server-impl/maven2-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven2-server-impl/maven2-server-impl.iml" group="plugins/maven" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-impl/maven3-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-impl/maven3-server-impl.iml" group="plugins/maven" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven3-server-common/maven3-server-common.iml" filepath="$PROJECT_DIR$/plugins/maven/maven3-server-common/maven3-server-common.iml" group="plugins/maven" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven30-server-impl/maven30-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven30-server-impl/maven30-server-impl.iml" group="plugins/maven" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven32-server-impl/maven32-server-impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven32-server-impl/maven32-server-impl.iml" group="plugins/maven" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/ninepatch/ninepatch.iml" filepath="$PROJECT_DIR$/android/tools-base/ninepatch/ninepatch.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/java/openapi/openapi.iml" filepath="$PROJECT_DIR$/java/openapi/openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/perflib/perflib.iml" filepath="$PROJECT_DIR$/android/tools-base/perflib/perflib.iml" group="android/sdktools" />

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.engine.SourcePositionProvider;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -77,13 +78,7 @@ public class EditSourceAction extends DebuggerAction{
     final NodeDescriptorImpl nodeDescriptor1 = nodeDescriptor;
     return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
       public SourcePosition compute() {
-        if (nodeDescriptor1 instanceof FieldDescriptorImpl && debuggerSession != null) {
-          return ((FieldDescriptorImpl)nodeDescriptor1).getSourcePosition(project, context);
-        }
-        if (nodeDescriptor1 instanceof LocalVariableDescriptorImpl && debuggerSession != null) {
-          return ((LocalVariableDescriptorImpl)nodeDescriptor1).getSourcePosition(project, context);
-        }
-        return null;
+        return SourcePositionProvider.getSourcePosition(nodeDescriptor1, project, context);
       }
     });
   }

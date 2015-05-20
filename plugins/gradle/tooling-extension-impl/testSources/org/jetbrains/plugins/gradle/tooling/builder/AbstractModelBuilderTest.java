@@ -18,9 +18,11 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 import com.intellij.openapi.externalSystem.model.ExternalProject;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -29,6 +31,7 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
@@ -52,6 +55,7 @@ import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeThat;
 
 /**
  * @author Vladislav.Soroka
@@ -62,7 +66,7 @@ public abstract class AbstractModelBuilderTest {
 
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
     {"1.9"}, {"1.10"}, {"1.11"}, {"1.12"},
-    {"2.0"}, {"2.1"}, {"2.2"}
+    {"2.0"}, {"2.1"}, {"2.2"} , {"2.3"}
   };
 
   public static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)\\]");
@@ -70,11 +74,12 @@ public abstract class AbstractModelBuilderTest {
   private static File ourTempDir;
 
   @NotNull
-  private final String gradleVersion;
+  protected final String gradleVersion;
   protected File testDir;
   protected ProjectImportAction.AllModels allModels;
 
   @Rule public TestName name = new TestName();
+  @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
 
   public AbstractModelBuilderTest(@NotNull String gradleVersion) {
     this.gradleVersion = gradleVersion;
@@ -88,6 +93,8 @@ public abstract class AbstractModelBuilderTest {
 
   @Before
   public void setUp() throws Exception {
+    assumeThat(gradleVersion, versionMatcherRule.getMatcher());
+
     ensureTempDirCreated();
 
     String methodName = name.getMethodName();
@@ -129,6 +136,8 @@ public abstract class AbstractModelBuilderTest {
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);
+      String jdkHome = IdeaTestUtil.requireRealJdkHome();
+      buildActionExecutor.setJavaHome(new File(jdkHome));
       buildActionExecutor.setJvmArguments("-Xmx64m", "-XX:MaxPermSize=64m");
       buildActionExecutor.withArguments("--info", "--recompile-scripts", GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.getAbsolutePath());
       allModels = buildActionExecutor.run();
@@ -145,7 +154,8 @@ public abstract class AbstractModelBuilderTest {
       // gradle-tooling-extension-api jar
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
-      ModelBuildScriptClasspathBuilderImpl.class
+      ModelBuildScriptClasspathBuilderImpl.class,
+      ShortTypeHandling.class
     );
 
     ContainerUtil.addAllNotNull(classes, doGetToolingExtensionClasses());

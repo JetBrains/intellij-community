@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,9 @@ import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author MYakovlev
- * Date: Jul 19, 2002
- */
 public abstract class CodeStyleSchemes {
   public static CodeStyleSchemes getInstance(){
-    CodeStyleSchemes schemes = ServiceManager.getService(CodeStyleSchemes.class);
-    if (!schemes.isLoaded()) {
-      schemes.loadSettings();
-    }
-    return schemes;
+    return ServiceManager.getService(CodeStyleSchemes.class);
   }
 
   public abstract CodeStyleScheme[] getSchemes();
@@ -69,9 +61,5 @@ public abstract class CodeStyleSchemes {
   public abstract CodeStyleScheme getDefaultScheme();
 
   public abstract void addScheme(CodeStyleScheme currentScheme);
-
-  public abstract boolean isLoaded();
-
-  public abstract void loadSettings();
 }
 

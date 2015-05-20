@@ -95,7 +95,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     return true;
   }
 
-  private static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
+  public static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
     if (d1.isPropertyConflict() != d2.isPropertyConflict()) return false;
     if (d1.isTextConflict() != d2.isTextConflict()) return false;
     if (d1.isTreeConflict() != d2.isTreeConflict()) return false;
@@ -280,7 +280,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                                                             true) {
             @Override
             protected void process(TreeConflictDescription d) throws VcsException {
-              new SvnTreeConflictResolver(myVcs, paths.myMainPath, myCommittedRevision, paths.myAdditionalPath).resolveSelectTheirsFull(d);
+              new SvnTreeConflictResolver(myVcs, paths.myMainPath, paths.myAdditionalPath).resolveSelectTheirsFull();
             }
 
             @Override
@@ -337,7 +337,7 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
                                                             true) {
             @Override
             protected void process(TreeConflictDescription d) throws VcsException {
-              new SvnTreeConflictResolver(myVcs, paths.myMainPath, myCommittedRevision, paths.myAdditionalPath).resolveSelectMineFull(d);
+              new SvnTreeConflictResolver(myVcs, paths.myMainPath, paths.myAdditionalPath).resolveSelectMineFull();
             }
 
             @Override

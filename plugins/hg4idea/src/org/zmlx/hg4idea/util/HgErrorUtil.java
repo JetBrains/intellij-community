@@ -17,9 +17,11 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -35,26 +37,34 @@ public final class HgErrorUtil {
 
   private static final Logger LOG = Logger.getInstance(HgErrorUtil.class.getName());
 
-  public static final String SETTINGS_LINK = "settings";
-  public static final String MAPPING_ERROR_MESSAGE = String.format(
+  private static final String SETTINGS_LINK = "settings";
+  public static final String MAPPING_ERROR_MESSAGE =
     "Please, ensure that your project base dir is hg root directory or specify full repository path in  <a href='" +
-    SETTINGS_LINK +
-    "'>directory mappings panel</a>.");
+    SETTINGS_LINK + "'>directory mappings panel</a>.";
+  private static final String MERGE_WITH_ANCESTOR_ERROR = "merging with a working directory ancestor has no effect";
 
   private HgErrorUtil() {
   }
 
   public static boolean isAbort(@Nullable HgCommandResult result) {
-    if (result == null) {
-      return true;
-    }
+    return result == null || getAbortLine(result) != null;
+  }
+
+  @Nullable
+  private static String getAbortLine(@NotNull HgCommandResult result) {
     final List<String> errorLines = result.getErrorLines();
-    for (String line : errorLines) {
-      if (isAbortLine(line)) {
-        return true;
+    return ContainerUtil.find(errorLines, new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return isAbortLine(s);
       }
-    }
-    return false;
+    });
+  }
+
+  public static boolean isAncestorMergeError(@Nullable HgCommandResult result) {
+    if (result == null) return false;
+    String errorLine = getAbortLine(result);
+    return errorLine != null && StringUtil.contains(errorLine, MERGE_WITH_ANCESTOR_ERROR);
   }
 
   public static boolean isAuthorizationError(@Nullable HgCommandResult result) {

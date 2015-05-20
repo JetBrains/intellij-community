@@ -26,6 +26,8 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 20, 2008
+ *
+ * @see com.intellij.psi.impl.search.IndexPatternBuilder
  */
 public abstract class LexerBasedTodoIndexer extends VersionedTodoIndexer implements IdAndToDoScannerBasedOnFilterLexer {
   @Override

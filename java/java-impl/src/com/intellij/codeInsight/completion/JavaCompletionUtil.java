@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
@@ -62,9 +63,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -153,18 +152,7 @@ public class JavaCompletionUtil {
       return type;
     }
 
-    T result = (T)type.accept(new PsiTypeVisitor<PsiType>() {
-
-      @Override
-      public PsiType visitArrayType(final PsiArrayType arrayType) {
-        return new PsiArrayType(originalize(arrayType.getComponentType()));
-      }
-
-      @Override
-      public PsiType visitCapturedWildcardType(final PsiCapturedWildcardType capturedWildcardType) {
-        return PsiCapturedWildcardType.create(originalize(capturedWildcardType.getWildcard()), capturedWildcardType.getContext());
-      }
-
+    T result = new PsiTypeMapper() {
       @Override
       public PsiType visitClassType(final PsiClassType classType) {
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
@@ -178,35 +166,16 @@ public class JavaCompletionUtil {
       }
 
       @Override
-      public PsiType visitEllipsisType(final PsiEllipsisType ellipsisType) {
-        return new PsiEllipsisType(originalize(ellipsisType.getComponentType()));
-      }
-
-      @Override
-      public PsiType visitPrimitiveType(final PsiPrimitiveType primitiveType) {
-        return primitiveType;
-      }
-
-      @Override
-      public PsiType visitType(final PsiType type) {
+      public PsiType visitType(PsiType type) {
         return type;
       }
-
-      @Override
-      public PsiType visitWildcardType(final PsiWildcardType wildcardType) {
-        final PsiType bound = wildcardType.getBound();
-        final PsiManager manager = wildcardType.getManager();
-        if (bound == null) return PsiWildcardType.createUnbounded(manager);
-        return wildcardType.isExtends() ? PsiWildcardType.createExtends(manager, bound) : PsiWildcardType.createSuper(manager, bound);
-      }
-    });
+    }.mapType(type);
     if (result == null) {
       throw new AssertionError("Null result for type " + type + " of class " + type.getClass());
     }
     return result;
   }
 
-  @Nullable
   private static PsiSubstitutor originalize(@Nullable final PsiSubstitutor substitutor) {
     if (substitutor == null) return null;
 
@@ -512,29 +481,28 @@ public class JavaCompletionUtil {
                                                 @NotNull LookupElement item,
                                                 @NotNull Object object,
                                                 @NotNull PsiElement place) {
-    final boolean bold = containsMember(qualifierType, object);
-    boolean red = false;
-    if (object instanceof PsiMember) {
-      red = Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place));
-    }
-    LookupElement result = item;
-    if (bold || red) {
-      final Color fg = red ? JBColor.RED : null;
-      result = LookupElementDecorator.withRenderer(result, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+    if (object instanceof PsiMember &&
+        Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place))) {
+      return LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
         @Override
         public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
           element.getDelegate().renderElement(presentation);
-          presentation.setItemTextBold(bold);
-          if (fg != null) {
-            presentation.setItemTextForeground(fg);
-          }
+          presentation.setItemTextForeground(JBColor.RED);
         }
       });
     }
-    if (bold) {
-      result = PrioritizedLookupElement.withExplicitProximity(result, 1);
+    if (containsMember(qualifierType, object)) {
+      LookupElementRenderer<LookupElementDecorator<LookupElement>> boldRenderer =
+        new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+          @Override
+          public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+            element.getDelegate().renderElement(presentation);
+            presentation.setItemTextBold(true);
+          }
+        };
+      return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, boldRenderer), 1);
     }
-    return result;
+    return item;
   }
 
   public static boolean containsMember(@Nullable PsiType qualifierType, @NotNull Object object) {
@@ -584,6 +552,10 @@ public class JavaCompletionUtil {
                                                                          JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
                                                                          Conditions.<PsiClass>alwaysTrue());
       }
+    }
+    
+    if (reference instanceof PsiMethodReferenceExpression && completion instanceof PsiMethod && ((PsiMethod)completion).isConstructor()) {
+      return Arrays.asList(JavaLookupElementBuilder.forMethod((PsiMethod)completion, "new", PsiSubstitutor.EMPTY, null));
     }
 
     LookupElement _ret = LookupItemUtil.objectToLookupItem(completion);

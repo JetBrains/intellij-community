@@ -68,7 +68,7 @@ public abstract class AbstractExternalSystemSettings<
 
   /**
    * Every time particular external system setting is changed corresponding message is sent via ide
-   * <a href="http://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+Messaging+infrastructure">messaging sub-system</a>.
+   * <a href="https://confluence.jetbrains.com/display/IDEADEV/IntelliJ+IDEA+Messaging+infrastructure">messaging sub-system</a>.
    * The problem is that every external system implementation defines it's own topic/listener pair. Listener interface is derived
    * from the common {@link ExternalSystemSettingsListener} interface and is specific to external sub-system implementation.
    * However, it's possible that a client wants to perform particular actions based only on {@link ExternalSystemSettingsListener}
@@ -82,7 +82,6 @@ public abstract class AbstractExternalSystemSettings<
   public abstract void subscribe(@NotNull ExternalSystemSettingsListener<PS> listener);
 
   public void copyFrom(@NotNull SS settings) {
-    myLinkedProjectsSettings.clear();
     for (PS projectSettings : settings.getLinkedProjectsSettings()) {
       myLinkedProjectsSettings.put(projectSettings.getExternalProjectPath(), projectSettings);
     }

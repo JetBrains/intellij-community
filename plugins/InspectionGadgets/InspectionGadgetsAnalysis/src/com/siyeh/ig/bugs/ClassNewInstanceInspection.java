@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2010 Bas Leijdekkers
+ * Copyright 2009-2015 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -72,8 +73,7 @@ public class ClassNewInstanceInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression)) {
@@ -90,13 +90,20 @@ public class ClassNewInstanceInspection extends BaseInspection {
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiElement parentOfType = PsiTreeUtil.getParentOfType(element,
-                                                                  PsiMethod.class, PsiTryStatement.class);
+      final PsiElement parentOfType =
+        PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiTryStatement.class, PsiLambdaExpression.class);
       if (parentOfType instanceof PsiTryStatement) {
         final PsiTryStatement tryStatement =
           (PsiTryStatement)parentOfType;
         addCatchBlock(tryStatement, "java.lang.NoSuchMethodException",
                       "java.lang.reflect.InvocationTargetException");
+      }
+      else if (parentOfType instanceof PsiLambdaExpression) {
+        final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(parentOfType);
+        if (FileModificationService.getInstance().preparePsiElementsForWrite(method)) {
+          addThrowsClause(method, "java.lang.NoSuchMethodException",
+                          "java.lang.reflect.InvocationTargetException");
+        }
       }
       else {
         final PsiMethod method = (PsiMethod)parentOfType;

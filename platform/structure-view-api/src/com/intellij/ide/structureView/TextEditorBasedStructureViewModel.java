@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * The standard {@link StructureViewModel} implementation which is linked to a text editor.
  *
- * @see com.intellij.ide.structureView.TreeBasedStructureViewBuilder#createStructureViewModel(Editor editor)
+ * @see TreeBasedStructureViewBuilder#createStructureViewModel(Editor editor)
  */
 
 public abstract class TextEditorBasedStructureViewModel implements StructureViewModel, ProvidingTreeModel {
@@ -48,6 +48,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   private final Disposable myDisposable = Disposer.newDisposable();
   private final List<FileEditorPositionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private List<ModelListener> myModelListeners = new ArrayList<ModelListener>(2);
+  private CaretAdapter myEditorCaretListener;
 
   /**
    * Creates a structure view model instance linked to a text editor displaying the specified
@@ -72,28 +73,32 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     myEditor = editor;
     myPsiFile = file;
 
-    if (editor != null) {
-      EditorFactory.getInstance().getEventMulticaster().addCaretListener(new CaretAdapter() {
-        @Override
-        public void caretPositionChanged(CaretEvent e) {
-          if (e.getEditor().equals(myEditor)) {
-            for (FileEditorPositionListener listener : myListeners) {
-              listener.onCurrentElementChanged();
-            }
+    myEditorCaretListener = new CaretAdapter() {
+      @Override
+      public void caretPositionChanged(CaretEvent e) {
+        if (e.getEditor().equals(myEditor)) {
+          for (FileEditorPositionListener listener : myListeners) {
+            listener.onCurrentElementChanged();
           }
         }
-      }, myDisposable);
-    }
+      }
+    };
   }
 
   @Override
   public final void addEditorPositionListener(@NotNull FileEditorPositionListener listener) {
+    if (myEditor != null && myListeners.isEmpty()) {
+      EditorFactory.getInstance().getEventMulticaster().addCaretListener(myEditorCaretListener, myDisposable);
+    }
     myListeners.add(listener);
   }
 
   @Override
   public final void removeEditorPositionListener(@NotNull FileEditorPositionListener listener) {
     myListeners.remove(listener);
+    if (myEditor != null && myListeners.isEmpty()) {
+      EditorFactory.getInstance().getEventMulticaster().removeCaretListener(myEditorCaretListener);
+    }
   }
 
   @Override

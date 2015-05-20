@@ -1,0 +1,131 @@
+public int hashCode() {
+#if (!$superHasHashCode && $fields.size() == 1)
+  #set($field = $fields.get(0))
+  #if ($field.primitive)
+#addTempForOneField($field)
+    return #addPrimitiveFieldHashCode($field);
+  #else
+    return #addFieldHashCode($field, false);
+  #end
+#elseif ($fields.size() > 0)
+  #set($resultName = $helper.getUniqueLocalVarName("result", $fields, $settings))
+  int $resultName ##
+  #set($resultAssigned = false)
+  #set($resultDeclarationCompleted = false)
+  #if ($superHasHashCode)
+    = #addSuperHashCode();
+    #set($resultAssigned = true)
+    #set($resultDeclarationCompleted = true)
+  #end
+  #addTempDeclaration($resultDeclarationCompleted)
+  #set($tempName = "#addTempDeclaration($resultDeclarationCompleted)")
+  #foreach($field in $fields)
+    #addTempAssignment($field)
+    #if ($resultDeclarationCompleted)
+      $resultName ##
+    #end
+    = ##
+    #if ($resultAssigned)
+        31 * $resultName + ##
+    #end
+    #if ($field.primitive)
+      #addPrimitiveFieldHashCode($field)##
+    #else
+      #addFieldHashCode($field, $resultAssigned)##
+    #end
+    ;
+    #set($resultAssigned = true)
+    #set($resultDeclarationCompleted = true)
+  #end
+  return $resultName;
+#else
+  return 0;
+#end
+}
+##
+#macro (addPrimitiveFieldHashCode $field)
+  #set ($fName = $field.accessor)
+  #if ($field.byte || $field.short || $field.char)
+    (int) $fName##
+  #elseif ($field.long)
+    (int)($fName ^ ($fName >>> 32))##
+  #elseif ($field.boolean)
+    ($fName ? 1 : 0)##
+  #elseif ($field.float)
+    ($fName != +0.0f ? Float.floatToIntBits($fName) : 0)##
+  #elseif ($field.double)
+    #set($tempName = "#getTempVarName()")
+    (int) ($tempName ^ ($tempName >>> 32))##
+  #elseif ($field.void)
+    0##
+  #else
+    $fName##
+  #end
+#end
+##
+#macro(getTempVarName)
+  $helper.getUniqueLocalVarName("temp", $fields, $settings)##
+#end
+##
+#macro(addTempForOneField $field)
+  #if ($field.double)
+    #if ($settings.generateFinalLocals)
+    final ##
+    #end
+  #set($tempName = "#getTempVarName()")
+  long $tempName = Double.doubleToLongBits($field.accessor);
+  #end
+#end
+##
+#macro(adjustHashCodeToArrays $field)
+   #if ($field.array && $java_version > 4)
+    #if ($field.nestedArray)
+      java.util.Arrays.deepHashCode($field.accessor)##
+    #else
+      java.util.Arrays.hashCode($field.accessor)##
+    #end
+  #else
+    ${field.accessor}.hashCode()##
+  #end
+#end
+##
+#macro(addSuperHashCode)
+  #if ($superHasHashCode)
+    super.hashCode()##
+  #else
+    0##
+  #end
+#end
+##
+#macro(addTempDeclaration $resultDeclarationCompleted)
+  #foreach($field in $fields)
+    #if ($field.double)
+      #if (!$resultDeclarationCompleted)
+        ;
+      #end
+      #set($tempName = "#getTempVarName()")
+      long $tempName;
+      #set($resultDeclarationCompleted = true)
+      #break
+    #end
+  #end
+#end
+##
+#macro(addTempAssignment $field)
+  #if ($field.double)
+    #set($tempName = "#getTempVarName()")
+    $tempName = Double.doubleToLongBits($field.accessor);
+  #end
+#end
+##
+#macro(addFieldHashCode $field $brace)
+#set($name = $field.accessor)
+#if ($field.notNull)#adjustHashCodeToArrays($field)
+  #else
+    #if ($brace)(##
+    #end
+    $name != null ? #adjustHashCodeToArrays($field) : 0##
+    #if ($brace))##
+    #end
+  #end
+#end

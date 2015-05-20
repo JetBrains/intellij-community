@@ -1,4 +1,4 @@
-// "Invert If Condition" "true"
+// "Invert 'if' condition" "true"
 class B {
     public static void foo() {
         for (int i = 0; i < 10; i++) {

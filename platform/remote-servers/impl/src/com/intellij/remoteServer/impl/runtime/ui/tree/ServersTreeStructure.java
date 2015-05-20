@@ -182,17 +182,17 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       final RemoteServer<?> server = getValue();
       final ServerType<? extends ServerConfiguration> serverType = server.getType();
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(doGetProject());
-      List<RunnerAndConfigurationSettings> list
-        = ContainerUtil.filter(configurationManager.getDeploymentConfigurations(serverType),
-                               new Condition<RunnerAndConfigurationSettings>() {
-
-                                 @Override
-                                 public boolean value(RunnerAndConfigurationSettings settings) {
-                                   DeployToServerRunConfiguration configuration =
-                                     (DeployToServerRunConfiguration)settings.getConfiguration();
-                                   return StringUtil.equals(server.getName(), configuration.getServerName());
-                                 }
-                               });
+      final List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(ContainerUtil.filter(
+        configurationManager.getDeploymentConfigurations(serverType),
+        new Condition<RunnerAndConfigurationSettings>() {
+          @Override
+          public boolean value(RunnerAndConfigurationSettings settings) {
+            DeployToServerRunConfiguration configuration =
+              (DeployToServerRunConfiguration)settings.getConfiguration();
+            return StringUtil.equals(server.getName(), configuration.getServerName());
+          }
+        }
+      ));
       if (canCreate) {
         list.add(null);
       }
@@ -345,7 +345,7 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     @Override
     public LoggingHandlerImpl getLoggingHandler() {
       DeploymentLogManagerImpl logManager = getLogManager();
-      return logManager != null ? logManager.getMainLoggingHandler() : null;
+      return logManager != null && logManager.isMainHandlerVisible() ? logManager.getMainLoggingHandler() : null;
     }
 
     @Nullable

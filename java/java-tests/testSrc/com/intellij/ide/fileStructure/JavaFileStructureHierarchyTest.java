@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class JavaFileStructureHierarchyTest extends JavaFileStructureTestCase {
     setShowParents(true);
   }
 
-  public void testSimple() throws Exception {checkTree();}
-  public void testAnonymousAsConstantInInterface() throws Exception {checkTree("getA");}
-  public void testAnonymousHashCode() throws Exception {checkTree("hash");}
+  public void testSimple() {checkTree();}
+  public void testAnonymousAsConstantInInterface() {checkTree("getA");}
+  public void testAnonymousHashCode() {checkTree("hash");}
 }

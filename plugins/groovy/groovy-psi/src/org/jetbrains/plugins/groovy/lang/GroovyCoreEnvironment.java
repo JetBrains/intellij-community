@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
 import com.intellij.core.CoreApplicationEnvironment;
 import com.intellij.core.CoreProjectEnvironment;
-import com.intellij.ide.IconProvider;
+import com.intellij.ide.FileIconProvider;
 import com.intellij.javaee.CoreExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.LanguageAnnotators;
@@ -76,7 +77,6 @@ import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.geb.*;
 import org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider;
 import org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor;
-import org.jetbrains.plugins.groovy.gpp.GppImplicitUsageProvider;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -135,7 +135,8 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(NonCodeMembersContributor.EP_NAME, new DGMMemberContributor());
       appEnvironment.addExtension(NonCodeMembersContributor.EP_NAME, new SwingBuilderNonCodeMemberContributor());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), DefaultImportContributor.EP_NAME, DefaultImportContributor.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), DefaultImportContributor.EP_NAME,
+                                                        DefaultImportContributor.class);
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), AstTransformContributor.EP_NAME, AstTransformContributor.class);
       appEnvironment.addExtension(AstTransformContributor.EP_NAME, new AutoCloneContributor());
@@ -145,7 +146,8 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(AstTransformContributor.EP_NAME, new GrInheritConstructorContributor());
       appEnvironment.addExtension(AstTransformContributor.EP_NAME, new LoggingContributor());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClosureMissingMethodContributor.EP_NAME, ClosureMissingMethodContributor.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClosureMissingMethodContributor.EP_NAME,
+                                                        ClosureMissingMethodContributor.class);
       appEnvironment.addExtension(ClosureMissingMethodContributor.EP_NAME, new PluginXmlClosureMemberContributor());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrVariableEnhancer.EP_NAME, GrVariableEnhancer.class);
@@ -154,7 +156,8 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(GrVariableEnhancer.EP_NAME, new ClosureParamsEnhancer());
       appEnvironment.addExtension(GrVariableEnhancer.EP_NAME, new GppClosureParameterTypeProvider());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrReferenceTypeEnhancer.EP_NAME, GrReferenceTypeEnhancer.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrReferenceTypeEnhancer.EP_NAME,
+                                                        GrReferenceTypeEnhancer.class);
       appEnvironment.addExtension(GrReferenceTypeEnhancer.EP_NAME, new GroovyMapValueTypeEnhancer());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrTypeConverter.EP_NAME, GrTypeConverter.class);
@@ -171,23 +174,28 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GrContainerConverter());
       appEnvironment.addExtension(GrTypeConverter.EP_NAME, new GppTypeConverter());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyExpectedTypesContributor.EP_NAME, GroovyExpectedTypesContributor.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyExpectedTypesContributor.EP_NAME,
+                                                        GroovyExpectedTypesContributor.class);
       appEnvironment.addExtension(GroovyExpectedTypesContributor.EP_NAME, new GppExpectedTypesContributor());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyScriptTypeDetector.EP_NAME, GroovyScriptTypeDetector.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyScriptTypeDetector.EP_NAME,
+                                                        GroovyScriptTypeDetector.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyNamedArgumentProvider.EP_NAME, GroovyNamedArgumentProvider.class);
       appEnvironment.addExtension(GroovyNamedArgumentProvider.EP_NAME, new GroovyConstructorNamedArgumentProvider());
       appEnvironment.addExtension(GroovyNamedArgumentProvider.EP_NAME, new GroovyMethodReturnNamedArgumentProvider());
       appEnvironment.addExtension(GroovyNamedArgumentProvider.EP_NAME, new GroovySourceCodeNamedArgumentProvider());
       appEnvironment.addExtension(GroovyNamedArgumentProvider.EP_NAME, new SwingBuilderNamedArgumentProvider());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyMapContentProvider.EP_NAME, GroovyMapContentProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyMapContentProvider.EP_NAME,
+                                                        GroovyMapContentProvider.class);
       appEnvironment.addExtension(GroovyMapContentProvider.EP_NAME, new ConfigSlurperMapContentProvider());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyUnresolvedHighlightFilter.EP_NAME, GroovyUnresolvedHighlightFilter.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyUnresolvedHighlightFilter.EP_NAME,
+                                                        GroovyUnresolvedHighlightFilter.class);
       appEnvironment.addExtension(GroovyUnresolvedHighlightFilter.EP_NAME, new GroovyUnresolvedReferenceFilterByFile());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyUnresolvedHighlightFileFilter.EP_NAME, GroovyUnresolvedHighlightFileFilter.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyUnresolvedHighlightFileFilter.EP_NAME,
+                                                        GroovyUnresolvedHighlightFileFilter.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrCallExpressionTypeCalculator.EP_NAME, GrCallExpressionTypeCalculator.class);
       appEnvironment.addExtension(GrCallExpressionTypeCalculator.EP_NAME, new DefaultCallExpressionTypeCalculator());
       appEnvironment.addExtension(GrCallExpressionTypeCalculator.EP_NAME, new GrDescriptorReturnTypeCalculator());
@@ -210,7 +218,8 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(GdslMembersProvider.EP_NAME, new GdkMethodDslProvider());
       appEnvironment.addExtension(GdslMembersProvider.EP_NAME, new GroovyDslDefaultMembers());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyFrameworkConfigNotification.EP_NAME, GroovyFrameworkConfigNotification.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GroovyFrameworkConfigNotification.EP_NAME,
+                                                        GroovyFrameworkConfigNotification.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), GrMethodMayBeStaticInspectionFilter.EP_NAME, GrMethodMayBeStaticInspectionFilter.class);
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), CustomAnnotationChecker.EP_NAME, CustomAnnotationChecker.class);
       appEnvironment.addExtension(CustomAnnotationChecker.EP_NAME, new AnnotationCollectorChecker());
@@ -222,24 +231,29 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(CustomAnnotationChecker.EP_NAME, new NewifyAnnotationChecker());
       appEnvironment.addExtension(CustomAnnotationChecker.EP_NAME, new TypeCheckedAnnotationChecker());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ImplicitPropertyUsageProvider.EP_NAME, ImplicitPropertyUsageProvider.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ImplicitPropertyUsageProvider.EP_NAME,
+                                                        ImplicitPropertyUsageProvider.class);
       appEnvironment.addExtension(ImplicitPropertyUsageProvider.EP_NAME, new DGMImplicitPropertyUsageProvider());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, ImplicitUsageProvider.class);
-      appEnvironment.addExtension(ImplicitUsageProvider.EP_NAME, new GppImplicitUsageProvider());
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME,
+                                                        ImplicitUsageProvider.class);
       appEnvironment.addExtension(ImplicitUsageProvider.EP_NAME, new GrImplicitUsageProvider());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), FileTypeRegistry.FileTypeDetector.EP_NAME, FileTypeRegistry.FileTypeDetector.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), FileTypeRegistry.FileTypeDetector.EP_NAME,
+                                                        FileTypeRegistry.FileTypeDetector.class);
       appEnvironment.addExtension(FileTypeRegistry.FileTypeDetector.EP_NAME, new GroovyHashBangFileTypeDetector());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME,
+                                                        ClsCustomNavigationPolicy.class);
       appEnvironment.addExtension(ClsCustomNavigationPolicy.EP_NAME, new GroovyClsCustomNavigationPolicy());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), PomDeclarationSearcher.EP_NAME, PomDeclarationSearcher.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), PomDeclarationSearcher.EP_NAME,
+                                                        PomDeclarationSearcher.class);
       appEnvironment.addExtension(PomDeclarationSearcher.EP_NAME, new GebContentDeclarationSearcher());
       appEnvironment.addExtension(PomDeclarationSearcher.EP_NAME, new SpockPomDeclarationSearcher());
 
-      appEnvironment.addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, GroovyLanguage.INSTANCE, new GroovyConstantExpressionEvaluator());
+      appEnvironment.addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, GroovyLanguage.INSTANCE,
+                                          new GroovyConstantExpressionEvaluator());
 
       appEnvironment.addExplicitExtension(ExpressionConverter.EP, GroovyLanguage.INSTANCE, new GroovyExpressionConverter());
       appEnvironment.addExplicitExtension(LanguageAnnotators.INSTANCE, GroovyLanguage.INSTANCE, new GrAnnotatorImpl());
@@ -281,7 +295,8 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(StubIndexExtension.EP_NAME, new GrScriptClassNameIndex());
       appEnvironment.addExtension(StubIndexExtension.EP_NAME, new GrScriptClassNameIndex());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), FileBasedIndexExtension.EXTENSION_POINT_NAME, FileBasedIndexExtension.class);
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), FileBasedIndexExtension.EXTENSION_POINT_NAME,
+                                                        FileBasedIndexExtension.class);
       appEnvironment.addExtension(FileBasedIndexExtension.EXTENSION_POINT_NAME, new GroovyDslFileIndex());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ReferencesSearch.EP_NAME, QueryExecutor.class);
@@ -290,8 +305,8 @@ public class GroovyCoreEnvironment {
       appEnvironment.addExtension(ReferencesSearch.EP_NAME, new AccessorReferencesSearcher());
       appEnvironment.addExtension(ReferencesSearch.EP_NAME, new GroovyTraitFieldSearcher());
 
-      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), IconProvider.EXTENSION_POINT_NAME, IconProvider.class);
-      appEnvironment.addExtension(IconProvider.EXTENSION_POINT_NAME, new GroovyIconProvider());
+      CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), FileIconProvider.EP_NAME, FileIconProvider.class);
+      appEnvironment.addExtension(FileIconProvider.EP_NAME, new GroovyFileIconProvider());
 
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ResolveScopeProvider.EP_NAME, ResolveScopeProvider.class);
       appEnvironment.addExtension(ResolveScopeProvider.EP_NAME, new GroovyResolveScopeProvider());
@@ -328,9 +343,10 @@ public class GroovyCoreEnvironment {
       project.registerService(GroovyExtensionProvider.class, GroovyExtensionProvider.class);
       projectEnvironment.addProjectExtension(PsiShortNamesCache.EP_NAME, new GroovyShortNamesCache(project));
       projectEnvironment.addProjectExtension(PsiElementFinder.EP_NAME, new GroovyClassFinder(project));
-      projectEnvironment.registerProjectComponent(GroovyUnusedImportsPassFactory.class, new GroovyUnusedImportsPassFactory(project));
-      projectEnvironment.registerProjectComponent(GrKeywordAndDeclarationHighlightFactory.class, new GrKeywordAndDeclarationHighlightFactory(project));
-      projectEnvironment.registerProjectComponent(GrReferenceHighlighterFactory.class, new GrReferenceHighlighterFactory(project));
+      TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
+      projectEnvironment.registerProjectComponent(GroovyUnusedImportsPassFactory.class, new GroovyUnusedImportsPassFactory(project, registrar));
+      projectEnvironment.registerProjectComponent(GrKeywordAndDeclarationHighlightFactory.class, new GrKeywordAndDeclarationHighlightFactory(project, registrar));
+      projectEnvironment.registerProjectComponent(GrReferenceHighlighterFactory.class, new GrReferenceHighlighterFactory(project, registrar));
     }
   }
 }

@@ -1,4 +1,4 @@
-// "Create Field for Parameter 'id'" "true"
+// "Create field for parameter 'id'" "true"
 
 class Person {
     private String __fname;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A PSI element representing a file.
@@ -101,5 +100,9 @@ public interface PsiFile extends PsiFileSystemItem {
   @Override
   FileASTNode getNode();
 
+  /**
+   * Called by the PSI framework when the contents of the file changes. Can be used to invalidate
+   * file-level caches. If you override this method, you <b>must</b> call the base class implementation.
+   */
   void subtreeChanged();
 }

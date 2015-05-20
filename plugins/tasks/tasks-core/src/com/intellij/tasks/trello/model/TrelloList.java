@@ -18,6 +18,7 @@ package com.intellij.tasks.trello.model;
 
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -73,6 +74,7 @@ public class TrelloList extends TrelloModel {
     this.name = name;
   }
 
+  @Transient
   public boolean isMoved() {
     return myMoved;
   }

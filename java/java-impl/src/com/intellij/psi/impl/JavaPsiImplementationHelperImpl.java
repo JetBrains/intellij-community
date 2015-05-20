@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
@@ -69,6 +70,8 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   public PsiClass getOriginalClass(PsiClass psiClass) {
     PsiCompiledElement cls = psiClass.getUserData(ClsElementImpl.COMPILED_ELEMENT);
     if (cls != null && cls.isValid()) return (PsiClass)cls;
+    
+    if (DumbService.isDumb(myProject)) return psiClass;
 
     VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
     final ProjectFileIndex idx = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -112,7 +115,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       if (!(orderEntry instanceof LibraryOrSdkOrderEntry)) continue;
       for (VirtualFile root : orderEntry.getFiles(OrderRootType.SOURCES)) {
         VirtualFile source = root.findFileByRelativePath(relativePath);
-        if (source != null) {
+        if (source != null && source.isValid()) {
           PsiFile psiSource = clsFile.getManager().findFile(source);
           if (psiSource instanceof PsiClassOwner) {
             return psiSource;
@@ -263,10 +266,10 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
   @Override
   public void setupCatchBlock(@NotNull String exceptionName, @NotNull PsiType exceptionType, PsiElement context, @NotNull PsiCatchSection catchSection) {
-    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
+    final FileTemplate catchBodyTemplate = FileTemplateManager.getInstance(catchSection.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     LOG.assertTrue(catchBodyTemplate != null);
 
-    final Properties props = new Properties();
+    Properties props = FileTemplateManager.getInstance(myProject).getDefaultProperties();
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, exceptionName);
     props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION_TYPE, exceptionType.getCanonicalText());
     if (context != null && context.isPhysical()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,22 @@ import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.GroupWrapper;
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Alarm;
@@ -42,10 +47,6 @@ import javax.swing.tree.DefaultTreeModel;
 public class StructureTreeBuilder extends AbstractTreeBuilder {
   private final Project myProject;
   private final StructureViewModel myStructureModel;
-
-  private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
-  private final PsiTreeChangeListener myPsiTreeChangeListener;
-  private final ModelListener myModelListener;
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   
@@ -63,29 +64,26 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     myProject = project;
     myStructureModel = structureModel;
 
-    myPsiTreeChangeListener = new MyPsiTreeChangeListener();
-    myModelListener = new ModelListener() {
+    final ModelListener myModelListener = new ModelListener() {
       @Override
       public void onModelChanged() {
         addRootToUpdate();
       }
     };
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
 
-    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
-    CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
+    CopyPasteUtil.DefaultCopyPasteListener copyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
+    CopyPasteManager.getInstance().addContentChangedListener(copyPasteListener, this);
     initRootNode();
     myStructureModel.addModelListener(myModelListener);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        myStructureModel.removeModelListener(myModelListener);
+      }
+    });
 
     setCanYieldUpdate(!ApplicationManager.getApplication().isUnitTestMode());
-  }
-
-  @Override
-  public final void dispose() {
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
-    CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
-    myStructureModel.removeModelListener(myModelListener);
-    super.dispose();
   }
 
   @Override

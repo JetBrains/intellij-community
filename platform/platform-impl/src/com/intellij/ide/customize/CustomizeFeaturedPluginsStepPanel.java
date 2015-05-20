@@ -19,10 +19,10 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -31,9 +31,12 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -88,19 +91,24 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
 
 
+      final boolean isVIM = PluginGroups.IDEA_VIM_PLUGIN_ID.equals(descriptor.getPluginId().getIdString());
+      
       JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + title + "</h2></body></html>");
       JLabel topicLabel = new JLabel("<html><body><h4 style=\"text-align:left;\">" + topic + "</h4></body></html>");
-      JLabel descriptionLabel = new JLabel("<html><body><i>" + description + "</i></body></html>") {
-        @Override
-        public Dimension getPreferredSize() {
-          Dimension size = super.getPreferredSize();
-          size.width = Math.min(size.width, 200);
-          return size;
-        }
-      };
+
+      JLabel descriptionLabel = createHTMLLabel("<i>" + description + "</i>");
+      JLabel warningLabel = null;
+      if (isVIM) {
+        warningLabel = createHTMLLabel("Enables Vim-keymap and 'insert' mode for editing. " +
+                                       "Not recommended if you are unfamiliar with Vim.");
+        
+        if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
+      }
+      
       final CardLayout wrapperLayout = new CardLayout();
       final JPanel buttonWrapper = new JPanel(wrapperLayout);
-      final JButton installButton = new JButton("Install");
+      final JButton installButton = new JButton(isVIM ? "Install and Enable" : "Install");
+      
       final JProgressBar progressBar = new JProgressBar(0, 100);
       progressBar.setStringPainted(true);
       JPanel progressPanel = new JPanel(new VerticalFlowLayout(true, false));
@@ -110,7 +118,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       linkWrapper.add(cancelLink);
       progressPanel.add(linkWrapper);
 
-      JPanel buttonPanel = new JPanel(new VerticalFlowLayout(0, 0));
+      final JPanel buttonPanel = new JPanel(new VerticalFlowLayout(0, 0));
       buttonPanel.add(installButton);
 
       buttonWrapper.add(buttonPanel, "button");
@@ -180,9 +188,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
             public void run() {
               try {
                 indicator.start();
-                PluginNode node = new PluginNode(descriptor.getPluginId());
-                node.setUrl(descriptor.getUrl());
-                PluginDownloader downloader = PluginDownloader.createDownloader(node);
+                PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
                 downloader.prepareToInstall(indicator);
                 downloader.install();
                 indicator.processFinish();
@@ -222,6 +228,23 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       gbc.weighty = 1;
       groupPanel.add(Box.createVerticalGlue(), gbc);
       gbc.weighty = 0;
+      if (warningLabel != null) {
+        Insets insetsBefore = gbc.insets;
+        gbc.insets = new Insets(0, -10, SMALL_GAP, -10);
+        JPanel warningPanel = new JPanel(new BorderLayout()) {
+          @Override
+          public Color getBackground() {
+            return new JBColor(new Color(252, 254, 200), ColorUtil.fromHex("52503A"));
+          }
+        };
+        warningPanel.setBorder(new EmptyBorder(5, 10, 5, 10));
+        warningPanel.add(warningLabel);
+
+        groupPanel.add(warningPanel, gbc);
+        gbc.insets = insetsBefore;
+      }
+      
+      gbc.insets.bottom = 0;
       groupPanel.add(buttonWrapper, gbc);
       gridPanel.add(groupPanel);
     }
@@ -242,6 +265,18 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
     if (isEmptyOrOffline) throw new OfflineException();
     add(scrollPane);
+  }
+
+  @NotNull
+  private static JLabel createHTMLLabel(final String text) {
+    return new JLabel("<html><body>" + text + "</body></html>") {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        size.width = Math.min(size.width, 200);
+        return size;
+      }
+    };
   }
 
   @Override

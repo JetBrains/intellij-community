@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ExporterToTextFile;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -32,22 +33,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.io.File;
+import java.util.*;
 import java.util.List;
 
 import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
@@ -56,7 +60,7 @@ import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
  * @author Jeka
  * @author Konstantin Bulenkov
  */
-public class ThreadDumpPanel extends JPanel {
+public class ThreadDumpPanel extends JPanel implements DataProvider {
   private static final Icon PAUSE_ICON_DAEMON = new LayeredIcon(Paused, Daemon_sign);
   private static final Icon LOCKED_ICON_DAEMON = new LayeredIcon(Locked, Daemon_sign);
   private static final Icon RUNNING_ICON_DAEMON = new LayeredIcon(Running, Daemon_sign);
@@ -68,6 +72,7 @@ public class ThreadDumpPanel extends JPanel {
   private final List<ThreadState> myThreadDump;
   private final JPanel myFilterPanel;
   private final SearchTextField myFilterField;
+  private final ExporterToTextFile myExporterToTextFile;
 
   public ThreadDumpPanel(final Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
     super(new BorderLayout());
@@ -103,11 +108,14 @@ public class ThreadDumpPanel extends JPanel {
       }
     });
 
+    myExporterToTextFile = createToFileExporter(project, myThreadDump);
+
     FilterAction filterAction = new FilterAction();
     filterAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet(), myThreadList);
     toolbarActions.add(filterAction);
     toolbarActions.add(new CopyToClipboardAction(threadDump, project));
     toolbarActions.add(new SortThreadsAction());
+    toolbarActions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPORT_TO_TEXT_FILE));
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(), BorderLayout.WEST);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
@@ -135,6 +143,15 @@ public class ThreadDumpPanel extends JPanel {
         }
       }, consoleView);
     }
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (PlatformDataKeys.EXPORTER_TO_TEXT_FILE.is(dataId)) {
+      return myExporterToTextFile;
+    }
+    return null;
   }
 
   private void updateThreadList() {
@@ -352,6 +369,61 @@ public class ThreadDumpPanel extends JPanel {
         myFilterField.selectText();
       }
       updateThreadList();
+    }
+  }
+
+  public static ExporterToTextFile createToFileExporter(Project project, List<ThreadState> threadStates) {
+    return new MyToFileExporter(project, threadStates);
+  }
+
+  private static class MyToFileExporter implements ExporterToTextFile {
+    private final Project myProject;
+    private final List<ThreadState> myThreadStates;
+
+    public MyToFileExporter(Project project, List<ThreadState> threadStates) {
+      myProject = project;
+      myThreadStates = threadStates;
+    }
+
+    @Override
+    public JComponent getSettingsEditor() {
+      return null;
+    }
+
+    @Override
+    public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {}
+
+    @Override
+    public void removeSettingsChangedListener(ChangeListener listener) {}
+
+    @Override
+    public String getReportText() {
+      StringBuilder sb = new StringBuilder();
+      for (ThreadState state : myThreadStates) {
+        sb.append(state.getStackTrace()).append("\n\n");
+      }
+      return sb.toString();
+    }
+
+    private static final @NonNls String DEFAULT_REPORT_FILE_NAME = "threads_report.txt";
+
+    @Override
+    public String getDefaultFilePath() {
+      final VirtualFile baseDir = myProject.getBaseDir();
+      if (baseDir != null) {
+        return baseDir.getPresentableUrl() + File.separator + DEFAULT_REPORT_FILE_NAME;
+      }
+      return null;
+    }
+
+    @Override
+    public void exportedTo(String filePath) {
+
+    }
+
+    @Override
+    public boolean canExport() {
+      return !myThreadStates.isEmpty();
     }
   }
 }

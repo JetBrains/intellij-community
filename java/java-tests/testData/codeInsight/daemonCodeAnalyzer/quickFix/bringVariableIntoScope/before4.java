@@ -1,4 +1,4 @@
-// "Bring 'int i' into Scope" "true"
+// "Bring 'int i' into scope" "true"
 class a {
     public void foo() {
         if (true) {

@@ -157,9 +157,8 @@ public class VcsHistoryProviderBackgroundableProxy {
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"),
                                                               true, BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull ProgressIndicator indicator) {
-        if (indicator != null) {
-          indicator.setText(VcsUtil.getPathForProgressPresentation(filePath.getIOFile()));
-        }
+        indicator.setText(VcsUtil.getPathForProgressPresentation(filePath.getIOFile()));
+        indicator.setIndeterminate(true);
         try {
           VcsHistorySession cachedSession = null;
           if (canUseLastRevisionCheck && myCachesHistory && ((cachedSession = getSessionFromCacheWithLastRevisionCheck(filePath, vcsKey))) != null) {

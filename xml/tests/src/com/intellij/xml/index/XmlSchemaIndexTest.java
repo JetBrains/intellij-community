@@ -10,6 +10,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.xml.util.XmlUtil;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,7 +33,6 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
 
     VirtualFile file = myFixture.copyFileToProject("spring-beans-2.0.xsd");
     final Collection<String> tags = XsdTagNameBuilder.computeTagNames(file.getInputStream());
-    assert tags != null;
     assertEquals(22, tags.size());
 
     final String ns = XsdNamespaceBuilder.computeNamespace(file.getInputStream());
@@ -43,7 +43,6 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     assertEquals("http://www.w3.org/2001/XMLSchema", namespace);
 
     final Collection<String> xstags = XsdTagNameBuilder.computeTagNames(xsd.getInputStream());
-    assert xstags != null;
     assertEquals(69, xstags.size());
     assertTrue(xstags.contains("schema"));
   }
@@ -53,7 +52,16 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream()));
     assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
-    assertEquals(Arrays.asList("web-app"), builder.getTags());
+    assertEquals(Collections.singletonList("web-app"), builder.getTags());
+  }
+
+  public void testRootTags() throws Exception {
+    VirtualFile file = myFixture.copyFileToProject("XMLSchema.xsd");
+    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream()));
+    assertEquals(XmlUtil.XML_SCHEMA_URI, builder.getNamespace());
+    assertEquals("1.0", builder.getVersion());
+    assertEquals(Collections.singletonList("schema"), builder.getRootTags());
+    assertEquals(41, builder.getTags().size());
   }
 
   public void testTagNameIndex() {
@@ -97,14 +105,17 @@ public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
     XsdNamespaceBuilder builder = resource.getValue();
     assertEquals(NS, builder.getNamespace());
     assertEquals("3.0", builder.getVersion());
-    assertEquals(Arrays.asList("web-app"), builder.getTags());
+    assertEquals(Collections.singletonList("web-app"), builder.getTags());
 
     resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "2.5", null, myModule, getProject());
     assertNotNull(resource);
     builder = resource.getValue();
     assertEquals(NS, builder.getNamespace());
     assertEquals("2.5", builder.getVersion());
-    assertEquals(Arrays.asList("web-app"), builder.getTags());
+    assertEquals(Collections.singletonList("web-app"), builder.getTags());
+
+    resource = XmlNamespaceIndex.guessSchema(NS, "foo-bar", "2.5", null, myModule, getProject());
+    assertNull(resource);
   }
 
   public void testGuessDTD() throws Exception {

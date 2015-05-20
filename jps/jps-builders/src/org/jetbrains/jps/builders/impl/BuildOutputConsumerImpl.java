@@ -101,6 +101,10 @@ public class BuildOutputConsumerImpl implements BuildOutputConsumer {
     registerOutput(outputDir, true, sourcePaths);
   }
 
+  public int getNumberOfProcessedSources() {
+    return myRegisteredSources.size();
+  }
+
   public void fireFileGeneratedEvent() {
     if (!myFileGeneratedEvent.getPaths().isEmpty()) {
       myContext.processMessage(myFileGeneratedEvent);

@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ui.UIUtil;
@@ -51,10 +50,9 @@ public class UsageTreeColorsScheme implements NamedComponent, JDOMExternalizable
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     if (myColorsScheme == null) {
-      EditorColorsScheme scheme = EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeTextBackground());
-      myColorsScheme = (EditorColorsScheme)scheme.clone();
+      myColorsScheme = (EditorColorsScheme)EditorColorsUtil.getColorSchemeForBackground(UIUtil.getTreeTextBackground()).clone();
     }
     myColorsScheme.readExternal(element);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,17 +38,21 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.services.MavenRepositoryServicesManager;
@@ -159,7 +163,7 @@ public class RepositoryAttachHandler {
           }
         }
         // search for jar file first otherwise lib root won't be found!
-        manager.refreshAndFindFileByUrl(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(toFile.getPath())));
+        manager.refreshAndFindFileByUrl(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(toFile.getPath())));
         final String url = VfsUtil.getUrlForLibraryRoot(toFile);
         final VirtualFile file = manager.refreshAndFindFileByUrl(url);
         if (file != null) {
@@ -211,9 +215,12 @@ public class RepositoryAttachHandler {
             final List<MavenArtifactInfo> artifacts;
             artifacts = MavenRepositoryServicesManager.findArtifacts(template, serviceUrl);
             if (!artifacts.isEmpty()) {
-              if (!proceedFlag.get()) break;
-              final List<MavenRepositoryInfo> repositories = MavenRepositoryServicesManager.getRepositories(serviceUrl);
-              final HashMap<String, MavenRepositoryInfo> map = new HashMap<String, MavenRepositoryInfo>();
+              if (!proceedFlag.get()) {
+                break;
+              }
+
+              List<MavenRepositoryInfo> repositories = MavenRepositoryServicesManager.getRepositories(serviceUrl);
+              Map<String, MavenRepositoryInfo> map = new THashMap<String, MavenRepositoryInfo>();
               for (MavenRepositoryInfo repository : repositories) {
                 map.put(repository.getId(), repository);
               }
@@ -310,7 +317,7 @@ public class RepositoryAttachHandler {
                                      Collection<MavenRepositoryInfo> repositories,
                                      final Processor<List<MavenArtifact>> resultProcessor,
                                      ProgressIndicator indicator) {
-    doResolveInner(project, Collections.<MavenId>singletonList(mavenId), extraTypes, repositories, resultProcessor, indicator);
+    doResolveInner(project, Collections.singletonList(mavenId), extraTypes, repositories, resultProcessor, indicator);
   }
 
   public static void doResolveInner(Project project,
@@ -324,22 +331,26 @@ public class RepositoryAttachHandler {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
     MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
     try {
-      embedder.customizeForResolve(new SoutMavenConsole(), new MavenProgressIndicator(indicator));
+      final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(project).getGeneralSettings();
+      embedder.customizeForResolve(
+        new SoutMavenConsole(mavenGeneralSettings.getOutputLevel(), mavenGeneralSettings.isPrintErrorStackTraces()),
+        new MavenProgressIndicator(indicator));
       List<MavenRemoteRepository> remoteRepositories = convertRepositories(repositories);
       List<MavenArtifactInfo> artifacts = new ArrayList<MavenArtifactInfo>(mavenIds.size());
       for (MavenId id : mavenIds) {
         artifacts.add(new MavenArtifactInfo(id, "jar", null));
       }
-      final List<MavenArtifact> firstResult = embedder.resolveTransitively(artifacts, remoteRepositories);
+      List<MavenArtifact> firstResult = embedder.resolveTransitively(artifacts, remoteRepositories);
       for (MavenArtifact artifact : firstResult) {
-        if (!artifact.isResolved()) continue;
-        if (MavenConstants.SCOPE_TEST.equals(artifact.getScope())) continue;
+        if (!artifact.isResolved() || MavenConstants.SCOPE_TEST.equals(artifact.getScope())) {
+          continue;
+        }
         result.add(artifact);
       }
       // download docs & sources
       if (!extraTypes.isEmpty()) {
-        final HashSet<String> allowedClassifiers = new HashSet<String>();
-        final Collection<MavenArtifactInfo> resolve = new LinkedHashSet<MavenArtifactInfo>();
+        Set<String> allowedClassifiers = new THashSet<String>();
+        Collection<MavenArtifactInfo> resolve = new LinkedHashSet<MavenArtifactInfo>();
         for (MavenExtraArtifactType extraType : extraTypes) {
           allowedClassifiers.add(extraType.getDefaultClassifier());
           for (MavenId id : mavenIds) {
@@ -347,12 +358,10 @@ public class RepositoryAttachHandler {
           }
           // skip sources/javadoc for dependencies
         }
-        final List<MavenArtifact> secondResult =
-          embedder.resolveTransitively(new ArrayList<MavenArtifactInfo>(resolve), remoteRepositories);
-        for (MavenArtifact artifact : secondResult) {
-          if (!artifact.isResolved()) continue;
-          if (MavenConstants.SCOPE_TEST.equals(artifact.getScope())) continue;
-          if (!allowedClassifiers.contains(artifact.getClassifier())) continue;
+        for (MavenArtifact artifact : embedder.resolveTransitively(new ArrayList<MavenArtifactInfo>(resolve), remoteRepositories)) {
+          if (!artifact.isResolved() || MavenConstants.SCOPE_TEST.equals(artifact.getScope()) || !allowedClassifiers.contains(artifact.getClassifier())) {
+            continue;
+          }
           result.add(artifact);
         }
       }
@@ -382,7 +391,7 @@ public class RepositoryAttachHandler {
     return result;
   }
 
-  public static MavenId getMavenId(final String coord) {
+  public static MavenId getMavenId(@NotNull String coord) {
     final String[] parts = coord.split(":");
     return new MavenId(parts.length > 0 ? parts[0] : null,
                        parts.length > 1 ? parts[1] : null,

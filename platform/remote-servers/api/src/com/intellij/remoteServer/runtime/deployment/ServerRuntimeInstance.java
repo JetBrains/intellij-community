@@ -2,6 +2,7 @@ package com.intellij.remoteServer.runtime.deployment;
 
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
+import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.RemoteOperationCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,11 @@ public abstract class ServerRuntimeInstance<D extends DeploymentConfiguration> {
     void addDeployment(@NotNull String deploymentName);
 
     void addDeployment(@NotNull String deploymentName, @Nullable DeploymentRuntime deploymentRuntime);
+
+    Deployment addDeployment(@NotNull String deploymentName,
+                             @Nullable DeploymentRuntime deploymentRuntime,
+                             @Nullable DeploymentStatus deploymentStatus,
+                             @Nullable String deploymentStatusText);
 
     void succeeded();
   }

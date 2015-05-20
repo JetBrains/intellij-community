@@ -28,12 +28,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +68,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
         LOG.assertTrue(psiParameter != null);
       }
 
-      setText(CodeInsightBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "Constructor" : "Method"));
+      setText(CodeInsightBundle.message("intention.bind.fields.from.parameters.text", method.isConstructor() ? "constructor" : "method"));
     }
     return isAvailable(psiParameter);
   }
@@ -153,14 +152,26 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   }
 
   private static void invoke(final Project project, Editor editor, PsiFile file, boolean isInteractive) {
-    PsiParameter myParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
+    PsiParameter psiParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-    final PsiMethod method = myParameter != null ? (PsiMethod)myParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
+    final PsiMethod method = psiParameter != null ? (PsiMethod)psiParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
     LOG.assertTrue(method != null);
 
     final HashSet<String> usedNames = new HashSet<String>();
-    for (PsiParameter selected : selectParameters(project, method, copyUnboundedParamsAndClearOriginal(method), isInteractive)) {
-      processParameter(project, selected, usedNames);
+    final Iterable<PsiParameter> parameters = selectParameters(project, method, copyUnboundedParamsAndClearOriginal(method), isInteractive);
+    final MultiMap<PsiType, PsiParameter> types = new MultiMap<PsiType, PsiParameter>();
+    for (PsiParameter parameter : parameters) {
+      types.putValue(parameter.getType(), parameter);
+    }
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
+    for (PsiParameter selected : parameters) {
+      try {
+        settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(selected.getType()).size() > 1;
+        processParameter(project, selected, usedNames);
+      } finally {
+        settings.PREFER_LONGER_NAMES = preferLongerNames;
+      }
     }
   }
 
@@ -248,16 +259,18 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   }
 
   private static void processParameter(final Project project,
-                                       final PsiParameter myParameter,
+                                       final PsiParameter parameter,
                                        final Set<String> usedNames) {
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-    final PsiType type = FieldFromParameterUtils.getSubstitutedType(myParameter);
+    final PsiType type = FieldFromParameterUtils.getSubstitutedType(parameter);
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-    final String parameterName = myParameter.getName();
+    final String parameterName = parameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
 
-    final PsiClass targetClass = PsiTreeUtil.getParentOfType(myParameter, PsiClass.class);
-    final PsiMethod method = (PsiMethod)myParameter.getDeclarationScope();
+    final PsiClass targetClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
+    final PsiElement declarationScope = parameter.getDeclarationScope();
+    if (!(declarationScope instanceof PsiMethod)) return;
+    final PsiMethod method = (PsiMethod)declarationScope;
 
     final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);
 
@@ -275,8 +288,18 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
         }
       }
     }
+
+    if (usedNames.contains(name)) {
+      for (String curName : names) {
+        if (!usedNames.contains(curName)) {
+          name = curName;
+          break;
+        }
+      }
+    }
+    
     final String fieldName = usedNames.add(name) ? name
-                                                 : JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, myParameter, true);
+                                                 : JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, parameter, true);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -286,7 +309,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
             project,
             targetClass,
             method,
-            myParameter,
+            parameter,
             type,
             fieldName,
             isMethodStatic,

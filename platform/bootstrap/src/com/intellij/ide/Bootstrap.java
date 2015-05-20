@@ -16,7 +16,6 @@
 package com.intellij.ide;
 
 import com.intellij.idea.Main;
-import com.intellij.util.lang.UrlClassLoader;
 
 import java.lang.reflect.Method;
 
@@ -30,7 +29,7 @@ public class Bootstrap {
 
   public static void main(String[] args, String mainClass, String methodName) throws Exception {
     boolean updatePlugins = !Main.isCommandLine();
-    UrlClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(updatePlugins);
+    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(updatePlugins);
 
     WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
 

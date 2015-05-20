@@ -18,7 +18,7 @@ package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -27,6 +27,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -64,14 +66,23 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
-    if (symbolTypes == null || symbolTypes.length == 0) return;
-    if (symbolTypes.length == 1) {
-      navigate(project, symbolTypes[0]);
+    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+    try {
+      int offset = editor.getCaretModel().getOffset();
+      PsiElement[] symbolTypes = findSymbolTypes(editor, offset);
+      if (symbolTypes == null || symbolTypes.length == 0) return;
+      if (symbolTypes.length == 1) {
+        navigate(project, symbolTypes[0]);
+      }
+      else {
+        NavigationUtil.getPsiElementPopup(symbolTypes, CodeInsightBundle.message("choose.type.popup.title")).showInBestPositionFor(editor);
+      }
     }
-    else {
-      NavigationUtil.getPsiElementPopup(symbolTypes, CodeInsightBundle.message("choose.type.popup.title")).showInBestPositionFor(editor);
+    catch (IndexNotReadyException e) {
+      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
+    }
+    finally {
+      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
     }
   }
 
@@ -99,10 +110,10 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
 
   @Nullable
   public static PsiElement[] findSymbolTypes(@NotNull Editor editor, int offset) {
-    PsiElement targetElement = TargetElementUtilBase.getInstance().findTargetElement(editor,
-                                                                                     TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
-                                                                                     TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
-                                                                                     TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED,
+    PsiElement targetElement = TargetElementUtil.getInstance().findTargetElement(editor,
+                                                                                     TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
+                                                                                     TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+                                                                                     TargetElementUtil.LOOKUP_ITEM_ACCEPTED,
                                                                                      offset);
 
     if (targetElement != null) {
@@ -110,7 +121,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
       return symbolType == null ? PsiElement.EMPTY_ARRAY : symbolType;
     }
 
-    final PsiReference psiReference = TargetElementUtilBase.findReference(editor, offset);
+    final PsiReference psiReference = TargetElementUtil.findReference(editor, offset);
     if (psiReference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(false);
       Set<PsiElement> types = new THashSet<PsiElement>();

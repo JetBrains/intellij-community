@@ -73,7 +73,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       if (list == null) {
         return;
       }
-      Callable func = node.resolveCalleeFunction(getResolveContext());
+      PyCallable func = node.resolveCalleeFunction(getResolveContext());
       if (func != null && hasSpecialCasedDefaults(func, node)) {
         return;
       }
@@ -81,7 +81,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       checkArguments(result, node.getArguments());
     }
 
-    private static boolean hasSpecialCasedDefaults(Callable callable, PsiElement anchor) {
+    private static boolean hasSpecialCasedDefaults(PyCallable callable, PsiElement anchor) {
       final String name = callable.getName();
       final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
       if ("getattr".equals(name) && cache.isBuiltin(callable)) {

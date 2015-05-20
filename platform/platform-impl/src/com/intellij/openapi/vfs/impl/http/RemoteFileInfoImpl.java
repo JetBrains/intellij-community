@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
@@ -29,6 +28,8 @@ import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
 import java.io.IOException;
@@ -292,7 +293,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
 
   @NotNull
   @Override
-  public AsyncResult<VirtualFile> download() {
+  public Promise<VirtualFile> download() {
     synchronized (myLock) {
       switch (getState()) {
         case DOWNLOADING_NOT_STARTED:
@@ -301,17 +302,18 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
         case DOWNLOADING_IN_PROGRESS:
           return createDownloadedCallback(this);
         case DOWNLOADED:
-          return new AsyncResult.Done<VirtualFile>(myLocalVirtualFile);
+          return Promise.resolve(myLocalVirtualFile);
 
         case ERROR_OCCURRED:
         default:
-          return new AsyncResult.Rejected<VirtualFile>();
+          return Promise.reject("errorOccured");
       }
     }
   }
 
-  private static AsyncResult<VirtualFile> createDownloadedCallback(@NotNull final RemoteFileInfo remoteFileInfo) {
-    final AsyncResult<VirtualFile> callback = new AsyncResult<VirtualFile>();
+  @NotNull
+  private static Promise<VirtualFile> createDownloadedCallback(@NotNull final RemoteFileInfo remoteFileInfo) {
+    final AsyncPromise<VirtualFile> promise = new AsyncPromise<VirtualFile>();
     remoteFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
       @Override
       public void fileDownloaded(VirtualFile localFile) {
@@ -319,7 +321,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
           remoteFileInfo.removeDownloadingListener(this);
         }
         finally {
-          callback.setDone(localFile);
+          promise.setResult(localFile);
         }
       }
 
@@ -329,7 +331,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
           remoteFileInfo.removeDownloadingListener(this);
         }
         finally {
-          callback.reject(errorMessage);
+          promise.setError(Promise.createError(errorMessage));
         }
       }
 
@@ -339,10 +341,10 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
           remoteFileInfo.removeDownloadingListener(this);
         }
         finally {
-          callback.setRejected();
+          promise.setError(Promise.createError("Cancelled"));
         }
       }
     });
-    return callback;
+    return promise;
   }
 }

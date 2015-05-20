@@ -16,13 +16,13 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../build/lib/gant/lib/gant_groovy2.1-1.9.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../build/lib/gant/lib/gant-1.9.11_groovy-2.3.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="jps-plugin-system" />
+    <orderEntry type="library" name="Log4J" level="project" />
   </component>
 </module>
-

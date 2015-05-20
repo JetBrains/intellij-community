@@ -59,7 +59,7 @@ public class DiffPanelOptions {
   }
 
   public void showSource(@Nullable OpenFileDescriptor descriptor) {
-    if (descriptor == null || myDiffPanel.getProject() == null) return;
+    if (descriptor == null || myDiffPanel.getProject() == null || myDiffPanel.getProject().isDefault()) return;
     myShowSourcePolicy.showSource(descriptor, myDiffPanel);
   }
 
@@ -102,8 +102,7 @@ public class DiffPanelOptions {
     ShowSourcePolicy DEFAULT = new ShowSourcePolicy() {
       public void showSource(@NotNull OpenFileDescriptor descriptor, @NotNull DiffPanelImpl diffPanel) {
         Window window = diffPanel.getOwnerWindow();
-        if (window == null) return;
-        else if (window instanceof Frame) OPEN_EDITOR.showSource(descriptor, diffPanel);
+        if (window == null || window instanceof Frame) OPEN_EDITOR.showSource(descriptor, diffPanel);
         else OPEN_EDITOR_AND_CLOSE_DIFF.showSource(descriptor, diffPanel);
       }
     };

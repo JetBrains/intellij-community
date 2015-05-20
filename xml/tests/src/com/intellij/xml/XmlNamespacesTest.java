@@ -54,13 +54,13 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             "<schema:schema\n" +
                             "        xmlns:schema=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                            "        >\n" +
+                            ">\n" +
                             "</schema:schema>", XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix.NAME, false);
 
     doOptimizeImportsTest("<schema:schema \n" +
                           "            xmlns:schema=\"http://www.w3.org/2001/XMLSchema\"\n" +
                           "            xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                          "        >\n" +
+                          ">\n" +
                           "</schema:schema>");
   }
 
@@ -77,7 +77,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
 
     doOptimizeImportsTest("<x:all\n" +
                           "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
-                          "        />");
+                          "/>");
   }
 
   public void testUnusedLocation() throws Exception {
@@ -89,7 +89,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             "<x:all\n" +
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                            "        />",
+                            "/>",
                             XmlUnusedNamespaceInspection.RemoveNamespaceLocationFix.NAME);
   }
 
@@ -115,7 +115,7 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
                             "<x:all\n" +
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                            "        />",
+                            "/>",
                             XmlUnusedNamespaceInspection.RemoveNamespaceLocationFix.NAME);
   }
 

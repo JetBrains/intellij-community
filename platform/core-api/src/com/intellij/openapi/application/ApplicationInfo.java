@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,30 +27,21 @@ public abstract class ApplicationInfo {
   public abstract String getApiVersion();
   public abstract String getMajorVersion();
   public abstract String getMinorVersion();
+  public abstract String getMicroVersion();
+  public abstract String getPatchVersion();
   public abstract String getVersionName();
   public abstract String getHelpURL();
   public abstract String getCompanyName();
   public abstract String getCompanyURL();
   public abstract String getThirdPartySoftwareURL();
+  public abstract String getJetbrainsTvUrl();
+
   public abstract Rectangle getAboutLogoRect();
   public abstract boolean hasHelp();
   public abstract boolean hasContextHelp();
 
-  public String getFullVersion() {
-    final String majorVersion = getMajorVersion();
-    if (majorVersion != null && majorVersion.trim().length() > 0) {
-      final String minorVersion = getMinorVersion();
-      if (minorVersion != null && minorVersion.trim().length() > 0) {
-        return majorVersion + "." + minorVersion;
-      }
-      else {
-        return majorVersion + ".0";
-      }
-    }
-    else {
-      return getVersionName();
-    }
-  }
+  public abstract String getFullVersion();
+  public abstract String getStrictVersion();
 
   public static ApplicationInfo getInstance() {
     return ServiceManager.getService(ApplicationInfo.class);
@@ -62,11 +53,5 @@ public abstract class ApplicationInfo {
 
   public static boolean contextHelpAvailable() {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasContextHelp();
-  }
-
-  /** @deprecated use {@link #getBuild()} instead (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public String getBuildNumber() {
-    return getBuild().asString();
   }
 }

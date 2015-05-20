@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,8 +161,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
             ((ButtonlessScrollBarUI)otherUI).startMacScrollbarFadeout(true);
           }
 
-          startRegularThumbAnimator();
-          startMacScrollbarFadeout();
+          restart();
         }
         else if (resized) {
           startMacScrollbarFadeout();
@@ -220,8 +219,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         if (e.getChanged() == scrollbar.getParent()) {
           // when scrollpane is shown first time, we 'blink' the scrollbars
           if ((HierarchyEvent.SHOWING_CHANGED & e.getChangeFlags()) != 0) {
-            startRegularThumbAnimator();
-            startMacScrollbarFadeout();
+            restart();
           }
         }
       }
@@ -276,11 +274,11 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     if (style != myMacScrollerStyle && scrollbar != null) {
       myMacScrollerStyle = style;
-      JScrollBar scrollBar = scrollbar;
-      uninstallUI(scrollBar);
-      installUI(scrollBar);
 
-      JScrollPane pane = JBScrollPane.findScrollPane(scrollBar);
+      updateStyleDefaults();
+      restart();
+      
+      JScrollPane pane = JBScrollPane.findScrollPane(scrollbar);
       if (pane != null) pane.revalidate();
     }
   }
@@ -423,16 +421,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   @Override
-  public void installUI(JComponent c) {
-    super.installUI(c);
-    scrollbar.setFocusable(false);
-    scrollbar.setOpaque(alwaysShowTrack());
-  }
-
-  @Override
   protected void installDefaults() {
-    myMacScrollerStyle = NSScrollerHelper.getScrollerStyle();
-    
     final int incGap = UIManager.getInt("ScrollBar.incrementButtonGap");
     final int decGap = UIManager.getInt("ScrollBar.decrementButtonGap");
     try {
@@ -444,6 +433,14 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       UIManager.put("ScrollBar.incrementButtonGap", incGap);
       UIManager.put("ScrollBar.decrementButtonGap", decGap);
     }
+
+    myMacScrollerStyle = NSScrollerHelper.getScrollerStyle();
+    scrollbar.setFocusable(false);
+    updateStyleDefaults();
+  }
+
+  private void updateStyleDefaults() {
+    scrollbar.setOpaque(alwaysShowTrack());
   }
 
   @Override
@@ -459,10 +456,14 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     scrollbar.addHierarchyListener(myHierarchyListener);
     updateGlobalListeners(false);
 
+    restart();
+  }
+
+  private void restart() {
     startRegularThumbAnimator();
     startMacScrollbarFadeout();
   }
-  
+
   private static final Method setValueFrom = ReflectionUtil.getDeclaredMethod(TrackListener.class, "setValueFrom", MouseEvent.class);
   static {
     LOG.assertTrue(setValueFrom != null, "Cannot get TrackListener.setValueFrom method");
@@ -611,7 +612,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   protected int getThickness() {
-    return isMacOverlayScrollbar() ? 15 : 13;
+    return isMacOverlayScrollbar() ? JBUI.scale(15) : JBUI.scale(13);
   }
 
   @Override
@@ -632,7 +633,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   
   @Override
   public boolean contains(JComponent c, int x, int y) {
-    if (isMacOverlayScrollbar() && !alwaysShowTrack() && myMacScrollbarHidden) return false;  
+    if (isMacOverlayScrollbar() && !alwaysShowTrack() && !alwaysPaintThumb() && myMacScrollbarHidden) return false;  
     return super.contains(c, x, y);
   }
 
@@ -814,7 +815,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     final Stroke stroke = g.getStroke();
     g.setStroke(BORDER_STROKE);
     g.setColor(getGradientThumbBorderColor());
-    g.drawRoundRect(hGap, vGap, w, h, 3, 3);
+    final int R = JBUI.scale(3);
+    g.drawRoundRect(hGap, vGap, w, h, R, R);
     g.setStroke(stroke);
   }
 
@@ -870,7 +872,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
     @Override
     public Dimension getMaximumSize() {
-      return new Dimension(0, 0);
+      return JBUI.emptySize();
     }
 
     @Override

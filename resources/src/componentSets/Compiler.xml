@@ -22,4 +22,9 @@
       <implementation-class>com.intellij.compiler.impl.CompilerCacheManager</implementation-class>
     </component>
   </project-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.compiler.ProblemsView" serviceImplementation="com.intellij.compiler.impl.ProblemsViewImpl"/>
+  </extensions>
+
 </components>

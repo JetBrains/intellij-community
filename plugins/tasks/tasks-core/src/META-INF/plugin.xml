@@ -140,7 +140,7 @@
     <fileTypeFactory implementation="com.intellij.tasks.jira.jql.JqlFileTypeFactory"/>
     <lang.parserDefinition language="JQL"
                            implementationClass="com.intellij.tasks.jira.jql.JqlParserDefinition"/>
-    <lang.syntaxHighlighterFactory key="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlHighlighterFactory"/>
     <lang.braceMatcher language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlBraceMatcher"/>
     <completion.contributor language="JQL"
                             implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlCompletionContributor"/>

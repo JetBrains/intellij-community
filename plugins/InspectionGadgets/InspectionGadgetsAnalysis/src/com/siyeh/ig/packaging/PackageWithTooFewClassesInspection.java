@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,12 +58,16 @@ public class PackageWithTooFewClassesInspection extends BaseGlobalInspection {
       return null;
     }
     int numClasses = 0;
+    boolean subpackage = false;
     for (RefEntity child : children) {
       if (child instanceof RefClass) {
         numClasses++;
       }
+      else if (child instanceof RefPackage) {
+        subpackage = true;
+      }
     }
-    if (numClasses >= limit || numClasses == 0) {
+    if (numClasses >= limit || (numClasses == 0 && subpackage)) {
       return null;
     }
     final String errorString = InspectionGadgetsBundle.message(

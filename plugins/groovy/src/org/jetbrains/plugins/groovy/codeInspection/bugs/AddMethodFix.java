@@ -58,7 +58,7 @@ public class AddMethodFix extends GroovyFix {
     }
     else {
       String templName = JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY;
-      final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
+      final FileTemplate template = FileTemplateManager.getInstance(project).getCodeTemplate(templName);
 
       Properties properties = new Properties();
 

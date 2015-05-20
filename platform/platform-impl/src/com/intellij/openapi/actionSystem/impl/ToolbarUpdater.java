@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.util.IdRunnable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.update.Activatable;
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.WeakReference;
 
 /**
  * @author Konstantin Bulenkov
@@ -93,25 +94,16 @@ public abstract class ToolbarUpdater implements Activatable {
   }
 
   private void updateActions(boolean now, final boolean transparentOnly, final boolean forced) {
-    final IdRunnable updateRunnable = new IdRunnable(this) {
-      @Override
-      public void run() {
-        if (!myComponent.isVisible()) {
-          return;
-        }
+    final Runnable updateRunnable = new MyUpdateRunnable(this, transparentOnly, forced);
+    final Application app = ApplicationManager.getApplication();
 
-        updateActionsImpl(transparentOnly, forced);
-      }
-    };
-
-    if (now) {
+    if (now || app.isUnitTestMode()) {
       updateRunnable.run();
     }
     else {
-      final Application app = ApplicationManager.getApplication();
       final IdeFocusManager fm = IdeFocusManager.getInstance(null);
 
-      if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
+      if (!app.isHeadlessEnvironment()) {
         if (app.isDispatchThread()) {
           fm.doWhenFocusSettlesDown(updateRunnable);
         }
@@ -169,6 +161,51 @@ public abstract class ToolbarUpdater implements Activatable {
       }
 
       updateActions(false, myActionManager.isTransparentOnlyActionsUpdateNow(), false);
+    }
+  }
+
+  private static class MyUpdateRunnable implements Runnable {
+    private final boolean myTransparentOnly;
+    private final boolean myForced;
+
+    @NotNull private final WeakReference<ToolbarUpdater> myUpdaterRef;
+    private final int myHash;
+
+    public MyUpdateRunnable(@NotNull ToolbarUpdater updater, boolean transparentOnly, boolean forced) {
+      myTransparentOnly = transparentOnly;
+      myForced = forced;
+      myHash = updater.hashCode();
+
+      myUpdaterRef = new WeakReference<ToolbarUpdater>(updater);
+    }
+
+    @Override
+    public void run() {
+      ToolbarUpdater updater = myUpdaterRef.get();
+      if (updater == null) return;
+
+      if (!updater.myComponent.isVisible()) {
+        return;
+      }
+
+      updater.updateActionsImpl(myTransparentOnly, myForced);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof MyUpdateRunnable)) return false;
+
+      MyUpdateRunnable that = (MyUpdateRunnable)obj;
+      if (myHash != that.myHash) return false;
+
+      ToolbarUpdater updater1 = myUpdaterRef.get();
+      ToolbarUpdater updater2 = that.myUpdaterRef.get();
+      return Comparing.equal(updater1, updater2);
+    }
+
+    @Override
+    public int hashCode() {
+      return myHash;
     }
   }
 }

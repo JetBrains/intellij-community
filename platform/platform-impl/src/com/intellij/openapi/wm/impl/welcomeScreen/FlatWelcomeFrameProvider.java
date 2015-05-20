@@ -31,6 +31,7 @@ public class FlatWelcomeFrameProvider implements WelcomeFrameProvider {
 
   public static boolean isAvailable() {
     return Registry.is("ide.new.welcome.screen")
-            && (PlatformUtils.isIntelliJ() || PlatformUtils.isCidr() || PlatformUtils.isWebStorm() || PlatformUtils.isPyCharm());
+            && (PlatformUtils.isIntelliJ() || PlatformUtils.isCidr() || PlatformUtils.isWebStorm() ||
+                PlatformUtils.isPyCharm() || PlatformUtils.isRubyMine() || PlatformUtils.isPhpStorm());
   }
 }

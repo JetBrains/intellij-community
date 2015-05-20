@@ -36,7 +36,6 @@ import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Collection;
 import java.util.List;
 
 public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
@@ -58,11 +57,17 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
     HgBookmarkCommand.createBookmark(repositories, name, true);
   }
 
+  @Override
+  protected String getActiveBranch(HgRepository repository) {
+    String bookmark = repository.getCurrentBookmark();
+    return bookmark == null ? repository.getCurrentBranch() : bookmark;
+  }
+
   @NotNull
   @Override
-  protected Collection<String> getCommonBranchNames(@NotNull List<HgRepository> repositories) {
+  protected Iterable<String> getAllBranches(@NotNull HgRepository repository) {
     //be careful with equality names of branches/bookmarks =(
-    return ContainerUtil.concat(HgBranchUtil.getCommonBookmarks(repositories), HgBranchUtil.getCommonBranches(repositories));
+    return ContainerUtil.concat(HgUtil.getSortedNamesWithoutHashes(repository.getBookmarks()), repository.getOpenedBranches());
   }
 
   @Override
@@ -78,7 +83,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
           Project project = repository.getProject();
           VirtualFile repositoryRoot = repository.getRoot();
           try {
-            new HgCommitCommand(project, repositoryRoot, "Automated merge with " + branch).execute();
+            new HgCommitCommand(project, repository, "Automated merge with " + branch).execute();
             new HgBookmarkCommand(project, repositoryRoot, branch).deleteBookmark();
           }
           catch (HgCommandException e) {

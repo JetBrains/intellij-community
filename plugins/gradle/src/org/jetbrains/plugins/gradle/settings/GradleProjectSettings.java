@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.settings;
 
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class GradleProjectSettings extends ExternalProjectSettings {
 
   @Nullable private String myGradleHome;
+  @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;;
   @Nullable private DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
 
@@ -36,6 +38,15 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   public void setGradleHome(@Nullable String gradleHome) {
     myGradleHome = gradleHome;
+  }
+
+  @Nullable
+  public String getGradleJvm() {
+    return myGradleJvm;
+  }
+
+  public void setGradleJvm(@Nullable String gradleJvm) {
+    myGradleJvm = gradleJvm;
   }
 
   @Nullable
@@ -61,6 +72,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     GradleProjectSettings result = new GradleProjectSettings();
     copyTo(result);
     result.myGradleHome = myGradleHome;
+    result.myGradleJvm = myGradleJvm;
     result.distributionType = distributionType;
     result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
     return result;

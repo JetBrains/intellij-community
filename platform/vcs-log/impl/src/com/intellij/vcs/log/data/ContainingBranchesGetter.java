@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -151,10 +152,11 @@ public class ContainingBranchesGetter implements VcsLogListener {
         if (graph != null && refs != null && VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
           Set<Integer> branchesIndexes = graph.getContainingBranches(dataHolder.getCommitIndex(hash));
 
-          Set<VcsRef> branchesRefs = new HashSet<VcsRef>();
+          Collection<VcsRef> branchesRefs = new HashSet<VcsRef>();
           for (Integer index : branchesIndexes) {
-            branchesRefs.addAll(refs.refsToCommit(dataHolder.getHash(index)));
+            branchesRefs.addAll(refs.refsToCommit(index));
           }
+          branchesRefs = ContainerUtil.sorted(branchesRefs, provider.getReferenceManager().getLabelsOrderComparator());
 
           ArrayList<String> branchesList = new ArrayList<String>();
           for (VcsRef ref : branchesRefs) {
@@ -162,7 +164,6 @@ public class ContainingBranchesGetter implements VcsLogListener {
               branchesList.add(ref.getName());
             }
           }
-          Collections.sort(branchesList);
           return branchesList;
         }
         else {

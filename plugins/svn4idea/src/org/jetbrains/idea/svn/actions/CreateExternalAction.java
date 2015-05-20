@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.ActionExecuteHelper;
 import com.intellij.vcsUtil.ActionStateConsumer;
 import com.intellij.vcsUtil.ActionUpdateHelper;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
@@ -96,7 +97,7 @@ public class CreateExternalAction extends DumbAwareAction {
       final File ioFile = new File(vf.getPath());
       if (addToExternalProperty(vcs, ioFile, target, url)) return;
       final VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-      final FilePathImpl filePath = new FilePathImpl(ioFile, true);
+      final FilePath filePath = VcsUtil.getFilePath(ioFile, true);
       dirtyScopeManager.fileDirty(filePath);
       if (checkout) {
         // +-

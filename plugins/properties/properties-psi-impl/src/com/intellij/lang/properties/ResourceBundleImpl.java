@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SmartList;
@@ -34,6 +35,7 @@ import java.util.List;
 
 public class ResourceBundleImpl extends ResourceBundle {
   @NotNull private final PropertiesFile myDefaultPropertiesFile;
+  private boolean myValid = true;
 
   public ResourceBundleImpl(@NotNull final PropertiesFile defaultPropertiesFile) {
     myDefaultPropertiesFile = defaultPropertiesFile;
@@ -53,12 +55,17 @@ public class ResourceBundleImpl extends ResourceBundle {
     });
     final String baseName = getBaseName();
     List<PropertiesFile> result = new SmartList<PropertiesFile>();
+    final String defaultNameWithoutExtension = FileUtil.getNameWithoutExtension(myDefaultPropertiesFile.getName());
     for (PsiFile file : children) {
       if (!file.isValid() || file.getVirtualFile().getExtension() == null) continue;
       if (Comparing.strEqual(PropertiesUtil.getDefaultBaseName(file.getVirtualFile()), baseName)) {
         PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
         if (propertiesFile != null) {
           result.add(propertiesFile);
+          if (propertiesFile != myDefaultPropertiesFile && FileUtil.getNameWithoutExtension(propertiesFile.getName()).compareTo(defaultNameWithoutExtension) == 0) {
+            //means 2 default properties files
+            return Collections.singletonList(myDefaultPropertiesFile);
+          }
         }
       }
     }
@@ -88,6 +95,14 @@ public class ResourceBundleImpl extends ResourceBundle {
     return myDefaultPropertiesFile.getProject();
   }
 
+  public boolean isValid() {
+    return myValid;
+  }
+
+  public void invalidate() {
+    myValid = false;
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -103,5 +118,10 @@ public class ResourceBundleImpl extends ResourceBundle {
 
   public String getUrl() {
     return getBaseDirectory() + "/" + getBaseName();
+  }
+
+  @Override
+  public String toString() {
+    return "ResourceBundleImpl:" + getBaseName();
   }
 }

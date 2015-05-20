@@ -21,10 +21,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.*;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.LinkedHashMap;
 
 import static com.intellij.util.containers.ContainerUtil.newIdentityHashMap;
 import static com.intellij.util.containers.ContainerUtil.newIdentityTroveSet;
@@ -34,9 +34,15 @@ import static com.intellij.util.containers.ContainerUtil.newIdentityTroveSet;
 */
 public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private final TreeSet<String> mySortedStrings = new TreeSet<String>();
-  private final MultiMap<String, LookupElement> myElements = MultiMap.createSmartList();
-  private final Map<LookupElement, FList<LookupElement>> myToLift = newIdentityHashMap();
-  private final IdentityHashMap<FList<LookupElement>, IdentityHashMap<LookupElement, FList<LookupElement>>> myPrepends = newIdentityHashMap();
+  private final MultiMap<String, LookupElement> myElements = MultiMap.createSmart();
+  private final MultiMap<LookupElement, LookupElement> myToLift = new MultiMap<LookupElement, LookupElement>() {
+    @NotNull
+    @Override
+    protected Map<LookupElement, Collection<LookupElement>> createMap() {
+      return newIdentityHashMap();
+    }
+  };
+  private final WeakInterner<Collection<LookupElement>> myListInterner = new WeakInterner<Collection<LookupElement>>();
   private final String myName;
   private final Classifier<LookupElement> myNext;
   private final LiftingCondition myCondition;
@@ -55,20 +61,25 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     myCount++;
 
     final Set<String> strings = added.getAllLookupStrings();
-    for (String string : strings) {
-      if (string.length() == 0) continue;
-
-      myElements.putValue(string, added);
-      mySortedStrings.add(string);
-      final NavigableSet<String> after = mySortedStrings.tailSet(string, false);
-      for (String s : after) {
-        if (!s.startsWith(string)) {
-          break;
-        }
-        for (LookupElement longer : myElements.get(s)) {
-          updateLongerItem(added, longer);
+    try {
+      for (String string : strings) {
+        if (string.length() == 0) continue;
+  
+        myElements.putValue(string, added);
+        mySortedStrings.add(string);
+        final NavigableSet<String> after = mySortedStrings.tailSet(string, false);
+        for (String s : after) {
+          if (!s.startsWith(string)) {
+            break;
+          }
+          for (LookupElement longer : myElements.get(s)) {
+            updateLongerItem(added, longer);
+          }
         }
       }
+    }
+    catch (ConcurrentModificationException e) {
+      throw new RuntimeException("Error while traversing lookup strings of " + added + " of " + added.getClass(), e);
     }
     myNext.addElement(added, context);
 
@@ -77,39 +88,30 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   private void updateLongerItem(LookupElement shorter, LookupElement longer) {
     if (myCondition.shouldLift(shorter, longer)) {
-      FList<LookupElement> oldValue = ContainerUtil.getOrElse(myToLift, longer, FList.<LookupElement>emptyList());
-      myToLift.put(longer, prependOrReuse(oldValue, shorter));
+      myToLift.putValue(longer, shorter);
+      internListToLift(longer);
     }
   }
 
-  private FList<LookupElement> prependOrReuse(FList<LookupElement> tail, LookupElement head) {
-    IdentityHashMap<LookupElement, FList<LookupElement>> cache = myPrepends.get(tail);
-    if (cache == null) {
-      myPrepends.put(tail, cache = newIdentityHashMap());
-    }
-    FList<LookupElement> result = cache.get(head);
-    if (result == null) {
-      cache.put(head, result = tail.getHead() == head ? tail : tail.prepend(head));
-    }
-    return result;
+  private void internListToLift(LookupElement longer) {
+    myToLift.put(longer, myListInterner.intern(myToLift.get(longer)));
   }
 
   private void calculateToLift(LookupElement element) {
-    FList<LookupElement> toLift = FList.emptyList();
-
+    boolean hasChanges = false;
     for (String string : element.getAllLookupStrings()) {
       for (int len = 1; len < string.length(); len++) {
         String prefix = string.substring(0, len);
         for (LookupElement shorterElement : myElements.get(prefix)) {
           if (myCondition.shouldLift(shorterElement, element)) {
-            toLift = prependOrReuse(toLift, shorterElement);
+            hasChanges = true;
+            myToLift.putValue(element, shorterElement);
           }
         }
       }
     }
-
-    if (!toLift.isEmpty()) {
-      myToLift.put(element, toLift);
+    if (hasChanges) {
+      internListToLift(element);
     }
   }
 
@@ -133,7 +135,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   @Override
   public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
     final THashSet<LookupElement> lifted = newIdentityTroveSet();
-    ContainerUtil.newArrayList(liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, context));
+    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, context);
     if (!lifted.isEmpty()) {
       for (LookupElement element : map.keySet()) {
         final StringBuilder builder = map.get(element);
@@ -172,7 +174,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     @Override
     public Iterator<LookupElement> iterator() {
       final Set<LookupElement> processed = newIdentityTroveSet(mySrcSet.size());
-      final Set<FList<LookupElement>> arraysProcessed = newIdentityTroveSet();
+      final Set<Collection<LookupElement>> arraysProcessed = newIdentityTroveSet();
 
       final Iterable<LookupElement> next = myNext.classify(mySource, myContext);
       Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), new Condition<LookupElement>() {
@@ -184,7 +186,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
       return new FlatteningIterator<LookupElement, LookupElement>(base) {
         @Override
         protected Iterator<LookupElement> createValueIterator(LookupElement element) {
-          List<LookupElement> shorter = addShorterElements(null, myToLift.get(element));
+          List<LookupElement> shorter = addShorterElements(myToLift.get(element));
           List<LookupElement> singleton = Collections.singletonList(element);
           if (shorter != null) {
             if (myLifted != null) {
@@ -197,22 +199,22 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         }
 
         @Nullable
-        private List<LookupElement> addShorterElements(@Nullable List<LookupElement> toLift,
-                                                       @Nullable FList<LookupElement> from) {
+        private List<LookupElement> addShorterElements(@Nullable Collection<LookupElement> from) {
+          List<LookupElement> toLift = null;
           if (from == null) {
-            return toLift;
+            return null;
           }
 
-          FList<LookupElement> each = from;
-          while (!each.isEmpty() && arraysProcessed.add(each)) {
-            LookupElement shorterElement = each.getHead();
-            if (mySrcSet.contains(shorterElement) && processed.add(shorterElement)) {
-              if (toLift == null) {
-                toLift = new ArrayList<LookupElement>();
+          if (arraysProcessed.add(from)) {
+            for (LookupElement shorterElement : from) {
+              if (mySrcSet.contains(shorterElement) && processed.add(shorterElement)) {
+                if (toLift == null) {
+                  toLift = new ArrayList<LookupElement>();
+                }
+                toLift.add(shorterElement);
               }
-              toLift.add(shorterElement);
             }
-            each = each.getTail();
+
           }
           return toLift;
         }

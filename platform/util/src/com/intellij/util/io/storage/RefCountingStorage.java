@@ -43,15 +43,20 @@ public class RefCountingStorage extends AbstractStorage {
   private int myPendingWriteRequestsSize;
   private final ThreadPoolExecutor myPendingWriteRequestsExecutor = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.DAYS, new LinkedBlockingQueue<Runnable>(), ConcurrencyUtil.newNamedThreadFactory("RefCountingStorage write content helper"));
 
-  private final boolean myDoNotZipCaches = Boolean.valueOf(System.getProperty("idea.doNotZipCaches")).booleanValue();
+  private final boolean myDoNotZipCaches;
   private static final int MAX_PENDING_WRITE_SIZE = 20 * 1024 * 1024;
 
   public RefCountingStorage(String path) throws IOException {
-    super(path);
+    this(path, CapacityAllocationPolicy.DEFAULT);
   }
 
   public RefCountingStorage(String path, CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    this(path, capacityAllocationPolicy, Boolean.valueOf(System.getProperty("idea.doNotZipCaches")).booleanValue());
+  }
+
+  public RefCountingStorage(String path, CapacityAllocationPolicy capacityAllocationPolicy, boolean doNotZipCaches) throws IOException {
     super(path, capacityAllocationPolicy);
+    myDoNotZipCaches = doNotZipCaches;
   }
 
   @Override

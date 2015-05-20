@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ant.AntBundle;
@@ -35,6 +36,8 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 public class AntCreatePropertyFix implements LocalQuickFix {
   private static final String PROPERTY = "property";
@@ -67,18 +70,29 @@ public class AntCreatePropertyFix implements LocalQuickFix {
     final PsiElement psiElement = descriptor.getPsiElement();
     final PsiFile containingFile = psiElement.getContainingFile();
 
-
+    final FileModificationService modificationService = FileModificationService.getInstance();
     Navigatable result = null;
     if (myPropFile != null) {
-      final IProperty generatedProperty = myPropFile.addProperty(myCanonicalText, "");
       final VirtualFile vFile = myPropFile.getVirtualFile();
-      result = vFile != null? new OpenFileDescriptor(project, vFile, generatedProperty.getPsiElement().getTextRange().getEndOffset()) : generatedProperty;
+
+      boolean canModify = true;
+      if (myPropFile instanceof PsiFile) {
+        canModify = modificationService.prepareFileForWrite((PsiFile)myPropFile);
+      }
+      else if (vFile != null) {
+        canModify = modificationService.prepareVirtualFilesForWrite(project, Collections.singleton(vFile));
+      }
+
+      if (canModify) {
+        final IProperty generatedProperty = myPropFile.addProperty(myCanonicalText, "");
+        result = vFile != null? new OpenFileDescriptor(project, vFile, generatedProperty.getPsiElement().getTextRange().getEndOffset()) : generatedProperty;
+      }
     }
     else {
       if (containingFile instanceof XmlFile) {
         final XmlFile xmlFile = (XmlFile)containingFile;
         final XmlTag rootTag = xmlFile.getRootTag();
-        if (rootTag != null) {
+        if (rootTag != null && modificationService.prepareFileForWrite(xmlFile)) {
           final XmlTag propTag = rootTag.createChildTag(PROPERTY, rootTag.getNamespace(), null, false);
           propTag.setAttribute(NAME_ATTR, myCanonicalText);
           propTag.setAttribute(VALUE_ATTR, "");

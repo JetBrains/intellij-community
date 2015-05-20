@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,60 +21,48 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.ui.ExportDialog;
-import com.intellij.idea.ActionsBundle;
+import com.intellij.ide.actions.ExportToTextFileAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SystemProperties;
+import com.intellij.unscramble.ThreadDumpPanel;
+import com.intellij.unscramble.ThreadState;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.util.List;
 
 public class ExportThreadsAction extends AnAction implements AnAction.TransparentUpdate {
   public void actionPerformed(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       return;
     }
     DebuggerContextImpl context = (DebuggerManagerEx.getInstanceEx(project)).getContext();
 
-    if(context.getDebuggerSession() != null) {
-      String destinationDirectory = "";
-      final VirtualFile baseDir = project.getBaseDir();
-      if (baseDir != null) destinationDirectory = baseDir.getPresentableUrl();
-
-      ExportDialog dialog = new ExportDialog(context.getDebugProcess(), destinationDirectory);
-      if (dialog.showAndGet()) {
-        try {
-          File file = new File(dialog.getFilePath());
-          BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-          try {
-            String text = StringUtil.convertLineSeparators(dialog.getTextToSave(), SystemProperties.getLineSeparator());
-            writer.write(text);
+    final DebuggerSession session = context.getDebuggerSession();
+    if(session != null && session.isAttached()) {
+      final DebugProcessImpl process = context.getDebugProcess();
+      if (process != null) {
+        process.getManagerThread().invoke(new DebuggerCommandImpl() {
+          protected void action() throws Exception {
+            final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              public void run() {
+                ExportToTextFileAction.export(project, ThreadDumpPanel.createToFileExporter(project, threads));
+              }
+            }, ModalityState.NON_MODAL);
           }
-          finally {
-            writer.close();
-          }
-        }
-        catch (IOException ex) {
-          Messages
-            .showMessageDialog(project, ex.getMessage(), ActionsBundle.actionText(DebuggerActions.EXPORT_THREADS), Messages.getErrorIcon());
-        }
+        });
       }
     }
   }
-
-
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();

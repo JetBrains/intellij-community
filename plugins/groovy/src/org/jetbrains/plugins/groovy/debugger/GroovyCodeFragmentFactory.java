@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
@@ -114,21 +115,29 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
       //javaText.append("System.out.println(java.util.Arrays.toString(new Exception().getStackTrace()));\n");
       //javaText.append("System.out.println(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(" + s + ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), |.+(?:com|org)\\\\.springsource\\\\.loaded\\\\.).+\")\n");
 
+      javaText.append("Class.forName(\"java.lang.StackTraceElement\");\n");
+      javaText.append("StackTraceElement[] |trace = new Exception().getStackTrace();\n");
       javaText.append(
-        "if (java.util.Arrays.toString(new Exception().getStackTrace()).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
+        "if (java.util.Arrays.toString(|trace).matches(\"\\\\[([^,()]+\\\\$\\\\$)[A-Za-z0-9]{8}(\\\\.[^,()]+)\\\\(")
         .append(s)
         .append(
           ":\\\\d+\\\\), (\\\\1[A-Za-z0-9]{8}\\\\2\\\\(Unknown Source\\\\), $OR$.+(?:com$OR$org)\\\\.springsource\\\\.loaded\\\\.).+\")) {\n");
       javaText.append("  |thiz0 = thiz;\n");
       javaText.append(" } else {\n");
-      javaText.append("  |thiz0 = this;\n");
+      if (contextClass instanceof GrTraitTypeDefinition) {
+        javaText.append("  |thiz0 = $self;\n");
+      }
+      else {
+        javaText.append("  |thiz0 = this;\n");
+      }
       javaText.append(" }\n");
     }
 
     if (!isStatic) {
       javaText.append("|clazz = |thiz0.getClass();\n");
       javaText.append("|mc = |thiz0.getMetaClass();\n");
-    } else {
+    }
+    else {
       assert contextClass != null;
       javaText.append("|clazz = java.lang.Class.forName(\"").append(ClassUtil.getJVMClassName(contextClass)).append("\");\n");
       javaText.append("|mc = groovy.lang.GroovySystem.getMetaClassRegistry().getMetaClass(|clazz);\n");
@@ -150,24 +159,33 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     if (!isStatic) {
       javaText.append("|closure.setDelegate(|thiz0);\n");
       javaText.append("|emc.setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
-    } else {
+    }
+    else {
       javaText.append("|emc.getProperty(\"static\").setProperty(\"").append(EVAL_NAME).append("\", |closure);\n");
     }
     javaText.append("|emc.initialize();\n");
     javaText.append(unwrapVals(values));
     if (!isStatic) {
-      javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeMethod(|thiz0, \"").append(EVAL_NAME).append("\", |resVals);\n");
-    } else {
-      javaText.append("java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeStaticMethod(|clazz, \"").append(EVAL_NAME).append("\", |resVals);\n");
+      javaText.append(
+        "java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeMethod(|thiz0, \""
+      ).append(EVAL_NAME).append("\", |resVals);\n");
     }
-    javaText.append("if (|res instanceof java.lang.Boolean) ((java.lang.Boolean) |res).booleanValue() else |res");
+    else {
+      javaText.append(
+        "java.lang.Object |res = ((groovy.lang.MetaClassImpl)|emc).invokeStaticMethod(|clazz, \""
+      ).append(EVAL_NAME).append("\", |resVals);\n");
+    }
+    javaText.append("|res");
 
     final PsiElementFactory factory = JavaPsiFacade.getInstance(toEval.getProject()).getElementFactory();
 
-    String hiddenJavaVars = StringUtil.replace(javaText.toString(), "|", "_$_" + new Random().nextInt(42));
-    hiddenJavaVars = hiddenJavaVars.replaceAll("\\$OR\\$", "|");
-    final String finalText = StringUtil.replace(StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, textWithImports.getImports());
-    JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
+    final String hiddenJavaVars = StringUtil.replace(
+      javaText.toString(), "|", "_$_" + new Random().nextInt(42)
+    ).replaceAll("\\$OR\\$", "|");
+    final String finalText = StringUtil.replace(
+      StringUtil.replace(hiddenJavaVars, TEXT, groovyText), IMPORTS, textWithImports.getImports()
+    );
+    final JavaCodeFragment result = JavaCodeFragmentFactory.getInstance(project).createCodeBlockCodeFragment(finalText, null, true);
     if (contextClass != null) {
       result.setThisType(factory.createType(contextClass));
     }
@@ -192,7 +210,8 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
         }
 
         PsiElement resolved = referenceExpression.resolve();
-        if (resolved instanceof PsiMember && (resolved instanceof PsiClass || ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC))) {
+        if (resolved instanceof PsiMember
+            && (resolved instanceof PsiClass || ((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC))) {
           String qName = com.intellij.psi.util.PsiUtil.getMemberQualifiedName((PsiMember)resolved);
           if (qName != null && qName.contains(".") && !referenceExpression.isQualified()) {
             replaceWithReference(referenceExpression, qName);
@@ -207,7 +226,8 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
 
         if (resolved instanceof GrVariable && !(resolved instanceof GrField) && !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
           final String name = ((GrVariable)resolved).getName();
-          if (resolved instanceof ClosureSyntheticParameter && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter) resolved).getClosure(), false)) {
+          if (resolved instanceof ClosureSyntheticParameter
+              && PsiTreeUtil.isAncestor(toEval, ((ClosureSyntheticParameter)resolved).getClosure(), false)) {
             return;
           }
 
@@ -222,12 +242,12 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
             // Evaluating inside closure for outer variable definitions
             // All non-local variables are accessed by references
             value = "this." + name;
-          } else {
+          }
+          else {
             value = name;
           }
           parameters.put(name, value);
         }
-
       }
 
       private boolean shouldDelegate(GrReferenceExpression referenceExpression, @Nullable PsiElement resolved) {
@@ -239,7 +259,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
           return true;
         }
 
-        if (resolved instanceof PsiMethod && !referenceExpression.isQualified()) {
+        if (resolved instanceof PsiMethod) {
           String methodName = ((PsiMethod)resolved).getName();
           if (closure != null && "getDelegate".equals(methodName) || "call".equals(methodName)) {
             return true;
@@ -274,7 +294,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     for (GrExpression expression : replacements.keySet()) {
       expression.replaceWithExpression(factory.createExpressionFromText(replacements.get(expression)), false);
     }
-    
+
     return Pair.create(parameters, toEval);
   }
 

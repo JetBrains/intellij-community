@@ -11,5 +11,6 @@
                     interface="com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener"/>
     <extensionPoint name="externalSystemExecutionConsoleManager"
                     interface="com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager"/>
+    <extensionPoint name="externalSystemViewContributor" interface="com.intellij.openapi.externalSystem.view.ExternalSystemViewContributor"/>
   </extensionPoints>
 </idea-plugin>

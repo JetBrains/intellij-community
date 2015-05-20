@@ -32,6 +32,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -60,8 +61,10 @@ public class XmlImportOptimizer implements ImportOptimizer {
 
   @NotNull
   @Override
-  public Runnable processFile(final PsiFile file) {
-    return new Runnable() {
+  public CollectingInfoRunnable processFile(final PsiFile file) {
+    return new CollectingInfoRunnable() {
+      int myRemovedNameSpaces = 0;
+
       @Override
       public void run() {
         XmlFile xmlFile = (XmlFile)file;
@@ -97,10 +100,19 @@ public class XmlImportOptimizer implements ImportOptimizer {
         SmartPsiElementPointer<XmlTag> pointer = null;
         for (Map.Entry<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fix : fixes.entrySet()) {
           pointer = fix.getKey().doFix(project, fix.getValue(), false);
+          myRemovedNameSpaces++;
         }
         if (pointer != null) {
           XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix.reformatStartTag(project, pointer);
         }
+      }
+
+      @Nullable
+      @Override
+      public String getUserNotificationInfo() {
+        return myRemovedNameSpaces > 0
+               ? "Removed " + myRemovedNameSpaces + " namespace" + (myRemovedNameSpaces > 1 ? "s" : "")
+               : null;
       }
     };
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 
 import java.io.File;
@@ -97,7 +99,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     final String canonicalSandbox = sandboxHome;
 
     //copy license from running instance of idea
-    IdeaLicenseHelper.copyIDEALicense(sandboxHome, ideaJdk);
+    IdeaLicenseHelper.copyIDEALicense(sandboxHome);
 
     final JavaCommandLineState state = new JavaCommandLineState(env) {
       @Override
@@ -110,16 +112,23 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         fillParameterList(vm, VM_PARAMETERS);
         fillParameterList(params.getProgramParametersList(), PROGRAM_PARAMETERS);
         Sdk usedIdeaJdk = ideaJdk;
-        if (isAlternativeJreEnabled() && !StringUtil.isEmptyOrSpaces(getAlternativeJrePath())) {
-          try {
-            usedIdeaJdk = (Sdk)usedIdeaJdk.clone();
+        String alternativeIdePath = getAlternativeJrePath();
+        if (isAlternativeJreEnabled() && !StringUtil.isEmptyOrSpaces(alternativeIdePath)) {
+          final Sdk configuredJdk = ProjectJdkTable.getInstance().findJdk(alternativeIdePath);
+          if (configuredJdk != null) {
+            usedIdeaJdk = configuredJdk;
           }
-          catch (CloneNotSupportedException e) {
-            throw new ExecutionException(e.getMessage());
+          else {
+            try {
+              usedIdeaJdk = (Sdk)usedIdeaJdk.clone();
+            }
+            catch (CloneNotSupportedException e) {
+              throw new ExecutionException(e.getMessage());
+            }
+            final SdkModificator sdkToSetUp = usedIdeaJdk.getSdkModificator();
+            sdkToSetUp.setHomePath(alternativeIdePath);
+            sdkToSetUp.commitChanges();
           }
-          final SdkModificator sdkToSetUp = usedIdeaJdk.getSdkModificator();
-          sdkToSetUp.setHomePath(getAlternativeJrePath());
-          sdkToSetUp.commitChanges();
         }
         @NonNls String libPath = usedIdeaJdk.getHomePath() + File.separator + "lib";
         vm.add("-Xbootclasspath/a:" + libPath + File.separator + "boot.jar");
@@ -141,37 +150,9 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
         if (!vm.hasProperty(PlatformUtils.PLATFORM_PREFIX_KEY)) {
           String buildNumber = IdeaJdk.getBuildNumber(usedIdeaJdk.getHomePath());
+
           if (buildNumber != null) {
-            String prefix = null;
-
-            if (buildNumber.startsWith("IC")) {
-              prefix = PlatformUtils.IDEA_CE_PREFIX;
-            }
-            else if (buildNumber.startsWith("PY")) {
-              prefix = PlatformUtils.PYCHARM_PREFIX;
-            }
-            else if (buildNumber.startsWith("PC")) {
-              prefix = PlatformUtils.PYCHARM_CE_PREFIX;
-            }
-            else if (buildNumber.startsWith("RM")) {
-              prefix = PlatformUtils.RUBY_PREFIX;
-            }
-            else if (buildNumber.startsWith("PS")) {
-              prefix = PlatformUtils.PHP_PREFIX;
-            }
-            else if (buildNumber.startsWith("WS")) {
-              prefix = PlatformUtils.WEB_PREFIX;
-            }
-            else if (buildNumber.startsWith("OC")) {
-              prefix = PlatformUtils.APPCODE_PREFIX;
-            }
-            else if (buildNumber.startsWith("CL")) {
-              prefix = PlatformUtils.CLION_PREFIX;
-            }
-            else if (buildNumber.startsWith("DB")) {
-              prefix = PlatformUtils.DBE_PREFIX;
-            }
-
+            String prefix = IntelliJPlatformProduct.fromBuildNumber(buildNumber).getPlatformPrefix();
             if (prefix != null) {
               vm.defineProperty(PlatformUtils.PLATFORM_PREFIX_KEY, prefix);
             }

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Vladimir Kondratyev
@@ -115,23 +116,22 @@ public class TodoFilter implements Cloneable{
    * @param element with filter's data.
    * @param patterns all available patterns
    */
-  public void readExternal(Element element,TodoPattern[] patterns) {
-    myName=element.getAttributeValue(ATTRIBUTE_NAME);
-    if(myName==null){
+  public void readExternal(Element element, @NotNull List<TodoPattern> patterns) {
+    myName = element.getAttributeValue(ATTRIBUTE_NAME);
+    if (myName == null) {
       throw new IllegalArgumentException();
     }
     myTodoPatterns.clear();
-    for (Object o : element.getChildren()) {
-      Element child = (Element)o;
+    for (Element child : element.getChildren()) {
       if (!ELEMENT_PATTERN.equals(child.getName())) {
         continue;
       }
       try {
         int index = Integer.parseInt(child.getAttributeValue(ATTRIBUTE_INDEX));
-        if (index < 0 || index > patterns.length - 1) {
+        if (index < 0 || index > patterns.size() - 1) {
           continue;
         }
-        TodoPattern pattern = patterns[index];
+        TodoPattern pattern = patterns.get(index);
         if (myTodoPatterns.contains(pattern)) {
           continue;
         }

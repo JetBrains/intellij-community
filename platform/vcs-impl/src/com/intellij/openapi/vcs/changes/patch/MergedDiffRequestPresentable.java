@@ -22,7 +22,6 @@ import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.actions.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,9 +43,8 @@ public class MergedDiffRequestPresentable implements DiffRequestPresentable {
   }
 
   public MyResult step(DiffChainContext context) {
-    FilePathImpl filePath = new FilePathImpl(myFile);
-    if (filePath.getFileType().isBinary()) {
-      final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, filePath, context);
+    if (myFile.getFileType().isBinary()) {
+      final boolean nowItIsText = ChangeDiffRequestPresentable.checkAssociate(myProject, myFile.getName(), context);
       if (! nowItIsText) {
         final SimpleDiffRequest request = new SimpleDiffRequest(myProject, null);
         return new MyResult(request, DiffPresentationReturnValue.removeFromList);
@@ -61,7 +59,7 @@ public class MergedDiffRequestPresentable implements DiffRequestPresentable {
       .create3WayDiffRequest(revisionTexts.getLocal().toString(),
                              revisionTexts.getPatched(),
                              revisionTexts.getBase().toString(),
-                             filePath.getFileType(), myProject, null, null);
+                             myFile.getFileType(), myProject, null, null);
     request.setWindowTitle(VcsBundle.message("patch.apply.conflict.title", FileUtil.toSystemDependentName(myFile.getPresentableUrl())));
     request.setVersionTitles(new String[] {"Current Version", "Base Version", FileUtil.toSystemDependentName(myAfterTitle)});
     return new MyResult(request, DiffPresentationReturnValue.useRequest);

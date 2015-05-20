@@ -3,7 +3,12 @@
   <property name="project.home" value="${build.dir}/.."/>
   <property name="gant.home" value="${project.home}/build/lib/gant"/>
   <property name="idea.lib" value="${project.home}/lib"/>
-  <property name="gant.target" value="default"/>
+
+  <condition property="gant.target" value="default">
+    <not>
+      <isset property="gant.target"/>
+    </not>
+  </condition>
 
   <path id="gant.classpath">
     <fileset dir="${gant.home}/lib">

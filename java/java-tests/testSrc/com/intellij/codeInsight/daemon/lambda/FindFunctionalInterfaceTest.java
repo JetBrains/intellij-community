@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.idea.Bombed;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -25,7 +24,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Calendar;
 import java.util.Collection;
 
 public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase {

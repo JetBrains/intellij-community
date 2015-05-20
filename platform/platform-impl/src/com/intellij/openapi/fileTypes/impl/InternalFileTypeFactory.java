@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class InternalFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
-    consumer.consume(new WorkspaceFileType(), WorkspaceFileType.DEFAULT_EXTENSION);
-    consumer.consume(new ModuleFileType(), ModuleFileType.DEFAULT_EXTENSION);
-    consumer.consume(new ProjectFileType(), ProjectFileType.DEFAULT_EXTENSION);
+    consumer.consume(WorkspaceFileType.INSTANCE, WorkspaceFileType.DEFAULT_EXTENSION);
+    consumer.consume(ModuleFileType.INSTANCE, ModuleFileType.DEFAULT_EXTENSION);
+    consumer.consume(ProjectFileType.INSTANCE, ProjectFileType.DEFAULT_EXTENSION);
   }
 }

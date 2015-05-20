@@ -27,6 +27,6 @@ public class PlatformFileTypeFactory extends FileTypeFactory {
     consumer.consume(ArchiveFileType.INSTANCE, "zip;jar;war;ear;swc;ane;egg;apk");
     consumer.consume(PlainTextFileType.INSTANCE, "txt;sh;bat;cmd;policy;log;cgi;MF;jad;jam;htaccess;rb");
     consumer.consume(NativeFileType.INSTANCE, "doc;docx;xls;xlsx;ppt;pptx;mdb;vsd;pdf;hlp;chm;odt");
-    consumer.consume(UnknownFileType.INSTANCE);
+    consumer.consume(UnknownFileType.INSTANCE, "lib;dll;a;so;dylib");
   }
 }

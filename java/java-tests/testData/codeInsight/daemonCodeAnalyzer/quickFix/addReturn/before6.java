@@ -1,4 +1,4 @@
-// "Add Method Body" "false"
+// "Add method body" "false"
 class a {
  String f() {
    return null;

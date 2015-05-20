@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
     List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
     //TODO: this thing is just called TWICE with same arguments eating CPU on huge files :(
-    Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, insideRanges, outside,
+    Divider.divideInsideAndOutside(myFile, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, inside, insideRanges, outside,
                                    outsideRanges, false, SHOULD_HIGHIGHT_FILTER);
 
 
@@ -104,7 +104,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       result = injectedResult;
     }
     for (HighlightInfo info : result) {
-      if (myStartOffset <= info.getStartOffset() && info.getEndOffset() <= myEndOffset) {
+      if (myRestrictRange.contains(info)) {
         gotHighlights.add(info);
       }
       else {
@@ -114,7 +114,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     }
 
     if (!injectionsOutside.isEmpty()) {
-      final ProperTextRange priorityIntersection = myPriorityRange.intersection(new TextRange(myStartOffset, myEndOffset));
+      final ProperTextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
       if ((!inside.isEmpty() || !gotHighlights.isEmpty()) &&
           priorityIntersection != null) { // do not apply when there were no elements to highlight
         // clear infos found in visible area to avoid applying them twice
@@ -167,7 +167,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       if (context != null
           && context.isValid()
           && !file.getProject().isDisposed()
-          && (myUpdateAll || new ProperTextRange(myStartOffset, myEndOffset).intersects(context.getTextRange()))) {
+          && (myUpdateAll || myRestrictRange.intersects(context.getTextRange()))) {
         hosts.add(context);
       }
     }

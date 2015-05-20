@@ -23,10 +23,12 @@ import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
 import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -52,7 +54,7 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
   private ExternalProjectPathField myProjectPathField;
   @SuppressWarnings("FieldCanBeLocal") // Used via reflection at showUi() and disposeResources()
   private JBLabel myTasksLabel;
-  private JBTextField myTasksTextField;
+  private EditorTextField myTasksTextField;
   @SuppressWarnings("FieldCanBeLocal") // Used via reflection at showUi() and disposeResources()
   private JBLabel myVmOptionsLabel;
   private RawCommandLineEditor myVmOptionsEditor;
@@ -95,11 +97,13 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
     canvas.add(myProjectPathField, ExternalSystemUiUtil.getFillLineConstraints(0));
 
     myTasksLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.tasks"));
-    myTasksTextField = new JBTextField(ExternalSystemConstants.TEXT_FIELD_WIDTH_IN_COLUMNS);
+    myTasksTextField = new EditorTextField("", myProject, PlainTextFileType.INSTANCE);
     canvas.add(myTasksLabel, ExternalSystemUiUtil.getLabelConstraints(0));
     GridBag c = ExternalSystemUiUtil.getFillLineConstraints(0);
     c.insets.right = myProjectPathField.getButton().getPreferredSize().width + 8 /* street magic, sorry */;
     canvas.add(myTasksTextField, c);
+
+    new TaskCompletionProvider(myProject, myExternalSystemId, myProjectPathField).apply(myTasksTextField);
 
     myVmOptionsLabel = new JBLabel(ExternalSystemBundle.message("run.configuration.settings.label.vmoptions"));
     myVmOptionsEditor = new RawCommandLineEditor();

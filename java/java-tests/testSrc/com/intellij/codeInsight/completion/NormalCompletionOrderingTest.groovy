@@ -22,6 +22,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor
 import com.intellij.ide.ui.UISettings
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiField
@@ -110,7 +111,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     final String path = getTestName(false) + ".java";
     myFixture.configureByFile(path);
     myFixture.complete(CompletionType.BASIC, 2);
-    assertPreferredItems(0, "BOOLEAN", "booleanMethod", "AN_OBJECT", "voidMethod", "registerNatives");
+    assertPreferredItems(0, "BOOLEAN", "booleanMethod", "AN_OBJECT", "voidMethod");
   }
 
   public void testDispreferDeclared() throws Throwable {
@@ -285,6 +286,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferReturn() {
+    checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod");
+  }
+
+  public void testPreferReturnBeforeExpression() {
     checkPreferredItems(0, "return", "rLocal", "rParam", "rMethod");
   }
 
@@ -652,6 +657,24 @@ interface TxANotAnno {}
     assertPreferredItems 0, 'newLinkedSet0', 'newLinkedSet1', 'newLinkedSet2'
     incUseCount lookup, 1
     assertPreferredItems 0, 'newLinkedSet1', 'newLinkedSet0', 'newLinkedSet2'
+  }
+
+  public void testNoStatsInSuperInvocation() {
+    checkPreferredItems 0, 'put', 'putAll'
+
+    myFixture.type('\n')
+    assert myFixture.editor.document.text.contains("put")
+    
+    myFixture.type(');\nsuper.')
+    myFixture.completeBasic()
+
+    assertPreferredItems 0, 'get'
+  }
+
+  public void testLiveTemplateOrdering() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    checkPreferredItems(0, 'return')
+    assert lookup.items[-1].lookupString == 'ritar'
   }
 
 }

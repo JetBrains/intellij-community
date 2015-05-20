@@ -292,17 +292,18 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static PsiCall getCall(PsiExpressionList list) {
-    if (list.getParent() instanceof PsiMethodCallExpression) {
-      return (PsiCall)list.getParent();
+    PsiElement listParent = list.getParent();
+    if (listParent instanceof PsiMethodCallExpression) {
+      return (PsiCall)listParent;
     }
-    if (list.getParent() instanceof PsiNewExpression) {
-      return (PsiCall)list.getParent();
+    if (listParent instanceof PsiNewExpression) {
+      return (PsiCall)listParent;
     }
-    if (list.getParent() instanceof PsiAnonymousClass) {
-      return (PsiCall)list.getParent().getParent();
+    if (listParent instanceof PsiAnonymousClass) {
+      return (PsiCall)listParent.getParent();
     }
-    if (list.getParent() instanceof PsiEnumConstant) {
-      return (PsiCall)list.getParent();
+    if (listParent instanceof PsiEnumConstant) {
+      return (PsiCall)listParent;
     }
     return null;
   }

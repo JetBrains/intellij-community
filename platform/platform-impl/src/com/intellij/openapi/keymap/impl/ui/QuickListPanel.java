@@ -39,7 +39,7 @@ public class QuickListPanel {
   private JPanel myListPanel;
   private final QuickList[] myAllQuickLists;
 
-  public QuickListPanel(QuickList origin, final QuickList[] allQuickLists) {
+  public QuickListPanel(@NotNull QuickList origin, @NotNull QuickList[] allQuickLists) {
     myAllQuickLists = allQuickLists;
 
     myActionsList = new JBList(new DefaultListModel());
@@ -69,7 +69,7 @@ public class QuickListPanel {
         }
       }).setButtonComparator("Add", "Add Separator", "Remove", "Up", "Down").createPanel(), BorderLayout.CENTER);
 
-    myDisplayName.setText(origin.getDisplayName());
+    myDisplayName.setText(origin.getName());
     myDescription.setText(origin.getDescription());
 
     String[] ids = origin.getActionIds();
@@ -138,7 +138,6 @@ public class QuickListPanel {
     }
     model.addElement(id);
   }
-
 
   public JPanel getPanel() {
     return myPanel;

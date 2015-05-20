@@ -29,7 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -123,11 +123,11 @@ public class GrHighlightUtil {
 
     if (resolved instanceof PsiField || resolved instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)resolved)) {
       boolean isStatic = ((PsiVariable)resolved).hasModifierProperty(PsiModifier.STATIC);
-      return isStatic ? DefaultHighlighter.STATIC_FIELD : DefaultHighlighter.INSTANCE_FIELD;
+      return isStatic ? GroovySyntaxHighlighter.STATIC_FIELD : GroovySyntaxHighlighter.INSTANCE_FIELD;
     }
     else if (resolved instanceof GrAccessorMethod) {
       boolean isStatic = ((GrAccessorMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
-      return isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE;
+      return isStatic ? GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE : GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE;
     }
     else if (resolved instanceof PsiMethod) {
 
@@ -140,49 +140,49 @@ public class GrHighlightUtil {
             return null;
           }
           else {
-            return DefaultHighlighter.CONSTRUCTOR_CALL;
+            return GroovySyntaxHighlighter.CONSTRUCTOR_CALL;
           }
         }
         else {
-          return DefaultHighlighter.CONSTRUCTOR_DECLARATION;
+          return GroovySyntaxHighlighter.CONSTRUCTOR_DECLARATION;
         }
       }
       else {
         boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
         if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
-          return isStatic ? DefaultHighlighter.STATIC_PROPERTY_REFERENCE : DefaultHighlighter.INSTANCE_PROPERTY_REFERENCE;
+          return isStatic ? GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE : GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE;
         }
         else {
           if (refElement != null) {
-            return isStatic ? DefaultHighlighter.STATIC_METHOD_ACCESS : DefaultHighlighter.METHOD_CALL;
+            return isStatic ? GroovySyntaxHighlighter.STATIC_METHOD_ACCESS : GroovySyntaxHighlighter.METHOD_CALL;
           }
           else {
-            return DefaultHighlighter.METHOD_DECLARATION;
+            return GroovySyntaxHighlighter.METHOD_DECLARATION;
           }
         }
       }
     }
     else if (resolved instanceof PsiTypeParameter) {
-      return DefaultHighlighter.TYPE_PARAMETER;
+      return GroovySyntaxHighlighter.TYPE_PARAMETER;
     }
     else if (resolved instanceof PsiClass) {
       if (((PsiClass)resolved).isAnnotationType()) {
-        return DefaultHighlighter.ANNOTATION;
+        return GroovySyntaxHighlighter.ANNOTATION;
       }
       else {
-        return DefaultHighlighter.CLASS_REFERENCE;
+        return GroovySyntaxHighlighter.CLASS_REFERENCE;
       }
     }
     else if (resolved instanceof GrParameter) {
       boolean reassigned = isReassigned((GrParameter)resolved);
-      return reassigned ? DefaultHighlighter.REASSIGNED_PARAMETER : DefaultHighlighter.PARAMETER;
+      return reassigned ? GroovySyntaxHighlighter.REASSIGNED_PARAMETER : GroovySyntaxHighlighter.PARAMETER;
     }
     else if (resolved instanceof GrVariable) {
       boolean reassigned = isReassigned((GrVariable)resolved);
-      return reassigned ? DefaultHighlighter.REASSIGNED_LOCAL_VARIABLE : DefaultHighlighter.LOCAL_VARIABLE;
+      return reassigned ? GroovySyntaxHighlighter.REASSIGNED_LOCAL_VARIABLE : GroovySyntaxHighlighter.LOCAL_VARIABLE;
     }
     else if (resolved instanceof GrLabeledStatement) {
-      return DefaultHighlighter.LABEL;
+      return GroovySyntaxHighlighter.LABEL;
     }
     return null;
   }

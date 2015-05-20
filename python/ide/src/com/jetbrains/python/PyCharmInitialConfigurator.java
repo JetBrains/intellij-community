@@ -90,7 +90,7 @@ public class PyCharmInitialConfigurator {
       });
     }
 
-    Registry.get("ide.scratch.enabled").setValue(false); //disable scratch till it is ready
+    Registry.get("ide.scratch.enabled").setValue(true);
   }
 
   private static void showInitialConfigurationDialog() {

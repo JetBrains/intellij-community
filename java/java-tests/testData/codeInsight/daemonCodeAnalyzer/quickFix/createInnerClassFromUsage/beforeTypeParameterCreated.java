@@ -1,4 +1,4 @@
-// "Create Inner Class 'Foo'" "true"
+// "Create inner class 'Foo'" "true"
 public class Test {
   <R> void foo(Fo<caret>o<R, String> f){}
 }

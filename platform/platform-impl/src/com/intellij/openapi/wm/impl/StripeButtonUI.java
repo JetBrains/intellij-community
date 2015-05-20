@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -48,8 +49,8 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     final AnchoredButton button=(AnchoredButton)c;
     final Dimension dim=super.getPreferredSize(button);
 
-    dim.width=(int)(4+dim.width*1.1f);
-    dim.height+=2;
+    dim.width=(int)(JBUI.scale(4) + dim.width*1.1f);
+    dim.height+= JBUI.scale(2);
 
     final ToolWindowAnchor anchor=button.getAnchor();
     if(ToolWindowAnchor.LEFT==anchor||ToolWindowAnchor.RIGHT==anchor){
@@ -106,16 +107,17 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
 
     final ButtonModel model=button.getModel();
     final Color background = button.getBackground();
-    ourIconRect.x -= 2;
-    ourTextRect.x -= 2;
+    ourIconRect.x -= JBUI.scale(2);
+    ourTextRect.x -= JBUI.scale(2);
+    final int off = JBUI.scale(1);
     if (model.isArmed() && model.isPressed() || model.isSelected() || model.isRollover()) {
-      if (anchor == ToolWindowAnchor.LEFT) g2.translate(-1, 0);
-      if (anchor.isHorizontal()) g2.translate(0, -1);
+      if (anchor == ToolWindowAnchor.LEFT) g2.translate(-off, 0);
+      if (anchor.isHorizontal()) g2.translate(0, -off);
       final boolean dark = UIUtil.isUnderDarcula();
       g2.setColor(dark ? Gray._15.withAlpha(model.isSelected() ? 85: 40) : Gray._85.withAlpha(model.isSelected()? 85: 40));
       g2.fillRect(0, 0, button.getWidth(), button.getHeight());
-      if (anchor == ToolWindowAnchor.LEFT) g2.translate(1, 0);
-      if (anchor.isHorizontal()) g2.translate(0, 1);
+      if (anchor == ToolWindowAnchor.LEFT) g2.translate(off, 0);
+      if (anchor.isHorizontal()) g2.translate(0, off);
     }
 
 

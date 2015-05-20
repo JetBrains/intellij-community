@@ -598,35 +598,35 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     assertEquals(logicalLinesBefore + 1, myEditor.offsetToLogicalPosition(text.length()).line);
   }
   
-  //public void testPastingInsideSelection() throws IOException {
-  //  String text = 
-  //    "this is line number 0\n" +
-  //    "this is line number 1\n" +
-  //    "this is line number 2\n" +
-  //    "this is line number 3\n" +
-  //    "this is line number 4\n" +
-  //    "this is line number 5\n" +
-  //    "this is line number 6\n" +
-  //    "this is the last line";
-  //  
-  //  init(100, text);
-  //  int lineToSelect = 4;
-  //  myEditor.getCaretModel().moveToOffset(text.indexOf("number " + lineToSelect));
-  //  Document document = myEditor.getDocument();
-  //
-  //  int startOffset = document.getLineStartOffset(lineToSelect);
-  //  int endOffset = document.getLineEndOffset(lineToSelect);
-  //  myEditor.getSelectionModel().setSelection(startOffset, endOffset);
-  //  
-  //  VisualPosition positionBefore = myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1));
-  //  List<SoftWrap> softWrapsBefore = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
-  //  
-  //  copy();
-  //  paste();
-  //  
-  //  assertEquals(positionBefore, myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1)));
-  //  assertEquals(softWrapsBefore, getSoftWrapModel().getRegisteredSoftWraps());
-  //}
+  public void testPastingInsideSelection() throws IOException {
+    String text = 
+      "this is line number 0\n" +
+      "this is line number 1\n" +
+      "this is line number 2\n" +
+      "this is line number 3\n" +
+      "this is line number 4\n" +
+      "this is line number 5\n" +
+      "this is line number 6\n" +
+      "this is the last line";
+    
+    init(100, text);
+    int lineToSelect = 4;
+    myEditor.getCaretModel().moveToOffset(text.indexOf("number " + lineToSelect));
+    Document document = myEditor.getDocument();
+  
+    int startOffset = document.getLineStartOffset(lineToSelect);
+    int endOffset = document.getLineEndOffset(lineToSelect);
+    myEditor.getSelectionModel().setSelection(startOffset, endOffset);
+    
+    VisualPosition positionBefore = myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1));
+    List<SoftWrap> softWrapsBefore = new ArrayList<SoftWrap>(getSoftWrapModel().getRegisteredSoftWraps());
+    
+    copy();
+    paste();
+    
+    assertEquals(positionBefore, myEditor.offsetToVisualPosition(document.getLineStartOffset(lineToSelect + 1)));
+    assertEquals(softWrapsBefore, getSoftWrapModel().getRegisteredSoftWraps());
+  }
   
   public void testRemoveHugeLogicalLineThatLaysBeforeSoftWrappedLines() throws IOException {
     String text =
@@ -1050,6 +1050,71 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
 
     // verify that cached layout data is intact after document change and position recalculation is done correctly
     assertEquals(new LogicalPosition(0, 0), myEditor.visualToLogicalPosition(new VisualPosition(0, 0)));
+  }
+  
+  public void testOnlyMinimalRangeIsRecalculatedOnDocumentChange() throws IOException {
+    init("aa bb cc dd ee<caret> ff gg hh ii jj", TestFileType.TEXT);
+    EditorTestUtil.configureSoftWraps(myEditor, 8);
+    verifySoftWrapPositions(6, 12, 18, 24);
+    
+    final IncrementalCacheUpdateEvent[] event = new IncrementalCacheUpdateEvent[1];
+    ((SoftWrapModelImpl)myEditor.getSoftWrapModel()).getApplianceManager().addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
+      @Override
+      public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent e) {
+        assertNull(event[0]);
+        event[0] = e;
+      }
+    });
+    
+    type(' ');
+    
+    verifySoftWrapPositions(6, 12, 19, 25);
+    assertNotNull(event[0]);
+    assertEquals(6, event[0].getStartOffset());
+    assertEquals(19, event[0].getActualEndOffset());
+  }
+  
+  public void testPositionsAreCorrectAfterIncrementalRecalculation() throws IOException {
+    initText("abra<caret> cadabra");
+    configureSoftWraps(10);
+    type(' ');
+    
+    assertEquals(new LogicalPosition(0, 6), myEditor.offsetToLogicalPosition(6));
+    assertEquals(new VisualPosition(1, 1), myEditor.offsetToVisualPosition(6));
+  }
+
+  public void testSoftWrappingWithFoldRegionAndTabs() throws IOException {
+    initText("foldA\t\t\t\t");
+    addCollapsedFoldRegion(0, 4, ".");
+    configureSoftWraps(10);
+
+    assertNull(myEditor.getSoftWrapModel().getSoftWrap(4));
+  }
+  
+  public void testSoftWrapsAreNotCreatedInsideFoldRegions() throws Exception {
+    initText("\t\t\taaaaa\t");
+    addCollapsedFoldRegion(7, 9, ".");
+    configureSoftWraps(10);
+
+    assertNull(myEditor.getSoftWrapModel().getSoftWrap(8));
+  }
+  
+  public void testUnbreakableLinesDontAffectFollowingLines() throws Exception {
+    initText("unbreakableLine\nshort line");
+    configureSoftWraps(10);
+    
+    verifySoftWrapPositions();
+  }
+  
+  public void testFoldRegionPreventsLaterWrapping() throws Exception {
+    initText("unbreakableText.txt");
+    configureSoftWraps(10);
+    verifySoftWrapPositions(15);
+    
+    addCollapsedFoldRegion(12, 13, ".");
+
+    verifySoftWrapPositions(12);
+    assertEquals(1, myEditor.offsetToVisualPosition(19).line);
   }
   
   private void init(final int visibleWidthInColumns, @NotNull String fileText) throws IOException {

@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +81,7 @@ public class ChangesCacheFile {
     myVcs = vcs;
     myChangesProvider = (CachingCommittedChangesProvider) vcs.getCommittedChangesProvider();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myRootPath = new FilePathImpl(root);
+    myRootPath = VcsUtil.getFilePath(root);
     myLocation = location;
   }
 
@@ -602,7 +603,7 @@ public class ChangesCacheFile {
     final List<Pair<String,VcsRevisionNumber>> list = group.getFilesAndRevisions(myVcsManager);
     for(Pair<String, VcsRevisionNumber> pair: list) {
       final String file = pair.first;
-      FilePath path = new FilePathImpl(new File(file), false);
+      FilePath path = VcsUtil.getFilePath(file, false);
       if (!path.isUnder(myRootPath, false) || pair.second == null) {
         continue;
       }

@@ -44,7 +44,7 @@ public class PerIndexDocumentVersionMap {
   }
 
   private static final Key<List<IdVersionInfo>> KEY = Key.create("UnsavedDocIdVersionInfo");
-  public long getAndSet(@NotNull Document document, @NotNull ID<?, ?> indexId, long value) {
+  public long set(@NotNull Document document, @NotNull ID<?, ?> indexId, long value) {
     List<IdVersionInfo> list = document.getUserData(KEY);
     if (list == null) {
       list = ((UserDataHolderEx)document).putUserDataIfAbsent(KEY, new ArrayList<IdVersionInfo>());
@@ -67,6 +67,29 @@ public class PerIndexDocumentVersionMap {
     }
   }
 
+  public long get(@NotNull Document document, @NotNull ID<?, ?> indexId) {
+    List<IdVersionInfo> list = document.getUserData(KEY);
+    if (list == null) {
+      return INVALID_STAMP;
+    }
+
+    synchronized (list) {
+      for (IdVersionInfo info : list) {
+        if (info.id == indexId) {
+          long old = info.docVersion;
+          if (info.mapVersion != mapVersion) {
+            return INVALID_STAMP;
+          }
+          return old;
+        }
+      }
+      return INVALID_STAMP;
+    }
+  }
+
+  public void clearForDocument(@NotNull Document document) {
+    document.putUserData(KEY, new ArrayList<IdVersionInfo>());
+  }
   public void clear() {
     mapVersion++;
   }

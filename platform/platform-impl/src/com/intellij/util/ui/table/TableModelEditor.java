@@ -371,7 +371,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
           }
 
           table.requestFocus();
-          TableUtil.updateScroller(table, false);
+          TableUtil.updateScroller(table);
         }
       }
     ).createPanel();
@@ -440,7 +440,7 @@ public class TableModelEditor<T> implements ElementProducer<T> {
     public void run(AnActionButton button) {
       if (TableUtil.doRemoveSelectedItems(table, model, this)) {
         table.requestFocus();
-        TableUtil.updateScroller(table, false);
+        TableUtil.updateScroller(table);
       }
     }
 

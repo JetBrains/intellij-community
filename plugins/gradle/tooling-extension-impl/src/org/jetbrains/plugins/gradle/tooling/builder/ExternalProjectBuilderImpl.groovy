@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentHashMap
 class ExternalProjectBuilderImpl implements ModelBuilderService {
 
   private final cache = new ConcurrentHashMap<String, ExternalProject>()
+  private final myTasksFactory = new TasksFactory()
 
   @Override
   public boolean canBuild(String modelName) {
@@ -94,18 +95,25 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     result
   }
 
-  static Map<String, ExternalTask> getTasks(Project project) {
-    def result = [:] as Map<String, ExternalTask>
+  Map<String, ExternalTask> getTasks(Project project) {
+    def result = [:] as Map<String, DefaultExternalTask>
 
-    project.tasks.all { Task task ->
-      ExternalTask externalTask = new DefaultExternalTask()
-      externalTask.name = task.name
-      externalTask.description = task.description
-      externalTask.group = task.group
-      externalTask.QName = task.path
-      result.put(externalTask.QName, externalTask)
+    myTasksFactory.getTasks(project).each { Task task ->
+      DefaultExternalTask externalTask = result.get(task.name)
+      if (externalTask == null) {
+        externalTask = new DefaultExternalTask()
+        externalTask.name = task.name
+        externalTask.QName = task.name
+        externalTask.description = task.description
+        externalTask.group = task.group ?: "other"
+        result.put(externalTask.name, externalTask)
+      }
+
+      def projectTaskPath = project.path + ':' + task.name
+      if (projectTaskPath.equals(task.path)) {
+        externalTask.QName = task.path
+      }
     }
-
     result
   }
 
@@ -133,13 +141,13 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       ExternalSourceDirectorySet resourcesDirectorySet = new DefaultExternalSourceDirectorySet()
       resourcesDirectorySet.name = sourceSet.resources.name
       resourcesDirectorySet.srcDirs = sourceSet.resources.srcDirs
-      resourcesDirectorySet.outputDir = sourceSet.output.resourcesDir
+      resourcesDirectorySet.outputDir = chooseNotNull(sourceSet.output.resourcesDir, sourceSet.output.classesDir, project.buildDir)
       resourcesDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 
       ExternalSourceDirectorySet javaDirectorySet = new DefaultExternalSourceDirectorySet()
       javaDirectorySet.name = sourceSet.allJava.name
       javaDirectorySet.srcDirs = sourceSet.allJava.srcDirs
-      javaDirectorySet.outputDir = sourceSet.output.classesDir
+      javaDirectorySet.outputDir = chooseNotNull(sourceSet.output.classesDir, project.buildDir);
       javaDirectorySet.inheritedCompilerOutput = inheritOutputDirs
 //      javaDirectorySet.excludes = javaExcludes + sourceSet.java.excludes;
 //      javaDirectorySet.includes = javaIncludes + sourceSet.java.includes;
@@ -171,6 +179,10 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
       result[sourceSet.name] = externalSourceSet
     }
     result
+  }
+
+  static <T> T chooseNotNull(T ... params) {
+    params.findResult("", { it })
   }
 
   static getFilters(Project project, String taskName) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFile;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.impl.ZipHandler;
@@ -43,7 +42,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.zip.ZipFile;
 
 /**
  * @author max
@@ -67,7 +65,12 @@ public class JarHandler extends ZipHandler {
   protected File getFileToUse() {
     File fileWithMirrorResolved = myFileWithMirrorResolved;
     if (fileWithMirrorResolved == null) {
-      myFileWithMirrorResolved = fileWithMirrorResolved = getMirrorFile(getFile());
+      File file = getFile();
+      fileWithMirrorResolved = getMirrorFile(file);
+      if (FileUtil.compareFiles(file, fileWithMirrorResolved) == 0) {
+        fileWithMirrorResolved = file;
+      }
+      myFileWithMirrorResolved = fileWithMirrorResolved;
     }
     return fileWithMirrorResolved;
   }
@@ -120,12 +123,11 @@ public class JarHandler extends ZipHandler {
         try {
           FileInputStream is = new FileInputStream(originalFile);
           try {
-            byte[] buffer = new byte[20 * 1024];
-
             sha1 = MessageDigest.getInstance("SHA1");
             sha1.update(String.valueOf(originalAttributes.length).getBytes(Charset.defaultCharset()));
             sha1.update((byte)0);
 
+            byte[] buffer = new byte[20 * 1024];
             while (true) {
               int read = is.read(buffer);
               if (read < 0) break;
@@ -325,18 +327,5 @@ public class JarHandler extends ZipHandler {
 
     String message = VfsBundle.message("jar.copy.error.message", path, target.getPath(), e.getMessage());
     ERROR_COPY_NOTIFICATION.getValue().createNotification(message, NotificationType.ERROR).notify(null);
-  }
-
-  /** @deprecated to be removed in IDEA 15 */
-  @SuppressWarnings("deprecation")
-  public JarFile getJar() {
-    File original = getFile();
-    try {
-      return new JarHandlerBase.MyJarFile(new ZipFile(getMirrorFile(original)));
-    }
-    catch (IOException e) {
-      LOG.warn(e.getMessage() + ": " + original, e);
-      return null;
-    }
   }
 }

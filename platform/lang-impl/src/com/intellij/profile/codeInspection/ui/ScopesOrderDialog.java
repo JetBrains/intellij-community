@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,12 @@ import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.ListUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +71,7 @@ public class ScopesOrderDialog extends DialogWrapper {
     final JLabel descr = new JLabel("<html><p>If file appears in two or more scopes, it will be " +
                                            "inspected with settings of the topmost scope in list above.</p><p/>" +
                                            "<p>Scope order is set globally for all inspections in the profile.</p></html>");
-    descr.setPreferredSize(new Dimension(300, 100));
+    descr.setPreferredSize(JBUI.size(300, 100));
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, descr);
     myPanel = new JPanel();
     myPanel.setLayout(new BorderLayout());

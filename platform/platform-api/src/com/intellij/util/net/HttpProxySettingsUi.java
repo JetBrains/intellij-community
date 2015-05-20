@@ -29,6 +29,7 @@ import com.intellij.ui.PortField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.io.HttpRequests;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import org.jetbrains.annotations.NotNull;
@@ -172,27 +173,25 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
-            HttpURLConnection connection = null;
             try {
               //already checked for null above
               //noinspection ConstantConditions
-              connection = settings.openHttpConnection(answer);
-              connection.setReadTimeout(3 * 1000);
-              connection.setConnectTimeout(3 * 1000);
-              connection.connect();
-              final int code = connection.getResponseCode();
-              if (HttpURLConnection.HTTP_OK != code) {
-                exceptionReference.set(new IOException("Error code: " + code));
-              }
+              HttpRequests.request(answer)
+                .readTimeout(3 * 1000)
+                .connect(new HttpRequests.RequestProcessor<Void>() {
+                  @Override
+                  public Void process(@NotNull HttpRequests.Request request) throws IOException {
+                    if (!request.isSuccessful()) {
+                      exceptionReference.set(new IOException("Error code: " + ((HttpURLConnection)request.getConnection()).getResponseCode()));
+                    }
+                    return null;
+                  }
+                });
             }
             catch (IOException e) {
               exceptionReference.set(e);
             }
-            finally {
-              if (connection != null) {
-                connection.disconnect();
-              }
-            }
+
             //noinspection SSBasedInspection
             SwingUtilities.invokeLater(new Runnable() {
               @Override

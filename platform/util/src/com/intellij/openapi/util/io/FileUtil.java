@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.CommonBundle;
+import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +43,9 @@ import java.util.regex.Pattern;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
-
+  static {
+    if (!Patches.USE_REFLECTION_TO_ACCESS_JDK7) throw new RuntimeException("Please migrate FileUtilRt to JDK8");
+  }
   @NonNls public static final String ASYNC_DELETE_EXTENSION = ".__del__";
 
   public static final int REGEX_PATTERN_FLAGS = SystemInfo.isFileSystemCaseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
@@ -107,15 +110,22 @@ public class FileUtil extends FileUtilRt {
     return !ThreeState.NO.equals(isAncestorThreeState(ancestor, file, strict));
   }
 
+  /**
+   * Checks if the {@code ancestor} is an ancestor of the {@code file}, and if it is an immediate parent or not.
+   *
+   * @param ancestor supposed ancestor.
+   * @param file     supposed descendant.
+   * @param strict   if {@code false}, the file can be ancestor of itself,
+   *                 i.e. the method returns {@code ThreeState.YES} if {@code ancestor} equals to {@code file}.
+   *
+   * @return {@code ThreeState.YES} if ancestor is an immediate parent of the file,
+   *         {@code ThreeState.UNSURE} if ancestor is not immediate parent of the file,
+   *         {@code ThreeState.NO} if ancestor is not a parent of the file at all.
+   */
   @NotNull
   public static ThreeState isAncestorThreeState(@NotNull String ancestor, @NotNull String file, boolean strict) {
     String ancestorPath = toCanonicalPath(ancestor);
     String filePath = toCanonicalPath(file);
-
-    if (ancestorPath == null || filePath == null) {
-      return ThreeState.NO;
-    }
-
     return startsWith(filePath, ancestorPath, strict, SystemInfo.isFileSystemCaseSensitive, true);
   }
 
@@ -127,30 +137,27 @@ public class FileUtil extends FileUtilRt {
     return !ThreeState.NO.equals(startsWith(path, start, false, caseSensitive, false));
   }
 
-  /**
-   * @return ThreeState.YES if same path or immediate parent
-   */
   @NotNull
-  private static ThreeState startsWith(@NotNull String path, @NotNull String start, boolean strict, boolean caseSensitive,
+  private static ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean caseSensitive,
                                        boolean checkImmediateParent) {
-    final int length1 = path.length();
-    final int length2 = start.length();
-    if (length2 == 0) return length1 == 0 ? ThreeState.YES : ThreeState.UNSURE;
-    if (length2 > length1) return ThreeState.NO;
-    if (!path.regionMatches(!caseSensitive, 0, start, 0, length2)) return ThreeState.NO;
-    if (length1 == length2) {
+    final int pathLength = path.length();
+    final int prefixLength = prefix.length();
+    if (prefixLength == 0) return pathLength == 0 ? ThreeState.YES : ThreeState.UNSURE;
+    if (prefixLength > pathLength) return ThreeState.NO;
+    if (!path.regionMatches(!caseSensitive, 0, prefix, 0, prefixLength)) return ThreeState.NO;
+    if (pathLength == prefixLength) {
       return strict ? ThreeState.NO : ThreeState.YES;
     }
-    char last2 = start.charAt(length2 - 1);
-    int slashOrSeparatorIdx = length2;
-    if (last2 == '/' || last2 == File.separatorChar) {
-      slashOrSeparatorIdx = length2 - 1;
+    char lastPrefixChar = prefix.charAt(prefixLength - 1);
+    int slashOrSeparatorIdx = prefixLength;
+    if (lastPrefixChar == '/' || lastPrefixChar == File.separatorChar) {
+      slashOrSeparatorIdx = prefixLength - 1;
     }
     char next1 = path.charAt(slashOrSeparatorIdx);
     if (next1 == '/' || next1 == File.separatorChar) {
       if (!checkImmediateParent) return ThreeState.YES;
 
-      if (slashOrSeparatorIdx == length1 - 1) return ThreeState.YES;
+      if (slashOrSeparatorIdx == pathLength - 1) return ThreeState.YES;
       int idxNext = path.indexOf(next1, slashOrSeparatorIdx + 1);
       idxNext = idxNext == -1 ? path.indexOf(next1 == '/' ? '\\' : '/', slashOrSeparatorIdx + 1) : idxNext;
       return idxNext == -1 ? ThreeState.YES : ThreeState.UNSURE;
@@ -417,6 +424,13 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean delete(@NotNull File file) {
+    if (NIOReflect.IS_AVAILABLE) {
+      return deleteRecursivelyNIO(file);
+    }
+    return deleteRecursively(file);
+  }
+
+  private static boolean deleteRecursively(@NotNull File file) {
     FileAttributes attributes = FileSystemUtil.getAttributes(file);
     if (attributes == null) return true;
 
@@ -424,7 +438,7 @@ public class FileUtil extends FileUtilRt {
       File[] files = file.listFiles();
       if (files != null) {
         for (File child : files) {
-          if (!delete(child)) return false;
+          if (!deleteRecursively(child)) return false;
         }
       }
     }
@@ -493,7 +507,7 @@ public class FileUtil extends FileUtilRt {
     }
 
     if (SystemInfo.isUnix && fromFile.canExecute()) {
-      FileSystemUtil.clonePermissions(fromFile.getPath(), toFile.getPath());
+      FileSystemUtil.clonePermissionsToExecute(fromFile.getPath(), toFile.getPath());
     }
   }
 
@@ -1473,24 +1487,6 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.loadLines(reader);
   }
 
-  /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
-  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
-  public static List<String> loadLines(@NotNull InputStream stream) throws IOException {
-    return loadLines(new InputStreamReader(stream));
-  }
-
-  /** @deprecated unclear closing policy, do not use (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static List<String> loadLines(@NotNull Reader reader) throws IOException {
-    BufferedReader bufferedReader = new BufferedReader(reader);
-    try {
-      return loadLines(bufferedReader);
-    }
-    finally {
-      bufferedReader.close();
-    }
-  }
-
   @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
     return FileUtilRt.loadBytes(stream);
@@ -1541,7 +1537,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   /**
-   * Like {@link Properties#load(java.io.Reader)}, but preserves the order of key/value pairs.
+   * Like {@link Properties#load(Reader)}, but preserves the order of key/value pairs.
    */
   @NotNull
   public static Map<String, String> loadProperties(@NotNull Reader reader) throws IOException {
@@ -1571,5 +1567,16 @@ public class FileUtil extends FileUtilRt {
     File tempFileNameForDeletion = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
     boolean success = file.renameTo(tempFileNameForDeletion);
     return delete(success ? tempFileNameForDeletion:file);
+  }
+
+  public static boolean isFileSystemCaseSensitive(@NotNull String path) throws FileNotFoundException {
+    FileAttributes attributes = FileSystemUtil.getAttributes(path);
+    if (attributes == null) {
+      throw new FileNotFoundException(path);
+    }
+
+    FileAttributes upper = FileSystemUtil.getAttributes(path.toUpperCase(Locale.ENGLISH));
+    FileAttributes lower = FileSystemUtil.getAttributes(path.toLowerCase(Locale.ENGLISH));
+    return !(attributes.equals(upper) && attributes.equals(lower));
   }
 }

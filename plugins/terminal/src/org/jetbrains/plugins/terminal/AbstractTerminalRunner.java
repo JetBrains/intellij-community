@@ -173,6 +173,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return myProject;
   }
 
+  public abstract String runningTargetName();
+
+
   public void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
     // Create Server process
     try {
@@ -181,7 +184,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       createAndStartSession(terminalWidget, createTtyConnector(process));
     }
     catch (Exception e) {
-      LOG.error("Can't open terminal session:" + e.getMessage(), e);
+      Messages.showErrorDialog(e.getMessage(), "Can't Open " + runningTargetName());
     }
   }
 }

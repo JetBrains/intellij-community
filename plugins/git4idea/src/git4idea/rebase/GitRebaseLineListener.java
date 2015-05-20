@@ -69,7 +69,7 @@ public class GitRebaseLineListener extends GitLineHandlerAdapter {
         assert myStatus == null;
         myStatus = myProgressLine == null ? Status.CANCELLED : Status.ERROR;
       }
-      else if (line.startsWith("fatal") || line.startsWith("error: ") || line.startsWith("Cannot rebase")) {
+      else if (line.startsWith("fatal") || line.startsWith("error: ") || line.startsWith("Cannot")) {
         if (myStatus != Status.CONFLICT) {
           myStatus = Status.ERROR;
         }

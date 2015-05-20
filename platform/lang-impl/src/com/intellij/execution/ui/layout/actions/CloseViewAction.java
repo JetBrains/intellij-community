@@ -27,8 +27,8 @@ public class CloseViewAction extends BaseViewAction {
   @Override
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(content));
-    e.getPresentation().setIcon(AllIcons.Actions.CloseNew);
-    e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseNewHovered);
+    e.getPresentation().setIcon(AllIcons.Actions.Close);
+    e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
   }
 
   @Override

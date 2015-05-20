@@ -59,7 +59,7 @@ public class EscapeAction extends EditorAction {
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       SelectionModel selectionModel = editor.getSelectionModel();
       CaretModel caretModel = editor.getCaretModel();
-      return selectionModel.hasSelection() || selectionModel.hasBlockSelection() || caretModel.getCaretCount() > 1;
+      return selectionModel.hasSelection() || caretModel.getCaretCount() > 1;
     }
   }
 }

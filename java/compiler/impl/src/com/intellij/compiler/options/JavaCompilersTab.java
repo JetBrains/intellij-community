@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.compiler.options;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -46,6 +47,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   private JPanel myTargetOptionsPanel;
   private final CardLayout myCardLayout;
 
+  private final Project myProject;
   private final BackendCompiler myDefaultCompiler;
   private BackendCompiler mySelectedCompiler;
   private final CompilerConfigurationImpl myCompilerConfiguration;
@@ -58,6 +60,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   }
 
   public JavaCompilersTab(final Project project, Collection<BackendCompiler> compilers, BackendCompiler defaultCompiler) {
+    myProject = project;
     myDefaultCompiler = defaultCompiler;
     myCompilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     myConfigurables = new ArrayList<Configurable>(compilers.size());
@@ -132,15 +135,23 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   }
 
   public void apply() throws ConfigurationException {
-    for (Configurable configurable : myConfigurables) {
-      configurable.apply();
-    }
-    myCompilerConfiguration.setDefaultCompiler(mySelectedCompiler);
-    myCompilerConfiguration.setProjectBytecodeTarget(myTargetLevelComponent.getProjectBytecodeTarget());
-    myCompilerConfiguration.setModulesBytecodeTargetMap(myTargetLevelComponent.getModulesBytecodeTargetMap());
+    try {
+      for (Configurable configurable : myConfigurables) {
+        if (configurable.isModified()) {
+          configurable.apply();
+        }
+      }
 
-    myTargetLevelComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
-    myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
+      myCompilerConfiguration.setDefaultCompiler(mySelectedCompiler);
+      myCompilerConfiguration.setProjectBytecodeTarget(myTargetLevelComponent.getProjectBytecodeTarget());
+      myCompilerConfiguration.setModulesBytecodeTargetMap(myTargetLevelComponent.getModulesBytecodeTargetMap());
+
+      myTargetLevelComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
+      myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
+    }
+    finally {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   public void reset() {

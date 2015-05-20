@@ -27,6 +27,7 @@
     <orderEntry type="module" module-name="maven" />
     <orderEntry type="module" module-name="junit" />
     <orderEntry type="library" name="swingx" level="project" />
+    <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="Gradle">
         <CLASSES>
@@ -40,6 +41,7 @@
           <root url="jar://$MODULE_DIR$/lib/gradle-base-services-groovy-2.2.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-native-2.2.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-resources-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-cli-2.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -53,18 +55,8 @@
           <root url="jar://$MODULE_DIR$/lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/base-services-groovy/src/main/groovy" />
           <root url="jar://$MODULE_DIR$/lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/native/src/main/java" />
           <root url="jar://$MODULE_DIR$/lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/resources/src/main/java" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-2.2-src.zip!/gradle-2.2/subprojects/cli/src/main/java" />
         </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library name="Slf4j">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/slf4j-api-1.7.7.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/logback-classic-1.0.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/logback-core-1.0.13.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
@@ -106,14 +98,14 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
-    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="junit" />
     <orderEntry type="module" module-name="smRunner" />
     <orderEntry type="library" name="Kryo" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>
 </module>

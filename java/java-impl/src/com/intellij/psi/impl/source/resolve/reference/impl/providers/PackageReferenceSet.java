@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ReferenceSetBase;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,9 +38,15 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
+  private final GlobalSearchScope mySearchScope;
 
   public PackageReferenceSet(@NotNull final String str, @NotNull final PsiElement element, final int startInElement) {
+    this(str, element, startInElement, element.getResolveScope());
+  }
+
+  public PackageReferenceSet(@NotNull final String str, @NotNull final PsiElement element, final int startInElement, @NotNull GlobalSearchScope scope) {
     super(str, element, startInElement, DOT_SEPARATOR);
+    mySearchScope=scope;
   }
 
   @Override
@@ -50,7 +57,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
 
   public Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, final String packageName) {
     if (context != null) {
-      return ContainerUtil.filter(context.getSubPackages(), new Condition<PsiPackage>() {
+      return ContainerUtil.filter(context.getSubPackages(getResolveScope()), new Condition<PsiPackage>() {
         @Override
         public boolean value(PsiPackage aPackage) {
           return Comparing.equal(aPackage.getName(), packageName);
@@ -58,6 +65,11 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
       });
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  protected GlobalSearchScope getResolveScope() {
+    return mySearchScope;
   }
 
   public Collection<PsiPackage> resolvePackage() {

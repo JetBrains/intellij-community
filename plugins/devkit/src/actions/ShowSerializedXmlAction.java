@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.lang.UrlClassLoader;
-import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.MutableAccessor;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -79,7 +82,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     final String className = ClassUtil.getJVMClassName(psiClass);
 
     final Project project = getEventProject(e);
-    CompilerManager.getInstance(project).make(new FileSetCompileScope(Arrays.asList(virtualFile), new Module[]{module}), new CompileStatusNotification() {
+    CompilerManager.getInstance(project).make(new FileSetCompileScope(Collections.singletonList(virtualFile), new Module[]{module}), new CompileStatusNotification() {
       @Override
       public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
         if (aborted || errors > 0) return;
@@ -151,6 +154,11 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
     @Nullable
     public Object createValue(Type type, final FList<Type> types) throws Exception {
+      return createValue(type, types, Collections.<Type>emptyList());
+    }
+
+    @Nullable
+    public Object createValue(Type type, final FList<Type> types, List<Type> elementTypes) throws Exception {
       if (types.contains(type)) return null;
       FList<Type> processedTypes = types.prepend(type);
       final Class<?> valueClass = type instanceof Class ? (Class<Object>)type : (Class<Object>)((ParameterizedType)type).getRawType();
@@ -175,13 +183,13 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
         return constants[(myNum++) % constants.length];
       }
       else if (Collection.class.isAssignableFrom(valueClass) && type instanceof ParameterizedType) {
-        return createCollection(valueClass, (ParameterizedType)type, processedTypes);
+        return createCollection(valueClass, (ParameterizedType)type, processedTypes, elementTypes);
       }
       else if (Map.class.isAssignableFrom(valueClass) && type instanceof ParameterizedType) {
         return createMap((ParameterizedType)type, processedTypes);
       }
       else if (valueClass.isArray()) {
-        return createArray(valueClass, processedTypes);
+        return createArray(valueClass, processedTypes, elementTypes);
       }
       else if (Element.class.isAssignableFrom(valueClass)) {
         return new Element("customElement" + (myNum++)).setAttribute("attribute", "value" + (myNum++)).addContent(new Element("child" + (myNum++)));
@@ -191,23 +199,26 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       }
     }
 
-    public Object createObject(Class<?> aClass, FList<Type> processedTypes) throws Exception {
-      final Object o = aClass.getDeclaredConstructor().newInstance();
-      for (Accessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
-        final Type type = accessor.getGenericType();
-        Object value = createValue(type, processedTypes);
+    @NotNull
+    public Object createObject(@NotNull Class<?> aClass, FList<Type> processedTypes) throws Exception {
+      Object o = ReflectionUtil.newInstance(aClass);
+      for (MutableAccessor accessor : XmlSerializerUtil.getAccessors(aClass)) {
+        AbstractCollection abstractCollection = accessor.getAnnotation(AbstractCollection.class);
+        List<Type> elementTypes = abstractCollection != null ? Arrays.<Type>asList(abstractCollection.elementTypes()) : Collections.<Type>emptyList();
+        Object value = createValue(accessor.getGenericType(), processedTypes, elementTypes);
         if (value != null) {
-          accessor.write(o, value);
+          accessor.set(o, value);
         }
       }
       return o;
     }
 
     @Nullable
-    private Object createArray(Class<?> valueClass, FList<Type> processedTypes) throws Exception {
-      final Object[] array = (Object[])Array.newInstance(valueClass.getComponentType(), 2);
+    private Object createArray(Class<?> valueClass, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
+      final Object[] array = (Object[])Array.newInstance(valueClass.getComponentType(), Math.max(elementTypes.size(), 2));
       for (int i = 0; i < array.length; i++) {
-        array[i] = createValue(valueClass.getComponentType(), processedTypes);
+        Type type = elementTypes.isEmpty() ? valueClass.getComponentType() : elementTypes.get(i % elementTypes.size());
+        array[i] = createValue(type, processedTypes);
       }
       return array;
     }
@@ -227,8 +238,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
     }
 
     @Nullable
-    private Object createCollection(Class<?> aClass, ParameterizedType genericType, FList<Type> processedTypes) throws Exception {
-      final Type elementClass = genericType.getActualTypeArguments()[0];
+    private Object createCollection(Class<?> aClass, ParameterizedType genericType, FList<Type> processedTypes, List<Type> elementTypes) throws Exception {
       Collection<Object> o;
       if (List.class.isAssignableFrom(aClass)) {
         o = new ArrayList<Object>();
@@ -239,8 +249,10 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       else {
         return null;
       }
-      for (int i = 0; i < 2; i++) {
-        final Object item = createValue(elementClass, processedTypes);
+      final Type elementClass = genericType.getActualTypeArguments()[0];
+      for (int i = 0; i < Math.max(elementTypes.size(), 2); i++) {
+        Type type = elementTypes.isEmpty() ? elementClass : elementTypes.get(i % elementTypes.size());
+        final Object item = createValue(type, processedTypes);
         if (item != null) {
           o.add(item);
         }

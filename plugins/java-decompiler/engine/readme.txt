@@ -64,7 +64,7 @@ urc    : full name of user-supplied class implementing IIdentifierRenamer. It is
          should be renamed and provides new identifier names. For more information see section 5
 inn (1): check for IntelliJ IDEA-specific @NotNull annotation and remove inserted code if found
 lac (0): decompile lambda expressions to anonymous classes
-nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 1 - '\n' (Linux), default is OS-dependent
+nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 1 - '\n' (Unix), default is OS-dependent
 ind    : indentation string (default is "   " (3 spaces))
  
 The default logging level is INFO. This value can be overwritten by setting the option 'log' as follows:

@@ -612,7 +612,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           result = compile();
         }
         catch (Throwable throwable) {
-          LOG.error(toString(), throwable);
+          LOG.warn(toString(), throwable);
           result = ALWAYS_FALSE;
         }
         myCompiledPattern = (ElementPattern<T>)result;

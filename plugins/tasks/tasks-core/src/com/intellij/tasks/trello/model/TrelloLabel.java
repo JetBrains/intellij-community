@@ -16,6 +16,7 @@
 package com.intellij.tasks.trello.model;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -30,11 +31,16 @@ public class TrelloLabel {
     ORANGE(new Color(0xE09952)),
     RED(new Color(0xcb4d4d)),
     PURPLE(new Color(0x9933cc)),
-    BLUE(new Color(0x4d77cb));
+    BLUE(new Color(0x4d77cb)),
+    SKY(new Color(0x33cee6)),
+    LIME(new Color(0x45e660)),
+    PINK(new Color(0xff78cb)),
+    BLACK(new Color(0x4d4d4d)),
+    NO_COLOR(null);
 
     private final Color color;
 
-    LabelColor(Color c) {
+    LabelColor(@Nullable Color c) {
       this.color = c;
     }
 
@@ -52,7 +58,7 @@ public class TrelloLabel {
     return name;
   }
 
-  @NotNull
+  @Nullable
   public LabelColor getColor() {
     return color;
   }

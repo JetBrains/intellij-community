@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -106,7 +107,7 @@ public class PythonTask {
   public ProcessHandler createProcess(@Nullable final Map<String, String> env) throws ExecutionException {
     final GeneralCommandLine commandLine = createCommandLine();
     if (env != null) {
-       commandLine.getEnvironment().putAll(env);
+      commandLine.getEnvironment().putAll(env);
     }
 
     ProcessHandler handler;
@@ -185,13 +186,15 @@ public class PythonTask {
   }
 
   /**
-   * @param env environment variables to be passed to process or null if nothing should be passed
+   * @param env         environment variables to be passed to process or null if nothing should be passed
+   * @param consoleView console to run this task on. New console will be used if no console provided.
    */
-  public void run(@Nullable final Map<String, String> env) throws ExecutionException {
+  public void run(@Nullable final Map<String, String> env, @Nullable final ConsoleView consoleView) throws ExecutionException {
     final ProcessHandler process = createProcess(env);
     final Project project = myModule.getProject();
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
+      .withConsole(consoleView)
       .withTitle(myRunTabTitle)
       .withRerun(new Runnable() {
         @Override
@@ -199,8 +202,9 @@ public class PythonTask {
           try {
             process.destroyProcess(); // Stop process before rerunning it
             if (process.waitFor(TIME_TO_WAIT_PROCESS_STOP)) {
-              PythonTask.this.run(env);
-            }else {
+              PythonTask.this.run(env, consoleView);
+            }
+            else {
               Messages.showErrorDialog(PyBundle.message("unable.to.stop"), myRunTabTitle);
             }
           }

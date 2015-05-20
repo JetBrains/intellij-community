@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
@@ -51,10 +52,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -82,6 +80,13 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     PsiElement parent = myElement.getParent();
     if (parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null) {
       return false;
+    }
+
+    if (parent instanceof PsiReferenceExpression) {
+      PsiExpression expression = ((PsiReferenceExpression)parent).getQualifierExpression();
+      if (expression != null && expression != myElement) {
+        return false;
+      }
     }
 
     PsiManager manager = file.getManager();
@@ -114,7 +119,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
 
     boolean referenceHasTypeParameters = hasTypeParameters(myRef);
-    PsiClass[] classes = PsiShortNamesCache.getInstance(myElement.getProject()).getClassesByName(name, scope);
+    final Project project = myElement.getProject();
+    PsiClass[] classes = PsiShortNamesCache.getInstance(project).getClassesByName(name, scope);
     if (classes.length == 0) return Collections.emptyList();
     List<PsiClass> classList = new ArrayList<PsiClass>(classes.length);
     boolean isAnnotationReference = myElement.getParent() instanceof PsiAnnotation;
@@ -125,7 +131,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       if (referenceHasTypeParameters && !aClass.hasTypeParameters()) continue;
       String qName = aClass.getQualifiedName();
       if (qName != null) { //filter local classes
-        if (qName.indexOf('.') == -1) continue; //do not show classes from default package)
+        if (qName.indexOf('.') == -1 || !PsiNameHelper.getInstance(project).isQualifiedName(qName)) continue; //do not show classes from default or invalid package
         if (qName.endsWith(name) && (file == null || ImportFilter.shouldImport(file, qName))) {
           if (isAccessible(aClass, myElement)) {
             classList.add(aClass);
@@ -142,7 +148,22 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     }
 
     filterAlreadyImportedButUnresolved(classList);
+    filerByPackageName(classList, file);
     return classList;
+  }
+
+  protected void filerByPackageName(List<PsiClass> classList, PsiFile file) {
+    final String packageName = StringUtil.getPackageName(getQualifiedName(myElement));
+    if (!packageName.isEmpty() && 
+        file instanceof PsiJavaFile && 
+        Arrays.binarySearch(((PsiJavaFile)file).getImplicitlyImportedPackages(), packageName) < 0) {
+      for (Iterator<PsiClass> iterator = classList.iterator(); iterator.hasNext(); ) {
+        final String classQualifiedName = iterator.next().getQualifiedName();
+        if (classQualifiedName != null && !packageName.equals(StringUtil.getPackageName(classQualifiedName))) {
+          iterator.remove();
+        }
+      }
+    }
   }
 
   protected boolean canReferenceClass(R ref) {

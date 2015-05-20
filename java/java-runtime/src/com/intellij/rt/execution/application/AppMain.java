@@ -38,33 +38,34 @@ public class AppMain {
 
   private static native void triggerControlBreak();
 
+  private static boolean ourHasSecurityProblem = false;
   static {
-    String binPath = System.getProperty(PROPERTY_BINPATH) + File.separator;
-    final String osName = System.getProperty("os.name").toLowerCase();
-    String arch = System.getProperty("os.arch").toLowerCase();
-    String libPath = null;
-    if (osName.startsWith("windows")) {
-      if (arch.equals("amd64")) {
-        libPath = binPath + "breakgen64.dll";
-      }
-      else {
-        libPath = binPath + "breakgen.dll";
-      }
-    } else if (osName.startsWith("linux")) {
-      if (arch.equals("amd64")) {
-        libPath = binPath + "libbreakgen64.so";
-      } else {
-        libPath = binPath + "libbreakgen.so";
-      }
-    } else if (osName.startsWith("mac")) {
-      if (arch.endsWith("64")) {
-        libPath = binPath + "libbreakgen64.jnilib";
-      } else {
-        libPath = binPath + "libbreakgen.jnilib";
-      }
-    }
-
     try {
+      String binPath = System.getProperty(PROPERTY_BINPATH) + File.separator;
+      final String osName = System.getProperty("os.name").toLowerCase();
+      String arch = System.getProperty("os.arch").toLowerCase();
+      String libPath = null;
+      if (osName.startsWith("windows")) {
+        if (arch.equals("amd64")) {
+          libPath = binPath + "breakgen64.dll";
+        }
+        else {
+          libPath = binPath + "breakgen.dll";
+        }
+      } else if (osName.startsWith("linux")) {
+        if (arch.equals("amd64")) {
+          libPath = binPath + "libbreakgen64.so";
+        } else {
+          libPath = binPath + "libbreakgen.so";
+        }
+      } else if (osName.startsWith("mac")) {
+        if (arch.endsWith("64")) {
+          libPath = binPath + "libbreakgen64.jnilib";
+        } else {
+          libPath = binPath + "libbreakgen.jnilib";
+        }
+      }
+
       if (libPath != null) {
         System.load(libPath);
       }
@@ -72,41 +73,46 @@ public class AppMain {
     catch (UnsatisfiedLinkError e) {
       //Do nothing, unknown os or some other error => no ctrl-break is available
     }
+    catch (SecurityException e) {
+      ourHasSecurityProblem = true;
+      System.out.println("break in console is not supported due to security permissions: " + e.getMessage());
+    }
   }
 
   public static void main(String[] args) throws Throwable {
+    if (!ourHasSecurityProblem) {
+      final int portNumber = Integer.getInteger(PROPERTY_PORT_NUMBER).intValue();
+      Thread t = new Thread(
+        new Runnable() {
+          public void run() {
+            try {
+              ServerSocket socket = new ServerSocket(portNumber);
+              Socket client = socket.accept();
+              BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+              while (true) {
+                String msg = reader.readLine();
 
-    final int portNumber = Integer.getInteger(PROPERTY_PORT_NUMBER).intValue();
-    Thread t = new Thread(
-      new Runnable() {
-        public void run() {
-          try {
-            ServerSocket socket = new ServerSocket(portNumber);
-            Socket client = socket.accept();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            while (true) {
-              String msg = reader.readLine();
-
-              if ("TERM".equals(msg)){
-                return;
+                if ("TERM".equals(msg)){
+                  return;
+                }
+                else if ("BREAK".equals(msg)) {
+                  triggerControlBreak();
+                }
+                else if ("STOP".equals(msg)) {
+                  System.exit(1);
+                }
               }
-              else if ("BREAK".equals(msg)) {
-                triggerControlBreak();
-              }
-              else if ("STOP".equals(msg)) {
-                System.exit(1);
-              }
+            } catch (IOException ignored) {
+            } catch (IllegalArgumentException ignored) {
+            } catch (SecurityException ignored) {
             }
-          } catch (IOException ignored) {
-          } catch (IllegalArgumentException ignored) {
-          } catch (SecurityException ignored) {
           }
-        }
-      }, "Monitor Ctrl-Break");
-    try {
-      t.setDaemon(true);
-      t.start();
-    } catch (Exception ignored) {}
+        }, "Monitor Ctrl-Break");
+      try {
+        t.setDaemon(true);
+        t.start();
+      } catch (Exception ignored) {}
+    }
 
     String mainClass = args[0];
     String[] parms = new String[args.length - 1];

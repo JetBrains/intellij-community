@@ -123,7 +123,14 @@ public abstract class InstructionVisitor {
   public DfaInstructionState[] visitFlushVariable(FlushVariableInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final DfaVariableValue variable = instruction.getVariable();
     if (variable != null) {
-      memState.flushVariable(variable);
+      if (instruction.isDependentsOnly()) {
+        for (DfaVariableValue qualified : runner.getFactory().getVarFactory().getAllQualifiedBy(variable)) {
+          memState.flushVariable(qualified);
+        }
+      }
+      else {
+        memState.flushVariable(variable);
+      }
     } else {
       memState.flushFields();
     }

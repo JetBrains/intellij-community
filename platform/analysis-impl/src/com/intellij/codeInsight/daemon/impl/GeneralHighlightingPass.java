@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
-  static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
+  private static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   protected static final Condition<PsiFile> SHOULD_HIGHIGHT_FILTER = new Condition<PsiFile>() {
     @Override
@@ -73,11 +73,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   };
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
-  protected final int myStartOffset;
-  protected final int myEndOffset;
   protected final boolean myUpdateAll;
   protected final ProperTextRange myPriorityRange;
-  protected final Editor myEditor;
 
   protected final List<HighlightInfo> myHighlights = new ArrayList<HighlightInfo>();
 
@@ -102,11 +99,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                  @Nullable Editor editor,
                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     super(project, document, PRESENTABLE_NAME, file, editor, TextRange.create(startOffset, endOffset), true, highlightInfoProcessor);
-    myStartOffset = startOffset;
-    myEndOffset = endOffset;
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
-    myEditor = editor;
 
     PsiUtilCore.ensureValid(file);
     boolean wholeFileHighlighting = isWholeFileHighlighting();
@@ -117,7 +111,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     // initial guess to show correct progress in the traffic light icon
     setProgressLimit(document.getTextLength()/2); // approx number of PSI elements = file length/2
-    myGlobalScheme = myEditor != null ? myEditor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
+    myGlobalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
@@ -189,7 +183,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     try {
       List<ProperTextRange> insideRanges = new ArrayList<ProperTextRange>();
       List<ProperTextRange> outsideRanges = new ArrayList<ProperTextRange>();
-      Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, insideElements, insideRanges, outsideElements,
+      Divider.divideInsideAndOutside(myFile, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myPriorityRange, insideElements, insideRanges, outsideElements,
                                      outsideRanges, false, SHOULD_HIGHIGHT_FILTER);
       // put file element always in outsideElements
       if (!insideElements.isEmpty() && insideElements.get(insideElements.size()-1) instanceof PsiFile) {
@@ -204,7 +198,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       final boolean forceHighlightParents = forceHighlightParents();
 
       if (!isDumbMode()) {
-        highlightTodos(myFile, myDocument.getCharsSequence(), myStartOffset, myEndOffset, progress, myPriorityRange, insideResult,
+        highlightTodos(myFile, myDocument.getCharsSequence(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), progress, myPriorityRange, insideResult,
                        outsideResult);
       }
 
@@ -235,7 +229,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private boolean isWholeFileHighlighting() {
-    return myUpdateAll && myStartOffset == 0 && myEndOffset == myDocument.getTextLength();
+    return myUpdateAll && myRestrictRange.equalsToRange(0, myDocument.getTextLength());
   }
 
   @Override
@@ -295,6 +289,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull final HighlightInfoHolder holder,
                                     final int i,
                                     @NotNull final Runnable action) {
+    final boolean[] success = {true};
     if (i == visitors.length) {
       action.run();
     }
@@ -302,13 +297,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       if (!visitors[i].analyze(myFile, myUpdateAll, holder, new Runnable() {
         @Override
         public void run() {
-          analyzeByVisitors(visitors, holder, i+1, action);
+          success[0] = analyzeByVisitors(visitors, holder, i + 1, action);
         }
       })) {
-        return false;
+        success[0] = false;
       }
     }
-    return true;
+    return success[0];
   }
 
   private void runVisitors(@NotNull List<PsiElement> elements,
@@ -367,7 +362,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       List<HighlightInfo> infosForThisRange = holder.size() == 0 ? null : new ArrayList<HighlightInfo>(holder.size());
       for (int j = 0; j < holder.size(); j++) {
         final HighlightInfo info = holder.get(j);
-        assert info != null;
 
         if (!myRestrictRange.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
         List<HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) && !(element instanceof PsiFile) ? insideResult : outsideResult;
@@ -420,8 +414,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private static final int POST_UPDATE_ALL = 5;
 
-  static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
-                                          @NotNull final Project project) throws ProcessCanceledException {
+  private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
+                                                  @NotNull final Project project) throws ProcessCanceledException {
     progress.cancel();
     JobScheduler.getScheduler().schedule(new Runnable() {
 
@@ -457,14 +451,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return new CustomHighlightInfoHolder(file, getColorsScheme(), filters);
   }
 
-  protected static void highlightTodos(@NotNull PsiFile file,
-                                       @NotNull CharSequence text,
-                                       int startOffset,
-                                       int endOffset,
-                                       @NotNull ProgressIndicator progress,
-                                       @NotNull ProperTextRange priorityRange,
-                                       @NotNull Collection<HighlightInfo> insideResult,
-                                       @NotNull Collection<HighlightInfo> outsideResult) {
+  static void highlightTodos(@NotNull PsiFile file,
+                             @NotNull CharSequence text,
+                             int startOffset,
+                             int endOffset,
+                             @NotNull ProgressIndicator progress,
+                             @NotNull ProperTextRange priorityRange,
+                             @NotNull Collection<HighlightInfo> insideResult,
+                             @NotNull Collection<HighlightInfo> outsideResult) {
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
     if (helper == null) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
@@ -523,6 +517,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   public String toString() {
-    return super.toString() + " updateAll="+myUpdateAll+" range=("+myStartOffset+","+myEndOffset+")";
+    return super.toString() + " updateAll="+myUpdateAll+" range= "+myRestrictRange;
   }
 }

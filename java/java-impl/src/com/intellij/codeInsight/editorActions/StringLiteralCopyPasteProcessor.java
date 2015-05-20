@@ -56,6 +56,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     StringBuilder buffer = new StringBuilder();
     int givenTextOffset = 0;
     boolean textWasChanged = false;
+    int deducedBlockSelectionWidth = deduceBlockSelectionWidth(startOffsets, endOffsets, text);
     for (int i = 0; i < startOffsets.length && givenTextOffset < text.length(); i++, givenTextOffset++) {
       if (i > 0) {
         buffer.append('\n'); // LF is added for block selection
@@ -109,8 +110,28 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
           givenTextStartOffset += numberOfSymbolsToCopy;
         }
       }
+      int blockSelectionPadding = deducedBlockSelectionWidth - (fileEndOffset - fileStartOffset);
+      for (int j = 0; j < blockSelectionPadding; j++) {
+        buffer.append(' ');
+        givenTextOffset++;
+      }
     }
     return textWasChanged ? buffer.toString() : null;
+  }
+
+  private static int deduceBlockSelectionWidth(int[] startOffsets, int[] endOffsets, final String text) {
+    int fragmentCount = startOffsets.length;
+    assert fragmentCount > 0;
+    int totalLength = fragmentCount - 1; // number of line breaks inserted between fragments
+    for (int i = 0; i < fragmentCount; i++) {
+      totalLength += endOffsets[i] - startOffsets[i];
+    }
+    if (totalLength < text.length() && (text.length() + 1) % fragmentCount == 0) {
+      return (text.length() + 1) / fragmentCount - 1;
+    }
+    else {
+      return -1;
+    }
   }
 
   @NotNull

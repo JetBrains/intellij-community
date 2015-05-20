@@ -75,7 +75,7 @@ public class CalloutBorder implements Border {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return INSETS;
+    return (Insets)INSETS.clone();
   }
 
   @Override

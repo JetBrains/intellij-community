@@ -15,18 +15,31 @@
  */
 package com.intellij.application.options.emmet;
 
+import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: zolotov
- * Date: 2/20/13
- */
+import java.util.List;
+
 public class EmmetConfigurableProvider extends ConfigurableProvider {
   @Nullable
   @Override
   public Configurable createConfigurable() {
-    return new EmmetCompositeConfigurable();
+    final List<Configurable> availableConfigurables = getAvailableConfigurables();
+    return availableConfigurables.size() == 1 
+           ? new EmmetCompositeConfigurable(ContainerUtil.getFirstItem(availableConfigurables))
+           : new EmmetCompositeConfigurable(availableConfigurables);
+  }
+
+  @NotNull
+  public static List<Configurable> getAvailableConfigurables() {
+    List<Configurable> configurables = ContainerUtil.newSmartList();
+    for (ZenCodingGenerator zenCodingGenerator : ZenCodingGenerator.getInstances()) {
+      ContainerUtil.addIfNotNull(configurables, zenCodingGenerator.createConfigurable());
+    }
+    return configurables;
   }
 }

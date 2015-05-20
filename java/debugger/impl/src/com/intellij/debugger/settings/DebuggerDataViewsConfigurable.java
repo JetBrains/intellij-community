@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
+import com.intellij.debugger.ui.tree.render.PrimitiveRenderer;
 import com.intellij.debugger.ui.tree.render.ToStringRenderer;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -28,7 +29,7 @@ import com.intellij.openapi.util.registry.ui.RegistryCheckBox;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.classFilter.ClassFilterEditor;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private JCheckBox myCbShowDeclaredType;
   private JCheckBox myCbShowFQNames;
   private JCheckBox myCbShowObjectId;
+  private JCheckBox myCbShowStringsType;
+  private JCheckBox myCbHexValue;
 
   private StateRestoringCheckBox myCbShowStaticFinalFields;
   //private final ArrayRendererConfigurable myArrayRendererConfigurable;
@@ -120,6 +123,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowDeclaredType = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.declared.type"));
     myCbShowFQNames = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.fq.names"));
     myCbShowObjectId = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
+    myCbHexValue = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.hex.value"));
+    myCbShowStringsType = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.strings.type"));
 
     myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.toString"));
     myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overriding"));
@@ -172,14 +177,16 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     //arraysPanel.add(myCbHideNullArrayElements, BorderLayout.SOUTH);
     //arraysPanel.setBorder(IdeBorderFactory.createTitledBorder("Arrays", true));
     //panel.add(arraysPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-    panel.add(myCbHideNullArrayElements, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(myCbShowStringsType, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    panel.add(myCbHexValue, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
+    panel.add(myCbHideNullArrayElements, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
 
     panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 10), 0, 0));
     // starting 4-th row
     panel.add(myCbEnableToString, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(4, 0, 0, 0), 0, 0));
     panel.add(myRbAllThatOverride, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 12, 0, 0), 0, 0));
     panel.add(myRbFromList, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 12, 0, 0), 0, 0));
-    myToStringFilterEditor.setMinimumSize(new Dimension(50, 100));
+    myToStringFilterEditor.setMinimumSize(JBUI.size(50, 100));
     panel.add(myToStringFilterEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 3, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 12, 0, 0), 0, 0));
 
     return panel;
@@ -202,15 +209,17 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     classRenderer.SHOW_DECLARED_TYPE = myCbShowDeclaredType.isSelected();
     classRenderer.SHOW_FQ_TYPE_NAMES = myCbShowFQNames.isSelected();
     classRenderer.SHOW_OBJECT_ID = myCbShowObjectId.isSelected();
+    classRenderer.SHOW_STRINGS_TYPE = myCbShowStringsType.isSelected();
 
     final ToStringRenderer toStringRenderer = rendererSettings.getToStringRenderer();
     toStringRenderer.setEnabled(myCbEnableToString.isSelected());
     toStringRenderer.setUseClassFilters(myRbFromList.isSelected());
     toStringRenderer.setClassFilters(myToStringFilterEditor.getFilters());
 
-    myAutoTooltip.save();
+    PrimitiveRenderer primitiveRenderer = rendererSettings.getPrimitiveRenderer();
+    primitiveRenderer.setShowHexValue(myCbHexValue.isSelected());
 
-    //myArrayRendererConfigurable.apply();
+    myAutoTooltip.save();
 
     rendererSettings.fireRenderersChanged();
   }
@@ -239,6 +248,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowDeclaredType.setSelected(classRenderer.SHOW_DECLARED_TYPE);
     myCbShowFQNames.setSelected(classRenderer.SHOW_FQ_TYPE_NAMES);
     myCbShowObjectId.setSelected(classRenderer.SHOW_OBJECT_ID);
+    myCbShowStringsType.setSelected(classRenderer.SHOW_STRINGS_TYPE);
 
     final ToStringRenderer toStringRenderer = rendererSettings.getToStringRenderer();
     final boolean toStringEnabled = toStringRenderer.isEnabled();
@@ -251,7 +261,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myRbFromList.setEnabled(toStringEnabled);
     myRbAllThatOverride.setEnabled(toStringEnabled);
 
-    //myArrayRendererConfigurable.reset();
+    PrimitiveRenderer primitiveRenderer = rendererSettings.getPrimitiveRenderer();
+    myCbHexValue.setSelected(primitiveRenderer.isShowHexValue());
   }
 
   @Override
@@ -281,7 +292,9 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     (classRenderer.SHOW_VAL_FIELDS_AS_LOCAL_VARIABLES != myCbShowValFieldsAsLocalVariables.isSelectedWhenSelectable()) ||
     (classRenderer.SHOW_DECLARED_TYPE != myCbShowDeclaredType.isSelected()) ||
     (classRenderer.SHOW_FQ_TYPE_NAMES != myCbShowFQNames.isSelected()) ||
-    (classRenderer.SHOW_OBJECT_ID != myCbShowObjectId.isSelected());
+    (classRenderer.SHOW_OBJECT_ID != myCbShowObjectId.isSelected()) ||
+    (classRenderer.SHOW_STRINGS_TYPE != myCbShowStringsType.isSelected());
+
     if (isClassRendererModified) {
       return true;
     }
@@ -296,6 +309,11 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     }
 
     if (rendererSettings.areAlternateCollectionViewsEnabled() != myCbEnableAlternateViews.isSelected()) {
+      return true;
+    }
+
+    PrimitiveRenderer primitiveRenderer = rendererSettings.getPrimitiveRenderer();
+    if (primitiveRenderer.isShowHexValue() != myCbHexValue.isSelected()) {
       return true;
     }
 

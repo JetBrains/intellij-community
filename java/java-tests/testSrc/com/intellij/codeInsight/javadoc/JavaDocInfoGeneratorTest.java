@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -77,6 +78,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     verifyJavaDoc(getTestClass());
   }
   
+  public void testUnicodeEscapes() throws Exception {
+    verifyJavaDoc(getTestClass());
+  }
+  
   public void testEnumValueOf() throws Exception {
     doTestMethod();
   }
@@ -113,6 +118,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestMethod();
   }
 
+  public void testApiNotes() throws Exception {
+    doTestMethod();
+  }
+
   public void testLiteral() throws Exception {
     doTestField();
   }
@@ -134,19 +143,26 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiField field = psiClass.getFields() [0];
     String docInfo = new JavaDocumentationProvider().generateDoc(field, field);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true)), StringUtil.convertLineSeparators(docInfo.trim()));
+    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
 
     docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(field, field);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true) + "_quick"), StringUtil.convertLineSeparators(docInfo.trim()));
+    assertEquals(exampleHtmlFileText(getTestName(true) + "_quick"), replaceEnvironmentDependentContent(docInfo));
   }
 
   public void testClickableFieldReference() throws Exception {
     PsiClass aClass = getTestClass();
     PsiTypeElement element = aClass.getFields()[0].getTypeElement();
-    String docInfo = new JavaDocumentationProvider().generateDoc(element.getInnermostComponentReferenceElement().resolve(), element);
+    assertNotNull(element);
+    PsiJavaCodeReferenceElement innermostComponentReferenceElement = element.getInnermostComponentReferenceElement();
+    assertNotNull(innermostComponentReferenceElement);
+    String docInfo = new JavaDocumentationProvider().generateDoc(innermostComponentReferenceElement.resolve(), element);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true)), StringUtil.convertLineSeparators(docInfo.trim()));
+    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
+  }
+  
+  public void testNoSpaceAfterTagName() throws Exception {
+    verifyJavaDoc(getTestClass());
   }
 
   private static String exampleHtmlFileText(String name) throws IOException {
@@ -157,16 +173,17 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testClassTypeParamsPresentation() throws Exception {
     PsiClass psiClass = getTestClass();
     final PsiReferenceList extendsList = psiClass.getExtendsList();
+    assertNotNull(extendsList);
     final PsiJavaCodeReferenceElement referenceElement = extendsList.getReferenceElements()[0];
     final PsiClass superClass = extendsList.getReferencedTypes()[0].resolve();
 
     String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true)), StringUtil.convertLineSeparators(docInfo.trim()));
+    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
   }
 
   public void testLambdaParameter() throws Exception {
-    doTestLamabdaParameter();
+    doTestLambdaParameter();
   }
 
   private void doTestField() throws Exception {
@@ -181,7 +198,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     verifyJavaDoc(method);
   }
 
-  private void doTestLamabdaParameter() throws Exception {
+  private void doTestLambdaParameter() throws Exception {
     PsiClass psiClass = getTestClass();
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.findChildOfType(psiClass, PsiLambdaExpression.class);
     assertNotNull(lambdaExpression);
@@ -196,7 +213,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   private void verifyJavaDoc(final PsiElement field) throws IOException {
     String docInfo = new JavaDocInfoGenerator(getProject(), field).generateDocInfo(null);
     assertNotNull(docInfo);
-    assertEquals(exampleHtmlFileText(getTestName(true)), StringUtil.convertLineSeparators(docInfo.trim()));
+    assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
   }
 
   public void testPackageInfo() throws Exception {
@@ -207,11 +224,47 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
       new JavaDocInfoGenerator(getProject(), JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true))).generateDocInfo(null);
     String htmlText = FileUtil.loadFile(new File(packageInfo + File.separator + "packageInfo.html"));
     assertNotNull(info);
-    assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(info.trim()));
+    assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), replaceEnvironmentDependentContent(info));
+  }
+
+  public void testInheritedParameter() throws Exception {
+    configureByFile("/codeInsight/javadocIG/" + getTestName(true) + ".java");
+    PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
+    PsiClass innerClass = outerClass.findInnerClassByName("Impl", false);
+    assertNotNull(innerClass);
+    PsiParameter parameter = innerClass.getMethods()[0].getParameterList().getParameters()[0];
+    verifyJavaDoc(parameter);
+  }
+  
+  public void testHtmlLink() throws Exception {
+    PsiTestUtil.createTestProjectStructure(myProject, myModule, 
+                                           getTestDataPath() + "/codeInsight/javadocIG/htmlLinkProject", myFilesToDelete);
+    verifyJavadocFor("htmlLink");
+    verifyJavadocFor("pack.htmlLinkDeep");
+  }
+
+  private void verifyJavadocFor(String className) throws IOException {
+    PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
+    assertNotNull(psiClass);
+    String doc = new JavaDocInfoGenerator(myProject, psiClass).generateDocInfo(null);
+    assertNotNull(doc);
+    PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
+    PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");
+    assertNotNull(htmlFile);
+    assertEquals(StringUtil.convertLineSeparators(new String(htmlFile.getVirtualFile().contentsToByteArray()).trim()), 
+                 replaceEnvironmentDependentContent(doc));
+  }
+  
+  public void testHtmlLinkWithRef() throws Exception {
+    verifyJavaDoc(getTestClass());
   }
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
+  }
+  
+  private static String replaceEnvironmentDependentContent(String html) {
+    return StringUtil.convertLineSeparators(html.trim()).replaceAll("<base href=\"[^\"]*\">", "<base href=\"placeholder\">");
   }
 }

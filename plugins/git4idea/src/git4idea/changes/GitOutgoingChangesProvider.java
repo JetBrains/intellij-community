@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
@@ -105,7 +106,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
       return new ArrayList<Change>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
     }
     final List<Pair<SHAHash, Date>> hashes = GitHistoryUtils.onlyHashesHistory(myProject,
-      new FilePathImpl(vcsRoot), vcsRoot, (base.asString() + "..HEAD"));
+                                                                               VcsUtil.getFilePath(vcsRoot), vcsRoot, (base.asString() + "..HEAD"));
 
     if (hashes.isEmpty()) return Collections.emptyList(); // no local commits
     final String first = hashes.get(0).getFirst().getValue(); // optimization

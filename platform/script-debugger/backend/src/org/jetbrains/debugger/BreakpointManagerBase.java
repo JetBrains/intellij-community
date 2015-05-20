@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
 
   protected abstract Promise<Breakpoint> doSetBreakpoint(@NotNull BreakpointTarget target, @NotNull T breakpoint);
 
+  @NotNull
   @Override
   public Breakpoint setBreakpoint(@NotNull final BreakpointTarget target, int line, int column, @Nullable String condition, int ignoreCount, boolean enabled) {
     final T breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, enabled);
@@ -70,16 +71,18 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
 
     breakpoints.add(breakpoint);
     if (enabled) {
-      doSetBreakpoint(target, breakpoint).rejected(new Consumer<String>() {
+      doSetBreakpoint(target, breakpoint).rejected(new Consumer<Throwable>() {
         @Override
-        public void consume(@Nullable String errorMessage) {
-          dispatcher.getMulticaster().errorOccurred(breakpoint, errorMessage);
+        public void consume(@NotNull Throwable error) {
+          String message = error.getMessage();
+          dispatcher.getMulticaster().errorOccurred(breakpoint, message == null ? error.toString() : message);
         }
       });
     }
     return breakpoint;
   }
 
+  @NotNull
   @Override
   public Promise<Void> remove(@NotNull Breakpoint breakpoint) {
     @SuppressWarnings("unchecked")
@@ -107,6 +110,7 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
     return Promise.all(promises);
   }
 
+  @NotNull
   protected abstract Promise<Void> doClearBreakpoint(@NotNull T breakpoint);
 
   @Override
@@ -129,5 +133,29 @@ public abstract class BreakpointManagerBase<T extends BreakpointBase<?>> impleme
   @Override
   public FunctionSupport getFunctionSupport() {
     return null;
+  }
+
+  @Override
+  public boolean hasScriptRegExpSupport() {
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public MUTE_MODE getMuteMode() {
+    return MUTE_MODE.ONE;
+  }
+
+  @NotNull
+  @Override
+  public Promise<Void> flush(@NotNull Breakpoint breakpoint) {
+    //noinspection unchecked
+    return ((T)breakpoint).flush(this);
+  }
+
+  @NotNull
+  @Override
+  public Promise<?> enableBreakpoints(boolean enabled) {
+    return Promise.reject("Unsupported");
   }
 }

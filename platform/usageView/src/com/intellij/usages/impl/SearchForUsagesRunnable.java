@@ -30,6 +30,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -43,7 +44,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.HyperlinkAdapter;
@@ -129,7 +129,7 @@ class SearchForUsagesRunnable implements Runnable {
                                           @NotNull final List<String> lines) {
     com.intellij.usageView.UsageViewManager.getInstance(project); // in case tool window not registered
 
-    final Collection<PsiFile> largeFiles = processPresentation.getLargeFiles();
+    final Collection<VirtualFile> largeFiles = processPresentation.getLargeFiles();
     List<String> resultLines = new ArrayList<String>(lines);
     HyperlinkListener resultListener = listener;
     if (!largeFiles.isEmpty()) {
@@ -181,18 +181,17 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   @NotNull
-  private static String detailedLargeFilesMessage(@NotNull Collection<PsiFile> largeFiles) {
+  private static String detailedLargeFilesMessage(@NotNull Collection<VirtualFile> largeFiles) {
     String message = "";
     if (largeFiles.size() == 1) {
-      final VirtualFile vFile = largeFiles.iterator().next().getVirtualFile();
+      final VirtualFile vFile = largeFiles.iterator().next();
       message += "File " + presentableFileInfo(vFile) + " is ";
     }
     else {
       message += "Files<br> ";
 
       int counter = 0;
-      for (PsiFile file : largeFiles) {
-        final VirtualFile vFile = file.getVirtualFile();
+      for (VirtualFile vFile : largeFiles) {
         message += presentableFileInfo(vFile) + "<br> ";
         if (counter++ > 10) break;
       }
@@ -277,7 +276,7 @@ class SearchForUsagesRunnable implements Runnable {
     rangeBlinker.startBlinking();
   }
 
-  private UsageViewImpl getUsageView(ProgressIndicator indicator) {
+  private UsageViewImpl getUsageView(@NotNull ProgressIndicator indicator) {
     UsageViewImpl usageView = myUsageViewRef.get();
     if (usageView != null) return usageView;
     int usageCount = myUsageCountWithoutDefinition.get();
@@ -289,7 +288,7 @@ class SearchForUsagesRunnable implements Runnable {
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {
           final UsageViewImpl finalUsageView = usageView;
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
+          DumbService.getInstance(myProject).runReadActionInSmartMode(new Runnable() {
             @Override
             public void run() {
               finalUsageView.appendUsage(firstUsage);

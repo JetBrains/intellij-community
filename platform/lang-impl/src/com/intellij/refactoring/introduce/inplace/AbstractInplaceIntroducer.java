@@ -464,7 +464,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
   }
 
-  protected void restoreState(final V psiField) {
+  protected void restoreState(@NotNull final V psiField) {
     if (!ReadonlyStatusHandler.ensureDocumentWritable(myProject, InjectedLanguageUtil.getTopLevelEditor(myEditor).getDocument())) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -531,7 +531,16 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         final String refactoringId = getRefactoringId();
         if (refactoringId != null) {
           final RefactoringEventData beforeData = new RefactoringEventData();
-          beforeData.addElements(new PsiElement[] {getLocalVariable(), getExpr()});
+          final V localVariable = getLocalVariable();
+          if (localVariable != null) {
+            beforeData.addElement(localVariable);
+          } 
+          else {
+            final E beforeExpr = getBeforeExpr();
+            if (beforeExpr != null) {
+              beforeData.addElement(beforeExpr);
+            }
+          }
           myProject.getMessageBus()
             .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
         }
@@ -544,6 +553,10 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       saveSettings(variable);
     }
     return false;
+  }
+
+  protected E getBeforeExpr() {
+    return getExpr();
   }
 
   protected boolean ensureValid() {

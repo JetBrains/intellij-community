@@ -126,6 +126,10 @@ public final class IterationState {
   }
 
   public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection, boolean useOnlyFullLineHighlighters) {
+    this(editor, start, end, useCaretAndSelection, useCaretAndSelection, useOnlyFullLineHighlighters);
+  }
+  
+  public IterationState(@NotNull EditorEx editor, int start, int end, boolean useCaretAndSelection, boolean useVirtualSelection, boolean useOnlyFullLineHighlighters) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myDocument = editor.getDocument();
     myStartOffset = start;
@@ -137,14 +141,13 @@ public final class IterationState {
     LOG.assertTrue(myStartOffset <= myEnd);
     myHighlighterIterator = useOnlyFullLineHighlighters ? null : editor.getHighlighter().createIterator(start);
 
-    boolean hasSelection = useCaretAndSelection && (editor.getCaretModel().supportsMultipleCarets() || editor.getSelectionModel().hasSelection() || editor.getSelectionModel().hasBlockSelection());
-    if (!hasSelection) {
+    if (!useCaretAndSelection) {
       mySelectionStarts = ArrayUtilRt.EMPTY_INT_ARRAY;
       mySelectionEnds = ArrayUtilRt.EMPTY_INT_ARRAY;
       myVirtualSelectionStarts = ArrayUtilRt.EMPTY_INT_ARRAY;
       myVirtualSelectionEnds = ArrayUtilRt.EMPTY_INT_ARRAY;
     }
-    else if (editor.getCaretModel().supportsMultipleCarets()) {
+    else {
       List<Caret> carets = editor.getCaretModel().getAllCarets();
       mySelectionStarts = new int[carets.size()];
       mySelectionEnds = new int[carets.size()];
@@ -154,15 +157,11 @@ public final class IterationState {
         Caret caret = carets.get(i);
         mySelectionStarts[i] = caret.getSelectionStart();
         mySelectionEnds[i] = caret.getSelectionEnd();
-        myVirtualSelectionStarts[i] = caret.getSelectionStartPosition().column - editor.offsetToVisualPosition(mySelectionStarts[i]).column;
-        myVirtualSelectionEnds[i] = caret.getSelectionEndPosition().column - editor.offsetToVisualPosition(mySelectionEnds[i]).column;
+        if (useVirtualSelection) {
+          myVirtualSelectionStarts[i] = caret.getSelectionStartPosition().column - editor.offsetToVisualPosition(mySelectionStarts[i]).column;
+          myVirtualSelectionEnds[i] = caret.getSelectionEndPosition().column - editor.offsetToVisualPosition(mySelectionEnds[i]).column;
+        }
       }
-    }
-    else {
-      mySelectionStarts = editor.getSelectionModel().getBlockSelectionStarts();
-      mySelectionEnds = editor.getSelectionModel().getBlockSelectionEnds();
-      myVirtualSelectionStarts = new int[mySelectionStarts.length];
-      myVirtualSelectionEnds = new int[mySelectionEnds.length];
     }
 
     myFoldingModel = editor.getFoldingModel();
@@ -208,18 +207,12 @@ public final class IterationState {
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(new RangeHighlighterEx[list.size()]);
       Arrays.sort(highlighters, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
 
-      int skipped = 0;
       while (i < highlighters.length) {
         RangeHighlighterEx highlighter = highlighters[i++];
         if (!skipHighlighter(highlighter)) {
           myNextHighlighter = highlighter;
           break;
         }
-        skipped++;
-      }
-      if (skipped > Math.min(1000, markupModel.getDocument().getTextLength())) {
-        int i = 0;
-        //LOG.error("Inefficient iteration, limit the number of highlighters to iterate");
       }
     }
 
@@ -269,7 +262,7 @@ public final class IterationState {
     advanceCurrentVirtualSelectionIndex();
 
     if (!myUseOnlyFullLineHighlighters) {
-      myCurrentFold = myFoldingModel.fetchOutermost(myStartOffset);
+      myCurrentFold = myFoldingModel.getCollapsedRegionAtOffset(myStartOffset);
     }
     if (myCurrentFold != null) {
       myEndOffset = myCurrentFold.getEndOffset();

@@ -27,8 +27,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TerminalColor;
@@ -71,6 +70,14 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
           myColorScheme.setConsoleFontSize(size);
           fireFontChanged();
         }
+      }
+    }, this);
+
+    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsAdapter() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        myColorScheme.updateGlobalScheme(scheme);
+        fireFontChanged();
       }
     }, this);
   }
@@ -192,6 +199,17 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     return EditorSettingsExternalizable.getInstance().getBlinkPeriod();
   }
 
+  @Override
+  public int getBufferMaxLinesCount() {
+    final int linesCount = Registry.get("terminal.buffer.max.lines.count").asInteger();
+    if (linesCount > 0) {
+      return linesCount;
+    }
+    else {
+      return super.getBufferMaxLinesCount();
+    }
+  }
+
   public EditorColorsScheme getColorScheme() {
     return myColorScheme;
   }
@@ -236,7 +254,6 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     private final FontPreferences myFontPreferences = new FontPreferences();
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<TextAttributesKey, TextAttributes>();
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
-    private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap = null;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
@@ -244,8 +261,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     private int myConsoleFontSize = -1;
 
     private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
-      myCustomGlobalScheme = globalScheme;
-      updateGlobalScheme();
+      updateGlobalScheme(globalScheme);
       initFonts();
     }
 
@@ -305,10 +321,10 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     @NotNull
     @Override
     public Color getDefaultForeground() {
-      return getGlobal().getDefaultForeground();
+      Color foregroundColor = getGlobal().getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).getForegroundColor();
+      return foregroundColor != null ? foregroundColor : getGlobal().getDefaultForeground();
     }
 
-    @Nullable
     @Override
     public Color getColor(ColorKey key) {
       if (myOwnColors.containsKey(key)) return myOwnColors.get(key);
@@ -395,15 +411,12 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
     }
 
     @Override
-    public void readExternal(Element element) throws InvalidDataException {
+    public void readExternal(Element element) {
     }
 
-    @Override
-    public void writeExternal(Element element) throws WriteExternalException {
-    }
-
-    public void updateGlobalScheme() {
-      myGlobalScheme = myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme;
+    public void updateGlobalScheme(EditorColorsScheme scheme) {
+      myFontsMap = null;
+      myGlobalScheme = scheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : scheme;
     }
 
     @NotNull

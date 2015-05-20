@@ -19,13 +19,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.CalledInBackground;
+import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.*;
@@ -136,21 +135,17 @@ public class NewRootBunch {
 
   @Nullable
   @CalledInBackground
-  public SVNURL getWorkingBranchWithReload(final SVNURL svnurl, final VirtualFile root) {
-    final Ref<SVNURL> result = new Ref<SVNURL>();
-    try {
-      final SvnBranchConfigurationNew configuration = myMap.get(root).getValue();
-      final String group = configuration.getGroupToLoadToReachUrl(svnurl);
+  public SVNURL getWorkingBranch(@NotNull SVNURL svnurl, @NotNull VirtualFile root) {
+    SVNURL result;
 
-      if (group != null) {
-        reloadBranches(root, group, InfoReliability.setByUser, true);
-      }
-      result.set(myMap.get(root).getValue().getWorkingBranch(svnurl));
+    try {
+      result = myMap.get(root).getValue().getWorkingBranch(svnurl);
     }
-    catch (SVNException e) {
-      //
+    catch (SvnBindException e) {
+      result = null;
     }
-    return result.get();
+
+    return result;
   }
 
   public Map<VirtualFile, SvnBranchConfigurationNew> getMapCopy() {

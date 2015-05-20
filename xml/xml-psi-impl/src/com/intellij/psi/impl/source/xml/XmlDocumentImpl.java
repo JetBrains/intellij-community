@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,16 +113,17 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     XmlProlog prolog = myProlog;
 
     if (prolog == null) {
+      prolog = (XmlProlog)findElementByTokenType(XmlElementType.XML_PROLOG);
       synchronized (PsiLock.LOCK) {
-        prolog = myProlog;
-        if (prolog == null) {
-          prolog = (XmlProlog)findElementByTokenType(XmlElementType.XML_PROLOG);
+        if (myProlog == null) {
           myProlog = prolog;
+        } else {
+          prolog = myProlog;
         }
       }
     }
 
-    return myProlog;
+    return prolog;
   }
 
   @Override
@@ -130,16 +131,17 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     XmlTag rootTag = myRootTag;
 
     if (rootTag == null) {
+      rootTag = (XmlTag)findElementByTokenType(XmlElementType.XML_TAG);
       synchronized (PsiLock.LOCK) {
-        rootTag = myRootTag;
-        if (rootTag == null) {
-          rootTag = (XmlTag)findElementByTokenType(XmlElementType.XML_TAG);
+        if (myRootTag == null) {
           myRootTag = rootTag;
+        } else {
+          rootTag = myRootTag;
         }
       }
     }
 
-    return myRootTag;
+    return rootTag;
   }
 
   @Override
@@ -158,8 +160,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   public void clearCaches() {
     myDefaultDescriptorsCacheStrict.clear();
     myDefaultDescriptorsCacheNotStrict.clear();
-    myProlog = null;
-    myRootTag = null;
+    synchronized (PsiLock.LOCK) {
+      myProlog = null;
+      myRootTag = null;
+    }
     super.clearCaches();
   }
 
@@ -350,6 +354,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return descriptor;
   }
 
+  @NotNull
   @Override
   public CompositePsiElement clone() {
     HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(

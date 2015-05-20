@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,13 @@
  */
 package com.intellij.openapi.progress;
 
-import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 
 public class ProcessCanceledException extends RuntimeException {
-  private static final boolean ourHasStackTraces = SystemProperties.getBooleanProperty("idea.is.internal", false);
-
   public ProcessCanceledException() {
   }
 
-  public ProcessCanceledException(Throwable cause) {
+  public ProcessCanceledException(@NotNull Throwable cause) {
     super(cause);
-  }
-
-  @Override
-  public Throwable fillInStackTrace() {
-    if (ourHasStackTraces) return super.fillInStackTrace();
-    // https://wikis.oracle.com/display/HotSpotInternals/PerformanceTechniques
-    // http://www.javaspecialists.eu/archive/Issue129.html
-    // http://java-performance.info/throwing-an-exception-in-java-is-very-slow/
-    return this;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,47 +24,24 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.URLUtil;
-import com.intellij.util.io.ZipUtil;
-import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class BrowserLauncherAppless extends BrowserLauncher {
   static final Logger LOG = Logger.getInstance(BrowserLauncherAppless.class);
@@ -160,14 +137,6 @@ public class BrowserLauncherAppless extends BrowserLauncher {
   private void openOrBrowse(@NotNull String url, boolean browse, @Nullable Project project) {
     url = url.trim();
 
-    if (url.startsWith("jar:")) {
-      String files = extractFiles(url);
-      if (files == null) {
-        return;
-      }
-      url = files;
-    }
-
     URI uri;
     if (BrowserUtil.isAbsoluteURL(url)) {
       uri = VfsUtil.toUri(url);
@@ -198,190 +167,6 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     }
     else {
       browse(uri, project);
-    }
-  }
-
-  @Nullable
-  private static String extractFiles(String url) {
-    try {
-      int sharpPos = url.indexOf('#');
-      String anchor = "";
-      if (sharpPos != -1) {
-        anchor = url.substring(sharpPos);
-        url = url.substring(0, sharpPos);
-      }
-
-      Pair<String, String> pair = URLUtil.splitJarUrl(url);
-      if (pair == null) return null;
-
-      File jarFile = new File(FileUtil.toSystemDependentName(pair.first));
-      if (!jarFile.canRead()) return null;
-
-      String jarUrl = StandardFileSystems.FILE_PROTOCOL_PREFIX + FileUtil.toSystemIndependentName(jarFile.getPath());
-      String jarLocationHash = jarFile.getName() + "." + Integer.toHexString(jarUrl.hashCode());
-      final File outputDir = new File(getExtractedFilesDir(), jarLocationHash);
-
-      final String currentTimestamp = String.valueOf(new File(jarFile.getPath()).lastModified());
-      final File timestampFile = new File(outputDir, ".idea.timestamp");
-
-      String previousTimestamp = null;
-      if (timestampFile.exists()) {
-        previousTimestamp = FileUtilRt.loadFile(timestampFile);
-      }
-
-      if (!currentTimestamp.equals(previousTimestamp)) {
-        final Ref<Boolean> extract = new Ref<Boolean>();
-        Runnable r = new Runnable() {
-          @Override
-          public void run() {
-            final ConfirmExtractDialog dialog = new ConfirmExtractDialog();
-            if (dialog.isToBeShown()) {
-              dialog.show();
-              extract.set(dialog.isOK());
-            }
-            else {
-              dialog.close(DialogWrapper.OK_EXIT_CODE);
-              extract.set(true);
-            }
-          }
-        };
-
-        try {
-          GuiUtils.runOrInvokeAndWait(r);
-        }
-        catch (InvocationTargetException ignored) {
-          extract.set(false);
-        }
-        catch (InterruptedException ignored) {
-          extract.set(false);
-        }
-
-        if (!extract.get()) {
-          return null;
-        }
-
-        boolean closeZip = true;
-        final ZipFile zipFile = new ZipFile(jarFile);
-        try {
-          ZipEntry entry = zipFile.getEntry(pair.second);
-          if (entry == null) {
-            return null;
-          }
-          InputStream is = zipFile.getInputStream(entry);
-          ZipUtil.extractEntry(entry, is, outputDir);
-          closeZip = false;
-        }
-        finally {
-          if (closeZip) {
-            zipFile.close();
-          }
-        }
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            new Task.Backgroundable(null, "Extracting files...", true) {
-              @Override
-              public void run(@NotNull final ProgressIndicator indicator) {
-                final int size = zipFile.size();
-                final int[] counter = new int[]{0};
-
-                class MyFilter implements FilenameFilter {
-                  private final Set<File> myImportantDirs = ContainerUtil.newHashSet(outputDir, new File(outputDir, "resources"));
-                  private final boolean myImportantOnly;
-
-                  private MyFilter(boolean importantOnly) {
-                    myImportantOnly = importantOnly;
-                  }
-
-                  @Override
-                  public boolean accept(@NotNull File dir, @NotNull String name) {
-                    indicator.checkCanceled();
-                    boolean result = myImportantOnly == myImportantDirs.contains(dir);
-                    if (result) {
-                      indicator.setFraction(((double)counter[0]) / size);
-                      counter[0]++;
-                    }
-                    return result;
-                  }
-                }
-
-                try {
-                  try {
-                    ZipUtil.extract(zipFile, outputDir, new MyFilter(true));
-                    ZipUtil.extract(zipFile, outputDir, new MyFilter(false));
-                    FileUtil.writeToFile(timestampFile, currentTimestamp);
-                  }
-                  finally {
-                    zipFile.close();
-                  }
-                }
-                catch (IOException ignore) { }
-              }
-            }.queue();
-          }
-        });
-      }
-
-      return VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(new File(outputDir, pair.second).getPath())) + anchor;
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-      Messages.showErrorDialog("Cannot extract files: " + e.getMessage(), "Error");
-      return null;
-    }
-  }
-
-  private static File getExtractedFilesDir() {
-    return new File(PathManager.getSystemPath(), "ExtractedFiles");
-  }
-
-  public static void clearExtractedFiles() {
-    FileUtil.delete(getExtractedFilesDir());
-  }
-
-  private static class ConfirmExtractDialog extends OptionsDialog {
-    private ConfirmExtractDialog() {
-      super(null);
-      setTitle("Confirmation");
-      init();
-    }
-
-    @Override
-    protected boolean isToBeShown() {
-      return getGeneralSettingsInstance().isConfirmExtractFiles();
-    }
-
-    @Override
-    protected void setToBeShown(boolean value, boolean onOk) {
-      getGeneralSettingsInstance().setConfirmExtractFiles(value);
-    }
-
-    @Override
-    protected boolean shouldSaveOptionsOnCancel() {
-      return true;
-    }
-
-    @Override
-    @NotNull
-    protected Action[] createActions() {
-      setOKButtonText(CommonBundle.getYesButtonText());
-      return new Action[]{getOKAction(), getCancelAction()};
-    }
-
-    @Override
-    protected JComponent createCenterPanel() {
-      JPanel panel = new JPanel(new BorderLayout());
-      String message = "The files are inside an archive, do you want them to be extracted?";
-      JLabel label = new JLabel(message);
-
-      label.setIconTextGap(10);
-      label.setIcon(Messages.getQuestionIcon());
-
-      panel.add(label, BorderLayout.CENTER);
-      panel.add(Box.createVerticalStrut(10), BorderLayout.SOUTH);
-
-      return panel;
     }
   }
 
@@ -456,11 +241,7 @@ public class BrowserLauncherAppless extends BrowserLauncher {
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
 
     if (url != null && url.startsWith("jar:")) {
-      String files = extractFiles(url);
-      if (files == null) {
-        return false;
-      }
-      url = files;
+      return false;
     }
 
     if (url != null) {

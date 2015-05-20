@@ -155,25 +155,36 @@ public class FragmentBoundRenderer implements LineMarkerRenderer, LineSeparatorR
                           final boolean mirrorX, final int mirrorSize) {
     final Iterator<Couple<Integer>> iterator = points.iterator();
     assert iterator.hasNext();
-    final Convertor<Integer, Integer> c = new Convertor<Integer, Integer>() {
-      @Override
-      public Integer convert(Integer o) {
-        final int val = x1 + o - subtractX;
-        if (mirrorX) {
-          return mirrorSize - val;
-        }
-        return val;
-      }
-    };
+
+    int[] xPoints = new int[points.size()];
+    int[] yPoints1 = new int[points.size()];
+    int[] yPoints2 = new int[points.size()];
+    int n = 0;
+
     Couple<Integer> previous = iterator.next();
     while (iterator.hasNext()) {
       final Couple<Integer> next = iterator.next();
-      UIUtil.drawLine(g, c.convert(previous.getFirst()), y + offset + previous.getSecond() - myLineHeight/2, c.convert(next.getFirst()),
-                      y + offset + next.getSecond() - myLineHeight/2);
-      UIUtil.drawLine(g, c.convert(previous.getFirst()), y - offset + previous.getSecond() - myLineHeight/2, c.convert(next.getFirst()),
-                      y - offset + next.getSecond() - myLineHeight/2);
+
+      xPoints[n] = convert(previous.getFirst(), x1, subtractX, mirrorX, mirrorSize);
+      yPoints1[n] = y + offset + previous.getSecond() - myLineHeight / 2;
+      yPoints2[n] = y - offset + previous.getSecond() - myLineHeight / 2;
+      n++;
       previous = next;
     }
+    xPoints[n] = convert(previous.getFirst(), x1, subtractX, mirrorX, mirrorSize);
+    yPoints1[n] = y + offset + previous.getSecond() - myLineHeight / 2;
+    yPoints2[n] = y - offset + previous.getSecond() - myLineHeight / 2;
+
+    g.drawPolyline(xPoints, yPoints1, points.size());
+    g.drawPolyline(xPoints, yPoints2, points.size());
+  }
+
+  private static int convert(int value, int x1, int subtractX, boolean mirrorX, int mirrorSize) {
+    final int val = x1 + value - subtractX;
+    if (mirrorX) {
+      return mirrorSize - val;
+    }
+    return val;
   }
 
   private static class ShoeneLine {

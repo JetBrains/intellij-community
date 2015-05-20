@@ -22,14 +22,22 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * Allows to enumerate all build targets existing in a project.
+ *
  * @author Eugene Zhuravlev
- *         Date: 10/27/12
+ * @since 10/27/12
  */
 public interface BuildTargetRegistry {
+  /**
+   * Returns all build targets of a specified type.
+   */
   @NotNull
   <T extends BuildTarget<?>>
   List<T> getAllTargets(@NotNull BuildTargetType<T> type);
 
+  /**
+   * Returns all build targets existing in the project.
+   */
   @NotNull
   List<BuildTarget<?>> getAllTargets();
 
@@ -37,6 +45,9 @@ public interface BuildTargetRegistry {
     PRODUCTION, TEST, ALL
   }
 
+  /**
+   * Returns the module-based targets of the specified module that have the specified type.
+   */
   @NotNull
   Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull ModuleTargetSelector selector);
 }

@@ -25,7 +25,9 @@ import com.intellij.openapi.diff.impl.external.DiscloseMultiRequest;
 import com.intellij.openapi.diff.impl.external.MultiLevelDiffTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.Content;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created with IntelliJ IDEA.
@@ -47,7 +50,7 @@ public class CompositeDiffPanel implements DiffViewer {
   private final DiscloseMultiRequest myRequest;
   private final Window myWindow;
   private final Disposable myParentDisposable;
-  private final Map<String, DiffViewer> myMap;
+  private final Map<String, Pair<DiffViewer, Content>> myMap;
 
   public CompositeDiffPanel(Project project, final DiscloseMultiRequest request, final Window window, @NotNull Disposable parentDisposable) {
     myRequest = request;
@@ -57,7 +60,7 @@ public class CompositeDiffPanel implements DiffViewer {
     myUi.getComponent().setBorder(null);
     myUi.getOptions().setMinimizeActionEnabled(false);
     //myUi.getOptions().setTopToolbar()
-    myMap = new HashMap<String, DiffViewer>();
+    myMap = new HashMap<String, Pair<DiffViewer, Content>>();
   }
 
   @Override
@@ -68,59 +71,47 @@ public class CompositeDiffPanel implements DiffViewer {
   @Override
   public void setDiffRequest(DiffRequest request) {
     final Map<String, DiffRequest> requestMap = myRequest.discloseRequest(request);
-    final HashMap<String, DiffViewer> copy = new HashMap<String, DiffViewer>(myMap);
+
+    HashMap<String, Pair<DiffViewer, Content>> mapCopy = new HashMap<String, Pair<DiffViewer, Content>>(myMap);
+    myMap.clear();
 
     for (Map.Entry<String, DiffRequest> entry : requestMap.entrySet()) {
       final String key = entry.getKey();
       final DiffRequest diffRequest = entry.getValue();
       diffRequest.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), this);
-      final DiffViewer viewer = copy.remove(key);
+      final Pair<DiffViewer, Content> pair = mapCopy.get(key);
+      DiffViewer viewer = pair != null ? pair.first : null;
       if (viewer != null && viewer.acceptsType(diffRequest.getType()) && viewer.canShowRequest(diffRequest)) {
         viewer.setDiffRequest(diffRequest);
+        myMap.put(key, pair);
+        mapCopy.remove(key);
       } else {
-        if (viewer != null) {
-          removeTab(myUi.getContentManager().getContents(), key);
-        }
         final DiffViewer newViewer = myRequest.viewerForRequest(myWindow, myParentDisposable, key, diffRequest);
         if (newViewer == null) continue;
-        myMap.put(key, newViewer);
         final Content content = myUi.createContent(key, newViewer.getComponent(), key, null, newViewer.getPreferredFocusedComponent());
         content.setCloseable(false);
         content.setPinned(true);
-        Disposer.register(myParentDisposable, new Disposable() {
-          @Override
-          public void dispose() {
-            myMap.remove(key);
-            myUi.removeContent(content, true);
-          }
-        });
+        content.setDisposer(myParentDisposable);
         myUi.addContent(content);
+        myMap.put(key, Pair.create(newViewer, content));
+        if (pair != null) myUi.removeContent(pair.second, false);
       }
-    }
-    final Content[] contents = myUi.getContentManager().getContents();
-    for (String s : copy.keySet()) {
-      removeTab(contents, s);
     }
 
     if (myMap.isEmpty()) {
-      final ErrorDiffViewer errorDiffViewer = new ErrorDiffViewer(request);
-      myMap.put(FICTIVE_KEY, errorDiffViewer);
+      final ErrorDiffViewer errorDiffViewer = new ErrorDiffViewer(myWindow, request);
       final Content content = myUi.createContent(FICTIVE_KEY, errorDiffViewer.getComponent(), FICTIVE_KEY, null,
                                                  errorDiffViewer.getPreferredFocusedComponent());
       content.setCloseable(false);
       content.setPinned(true);
       content.setDisposer(myParentDisposable);
       myUi.addContent(content);
+      myMap.put(FICTIVE_KEY, Pair.<DiffViewer, Content>create(errorDiffViewer, content));
     }
-  }
 
-  private void removeTab(Content[] contents, String s) {
-    myMap.remove(s);
-    for (Content content : contents) {
-      if (s.equals(content.getDisplayName())) {
-        myUi.getContentManager().removeContent(content, false);
-        break;
-      }
+    for (Pair<DiffViewer, Content> pair : mapCopy.values()) {
+      myUi.removeContent(pair.second, false);
+      if (pair.first instanceof Disposable) Disposer.dispose((Disposable)pair.first);
     }
   }
 

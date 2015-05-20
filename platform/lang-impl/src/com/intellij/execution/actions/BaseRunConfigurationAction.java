@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -64,21 +66,21 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
       if (producers.size() > 1) {
         final AnAction[] children = new AnAction[producers.size()];
-        int chldIdx = 0;
+        int childIdx = 0;
         for (final ConfigurationFromContext fromContext : producers) {
           final ConfigurationType configurationType = fromContext.getConfigurationType();
           final RunConfiguration configuration = fromContext.getConfiguration();
           final String actionName = configuration instanceof LocatableConfiguration
                                     ? StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configuration))
                                     : configurationType.getDisplayName();
-          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configurationType.getIcon()) {
+          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configuration.getIcon()) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               perform(fromContext, context);
             }
           };
           anAction.getTemplatePresentation().setText(actionName, false);
-          children[chldIdx++] = anAction;
+          children[childIdx++] = anAction;
         }
         return children;
       }
@@ -108,6 +110,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @Override
   public boolean canBePerformed(DataContext dataContext) {
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project != null && DumbService.isDumb(project)) {
+      return false;
+    }
+
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {

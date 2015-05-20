@@ -9,6 +9,7 @@
 
   <extensionPoints>
     <extensionPoint name="implicitPropertyUsageProvider" interface="com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider"/>
+    <extensionPoint name="alphaUnsortedInspectionSuppressor" interface="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspectionSuppressor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -55,7 +56,8 @@
     <lang.commenter language="Properties" implementationClass="com.intellij.lang.properties.PropertiesCommenter"/>
     <stubIndex implementation="com.intellij.lang.properties.psi.PropertyKeyIndex"/>
     <lang.namesValidator language="Properties" implementationClass="com.intellij.lang.properties.PropertiesNamesValidator"/>
-    <refactoring.safeDeleteProcessor implementation="com.intellij.lang.properties.refactoring.PropertiesSafeDeleteProcessor"/>
+    <refactoring.safeDeleteProcessor implementation="com.intellij.lang.properties.refactoring.PropertiesFilesSafeDeleteProcessor"/>
+    <refactoring.safeDeleteProcessor implementation="com.intellij.lang.properties.refactoring.PropertyKeysSafeDeleteProcessor"/>
     <refactoring.moveHandler implementation="com.intellij.lang.properties.projectView.ResourceBundleMoveProvider"/>
     <colorSettingsPage implementation="com.intellij.openapi.options.colors.pages.PropertiesColorsPage"/>
     <treeStructureProvider implementation="com.intellij.lang.properties.projectView.ResourceBundleGrouper"/>
@@ -75,6 +77,14 @@
                      key="trail.spaces.property.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TrailingSpacesInPropertyInspection"/>
+    <localInspection language="Properties" shortName="AlphaUnsortedPropertiesFile" bundle="messages.PropertiesBundle"
+                     key="alpha.unsorted.properties.file.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="false" level="INFO"
+                     implementationClass="com.intellij.codeInspection.unsorted.AlphaUnsortedPropertiesFileInspection"/>
+    <localInspection language="Properties" shortName="WrongPropertyKeyValueDelimiter" bundle="messages.PropertiesBundle"
+                     key="wrong.property.key.value.delimiter.inspection.display.name" groupKey="properties.files.inspection.group.display.name"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.codeInspection.WrongPropertyKeyValueDelimiterInspection"/>
 
     <idIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesIdIndexer"/>
     <todoIndexer filetype="Properties" implementationClass="com.intellij.psi.impl.cache.impl.idCache.PropertiesTodoIndexer"/>
@@ -93,6 +103,8 @@
     <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.editor.PropertiesFoldingBuilder"/>
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoResourceBundleLocalizationsProvider"/>
     <gotoRelatedProvider implementation="com.intellij.lang.properties.editor.GotoPropertyDeclarationsProvider"/>
+
+    <codeStyleSettingsProvider implementation="com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettingsProvider"/>
   </extensions>
 
   <project-components>
@@ -121,6 +133,14 @@
             text="Property"
             description="Add Property to Resource Bundle">
       <add-to-group group-id="NewGroup" anchor="first"/>
+    </action>
+    <action id="GotoNextIncompletePropertyAction"
+            class="com.intellij.lang.properties.editor.GotoNextIncompletePropertyAction"
+            text="Go to next incomplete property"
+            use-shortcut-of="GotoNextError"/>
+
+    <action id="CreateResourceBundle" class="com.intellij.lang.properties.create.CreateResourceBundleAction">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
     </action>
   </actions>
 </idea-plugin>

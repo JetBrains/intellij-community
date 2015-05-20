@@ -24,14 +24,19 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.filters.FilterPositionUtil;
+import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.psi.codeStyle.JavaCodeStyleSettings.*;
 
 /**
 * @author peter
@@ -71,8 +76,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }
 
-    if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null &&
-        CodeStyleSettingsManager.getSettings(project).USE_FQ_CLASS_NAMES_IN_JAVADOC) {
+    if (PsiTreeUtil.getParentOfType(position, PsiDocComment.class, false) != null && shouldInsertFqnInJavadoc(item, file, project)) {
       AllClassesGetter.INSERT_FQN.handleInsert(context, item);
       return;
     }
@@ -110,6 +114,28 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
 
     if (fillTypeArgs && context.getCompletionChar() != '(') {
       JavaCompletionUtil.promptTypeArgs(context, context.getOffset(refEnd));
+    }
+  }
+
+  private static boolean shouldInsertFqnInJavadoc(@NotNull JavaPsiClassReferenceElement item,
+                                                  @NotNull PsiFile file,
+                                                  @NotNull Project project) 
+  {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    
+    switch (javaSettings.CLASS_NAMES_IN_JAVADOC) {
+      case FULLY_QUALIFY_NAMES_ALWAYS:
+        return true;
+      case SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT:
+        return false;
+      case FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED:
+        if (file instanceof PsiJavaFile) {
+          PsiJavaFile javaFile = ((PsiJavaFile)file);
+          return item.getQualifiedName() != null && !ImportHelper.isAlreadyImported(javaFile, item.getQualifiedName());
+        }
+      default:
+        return false;
     }
   }
 

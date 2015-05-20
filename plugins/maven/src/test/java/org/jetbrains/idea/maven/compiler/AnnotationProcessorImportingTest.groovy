@@ -195,6 +195,12 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 <build>
   <plugins>
             <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgument>-proc:none</compilerArgument>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.bsc.maven</groupId>
                 <artifactId>maven-processor-plugin</artifactId>
 
@@ -245,10 +251,9 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
       <artifactId>maven-compiler-plugin</artifactId>
       <configuration>
         <compilerArgument>-Aopt1=111 -Xmx512Mb -Aopt2=222</compilerArgument>
-        <compilerArguments>
-          <proc>none</proc>
-          <compilerArgument>-proc:none</compilerArgument>
-        </compilerArguments>
+        <compilerArgs>
+            <arg>-proc:none</arg>
+        </compilerArgs>
       </configuration>
     </plugin>
 
@@ -299,6 +304,12 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
   <build>
     <plugins>
+      <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+              <compilerArgument>-proc:none</compilerArgument>
+          </configuration>
+      </plugin>
       <plugin>
         <groupId>org.bsc.maven</groupId>
         <artifactId>maven-processor-plugin</artifactId>

@@ -746,6 +746,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testCastToIntersection() throws Exception {
+    doTest();
+  }
+
   public void testIDEA122401() throws Exception {
     doTest();
   }
@@ -776,6 +780,22 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testSuperWildcardCapturedSuperExtendsWildcardCapturedExtends() throws Exception {
+    doTest(false);
+  }
+
+  public void testRejectContradictingEqualsBounds() throws Exception {
+    doTest(false);
+  }
+
+  public void testRejectEqualsBoundsContradictingLowerBound() throws Exception {
+    doTest(false);
+  }
+
+  public void testSuperInterfaceMethodCalledByMatterOfInterface() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(false);
   }
@@ -794,4 +814,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testIDEA139069() throws Exception {
+    doTest();
+  }
 }

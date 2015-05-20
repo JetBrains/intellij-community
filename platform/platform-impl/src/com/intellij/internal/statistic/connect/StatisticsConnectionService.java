@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,17 +47,17 @@ public class StatisticsConnectionService extends SettingsConnectionService {
     return ArrayUtil.append(super.getAttributeNames(), PERMISSION_ATTR_NAME);
   }
 
-  public Boolean isTransmissionPermitted() {
+  public boolean isTransmissionPermitted() {
     final String permitted = getSettingValue(PERMISSION_ATTR_NAME);
-
-    return permitted == null ? true : Boolean.parseBoolean(permitted);
+    return permitted == null || Boolean.parseBoolean(permitted);
   }
 
   @NotNull
   public Set<String> getDisabledGroups() {
     final String disabledGroupsString = getSettingValue(DISABLED);
-
-    if (disabledGroupsString == null) return Collections.<String>emptySet();
+    if (disabledGroupsString == null) {
+      return Collections.emptySet();
+    }
 
     final List<String> disabledGroupsList = StringUtil.split(disabledGroupsString, ",");
     return ContainerUtil.map2Set(disabledGroupsList, new Function<String, String>() {

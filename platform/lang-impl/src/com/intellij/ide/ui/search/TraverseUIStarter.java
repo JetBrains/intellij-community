@@ -141,10 +141,11 @@ public class TraverseUIStarter extends ApplicationStarterEx {
     final SearchableOptionsRegistrar optionsRegistrar = SearchableOptionsRegistrar.getInstance();
     TreeSet<OptionDescription> options = new TreeSet<OptionDescription>();
 
-    processTemplates(optionsRegistrar, options, FileTemplateManager.getInstance().getAllTemplates());
-    processTemplates(optionsRegistrar, options, FileTemplateManager.getInstance().getAllPatterns());
-    processTemplates(optionsRegistrar, options, FileTemplateManager.getInstance().getAllCodeTemplates());
-    processTemplates(optionsRegistrar, options, FileTemplateManager.getInstance().getAllJ2eeTemplates());
+    FileTemplateManager fileTemplateManager = FileTemplateManager.getDefaultInstance();
+    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllTemplates());
+    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllPatterns());
+    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllCodeTemplates());
+    processTemplates(optionsRegistrar, options, fileTemplateManager.getAllJ2eeTemplates());
 
     writeOptions(configurableElement, options);
   }

@@ -59,11 +59,12 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
 
   public void testBranches() {
     VcsTestUtil.assertEqualCollections(myRepositoryReader.readBranches().keySet(),
-                                              Arrays.asList("default", "branchA", "branchB"));
+                                       Arrays.asList("default", "branchA", "branchB"));
   }
 
   public void testOpenedBranches() {
     cd(myRepository);
+    myRepository.refresh(false, true);
     HgRepository hgRepository = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
     hg("up branchA");
     hg("commit -m 'close branch' --close-branch");
@@ -74,12 +75,12 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
 
   public void testTags() {
     VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readTags()),
-                                              Arrays.asList("tag1", "tag2"));
+                                       Arrays.asList("tag1", "tag2"));
   }
 
   public void testLocalTags() {
     VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readLocalTags()),
-                                              Arrays.asList("localTag"));
+                                       Arrays.asList("localTag"));
   }
 
   public void testCurrentBookmark() {
@@ -89,7 +90,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
 
   public void testBookmarks() {
     VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks()),
-                                              Arrays.asList("A_BookMark", "B_BookMark", "C_BookMark"));
+                                       Arrays.asList("A_BookMark", "B_BookMark", "C_BookMark"));
   }
 
   private void createBranchesAndTags() {

@@ -22,12 +22,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +79,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTryStatement)) {
@@ -95,7 +95,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         return;
       }
       final PsiElement[] tryBlockChildren = tryBlock.getChildren();
-      final Set<PsiLocalVariable> variables = new HashSet();
+      final Set<PsiLocalVariable> variables = new LinkedHashSet<PsiLocalVariable>();
       for (final PsiLocalVariable variable : collectVariables(tryStatement)) {
         if (!isVariableUsedOutsideContext(variable, tryBlock)) {
           variables.add(variable);
@@ -377,6 +377,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         variables.add(variable);
       }
     }
+    Collections.sort(variables, PsiElementOrderComparator.getInstance());
     return variables;
   }
 

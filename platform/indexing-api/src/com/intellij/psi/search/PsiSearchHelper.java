@@ -38,7 +38,7 @@ public interface PsiSearchHelper {
     private SERVICE() {
     }
 
-    public static PsiSearchHelper getInstance(Project project) {
+    public static PsiSearchHelper getInstance(@NotNull Project project) {
       return ServiceManager.getService(project, PsiSearchHelper.class);
     }
   }

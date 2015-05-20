@@ -17,11 +17,9 @@ package org.intellij.images.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.fileEditor.FileEditor;
 import org.intellij.images.editor.ImageEditor;
-import org.intellij.images.editor.ImageFileEditor;
+import org.intellij.images.ui.ImageComponentDecorator;
 
 /**
  * Editor actions utility.
@@ -38,22 +36,17 @@ public final class ImageEditorActionUtil {
      * @param e Action event
      * @return Current {@link ImageEditor} or <code>null</code>
      */
-    public static ImageEditor getValidEditor(AnActionEvent e) {
-        ImageEditor editor = getEditor(e);
-        if (editor != null && editor.isValid()) {
-            return editor;
-        }
-        return null;
-    }
+    //public static ImageEditor getValidEditor(AnActionEvent e) {
+    //    ImageEditor editor = getEditor(e);
+    //    if (editor != null && editor.isValid()) {
+    //        return editor;
+    //    }
+    //    return null;
+    //}
 
-    public static ImageEditor getEditor(AnActionEvent e) {
+    public static ImageComponentDecorator getImageComponentDecorator(AnActionEvent e) {
         DataContext dataContext = e.getDataContext();
-      FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
-        if (editor instanceof ImageFileEditor) {
-            ImageFileEditor fileEditor = (ImageFileEditor) editor;
-            return fileEditor.getImageEditor();
-        }
-        return null;
+        return ImageComponentDecorator.DATA_KEY.getData(dataContext);
     }
 
     /**
@@ -63,9 +56,9 @@ public final class ImageEditorActionUtil {
      * @return Enabled value
      */
     public static boolean setEnabled(AnActionEvent e) {
-        ImageEditor editor = getValidEditor(e);
+        ImageComponentDecorator decorator = getImageComponentDecorator(e);
         Presentation presentation = e.getPresentation();
-        presentation.setEnabled(editor != null);
+        presentation.setEnabled(decorator != null);
         return presentation.isEnabled();
     }
 }

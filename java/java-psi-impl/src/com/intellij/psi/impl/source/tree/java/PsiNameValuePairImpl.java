@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -68,7 +69,13 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
   @Override
   public String getLiteralValue() {
     PsiNameValuePairStub stub = getStub();
-    return stub == null ? null : stub.getValue();
+    if (stub == null) {
+      PsiAnnotationMemberValue value = getValue();
+      return value instanceof PsiLiteralExpression ? StringUtil.unquoteString(value.getText()) : null;
+    }
+    else {
+      return stub.getValue();
+    }
   }
 
   @Override

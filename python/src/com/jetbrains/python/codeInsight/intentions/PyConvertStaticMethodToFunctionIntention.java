@@ -74,14 +74,9 @@ public class PyConvertStaticMethodToFunctionIntention extends BaseIntentionActio
       final PyDecorator decorator = decoratorList.findDecorator(PyNames.STATICMETHOD);
       if (decorator != null) decorator.delete();
     }
-    final PyElementGenerator generator = PyElementGenerator.getInstance(project);
 
     final PsiElement copy = problemFunction.copy();
-    final PyStatementList classStatementList = containingClass.getStatementList();
-    classStatementList.deleteChildRange(problemFunction, problemFunction);
-    if (classStatementList.getStatements().length < 1) {
-      classStatementList.add(generator.createPassStatement());
-    }
+    problemFunction.delete();
     file.addAfter(copy, containingClass);
 
     for (UsageInfo usage : usages) {

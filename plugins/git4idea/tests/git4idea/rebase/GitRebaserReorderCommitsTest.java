@@ -45,7 +45,6 @@ public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
     GitTestUtil.createRepository(myProject, myProjectPath, false);
     myRebaser = new GitRebaser(myProject, ServiceManager.getService(Git.class), null);
     myFirstCommit = makeCommit();
-    GitTestUtil.setDefaultBuiltInServerPort();
     BuiltInServerManager.getInstance().waitForStart();
   }
 

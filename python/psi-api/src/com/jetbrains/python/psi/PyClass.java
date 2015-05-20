@@ -111,6 +111,10 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   PyExpression[] getSuperClassExpressions();
 
   /**
+   * Collects methods defined in the class and its ancestors if necessary.
+   * <p/>
+   * This method does not access AST if underlying PSI is stub based and {@code inherited} parameter is false.
+   *
    * @param inherited return inherited (parent) methods as well
    * @return class methods
    */
@@ -164,11 +168,22 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   boolean visitClassAttributes(Processor<PyTargetExpression> processor, boolean inherited);
 
+  /**
+   * Effectively collects assignments inside the class body.
+   * <p/>
+   * This method does not access AST if underlying PSI is stub based.
+   */
   List<PyTargetExpression> getClassAttributes();
 
   @Nullable
   PyTargetExpression findClassAttribute(@NotNull String name, boolean inherited);
 
+  /**
+   * Effectively collects assignments to attributes of {@code self} in {@code __init__}, {@code __new__} and
+   * other methods defined in the class.
+   * <p/>
+   * This method does not access AST if underlying PSI is stub based.
+   */
   List<PyTargetExpression> getInstanceAttributes();
 
   @Nullable
@@ -200,7 +215,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    * @return the property, or null
    */
   @Nullable
-  Property findPropertyByCallable(Callable callable);
+  Property findPropertyByCallable(PyCallable callable);
 
   /**
    * @param parent

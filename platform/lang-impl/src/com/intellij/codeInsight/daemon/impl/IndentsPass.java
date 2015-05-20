@@ -21,7 +21,9 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.lang.*;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -43,22 +45,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.IntStack;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
 
 public class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
-  private static final ConcurrentMap<IElementType, String> COMMENT_PREFIXES       = ContainerUtil.newConcurrentMap();
-  private static final String                              NO_COMMENT_INFO_MARKER = "hopefully, noone uses this string as a comment prefix";
-
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
   private static final Key<Long>                   LAST_TIME_INDENTS_BUILT           = Key.create("LAST_TIME_INDENTS_BUILT");
 
@@ -302,7 +298,6 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     IndentsCalculator calculator = new IndentsCalculator();
     calculator.calculate();
     int[] lineIndents = calculator.lineIndents;
-    TIntIntHashMap effectiveCommentColumns = calculator.indentAfterUncomment;
 
     List<IndentGuideDescriptor> descriptors = new ArrayList<IndentGuideDescriptor>();
 
@@ -312,33 +307,26 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     lines.push(0);
     indents.push(0);
     assert myDocument != null;
-    final CharSequence chars = myDocument.getCharsSequence();
     for (int line = 1; line < lineIndents.length; line++) {
       ProgressManager.checkCanceled();
-      int curIndent = lineIndents[line];
+      int curIndent = Math.abs(lineIndents[line]);
 
       while (!indents.empty() && curIndent <= indents.peek()) {
         ProgressManager.checkCanceled();
         final int level = indents.pop();
         int startLine = lines.pop();
         if (level > 0) {
-          boolean addDescriptor = effectiveCommentColumns.contains(startLine); // Indent started at comment
-          if (!addDescriptor) {
-            for (int i = startLine; i < line; i++) {
-              if (level != lineIndents[i] && level != effectiveCommentColumns.get(i)) {
-                addDescriptor = true;
-                break;
-              }
+          for (int i = startLine; i < line; i++) {
+            if (level != Math.abs(lineIndents[i])) {
+              descriptors.add(createDescriptor(level, startLine, line, lineIndents));
+              break;
             }
-          }
-          if (addDescriptor) {
-            descriptors.add(createDescriptor(level, startLine, line, chars));
           }
         }
       }
 
       int prevLine = line - 1;
-      int prevIndent = lineIndents[prevLine];
+      int prevIndent = Math.abs(lineIndents[prevLine]);
 
       if (curIndent - prevIndent > 1) {
         lines.push(prevLine);
@@ -351,77 +339,15 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       final int level = indents.pop();
       int startLine = lines.pop();
       if (level > 0) {
-        descriptors.add(createDescriptor(level, startLine, myDocument.getLineCount(), chars));
+        descriptors.add(createDescriptor(level, startLine, myDocument.getLineCount(), lineIndents));
       }
     }
     return descriptors;
   }
 
-  private IndentGuideDescriptor createDescriptor(int level, int startLine, int endLine, CharSequence chars) {
-    while (startLine > 0 && isBlankLine(startLine, chars)) startLine--;
+  private static IndentGuideDescriptor createDescriptor(int level, int startLine, int endLine, int[] lineIndents) {
+    while (startLine > 0 && lineIndents[startLine] < 0) startLine--;
     return new IndentGuideDescriptor(level, startLine, endLine);
-  }
-
-  private boolean isBlankLine(int line, CharSequence chars) {
-    Document document = myDocument;
-    if (document == null) {
-      return true;
-    }
-    int startOffset = document.getLineStartOffset(line);
-    int endOffset = document.getLineEndOffset(line);
-    return CharArrayUtil.shiftForward(chars, startOffset, endOffset, " \t") >= myDocument.getLineEndOffset(line);
-  }
-
-  /**
-   * We want to treat comments specially in a way to skip comment prefix on line indent calculation.
-   * <p/>
-   * Example:
-   * <pre>
-   *   if (true) {
-   *     int i1;
-   * //    int i2;
-   *     int i3;
-   *   }
-   * </pre>
-   * We want to use 'int i2;' start offset as the third line indent (though it has non-white space comment prefix (//)
-   * at the first column.
-   * <p/>
-   * This method tries to parse comment prefix for the language implied by the given comment type. It uses
-   * {@link #NO_COMMENT_INFO_MARKER} as an indicator that that information is unavailable
-   * 
-   * @param commentType  target comment type
-   * @return             prefix of the comment denoted by the given type if any;
-   *                     {@link #NO_COMMENT_INFO_MARKER} otherwise
-   */
-  @NotNull
-  private static String getCommentPrefix(@NotNull IElementType commentType) {
-    Commenter c = LanguageCommenters.INSTANCE.forLanguage(commentType.getLanguage());
-    if (!(c instanceof CodeDocumentationAwareCommenter)) {
-      COMMENT_PREFIXES.put(commentType, NO_COMMENT_INFO_MARKER);
-      return NO_COMMENT_INFO_MARKER;
-    }
-    CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)c;
-    
-    IElementType lineCommentType = commenter.getLineCommentTokenType();
-    String lineCommentPrefix = commenter.getLineCommentPrefix();
-    if (lineCommentType != null) {
-      COMMENT_PREFIXES.put(lineCommentType, lineCommentPrefix == null ? NO_COMMENT_INFO_MARKER : lineCommentPrefix);
-    }
-
-    IElementType blockCommentType = commenter.getBlockCommentTokenType();
-    String blockCommentPrefix = commenter.getBlockCommentPrefix();
-    if (blockCommentType != null) {
-      COMMENT_PREFIXES.put(blockCommentType, blockCommentPrefix == null ? NO_COMMENT_INFO_MARKER : blockCommentPrefix);
-    }
-
-    IElementType docCommentType = commenter.getDocumentationCommentTokenType();
-    String docCommentPrefix = commenter.getDocumentationCommentPrefix();
-    if (docCommentType != null) {
-      COMMENT_PREFIXES.put(docCommentType, docCommentPrefix == null ? NO_COMMENT_INFO_MARKER : docCommentPrefix);
-    }
-
-    COMMENT_PREFIXES.putIfAbsent(commentType, NO_COMMENT_INFO_MARKER);
-    return COMMENT_PREFIXES.get(commentType);
   }
 
   @NotNull
@@ -441,22 +367,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
     @NotNull public final Map<Language, TokenSet> myComments = ContainerUtilRt.newHashMap();
 
-    /**
-     * We need to treat specially commented lines. Consider a situation like below:
-     * <pre>
-     *   void test() {
-     *     if (true) {
-     *       int i;
-     *  //     int j;
-     *     }
-     *   }
-     * </pre>
-     * We don't want to show indent guide after 'int i;' line because un-commented line below ('int j;') would have the same indent
-     * level. That's why we remember 'indents after un-comment' at this collection.
-     */
-    @NotNull public final TIntIntHashMap/* line -> indent column after un-comment */ indentAfterUncomment = new TIntIntHashMap();
-
-    @NotNull public final int[]        lineIndents;
+    @NotNull public final int[]        lineIndents; // negative value means the line is empty (or contains a comment) and indent
+                                                    // (denoted by absolute value) was deduced from enclosing non-empty lines
     @NotNull public final CharSequence myChars;
 
     IndentsCalculator() {
@@ -469,26 +381,19 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
      * Calculates line indents for the {@link #myDocument target document}.
      */
     void calculate() {
+      assert myDocument != null;
       final FileType fileType = myFile.getFileType();
-      int prevLineIndent = -1;
 
       for (int line = 0; line < lineIndents.length; line++) {
         ProgressManager.checkCanceled();
         int lineStart = myDocument.getLineStartOffset(line);
         int lineEnd = myDocument.getLineEndOffset(line);
         final int nonWhitespaceOffset = CharArrayUtil.shiftForward(myChars, lineStart, lineEnd, " \t");
-        if (nonWhitespaceOffset == lineEnd) {
+        if (nonWhitespaceOffset == lineEnd || isComment(nonWhitespaceOffset)) { // treating commented lines in the same way as empty lines
           lineIndents[line] = -1; // Blank line marker
         }
         else {
-          final int column = ((EditorImpl)myEditor).calcColumnNumber(nonWhitespaceOffset, line, true, myChars);
-          if (prevLineIndent > 0 && prevLineIndent > column) {
-            lineIndents[line] = calcIndent(line, nonWhitespaceOffset, lineEnd, column);
-          }
-          else {
-            lineIndents[line] = column;
-          }
-          prevLineIndent = lineIndents[line];
+          lineIndents[line] = ((EditorImpl)myEditor).calcColumnNumber(nonWhitespaceOffset, line, true, myChars);
         }
       }
 
@@ -520,7 +425,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
 
           for (int blankLine = startLine; blankLine < line; blankLine++) {
             assert lineIndents[blankLine] == -1;
-            lineIndents[blankLine] = Math.min(topIndent, indent);
+            lineIndents[blankLine] = - Math.min(topIndent, indent);
           }
 
           //noinspection AssignmentToForLoopParameter
@@ -529,18 +434,8 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       }
     }
 
-    /**
-     * Tries to calculate given line's indent column assuming that there might be a comment at the given indent offset
-     * (see {@link #getCommentPrefix(IElementType)}).
-     *
-     * @param line            target line
-     * @param indentOffset    start indent offset to use for the given line
-     * @param lineEndOffset   given line's end offset
-     * @param fallbackColumn  column to return if it's not possible to apply comment-specific indent calculation rules 
-     * @return given line's indent column to use
-     */
-    private int calcIndent(int line, int indentOffset, int lineEndOffset, int fallbackColumn) {
-      final HighlighterIterator it = myEditor.getHighlighter().createIterator(indentOffset);
+    private boolean isComment(int offset) {
+      final HighlighterIterator it = myEditor.getHighlighter().createIterator(offset);
       IElementType tokenType = it.getTokenType();
       Language language = tokenType.getLanguage();
       TokenSet comments = myComments.get(language);
@@ -550,27 +445,13 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
           comments = definition.getCommentTokens();
         }
         if (comments == null) {
-          return fallbackColumn;
+          return false;
         }
         else {
           myComments.put(language, comments);
         }
       }
-      if (comments.contains(tokenType) && indentOffset == it.getStart()) {
-        String prefix = COMMENT_PREFIXES.get(tokenType);
-        if (prefix == null) {
-          prefix = getCommentPrefix(tokenType);
-        }
-        if (!NO_COMMENT_INFO_MARKER.equals(prefix)) {
-          final int indentInsideCommentOffset = CharArrayUtil.shiftForward(myChars, indentOffset + prefix.length(), lineEndOffset, " \t");
-          if (indentInsideCommentOffset < lineEndOffset) {
-            int indent = myEditor.calcColumnNumber(indentInsideCommentOffset, line);
-            indentAfterUncomment.put(line, indent - prefix.length());
-            return indent;
-          }
-        }
-      }
-      return fallbackColumn;
+      return comments.contains(tokenType);
     }
   }
 }

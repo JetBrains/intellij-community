@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import java.awt.event.ItemListener;
  */
 public abstract class ImportLayoutPanel extends JPanel {
   private final JBCheckBox myCbLayoutStaticImportsSeparately = new JBCheckBox("Layout static imports separately");
-  private JBTable myImportLayoutTable;
+  private final JBTable myImportLayoutTable;
 
   private final PackageEntryTable myImportLayoutList = new PackageEntryTable();
 
@@ -327,7 +327,7 @@ public abstract class ImportLayoutPanel extends JPanel {
         PackageEntry entry = packageTable.getEntryAt(row);
 
         if (entry == PackageEntry.BLANK_LINE_ENTRY) {
-          append("                                               <blank line>", SimpleTextAttributes.LINK_ATTRIBUTES);
+          append("<blank line>", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
           TextAttributes attributes = JavaHighlightingColors.KEYWORD.getDefaultAttributes();

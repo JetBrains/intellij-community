@@ -2,7 +2,7 @@ PsiJavaFile:Errors1.java
   PsiImportList
     <empty list>
   PsiClass:I
-    PsiComment(END_OF_LINE_COMMENT)('// "Replace Implements with Static Import" "true"')
+    PsiComment(END_OF_LINE_COMMENT)('// "Replace implements with static import" "true"')
     PsiWhiteSpace('\n')
     PsiModifierList:
       <empty list>

@@ -25,7 +25,6 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -246,7 +245,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       return false;
     }
 
-    FileDocumentManager.getInstance().saveAllDocuments();
+    // save all documents here when !myMovedFiles.isEmpty() deletes these files from VFS
+    // these leads to psi invalidation during refactoring inside write action
+    // FileDocumentManager.getInstance().saveAllDocuments();
     if (sourceVcs == null) {
       return createItem(toDir, file.getName(), file.isDirectory(), true);
     }
@@ -269,7 +270,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     File dstFile = new File(srcFile.getParentFile(), newName);
     SvnVcs vcs = getVCS(file);
     if (vcs != null) {
-      FileDocumentManager.getInstance().saveAllDocuments();
+      // save all documents here when !myMovedFiles.isEmpty() deletes these files from VFS
+      // these leads to psi invalidation during refactoring inside write action
+      // FileDocumentManager.getInstance().saveAllDocuments();
 
       myFilesToRefresh.add(file.getParent());
       return doMove(vcs, srcFile, dstFile);
@@ -535,7 +538,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
     return new RepeatSvnActionThroughBusy() {
       @Override
       protected void executeImpl() throws VcsException {
-        vcs.getFactory(file).createRevertClient().revert(new File[]{file}, Depth.allOrFiles(recursive), null);
+        vcs.getFactory(file).createRevertClient().revert(Collections.singletonList(file), Depth.allOrFiles(recursive), null);
       }
     };
   }

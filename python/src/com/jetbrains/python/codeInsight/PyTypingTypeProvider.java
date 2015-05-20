@@ -18,13 +18,15 @@ package com.jetbrains.python.codeInsight;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -33,15 +35,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author vlan
  */
 public class PyTypingTypeProvider extends PyTypeProviderBase {
+  public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
   private static ImmutableMap<String, String> BUILTIN_COLLECTIONS = ImmutableMap.<String, String>builder()
     .put("typing.List", "list")
     .put("typing.Dict", "dict")
     .put("typing.Set", PyNames.SET)
+    .put("typing.FrozenSet", "frozenset")
     .put("typing.Tuple", PyNames.TUPLE)
     .build();
 
@@ -51,13 +57,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add("typing.Protocol")
     .build();
 
-  public PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
+  @Nullable
+  public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final PyAnnotation annotation = param.getAnnotation();
     if (annotation != null) {
       // XXX: Requires switching from stub to AST
       final PyExpression value = annotation.getValue();
       if (value != null) {
-        return getTypingType(value, context);
+        final PyType type = getType(value, context);
+        if (type != null) {
+          final PyType optionalType = getOptionalTypeFromDefaultNone(param, type, context);
+          return Ref.create(optionalType != null ? optionalType : type);
+        }
       }
     }
     return null;
@@ -65,7 +76,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getReturnType(@NotNull Callable callable, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyFunction) {
       final PyFunction function = (PyFunction)callable;
       final PyAnnotation annotation = function.getAnnotation();
@@ -73,12 +84,98 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         // XXX: Requires switching from stub to AST
         final PyExpression value = annotation.getValue();
         if (value != null) {
-          return getTypingType(value, context);
+          final PyType type = getType(value, context);
+          return type != null ? Ref.create(type) : null;
         }
       }
       final PyType constructorType = getGenericConstructorType(function, context);
       if (constructorType != null) {
-        return constructorType;
+        return Ref.create(constructorType);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    if ("typing.cast".equals(function.getQualifiedName()) && callSite instanceof PyCallExpression) {
+      final PyCallExpression callExpr = (PyCallExpression)callSite;
+      final PyExpression[] args = callExpr.getArguments();
+      if (args.length > 0) {
+        final PyExpression typeExpr = args[0];
+        return getType(typeExpr, context);
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyTargetExpression && context.maySwitchToAST(referenceTarget)) {
+      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
+      final String comment = getTypeComment(target);
+      if (comment != null) {
+        final PyType type = getStringBasedType(comment, referenceTarget, context);
+        if (type instanceof PyTupleType) {
+          final PyTupleExpression tupleExpr = PsiTreeUtil.getParentOfType(target, PyTupleExpression.class);
+          if (tupleExpr != null) {
+            return PyTypeChecker.getTargetTypeFromTupleAssignment(target, tupleExpr, (PyTupleType)type);
+          }
+        }
+        return type;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static String getTypeComment(@NotNull PyTargetExpression target) {
+    final PsiElement commentContainer = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class, PyWithStatement.class,
+                                                                    PyForPart.class);
+    if (commentContainer != null) {
+      final PsiComment comment = getSameLineTrailingCommentChild(commentContainer);
+      if (comment != null) {
+        final String text = comment.getText();
+        final Matcher m = TYPE_COMMENT_PATTERN.matcher(text);
+        if (m.matches()) {
+          return m.group(1);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiComment getSameLineTrailingCommentChild(@NotNull PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    while (true) {
+      if (child == null) {
+        return null;
+      }
+      if (child instanceof PsiComment) {
+        return (PsiComment)child;
+      }
+      if (child.getText().contains("\n")) {
+        return null;
+      }
+      child = child.getNextSibling();
+    }
+  }
+
+  private static boolean isAny(@NotNull PyType type) {
+    return type instanceof PyClassType && "typing.Any".equals(((PyClassType)type).getPyClass().getQualifiedName());
+  }
+
+  @Nullable
+  private static PyType getOptionalTypeFromDefaultNone(@NotNull PyNamedParameter param,
+                                                       @NotNull PyType type,
+                                                       @NotNull TypeEvalContext context) {
+    final PyExpression defaultValue = param.getDefaultValue();
+    if (defaultValue != null) {
+      final PyType defaultType = context.getType(defaultValue);
+      if (defaultType instanceof PyNoneType) {
+        return PyUnionType.union(type, defaultType);
       }
     }
     return null;
@@ -139,10 +236,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getTypingType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  private static PyType getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     final PyType unionType = getUnionType(expression, context);
     if (unionType != null) {
       return unionType;
+    }
+    final Ref<PyType> optionalType = getOptionalTypeFromDefaultNone(expression, context);
+    if (optionalType != null) {
+      return optionalType.get();
+    }
+    final PyType callableType = getCallableType(expression, context);
+    if (callableType != null) {
+      return callableType;
     }
     final PyType parameterizedType = getParameterizedType(expression, context);
     if (parameterizedType != null) {
@@ -156,9 +261,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (genericType != null) {
       return genericType;
     }
-    final PyType functionType = getFunctionType(expression, context);
-    if (functionType != null) {
-      return functionType;
+    final Ref<PyType> classType = getClassType(expression, context);
+    if (classType != null) {
+      return classType.get();
     }
     final PyType stringBasedType = getStringBasedType(expression, context);
     if (stringBasedType != null) {
@@ -168,29 +273,82 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getStringBasedType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    if (expression instanceof PyStringLiteralExpression) {
-      // XXX: Requires switching from stub to AST
-      final String contents = ((PyStringLiteralExpression)expression).getStringValue();
-      final Project project = expression.getProject();
-      final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(project, "dummy.py", contents, false);
-      codeFragment.setContext(expression.getContainingFile());
-      final PsiElement element = codeFragment.getFirstChild();
-      if (element instanceof PyExpressionStatement) {
-        final PyExpression dummyExpr = ((PyExpressionStatement)element).getExpression();
-        return getType(dummyExpr, context);
+  private static Ref<PyType> getClassType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    final PyType type = context.getType(expression);
+    if (type != null && isAny(type)) {
+      return Ref.create();
+    }
+    if (type instanceof PyClassLikeType) {
+      final PyClassLikeType classType = (PyClassLikeType)type;
+      if (classType.isDefinition()) {
+        final PyType instanceType = classType.toInstance();
+        return Ref.create(instanceType);
+      }
+    }
+    else if (type instanceof PyNoneType) {
+      return Ref.create(type);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getOptionalTypeFromDefaultNone(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    if (expression instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
+      final PyExpression operand = subscriptionExpr.getOperand();
+      final String operandName = resolveToQualifiedName(operand, context);
+      if ("typing.Optional".equals(operandName)) {
+        final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
+        if (indexExpr != null) {
+          final PyType type = getType(indexExpr, context);
+          if (type != null) {
+            return Ref.create(PyUnionType.union(type, PyNoneType.INSTANCE));
+          }
+        }
+        return Ref.create();
       }
     }
     return null;
   }
 
   @Nullable
-  private static PyType getFunctionType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+  private static PyType getStringBasedType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
+    if (expression instanceof PyStringLiteralExpression) {
+      // XXX: Requires switching from stub to AST
+      final String contents = ((PyStringLiteralExpression)expression).getStringValue();
+      return getStringBasedType(contents, expression, context);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getStringBasedType(@NotNull String contents, @NotNull PsiElement anchor, @NotNull TypeEvalContext context) {
+    final Project project = anchor.getProject();
+    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(project, "dummy.py", contents, false);
+    codeFragment.setContext(anchor.getContainingFile());
+    final PsiElement element = codeFragment.getFirstChild();
+    if (element instanceof PyExpressionStatement) {
+      final PyExpression expr = ((PyExpressionStatement)element).getExpression();
+      if (expr instanceof PyTupleExpression) {
+        final PyTupleExpression tupleExpr = (PyTupleExpression)expr;
+        final List<PyType> elementTypes = new ArrayList<PyType>();
+        for (PyExpression elementExpr : tupleExpr.getElements()) {
+          elementTypes.add(getType(elementExpr, context));
+        }
+        return PyTupleType.create(anchor, elementTypes.toArray(new PyType[elementTypes.size()]));
+      }
+      return getType(expr, context);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getCallableType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
     if (expression instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)expression;
       final PyExpression operand = subscriptionExpr.getOperand();
       final String operandName = resolveToQualifiedName(operand, context);
-      if ("typing.Function".equals(operandName)) {
+      if ("typing.Callable".equals(operandName)) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr instanceof PyTupleExpression) {
           final PyTupleExpression tupleExpr = (PyTupleExpression)indexExpr;
@@ -233,7 +391,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (resolved instanceof PyTargetExpression) {
       final PyTargetExpression targetExpr = (PyTargetExpression)resolved;
       final QualifiedName calleeName = targetExpr.getCalleeName();
-      if (calleeName != null && "typevar".equals(calleeName.toString())) {
+      if (calleeName != null && "TypeVar".equals(calleeName.toString())) {
         // XXX: Requires switching from stub to AST
         final PyExpression assigned = targetExpr.findAssignedValue();
         if (assigned instanceof PyCallExpression) {
@@ -241,7 +399,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           final PyExpression callee = assignedCall.getCallee();
           if (callee != null) {
             final String calleeQName = resolveToQualifiedName(callee, context);
-            if ("typing.typevar".equals(calleeQName)) {
+            if ("typing.TypeVar".equals(calleeQName)) {
               final PyExpression[] arguments = assignedCall.getArguments();
               if (arguments.length > 0) {
                 final PyExpression firstArgument = arguments[0];
@@ -264,18 +422,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getGenericTypeBound(@NotNull PyExpression[] typeVarArguments, @NotNull TypeEvalContext context) {
     final List<PyType> types = new ArrayList<PyType>();
-    if (typeVarArguments.length > 1) {
-      final PyExpression secondArgument = typeVarArguments[1];
-      if (secondArgument instanceof PyKeywordArgument) {
-        final PyKeywordArgument valuesArgument = (PyKeywordArgument)secondArgument;
-        final PyExpression valueExpr = PyPsiUtils.flattenParens(valuesArgument.getValueExpression());
-        if (valueExpr instanceof PyTupleExpression) {
-          final PyTupleExpression tupleExpr = (PyTupleExpression)valueExpr;
-          for (PyExpression expr : tupleExpr.getElements()) {
-            types.add(getType(expr, context));
-          }
-        }
-      }
+    for (int i = 1; i < typeVarArguments.length; i++) {
+      types.add(getType(typeVarArguments[i], context));
     }
     return PyUnionType.union(types);
   }
@@ -320,26 +468,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final String collectionName = resolveToQualifiedName(expression, context);
     final String builtinName = BUILTIN_COLLECTIONS.get(collectionName);
     return builtinName != null ? PyTypeParser.getTypeByName(expression, builtinName) : null;
-  }
-
-  @Nullable
-  private static PyType getType(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    // It is possible to replace PyAnnotation.getType() with this implementation
-    final PyType typingType = getTypingType(expression, context);
-    if (typingType != null) {
-      return typingType;
-    }
-    final PyType type = context.getType(expression);
-    if (type instanceof PyClassLikeType) {
-      final PyClassLikeType classType = (PyClassLikeType)type;
-      if (classType.isDefinition()) {
-        return classType.toInstance();
-      }
-    }
-    else if (type instanceof PyNoneType) {
-      return type;
-    }
-    return null;
   }
 
   @Nullable

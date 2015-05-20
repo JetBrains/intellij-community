@@ -16,37 +16,40 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.status.Status;
 
 class SvnChangedFile {
-  private final FilePath myFilePath;
-  private final Status myStatus;
-  private String myCopyFromURL;
 
-  public SvnChangedFile(final FilePath filePath, final Status status) {
-    myFilePath = filePath;
-    myStatus = status;
+  @NotNull private final FilePath myFilePath;
+  @NotNull private final Status myStatus;
+  @Nullable private final String myCopyFromURL;
+
+  public SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status) {
+    this(filePath, status, null);
   }
 
-  public SvnChangedFile(final FilePath filePath, final Status status, final String copyFromURL) {
+  public SvnChangedFile(@NotNull FilePath filePath, @NotNull Status status, @Nullable String copyFromURL) {
     myFilePath = filePath;
     myStatus = status;
     myCopyFromURL = copyFromURL;
   }
 
+  @NotNull
   public FilePath getFilePath() {
     return myFilePath;
   }
 
+  @NotNull
   public Status getStatus() {
     return myStatus;
   }
 
+  @Nullable
   public String getCopyFromURL() {
-    if (myCopyFromURL == null) {
-      return myStatus.getCopyFromURL();
-    }
-    return myCopyFromURL;
+    return ObjectUtils.chooseNotNull(myCopyFromURL, myStatus.getCopyFromURL());
   }
 
   @Override
@@ -61,13 +64,11 @@ class SvnChangedFile {
 
     final SvnChangedFile that = (SvnChangedFile)o;
 
-    if (myFilePath != null ? !myFilePath.equals(that.myFilePath) : that.myFilePath != null) return false;
-
-    return true;
+    return myFilePath.equals(that.myFilePath);
   }
 
   @Override
   public int hashCode() {
-    return myFilePath != null ? myFilePath.hashCode() : 0;
+    return myFilePath.hashCode();
   }
 }

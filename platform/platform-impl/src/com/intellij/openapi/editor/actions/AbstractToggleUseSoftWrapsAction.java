@@ -17,14 +17,17 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
 
 /**
  * Provides common functionality for <code>'toggle soft wraps usage'</code> actions.
@@ -32,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since Aug 23, 2010 11:33:35 AM
  */
-public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
+public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction implements DumbAware {
 
   private final SoftWrapAppliancePlaces myAppliancePlace;
   private final boolean myGlobal;
@@ -61,6 +64,10 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
     if (editor == null) {
       return;
     }
+
+    Point point = editor.getScrollingModel().getVisibleArea().getLocation();
+    LogicalPosition anchorPosition = editor.xyToLogicalPosition(point);
+    int intraLineShift = point.y - editor.logicalPositionToXY(anchorPosition).y;
     
     if (myGlobal) {
       EditorSettingsExternalizable.getInstance().setUseSoftWraps(state, myAppliancePlace);
@@ -72,6 +79,10 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
     if (editor instanceof EditorEx) {
       ((EditorEx)editor).reinitSettings();
     }
+
+    editor.getScrollingModel().disableAnimation();
+    editor.getScrollingModel().scrollVertically(editor.logicalPositionToXY(anchorPosition).y + intraLineShift);
+    editor.getScrollingModel().enableAnimation();
   }
 
   @Nullable

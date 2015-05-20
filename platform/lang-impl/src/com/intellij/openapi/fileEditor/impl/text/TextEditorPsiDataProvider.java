@@ -16,12 +16,13 @@
 
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.InjectedCaret;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -114,7 +115,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (IDE_VIEW.is(dataId)) {
       final PsiFile psiFile = project == null ? null : PsiManager.getInstance(project).findFile(file);
       final PsiDirectory psiDirectory = psiFile != null ? psiFile.getParent() : null;
-      if (psiDirectory != null && psiDirectory.isPhysical()) {
+      if (psiDirectory != null && (psiDirectory.isPhysical() || ApplicationManager.getApplication().isUnitTestMode())) {
         return new IdeView() {
 
           @Override
@@ -188,7 +189,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (psiFile == null) return null;
 
     try {
-      TargetElementUtilBase util = TargetElementUtilBase.getInstance();
+      TargetElementUtil util = TargetElementUtil.getInstance();
       return util.findTargetElement(editor, util.getReferenceSearchFlags(), caret.getOffset());
     }
     catch (IndexNotReadyException e) {

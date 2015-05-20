@@ -203,7 +203,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
   }
 
   protected static void changeQualifier(PsiReferenceExpression refExpr, PsiClass aClass, PsiMember member) throws IncorrectOperationException {
-    if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass)) {
+    if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass) && !(refExpr instanceof PsiMethodReferenceExpression)) {
       refExpr.setQualifierExpression(null);
     }
     else if (!ImportsUtil.hasStaticImportOn(refExpr, member, false)){

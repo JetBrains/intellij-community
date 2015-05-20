@@ -226,25 +226,6 @@ public abstract class MvcFramework {
 
   protected abstract boolean isCoreJar(@NotNull VirtualFile localFile);
 
-  @Nullable
-  protected VirtualFile findCoreJar(@Nullable Module module) {
-    if (module == null) return null;
-
-    JavaPsiFacade javaFacade = JavaPsiFacade.getInstance(module.getProject());
-
-    for (PsiClass aClass : javaFacade.findClasses(getSomeFrameworkClass(), GlobalSearchScope.moduleWithLibrariesScope(module))) {
-      VirtualFile virtualFile = aClass.getContainingFile().getVirtualFile();
-      if (virtualFile != null && virtualFile.getFileSystem() instanceof JarFileSystem) {
-        VirtualFile localFile = PathUtil.getLocalFile(virtualFile);
-        if (isCoreJar(localFile)) {
-          return localFile;
-        }
-      }
-    }
-
-    return null;
-  }
-
   protected List<File> getImplicitClasspathRoots(@NotNull Module module) {
     final List<File> toExclude = new ArrayList<File>();
 

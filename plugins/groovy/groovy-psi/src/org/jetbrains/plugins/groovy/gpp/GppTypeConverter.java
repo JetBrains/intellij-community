@@ -15,18 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.gpp;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.dsl.toplevel.AnnotatedContextFilter;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -36,28 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter;
  * @author peter
  */
 public class GppTypeConverter extends GrTypeConverter {
-
-  public static final String GROOVY_LANG_TYPED = "groovy.lang.Typed";
-
-  public static boolean hasTypedContext(@Nullable PsiElement context) {
-    if (context == null) {
-      return false;
-    }
-
-    if (AnnotatedContextFilter.findContextAnnotation(context, GROOVY_LANG_TYPED) != null) {
-      return true;
-    }
-
-    if (isGppExtension(StringUtil.getShortName(context.getContainingFile().getName()))) {
-      return true;
-    }
-
-    return false;
-  }
-
-  public static boolean isGppExtension(String extension) {
-    return "gpp".equals(extension) || "grunit".equals(extension);
-  }
 
   @Override
   public boolean isAllowedInMethodCall() {
@@ -84,29 +59,6 @@ public class GppTypeConverter extends GrTypeConverter {
           }
         }
       }
-
-      if (lType instanceof PsiClassType && hasTypedContext(context)) {
-        return true;
-      }
-    }
-    else if (rType instanceof GrMapType) {
-      final PsiType lKeyType = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 0, false);
-      final PsiType lValueType = PsiUtil.substituteTypeParameter(lType, CommonClassNames.JAVA_UTIL_MAP, 1, false);
-      final PsiType[] parameters = ((GrMapType)rType).getParameters();
-      if (parameters.length == 2 && lKeyType != null && lValueType != null &&
-          parameters[0] != null && parameters[1] != null &&
-          (!TypesUtil.isAssignable(lKeyType, parameters[0], context) ||
-           !TypesUtil.isAssignable(lValueType, parameters[1], context))) {
-        return null;
-      }
-
-      if (hasTypedContext(context)) {
-        return true;
-      }
-    }
-    else if (rType instanceof GrClosureType && hasTypedContext(context)) {
-      final PsiType[] methodParameters = GppClosureParameterTypeProvider.findSingleAbstractMethodSignature(lType);
-      if (isClosureOverride(methodParameters, (GrClosureType)rType, context)) return true;
     }
 
     return null;

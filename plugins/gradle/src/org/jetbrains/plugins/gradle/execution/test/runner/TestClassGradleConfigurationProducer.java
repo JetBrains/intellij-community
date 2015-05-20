@@ -46,7 +46,7 @@ import static org.jetbrains.plugins.gradle.execution.test.runner.TestRunnerUtils
  * @author Vladislav.Soroka
  * @since 2/14/14
  */
-public class TestClassGradleConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
+public class TestClassGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 
   private static final List<String> TASKS_TO_RUN = ContainerUtil.newArrayList("cleanTest", "test");
 
@@ -64,7 +64,7 @@ public class TestClassGradleConfigurationProducer extends RunConfigurationProduc
     final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) return false;
 
-    if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
     PsiClass testClass = JUnitUtil.getTestClass(location);
@@ -99,7 +99,7 @@ public class TestClassGradleConfigurationProducer extends RunConfigurationProduc
     final Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
     if (location == null) return false;
 
-    if (PatternConfigurationProducer.isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
 

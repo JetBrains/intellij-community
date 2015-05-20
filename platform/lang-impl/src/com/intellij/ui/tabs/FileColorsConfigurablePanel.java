@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -70,7 +71,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     add(topPanel, BorderLayout.NORTH);
 
     final JPanel mainPanel = new JPanel(new GridLayout(2, 1));
-    mainPanel.setPreferredSize(new Dimension(300, 500));
+    mainPanel.setPreferredSize(JBUI.size(300, 500));
     mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
 
     final List<FileColorConfiguration> localConfigurations = manager.getLocalConfigurations();

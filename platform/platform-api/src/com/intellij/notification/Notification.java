@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class Notification {
   private Runnable myWhenExpired;
   private Boolean myImportant;
   private WeakReference<Balloon> myBalloonRef;
+  private final long myTimestamp;
 
   public Notification(@NotNull String groupDisplayId, @NotNull String title, @NotNull String content, @NotNull NotificationType type) {
     this(groupDisplayId, title, content, type, null);
@@ -66,8 +67,16 @@ public class Notification {
     myContent = content;
     myType = type;
     myListener = listener;
+    myTimestamp = System.currentTimeMillis();
 
     LOG.assertTrue(!StringUtil.isEmptyOrSpaces(myContent), "Notification should have content, groupId: " + myGroupId);
+  }
+
+  /**
+   * Returns the time (in milliseconds since Jan 1, 1970) when the notification was created.
+   */
+  public long getTimestamp() {
+    return myTimestamp;
   }
 
   @SuppressWarnings("MethodMayBeStatic")

@@ -18,6 +18,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -50,7 +51,13 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
         }
       });
       if (containingClass != null) {
-        final Query<PsiReference> query = ReferencesSearch.search(containingClass, p.getScope(), p.isIgnoreAccessScope());
+        SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+          @Override
+          public SearchScope compute() {
+            return p.getEffectiveSearchScope();
+          }
+        });
+        final Query<PsiReference> query = ReferencesSearch.search(containingClass, scope, p.isIgnoreAccessScope());
         return query.forEach(createImplicitDefaultAnnotationMethodConsumer(consumer));
       }
     }

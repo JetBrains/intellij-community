@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,17 @@
  */
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.CachedValueImpl;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
@@ -50,7 +58,6 @@ public class MavenIndex {
   private static final String DATA_DIR_NAME_KEY = "dataDirName";
   private static final String FAILURE_MESSAGE_KEY = "failureMessage";
 
-  private static final String UPDATE_DIR = "update";
 
   private static final String DATA_DIR_PREFIX = "data";
 
@@ -64,7 +71,9 @@ public class MavenIndex {
   private final MavenIndexerWrapper myIndexer;
   private final File myDir;
 
-  private final String myRepositoryId;
+  private final Set<String> myRegisteredRepositoryIds = ContainerUtil.newHashSet();
+  private final CachedValue<String> myId = new CachedValueImpl<String>(new MyIndexRepositoryIdsProvider());
+
   private final String myRepositoryPathOrUrl;
   private final Kind myKind;
   private Long myUpdateTimestamp;
@@ -85,7 +94,7 @@ public class MavenIndex {
                     IndexListener listener) throws MavenIndexException {
     myIndexer = indexer;
     myDir = dir;
-    myRepositoryId = repositoryId;
+    myRegisteredRepositoryIds.add(repositoryId);
     myRepositoryPathOrUrl = normalizePathOrUrl(repositoryPathOrUrl);
     myKind = kind;
     myListener = listener;
@@ -119,7 +128,11 @@ public class MavenIndex {
     }
 
     myKind = Kind.valueOf(props.getProperty(KIND_KEY));
-    myRepositoryId = props.getProperty(ID_KEY);
+
+    String myRepositoryIdsStr = props.getProperty(ID_KEY);
+    if (myRepositoryIdsStr != null) {
+      myRegisteredRepositoryIds.addAll(StringUtil.split(myRepositoryIdsStr, ","));
+    }
     myRepositoryPathOrUrl = normalizePathOrUrl(props.getProperty(PATH_OR_URL_KEY));
 
     try {
@@ -132,14 +145,19 @@ public class MavenIndex {
     myDataDirName = props.getProperty(DATA_DIR_NAME_KEY);
     myFailureMessage = props.getProperty(FAILURE_MESSAGE_KEY);
 
-    if (!getUpdateDir().exists()) {
-      myUpdateTimestamp = null;
-    }
-
     open();
   }
 
-  private static String normalizePathOrUrl(String pathOrUrl) {
+  public void registerId(String repositoryId) throws MavenIndexException {
+    if (myRegisteredRepositoryIds.add(repositoryId)) {
+      save();
+      close(true);
+      open();
+    }
+  }
+
+  @NotNull
+  public static String normalizePathOrUrl(@NotNull String pathOrUrl) {
     pathOrUrl = pathOrUrl.trim();
     pathOrUrl = FileUtil.toSystemIndependentName(pathOrUrl);
     while (pathOrUrl.endsWith("/")) {
@@ -192,8 +210,21 @@ public class MavenIndex {
 
   private void cleanupBrokenData() {
     close(true);
-    FileUtil.delete(getCurrentDataDir());
-    myDataDirName = null;
+
+    //noinspection TestOnlyProblems
+    final File currentDataDir = getCurrentDataDir();
+    final File currentDataContextDir = getCurrentDataContextDir();
+    final File[] files = currentDataDir.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (!FileUtil.filesEqual(file, currentDataContextDir)) {
+          FileUtil.delete(file);
+        }
+      }
+    }
+    else {
+      FileUtil.delete(currentDataDir);
+    }
   }
 
   public synchronized void close(boolean releaseIndexContext) {
@@ -212,7 +243,7 @@ public class MavenIndex {
     Properties props = new Properties();
 
     props.setProperty(KIND_KEY, myKind.toString());
-    props.setProperty(ID_KEY, myRepositoryId);
+    props.setProperty(ID_KEY, myId.getValue());
     props.setProperty(PATH_OR_URL_KEY, myRepositoryPathOrUrl);
     props.setProperty(INDEX_VERSION_KEY, CURRENT_VERSION);
     if (myUpdateTimestamp != null) props.setProperty(TIMESTAMP_KEY, String.valueOf(myUpdateTimestamp));
@@ -234,7 +265,7 @@ public class MavenIndex {
   }
 
   public String getRepositoryId() {
-    return myRepositoryId;
+    return myId.getValue();
   }
 
   public File getRepositoryFile() {
@@ -253,8 +284,8 @@ public class MavenIndex {
     return myKind;
   }
 
-  public boolean isFor(Kind kind, String repositoryId, String pathOrUrl) {
-    if (myKind != kind || !myRepositoryId.equals(repositoryId)) return false;
+  public boolean isFor(Kind kind, String pathOrUrl) {
+    if (myKind != kind) return false;
     if (kind == Kind.LOCAL) return FileUtil.pathsEqual(myRepositoryPathOrUrl, normalizePathOrUrl(pathOrUrl));
     return myRepositoryPathOrUrl.equalsIgnoreCase(normalizePathOrUrl(pathOrUrl));
   }
@@ -270,9 +301,27 @@ public class MavenIndex {
   public void updateOrRepair(boolean fullUpdate, MavenGeneralSettings settings, MavenProgressIndicator progress)
     throws MavenProcessCanceledException {
     try {
+      final File newDataDir = createNewDataDir();
+      final File newDataContextDir = getDataContextDir(newDataDir);
+      final File currentDataContextDir = getCurrentDataContextDir();
+
+      boolean reuseExistingContext = fullUpdate ?
+                                     myKind != Kind.LOCAL && hasValidContext(currentDataContextDir) :
+                                     hasValidContext(currentDataContextDir);
+
+      fullUpdate = fullUpdate || !reuseExistingContext && myKind == Kind.LOCAL;
+
+      if (reuseExistingContext) {
+        try {
+          FileUtil.copyDir(currentDataContextDir, newDataContextDir);
+        }
+        catch (IOException e) {
+          throw new MavenIndexException(e);
+        }
+      }
+
       if (fullUpdate) {
-        if (myKind == Kind.LOCAL) FileUtil.delete(getUpdateDir());
-        int context = createContext(getUpdateDir(), "update");
+        int context = createContext(newDataContextDir, "update");
         try {
           updateContext(context, settings, progress);
         }
@@ -280,7 +329,8 @@ public class MavenIndex {
           myIndexer.releaseIndex(context);
         }
       }
-      updateData(progress);
+
+      updateData(progress, newDataDir, fullUpdate);
 
       isBroken = false;
       myFailureMessage = null;
@@ -295,22 +345,22 @@ public class MavenIndex {
     save();
   }
 
+  private boolean hasValidContext(@NotNull File contextDir) {
+    return contextDir.isDirectory() && myIndexer.indexExists(contextDir);
+  }
+
   private void handleUpdateException(Exception e) {
     myFailureMessage = e.getMessage();
-    MavenLog.LOG.warn("Failed to update Maven indices for: [" + myRepositoryId + "] " + myRepositoryPathOrUrl, e);
+    MavenLog.LOG.warn("Failed to update Maven indices for: [" + myId + "] " + myRepositoryPathOrUrl, e);
   }
 
   private int createContext(File contextDir, String suffix) throws MavenServerIndexerException {
     String indexId = myDir.getName() + "-" + suffix;
     return myIndexer.createIndex(indexId,
-                                 myRepositoryId,
+                                 myId.getValue(),
                                  getRepositoryFile(),
                                  getRepositoryUrl(),
                                  contextDir);
-  }
-
-  private File getUpdateDir() {
-    return new File(myDir, UPDATE_DIR);
   }
 
   private void updateContext(int indexId, MavenGeneralSettings settings, MavenProgressIndicator progress)
@@ -318,18 +368,9 @@ public class MavenIndex {
     myIndexer.updateIndex(indexId, settings, progress);
   }
 
-  private void updateData(MavenProgressIndicator progress) throws MavenIndexException {
-    IndexData newData;
+  private void updateData(MavenProgressIndicator progress, File newDataDir, boolean fullUpdate) throws MavenIndexException {
 
-    File newDataDir = createNewDataDir();
-    try {
-      FileUtil.copyDir(getUpdateDir(), getDataContextDir(newDataDir));
-    }
-    catch (IOException e) {
-      throw new MavenIndexException(e);
-    }
-    newData = new IndexData(newDataDir);
-
+    IndexData newData = new IndexData(newDataDir);
     try {
       doUpdateIndexData(newData, progress);
       newData.flush();
@@ -349,7 +390,9 @@ public class MavenIndex {
       myData = newData;
       myDataDirName = newDataDir.getName();
 
-      myUpdateTimestamp = System.currentTimeMillis();
+      if (fullUpdate) {
+        myUpdateTimestamp = System.currentTimeMillis();
+      }
 
       oldData.close(true);
 
@@ -422,6 +465,11 @@ public class MavenIndex {
   @TestOnly
   protected synchronized File getCurrentDataDir() {
     return new File(myDir, myDataDirName);
+  }
+
+  private File getCurrentDataContextDir() {
+    //noinspection TestOnlyProblems
+    return new File(getCurrentDataDir(), "context");
   }
 
   private static File getDataContextDir(File dataDir) {
@@ -685,5 +733,18 @@ public class MavenIndex {
 
   public interface IndexListener {
     void indexIsBroken(MavenIndex index);
+  }
+
+  private class MyIndexRepositoryIdsProvider implements CachedValueProvider<String> {
+    @Nullable
+    @Override
+    public Result<String> compute() {
+      return Result.create(StringUtil.join(myRegisteredRepositoryIds, ","), new ModificationTracker() {
+        @Override
+        public long getModificationCount() {
+          return myRegisteredRepositoryIds.hashCode();
+        }
+      });
+    }
   }
 }

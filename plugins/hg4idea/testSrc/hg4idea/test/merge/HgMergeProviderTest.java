@@ -58,6 +58,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     hg("add " + aFile);
     hg("commit -m 'create file in default branch'");
     hgMergeWith("branchA");
+    myRepository.refresh(false, true);
     verifyMergeData(myRepository.findChild(aFile), "", "default", "a");
   }
 
@@ -75,6 +76,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     echo(aFile, " modify with b");
     hg("commit -m 'modify file in default'");
     hgMergeWith("branchA");
+    myRepository.refresh(false, true);
     verifyMergeData(myRepository.findChild(aFile), "base", "base modify with b", "base modify with a");
   }
 

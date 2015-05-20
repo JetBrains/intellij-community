@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
-import java.util.List;
 
 public interface Externalizer<T> {
   @NonNls String VALUE_ATTRIBUTE = "value";
@@ -60,9 +59,9 @@ public interface Externalizer<T> {
     }
   };
 
-  T readValue(Element dataElement) throws InvalidDataException;
+  T readValue(Element dataElement);
 
-  void writeValue(Element dataElement, T value) throws WriteExternalException;
+  void writeValue(Element dataElement, T value);
 
   class FactoryBased<T extends JDOMExternalizable> implements Externalizer<T> {
     private final Factory<T> myFactory;
@@ -72,15 +71,25 @@ public interface Externalizer<T> {
     }
 
     @Override
-    public T readValue(Element dataElement) throws InvalidDataException {
+    public T readValue(Element dataElement) {
       T data = myFactory.create();
-      data.readExternal(dataElement);
+      try {
+        data.readExternal(dataElement);
+      }
+      catch (InvalidDataException e) {
+        throw new RuntimeException(e);
+      }
       return data;
     }
 
     @Override
-    public void writeValue(Element dataElement, T value) throws WriteExternalException {
-      value.writeExternal(dataElement);
+    public void writeValue(Element dataElement, T value) {
+      try {
+        value.writeExternal(dataElement);
+      }
+      catch (WriteExternalException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     public static <T extends JDOMExternalizable> FactoryBased<T> create(Factory<T> factory) {
@@ -94,25 +103,25 @@ public interface Externalizer<T> {
     @NonNls private static final String VALUE_ATTR = "value";
 
     @Override
-    public Storage readValue(Element dataElement) throws InvalidDataException {
+    public Storage readValue(Element dataElement) {
       Storage.MapStorage storage = new Storage.MapStorage();
-      List<Element> children = dataElement.getChildren(ITEM_TAG);
-      for (Iterator<Element> iterator = children.iterator(); iterator.hasNext();) {
-        Element element = iterator.next();
+      for (Element element : dataElement.getChildren(ITEM_TAG)) {
         storage.put(element.getAttributeValue(KEY_ATTR), element.getAttributeValue(VALUE_ATTR));
       }
       return storage;
     }
 
     @Override
-    public void writeValue(Element dataElement, Storage storage) throws WriteExternalException {
+    public void writeValue(Element dataElement, Storage storage) {
       Iterator<String> keys = ((Storage.MapStorage)storage).getKeys();
       while (keys.hasNext()) {
         String key = keys.next();
         String value = storage.get(key);
         Element element = new Element(ITEM_TAG);
         element.setAttribute(KEY_ATTR, key);
-        if (value != null) element.setAttribute(VALUE_ATTR, value);
+        if (value != null) {
+          element.setAttribute(VALUE_ATTR, value);
+        }
         dataElement.addContent(element);
       }
     }

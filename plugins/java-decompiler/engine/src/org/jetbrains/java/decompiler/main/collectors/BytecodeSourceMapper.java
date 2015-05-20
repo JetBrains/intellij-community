@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ public class BytecodeSourceMapper {
 
   // original line to decompiled line
   private final Map<Integer, Integer> linesMapping = new HashMap<Integer, Integer>();
+  private final Set<Integer> unmappedLines = new TreeSet<Integer>();
 
   public void addMapping(String className, String methodName, int bytecodeOffset, int sourceLine) {
     Map<String, Map<Integer, Integer>> class_mapping = mapping.get(className);
@@ -53,6 +54,7 @@ public class BytecodeSourceMapper {
       addMapping(className, methodName, entry.getKey(), entry.getValue());
     }
     linesMapping.putAll(tracer.getOriginalLinesMapping());
+    unmappedLines.addAll(tracer.getUnmappedLines());
   }
 
   public void dumpMapping(TextBuffer buffer, boolean offsetsToHex) {
@@ -97,7 +99,16 @@ public class BytecodeSourceMapper {
     buffer.append("Lines mapping:").appendLineSeparator();
     Map<Integer, Integer> sorted = new TreeMap<Integer, Integer>(linesMapping);
     for (Entry<Integer, Integer> entry : sorted.entrySet()) {
-      buffer.append(entry.getKey()).append(" <-> ").append(entry.getValue()+ offset_total + 1).appendLineSeparator();
+      buffer.append(entry.getKey()).append(" <-> ").append(entry.getValue() + offset_total + 1).appendLineSeparator();
+    }
+
+    if (!unmappedLines.isEmpty()) {
+      buffer.append("Not mapped:").appendLineSeparator();
+      for (Integer line : unmappedLines) {
+        if (!linesMapping.containsKey(line)) {
+          buffer.append(line).appendLineSeparator();
+        }
+      }
     }
   }
 
@@ -121,6 +132,7 @@ public class BytecodeSourceMapper {
     int i = 0;
     for (Entry<Integer, Integer> entry : linesMapping.entrySet()) {
       res[i] = entry.getKey();
+      unmappedLines.remove(entry.getKey());
       res[i + 1] = entry.getValue() + offset_total + 1; // make it 1 based
       i += 2;
     }

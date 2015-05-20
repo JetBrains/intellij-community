@@ -27,18 +27,19 @@
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.8.2</version>
+    <version>1.9.4</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
+  <url>http://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-apache-oro</artifactId>
-  <version>1.8.2</version>
+  <version>1.9.4</version>
   <name>Apache Ant + Apache Oro</name>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.8.2</version>
+      <version>1.9.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -54,20 +55,18 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.4</source>
-          <target>1.4</target>
           <includes>
             <include>org/apache/tools/ant/util/regexp/JakartaOro*</include>
-            <include>org/apache/tools/ant/taskdefs/optional/perforce/*</include>
           </includes>
           <testIncludes>
-            <include>org/apache/tools/ant/taskdefs/optional/perforce/*</include>
+            <include>org/apache/tools/ant/util/regexp/JakartaOro*</include>
+            <include>org/apache/tools/ant/util/regexp/Regexp*</include>
           </testIncludes>
         </configuration>
       </plugin>
     </plugins>
     <sourceDirectory>../../../../src/main</sourceDirectory>
-    <testSourceDirectory>../../../../src/testcases</testSourceDirectory>
+    <testSourceDirectory>../../../../src/tests/junit</testSourceDirectory>
     <outputDirectory>../../../../target/${project.artifactId}/classes</outputDirectory>
     <testOutputDirectory>../../../../target/${project.artifactId}/testcases</testOutputDirectory>
     <directory>../../../../target/${project.artifactId}</directory>

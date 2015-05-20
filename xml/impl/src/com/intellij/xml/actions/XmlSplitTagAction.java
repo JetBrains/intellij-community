@@ -29,6 +29,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -142,7 +143,7 @@ public class XmlSplitTagAction implements IntentionAction {
     final StringBuilder attrs = new StringBuilder();
     final StringBuilder attrsWoId = new StringBuilder();
     for (XmlAttribute attribute : xmlTag.getAttributes()) {
-      if (!"id".equals(attribute.getName())) {
+      if (!HtmlUtil.ID_ATTRIBUTE_NAME.equals(attribute.getName())) {
         attrs.append(attribute.getName()).append("=\"").append(attribute.getValue()).append("\" ");
         attrsWoId.append(attribute.getName()).append("=\"").append(attribute.getValue()).append("\" ");
       } else {

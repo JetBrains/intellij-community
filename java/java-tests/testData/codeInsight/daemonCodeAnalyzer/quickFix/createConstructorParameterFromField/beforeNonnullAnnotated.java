@@ -1,8 +1,11 @@
 // "Add constructor parameter" "true"
+package javax.annotation;
 class A {
-  @javax.annotation.Nonnull private final Object <caret>field;
+  @Nonnull private final Object <caret>field;
 
   A(String... strs) {
   }
 
 }
+
+@interface Nonnull {}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -80,7 +81,7 @@ final class JavadocGenerationPanel extends JPanel {
     myScopeSlider.setValue(1);
     myScopeSlider.setLabelTable(labelTable);
     myScopeSlider.putClientProperty(UIUtil.JSLIDER_ISFILLED, Boolean.TRUE);
-    myScopeSlider.setPreferredSize(new Dimension(80, 50));
+    myScopeSlider.setPreferredSize(JBUI.size(80, 50));
     myScopeSlider.setPaintLabels(true);
     myScopeSlider.setSnapToTicks(true);
     myScopeSlider.addChangeListener(new ChangeListener() {

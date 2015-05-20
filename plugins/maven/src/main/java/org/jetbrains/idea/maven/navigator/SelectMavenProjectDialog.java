@@ -57,13 +57,7 @@ public class SelectMavenProjectDialog extends SelectFromMavenProjectsDialog {
     SimpleNode node = getSelectedNode();
     if (node instanceof NullNode) node = null;
 
-    if (node != null) {
-      if (!(node instanceof MavenProjectsStructure.ProjectNode)) {
-        ((MavenProjectsStructure.MavenSimpleNode)node).findParent(MavenProjectsStructure.ProjectNode.class);
-      }
-    }
-    myResult = node != null ? ((MavenProjectsStructure.ProjectNode)node).getMavenProject() : null;
-
+    myResult = node instanceof MavenProjectsStructure.ProjectNode ? ((MavenProjectsStructure.ProjectNode)node).getMavenProject() : null;
     super.doOKAction();
   }
 

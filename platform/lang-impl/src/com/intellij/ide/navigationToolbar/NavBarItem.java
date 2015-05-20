@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,9 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
-* @author Konstantin Bulenkov
-*/
+ * @author Konstantin Bulenkov
+ */
 public class NavBarItem extends SimpleColoredComponent implements Disposable {
-  //private static int count = 0;
-
   private final String myText;
   private final SimpleTextAttributes myAttributes;
   private final int myIndex;
@@ -43,24 +41,25 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
   private final NavBarUI myUI;
 
   public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
-    //count++;
-    //System.out.println(count);
     myPanel = panel;
     myUI = panel.getNavBarUI();
     myObject = object;
     myIndex = idx;
     isPopupElement = idx == -1;
+
     if (object != null) {
-      final NavBarPresentation presentation = myPanel.getPresentation();
+      NavBarPresentation presentation = myPanel.getPresentation();
       myText = presentation.getPresentableText(object);
       Icon icon = presentation.getIcon(object);
       myIcon = icon != null ? icon : EmptyIcon.create(5);
       myAttributes = presentation.getTextAttributes(object, false);
-    } else {
+    }
+    else {
       myText = "Sample";
       myIcon = PlatformIcons.DIRECTORY_CLOSED_ICON;
       myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
+
     Disposer.register(parent == null ? panel : parent, this);
 
     setOpaque(false);
@@ -71,14 +70,10 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
       setBorder(null);
       setPaintFocusBorder(false);
     }
+
     update();
   }
 
-  /**
-   * item for node popup
-   * @param panel
-   * @param object
-   */
   public NavBarItem(NavBarPanel panel, Object object, Disposable parent) {
     this(panel, object, -1, parent);
   }
@@ -133,17 +128,15 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
   protected void doPaint(Graphics2D g) {
     if (isPopupElement) {
       super.doPaint(g);
-    } else {
+    }
+    else {
       myUI.doPaintNavBarItem(g, this, myPanel);
     }
   }
 
-
   public int doPaintText(Graphics2D g, int offset) {
     return super.doPaintText(g, offset, false);
   }
-
-
 
   public boolean isLastElement() {
     return myIndex == myPanel.getModel().size() - 1;
@@ -181,8 +174,6 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     return focusOwner == myPanel && !myPanel.isNodePopupShowing();
   }
 
-
-
   public boolean isSelected() {
     final NavBarModel model = myPanel.getModel();
     return isPopupElement ? myPanel.isSelectedInPopup(myObject) : model.getSelectedIndex() == myIndex;
@@ -203,31 +194,8 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     return false;
   }
 
-  private Icon wrapIcon(final Icon openIcon, final Icon closedIcon, final int idx) {
-    return new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        closedIcon.paintIcon(c, g, x, y);
-      }
-
-      @Override
-      public int getIconWidth() {
-        return closedIcon.getIconWidth();
-      }
-
-      @Override
-      public int getIconHeight() {
-        return openIcon.getIconHeight();
-      }
-    };
-  }
-
   @Override
-  public void dispose() {
-    //count--;
-    //System.out.println(count);
-  }
-
+  public void dispose() { }
 
   public boolean isNextSelected() {
     return myIndex == myPanel.getModel().getSelectedIndex() - 1;

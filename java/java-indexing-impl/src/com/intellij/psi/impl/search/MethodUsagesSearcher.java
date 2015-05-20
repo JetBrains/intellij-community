@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
   @Override
-  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull final MethodReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     final PsiMethod method = p.getMethod();
     final boolean[] isConstructor = new boolean[1];
     final PsiManager[] psiManager = new PsiManager[1];
@@ -43,7 +43,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     final boolean[] needStrictSignatureSearch = new boolean[1];
     final boolean strictSignatureSearch = p.isStrictSignatureSearch();
 
-    final PsiClass aClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+    final PsiClass aClass = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(new Computable<PsiClass>() {
       public PsiClass compute() {
         PsiClass aClass = method.getContainingClass();
         if (aClass == null) return null;
@@ -51,8 +51,8 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
         psiManager[0] = aClass.getManager();
         methodName[0] = method.getName();
         isValueAnnotation[0] = PsiUtil.isAnnotationMethod(method) &&
-                    PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(methodName[0]) &&
-                    method.getParameterList().getParametersCount() == 0;
+                               PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(methodName[0]) &&
+                               method.getParameterList().getParametersCount() == 0;
         needStrictSignatureSearch[0] = strictSignatureSearch && (aClass instanceof PsiAnonymousClass
                                                                  || aClass.hasModifierProperty(PsiModifier.FINAL)
                                                                  || method.hasModifierProperty(PsiModifier.STATIC)
@@ -65,11 +65,16 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
 
     final SearchRequestCollector collector = p.getOptimizer();
 
-    final SearchScope searchScope = p.getScope();
+    final SearchScope searchScope = DumbService.getInstance(p.getProject()).runReadActionInSmartMode(new Computable<SearchScope>() {
+      @Override
+      public SearchScope compute() {
+        return p.getEffectiveSearchScope();
+      }
+    });
 
     if (isConstructor[0]) {
       new ConstructorReferencesSearchHelper(psiManager[0]).
-        processConstructorReferences(consumer, method, aClass, searchScope, !strictSignatureSearch, strictSignatureSearch, collector);
+        processConstructorReferences(consumer, method, aClass, searchScope, p.getProject(), false, strictSignatureSearch, collector);
     }
 
     if (isValueAnnotation[0]) {
@@ -86,7 +91,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
       return;
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    DumbService.getInstance(p.getProject()).runReadActionInSmartMode(new Runnable() {
       public void run() {
         final PsiMethod[] methods = strictSignatureSearch ? new PsiMethod[]{method} : aClass.findMethodsByName(methodName[0], false);
         SearchScope accessScope = methods[0].getUseScope();

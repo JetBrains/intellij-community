@@ -14,7 +14,11 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -43,6 +47,10 @@ public final class ShellCommand {
     }
     if (charset != null) {
       myCommandLine.setCharset(charset);
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //ignore all hg config files except current repository config
+      myCommandLine.getEnvironment().put("HGRCPATH", "");
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleNodeVisitor;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
@@ -28,7 +29,6 @@ import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 
 import javax.swing.*;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.*;
 
 public class SelectFromMavenProjectsDialog extends DialogWrapper {
   private final Project myProject;
@@ -92,7 +92,7 @@ public class SelectFromMavenProjectsDialog extends DialogWrapper {
   @Nullable
   protected JComponent createCenterPanel() {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
-    pane.setPreferredSize(new Dimension(320, 400));
+    pane.setPreferredSize(JBUI.size(320, 400));
     return pane;
   }
 

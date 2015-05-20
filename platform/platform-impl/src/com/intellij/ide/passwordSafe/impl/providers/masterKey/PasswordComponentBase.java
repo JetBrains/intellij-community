@@ -16,6 +16,7 @@
 package com.intellij.ide.passwordSafe.impl.providers.masterKey;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -99,5 +100,10 @@ public abstract class PasswordComponentBase {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static String getRequestorTitle(@NotNull Class<?> requestor) {
+    return TypePresentationService.getDefaultTypeName(requestor);
   }
 }

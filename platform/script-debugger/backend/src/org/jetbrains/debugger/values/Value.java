@@ -1,12 +1,11 @@
 package org.jetbrains.debugger.values;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.debugger.EvaluateContextAdditionalParameter;
 
 /**
  * An object that represents a VM variable value (compound or atomic).
  */
-public interface Value extends EvaluateContextAdditionalParameter {
+public interface Value {
   @NotNull
   ValueType getType();
 

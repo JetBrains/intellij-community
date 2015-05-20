@@ -148,7 +148,7 @@ public final class LoadTextUtil {
     if (charset == null) {
       charset = EncodingRegistry.getInstance().getDefaultCharset();
     }
-    if (fileType.getName().equals("Properties") && EncodingRegistry.getInstance().isNative2AsciiForPropertiesFiles()) {
+    if (fileType.getName().equals("Properties") && EncodingRegistry.getInstance().isNative2Ascii(virtualFile)) {
       charset = Native2AsciiCharset.wrap(charset);
     }
     virtualFile.setCharset(charset);
@@ -350,7 +350,7 @@ public final class LoadTextUtil {
   }
 
   @NotNull
-  public static Charset extractCharsetFromFileContent(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull String text) {
+  public static Charset extractCharsetFromFileContent(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull CharSequence text) {
     return ObjectUtils.notNull(charsetFromContentOrNull(project, virtualFile, text), virtualFile.getCharset());
   }
 

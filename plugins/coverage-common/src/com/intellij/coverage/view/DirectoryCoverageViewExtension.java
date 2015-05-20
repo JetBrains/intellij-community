@@ -39,18 +39,14 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public String getSummaryForNode(AbstractTreeNode node) {
-    return "Coverage Summary for \'" + node.toString() + "\': " +
-           myAnnotator.getDirCoverageInformationString((PsiDirectory)node.getValue(), mySuitesBundle,
-                                                       myCoverageDataManager);
+    return myAnnotator.getDirCoverageInformationString((PsiDirectory)node.getValue(), mySuitesBundle,
+                                                       myCoverageDataManager) + " in '" + node.toString() + "'";
   }
 
   @Override
   public String getSummaryForRootNode(AbstractTreeNode childNode) {
     final Object value = childNode.getValue();
-    String coverageInformationString = myAnnotator.getDirCoverageInformationString(((PsiDirectory)value), mySuitesBundle,
-                                                                                   myCoverageDataManager);
-
-    return "Coverage Summary: " + coverageInformationString;
+    return myAnnotator.getDirCoverageInformationString(((PsiDirectory)value), mySuitesBundle, myCoverageDataManager);
   }
 
   @Override

@@ -1,5 +1,6 @@
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.emptyMethod.EmptyMethodInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.i18n.I18nInspection;
@@ -15,11 +16,11 @@ public class RedundantSuppressTest extends InspectionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    InspectionToolRegistrar.getInstance().ensureInitialized();
     myInspectionToolWrappers = new InspectionToolWrapper[]{
       new LocalInspectionToolWrapper(new I18nInspection()),
       new LocalInspectionToolWrapper(new RawUseOfParameterizedTypeInspection()),
-      new GlobalInspectionToolWrapper(new EmptyMethodInspection())};
+      new GlobalInspectionToolWrapper(new EmptyMethodInspection()),
+      new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
       @Override
@@ -34,6 +35,10 @@ public class RedundantSuppressTest extends InspectionTestCase {
   }
 
   public void testAlternativeIds() throws Exception {
+    doTest();
+  }
+
+  public void testIgnoreUnused() throws Exception {
     doTest();
   }
 

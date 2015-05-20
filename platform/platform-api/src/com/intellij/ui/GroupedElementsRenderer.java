@@ -25,7 +25,7 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 public abstract class GroupedElementsRenderer {
-  public static final Color POPUP_SEPARATOR_FOREGROUND = new JBColor(Color.gray.brighter(), Gray._43);
+  public static final Color POPUP_SEPARATOR_FOREGROUND = new JBColor(Color.gray.brighter(), Gray.x51);
   public static final Color POPUP_SEPARATOR_TEXT_FOREGROUND = Color.gray;
   public static final Color SELECTED_FRAME_FOREGROUND = Color.black;
 

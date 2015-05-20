@@ -1,7 +1,7 @@
 class Demo {
 
     public void f1() {
-        f2<error descr="Cannot resolve method 'f2(int, <lambda expression>)'">(2, input -> input)</error>;
+        f2(2, <error descr="Target type of a lambda conversion must be an interface">input -> input</error>);
     }
 
     public void f2() {

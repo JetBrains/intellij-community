@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.ui.InstanceFilterEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +49,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
     Box mainPanel = Box.createHorizontalBox();
 
     myInstanceFilterEditor = new InstanceFilterEditor(myProject);
-    myInstanceFilterEditor.setPreferredSize(new Dimension(400, 200));
+    myInstanceFilterEditor.setPreferredSize(JBUI.size(400, 200));
     myInstanceFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(
       DebuggerBundle.message("instance.filters.dialog.instance.filters.group"), false));
     mainPanel.add(myInstanceFilterEditor);

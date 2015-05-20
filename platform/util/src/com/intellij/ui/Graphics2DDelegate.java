@@ -37,6 +37,10 @@ public class Graphics2DDelegate extends Graphics2D{
     myDelegate=g2d;
   }
 
+  public Graphics2D getDelegate() {
+    return myDelegate;
+  }
+
   @Override
   public void addRenderingHints(Map hints) {
     myDelegate.addRenderingHints(hints);

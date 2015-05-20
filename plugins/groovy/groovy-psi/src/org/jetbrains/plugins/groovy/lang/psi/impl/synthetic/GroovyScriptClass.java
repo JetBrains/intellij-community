@@ -31,6 +31,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,7 +180,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
       return new PsiClassType[]{type};
     }
 
-    final PsiClassType superClassFromDSL = GroovyDslFileIndex.pocessScriptSuperClasses(myFile);
+    final PsiClassType superClassFromDSL = GroovyDslFileIndex.processScriptSuperClasses(myFile);
     if (superClassFromDSL != null) {
       return new PsiClassType[]{superClassFromDSL};
     }
@@ -492,7 +493,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    myFile.setName(name + "." + myFile.getViewProvider().getVirtualFile().getExtension());
+    myFile.setName(PathUtil.makeFileName(name, myFile.getViewProvider().getVirtualFile().getExtension()));
     return this;
   }
 

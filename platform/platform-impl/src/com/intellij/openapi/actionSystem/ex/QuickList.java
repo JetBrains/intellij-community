@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,26 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.ExternalizableScheme;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class QuickList implements ExternalizableScheme {
-  @NonNls public static final String QUICK_LIST_PREFIX = "QuickList.";
-  @NonNls public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
+  public static final String QUICK_LIST_PREFIX = "QuickList.";
+  public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 
-  @NonNls private static final String ID_TAG = "id";
+  private static final String ID_TAG = "id";
+  private static final String READONLY_TAG = "readonly";
+  private static final String ACTION_TAG = "action";
+  private static final String DISPLAY_NAME_TAG = "display";
+  private static final String DESCRIPTION_TAG = "description";
 
-  @NonNls private static final String READONLY_TAG = "readonly";
-
-  @NonNls private static final String ACTION_TAG = "action";
-
-  @NonNls private static final String DISPLAY_NAME_TAG = "display";
-
-  @NonNls private static final String DESCRIPTION_TAG = "description";
-
-  private String myDisplayName;
+  private String myName;
   private String myDescription;
   private String[] myActionIds;
   private boolean myReadonly;
@@ -52,32 +48,29 @@ public class QuickList implements ExternalizableScheme {
   QuickList() {
   }
 
-  public QuickList(String displayName, String description, String[] actionIds, boolean isReadonly) {
-
-    myDisplayName = displayName == null ? "" : displayName;
-
-    myDescription = description == null ? "" : description;
-
+  public QuickList(@NotNull String displayName, @Nullable String description, String[] actionIds, boolean isReadonly) {
+    myName = displayName;
+    myDescription = StringUtil.nullize(description);
     myActionIds = actionIds;
-
     myReadonly = isReadonly;
   }
 
+  @Deprecated
   public String getDisplayName() {
-    return myDisplayName;
+    return myName;
   }
 
   @Override
   @NotNull
   public String getName() {
-
-    return getDisplayName();
+    return myName;
   }
 
   public boolean isReadonly() {
     return myReadonly;
   }
 
+  @Nullable
   public String getDescription() {
     return myDescription;
   }
@@ -87,52 +80,50 @@ public class QuickList implements ExternalizableScheme {
   }
 
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof QuickList)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof QuickList)) {
+      return false;
+    }
 
-    final QuickList quickList = (QuickList)o;
-    if (!Arrays.equals(myActionIds, quickList.myActionIds)) return false;
-    if (!myDescription.equals(quickList.myDescription)) return false;
-    if (!myDisplayName.equals(quickList.myDisplayName)) return false;
-    return true;
+    QuickList quickList = (QuickList)o;
+    return Arrays.equals(myActionIds, quickList.myActionIds) && Comparing.strEqual(myDescription, quickList.myDescription) && myName.equals(quickList.myName);
   }
 
   public int hashCode() {
-    return 29 * myDisplayName.hashCode() + myDescription.hashCode();
+    return 29 * myName.hashCode() + Comparing.hashcode(myDescription);
   }
 
+  @NotNull
   public String getActionId() {
-    return QUICK_LIST_PREFIX + getDisplayName();
+    return QUICK_LIST_PREFIX + getName();
   }
 
-  public void writeExternal(Element groupElement) {
-    groupElement.setAttribute(DISPLAY_NAME_TAG, getDisplayName());
-    groupElement.setAttribute(DESCRIPTION_TAG, getDescription());
-    groupElement.setAttribute(READONLY_TAG, String.valueOf(isReadonly()));
+  public void writeExternal(@NotNull Element groupElement) {
+    groupElement.setAttribute(DISPLAY_NAME_TAG, myName);
+    if (myDescription != null) {
+      groupElement.setAttribute(DESCRIPTION_TAG, myDescription);
+    }
+    if (myReadonly) {
+      groupElement.setAttribute(READONLY_TAG, "true");
+    }
 
     for (String actionId : getActionIds()) {
-      Element actionElement = new Element(ACTION_TAG);
-      actionElement.setAttribute(ID_TAG, actionId);
-      groupElement.addContent(actionElement);
+      groupElement.addContent(new Element(ACTION_TAG).setAttribute(ID_TAG, actionId));
     }
   }
 
-  public void readExternal(Element element) {
-    myDisplayName = element.getAttributeValue(DISPLAY_NAME_TAG);
-    myDescription = element.getAttributeValue(DESCRIPTION_TAG);
-    myReadonly = Boolean.valueOf(element.getAttributeValue(READONLY_TAG)).booleanValue();
+  public void readExternal(@NotNull Element element) {
+    myName = element.getAttributeValue(DISPLAY_NAME_TAG);
+    myDescription = StringUtil.nullize(element.getAttributeValue(DESCRIPTION_TAG));
+    myReadonly = Boolean.valueOf(element.getAttributeValue(READONLY_TAG, "false")).booleanValue();
 
-    List<String> ids = new SmartList<String>();
-    for (Object action : element.getChildren(ACTION_TAG)) {
-      Element actionElement = (Element)action;
-      ids.add(actionElement.getAttributeValue(ID_TAG));
+    List<Element> actionElements = element.getChildren(ACTION_TAG);
+    myActionIds = new String[actionElements.size()];
+    for (int i = 0, n = actionElements.size(); i < n; i++) {
+      myActionIds[i] = actionElements.get(i).getAttributeValue(ID_TAG);
     }
-
-    myActionIds = ArrayUtil.toStringArray(ids);
-  }
-
-  public void setDisplayName(final String name) {
-    myDisplayName = name;
   }
 
   @Override
@@ -142,7 +133,7 @@ public class QuickList implements ExternalizableScheme {
   }
 
   @Override
-  public void setName(@NotNull final String newName) {
-    setDisplayName(newName);
+  public void setName(@NotNull String newName) {
+    myName = newName;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   private LibraryModel myModel = new LibraryModel();
   private boolean myFirstLoad = true;
 
+  @NotNull
   @Override
   public ModifiableModel getModifiableModel() {
     return new LibraryModel(myModel);
@@ -95,17 +96,17 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   @Override
-  public void addListener(Listener listener) {
+  public void addListener(@NotNull Listener listener) {
     myDispatcher.addListener(listener);
   }
 
   @Override
-  public void addListener(Listener listener, Disposable parentDisposable) {
+  public void addListener(@NotNull Listener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
-  public void removeListener(Listener listener) {
+  public void removeListener(@NotNull Listener listener) {
     myDispatcher.removeListener(listener);
   }
 
@@ -191,8 +192,10 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myModel.writeExternal(element);
   }
 
+  /**
+   * @deprecated to be removed in IDEA 15 (please use ModifiableModel base interface directly)
+   */
   public interface ModifiableModelEx extends ModifiableModel {
-    Library createLibrary(String name, @Nullable PersistentLibraryKind type);
   }
 
   public class LibraryModel implements ModifiableModelEx, JDOMExternalizable {

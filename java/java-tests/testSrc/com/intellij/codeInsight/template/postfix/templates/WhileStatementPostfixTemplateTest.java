@@ -34,6 +34,10 @@ public class WhileStatementPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
+  public void testIncompleteExpression() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getSuffix() {

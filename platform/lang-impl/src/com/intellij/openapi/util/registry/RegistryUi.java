@@ -142,13 +142,15 @@ public class RegistryUi implements Disposable {
       public void keyPressed(@NotNull KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           int row = myTable.getSelectedRow();
-          RegistryValue rv = myModel.getRegistryValue(row);
-          if (rv.isBoolean()) {
-            rv.setValue(!rv.asBoolean());
-            keyChanged(rv.getKey());
-            for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
-            revaliateActions();
-            if (search.isPopupActive()) search.hidePopup();
+          if (row != -1) {
+            RegistryValue rv = myModel.getRegistryValue(row);
+            if (rv.isBoolean()) {
+              rv.setValue(!rv.asBoolean());
+              keyChanged(rv.getKey());
+              for (int i : new int[]{0, 1, 2}) myModel.fireTableCellUpdated(row, i);
+              revaliateActions();
+              if (search.isPopupActive()) search.hidePopup();
+            }
           }
         }
       }

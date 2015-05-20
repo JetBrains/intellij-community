@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+import org.jetbrains.jps.model.java.JavaResourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
 import java.util.ArrayList;
@@ -51,7 +52,8 @@ public class JavaProjectRootsUtil {
 
   private static boolean isForGeneratedSources(SourceFolder sourceFolder) {
     JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
-    return properties != null && properties.isForGeneratedSources();
+    JavaResourceRootProperties resourceProperties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.RESOURCES);
+    return properties != null && properties.isForGeneratedSources() || resourceProperties != null && resourceProperties.isForGeneratedSources();
   }
 
   public static boolean isInGeneratedCode(@NotNull VirtualFile file, @NotNull Project project) {

@@ -23,17 +23,24 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
  * @author Danila Ponomarenko
  */
 public class BindFieldsFromParametersTest extends LightIntentionActionTestCase {
+  private boolean myPreferLongNames;
+  
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.FIELD_NAME_PREFIX = "my";
+    myPreferLongNames = settings.PREFER_LONGER_NAMES;
+    if (getTestName(false).contains("SameParam")) {
+      settings.PREFER_LONGER_NAMES = false;
+    }
   }
 
   @Override
   protected void tearDown() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     settings.FIELD_NAME_PREFIX = "";
+    settings.PREFER_LONGER_NAMES = myPreferLongNames;
     super.tearDown();
   }
 

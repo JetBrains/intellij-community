@@ -19,6 +19,9 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +31,8 @@ import java.util.*;
 * User: cdr
 */
 abstract class FoldRegionsTree {
+  private static final Key<Boolean> VISIBLE = Key.create("visible.fold.region");
+  
   @NotNull private volatile CachedData myCachedData = new CachedData();
 
   //sorted using RangeMarker.BY_START_OFFSET comparator
@@ -47,6 +52,18 @@ abstract class FoldRegionsTree {
   };
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
+  private static final TObjectHashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new TObjectHashingStrategy<FoldRegion>() {
+    @Override
+    public int computeHashCode(FoldRegion o) {
+      return o.getStartOffset() * 31 + o.getEndOffset();
+    }
+
+    @Override
+    public boolean equals(FoldRegion o1, FoldRegion o2) {
+      return o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset();
+    }
+  };
+  
   void clear() {
     clearCachedValues();
 
@@ -67,15 +84,38 @@ abstract class FoldRegionsTree {
     List<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
     List<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
     List<FoldRegion> allValid = new ArrayList<FoldRegion>(myRegions.size());
-    FoldRegion[] regions = toFoldArray(myRegions);
-    FoldRegion currentCollapsed = null;
-    for (FoldRegion region : regions) {
+    
+    THashMap<FoldRegion, FoldRegion> distinctRegions = new THashMap<FoldRegion, FoldRegion>(myRegions.size(), OFFSET_BASED_HASHING_STRATEGY);
+    for (FoldRegion region : myRegions) {
       if (!region.isValid()) {
         continue;
       }
+      if (distinctRegions.contains(region)) {
+        if (region.getUserData(VISIBLE) == null) {
+          region.dispose();
+          continue;
+        }
+        else {
+          FoldRegion identicalRegion = distinctRegions.remove(region);
+          identicalRegion.dispose();
+        }
+      }
+      distinctRegions.put(region, region);
+    }
+    
+    for (FoldRegion region : myRegions) {
+      if (region.isValid()) {
+        allValid.add(region);
+      }
+    }
 
-      allValid.add(region);
+    if (allValid.size() < myRegions.size()) {
+      myRegions = allValid;
+    }
+    Collections.sort(myRegions, RangeMarker.BY_START_OFFSET); // the order could have changed due to document changes 
 
+    FoldRegion currentCollapsed = null;
+    for (FoldRegion region : myRegions) {
       if (!region.isExpanded()) {
         removeRegionsWithSameStartOffset(visible, region);
         removeRegionsWithSameStartOffset(topLevels, region);
@@ -83,15 +123,15 @@ abstract class FoldRegionsTree {
 
       if (currentCollapsed == null || !contains(currentCollapsed, region)) {
         visible.add(region);
+        region.putUserData(VISIBLE, Boolean.TRUE);
         if (!region.isExpanded()) {
           currentCollapsed = region;
           topLevels.add(region);
         }
       }
-    }
-
-    if (allValid.size() < myRegions.size()) {
-      myRegions = allValid;
+      else {
+        region.putUserData(VISIBLE, null);
+      }
     }
 
     FoldRegion[] topLevelRegions = toFoldArray(topLevels);
@@ -132,9 +172,11 @@ abstract class FoldRegionsTree {
       rebuild();
       return;
     }
+    
+    Set<FoldRegion> distinctRegions = new THashSet<FoldRegion>(visibleRegions.length, OFFSET_BASED_HASHING_STRATEGY);
 
     for (FoldRegion foldRegion : visibleRegions) {
-      if (!foldRegion.isValid()) {
+      if (!foldRegion.isValid() || !distinctRegions.add(foldRegion)) {
         rebuild();
         return;
       }

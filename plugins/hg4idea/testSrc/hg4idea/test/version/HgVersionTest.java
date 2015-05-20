@@ -33,7 +33,7 @@ public class HgVersionTest extends HgPlatformTest {
   private static final TestHgVersion[] commonTests = {
     new TestHgVersion("Mercurial Distributed SCM (version 2.6.2)", 2, 6, 2),
     new TestHgVersion("Mercurial Distributed SCM (version 2.6+20130507)", 2, 6, 0),
-    new TestHgVersion("Mercurial Distributed SCM (version 1.9.5)", 1, 9, 5),
+    new TestHgVersion("Mercurial Distributed SCM (version 2.0.1)", 2, 0, 1),
     new TestHgVersion("Mercurial Distributed SCM (version 2.6)", 2, 6, 0),
     new TestHgVersion("Mercurial Distributed SCM (version 2.7-rc+5-ca2dfc2f63eb)", 2, 7, 0),
     new TestHgVersion("Распределенная SCM Mercurial (версия 2.0.2)", 2, 0, 2),

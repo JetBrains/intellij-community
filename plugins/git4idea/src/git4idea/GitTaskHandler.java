@@ -17,7 +17,8 @@ package git4idea;
 
 import com.intellij.dvcs.branch.DvcsTaskHandler;
 import com.intellij.openapi.project.Project;
-import git4idea.branch.GitBranchUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -42,12 +43,17 @@ public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
 
   @Override
   protected void checkout(@NotNull String taskName, @NotNull List<GitRepository> repos, @Nullable Runnable callInAwtLater) {
-    myBrancher.checkout(taskName, repos, callInAwtLater);
+    myBrancher.checkout(taskName, false, repos, callInAwtLater);
   }
 
   @Override
   protected void checkoutAsNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories) {
     myBrancher.checkoutNewBranch(name, repositories);
+  }
+
+  @Override
+  protected String getActiveBranch(GitRepository repository) {
+    return repository.getCurrentBranchName();
   }
 
   @Override
@@ -62,7 +68,12 @@ public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
 
   @NotNull
   @Override
-  protected Collection<String> getCommonBranchNames(@NotNull List<GitRepository> repositories) {
-    return GitBranchUtil.getCommonBranches(repositories, true);
+  protected Collection<String> getAllBranches(@NotNull GitRepository repository) {
+    return ContainerUtil.map(repository.getBranches().getLocalBranches(), new Function<GitLocalBranch, String>() {
+      @Override
+      public String fun(GitLocalBranch branch) {
+        return branch.getName();
+      }
+    });
   }
 }

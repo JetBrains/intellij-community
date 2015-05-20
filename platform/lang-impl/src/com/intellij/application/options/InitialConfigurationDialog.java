@@ -191,8 +191,8 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
   private void preselectColorScheme() {
     UIManager.LookAndFeelInfo selectedLaf = (UIManager.LookAndFeelInfo) myAppearanceComboBox.getSelectedItem();
-    if (selectedLaf.getName().contains("Darcula")) {
-      myColorSchemeComboBox.setSelectedItem(EditorColorsManager.getInstance().getScheme("Darcula"));
+    if (!selectedLaf.getName().contains("Darcula")) {
+      myColorSchemeComboBox.setSelectedItem(EditorColorsManager.getInstance().getScheme("Default"));
     }
   }
 

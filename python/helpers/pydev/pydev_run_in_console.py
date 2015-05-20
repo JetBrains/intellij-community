@@ -23,6 +23,7 @@ def run_file(file, globals=None, locals=None):
     if locals is None:
         locals = globals
 
+    sys.path.insert(0, os.path.split(file)[0])
 
     print('Running %s'%file)
     pydev_imports.execfile(file, globals, locals)  # execute the script
@@ -40,6 +41,8 @@ if __name__ == '__main__':
     del sys.argv[1]
 
     file = sys.argv[1]
+
+    del sys.argv[0]
 
     import pydev_localhost
 

@@ -273,6 +273,7 @@ public class PsiImplUtil {
     return types;
   }
 
+  @NotNull
   public static PsiType getType(@NotNull PsiClassObjectAccessExpression classAccessExpression) {
     GlobalSearchScope resolveScope = classAccessExpression.getResolveScope();
     PsiManager manager = classAccessExpression.getManager();
@@ -413,7 +414,22 @@ public class PsiImplUtil {
 
   private static PsiType doNormalizeWildcardByPosition(final PsiType type, @NotNull PsiExpression expression, final PsiExpression toplevel) {
     if (type instanceof PsiCapturedWildcardType) {
-      return doNormalizeWildcardByPosition(((PsiCapturedWildcardType)type).getWildcard(), expression, toplevel);
+      final PsiWildcardType wildcardType = ((PsiCapturedWildcardType)type).getWildcard();
+      if (expression instanceof PsiReferenceExpression && LambdaUtil.isLambdaReturnExpression(expression)) {
+        return type;
+      }
+
+      if (PsiUtil.isAccessedForWriting(toplevel)) {
+        return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);
+      }
+      else {
+        if (wildcardType.isExtends()) {
+          return wildcardType.getBound();
+        }
+        else {
+          return ((PsiCapturedWildcardType)type).getUpperBound();
+        }
+      }
     }
 
 

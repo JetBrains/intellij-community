@@ -34,8 +34,8 @@ import org.jetbrains.annotations.NotNull;
  *
  */
 public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, DefinitionsScopedSearch.SearchParameters> {
-  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsScopedSearch");
-  public static DefinitionsScopedSearch INSTANCE = new DefinitionsScopedSearch();
+  public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.definitionsScopedSearch");
+  public static final DefinitionsScopedSearch INSTANCE = new DefinitionsScopedSearch();
   
   static {
     final QueryExecutor[] OLD_EXECUTORS = DefinitionsSearch.EP_NAME.getExtensions();

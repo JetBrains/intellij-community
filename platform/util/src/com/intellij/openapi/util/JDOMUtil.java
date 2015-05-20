@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,8 +95,12 @@ public class JDOMUtil {
 
   private static final EmptyTextFilter CONTENT_FILTER = new EmptyTextFilter();
 
-  public static int getTreeHash(@NotNull final Element root) {
-    return addToHash(0, root);
+  public static int getTreeHash(@NotNull Element root) {
+    return getTreeHash(root, false);
+  }
+
+  public static int getTreeHash(@NotNull Element root, boolean skipEmptyText) {
+    return addToHash(0, root, skipEmptyText);
   }
 
   @SuppressWarnings("unused")
@@ -105,47 +109,30 @@ public class JDOMUtil {
     return getTreeHash(document.getRootElement());
   }
 
-  private static int addToHash(int i, @NotNull final Element element) {
+  private static int addToHash(int i, @NotNull Element element, boolean skipEmptyText) {
     i = addToHash(i, element.getName());
 
-    for (Attribute aList : element.getAttributes()) {
-      i = addToHash(i, aList);
+    for (Attribute attribute : element.getAttributes()) {
+      i = addToHash(i, attribute.getName());
+      i = addToHash(i, attribute.getValue());
     }
 
-    List<Content> content = element.getContent();
-    for (Content child : content) {
+    for (Content child : element.getContent()) {
       if (child instanceof Element) {
-        i = addToHash(i, (Element)child);
+        i = addToHash(i, (Element)child, skipEmptyText);
       }
       else if (child instanceof Text) {
-        i = addToHash(i, ((Text)child).getText());
+        String text = ((Text)child).getText();
+        if (!skipEmptyText || !StringUtil.isEmptyOrSpaces(text)) {
+          i = addToHash(i, text);
+        }
       }
     }
-
     return i;
   }
 
-  private static int addToHash(int i, @NotNull final Attribute attribute) {
-    i = addToHash(i, attribute.getName());
-    i = addToHash(i, attribute.getValue());
-    return i;
-  }
-
-  private static int addToHash(final int i, @NotNull final String s) {
+  private static int addToHash(int i, @NotNull String s) {
     return i * 31 + s.hashCode();
-  }
-
-  @SuppressWarnings("unused")
-  @NotNull
-  @Deprecated
-  /**
-   * to remove in IDEA 15
-   */
-  public static Object[] getChildNodesWithAttrs(@NotNull Element e) {
-    ArrayList<Object> result = new ArrayList<Object>();
-    result.addAll(e.getContent());
-    result.addAll(e.getAttributes());
-    return ArrayUtil.toObjectArray(result);
   }
 
   @NotNull
@@ -186,35 +173,21 @@ public class JDOMUtil {
   }
 
   public static void internElement(@NotNull Element element, @NotNull StringInterner interner) {
-    element.setName(intern(interner, element.getName()));
+    element.setName(interner.intern(element.getName()));
 
     for (Attribute attr : element.getAttributes()) {
-      attr.setName(intern(interner, attr.getName()));
-      attr.setValue(intern(interner, attr.getValue()));
+      attr.setName(interner.intern(attr.getName()));
+      attr.setValue(interner.intern(attr.getValue()));
     }
 
     for (Content o : element.getContent()) {
       if (o instanceof Element) {
-        Element e = (Element)o;
-        internElement(e, interner);
+        internElement((Element)o, interner);
       }
       else if (o instanceof Text) {
-        Text text = (Text)o;
-        text.setText(intern(interner, text.getText()));
-      }
-      else if (o instanceof Comment) {
-        Comment comment = (Comment)o;
-        comment.setText(intern(interner, comment.getText()));
-      }
-      else {
-        throw new IllegalArgumentException("Wrong node: " + o);
+        ((Text)o).setText(interner.intern(o.getValue()));
       }
     }
-  }
-
-  @NotNull
-  private static String intern(@NotNull final StringInterner interner, @NotNull final String s) {
-    return interner.intern(s);
   }
 
   @NotNull
@@ -271,7 +244,6 @@ public class JDOMUtil {
     }
 
     return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2);
-
   }
 
   private static boolean attListsEqual(@NotNull List a1, @NotNull List a2) {
@@ -303,7 +275,6 @@ public class JDOMUtil {
     }
 
     return w1.size() == w2.size() && w1.toString().equals(w2.toString());
-
   }
 
   @NotNull
@@ -313,14 +284,7 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(byte[] bytes) throws IOException, JDOMException {
-    final ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-    try {
-      return loadDocument(inputStream);
-    }
-    finally {
-      inputStream.close();
-    }
-
+    return loadDocument(new ByteArrayInputStream(bytes));
   }
 
   private static SAXBuilder getSaxBuilder() {
@@ -342,18 +306,22 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(@NotNull CharSequence seq) throws IOException, JDOMException {
-    return getSaxBuilder().build(new CharSequenceReader(seq));
+    return loadDocument(new CharSequenceReader(seq));
+  }
+
+  @NotNull
+  public static Document loadDocument(@NotNull Reader reader) throws IOException, JDOMException {
+    try {
+      return getSaxBuilder().build(reader);
+    }
+    finally {
+      reader.close();
+    }
   }
 
   @NotNull
   public static Document loadDocument(File file) throws JDOMException, IOException {
-    final BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-    try {
-      return loadDocument(inputStream);
-    }
-    finally {
-      inputStream.close();
-    }
+    return loadDocument(new BufferedInputStream(new FileInputStream(file)));
   }
 
   @NotNull
@@ -363,27 +331,17 @@ public class JDOMUtil {
 
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
-    InputStreamReader reader = new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET);
-    try {
-      return getSaxBuilder().build(reader);
-    }
-    finally {
-      reader.close();
-    }
+    return loadDocument(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
+  }
+
+  @Contract("null -> null; !null -> !null")
+  public static Element load(Reader reader) throws JDOMException, IOException {
+    return reader == null ? null : loadDocument(reader).detachRootElement();
   }
 
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
-    if (stream == null) {
-      return null;
-    }
-
-    try {
-      return loadDocument(stream).detachRootElement();
-    }
-    finally {
-      stream.close();
-    }
+    return stream == null ? null : loadDocument(stream).detachRootElement();
   }
 
   @NotNull

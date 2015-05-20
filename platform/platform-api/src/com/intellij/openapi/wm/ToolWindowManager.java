@@ -25,6 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 
+/**
+ * If you want to register a toolwindow, which will be enabled during the dumb mode, please use {@link ToolWindowManager}'s
+ * registration methods which have 'canWorkInDumMode' parameter.
+ */
 public abstract class ToolWindowManager {
 
   public abstract boolean canShowNotification(@NotNull String toolWindowId);
@@ -37,22 +41,22 @@ public abstract class ToolWindowManager {
    * Register specified tool window into IDE window system.
    * @param id <code>id</code> of tool window to be registered.
    * @param component <code>component</code> which represents tool window content.
-   * May be null. Content can be further added via content manager for this tool window (See {@link com.intellij.openapi.wm.ToolWindow#getContentManager()})
+   * May be null. Content can be further added via content manager for this tool window (See {@link ToolWindow#getContentManager()})
    * @param anchor the default anchor for first registration. It uses only first time the
    * tool window with the specified <code>id</code> is being registered into the window system.
    * After the first registration window's anchor is stored in project file
    * and <code>anchor</code> is ignored.
-   * @exception java.lang.IllegalArgumentException if the same window is already installed or one
+   * @exception IllegalArgumentException if the same window is already installed or one
    * of the parameters is <code>null</code>.
    * @return tool window
-   * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
+   * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
    */
   @Deprecated
   @NotNull
   public abstract ToolWindow registerToolWindow(@NotNull String id, @NotNull JComponent component, @NotNull ToolWindowAnchor anchor);
 
   /**
-  * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
+  * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
   @Deprecated
   @NotNull
@@ -62,7 +66,7 @@ public abstract class ToolWindowManager {
                                                 @NotNull Disposable parentDisposable);
 
   /**
-  * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
+  * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
   @Deprecated
   @NotNull
@@ -72,7 +76,7 @@ public abstract class ToolWindowManager {
                                                 Disposable parentDisposable,
                                                 boolean canWorkInDumbMode);
   /**
-  * @deprecated  {@link com.intellij.openapi.wm.ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
+  * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
   */
   @Deprecated
   @NotNull
@@ -91,6 +95,9 @@ public abstract class ToolWindowManager {
 
   @NotNull
   public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable, boolean canWorkInDumbMode);
+
+  @NotNull
+  public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable, boolean canWorkInDumbMode, boolean secondary);
 
   @NotNull
   public ToolWindow registerToolWindow(@NotNull final String id,

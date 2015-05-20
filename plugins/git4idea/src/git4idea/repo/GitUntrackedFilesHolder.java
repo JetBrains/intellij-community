@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,11 +38,11 @@ import java.util.*;
 /**
  * <p>
  *   Stores files which are untracked by the Git repository.
- *   Should be updated by calling {@link #add(com.intellij.openapi.vfs.VirtualFile)} and {@link #remove(java.util.Collection)}
+ *   Should be updated by calling {@link #add(VirtualFile)} and {@link #remove(Collection)}
  *   whenever the list of unversioned files changes.
  *   Able to get the list of unversioned files from Git.
  * </p>
- * 
+ *
  * <p>
  *   This class is used by {@link git4idea.status.GitNewChangesCollector}.
  *   By keeping track of unversioned files in the Git repository we may invoke
@@ -180,7 +181,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   /**
    * Resets the list of untracked files after retrieving the full list of them from Git.
    */
-  public void rescanAll() throws VcsException {
+  private void rescanAll() throws VcsException {
     Set<VirtualFile> untrackedFiles = myGit.untrackedFiles(myProject, myRoot, null);
     synchronized (myDefinitelyUntrackedFiles) {
       myDefinitelyUntrackedFiles.clear();
@@ -281,7 +282,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
 
   @Nullable
   private static VirtualFile getAffectedFile(@NotNull VFileEvent event) {
-    if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent) {
+    if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || isRename(event)) {
       return event.getFile();
     } else if (event instanceof VFileCopyEvent) {
       VFileCopyEvent copyEvent = (VFileCopyEvent) event;
@@ -290,14 +291,18 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     return null;
   }
 
+  private static boolean isRename(@NotNull VFileEvent event) {
+    return event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME);
+  }
 
   private boolean notIgnored(@Nullable VirtualFile file) {
     return file != null && belongsToThisRepository(file) && !myChangeListManager.isIgnoredFile(file);
   }
 
   private boolean belongsToThisRepository(VirtualFile file) {
-    final GitRepository repository = myRepositoryManager.getRepositoryForFile(file);
+    // this check should be quick
+    // we shouldn't create a full instance repository here because it may lead to SOE while many unversioned files will be processed
+    final GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(DvcsUtil.getVcsRoot(myProject, file));
     return repository != null && repository.getRoot().equals(myRoot);
   }
-  
 }

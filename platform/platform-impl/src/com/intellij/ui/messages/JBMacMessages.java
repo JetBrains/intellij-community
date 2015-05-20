@@ -22,7 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ModalityHelper;
-import com.intellij.ui.mac.MacMessageException;
+import com.intellij.ui.MessageException;
 import com.intellij.ui.mac.MacMessagesEmulation;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
@@ -49,7 +49,9 @@ public class JBMacMessages extends MacMessagesEmulation {
       window = getForemostWindow(null);
     }
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String [] {defaultButton, alternateButton, otherButton}, null, defaultButton, alternateButton);
+                                                 new String [] {defaultButton, otherButton, alternateButton},
+                                                 doNotAskOption, defaultButton, alternateButton);
+
     String resultString = sheetMessage.getResult();
     int result = resultString.equals(defaultButton) ? Messages.YES : resultString.equals(alternateButton) ? Messages.NO : Messages.CANCEL;
     if (doNotAskOption != null) {
@@ -73,12 +75,8 @@ public class JBMacMessages extends MacMessagesEmulation {
 
     Icon icon = errorStyle ? UIUtil.getErrorIcon() : UIUtil.getInformationIcon();
 
-    if (focusedOptionIndex != -1) {
-      focusedOptionIndex = (defaultOptionIndex == focusedOptionIndex) ? buttons.length - 1 : focusedOptionIndex;
-    }
-
-    final String defaultOptionTitle = defaultOptionIndex == -1 ? null : buttons[defaultOptionIndex];
-    final String focusedButtonTitle = focusedOptionIndex == -1 ? null : buttons[focusedOptionIndex];
+    final String defaultOptionTitle = defaultOptionIndex != -1 ? buttons[defaultOptionIndex] : null;
+    final String focusedButtonTitle = focusedOptionIndex != -1 ? buttons[focusedOptionIndex] : null;
 
     final SheetMessage sheetMessage = new SheetMessage(window, title, message, icon, buttons, doNotAskDialogOption, defaultOptionTitle, focusedButtonTitle);
     String result = sheetMessage.getResult();
@@ -149,7 +147,7 @@ public class JBMacMessages extends MacMessagesEmulation {
     if (SystemInfo.isAppleJvm && MacUtil.getWindowTitle(_window) == null) {
       // With Apple JDK we cannot find a window if it does not have a title
       // Let's show a dialog instead of the message.
-      throw new MacMessageException("MacMessage parent does not have a title.");
+      throw new MessageException("MacMessage parent does not have a title.");
     }
     while (_window != null && MacUtil.getWindowTitle(_window) == null) {
       _window = _window.getOwner();

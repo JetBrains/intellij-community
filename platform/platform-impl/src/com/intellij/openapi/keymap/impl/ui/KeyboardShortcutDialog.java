@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
@@ -32,6 +31,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,7 +119,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     myConflictInfoArea.setLineWrap(true);
     myConflictInfoArea.setWrapStyleWord(true);
     final JScrollPane conflictInfoScroll = ScrollPaneFactory.createScrollPane(myConflictInfoArea);
-    conflictInfoScroll.setPreferredSize(new Dimension(260, 60));
+    conflictInfoScroll.setPreferredSize(JBUI.size(260, 60));
     conflictInfoScroll.setBorder(null);
     conflictsPanel.add(conflictInfoScroll);
     panel.add(
@@ -186,7 +186,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     }
     myKeystrokePreview.setText(strokeText);
 
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
 
     Map<String, ArrayList<KeyboardShortcut>> conflicts = myKeymap.getConflicts(myActionId, keyboardShortcut);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,8 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Computable;
@@ -42,9 +40,15 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.switcher.SwitchTarget;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -52,6 +56,8 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -82,7 +88,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
    */
   private final List<Rectangle> myComponentBounds = new ArrayList<Rectangle>();
 
-  private Dimension myMinimumButtonSize = new Dimension(0, 0);
+  private Dimension myMinimumButtonSize = JBUI.emptySize();
 
   /**
    * @see ActionToolbar#getLayoutPolicy()
@@ -325,9 +331,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private JComponent getCustomComponent(AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
-    JComponent customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
+    JComponent customComponent = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY), JComponent.class);
+    if (customComponent == null) {
+      customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
+      presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
+    }
     tweakActionComponentUI(customComponent);
-    presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
     return customComponent;
   }
 
@@ -742,7 +751,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       for (int i = getComponentCount() - 1, j = 1; i > 0; i--, j++) {
         final Component component = getComponent(i);
         if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
-          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * 25, 0, 25, maxHeight));
+          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * JBUI.scale(25), 0, JBUI.scale(25), maxHeight));
         }
       }
     }
@@ -752,7 +761,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<Rectangle>();
     calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
-    if (bounds.isEmpty()) return new Dimension(0, 0);
+    if (bounds.isEmpty()) return JBUI.emptySize();
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;
@@ -776,9 +785,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       }
     }
 
-    final Insets i = getInsets();
+    JBInsets.addTo(dimension, getInsets());
 
-    return new Dimension(dimension.width + i.left + i.right, dimension.height + i.top + i.bottom);
+    return dimension;
   }
 
   @Override
@@ -792,15 +801,41 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
+  private static class ToolbarReference extends WeakReference<ActionToolbarImpl> {
+    private static final ReferenceQueue<ActionToolbarImpl> ourQueue = new ReferenceQueue<ActionToolbarImpl>();
+    private volatile Disposable myDisposable;
+    
+    ToolbarReference(ActionToolbarImpl toolbar) {
+      super(toolbar, ourQueue);
+      processQueue();
+    }
+
+    private static void processQueue() {
+      while (true) {
+        ToolbarReference ref = (ToolbarReference)ourQueue.poll();
+        if (ref == null) break;
+        ref.disposeReference();
+      }
+    }
+
+    private void disposeReference() {
+      Disposable disposable = myDisposable;
+      if (disposable != null) {
+        myDisposable = null;
+        Disposer.dispose(disposable);
+      }
+    }
+  }
+
   private final class MySeparator extends JComponent {
     private final Dimension mySize;
 
     public MySeparator() {
       if (myOrientation == SwingConstants.HORIZONTAL) {
-        mySize = new Dimension(6, 24);
+        mySize = JBUI.size(6, 24);
       }
       else {
-        mySize = new Dimension(24, 6);
+        mySize = JBUI.size(24, 6);
       }
     }
 
@@ -920,14 +955,28 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public void setTargetComponent(final JComponent component) {
     myTargetComponent = component;
 
-    if (myTargetComponent != null && myTargetComponent.isVisible()) {
-      ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          myUpdater.updateActions(false, false);
-        }
-      }, ModalityState.stateForComponent(myTargetComponent));
+    if (myTargetComponent != null) {
+      updateWhenFirstShown(myTargetComponent, new ToolbarReference(this));
     }
+  }
+
+  private static void updateWhenFirstShown(JComponent targetComponent, final ToolbarReference ref) {
+    Activatable activatable = new Activatable.Adapter() {
+      public void showNotify() {
+        ActionToolbarImpl toolbar = ref.get();
+        if (toolbar != null) {
+          toolbar.myUpdater.updateActions(false, false);
+        }
+      }
+    };
+
+    ref.myDisposable = new UiNotifyConnector(targetComponent, activatable) {
+      @Override
+      protected void showNotify() {
+        super.showNotify();
+        ref.disposeReference();
+      }
+    };
   }
 
   @Override
@@ -1246,7 +1295,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     myMinimalMode = minimalMode;
     if (myMinimalMode) {
-      setMinimumButtonSize(new Dimension(0, 0));
+      setMinimumButtonSize(JBUI.emptySize());
       setLayoutPolicy(NOWRAP_LAYOUT_POLICY);
       setBorder(new EmptyBorder(0, 0, 0, 0));
       setOpaque(false);
@@ -1269,5 +1318,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public void setAddSeparatorFirst(boolean addSeparatorFirst) {
     myAddSeparatorFirst = addSeparatorFirst;
     myUpdater.updateActions(false, true);
+  }
+
+  @TestOnly
+  public Presentation getPresentation(AnAction action) {
+    return myPresentationFactory.getPresentation(action);
   }
 }

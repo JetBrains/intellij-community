@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -55,7 +56,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XDebugSessionTab extends DebuggerSessionTabBase {
-  private static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
+  public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   private XWatchesViewImpl myWatchesView;
   private final List<XDebugView> myViews = new ArrayList<XDebugView>();
@@ -63,6 +64,15 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   @Nullable
   private XDebugSessionImpl mySession;
   private XDebugSessionData mySessionData;
+
+  private Runnable myRebuildWatchesRunnable = new Runnable() {
+    @Override
+    public void run() {
+      if (myWatchesView != null && myWatchesView.rebuildNeeded()) {
+        myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
+      }
+    }
+  };
 
   @NotNull
   public static XDebugSessionTab create(@NotNull XDebugSessionImpl session,
@@ -115,9 +125,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
         Content content = event.getContent();
         XDebugSessionImpl session = mySession;
         if (session != null && content.isSelected() && DebuggerContentInfo.WATCHES_CONTENT.equals(ViewImpl.ID.get(content))) {
-          if (myWatchesView.rebuildNeeded()) {
-            myWatchesView.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED);
-          }
+          myRebuildWatchesRunnable.run();
         }
       }
     }, myRunContentDescriptor);
@@ -130,7 +138,18 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     mySession = session;
     mySessionData = session.getSessionData();
     myConsole = session.getConsoleView();
-    myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(), myUi.getComponent(), session.getSessionName(), icon);
+
+    AnAction[] restartActions;
+    List<AnAction> restartActionsList = session.getRestartActions();
+    if (ContainerUtil.isEmpty(restartActionsList)) {
+      restartActions = AnAction.EMPTY_ARRAY;
+    }
+    else {
+      restartActions = restartActionsList.toArray(new AnAction[restartActionsList.size()]);
+    }
+
+    myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(),
+                                                      myUi.getComponent(), session.getSessionName(), icon, myRebuildWatchesRunnable, restartActions);
     Disposer.register(myRunContentDescriptor, this);
     Disposer.register(myProject, myRunContentDescriptor);
   }
@@ -248,16 +267,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     final AnAction[] commonSettings = myUi.getOptions().getSettingsActionsList();
     DefaultActionGroup settings = new DefaultActionGroup(ActionsBundle.message("group.XDebugger.settings.text"), true);
     settings.getTemplatePresentation().setIcon(myUi.getOptions().getSettingsActions().getTemplatePresentation().getIcon());
-    if (commonSettings.length > 0) {
-      for (AnAction each : commonSettings) {
-        settings.add(each);
-      }
-      settings.addSeparator();
-    }
-    if (!session.getDebugProcess().isValuesCustomSorted()) {
-      settings.add(new ToggleSortValuesAction(commonSettings.length == 0));
-    }
-
+    settings.addAll(commonSettings);
     leftToolbar.add(settings);
 
     leftToolbar.addSeparator();
@@ -297,7 +307,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (!myShowIcon) {
         e.getPresentation().setIcon(null);

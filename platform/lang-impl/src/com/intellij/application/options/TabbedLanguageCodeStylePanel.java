@@ -31,18 +31,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -62,6 +62,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   private TabbedPaneWrapper myTabbedPane;
   private final PredefinedCodeStyle[] myPredefinedCodeStyles;
   private JPopupMenu myCopyFromMenu;
+  private @Nullable TabChangeListener myListener;
 
   protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
     super(language, currentSettings, settings);
@@ -83,7 +84,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected void initTabs(CodeStyleSettings settings) {
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
     addIndentOptionsTab(settings);
-    if (provider != null && !provider.usesSharedPreview()) {
+    if (provider != null) {
       addSpacesTab(settings);
       addWrappingAndBracesTab(settings);
       addBlankLinesTab(settings);
@@ -118,11 +119,22 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     addTab(new MyWrappingAndBracesPanel(settings));
   }
 
-  private void ensureTabs() {
+  protected void ensureTabs() {
     if (myTabs == null) {
       myPanel = new JPanel();
       myPanel.setLayout(new BorderLayout());
       myTabbedPane = new TabbedPaneWrapper(this);
+      myTabbedPane.addChangeListener(new ChangeListener() {
+        @Override
+        public void stateChanged(ChangeEvent e) {
+          if (myListener != null) {
+            String title = myTabbedPane.getSelectedTitle();
+            if (title != null) {
+              myListener.tabChanged(TabbedLanguageCodeStylePanel.this, title);
+            }
+          }
+        }
+      });
       myTabs = new ArrayList<CodeStyleAbstractPanel>();
       myPanel.add(myTabbedPane.getComponent());
       initTabs(getSettings());
@@ -391,24 +403,16 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     public MySpacesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
-    }
-
-    @Override
-    protected void installPreviewPanel(JPanel previewPanel) {
-      previewPanel.setLayout(new BorderLayout());
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
-    }
-
-    @Override
-    protected void customizeSettings() {
-      customizePanel(this);
     }
 
     @Override
     protected boolean shouldHideOptions() {
       return true;
+    }
+
+    @Override
+    public Language getDefaultLanguage() {
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
   }
 
@@ -416,47 +420,23 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     public MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
-    protected void customizeSettings() {
-      customizePanel(this);
+    public Language getDefaultLanguage() {
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
-
-    @Override
-    protected void installPreviewPanel(JPanel previewPanel) {
-      previewPanel.setLayout(new BorderLayout());
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
-    }
-
   }
 
   protected class MyWrappingAndBracesPanel extends WrappingAndBracesPanel {
 
     public MyWrappingAndBracesPanel(CodeStyleSettings settings) {
       super(settings);
-      setPanelLanguage(TabbedLanguageCodeStylePanel.this.getDefaultLanguage());
     }
 
     @Override
-    protected void customizeSettings() {
-      customizePanel(this);
-    }
-
-    @Override
-    protected void installPreviewPanel(JPanel previewPanel) {
-      previewPanel.setLayout(new BorderLayout());
-      previewPanel.add(getEditor().getComponent(), BorderLayout.CENTER);
-      previewPanel.setBorder(new CustomLineBorder(OnePixelDivider.BACKGROUND, 0, 1, 0, 0));
-    }
-  }
-
-  private void customizePanel(MultilanguageCodeStyleAbstractPanel panel) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
-    if (provider != null) {
-      provider.customizeSettings(panel, panel.getSettingsType());
+    public Language getDefaultLanguage() {
+      return TabbedLanguageCodeStylePanel.this.getDefaultLanguage();
     }
   }
 
@@ -672,5 +652,17 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myEditor.setEnabled(true);
     }
 
+  }
+
+  public interface TabChangeListener {
+    void tabChanged(@NotNull TabbedLanguageCodeStylePanel source, @NotNull String tabTitle);
+  }
+
+  public void setListener(@Nullable TabChangeListener listener) {
+    myListener = listener;
+  }
+
+  public void changeTab(@NotNull String tabTitle) {
+    myTabbedPane.setSelectedTitle(tabTitle);
   }
 }

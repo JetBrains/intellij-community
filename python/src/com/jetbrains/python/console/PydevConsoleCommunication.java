@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.*;
@@ -566,6 +567,18 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
         throw new PyDebuggerException("Evaluate in console failed", e);
       }
     }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public XSourcePosition getSourcePositionForName(String name) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public XSourcePosition getSourcePositionForType(String type) {
     return null;
   }
 

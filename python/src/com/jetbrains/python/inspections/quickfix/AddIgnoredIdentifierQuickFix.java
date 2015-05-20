@@ -16,13 +16,16 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ModifiableModel;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
-import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -69,6 +72,7 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
         if (myIgnoreAllAttributes) {
           name += END_WILDCARD;
         }
+        assert inspection != null;
         if (!inspection.ignoredIdentifiers.contains(name)) {
           inspection.ignoredIdentifiers.add(name);
         }

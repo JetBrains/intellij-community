@@ -74,6 +74,7 @@ public interface FilePath {
   /**
    * @return the type of the file
    */
+  @NotNull
   FileType getFileType();
 
   void refresh();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StateStorage.SaveSession;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
@@ -32,8 +33,8 @@ import java.util.List;
 import java.util.Set;
 
 public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
-  public ProjectWithModulesStoreImpl(@NotNull ProjectImpl project) {
-    super(project);
+  public ProjectWithModulesStoreImpl(@NotNull ProjectImpl project, @NotNull PathMacroManager pathMacroManager) {
+    super(project, pathMacroManager);
   }
 
   @Override
@@ -49,6 +50,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
     return true;
   }
 
+  @NotNull
   @Override
   public TrackingPathMacroSubstitutor[] getSubstitutors() {
     List<TrackingPathMacroSubstitutor> result = new SmartList<TrackingPathMacroSubstitutor>();

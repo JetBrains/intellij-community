@@ -2,7 +2,6 @@ package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 /**
  * A breakpoint in the browser JavaScript virtual machine. The {@code set*}
@@ -34,7 +33,6 @@ public abstract class Breakpoint {
   /**
    * Sets whether this breakpoint is enabled.
    * Requires subsequent {@link #flush} call.
-   * @param enabled whether the breakpoint should be enabled
    */
   public abstract Breakpoint enabled(boolean enabled);
 
@@ -48,26 +46,19 @@ public abstract class Breakpoint {
    */
   public abstract void setCondition(@Nullable String condition);
 
-  /**
-   * Flushes the breakpoint parameter changes (set* methods) into the browser
-   * and invokes the callback once the operation has finished. This method must
-   * be called for the set* method invocations to take effect.
-   *
-   */
-  @NotNull
-  public abstract Promise<Void> flush();
-
   public abstract boolean isResolved();
 
   /**
    * Be aware! V8 doesn't provide reliable debugger API, so, sometimes actual locations is empty - in this case this methods return "true".
    * V8 debugger doesn't report about resolved breakpoint if it is happened after initial breakpoint set. So, you cannot trust "actual locations".
    */
-  public abstract boolean isActualLineCorrect();
+  public boolean isActualLineCorrect() {
+    return true;
+  }
 
   /**
    * Visitor interface that includes all extensions.
    */
-  public interface TargetExtendedVisitor<R> extends FunctionSupport.Visitor<R>, ScriptRegExpSupport.Visitor<R> {
+  public interface TargetExtendedVisitor<R> extends FunctionSupport.Visitor<R>, ScriptRegExpSupportVisitor<R> {
   }
 }

@@ -25,9 +25,11 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class MoveCaretUpAction extends EditorAction {
   public MoveCaretUpAction() {
@@ -40,13 +42,13 @@ public class MoveCaretUpAction extends EditorAction {
     }
 
     @Override
-    public void execute(Editor editor, DataContext dataContext) {
+    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
       int lineShift = -1;
-      editor.getCaretModel().moveCaretRelatively(0, lineShift, false, false, true);
+      editor.getCaretModel().moveCaretRelatively(0, lineShift, false, false, caret == editor.getCaretModel().getPrimaryCaret());
     }
 
     @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
+    public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return !editor.isOneLineMode();
     }
   }

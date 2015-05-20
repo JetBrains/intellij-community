@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ import java.util.List;
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.CompositeElement");
 
-  private TreeElement firstChild = null;
-  private TreeElement lastChild = null;
+  private TreeElement firstChild;
+  private TreeElement lastChild;
 
   private volatile int myModificationsCount;
   private volatile int myCachedLength = -1;
@@ -68,6 +68,7 @@ public class CompositeElement extends TreeElement {
     return myModificationsCount;
   }
 
+  @NotNull
   @Override
   public CompositeElement clone() {
     CompositeElement clone = (CompositeElement)super.clone();
@@ -160,6 +161,7 @@ public class CompositeElement extends TreeElement {
   @Override
   public LeafElement findLeafElementAt(int offset) {
     TreeElement element = this;
+    if (element.getTreeParent() == null && offset >= element.getTextLength()) return null;
     startFind:
     while (true) {
       TreeElement child = element.getFirstChildNode();
@@ -261,6 +263,7 @@ public class CompositeElement extends TreeElement {
     return StringFactory.createShared(textToCharArray());
   }
 
+  @NotNull
   @Override
   public CharSequence getChars() {
     return getText();
@@ -448,6 +451,7 @@ public class CompositeElement extends TreeElement {
     return 0; //ChildRole.NONE;
   }
 
+  @NotNull
   @Override
   public ASTNode[] getChildren(@Nullable TokenSet filter) {
     int count = countChildren(filter);

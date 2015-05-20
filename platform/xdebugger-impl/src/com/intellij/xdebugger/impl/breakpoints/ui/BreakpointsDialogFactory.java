@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class BreakpointsDialogFactory {
     final BreakpointsDialog dialog = new BreakpointsDialog(myProject, initialBreakpoint != null ? initialBreakpoint : myBreakpoint, XBreakpointUtil.collectPanelProviders()) {
       @Override
       protected void dispose() {
+        myBreakpoint = null;
         for (BreakpointPanelProvider provider : XBreakpointUtil.collectPanelProviders()) {
           provider.onDialogClosed(myProject);
         }

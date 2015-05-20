@@ -46,4 +46,12 @@ public interface PsiLambdaExpression extends PsiFunctionalExpression {
    * @return true when lambda declares parameter types explicitly
    */
   boolean hasFormalParameterTypes();
+
+  /**
+   * A lambda expression (§15.27) is potentially compatible with a functional interface type (§9.8) if all of the following are true:
+   *   The arity of the target type's function type is the same as the arity of the lambda expression.
+   *   If the target type's function type has a void return, then the lambda body is either a statement expression (§14.8) or a void-compatible block (§15.27.2).
+   *   If the target type's function type has a (non-void) return type, then the lambda body is either an expression or a value-compatible block (§15.27.2).
+   */
+  boolean isPotentiallyCompatible(PsiType left);
 }

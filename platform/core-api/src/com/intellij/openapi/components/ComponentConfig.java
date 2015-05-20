@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,6 @@ public class ComponentConfig {
   }
 
   /**
-   * @param headless
    * @return false if the component should not be loaded in headless mode
    */
   public boolean prepareClasses(boolean headless) {
@@ -101,5 +100,17 @@ public class ComponentConfig {
 
   public void setLoadForDefaultProject(boolean loadForDefaultProject) {
     this.loadForDefaultProject = loadForDefaultProject;
+  }
+
+  @Override
+  public String toString() {
+    return "ComponentConfig{" +
+           "implementationClass='" + implementationClass + '\'' +
+           ", interfaceClass='" + interfaceClass + '\'' +
+           ", headlessImplementationClass='" + headlessImplementationClass + '\'' +
+           ", loadForDefaultProject=" + loadForDefaultProject +
+           ", options=" + options +
+           ", pluginDescriptor=" + pluginDescriptor +
+           '}';
   }
 }

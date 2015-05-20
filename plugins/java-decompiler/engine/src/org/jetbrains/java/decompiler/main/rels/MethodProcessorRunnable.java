@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.java.decompiler.main.rels;
 
+import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -78,7 +79,7 @@ public class MethodProcessorRunnable implements Runnable {
   public static RootStatement codeToJava(StructMethod mt, VarProcessor varProc) throws IOException {
     StructClass cl = mt.getClassStruct();
 
-    boolean isInitializer = "<clinit>".equals(mt.getName()); // for now static initializer only
+    boolean isInitializer = CodeConstants.CLINIT_NAME.equals(mt.getName()); // for now static initializer only
 
     mt.expandData();
     InstructionSequence seq = mt.getInstructionSequence();
@@ -136,6 +137,8 @@ public class MethodProcessorRunnable implements Runnable {
     ExprProcessor proc = new ExprProcessor();
     proc.processStatement(root, cl);
 
+    SequenceHelper.condenseSequences(root);
+    
     while (true) {
       StackVarsProcessor stackProc = new StackVarsProcessor();
       stackProc.simplifyStackVars(root, mt, cl);

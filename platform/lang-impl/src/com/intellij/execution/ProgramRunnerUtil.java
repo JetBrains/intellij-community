@@ -129,12 +129,9 @@ public class ProgramRunnerUtil {
 
   public static Icon getConfigurationIcon(final RunnerAndConfigurationSettings settings,
                                           final boolean invalid) {
-    RunConfiguration configuration = settings.getConfiguration();
-    ConfigurationFactory factory = settings.getFactory();
-    Icon icon =  factory != null ? factory.getIcon(configuration) : null;
-    if (icon == null) icon = AllIcons.RunConfigurations.Unknown;
+    Icon icon = getRawIcon(settings);
 
-    final Icon configurationIcon = settings.isTemporary() ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
+    final Icon configurationIcon = settings.isTemporary() ?  getTemporaryIcon(icon): icon;
     if (invalid) {
       return LayeredIcon.create(configurationIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer);
     }
@@ -142,10 +139,25 @@ public class ProgramRunnerUtil {
     return configurationIcon;
   }
 
-  public static String shortenName(final String name, final int toBeAdded) {
-    if (name == null) return "";
+  @NotNull
+  public static Icon getRawIcon(RunnerAndConfigurationSettings settings) {
+    RunConfiguration configuration = settings.getConfiguration();
+    ConfigurationFactory factory = settings.getFactory();
+    Icon icon =  factory != null ? factory.getIcon(configuration) : null;
+    if (icon == null) icon = AllIcons.RunConfigurations.Unknown;
+    return icon;
+  }
+
+  public static Icon getTemporaryIcon(@NotNull Icon rawIcon) {
+     return IconLoader.getTransparentIcon(rawIcon, 0.3f);
+  }
+
+  public static String shortenName(@Nullable String name, final int toBeAdded) {
+    if (name == null) {
+      return "";
+    }
+
     final int symbols = Math.max(10, 20 - toBeAdded);
-    if (name.length() < symbols) return name;
-    else return name.substring(0, symbols) + "...";
+    return name.length() < symbols ? name : name.substring(0, symbols) + "...";
   }
 }

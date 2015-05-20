@@ -20,11 +20,11 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.ResourceBundleManager;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -44,9 +44,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
+  private static final Logger LOG = Logger.getInstance(PropertiesFileImpl.class);
   private static final TokenSet PROPERTIES_LIST_SET = TokenSet.create(PropertiesElementTypes.PROPERTIES_LIST);
   private volatile MostlySingularMultiMap<String,IProperty> myPropertiesMap; //guarded by lock
   private volatile List<IProperty> myProperties;  //guarded by lock
+  private volatile boolean myAlphaSorted;
   private final Object lock = new Object();
 
   public PropertiesFileImpl(FileViewProvider viewProvider) {
@@ -87,11 +89,23 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       propertiesMap.add(key, property);
       properties.add(property);
     }
+    final boolean isAlphaSorted = PropertiesImplUtil.isAlphaSorted(properties);
     synchronized (lock) {
       if (myPropertiesMap != null) return;
       myProperties = properties;
       myPropertiesMap = propertiesMap;
+      myAlphaSorted = isAlphaSorted;
     }
+  }
+
+  public Character findFirstKeyValueDelimiter() {
+    for (IProperty property : myProperties) {
+      final Character separator = ((PropertyImpl)property).getKeyValueDelimiter();
+      if (separator != null) {
+        return separator;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -121,7 +135,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Override
   @NotNull
   public Locale getLocale() {
-    return ResourceBundleManager.getInstance(getProject()).getLocale(getVirtualFile());
+    return PropertiesUtil.getLocale(this);
   }
 
   @Override
@@ -135,12 +149,30 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Override
   @NotNull
   public PsiElement addProperty(@NotNull IProperty property) throws IncorrectOperationException {
-    if (haveToAddNewLine()) {
-      insertLineBreakBefore(null);
+    final IProperty position = findInsertionPosition(property);
+    return addPropertyAfter((Property)property, (Property)position);
+  }
+
+  private IProperty findInsertionPosition(@NotNull IProperty property) {
+    synchronized (lock) {
+      ensurePropertiesLoaded();
+      if (myProperties.isEmpty()) {
+        return null;
+      }
+      if (myAlphaSorted) {
+        final int insertIndex = Collections.binarySearch(myProperties, property, new Comparator<IProperty>() {
+          @Override
+          public int compare(IProperty p1, IProperty p2) {
+            final String k1 = p1.getKey();
+            final String k2 = p2.getKey();
+            LOG.assertTrue(k1 != null && k2 != null);
+            return k1.compareTo(k2);
+          }
+        });
+        return insertIndex == -1 ? null :myProperties.get(insertIndex < 0 ? - insertIndex - 2 : insertIndex);
+      }
+      return myProperties.get(myProperties.size() - 1);
     }
-    final TreeElement copy = ChangeUtil.copyToElement(property.getPsiElement());
-    getPropertiesList().addChild(copy);
-    return copy.getPsi();
   }
 
   @Override
@@ -165,9 +197,16 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return copy.getPsi();
   }
 
+  @NotNull
   @Override
   public IProperty addProperty(String key, String value) {
     return (IProperty)addProperty(PropertiesElementFactory.createProperty(getProject(), key, value));
+  }
+
+  @NotNull
+  @Override
+  public IProperty addPropertyAfter(String key, String value, @Nullable Property anchor) {
+    return (IProperty)addPropertyAfter((Property) PropertiesElementFactory.createProperty(getProject(), key, value), anchor);
   }
 
   private void insertLineBreakBefore(final ASTNode anchorBefore) {
@@ -187,6 +226,14 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
       result.put(property.getUnescapedKey(), property.getValue());
     }
     return result;
+  }
+
+  @Override
+  public boolean isAlphaSorted() {
+    synchronized (lock) {
+      ensurePropertiesLoaded();
+      return myAlphaSorted;
+    }
   }
 
   @Override

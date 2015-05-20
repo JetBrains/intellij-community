@@ -280,6 +280,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("*_dark", "collapseAll_dark.png");
     assertMatches("*_dark.png", "collapseAll_dark.png");
     assertMatches("**_dark.png", "collapseAll_dark.png");
+    assertTrue(firstLetterMatcher("*_DARK").matches("A_DARK.png"));
   }
 
   public void testMiddleMatching() {

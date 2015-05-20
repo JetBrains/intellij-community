@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,9 +63,15 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertEquals(1, handlers.length);
     VcsTaskHandler handler = handlers[0];
 
-    VcsTaskHandler.TaskInfo defaultInfo = handler.getActiveTask();
+    VcsTaskHandler.TaskInfo defaultInfo = handler.getAllExistingTasks()[0];
+    assertEquals(defaultBranchName, defaultInfo.getName());
+    assertEquals(2, defaultInfo.getRepositories().size());
+
     final String first = "first";
     VcsTaskHandler.TaskInfo firstInfo = handler.startNewTask(first);
+    assertEquals(first, firstInfo.getName());
+    assertEquals(2, firstInfo.getRepositories().size());
+
     assertEquals(2, getNumberOfBranches(repository));
     assertEquals(first, repository.getCurrentBranchName());
 
@@ -197,6 +204,24 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertEquals(getDefaultBranchName(), repository.getCurrentBranchName());
     // do not re-create "non-existing"
     assertEquals(2, getNumberOfBranches(repository));
+  }
+
+  public void _testCurrentTasks() throws Exception {
+    initRepositories("foo", "bar");
+    VcsTaskHandler handler = VcsTaskHandler.getAllHandlers(getProject())[0];
+    VcsTaskHandler.TaskInfo[] tasks = handler.getAllExistingTasks();
+    assertEquals(1, tasks.length);
+    VcsTaskHandler.TaskInfo defaultTask = tasks[0];
+    assertEquals(1, handler.getCurrentTasks().length);
+
+    VcsTaskHandler.TaskInfo task = handler.startNewTask("new");
+    assertEquals(2, handler.getAllExistingTasks().length);
+    assertEquals(1, handler.getCurrentTasks().length);
+
+    handler.closeTask(task, defaultTask);
+    VcsTaskHandler.TaskInfo[] existingTasks = handler.getAllExistingTasks();
+    assertEquals(Arrays.asList(existingTasks).toString(), 1, existingTasks.length);
+    assertEquals(1, handler.getCurrentTasks().length);
   }
 
   private List<Repository> initRepositories(String... names) {

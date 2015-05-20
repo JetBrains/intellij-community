@@ -43,7 +43,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
   public PsiMethod[] generateGetters(PsiField field) {
     final Project project = field.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiMethod getter = GenerateMembersUtil.generateGetterPrototype(field);
+    final PsiMethod getter = GenerateMembersUtil.generateSimpleGetterPrototype(field);
 
     final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonClassNames.ourReadOnlyMap);
 
@@ -62,7 +62,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
   @Override
   public PsiMethod[] generateSetters(PsiField field) {
-    final PsiMethod setter = GenerateMembersUtil.generateSetterPrototype(field);
+    final PsiMethod setter = GenerateMembersUtil.generateSimpleSetterPrototype(field);
     final Project project = field.getProject();
 
     final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonClassNames.ourWritableMap);

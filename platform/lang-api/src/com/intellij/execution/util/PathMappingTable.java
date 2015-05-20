@@ -16,11 +16,15 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.PathMappingSettings;
 
 final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.PathMapping> {
+  public PathMappingTable() {
+    getTableView().getEmptyText().setText("No mappings");
+  }
+
   @Override
   protected ListTableModel createListModel() {
     ColumnInfo local = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>("Local path") {

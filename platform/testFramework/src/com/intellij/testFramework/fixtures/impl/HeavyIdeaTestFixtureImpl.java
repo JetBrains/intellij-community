@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
+import org.junit.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +65,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -78,7 +79,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private Project myProject;
   private final Set<File> myFilesToDelete = new HashSet<File>();
   private IdeaTestApplication myApplication;
-  private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new THashSet<ModuleFixtureBuilder>();
+  private final Set<ModuleFixtureBuilder> myModuleFixtureBuilders = new LinkedHashSet<ModuleFixtureBuilder>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
@@ -128,7 +129,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     for (final File fileToDelete : myFilesToDelete) {
       boolean deleted = FileUtil.delete(fileToDelete);
-      assert deleted : "Can't delete " + fileToDelete;
+      Assert.assertTrue("Can't delete " + fileToDelete, deleted);
     }
 
     super.tearDown();
@@ -146,8 +147,10 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       @Override
       protected void run() throws Throwable {
         File tempDirectory = FileUtil.createTempDirectory(myName, "");
-        File projectFile = new File(tempDirectory, myName + PROJECT_FILE_SUFFIX);
+        PlatformTestCase.synchronizeTempDirVfs(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory));
         myFilesToDelete.add(tempDirectory);
+
+        File projectFile = new File(tempDirectory, myName + PROJECT_FILE_SUFFIX);
 
         LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectFile);
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -177,7 +180,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
   @Override
   public Project getProject() {
-    assert myProject != null : "setUp() should be called first";
+    Assert.assertNotNull("setUp() should be called first", myProject);
     return myProject;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
     PsiManager psiManager = viewProvider.getManager();
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
-    if (injectedManager == null) return null; //for tests
+
     final MultiHostRegistrarImpl result = doCompute(element, injectedManager, project, hostPsiFile);
 
     return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);

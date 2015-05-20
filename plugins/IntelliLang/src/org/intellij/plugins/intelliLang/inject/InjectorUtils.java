@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -229,15 +229,17 @@ public class InjectorUtils {
   public static BaseInjection findCommentInjection(@NotNull PsiElement context, @NotNull String supportId, @Nullable Ref<PsiElement> causeRef) {
     PsiElement target = CompletionUtil.getOriginalOrSelf(context);
     PsiFile file = target.getContainingFile();
+    if (file == null) return null;
     TreeMap<TextRange, BaseInjection> map = getInjectionMap(file);
-    Map.Entry<TextRange, BaseInjection> entry = map == null ? null : map.lowerEntry(target.getTextRange());
+    if (map == null) return null;
+    Map.Entry<TextRange, BaseInjection> entry = map.lowerEntry(target.getTextRange());
     if (entry == null) return null;
 
     PsiComment psiComment = PsiTreeUtil.findElementOfClassAtOffset(file, entry.getKey().getStartOffset(), PsiComment.class, false);
     if (psiComment == null) return null;
     TextRange r0 = psiComment.getTextRange();
 
-    // calulate topmost siblings & heights
+    // calculate topmost siblings & heights
     PsiElement commonParent = PsiTreeUtil.findCommonParent(psiComment, target);
     int h1 = 0, h2 = 0;
     PsiElement e1 = psiComment, e2 = target;
@@ -269,8 +271,7 @@ public class InjectorUtils {
   }
 
   @Nullable
-  private static TreeMap<TextRange, BaseInjection> getInjectionMap(@Nullable final PsiFile file) {
-    if (file == null) return null; //  e.g. null for synthetic groovy variables
+  private static TreeMap<TextRange, BaseInjection> getInjectionMap(@NotNull final PsiFile file) {
     return CachedValuesManager.getCachedValue(file, new CachedValueProvider<TreeMap<TextRange, BaseInjection>>() {
       @Nullable
       @Override

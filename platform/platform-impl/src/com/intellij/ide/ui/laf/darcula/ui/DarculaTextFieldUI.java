@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -85,6 +86,10 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
                 ui.showSearchPopup();
                 break;
               case CLEAR:
+                Object listener = c.getClientProperty("JTextField.Search.CancelAction");
+                if (listener instanceof ActionListener) {
+                  ((ActionListener)listener).actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "action"));
+                }
                 ((JTextField)c).setText("");
                 break;
             }
@@ -98,9 +103,10 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
 
   protected void showSearchPopup() {
     final Object value = myTextField.getClientProperty("JTextField.Search.FindPopup");
-    if (value instanceof JPopupMenu) {
+    final JTextComponent editor = getComponent();
+    if (editor != null && value instanceof JPopupMenu) {
       final JPopupMenu popup = (JPopupMenu)value;
-      popup.show(getComponent(), getSearchIconCoord().x, getComponent().getHeight());
+      popup.show(editor, getSearchIconCoord().x, editor.getHeight());
     }
   }
 
@@ -110,10 +116,11 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
   }
 
   private SearchAction getActionUnder(MouseEvent e) {
-    Point point = new Point(e.getX() - 8, e.getY() - 8);
-    return point.distance(getSearchIconCoord()) <= 8
+    int off = JBUI.scale(8);
+    Point point = new Point(e.getX() - off, e.getY() - off);
+    return point.distance(getSearchIconCoord()) <= off
            ? SearchAction.POPUP
-           : hasText() && point.distance(getClearIconCoord()) <= 8
+           : hasText() && point.distance(getClearIconCoord()) <= off
              ? SearchAction.CLEAR
              : null;
   }
@@ -121,22 +128,22 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
   protected Rectangle getDrawingRect() {
     final JTextComponent c = myTextField;
     final JBInsets i = JBInsets.create(c.getInsets());
-    final int x = i.right - 4 - 16;
+    final int x = i.right - JBUI.scale(4) - JBUI.scale(16);
     final int y = i.top - 3;
-    final int w = c.getWidth() - i.width() + 16*2 +7*2  - 5;
-    int h = c.getBounds().height - i.height() + 4*2 - 3;
+    final int w = c.getWidth() - i.width() + JBUI.scale(16*2 +7*2  - 5);
+    int h = c.getBounds().height - i.height() + JBUI.scale(4*2 - 3);
     if (h%2==1) h++;
     return new Rectangle(x, y, w, h);
   }
 
   protected Point getSearchIconCoord() {
     final Rectangle r = getDrawingRect();
-    return new Point(r.x + 3, r.y + (r.height - 16) / 2 + 1);
+    return new Point(r.x + JBUI.scale(3), r.y + (r.height - JBUI.scale(16)) / 2 + JBUI.scale(1));
   }
 
   protected Point getClearIconCoord() {
     final Rectangle r = getDrawingRect();
-    return new Point(r.x + r.width - 16 - 2, r.y + (r.height - 16) / 2);
+    return new Point(r.x + r.width - JBUI.scale(16) - JBUI.scale(2), r.y + (r.height - JBUI.scale(16)) / 2);
   }
 
   @Override
@@ -159,7 +166,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
       final boolean noBorder = c.getClientProperty("JTextField.Search.noBorderRing") == Boolean.TRUE;
       int radius = r.height-1;
       g.fillRoundRect(r.x, r.y+1, r.width, r.height - (noBorder ? 2 : 1), radius, radius);
-      g.setColor(c.isEnabled() ? Gray._100 : new Color(0x535353));
+      g.setColor(c.isEnabled() ? Gray._100 : Gray._83);
       if (!noBorder) {
         if (c.hasFocus()) {
             DarculaUIUtil.paintSearchFocusRing(g, r);
@@ -189,9 +196,9 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
       final int height = c.getHeight();
       final Insets i = border.getBorderInsets(c);
       if (c.hasFocus()) {
-        g.fillRoundRect(i.left - 5, i.top - 2, width - i.right - i.left + 10, height - i.top - i.bottom + 6, 5, 5);
+        g.fillRoundRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(10), height - i.top - i.bottom + JBUI.scale(6), JBUI.scale(5), JBUI.scale(5));
       } else {
-        g.fillRect(i.left - 5, i.top - 2, width - i.right - i.left + 12, height - i.top - i.bottom + 6);
+        g.fillRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(12), height - i.top - i.bottom + JBUI.scale(6));
       }
     } else {
       super.paintBackground(g);

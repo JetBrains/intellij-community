@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,24 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.ZipUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,11 +49,16 @@ import java.util.Set;
  * @since Nov 29, 2003
  */
 public class PluginInstaller {
-  private static final Object myLock = new Object();
+  public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
+
+  private static final Object ourLock = new Object();
 
   private PluginInstaller() { }
 
-  public static boolean prepareToInstall(List<PluginNode> pluginsToInstall, List<IdeaPluginDescriptor> allPlugins, @NotNull ProgressIndicator indicator) {
+  public static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
+                                         List<PluginId> allPlugins,
+                                         @NotNull ProgressIndicator indicator) {
+    updateUrls(pluginsToInstall, indicator);
     Set<PluginNode> dependant = new THashSet<PluginNode>();
     boolean install = prepareToInstall(pluginsToInstall, allPlugins, dependant, indicator);
     for (PluginNode node : dependant) {
@@ -58,10 +69,48 @@ public class PluginInstaller {
     return install;
   }
 
+  private static void updateUrls(List<PluginNode> pluginsToInstall, @NotNull ProgressIndicator indicator) {
+    boolean unknownNodes = false;
+    for (PluginNode node : pluginsToInstall) {
+      if (node.getRepositoryName() == UNKNOWN_HOST_MARKER) {
+        unknownNodes = true;
+        break;
+      }
+    }
+    if (!unknownNodes) return;
+
+    List<String> hosts = ContainerUtil.newSmartList();
+    ContainerUtil.addIfNotNull(hosts, ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl());
+    hosts.addAll(UpdateSettings.getInstance().getPluginHosts());
+    Map<PluginId, IdeaPluginDescriptor> allPlugins = ContainerUtil.newHashMap();
+    for (String host : hosts) {
+      try {
+        List<IdeaPluginDescriptor> descriptors = RepositoryHelper.loadPlugins(host, null, indicator);
+        for (IdeaPluginDescriptor descriptor : descriptors) {
+          allPlugins.put(descriptor.getPluginId(), descriptor);
+        }
+      }
+      catch (IOException ignored) { }
+    }
+
+    for (PluginNode node : pluginsToInstall) {
+      if (node.getRepositoryName() == UNKNOWN_HOST_MARKER) {
+        IdeaPluginDescriptor descriptor = allPlugins.get(node.getPluginId());
+        if (descriptor != null) {
+          node.setRepositoryName(((PluginNode)descriptor).getRepositoryName());
+          node.setDownloadUrl(((PluginNode)descriptor).getDownloadUrl());
+        }
+        else {
+          node.setRepositoryName(null);
+        }
+      }
+    }
+  }
+
   private static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                          List<IdeaPluginDescriptor> allPlugins,
+                                          List<PluginId> allPlugins,
                                           Set<PluginNode> installedDependant,
-                                          @NotNull ProgressIndicator progressIndicator) {
+                                          @NotNull ProgressIndicator indicator) {
     List<PluginId> pluginIds = new SmartList<PluginId>();
     for (PluginNode pluginNode : pluginsToInstall) {
       pluginIds.add(pluginNode.getPluginId());
@@ -69,9 +118,9 @@ public class PluginInstaller {
 
     boolean result = false;
     for (PluginNode pluginNode : pluginsToInstall) {
-      progressIndicator.setText(pluginNode.getName());
+      indicator.setText(pluginNode.getName());
       try {
-        result |= prepareToInstall(pluginNode, pluginIds, allPlugins, installedDependant, progressIndicator);
+        result |= prepareToInstall(pluginNode, pluginIds, allPlugins, installedDependant, indicator);
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
@@ -83,12 +132,13 @@ public class PluginInstaller {
     return result;
   }
 
-  private static boolean prepareToInstall(final PluginNode pluginNode,
-                                          final List<PluginId> pluginIds,
-                                          List<IdeaPluginDescriptor> allPlugins,
+  private static boolean prepareToInstall(PluginNode pluginNode,
+                                          List<PluginId> pluginIds,
+                                          List<PluginId> allPlugins,
                                           Set<PluginNode> installedDependant,
-                                          @NotNull ProgressIndicator progressIndicator) throws IOException {
+                                          @NotNull ProgressIndicator indicator) throws IOException {
     installedDependant.add(pluginNode);
+
     // check for dependent plugins at first.
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
       // prepare plugins list for install
@@ -98,7 +148,7 @@ public class PluginInstaller {
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         PluginId depPluginId = pluginNode.getDepends().get(i);
         if (PluginManager.isPluginInstalled(depPluginId) || PluginManagerCore.isModuleDependency(depPluginId) ||
-            PluginManagerUISettings.getInstance().getInstalledPlugins().contains(depPluginId.getIdString()) ||
+            InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
             (pluginIds != null && pluginIds.contains(depPluginId))) {
           // ignore installed or installing plugins
           continue;
@@ -120,16 +170,18 @@ public class PluginInstaller {
 
       if (depends.size() > 0) { // has something to install prior installing the plugin
         final boolean[] proceed = new boolean[1];
-        final StringBuffer buf = new StringBuffer();
-        for (PluginNode depend : depends) {
-          buf.append(depend.getName()).append(",");
-        }
         try {
           GuiUtils.runOrInvokeAndWait(new Runnable() {
             @Override
             public void run() {
               String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
-              String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), buf.substring(0, buf.length() - 1));
+              String deps = StringUtil.join(depends, new Function<PluginNode, String>() {
+                @Override
+                public String fun(PluginNode node) {
+                  return node.getName();
+                }
+              }, ", ");
+              String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), deps);
               proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
             }
           });
@@ -137,66 +189,42 @@ public class PluginInstaller {
         catch (Exception e) {
           return false;
         }
-        if (proceed[0]) {
-          if (!prepareToInstall(depends, allPlugins, installedDependant, progressIndicator)) {
-            return false;
-          }
-        }
-        else {
+        if (!proceed[0] || !prepareToInstall(depends, allPlugins, installedDependant, indicator)) {
           return false;
         }
       }
 
       if (optionalDeps.size() > 0) {
-        final StringBuffer buf = new StringBuffer();
-        for (PluginNode depend : optionalDeps) {
-          buf.append(depend.getName()).append(",");
-        }
         final boolean[] proceed = new boolean[1];
         try {
           GuiUtils.runOrInvokeAndWait(new Runnable() {
             @Override
             public void run() {
-              proceed[0] =
-                Messages.showYesNoDialog(IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(),
-                                                           buf.substring(0, buf.length() - 1)),
-                                         IdeBundle.message("plugin.manager.dependencies.detected.title"),
-                                         Messages.getWarningIcon()) == Messages.YES;
+              String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
+              String deps = StringUtil.join(optionalDeps, new Function<PluginNode, String>() {
+                @Override
+                public String fun(PluginNode node) {
+                  return node.getName();
+                }
+              }, ", ");
+              String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(), deps);
+              proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
             }
           });
         }
         catch (Exception e) {
           return false;
         }
-        if (proceed[0]) {
-          if (!prepareToInstall(optionalDeps, allPlugins, installedDependant, progressIndicator)) {
-            return false;
-          }
-        }
-      }
-    }
-
-    PluginDownloader downloader;
-    final String repositoryName = pluginNode.getRepositoryName();
-    if (repositoryName != null) {
-      try {
-        Map<PluginId, PluginDownloader> downloaders = new THashMap<PluginId, PluginDownloader>();
-        if (!UpdateChecker.checkPluginsHost(repositoryName, downloaders, progressIndicator)) {
+        if (proceed[0] && !prepareToInstall(optionalDeps, allPlugins, installedDependant, indicator)) {
           return false;
         }
-        downloader = downloaders.get(pluginNode.getPluginId());
-        if (downloader == null) return false;
       }
-      catch (Exception e) {
-        return false;
-      }
-    }
-    else {
-      downloader = PluginDownloader.createDownloader(pluginNode);
     }
 
-    if (downloader.prepareToInstall(progressIndicator)) {
-      synchronized (myLock) {
+    PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.getRepositoryName(), null);
+
+    if (downloader.prepareToInstall(indicator)) {
+      synchronized (ourLock) {
         downloader.install();
       }
       pluginNode.setStatus(PluginNode.STATUS_DOWNLOADED);
@@ -208,17 +236,12 @@ public class PluginInstaller {
     return true;
   }
 
-  private static boolean isPluginInRepo(PluginId depPluginId, List<IdeaPluginDescriptor> allPlugins) {
-    for (IdeaPluginDescriptor plugin : allPlugins) {
-      if (plugin.getPluginId().equals(depPluginId)) {
-        return true;
-      }
-    }
-    return false;
+  private static boolean isPluginInRepo(PluginId depPluginId, List<PluginId> allPlugins) {
+    return allPlugins.contains(depPluginId);
   }
 
   public static void prepareToUninstall(PluginId pluginId) throws IOException {
-    synchronized (myLock) {
+    synchronized (ourLock) {
       if (PluginManager.isPluginInstalled(pluginId)) {
         // add command to delete the 'action script' file
         IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(pluginId);
@@ -230,6 +253,35 @@ public class PluginInstaller {
           PluginManagerMain.LOG.error("Plugin not found: " + pluginId);
         }
       }
+    }
+  }
+
+  public static void install(final File fromFile, final String pluginName, boolean deleteFromFile) throws IOException {
+    //noinspection HardCodedStringLiteral
+    if (fromFile.getName().endsWith(".jar")) {
+      // add command to copy file to the IDEA/plugins path
+      StartupActionScriptManager.ActionCommand copyPlugin =
+        new StartupActionScriptManager.CopyCommand(fromFile, new File(PathManager.getPluginsPath() + File.separator + fromFile.getName()));
+      StartupActionScriptManager.addActionCommand(copyPlugin);
+    }
+    else {
+      // add command to unzip file to the IDEA/plugins path
+      String unzipPath;
+      if (ZipUtil.isZipContainsFolder(fromFile)) {
+        unzipPath = PathManager.getPluginsPath();
+      }
+      else {
+        unzipPath = PathManager.getPluginsPath() + File.separator + pluginName;
+      }
+
+      StartupActionScriptManager.ActionCommand unzip = new StartupActionScriptManager.UnzipCommand(fromFile, new File(unzipPath));
+      StartupActionScriptManager.addActionCommand(unzip);
+    }
+
+    // add command to remove temp plugin file
+    if (deleteFromFile) {
+      StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(fromFile);
+      StartupActionScriptManager.addActionCommand(deleteTemp);
     }
   }
 }

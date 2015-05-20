@@ -17,8 +17,10 @@ package org.jetbrains.plugins.github.api;
 
 import com.google.gson.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
 import org.apache.http.message.BasicHeader;
@@ -126,14 +128,30 @@ public class GithubApiUtil {
   @NotNull
   public static String getScopedToken(@NotNull GithubConnection connection, @NotNull Collection<String> scopes, @NotNull String note)
     throws IOException {
-    GithubAuthorization token = findToken(connection, note);
-    if (token == null) {
+    try {
       return getNewScopedToken(connection, scopes, note).getToken();
     }
-    if (token.getScopes().containsAll(scopes)) {
-      return token.getToken();
+    catch (GithubStatusCodeException e) {
+      if (e.getError() != null && e.getError().containsErrorCode("already_exists")) {
+        // with new API we can't reuse old token, so let's just create new one
+        // we need to change note as well, because it should be unique
+
+        List<GithubAuthorization> tokens = getAllTokens(connection);
+
+        for (int i = 1; i < 100; i++) {
+          final String newNote = note + "_" + i;
+          if (ContainerUtil.find(tokens, new Condition<GithubAuthorization>() {
+            @Override
+            public boolean value(GithubAuthorization authorization) {
+              return newNote.equals(authorization.getNote());
+            }
+          }) == null) {
+            return getNewScopedToken(connection, scopes, newNote).getToken();
+          }
+        }
+      }
+      throw e;
     }
-    return updateTokenScopes(connection, token, scopes).getToken();
   }
 
   @NotNull
@@ -173,20 +191,15 @@ public class GithubApiUtil {
     }
   }
 
-  @Nullable
-  private static GithubAuthorization findToken(@NotNull GithubConnection connection, @NotNull String note) throws IOException {
+  @NotNull
+  private static List<GithubAuthorization> getAllTokens(@NotNull GithubConnection connection) throws IOException {
     try {
       String path = "/authorizations";
 
       PagedRequest<GithubAuthorization> request =
         new PagedRequest<GithubAuthorization>(path, GithubAuthorization.class, GithubAuthorizationRaw[].class, ACCEPT_V3_JSON);
 
-      List<GithubAuthorization> tokens = request.getAll(connection);
-
-      for (GithubAuthorization token : tokens) {
-        if (note.equals(token.getNote())) return token;
-      }
-      return null;
+      return request.getAll(connection);
     }
     catch (GithubConfusingException e) {
       e.setDetails("Can't get available tokens");
@@ -204,15 +217,14 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static String getReadOnlyToken(@NotNull GithubConnection connection,
-                                        @NotNull String user,
-                                        @NotNull String repo,
-                                        @NotNull String note)
+  public static String getTasksToken(@NotNull GithubConnection connection,
+                                     @NotNull String user,
+                                     @NotNull String repo,
+                                     @NotNull String note)
     throws IOException {
     GithubRepo repository = getDetailedRepoInfo(connection, user, repo);
 
-    // TODO: use read-only token for private repos when it will be available
-    List<String> scopes = repository.isPrivate() ? Collections.singletonList("repo") : Collections.<String>emptyList();
+    List<String> scopes = repository.isPrivate() ? Collections.singletonList("repo") : Collections.singletonList("public_repo");
 
     return getScopedToken(connection, scopes, note);
   }

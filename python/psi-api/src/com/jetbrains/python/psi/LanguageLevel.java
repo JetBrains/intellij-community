@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -32,10 +35,24 @@ public enum LanguageLevel {
   PYTHON31(31, true, false, true, true),
   PYTHON32(32, true, false, true, true),
   PYTHON33(33, true, false, true, true),
-  PYTHON34(34, true, false, true, true);
+  PYTHON34(34, true, false, true, true),
+  PYTHON35(35, true, false, true, true);
 
-  private static LanguageLevel DEFAULT2 = PYTHON27;
-  private static LanguageLevel DEFAULT3 = PYTHON33;
+  public static List<LanguageLevel> ALL_LEVELS = ImmutableList.<LanguageLevel>builder()
+    .add(PYTHON24)
+    .add(PYTHON25)
+    .add(PYTHON26)
+    .add(PYTHON27)
+    .add(PYTHON30)
+    .add(PYTHON31)
+    .add(PYTHON32)
+    .add(PYTHON33)
+    .add(PYTHON34)
+    .add(PYTHON35)
+    .build();
+
+  private static final LanguageLevel DEFAULT2 = PYTHON27;
+  private static final LanguageLevel DEFAULT3 = PYTHON34;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
@@ -120,6 +137,9 @@ public enum LanguageLevel {
       }
       if (pythonVersion.startsWith("3.4")) {
         return PYTHON34;
+      }
+      if (pythonVersion.startsWith("3.5")) {
+        return PYTHON35;
       }
       return DEFAULT3;
     }

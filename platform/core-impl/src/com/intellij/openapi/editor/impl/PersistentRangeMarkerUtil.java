@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 12/27/10 4:26 PM
  */
-public class PersistentRangeMarkerUtil {
-
-  private PersistentRangeMarkerUtil() {
-  }
-
+class PersistentRangeMarkerUtil {
   /**
    * Answers if document region identified by the given range marker should be translated via diff algorithm on document change
    * identified by the given event.
@@ -37,7 +33,7 @@ public class PersistentRangeMarkerUtil {
    * @return              <code>true</code> if target document range referenced by the given range marker should be translated via
    *                      diff algorithm; <code>false</code> otherwise
    */
-  public static boolean shouldTranslateViaDiff(@NotNull DocumentEventImpl e, @NotNull RangeMarker rangeMarker) {
+  static boolean shouldTranslateViaDiff(@NotNull DocumentEventImpl e, @NotNull RangeMarker rangeMarker) {
     if (e.isWholeTextReplaced()) {
       // Perform translation if the whole text is replaced.
       return true;

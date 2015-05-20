@@ -17,7 +17,11 @@
                         serviceImplementation="com.intellij.remoteServer.agent.impl.RemoteAgentManagerImpl"/>
     <applicationService serviceInterface="com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager"
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.clientLibrary.ClientLibraryManagerImpl"/>
-    <applicationConfigurable groupId="build" displayName="Clouds" instance="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable"/>
+    <applicationConfigurable groupId="build"
+                             displayName="Clouds"
+                             id="RemoteServers"
+                             provider="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurableProvider"/>
+    <search.optionContributor implementation="com.intellij.remoteServer.impl.configuration.RemoteServerSearchableOptionContributor"/>
     <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
     <projectService serviceInterface="com.intellij.remoteServer.runtime.ui.RemoteServersView"
                     serviceImplementation="com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewImpl"/>
@@ -49,5 +53,6 @@
       <action id="Servers.DeployWithDebug" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployWithDebugAction"/>
       <action id="RemoteServers.EditDeploymentConfig" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeploymentConfigAction"/>
     </group>
+    <group id="RemoteServersViewPopup"/>
   </actions>
 </idea-plugin>

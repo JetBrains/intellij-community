@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,14 @@ import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.DocumentUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,10 +226,9 @@ public final class EditorUtil {
    * @return              given text offset that identifies the same position that is pointed by the given visual column
    *
    * @deprecated This function can give incorrect results when soft wraps are enabled in editor. It is also slow in case of
-   * long document lines - {@link com.intellij.openapi.editor.Editor#logicalPositionToOffset(com.intellij.openapi.editor.LogicalPosition)}
+   * long document lines - {@link Editor#logicalPositionToOffset(LogicalPosition)}
    * should be faster when soft wraps are enabled. To be removed in IDEA 16.
    */
-  @SuppressWarnings("UnusedDeclaration")
   public static int calcOffset(@NotNull EditorEx editor,
                                @NotNull CharSequence text,
                                int start,
@@ -466,6 +467,9 @@ public final class EditorUtil {
   }
 
   public static int calcColumnNumber(@Nullable Editor editor, @NotNull CharSequence text, final int start, final int offset, final int tabSize) {
+    if (editor instanceof TextComponentEditor) {
+      return offset - start;
+    }
     boolean useOptimization = true;
     if (editor != null) {
       SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(start);
@@ -718,8 +722,8 @@ public final class EditorUtil {
    * @param end       target end coordinate
    * @return          pair of the closest surrounding non-soft-wrapped logical positions for the visual line start and end
    *
-   * @see #getNotFoldedLineStartOffset(com.intellij.openapi.editor.Editor, int)
-   * @see #getNotFoldedLineEndOffset(com.intellij.openapi.editor.Editor, int)
+   * @see #getNotFoldedLineStartOffset(Editor, int)
+   * @see #getNotFoldedLineEndOffset(Editor, int)
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
   public static Pair<LogicalPosition, LogicalPosition> calcSurroundingRange(@NotNull Editor editor,
@@ -776,7 +780,7 @@ public final class EditorUtil {
    */
   public static int getNotFoldedLineStartOffset(@NotNull Editor editor, int offset) {
     while(true) {
-      offset = getLineStartOffset(offset, editor.getDocument());
+      offset = DocumentUtil.getLineStartOffset(offset, editor.getDocument());
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
       if (foldRegion == null || foldRegion.getStartOffset() >= offset) {
         break;
@@ -799,14 +803,6 @@ public final class EditorUtil {
       offset = foldRegion.getEndOffset();
     }
     return offset;
-  }
-
-  private static int getLineStartOffset(int offset, Document document) {
-    if (offset > document.getTextLength()) {
-      return offset;
-    }
-    int lineNumber = document.getLineNumber(offset);
-    return document.getLineStartOffset(lineNumber);
   }
 
   private static int getLineEndOffset(int offset, Document document) {
@@ -872,6 +868,36 @@ public final class EditorUtil {
     }
     int line = document.getLineNumber(offset);
     return offset == document.getLineEndOffset(line);
+  }
+
+  /**
+   * Setting selection using {@link SelectionModel#setSelection(int, int)} or {@link Caret#setSelection(int, int)} methods can result
+   * in resulting selection range to be larger than requested (in case requested range intersects with collapsed fold regions).
+   * This method will make sure interfering collapsed regions are expanded first, so that resulting selection range is exactly as 
+   * requested.
+   */
+  public static void setSelectionExpandingFoldedRegionsIfNeeded(@NotNull Editor editor, int startOffset, int endOffset) {
+    FoldingModel foldingModel = editor.getFoldingModel();
+    FoldRegion startFoldRegion = foldingModel.getCollapsedRegionAtOffset(startOffset);
+    if (startFoldRegion != null && (startFoldRegion.getStartOffset() == startOffset || startFoldRegion.isExpanded())) {
+      startFoldRegion = null;
+    }
+    FoldRegion endFoldRegion = foldingModel.getCollapsedRegionAtOffset(endOffset);
+    if (endFoldRegion != null && (endFoldRegion.getStartOffset() == endOffset || endFoldRegion.isExpanded())) {
+      endFoldRegion = null;
+    }
+    if (startFoldRegion != null || endFoldRegion != null) {
+      final FoldRegion finalStartFoldRegion = startFoldRegion;
+      final FoldRegion finalEndFoldRegion = endFoldRegion;
+      foldingModel.runBatchFoldingOperation(new Runnable() {
+        @Override
+        public void run() {
+          if (finalStartFoldRegion != null) finalStartFoldRegion.setExpanded(true);
+          if (finalEndFoldRegion != null) finalEndFoldRegion.setExpanded(true);
+        }
+      });
+    }
+    editor.getSelectionModel().setSelection(startOffset, endOffset);
   }
 }
 

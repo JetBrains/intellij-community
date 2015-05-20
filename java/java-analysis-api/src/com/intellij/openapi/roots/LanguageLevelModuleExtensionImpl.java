@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,10 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LanguageLevelModuleExtensionImpl  extends ModuleExtension<LanguageLevelModuleExtensionImpl> implements LanguageLevelModuleExtension {
@@ -62,7 +61,7 @@ public class LanguageLevelModuleExtensionImpl  extends ModuleExtension<LanguageL
   }
 
   @Override
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) {
     final String languageLevel = element.getAttributeValue(LANGUAGE_LEVEL_ELEMENT_NAME);
     if (languageLevel != null) {
       try {
@@ -78,7 +77,7 @@ public class LanguageLevelModuleExtensionImpl  extends ModuleExtension<LanguageL
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(final Element element) {
     if (myLanguageLevel != null) {
       element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
     }

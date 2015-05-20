@@ -1,4 +1,4 @@
-// "Create Inner Class 'ArrayList'" "false"
+// "Create inner class 'ArrayList'" "false"
 public class Test {
   public static void main() {
     Inner q = new Inner();

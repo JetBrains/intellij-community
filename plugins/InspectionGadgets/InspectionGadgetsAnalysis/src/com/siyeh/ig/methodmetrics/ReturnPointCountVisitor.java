@@ -90,4 +90,10 @@ class ReturnPointCountVisitor extends JavaRecursiveElementVisitor {
   public int getCount() {
     return m_count;
   }
+
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  }
+
+  public void visitClass(PsiClass aClass) {
+  }
 }

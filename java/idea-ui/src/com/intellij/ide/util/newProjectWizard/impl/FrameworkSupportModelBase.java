@@ -109,6 +109,13 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
       node.setChecked(enable);
       // ensure configurable to be created and registered to disposer
       node.getConfigurable();
+      if (myFrameworkVersions.get(providerId) == null) {
+        for (FrameworkVersion version : node.getUserObject().getFrameworkType().getVersions()) {
+          if (version.getAvailabilityCondition().isAvailableFor(this)) {
+            setSelectedVersion(providerId, version);
+          }
+        }
+      }
     }
   }
 

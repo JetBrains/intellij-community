@@ -16,16 +16,11 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -35,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -111,32 +105,14 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       panel.createActionLabel("Install plugins", new Runnable() {
         @Override
         public void run() {
-          ProgressManager.getInstance().run(new Task.Modal(null, "Search for plugins in repository", true) {
-            private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
-            private List<IdeaPluginDescriptor> myAllPlugins;
-
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              try {
-                myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
-                for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-                  if (plugins.contains(new PluginsAdvertiser.Plugin(loadedPlugin.getPluginId(), null, false))) {
-                    myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
-                  }
-                }
-              }
-              catch (Exception ignore) {
-              }
-            }
-
-            @Override
-            public void onSuccess() {
-              final PluginsAdvertiserDialog advertiserDialog =
-                new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins);
-              if (advertiserDialog.showAndGet()) {
-                myEnabledExtensions.add(extension);
-                myNotifications.updateAllNotifications();
-              }
+          Set<String> pluginIds = new HashSet<String>();
+          for (PluginsAdvertiser.Plugin plugin : plugins) {
+            pluginIds.add(plugin.myPluginId);
+          }
+          PluginsAdvertiser.installAndEnablePlugins(pluginIds, new Runnable() {
+            public void run() {
+              myEnabledExtensions.add(extension);
+              myNotifications.updateAllNotifications();
             }
           });
         }
@@ -183,6 +159,6 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   }
 
   private static UnknownFeature createExtensionFeature(String extension) {
-    return new UnknownFeature(FileTypeFactory.FILE_TYPE_FACTORY_EP.getName(), extension);
+    return new UnknownFeature(FileTypeFactory.FILE_TYPE_FACTORY_EP.getName(), "File Type", extension);
   }
 }

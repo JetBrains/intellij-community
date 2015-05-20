@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.execution.CantRunException;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.Externalizer;
 import org.jdom.Element;
@@ -35,11 +34,13 @@ public abstract class AntReference {
   @NonNls private static final String BUNDLED_ANT_ATTR = "bundledAnt";
 
   public static final Externalizer<AntReference> EXTERNALIZER = new Externalizer<AntReference>() {
-    public AntReference readValue(Element dataElement) throws InvalidDataException {
+    public AntReference readValue(Element dataElement) {
       if (Boolean.valueOf(dataElement.getAttributeValue(PROJECT_DEFAULT_ATTR)).booleanValue()) return PROJECT_DEFAULT;
       if (Boolean.valueOf(dataElement.getAttributeValue(BUNDLED_ANT_ATTR)).booleanValue()) return BUNDLED_ANT;
       String name = dataElement.getAttributeValue(NAME_ATTR);
-      if (name == null) throw new InvalidDataException();
+      if (name == null) {
+        throw new IllegalStateException("no name");
+      }
       return new MissingAntReference(name);
     }
 

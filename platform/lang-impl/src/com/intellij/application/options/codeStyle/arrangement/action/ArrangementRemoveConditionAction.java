@@ -26,8 +26,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 public class ArrangementRemoveConditionAction extends AnAction {
 
   public ArrangementRemoveConditionAction() {
-    getTemplatePresentation().setIcon(AllIcons.Actions.CloseNew);
-    getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseNewHovered);
+    getTemplatePresentation().setIcon(AllIcons.Actions.Close);
+    getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
   }
 
   @Override

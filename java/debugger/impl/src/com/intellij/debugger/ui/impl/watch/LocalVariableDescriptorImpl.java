@@ -17,26 +17,22 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerContextUtil;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements LocalVariableDescriptor {
   private final StackFrameProxyImpl myFrameProxy;
@@ -58,35 +54,6 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   @Override
   public LocalVariableProxyImpl getLocalVariable() {
     return myLocalVariable;
-  }
-
-  @Nullable
-  public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context) {
-    return getSourcePosition(project, context, false);
-  }
-
-  @Nullable
-  public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context, boolean nearest) {
-    StackFrameProxyImpl frame = context.getFrameProxy();
-    if (frame == null) return null;
-
-    PsiElement place = PositionUtil.getContextElement(context);
-
-    if (place == null) {
-      return null;
-    }
-
-    PsiVariable psiVariable = JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(getName(), place);
-    if (psiVariable == null) {
-      return null;
-    }
-
-    PsiFile containingFile = psiVariable.getContainingFile();
-    if(containingFile == null) return null;
-    if (nearest) {
-      return DebuggerContextUtil.findNearest(context, psiVariable, containingFile);
-    }
-    return SourcePosition.createFromOffset(containingFile, psiVariable.getTextOffset());
   }
 
   public boolean isNewLocal() {
@@ -130,19 +97,10 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Override
   public String calcValueName() {
-    final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-    StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(getName());
-      if (classRenderer.SHOW_DECLARED_TYPE) {
-        buf.append(": ");
-        buf.append(classRenderer.renderTypeName(myTypeName));
-      }
-      return buf.toString();
+    if (NodeRendererSettings.getInstance().getClassRenderer().SHOW_DECLARED_TYPE) {
+      return addDeclaredType(myTypeName);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    return super.calcValueName();
   }
 
   @Override

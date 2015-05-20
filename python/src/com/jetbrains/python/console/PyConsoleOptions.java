@@ -52,14 +52,6 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myShowDebugConsoleByDefault = showDebugConsoleByDefault;
   }
 
-  public boolean isShowSeparatorLine() {
-    return myState.myShowSeparatorLine;
-  }
-
-  public void setShowSeparatorLine(boolean showSeparatorLine) {
-    myState.myShowSeparatorLine = showSeparatorLine;
-  }
-
   public boolean isIpythonEnabled(){
     return myState.myIpythonEnabled;
   }
@@ -80,7 +72,6 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   @Override
   public void loadState(State state) {
     myState.myShowDebugConsoleByDefault = state.myShowDebugConsoleByDefault;
-    myState.myShowSeparatorLine = state.myShowSeparatorLine;
     myState.myPythonConsoleState = state.myPythonConsoleState;
     myState.myIpythonEnabled = state.myIpythonEnabled;
   }
@@ -89,7 +80,6 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public PyConsoleSettings myPythonConsoleState = new PyConsoleSettings();
 
     public boolean myShowDebugConsoleByDefault = false;
-    public boolean myShowSeparatorLine = true;
     public boolean myIpythonEnabled = true;
   }
 

@@ -61,6 +61,16 @@ public class _LastInSuiteTest extends TestCase {
     }
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public void testStatistics() throws Exception {
+    if (_FirstInSuiteTest.suiteStarted != 0) {
+      long testSuiteDuration = System.nanoTime() - _FirstInSuiteTest.suiteStarted;
+      System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']",
+                                       testSuiteDuration / 1000000));
+    }
+    LightPlatformTestCase.reportTestExecutionStatistics();
+  }
+
   private static void captureMemorySnapshot() {
     try {
       Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "forceCaptureMemorySnapshot");

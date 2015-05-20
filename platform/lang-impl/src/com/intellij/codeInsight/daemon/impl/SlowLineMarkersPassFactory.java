@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.*;
+import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -47,7 +50,7 @@ public class SlowLineMarkersPassFactory extends AbstractProjectComponent impleme
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
     if (textRange == null) return null;
-    return new SlowLineMarkersPass(myProject, file, editor, textRange.getStartOffset(), textRange.getEndOffset());
+    return new SlowLineMarkersPass(myProject, file, editor, textRange);
   }
 
   private static TextRange calculateRangeToProcess(Editor editor) {

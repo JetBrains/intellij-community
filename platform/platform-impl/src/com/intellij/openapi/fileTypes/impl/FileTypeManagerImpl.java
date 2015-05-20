@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,18 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
-import com.intellij.ide.highlighter.custom.impl.ReadFileType;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.TransferToPooledThreadQueue;
-import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.BaseSchemeProcessor;
-import com.intellij.openapi.options.ExternalInfo;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.project.Project;
@@ -40,6 +36,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -50,8 +47,9 @@ import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
-import com.intellij.util.containers.ConcurrentBitSet;
+import com.intellij.util.containers.ConcurrentPackedBitsArray;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -62,25 +60,36 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * @author Yura Cangea
- */
-public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOMExternalizable, ExportableApplicationComponent, Disposable {
+@State(
+  name = "FileTypeManager",
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/filetypes.xml"),
+  additionalExportFile = FileTypeManagerImpl.FILE_SPEC
+)
+public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element>, ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
-  private static final int VERSION = 11;
+  // You must update all existing default configurations accordingly
+  private static final int VERSION = 14;
   private static final Key<FileType> FILE_TYPE_KEY = Key.create("FILE_TYPE_KEY");
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and autoDetectedAsText, autoDetectedAsBinary and autoDetectWasRun sets are used instead.
   private static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
   private static final int DETECT_BUFFER_SIZE = 8192; // the number of bytes to read from the file to feed to the file type detector
+
+  @NonNls
+  private static final String DEFAULT_IGNORED =
+    "*.hprof;*.pyc;*.pyo;*.rbc;*~;.DS_Store;.bundle;.git;.hg;.svn;CVS;RCS;SCCS;__pycache__;.tox;_svn;rcs;vssver.scc;vssver2.scc;";
+
   private static boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
   private final Set<FileType> myDefaultTypes = new THashSet<FileType>();
   private final List<FileTypeIdentifiableByVirtualFile> mySpecialFileTypes = new ArrayList<FileTypeIdentifiableByVirtualFile>();
@@ -96,17 +105,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private final Map<FileNameMatcher, Pair<FileType, Boolean>> myRemovedMappings = new THashMap<FileNameMatcher, Pair<FileType, Boolean>>();
 
   @NonNls private static final String ELEMENT_FILETYPE = "filetype";
-  @NonNls private static final String ELEMENT_FILETYPES = "filetypes";
-  @NonNls private static final String ELEMENT_IGNOREFILES = "ignoreFiles";
+  @NonNls private static final String ELEMENT_IGNORE_FILES = "ignoreFiles";
   @NonNls private static final String ATTRIBUTE_LIST = "list";
 
   @NonNls private static final String ATTRIBUTE_VERSION = "version";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_DESCRIPTION = "description";
-  @NonNls private static final String ATTRIBUTE_ICON = "icon";
-  @NonNls private static final String ATTRIBUTE_EXTENSIONS = "extensions";
-  @NonNls private static final String ATTRIBUTE_BINARY = "binary";
-  @NonNls private static final String ATTRIBUTE_DEFAULT_EXTENSION = "default_extension";
 
   private static class StandardFileType {
     @NotNull private final FileType fileType;
@@ -124,16 +128,111 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
   private final SchemesManager<FileType, AbstractFileType> mySchemesManager;
   @NonNls
-  private static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/filetypes";
-  private final ConcurrentBitSet autoDetectWasRun = new ConcurrentBitSet();
-  private final ConcurrentBitSet autoDetectedAsText = new ConcurrentBitSet();
-  private final ConcurrentBitSet autoDetectedAsBinary = new ConcurrentBitSet();
+  static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/filetypes";
+
+  // these flags are stored in 'packedFlags' as chunks of four bits
+  private static final int AUTO_DETECTED_AS_TEXT_MASK = 1;     // set if the file was auto-detected as text
+  private static final int AUTO_DETECTED_AS_BINARY_MASK = 2;   // set if the file was auto-detected as binary
+  private static final int AUTO_DETECT_WAS_RUN_MASK = 4;       // set if auto-detection was performed for this file
+  private static final int ATTRIBUTES_WERE_LOADED_MASK = 8;    // set if AUTO_* bits above were loaded from the file persistent attributes
+  private final ConcurrentPackedBitsArray packedFlags = new ConcurrentPackedBitsArray(4);
+
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
+  public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory, PropertiesComponent propertiesComponent) {
+    int fileTypeChangedCounter = StringUtilRt.parseInt(propertiesComponent.getValue("fileTypeChangedCounter"), 0);
+    fileTypeChangedCount = new AtomicInteger(fileTypeChangedCounter);
+    autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", fileTypeChangedCounter, true);
+
+    myMessageBus = bus;
+    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
+      @NotNull
+      @Override
+      public AbstractFileType readScheme(@NotNull Element element, boolean duringLoad) {
+        if (!duringLoad) {
+          fireBeforeFileTypesChanged();
+        }
+        AbstractFileType type = (AbstractFileType)loadFileType(element, false);
+        if (!duringLoad) {
+          fireFileTypesChanged();
+        }
+        return type;
+      }
+
+      @NotNull
+      @Override
+      public State getState(@NotNull AbstractFileType fileType) {
+        if (!shouldSave(fileType)) {
+          return State.NON_PERSISTENT;
+        }
+        if (!myDefaultTypes.contains(fileType)) {
+          return State.POSSIBLY_CHANGED;
+        }
+        return fileType.isModified() ? State.POSSIBLY_CHANGED : State.NON_PERSISTENT;
+      }
+
+      @Override
+      public Element writeScheme(@NotNull AbstractFileType fileType) {
+        Element root = new Element(ELEMENT_FILETYPE);
+
+        root.setAttribute("binary", String.valueOf(fileType.isBinary()));
+        if (!StringUtil.isEmpty(fileType.getDefaultExtension())) {
+          root.setAttribute("default_extension", fileType.getDefaultExtension());
+        }
+        root.setAttribute(ATTRIBUTE_DESCRIPTION, fileType.getDescription());
+        root.setAttribute(ATTRIBUTE_NAME, fileType.getName());
+
+        fileType.writeExternal(root);
+
+        Element map = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
+        writeExtensionsMap(map, fileType, false);
+        if (!map.getChildren().isEmpty()) {
+          root.addContent(map);
+        }
+        return root;
+      }
+
+      @Override
+      public void onSchemeDeleted(@NotNull AbstractFileType scheme) {
+        fireBeforeFileTypesChanged();
+        myPatternsTable.removeAllAssociations(scheme);
+        fireFileTypesChanged();
+      }
+    }, RoamingType.PER_USER);
+    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        Collection<VirtualFile> files = ContainerUtil.map2Set(events, new Function<VFileEvent, VirtualFile>() {
+          @Override
+          public VirtualFile fun(VFileEvent event) {
+            VirtualFile file = event instanceof VFileCreateEvent ? null : event.getFile();
+            return file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
+          }
+        });
+        files.remove(null);
+        if (toLog()) {
+          log("F: VFS events: " + events);
+        }
+        if (!files.isEmpty() && RE_DETECT_ASYNC) {
+          if (toLog()) {
+            log("F: queued to redetect: " + files);
+          }
+          reDetectQueue.offerIfAbsent(files);
+        }
+      }
+    });
+
+    //noinspection SpellCheckingInspection
+    myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
+
+    // this should be done BEFORE reading state
+    initStandardFileTypes();
+  }
+
   @VisibleForTesting
-  public void initStandardFileTypes() {
-    final FileTypeConsumer consumer = new FileTypeConsumer() {
+  void initStandardFileTypes() {
+    FileTypeConsumer consumer = new FileTypeConsumer() {
       @Override
       public void consume(@NotNull FileType fileType) {
         register(fileType, parse(fileType.getDefaultExtension()));
@@ -158,7 +257,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       private void register(@NotNull FileType fileType, @NotNull List<FileNameMatcher> fileNameMatchers) {
         final StandardFileType type = myStandardFileTypes.get(fileType.getName());
         if (type != null) {
-          for (FileNameMatcher matcher : fileNameMatchers) type.matchers.add(matcher);
+          type.matchers.addAll(fileNameMatchers);
         }
         else {
           myStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, fileNameMatchers));
@@ -166,110 +265,51 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     };
 
-    for (FileTypeFactory factory : Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP)) {
+    for (FileTypeFactory factory : FileTypeFactory.FILE_TYPE_FACTORY_EP.getExtensions()) {
       try {
         factory.createFileTypes(consumer);
       }
-      catch (Throwable t) {
-        PluginManager.handleComponentError(t, factory.getClass().getName(), null);
+      catch (Throwable e) {
+        PluginManager.handleComponentError(e, factory.getClass().getName(), null);
       }
     }
-    for (final StandardFileType pair : myStandardFileTypes.values()) {
-      registerFileTypeWithoutNotification(pair.fileType, pair.matchers);
+    for (StandardFileType pair : myStandardFileTypes.values()) {
+      registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);
     }
-  }
 
-  // -------------------------------------------------------------------------
-  // Constructor
-  // -------------------------------------------------------------------------
+    if (PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr()) {
+      // build scripts are correct, but it is required to run from sources
+      return;
+    }
 
-  public FileTypeManagerImpl(MessageBus bus, SchemesManagerFactory schemesManagerFactory) {
-    myMessageBus = bus;
-    mySchemesManager = schemesManagerFactory.createSchemesManager(FILE_SPEC, new BaseSchemeProcessor<AbstractFileType>() {
-      @NotNull
-      @Override
-      public AbstractFileType readScheme(@NotNull Element root) {
-        ReadFileType type = new ReadFileType(AbstractFileType.readSyntaxTable(root.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING)), root);
-        String fileTypeName = root.getAttributeValue(ATTRIBUTE_NAME);
-        String fileTypeDescr = root.getAttributeValue(ATTRIBUTE_DESCRIPTION);
-        String iconPath = root.getAttributeValue(ATTRIBUTE_ICON);
-        setFileTypeAttributes(fileTypeName, fileTypeDescr, iconPath, type);
-        return type;
-      }
-
-      @Override
-      public boolean shouldBeSaved(@NotNull final AbstractFileType fileType) {
-        return shouldBeSavedToFile(fileType);
-      }
-
-      @Override
-      public Element writeScheme(@NotNull final AbstractFileType fileType) throws WriteExternalException {
-        Element root = new Element(ELEMENT_FILETYPE);
-
-        root.setAttribute(ATTRIBUTE_BINARY, String.valueOf(fileType.isBinary()));
-        root.setAttribute(ATTRIBUTE_DEFAULT_EXTENSION, fileType.getDefaultExtension());
-        root.setAttribute(ATTRIBUTE_DESCRIPTION, fileType.getDescription());
-        root.setAttribute(ATTRIBUTE_NAME, fileType.getName());
-
-        fileType.writeExternal(root);
-
-        Element map = new Element(AbstractFileType.ELEMENT_EXTENSIONMAP);
-        root.addContent(map);
-
-        if (fileType instanceof ImportedFileType) {
-          writeImportedExtensionsMap(map, (ImportedFileType)fileType);
-        }
-        else {
-          writeExtensionsMap(map, fileType, false);
-        }
-        return root;
-      }
-
-      @Override
-      public void onSchemeAdded(@NotNull final AbstractFileType scheme) {
-        fireBeforeFileTypesChanged();
-        if (scheme instanceof ReadFileType) {
-          loadFileType((ReadFileType)scheme);
-        }
-        fireFileTypesChanged();
-      }
-
-      @Override
-      public void onSchemeDeleted(@NotNull final AbstractFileType scheme) {
-        fireBeforeFileTypesChanged();
-        myPatternsTable.removeAllAssociations(scheme);
-        fireFileTypesChanged();
-      }
-    }, RoamingType.PER_USER);
-    bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter(){
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-        Collection<VirtualFile> files = ContainerUtil.map2Set(events, new Function<VFileEvent, VirtualFile>() {
-          @Override
-          public VirtualFile fun(VFileEvent event) {
-            VirtualFile file = event instanceof VFileCreateEvent ? null : event.getFile();
-            return file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
+    try {
+      URL defaultFileTypesUrl = FileTypeManagerImpl.class.getResource("/defaultFileTypes.xml");
+      if (defaultFileTypesUrl != null) {
+        Element defaultFileTypesElement = JDOMUtil.load(URLUtil.openStream(defaultFileTypesUrl));
+        for (Element e : defaultFileTypesElement.getChildren()) {
+          //noinspection SpellCheckingInspection
+          if ("filetypes".equals(e.getName())) {
+            for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
+              loadFileType(element, true);
+            }
           }
-        });
-        files.remove(null);
-        if (toLog()) {
-          System.out.println("F: VFS events: " + events);
-        }
-        if (!files.isEmpty() && RE_DETECT_ASYNC) {
-          if (toLog()) {
-            System.out.println("F: queued to redetect: " + files);
+          else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(e.getName())) {
+            readGlobalMappings(e);
           }
-          reDetectQueue.offerIfAbsent(files);
         }
       }
-    });
-
-    // this should be done BEFORE reading state
-    initStandardFileTypes();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   private static boolean toLog() {
     return RE_DETECT_ASYNC && ApplicationManager.getApplication().isUnitTestMode();
+  }
+
+  private static void log(@SuppressWarnings("UnusedParameters") String message) {
+    //System.out.println(message);
   }
 
   private final TransferToPooledThreadQueue<Collection<VirtualFile>> reDetectQueue = new TransferToPooledThreadQueue<Collection<VirtualFile>>("File type re-detect", Conditions.alwaysFalse(), -1, new Processor<Collection<VirtualFile>>() {
@@ -286,22 +326,33 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   @TestOnly
-  void reDetectAsync(boolean enable) {
+  @NotNull
+  Collection<VirtualFile> dumpReDetectQueue() {
+    return ContainerUtil.flatten(reDetectQueue.dump());
+  }
+
+  @TestOnly
+  static void reDetectAsync(boolean enable) {
     RE_DETECT_ASYNC = enable;
   }
 
   private void reDetect(@NotNull Collection<VirtualFile> files) {
-    final List<VirtualFile> changed = new ArrayList<VirtualFile>();
+    final Collection<VirtualFile> changed = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
       boolean shouldRedetect = wasAutoDetectedBefore(file) && isDetectable(file);
       if (toLog()) {
-        System.out.println("F: Redetect file: " + file.getName() + "; shouldRedetect: " + shouldRedetect);
+        log("F: Redetect file: " + file.getName() + "; shouldRedetect: " + shouldRedetect);
       }
       if (shouldRedetect) {
-        FileType before = file.getFileType();
-        FileType after = detectFromContent(file);
+        int id = file instanceof VirtualFileWithId ? ((VirtualFileWithId)file).getId() : -1;
+        FileType before = getAutoDetectedType(file, id);
+
+        packedFlags.set(id, ATTRIBUTES_WERE_LOADED_MASK);
+
+        file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
+        FileType after = getFileTypeByFile(file); // may be back to standard file type
         if (toLog()) {
-          System.out.println("F: After redetect file: " + file.getName() + "; before: " + before.getName() + "; after: " + after.getName()+"; now getFileType()="+file.getFileType().getName());
+          log("F: After redetect file: " + file.getName() + "; before: " + before.getName() + "; after: " + after.getName()+"; now getFileType()="+file.getFileType().getName());
         }
 
         if (before != after) {
@@ -325,23 +376,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (file instanceof VirtualFileWithId) {
       int id = Math.abs(((VirtualFileWithId)file).getId());
       // do not re-detect binary files
-      return autoDetectWasRun.get(id) && !autoDetectedAsBinary.get(id);
+      return (packedFlags.get(id) & (AUTO_DETECT_WAS_RUN_MASK | AUTO_DETECTED_AS_BINARY_MASK)) == AUTO_DETECT_WAS_RUN_MASK;
     }
     return false;
-  }
-
-  private static void writeImportedExtensionsMap(final Element map, final ImportedFileType type) {
-    for (FileNameMatcher matcher : type.getOriginalPatterns()) {
-      Element content = AbstractFileType.writeMapping(type, matcher, false);
-      if (content != null) {
-        map.addContent(content);
-      }
-    }
-  }
-
-  private boolean shouldBeSavedToFile(final FileType fileType) {
-    if (!(fileType instanceof JDOMExternalizable) || !shouldSave(fileType)) return false;
-    return !myDefaultTypes.contains(fileType) || isDefaultModified(fileType);
   }
 
   @Override
@@ -350,21 +387,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     StandardFileType stdFileType = myStandardFileTypes.get(name);
     return stdFileType != null ? stdFileType.fileType : PlainTextFileType.INSTANCE;
   }
-
-  @Override
-  @NotNull
-  public File[] getExportFiles() {
-    return new File[]{getOrCreateFileTypesDir(), PathManager.getOptionsFile(this)};
-  }
-
-  @Override
-  @NotNull
-  public String getPresentableName() {
-    return FileTypesBundle.message("filetype.settings.component");
-  }
-  // -------------------------------------------------------------------------
-  // ApplicationComponent interface implementation
-  // -------------------------------------------------------------------------
 
   @Override
   public void disposeComponent() {
@@ -378,17 +400,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
     }
     // Resolve unresolved mappings initialized before certain plugin initialized.
-    for (final StandardFileType pair : myStandardFileTypes.values()) {
+    for (StandardFileType pair : myStandardFileTypes.values()) {
       bindUnresolvedMappings(pair.fileType);
     }
-    if (loadAllFileTypes()) {
+
+    boolean isAtLeastOneStandardFileTypeHasBeenRead = false;
+    for (AbstractFileType fileType : mySchemesManager.loadSchemes()) {
+      isAtLeastOneStandardFileTypeHasBeenRead |= myInitialAssociations.hasAssociationsFor(fileType);
+    }
+    if (isAtLeastOneStandardFileTypeHasBeenRead) {
       restoreStandardFileExtensions();
     }
   }
-
-  // -------------------------------------------------------------------------
-  // Implementation of abstract methods
-  // -------------------------------------------------------------------------
 
   @Override
   @NotNull
@@ -405,7 +428,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public static void cacheFileType(@NotNull VirtualFile file, @Nullable FileType fileType) {
     file.putUserData(FILE_TYPE_KEY, fileType);
     if (toLog()) {
-      System.out.println("F: Cached file type for "+file.getName()+" to "+(fileType == null ? null : fileType.getName()));
+      log("F: Cached file type for "+file.getName()+" to "+(fileType == null ? null : fileType.getName()));
     }
   }
 
@@ -425,7 +448,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       FileTypeIdentifiableByVirtualFile type = mySpecialFileTypes.get(i);
       if (type.isMyFileType(file)) {
         if (toLog()) {
-          System.out.println("F: Special file type for "+file.getName()+"; type: "+type.getName());
+          log("F: Special file type for "+file.getName()+"; type: "+type.getName());
         }
         return type;
       }
@@ -434,7 +457,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     fileType = getFileTypeByFileName(file.getNameSequence());
     if (fileType != UnknownFileType.INSTANCE) {
       if (toLog()) {
-        System.out.println("F: By name file type for "+file.getName()+"; type: "+fileType.getName());
+        log("F: By name file type for "+file.getName()+"; type: "+fileType.getName());
       }
       return fileType;
     }
@@ -452,37 +475,23 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (file instanceof VirtualFileWithId) {
       int id = ((VirtualFileWithId)file).getId();
       if (id < 0) return UnknownFileType.INSTANCE;
-      if (autoDetectWasRun.get(id)) {
-        FileType type = autoDetectedAsText.get(id) ? FileTypes.PLAIN_TEXT :
-                        autoDetectedAsBinary.get(id) ? UnknownFileType.INSTANCE :
-                        ObjectUtils.notNull(file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY), FileTypes.PLAIN_TEXT);
+
+      long flags = packedFlags.get(id);
+      boolean autoDetectWasRun = (flags & AUTO_DETECT_WAS_RUN_MASK) != 0;
+      if (autoDetectWasRun) {
+        FileType type = getAutoDetectedType(file, id);
         if (toLog()) {
-          System.out.println("F: getFileType("+file.getName()+") = "+type.getName());
+          log("F: autodetected getFileType("+file.getName()+") = "+type.getName());
         }
         return type;
       }
-      boolean wasDetectedAsText = false;
-      boolean wasDetectedAsBinary = false;
-      boolean wasAutoDetectRun = false;
-      DataInputStream stream = autoDetectedAttribute.readAttribute(file);
-      try {
-        try {
-          byte status = stream != null ? stream.readByte() : 0;
-          wasAutoDetectRun = stream != null;
-          wasDetectedAsText = BitUtil.isSet(status, AUTO_DETECTED_AS_TEXT_FLAG);
-          wasDetectedAsBinary = BitUtil.isSet(status, AUTO_DETECTED_AS_BINARY_FLAG);
-        }
-        finally {
-          if (stream != null) {
-            stream.close();
-          }
-        }
+      if ((flags & ATTRIBUTES_WERE_LOADED_MASK) == 0) {
+        flags = readFlagsFromCache(file);
+        packedFlags.set(id, flags);
       }
-      catch (IOException ignored) {
-      }
-      autoDetectWasRun.set(id, wasAutoDetectRun);
-      autoDetectedAsText.set(id, wasDetectedAsText);
-      autoDetectedAsBinary.set(id, wasDetectedAsBinary);
+      boolean wasDetectedAsText = BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK);
+      boolean wasDetectedAsBinary = BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK);
+      boolean wasAutoDetectRun = BitUtil.isSet(flags, AUTO_DETECT_WAS_RUN_MASK);
       if (wasAutoDetectRun && (wasDetectedAsText || wasDetectedAsBinary)) {
         return wasDetectedAsText ? FileTypes.PLAIN_TEXT : UnknownFileType.INSTANCE;
       }
@@ -494,10 +503,64 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     if (toLog()) {
-      System.out.println("F: getFileType after detect run("+file.getName()+") = "+fileType.getName());
+      log("F: getFileType after detect run("+file.getName()+") = "+fileType.getName());
     }
 
     return fileType;
+  }
+
+  private volatile FileAttribute autoDetectedAttribute;
+  protected byte readFlagsFromCache(@NotNull VirtualFile file) {
+    DataInputStream stream = autoDetectedAttribute.readAttribute(file);
+    boolean wasAutoDetectRun = false;
+    byte status = 0;
+    try {
+      try {
+        status = stream == null ? 0 : stream.readByte();
+        wasAutoDetectRun = stream != null;
+      }
+      finally {
+        if (stream != null) {
+          stream.close();
+        }
+      }
+    }
+    catch (IOException ignored) {
+    }
+    status = (byte)BitUtil.set(status, AUTO_DETECT_WAS_RUN_MASK, wasAutoDetectRun);
+    status = (byte)BitUtil.set(status, ATTRIBUTES_WERE_LOADED_MASK, true);
+
+    return status;
+  }
+
+  protected void writeFlagsToCache(@NotNull VirtualFile file, int flags) {
+    DataOutputStream stream = autoDetectedAttribute.writeAttribute(file);
+    try {
+      try {
+        stream.writeByte(flags);
+      }
+      finally {
+        stream.close();
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
+  private void clearCaches() {
+    int count = fileTypeChangedCount.incrementAndGet();
+    autoDetectedAttribute = autoDetectedAttribute.newVersion(count);
+    PropertiesComponent.getInstance().setValue("fileTypeChangedCounter", Integer.toString(count));
+    packedFlags.clear();
+  }
+
+  @NotNull
+  private FileType getAutoDetectedType(@NotNull VirtualFile file, int id) {
+    long flags = packedFlags.get(id);
+    return BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK) ? FileTypes.PLAIN_TEXT :
+           BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK) ? UnknownFileType.INSTANCE :
+           ObjectUtils.notNull(file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY), FileTypes.PLAIN_TEXT);
   }
 
   @NotNull
@@ -507,31 +570,20 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     return file.getFileType();
   }
 
-  private volatile FileAttribute autoDetectedAttribute = new FileAttribute("AUTO_DETECTION_CACHE_ATTRIBUTE", 0, true);
-  private static final int AUTO_DETECTED_AS_TEXT_FLAG = 0x01;
-  private static final int AUTO_DETECTED_AS_BINARY_FLAG = 0x02;
   private void cacheAutoDetectedFileType(@NotNull VirtualFile file, @NotNull FileType fileType) {
-    DataOutputStream stream = autoDetectedAttribute.writeAttribute(file);
     boolean wasAutodetectedAsText = fileType == FileTypes.PLAIN_TEXT;
     boolean wasAutodetectedAsBinary = fileType == FileTypes.UNKNOWN;
-    try {
-      try {
-        byte b = (byte)((wasAutodetectedAsText ? AUTO_DETECTED_AS_TEXT_FLAG : 0) |
-                         (wasAutodetectedAsBinary ? AUTO_DETECTED_AS_BINARY_FLAG : 0));
-        stream.writeByte(b);
-      }
-      finally {
-        stream.close();
-      }
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
+
+    int flags = BitUtil.set(0, AUTO_DETECTED_AS_TEXT_MASK, wasAutodetectedAsText);
+    flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
+    writeFlagsToCache(file, flags);
     if (file instanceof VirtualFileWithId) {
       int id = Math.abs(((VirtualFileWithId)file).getId());
-      autoDetectWasRun.set(id);
-      autoDetectedAsText.set(id, wasAutodetectedAsText);
-      autoDetectedAsBinary.set(id, wasAutodetectedAsBinary);
+      flags = AUTO_DETECT_WAS_RUN_MASK | ATTRIBUTES_WERE_LOADED_MASK;
+      flags = BitUtil.set(flags, AUTO_DETECTED_AS_TEXT_MASK, wasAutodetectedAsText);
+      flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
+      packedFlags.set(id, flags);
+
       if (wasAutodetectedAsText || wasAutodetectedAsBinary) {
         file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
         return;
@@ -546,7 +598,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     // TODO: Abstract file types are not std one, so need to be restored specially,
     // currently there are 6 of them and restoration does not happen very often so just iteration is enough
     if (type == PlainTextFileType.INSTANCE && !fileTypeName.equals(type.getName())) {
-      for (FileType fileType: getRegisteredFileTypes()) {
+      for (FileType fileType: mySchemesManager.getAllSchemes()) {
         if (fileTypeName.equals(fileType.getName())) {
           return fileType;
         }
@@ -607,7 +659,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       }
       FileType fileType = result.get();
       if (toLog()) {
-        System.out.println("F: Redetect run for file: " + file.getName() + "; result: "+fileType.getName());
+        log("F: Redetect run for file: " + file.getName() + "; result: "+fileType.getName());
       }
 
       if (LOG.isDebugEnabled()) {
@@ -656,7 +708,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   @Override
-  public void registerFileType(FileType fileType) {
+  public void registerFileType(@NotNull FileType fileType) {
+    //noinspection deprecation
     registerFileType(fileType, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
@@ -666,15 +719,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       @Override
       public void run() {
         fireBeforeFileTypesChanged();
-        registerFileTypeWithoutNotification(type, defaultAssociations);
+        registerFileTypeWithoutNotification(type, defaultAssociations, true);
         fireFileTypesChanged();
-
       }
     });
   }
 
   @Override
-  public void unregisterFileType(final FileType fileType) {
+  public void unregisterFileType(@NotNull final FileType fileType) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -686,7 +738,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   private void unregisterFileTypeWithoutNotification(FileType fileType) {
-    removeAllAssociations(fileType);
+    myPatternsTable.removeAllAssociations(fileType);
     mySchemesManager.removeScheme(fileType);
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
       final FileTypeIdentifiableByVirtualFile fakeFileType = (FileTypeIdentifiableByVirtualFile)fileType;
@@ -703,7 +755,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @Override
   @NotNull
-  public String getExtension(String fileName) {
+  public String getExtension(@NotNull String fileName) {
     int index = fileName.lastIndexOf('.');
     if (index < 0) return "";
     return fileName.substring(index + 1);
@@ -712,12 +764,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @Override
   @NotNull
   public String getIgnoredFilesList() {
-    final Set<String> masks = myIgnoredPatterns.getIgnoreMasks();
-    if (masks.isEmpty()) {
-      return "";
-    }
-
-    return StringUtil.join(masks, ";") + ";";
+    Set<String> masks = myIgnoredPatterns.getIgnoreMasks();
+    return masks.isEmpty() ? "" : StringUtil.join(masks, ";") + ";";
   }
 
   @Override
@@ -729,7 +777,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   @Override
-  public boolean isIgnoredFilesListEqualToCurrent(String list) {
+  public boolean isIgnoredFilesListEqualToCurrent(@NotNull String list) {
     Set<String> tempSet = new THashSet<String>();
     StringTokenizer tokenizer = new StringTokenizer(list, ";");
     while (tokenizer.hasMoreTokens()) {
@@ -771,33 +819,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     removeAssociation(type, matcher, true);
   }
 
-  private void removeAllAssociations(FileType type) {
-    myPatternsTable.removeAllAssociations(type);
-  }
-
   @Override
   public void fireBeforeFileTypesChanged() {
     FileTypeEvent event = new FileTypeEvent(this);
     myMessageBus.syncPublisher(TOPIC).beforeFileTypesChanged(event);
   }
 
-  @Override
-  public SchemesManager<FileType, AbstractFileType> getSchemesManager() {
-    return mySchemesManager;
-  }
-
-  private final AtomicInteger fileTypeChangedCount = new AtomicInteger();
+  private final AtomicInteger fileTypeChangedCount;
   @Override
   public void fireFileTypesChanged() {
     clearCaches();
     myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this));
-  }
-
-  private void clearCaches() {
-    autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.incrementAndGet());
-    autoDetectWasRun.clear();
-    autoDetectedAsText.clear();
-    autoDetectedAsBinary.clear();
   }
 
   private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<FileTypeListener, MessageBusConnection>();
@@ -817,58 +849,37 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-
-  @SuppressWarnings({"SimplifiableIfStatement"})
-  private static boolean isDefaultModified(FileType fileType) {
-    if (fileType instanceof ExternalizableFileType) {
-      return ((ExternalizableFileType)fileType).isModified();
-    }
-    return true; //TODO?
-  }
-
-  // -------------------------------------------------------------------------
-  // Implementation of NamedExternalizable interface
-  // -------------------------------------------------------------------------
-
   @Override
-  public String getExternalFileName() {
-    return "filetypes";
-  }
+  public void loadState(Element state) {
+    int savedVersion = StringUtilRt.parseInt(state.getAttributeValue(ATTRIBUTE_VERSION), 0);
 
-  @Override
-  public void readExternal(Element parentNode) throws InvalidDataException {
-    int savedVersion = getVersion(parentNode);
-    for (final Object o : parentNode.getChildren()) {
-      final Element e = (Element)o;
-      if (ELEMENT_FILETYPES.equals(e.getName())) {
-        List children = e.getChildren(ELEMENT_FILETYPE);
-        for (final Object aChildren : children) {
-          Element element = (Element)aChildren;
-          loadFileType(element, true, null, false, null);
-        }
+    for (Element element : state.getChildren()) {
+      if (element.getName().equals(ELEMENT_IGNORE_FILES)) {
+        myIgnoredPatterns.setIgnoreMasks(element.getAttributeValue(ATTRIBUTE_LIST));
       }
-      else if (ELEMENT_IGNOREFILES.equals(e.getName())) {
-        myIgnoredPatterns.setIgnoreMasks(e.getAttributeValue(ATTRIBUTE_LIST));
-      }
-      else if (AbstractFileType.ELEMENT_EXTENSIONMAP.equals(e.getName())) {
-        readGlobalMappings(e);
+      else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(element.getName())) {
+        readGlobalMappings(element);
       }
     }
 
-    if (savedVersion == 0) {
-      addIgnore(".svn");
-    }
-    if (savedVersion < 2) {
-      restoreStandardFileExtensions();
-    }
     if (savedVersion < 4) {
+      if (savedVersion == 0) {
+        addIgnore(".svn");
+      }
+
+      if (savedVersion < 2) {
+        restoreStandardFileExtensions();
+      }
+
       addIgnore("*.pyc");
       addIgnore("*.pyo");
       addIgnore(".git");
     }
+
     if (savedVersion < 5) {
       addIgnore("*.hprof");
     }
+
     if (savedVersion < 6) {
       addIgnore("_svn");
     }
@@ -878,7 +889,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     if (savedVersion < 8) {
-      addIgnore("*.lib");
       addIgnore("*~");
     }
 
@@ -890,18 +900,36 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       addIgnore(".bundle");
     }
 
-    if (savedVersion < VERSION) {
+    if (savedVersion < 11) {
       addIgnore("*.rbc");
     }
+
+    if (savedVersion < 13) {
+      // we want *.lib back since it's an important user artifact for CLion, also for IDEA project itself, since we have some libs.  
+      Set<String> masks = new LinkedHashSet<String>(myIgnoredPatterns.getIgnoreMasks());
+      masks.remove("*.lib");
+      
+      myIgnoredPatterns.clearPatterns();
+      for (String each : masks) {
+        myIgnoredPatterns.addIgnoreMask(each);
+      }
+    }
+
+    if (savedVersion < 14) {
+      addIgnore(".tox");
+    }
+
     myIgnoredFileCache.clearCache();
-    fileTypeChangedCount.set(JDOMExternalizer.readInteger(parentNode, "fileTypeChangedCounter", 0));
-    autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
+
+    String counter = JDOMExternalizer.readString(state, "fileTypeChangedCounter");
+    if (counter != null) {
+      fileTypeChangedCount.set(StringUtilRt.parseInt(counter, 0));
+      autoDetectedAttribute = autoDetectedAttribute.newVersion(fileTypeChangedCount.get());
+    }
   }
 
   private void readGlobalMappings(@NotNull Element e) {
-    List<Pair<FileNameMatcher, String>> associations = AbstractFileType.readAssociations(e);
-
-    for (Pair<FileNameMatcher, String> association : associations) {
+    for (Pair<FileNameMatcher, String> association : AbstractFileType.readAssociations(e)) {
       FileType type = getFileTypeByName(association.getSecond());
       FileNameMatcher matcher = association.getFirst();
       if (type != null) {
@@ -919,7 +947,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
 
     List<Trinity<FileNameMatcher, String, Boolean>> removedAssociations = AbstractFileType.readRemovedAssociations(e);
-
     for (Trinity<FileNameMatcher, String, Boolean> trinity : removedAssociations) {
       FileType type = getFileTypeByName(trinity.getSecond());
       FileNameMatcher matcher = trinity.getFirst();
@@ -927,23 +954,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         removeAssociation(type, matcher, false);
       }
       else {
-        myUnresolvedRemovedMappings.put(matcher, Trinity
-          .create(trinity.getSecond(), myUnresolvedMappings.get(matcher), trinity.getThird()));
+        myUnresolvedRemovedMappings.put(matcher, Trinity.create(trinity.getSecond(), myUnresolvedMappings.get(matcher), trinity.getThird()));
       }
-    }
-  }
-
-  private void readMappingsForFileType(@NotNull Element e, FileType type) {
-    List<Pair<FileNameMatcher, String>> associations = AbstractFileType.readAssociations(e);
-
-    for (Pair<FileNameMatcher, String> association : associations) {
-      associate(type, association.getFirst(), false);
-    }
-
-    List<Trinity<FileNameMatcher, String, Boolean>> removedAssociations = AbstractFileType.readRemovedAssociations(e);
-
-    for (Trinity<FileNameMatcher, String, Boolean> removedAssociation : removedAssociations) {
-      removeAssociation(type, removedAssociation.getFirst(), false);
     }
   }
 
@@ -971,78 +983,94 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  private static int getVersion(@NotNull Element node) {
-    final String verString = node.getAttributeValue(ATTRIBUTE_VERSION);
-    if (verString == null) return 0;
-    try {
-      return Integer.parseInt(verString);
-    }
-    catch (NumberFormatException e) {
-      return 0;
-    }
-  }
-
+  @Nullable
   @Override
-  public void writeExternal(Element parentNode) throws WriteExternalException {
-    parentNode.setAttribute(ATTRIBUTE_VERSION, String.valueOf(VERSION));
+  public Element getState() {
+    Element state = new Element("state");
 
-    Element element = new Element(ELEMENT_IGNOREFILES);
-    parentNode.addContent(element);
-    element.setAttribute(ATTRIBUTE_LIST, getIgnoredFilesList());
-    Element map = new Element(AbstractFileType.ELEMENT_EXTENSIONMAP);
-    parentNode.addContent(map);
-
-    final List<FileType> fileTypes = Arrays.asList(getRegisteredFileTypes());
-    Collections.sort(fileTypes, new Comparator<FileType>() {
-      @Override
-      public int compare(@NotNull FileType o1, @NotNull FileType o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
-    for (FileType type : fileTypes) {
-      writeExtensionsMap(map, type, true);
+    Set<String> masks = myIgnoredPatterns.getIgnoreMasks();
+    String ignoreFiles;
+    if (masks.isEmpty()) {
+      ignoreFiles = "";
+    }
+    else {
+      String[] strings = ArrayUtil.toStringArray(masks);
+      Arrays.sort(strings);
+      ignoreFiles = StringUtil.join(strings, ";") + ";";
     }
 
-    int value = fileTypeChangedCount.get();
-    if (value != 0) {
-      JDOMExternalizer.write(parentNode, "fileTypeChangedCounter", value);
+    if (!ignoreFiles.equalsIgnoreCase(DEFAULT_IGNORED)) {
+      // empty means empty list - we need to distinguish null and empty to apply or not to apply default value
+      state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, ignoreFiles));
     }
-  }
 
-  private void writeExtensionsMap(final Element map, final FileType type, boolean specifyTypeName) {
-    final List<FileNameMatcher> assocs = myPatternsTable.getAssociations(type);
-    final Set<FileNameMatcher> defaultAssocs = new HashSet<FileNameMatcher>(myInitialAssociations.getAssociations(type));
+    Element map = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
 
-    for (FileNameMatcher matcher : assocs) {
-      if (defaultAssocs.contains(matcher)) {
-        defaultAssocs.remove(matcher);
+    List<FileType> notExternalizableFileTypes = new ArrayList<FileType>();
+    for (FileType type : mySchemesManager.getAllSchemes()) {
+      if (!(type instanceof AbstractFileType) || myDefaultTypes.contains(type)) {
+        notExternalizableFileTypes.add(type);
       }
-      else if (shouldSave(type)) {
-        if (!(type instanceof ImportedFileType) || !((ImportedFileType)type).getOriginalPatterns().contains(matcher)) {
-          Element content = AbstractFileType.writeMapping(type, matcher, specifyTypeName);
-          if (content != null) {
-            map.addContent(content);
-          }
+    }
+    if (!notExternalizableFileTypes.isEmpty()) {
+      Collections.sort(notExternalizableFileTypes, new Comparator<FileType>() {
+        @Override
+        public int compare(@NotNull FileType o1, @NotNull FileType o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+      for (FileType type : notExternalizableFileTypes) {
+        writeExtensionsMap(map, type, true);
+      }
+    }
+
+    if (!myUnresolvedMappings.isEmpty()) {
+      FileNameMatcher[] unresolvedMappingKeys = myUnresolvedMappings.keySet().toArray(new FileNameMatcher[myUnresolvedMappings.size()]);
+      Arrays.sort(unresolvedMappingKeys, new Comparator<FileNameMatcher>() {
+        @Override
+        public int compare(FileNameMatcher o1, FileNameMatcher o2) {
+          return o1.getPresentableString().compareTo(o2.getPresentableString());
+        }
+      });
+
+      for (FileNameMatcher fileNameMatcher : unresolvedMappingKeys) {
+        Element content = AbstractFileType.writeMapping(myUnresolvedMappings.get(fileNameMatcher), fileNameMatcher, true);
+        if (content != null) {
+          map.addContent(content);
         }
       }
     }
 
-    for (FileNameMatcher matcher : defaultAssocs) {
+    if (!map.getChildren().isEmpty()) {
+      state.addContent(map);
+    }
+
+    if (!state.getChildren().isEmpty()) {
+      state.setAttribute(ATTRIBUTE_VERSION, String.valueOf(VERSION));
+    }
+    return state;
+  }
+
+  private void writeExtensionsMap(@NotNull Element map, @NotNull FileType type, boolean specifyTypeName) {
+    List<FileNameMatcher> associations = myPatternsTable.getAssociations(type);
+    Set<FileNameMatcher> defaultAssociations = new THashSet<FileNameMatcher>(myInitialAssociations.getAssociations(type));
+
+    for (FileNameMatcher matcher : associations) {
+      if (defaultAssociations.contains(matcher)) {
+        defaultAssociations.remove(matcher);
+      }
+      else if (shouldSave(type)) {
+        Element content = AbstractFileType.writeMapping(type.getName(), matcher, specifyTypeName);
+        if (content != null) {
+          map.addContent(content);
+        }
+      }
+    }
+
+    for (FileNameMatcher matcher : defaultAssociations) {
       Element content = AbstractFileType.writeRemovedMapping(type, matcher, specifyTypeName, isApproved(matcher));
       if (content != null) {
         map.addContent(content);
-      }
-    }
-
-    if (type instanceof ImportedFileType) {
-      List<FileNameMatcher> original = ((ImportedFileType)type).getOriginalPatterns();
-      for (FileNameMatcher matcher : original) {
-        if (!assocs.contains(matcher)) {
-          Element content = AbstractFileType.writeRemovedMapping(type, matcher, specifyTypeName, isApproved(matcher));
-          if (content != null) {
-            map.addContent(content);
-          }
-        }
       }
     }
   }
@@ -1062,8 +1090,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@NonNls String semicolonDelimited) {
-    if (semicolonDelimited == null) return Collections.emptyList();
+  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimited) {
+    if (semicolonDelimited == null) {
+      return Collections.emptyList();
+    }
+
     StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, FileTypeConsumer.EXTENSION_DELIMITER, false);
     ArrayList<FileNameMatcher> list = new ArrayList<FileNameMatcher>();
     while (tokenizer.hasMoreTokens()) {
@@ -1075,8 +1106,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   /**
    * Registers a standard file type. Doesn't notifyListeners any change events.
    */
-  private void registerFileTypeWithoutNotification(@NotNull FileType fileType, @NotNull List<FileNameMatcher> matchers) {
-    mySchemesManager.addNewScheme(fileType, true);
+  private void registerFileTypeWithoutNotification(@NotNull FileType fileType, @NotNull List<FileNameMatcher> matchers, boolean addScheme) {
+    if (addScheme) {
+      mySchemesManager.addNewScheme(fileType, true);
+    }
     for (FileNameMatcher matcher : matchers) {
       myPatternsTable.addAssociation(matcher, fileType);
       myInitialAssociations.addAssociation(matcher, fileType);
@@ -1085,7 +1118,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (fileType instanceof FileTypeIdentifiableByVirtualFile) {
       mySpecialFileTypes.add((FileTypeIdentifiableByVirtualFile)fileType);
     }
-
   }
 
   private void bindUnresolvedMappings(@NotNull FileType fileType) {
@@ -1106,153 +1138,95 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  // returns true if at least one standard file type has been read
-  private boolean loadAllFileTypes() {
-    Collection<AbstractFileType> collection = mySchemesManager.loadSchemes();
-
-    boolean res = false;
-    for (AbstractFileType fileType : collection) {
-      ReadFileType readFileType = (ReadFileType)fileType;
-      FileType loadedFileType = loadFileType(readFileType);
-      res |= myInitialAssociations.hasAssociationsFor(loadedFileType);
-    }
-
-    return res;
-  }
-
-  private FileType loadFileType(@NotNull ReadFileType readFileType) {
-    return loadFileType(readFileType.getElement(), false, readFileType.getExternalInfo(),
-                        true, readFileType.getExternalInfo().getCurrentFileName());
-  }
-
-
-  private FileType loadFileType(@NotNull Element typeElement, boolean isDefaults, final ExternalInfo info, boolean ignoreExisting, String fileName) {
+  @NotNull
+  private FileType loadFileType(@NotNull Element typeElement, boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
     String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
-    String iconPath = typeElement.getAttributeValue(ATTRIBUTE_ICON);
-    String extensionsStr = typeElement.getAttributeValue(ATTRIBUTE_EXTENSIONS); // TODO: support wildcards
+    String iconPath = typeElement.getAttributeValue("icon");
 
-    FileType type = getFileTypeByName(fileTypeName);
-
-    if (isDefaults && !ignoreExisting) {
+    String extensionsStr = StringUtil.nullize(typeElement.getAttributeValue("extensions"));
+    if (isDefault && extensionsStr != null) {
+      // todo support wildcards
       extensionsStr = filterAlreadyRegisteredExtensions(extensionsStr);
     }
 
-    List<FileNameMatcher> exts = parse(extensionsStr);
-    if (type != null && !ignoreExisting) {
-      if (isDefaults) return type;
-      if (extensionsStr != null) {
-        removeAllAssociations(type);
-        for (FileNameMatcher ext : exts) {
-          associate(type, ext, false);
+    FileType type = isDefault ? getFileTypeByName(fileTypeName) : null;
+    if (type != null) {
+      return type;
+    }
+
+    Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
+    if (element == null) {
+      for (CustomFileTypeFactory factory : CustomFileTypeFactory.EP_NAME.getExtensions()) {
+        type = factory.createFileType(typeElement);
+        if (type != null) {
+          break;
         }
       }
 
-      if (type instanceof JDOMExternalizable) {
-        try {
-          ((JDOMExternalizable)type).readExternal(typeElement);
-        }
-        catch (InvalidDataException e) {
-          throw new RuntimeException(e);
-        }
+      if (type == null) {
+        type = new UserBinaryFileType();
       }
     }
     else {
-      type = loadCustomFile(typeElement, info, fileName);
-      if (type instanceof UserFileType) {
-        setFileTypeAttributes(fileTypeName, fileTypeDescr, iconPath, (UserFileType)type);
-      }
-      registerFileTypeWithoutNotification(type, exts);
+      SyntaxTable table = AbstractFileType.readSyntaxTable(element);
+      type = new AbstractFileType(table);
+      ((AbstractFileType)type).initSupport();
     }
 
-    if (type instanceof UserFileType) {
-      UserFileType ft = (UserFileType)type;
-      setFileTypeAttributes(fileTypeName, fileTypeDescr, iconPath, ft);
-    }
+    setFileTypeAttributes((UserFileType)type, fileTypeName, fileTypeDescr, iconPath);
+    registerFileTypeWithoutNotification(type, parse(extensionsStr), isDefault);
 
-    if (isDefaults) {
+    if (isDefault) {
       myDefaultTypes.add(type);
       if (type instanceof ExternalizableFileType) {
         ((ExternalizableFileType)type).markDefaultSettings();
       }
     }
     else {
-      Element extensions = typeElement.getChild(AbstractFileType.ELEMENT_EXTENSIONMAP);
+      Element extensions = typeElement.getChild(AbstractFileType.ELEMENT_EXTENSION_MAP);
       if (extensions != null) {
-        readMappingsForFileType(extensions, type);
+        for (Pair<FileNameMatcher, String> association : AbstractFileType.readAssociations(extensions)) {
+          associate(type, association.getFirst(), false);
+        }
+
+        for (Trinity<FileNameMatcher, String, Boolean> removedAssociation : AbstractFileType.readRemovedAssociations(extensions)) {
+          removeAssociation(type, removedAssociation.getFirst(), false);
+        }
       }
     }
-
     return type;
   }
 
-  private String filterAlreadyRegisteredExtensions(String semicolonDelimited) {
+  @Nullable
+  private String filterAlreadyRegisteredExtensions(@NotNull String semicolonDelimited) {
     StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, FileTypeConsumer.EXTENSION_DELIMITER, false);
-    ArrayList<String> list = new ArrayList<String>();
+    StringBuilder builder = null;
     while (tokenizer.hasMoreTokens()) {
-      final String extension = tokenizer.nextToken().trim();
+      String extension = tokenizer.nextToken().trim();
       if (getFileTypeByExtension(extension) == UnknownFileType.INSTANCE) {
-        list.add(extension);
-      }
-    }
-    return StringUtil.join(list, FileTypeConsumer.EXTENSION_DELIMITER);
-  }
-
-  @NotNull
-  private static FileType loadCustomFile(@NotNull Element typeElement, ExternalInfo info, String fileName) {
-    FileType type = null;
-
-    Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
-    if (element != null) {
-      final SyntaxTable table = AbstractFileType.readSyntaxTable(element);
-      if (table != null) {
-        if (info == null) {
-          type = new AbstractFileType(table);
-          ((AbstractFileType)type).getExternalInfo().setCurrentFileName(fileName);
+        if (builder == null) {
+          builder = new StringBuilder();
         }
-        else {
-          type = new ImportedFileType(table, info);
-          ((ImportedFileType)type).readOriginalMatchers(typeElement);
+        else if (builder.length() > 0) {
+          builder.append(FileTypeConsumer.EXTENSION_DELIMITER);
         }
-        ((AbstractFileType)type).initSupport();
-        return type;
+        builder.append(extension);
       }
     }
-    for (CustomFileTypeFactory factory : Extensions.getExtensions(CustomFileTypeFactory.EP_NAME)) {
-      type = factory.createFileType(typeElement);
-      if (type != null) {
-        break;
-      }
-    }
-    if (type == null) {
-      type = new UserBinaryFileType();
-    }
-    return type;
+    return builder == null ? null : builder.toString();
   }
 
-  private static void setFileTypeAttributes(final String fileTypeName,
-                                            final String fileTypeDescr,
-                                            final String iconPath,
-                                            final UserFileType ft) {
-    if (iconPath != null && !StringUtil.isEmptyOrSpaces(iconPath)) {
-      Icon icon = IconLoader.getIcon(iconPath);
-      ft.setIcon(icon);
+  private static void setFileTypeAttributes(@NotNull UserFileType fileType, @Nullable String name, @Nullable String description, @Nullable String iconPath) {
+    if (!StringUtil.isEmptyOrSpaces(iconPath)) {
+      fileType.setIcon(IconLoader.getIcon(iconPath));
     }
-
-    if (fileTypeDescr != null) ft.setDescription(fileTypeDescr);
-    if (fileTypeName != null) ft.setName(fileTypeName);
-  }
-
-  private static File getOrCreateFileTypesDir() {
-    String directoryPath = PathManager.getConfigPath() + File.separator + ELEMENT_FILETYPES;
-    File directory = new File(directoryPath);
-    if (!directory.exists()) {
-      if (!directory.mkdir()) {
-        LOG.error("Could not create directory: " + directory.getAbsolutePath());
-        return null;
-      }
+    if (description != null) {
+      fileType.setDescription(description);
     }
-    return directory;
+    if (name != null) {
+      fileType.setName(name);
+    }
   }
 
   private static boolean shouldSave(FileType fileType) {
@@ -1350,12 +1324,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (typeName != null && !typeName.equals(fileType.getName())) {
       Trinity<String, String, Boolean> trinity = myUnresolvedRemovedMappings.get(matcher);
       myRemovedMappings.put(matcher, Pair.create(fileType, trinity != null && trinity.third));
+      myUnresolvedMappings.remove(matcher);
     }
   }
 
-  @VisibleForTesting
-  public Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
+  Map<FileNameMatcher, Pair<FileType, Boolean>> getRemovedMappings() {
     return myRemovedMappings;
+  }
+
+  @TestOnly
+  void clearForTests() {
+    myStandardFileTypes.clear();
+    myUnresolvedMappings.clear();
+    mySchemesManager.clearAllSchemes();
   }
 
   @Override

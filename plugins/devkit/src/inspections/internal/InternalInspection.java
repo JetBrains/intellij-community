@@ -16,8 +16,8 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.PsiElementVisitor;
@@ -29,18 +29,10 @@ public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiUtil.EMPTY_VISITOR;
+    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
-  @NotNull
-  @Override
-  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                              boolean isOnTheFly,
-                                              @NotNull LocalInspectionToolSession session) {
-    return isAllowed(holder) ? buildInternalVisitor(holder, isOnTheFly) : PsiUtil.EMPTY_VISITOR;
-  }
-
-  private static boolean isAllowed(ProblemsHolder holder) {
+  private boolean isAllowed(ProblemsHolder holder) {
     if (PsiUtil.isIdeaProject(holder.getProject())) {
       return true;
     }
@@ -50,7 +42,13 @@ public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
       return true;
     }
 
-    return false;
+    //seems that internal inspection tests should test in most cases the inspection 
+    //and not that internal inspections are not available in non-idea non-plugin projects 
+    return isAllowedByDefault();
+  }
+
+  protected boolean isAllowedByDefault() {
+    return ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public abstract PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);

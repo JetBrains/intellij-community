@@ -43,8 +43,13 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
     if (element instanceof PsiCall) {
       call = (PsiCall)element;
     }
-    else if (element.getParent() instanceof PsiCall) {
-      call = (PsiCall)element.getParent();
+    else {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiCall) {
+        call = (PsiCall)parent;
+      } else if (parent instanceof PsiAnonymousClass) {
+        call = (PsiNewExpression)parent.getParent();
+      }
     }
     if (call != null) {
       final PsiExpressionList argList = call.getArgumentList();
@@ -71,7 +76,7 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
         newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
           @Override
           public String fun(PsiParameter psiParameter) {
-            return parameter.getType().getCanonicalText();
+            return psiParameter.getType().getCanonicalText();
           }
         }, ","));
         newText.append(")*/");

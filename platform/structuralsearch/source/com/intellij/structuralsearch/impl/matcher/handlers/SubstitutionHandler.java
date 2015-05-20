@@ -521,10 +521,6 @@ public class SubstitutionHandler extends MatchingHandler {
     this.target = target;
   }
 
-  public MatchingHandler getMatchHandler() {
-    return matchHandler;
-  }
-
   public void setMatchHandler(MatchingHandler matchHandler) {
     this.matchHandler = matchHandler;
   }

@@ -15,60 +15,12 @@
  */
 package com.jetbrains.python.newProject;
 
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.impl.welcomeScreen.CardActionsPanel;
-import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog;
 import com.jetbrains.python.newProject.actions.PyCharmNewProjectStep;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-
-public class PyCharmNewProjectDialog extends DialogWrapper {
-  public PyCharmNewProjectDialog() {
-    super(ProjectManager.getInstance().getDefaultProject());
-    setTitle(" "); // hack to make native fileChooser work on Mac. See MacFileChooserDialogImpl.MAIN_THREAD_RUNNABLE
-    init();
-  }
-
-  @Nullable
+public class PyCharmNewProjectDialog extends AbstractNewProjectDialog {
   @Override
-  protected JComponent createCenterPanel() {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        PyCharmNewProjectDialog.this.close(OK_EXIT_CODE);
-      }
-    };
-    final DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
-    final DefaultActionGroup root = new PyCharmNewProjectStep(generators.length == 0 ? "Create Project" : "Select Project Type", runnable);
-
-    return new CardActionsPanel(root) {
-
-      @Override
-      public Dimension getPreferredSize() {
-        return getMinimumSize();
-      }
-
-      @Override
-      public Dimension getMinimumSize() {
-        if (generators.length == 0) return new Dimension(550, 200);
-        return new Dimension(650, 450);
-      }
-    };
-  }
-
-  @Override
-  protected String getHelpId() {
-    return null;
-  }
-
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[0];
+  protected PyCharmNewProjectStep createRootStep() {
+    return new PyCharmNewProjectStep();
   }
 }

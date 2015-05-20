@@ -15,13 +15,15 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import groovy.lang.GroovyObject;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.bundling.Jar;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
@@ -64,7 +66,17 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     final String moduleVersion = project.getVersion().toString();
     final File buildDir = project.getBuildDir();
 
-    final ModuleExtendedModelImpl moduleVersionModel = new ModuleExtendedModelImpl(moduleName, moduleGroup, moduleVersion, buildDir);
+    String javaSourceCompatibility = null;
+    for (Task task : project.getTasks()) {
+      if (task instanceof JavaCompile) {
+        JavaCompile javaCompile = (JavaCompile)task;
+        javaSourceCompatibility = javaCompile.getSourceCompatibility();
+        if(task.getName().equals("compileJava")) break;
+      }
+    }
+
+    final ModuleExtendedModelImpl moduleVersionModel =
+      new ModuleExtendedModelImpl(moduleName, moduleGroup, moduleVersion, buildDir, javaSourceCompatibility);
 
     final List<File> artifacts = new ArrayList<File>();
     for (Task task : project.getTasks()) {
@@ -134,12 +146,9 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     final Set<String> ideaSourceDirectories = new HashSet<String>();
     final Set<String> ideaTestDirectories = new HashSet<String>();
     final Set<String> ideaGeneratedDirectories = new HashSet<String>();
-    final Set<String> ideaExtResourceDirectories = new HashSet<String>();
-    final Set<String> ideaExtTestResourceDirectories = new HashSet<String>();
     final Set<File> excludeDirectories = new HashSet<File>();
 
-    enrichDataFromIdeaPlugin(project, excludeDirectories, ideaSourceDirectories, ideaTestDirectories,
-                             ideaExtResourceDirectories, ideaExtTestResourceDirectories, ideaGeneratedDirectories);
+    enrichDataFromIdeaPlugin(project, excludeDirectories, ideaSourceDirectories, ideaTestDirectories, ideaGeneratedDirectories);
 
     if (ideaSourceDirectories.isEmpty()) {
       sourceDirectories.clear();
@@ -155,11 +164,6 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     sourceDirectories.addAll(ideaSourceDirectories);
     ideaTestDirectories.removeAll(testResourceDirectories);
     testDirectories.addAll(ideaTestDirectories);
-
-    resourceDirectories.removeAll(ideaExtTestResourceDirectories);
-    resourceDirectories.addAll(ideaExtResourceDirectories);
-    testResourceDirectories.removeAll(ideaExtResourceDirectories);
-    testResourceDirectories.addAll(ideaExtTestResourceDirectories);
 
     // ensure disjoint directories with different type
     resourceDirectories.removeAll(sourceDirectories);
@@ -184,6 +188,17 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
     moduleVersionModel.setContentRoots(Collections.<ExtIdeaContentRoot>singleton(contentRoot));
     moduleVersionModel.setCompilerOutput(compilerOutput);
+
+    ConfigurationContainer configurations = project.getConfigurations();
+    SortedMap<String, Configuration> configurationsByName = configurations.getAsMap();
+
+    Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>();
+    for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
+      Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles();
+      artifactsByConfiguration.put(configurationEntry.getKey(), files);
+    }
+    moduleVersionModel.setArtifactsByConfiguration(artifactsByConfiguration);
+
     return moduleVersionModel;
   }
 
@@ -224,8 +239,6 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
                                                Set<File> excludeDirectories,
                                                Set<String> javaDirectories,
                                                Set<String> testDirectories,
-                                               Set<String> ideaExtResourceDirectories,
-                                               Set<String> ideaExtTestResourceDirectories,
                                                Set<String> ideaGeneratedDirectories) {
 
     IdeaPlugin ideaPlugin = project.getPlugins().getPlugin(IdeaPlugin.class);
@@ -249,25 +262,5 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
         ideaGeneratedDirectories.add(file.getPath());
       }
     }
-
-    ideaExtResourceDirectories.addAll(getExtDirs("resourceDirs", ideaModel.getModule()));
-    ideaExtTestResourceDirectories.addAll(getExtDirs("testResourceDirs", ideaModel.getModule()));
-  }
-
-  private static List<String> getExtDirs(String propertyName, GroovyObject ideaModule) {
-    List<String> directories = new ArrayList<String>();
-    Object resourceDirs = ideaModule.getProperty(propertyName);
-    if (resourceDirs instanceof Iterable) {
-      for (Object o : Iterable.class.cast(resourceDirs)) {
-        if (o instanceof File) {
-          directories.add(File.class.cast(o).getPath());
-        }
-        else if (o instanceof String) {
-          directories.add((String)o);
-        }
-      }
-    }
-
-    return directories;
   }
 }

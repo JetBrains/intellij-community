@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,13 +55,13 @@ public enum AutoCompletionPolicy {
     return new PolicyDecorator(element, this);
   }
 
+  /**
+   * @deprecated use direct call {@link LookupElement#getAutoCompletionPolicy()} instead
+   */
   @Nullable
+  @Deprecated
   public static AutoCompletionPolicy getPolicy(LookupElement element) {
-    final PolicyDecorator decorator = element.as(PolicyDecorator.CLASS_CONDITION_KEY);
-    if (decorator != null) {
-      return decorator.myPolicy;
-    }
-    return null;
+    return element.getAutoCompletionPolicy();
   }
 
   private static class PolicyDecorator extends LookupElementDecorator<LookupElement> {
@@ -73,5 +73,9 @@ public enum AutoCompletionPolicy {
       myPolicy = policy;
     }
 
+    @Override
+    public AutoCompletionPolicy getAutoCompletionPolicy() {
+      return myPolicy;
+    }
   }
 }

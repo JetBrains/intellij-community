@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,17 @@ class VariableReturnedVisitor extends JavaRecursiveElementVisitor {
     super.visitReturnStatement(returnStatement);
     final PsiExpression returnValue = returnStatement.getReturnValue();
     if (VariableAccessUtils.mayEvaluateToVariable(returnValue, variable, myBuilderPattern)) {
+      returned = true;
+    }
+  }
+
+  @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    if (returned) {
+      return;
+    }
+    final PsiElement body = expression.getBody();
+    if (body instanceof PsiExpression && VariableAccessUtils.mayEvaluateToVariable((PsiExpression)body, variable, myBuilderPattern)) {
       returned = true;
     }
   }

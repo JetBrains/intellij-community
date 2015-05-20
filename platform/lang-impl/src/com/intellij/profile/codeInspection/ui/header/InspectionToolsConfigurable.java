@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ModifiableModel;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -57,13 +55,13 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -83,7 +81,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   public static final String DISPLAY_NAME = "Inspections";
   private static final String HEADER_TITLE = "Profile:";
 
-  private static final Logger LOG = Logger.getInstance("#" + InspectionToolsConfigurable.class.getName());
+  private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
   protected final InspectionProfileManager myProfileManager;
   protected final InspectionProjectProfileManager myProjectProfileManager;
   private final CardLayout myLayout = new CardLayout();
@@ -92,8 +90,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     new HashMap<Profile, SingleInspectionProfilePanel>();
   private final List<Profile> myDeletedProfiles = new ArrayList<Profile>();
   protected ProfilesConfigurableComboBox myProfiles;
-  private JPanel myPanel;
-  private JPanel myWholePanel;
+  private final JPanel myPanel;
+  private final JPanel myWholePanel;
   private Alarm mySelectionAlarm;
 
   public InspectionToolsConfigurable(@NotNull final InspectionProjectProfileManager projectProfileManager,
@@ -113,11 +111,15 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     myProfiles = new ProfilesConfigurableComboBox(new ListCellRendererWrapper<Profile>() {
       @Override
       public void customize(final JList list, final Profile value, final int index, final boolean selected, final boolean hasFocus) {
-        final String profileName = value.getName();
-        final SingleInspectionProfilePanel singleInspectionProfilePanel = myPanels.get(value);
-        final boolean isShared = singleInspectionProfilePanel != null && singleInspectionProfilePanel.isProfileShared();
+        final SingleInspectionProfilePanel singleInspectionProfilePanel = getProfilePanel(value);
+        LOG.assertTrue(singleInspectionProfilePanel != null,
+                       String.format("No panel for profile (name = %s, manager class = %s, is modified = %s) found",
+                                     value.getName(),
+                                     value.getProfileManager().getClass(),
+                                     ((InspectionProfileImpl) value).isChanged()));
+        final boolean isShared = singleInspectionProfilePanel.isProfileShared();
         setIcon(isShared ? AllIcons.General.ProjectSettings : AllIcons.General.Settings);
-        setText(profileName);
+        setText(singleInspectionProfilePanel.getCurrentProfileName());
       }
     }) {
       @Override
@@ -139,12 +141,13 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
       @Override
       public void setShareToTeamMembers(boolean shared) {
-        final InspectionProfileImpl inspectionProfile = getSelectedObject();
-        final String name = inspectionProfile.getName();
-        for (Map.Entry<Profile, SingleInspectionProfilePanel> e : myPanels.entrySet()) {
-          final InspectionProfileImpl currentProfile = (InspectionProfileImpl)e.getKey();
-          if (currentProfile.getName().equals(name) && !currentProfile.equals(inspectionProfile)) {
-            final boolean curShared = e.getValue().isProfileShared();
+        final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
+        LOG.assertTrue(selectedPanel != null, "No settings selectedPanel for: " + getSelectedObject());
+
+        final String name = getSelectedPanel().getCurrentProfileName();
+        for (SingleInspectionProfilePanel p : myPanels.values()) {
+          if (p != selectedPanel && Comparing.equal(p.getCurrentProfileName(), name)) {
+            final boolean curShared = p.isProfileShared();
             if (curShared == shared) {
               Messages.showErrorDialog((shared ? "Shared" : "Application level") + " profile with same name exists.", "Inspections Settings");
               return;
@@ -152,9 +155,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
           }
         }
 
-        final SingleInspectionProfilePanel panel = getSelectedPanel();
-        LOG.assertTrue(panel != null, "No settings panel for: " + getSelectedObject());
-        panel.setProfileShared(shared);
+        selectedPanel.setProfileShared(shared);
         myProfiles.repaint();
       }
 
@@ -165,7 +166,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
           final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)newProfile.getModifiableModel();
           modifiableModel.setModified(true);
           modifiableModel.setProjectLevel(false);
-          addProfile(modifiableModel);
+          addProfile(modifiableModel, newProfile);
           rename(modifiableModel);
         }
       }
@@ -182,23 +183,23 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       }
 
       private void rename(@NotNull final InspectionProfileImpl inspectionProfile) {
-        final String initialName = inspectionProfile.getName();
-        myProfiles.showEditCard(inspectionProfile.getName(), new SaveInputComponentValidator() {
+        final String initialName = getSelectedPanel().getCurrentProfileName();
+        myProfiles.showEditCard(initialName, new SaveInputComponentValidator() {
           @Override
           public void doSave(@NotNull String text) {
             if (!text.equals(initialName)) {
-              deleteProfile(inspectionProfile);
-              myProfiles.getModel().removeElement(inspectionProfile);
-              inspectionProfile.setName(text);
-              inspectionProfile.setModified(true);
-              addProfile(inspectionProfile);
+              getProfilePanel(inspectionProfile).setCurrentProfileName(text);
             }
             myProfiles.showComboBoxCard();
           }
 
           @Override
           public boolean checkValid(@NotNull String text) {
-            final boolean isValid = text.equals(initialName) || !hasName(text, myPanels.get(inspectionProfile).isProfileShared());
+            final SingleInspectionProfilePanel singleInspectionProfilePanel = myPanels.get(inspectionProfile);
+            if (singleInspectionProfilePanel == null) {
+              return false;
+            }
+            final boolean isValid = text.equals(initialName) || !hasName(text, singleInspectionProfilePanel.isProfileShared());
             if (isValid) {
               myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());
             }
@@ -206,6 +207,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
               myAuxiliaryRightPanel.showError("Name is already in use. Please change name to unique.");
             }
             return isValid;
+          }
+
+          @Override
+          public void cancel() {
+            myProfiles.showComboBoxCard();
+            myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());
           }
         });
       }
@@ -336,7 +343,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
               }
               final ModifiableModel model = profile.getModifiableModel();
               model.setModified(true);
-              addProfile((InspectionProfileImpl)model);
+              addProfile((InspectionProfileImpl)model, profile);
 
               //TODO myDeletedProfiles ? really need this
               myDeletedProfiles.remove(profile);
@@ -359,31 +366,39 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       @Override
       public void saveDescription(@NotNull String description) {
         final InspectionProfileImpl inspectionProfile = getSelectedObject();
-        if (!Comparing.equal(description, inspectionProfile.getDescription())) {
+        if (!Comparing.strEqual(description, inspectionProfile.getDescription())) {
           inspectionProfile.setDescription(description);
           inspectionProfile.setModified(true);
         }
         myAuxiliaryRightPanel.showDescription(description);
       }
+
+      @Override
+      public void cancel() {
+        myAuxiliaryRightPanel.showDescription(getSelectedObject().getDescription());
+      }
     });
 
     toolbar.setLayout(new GridBagLayout());
-    toolbar.add(new JLabel(HEADER_TITLE),
-                new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(10, 5, 0, 0), 0,
-                                       0));
-    toolbar.add(myProfiles,
-                new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(10, 5, 0, 0), 0,
-                                       0));
-    toolbar.add(manageButton,
-                new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.VERTICAL, new Insets(10, 5, 0, 0), 0,
-                                       0));
-    toolbar.add(myAuxiliaryRightPanel,
-                new GridBagConstraints(3, 0, 1, 1, 1.0, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 5, 0, 0), 0,
-                                       0));
+    final JLabel headerTitleLabel = new JLabel(HEADER_TITLE);
+    headerTitleLabel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
+    toolbar.add(headerTitleLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 
-    ((InspectionManagerEx)InspectionManager.getInstance(projectProfileManager.getProject())).buildInspectionSearchIndexIfNecessary();
+    toolbar.add(myProfiles, new GridBagConstraints(1, 0, 1, 1, 0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL, new Insets(0, 6, 0, 0), 0, 0));
+
+    toolbar.add(withBorderOnTop(manageButton), new GridBagConstraints(2, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.VERTICAL, new Insets(0, 10, 0, 0), 0, 0));
+
+    toolbar.add(myAuxiliaryRightPanel, new GridBagConstraints(3, 0, 1, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 15, 0, 0), 0, 0));
+
     myProjectProfileManager = projectProfileManager;
     myProfileManager = profileManager;
+  }
+
+  private static JComponent withBorderOnTop(final JComponent component) {
+    final JPanel panel = new JPanel();
+    panel.add(component);
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(UIUtil.isUnderDarcula() ? 10 : 13, 0, 0, 0));
+    return panel;
   }
 
   private Project getProject() {
@@ -409,9 +424,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return inspectionProfile;
   }
 
-  private void addProfile(InspectionProfileImpl model) {
+  private void addProfile(InspectionProfileImpl model, InspectionProfileImpl profile) {
     final String modelName = model.getName();
-    final SingleInspectionProfilePanel panel = createPanel(model, modelName);
+    final SingleInspectionProfilePanel panel = createPanel(model, profile, modelName);
     myPanel.add(getCardName(model), panel);
 
     myProfiles.getModel().addElement(model);
@@ -460,7 +475,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   public boolean isModified() {
     final InspectionProfileImpl selectedProfile = getSelectedObject();
     final InspectionProfileImpl currentProfile = getCurrentProfile();
-    if (!Comparing.equal(selectedProfile.getName(), currentProfile.getName()) || selectedProfile.isProjectLevel() != currentProfile.isProjectLevel()) {
+    if (!Comparing.equal(selectedProfile, currentProfile)) {
       return true;
     }
     for (SingleInspectionProfilePanel panel : myPanels.values()) {
@@ -472,7 +487,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public void apply() throws ConfigurationException {
-    final Map<Profile, SingleInspectionProfilePanel> panels = new LinkedHashMap<Profile, SingleInspectionProfilePanel>();
+    final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
     for (final Profile inspectionProfile : myPanels.keySet()) {
       if (myDeletedProfiles.remove(inspectionProfile)) {
         deleteProfile(getProfilePanel(inspectionProfile).getSelectedProfile());
@@ -480,13 +495,15 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       else {
         final SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
         panel.apply();
-        final ModifiableModel profile = panel.getSelectedProfile();
-        panels.put(profile, panel);
+        if (panel == selectedPanel) {
+          applyRootProfile(panel.getCurrentProfileName(), panel.isProfileShared());
+        }
       }
     }
-    myPanels.clear();
-    myPanels.putAll(panels);
+    doReset();
   }
+
+  protected abstract void applyRootProfile(final String name, final boolean isShared);
 
   private SingleInspectionProfilePanel getProfilePanel(Profile inspectionProfile) {
     return myPanels.get(inspectionProfile);
@@ -496,7 +513,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     myPanels.put(profile, panel);
   }
 
-  protected void deleteProfile(Profile profile) {
+  private void deleteProfile(Profile profile) {
     final String name = profile.getName();
     if (profile.getProfileManager() == myProfileManager) {
       if (myProfileManager.getProfile(name, false) != null) {
@@ -517,8 +534,12 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
   @Override
   public void reset() {
+    doReset();
+  }
+
+  private void doReset() {
     myDeletedProfiles.clear();
-    myPanels.clear();
+    disposeUIResources();
     final Collection<Profile> profiles = getProfiles();
     final List<Profile> modifiableProfiles = new ArrayList<Profile>(profiles.size());
     for (Profile profile : profiles) {
@@ -526,7 +547,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       final ModifiableModel modifiableProfile = ((InspectionProfileImpl)profile).getModifiableModel();
       modifiableProfiles.add(modifiableProfile);
       final InspectionProfileImpl inspectionProfile = (InspectionProfileImpl)modifiableProfile;
-      final SingleInspectionProfilePanel panel = createPanel(inspectionProfile, profileName);
+      final SingleInspectionProfilePanel panel = createPanel(inspectionProfile, profile, profileName);
       putProfile(modifiableProfile, panel);
       myPanel.add(getCardName(inspectionProfile), panel);
     }
@@ -560,8 +581,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return (inspectionProfile.isProjectLevel() ? "s" : "a") + inspectionProfile.getName();
   }
 
-  private SingleInspectionProfilePanel createPanel(InspectionProfileImpl profile, String profileName) {
-    return new SingleInspectionProfilePanel(myProjectProfileManager, profileName, profile) {
+  private SingleInspectionProfilePanel createPanel(InspectionProfileImpl profile, Profile original, String profileName) {
+    return new SingleInspectionProfilePanel(myProjectProfileManager, profileName, profile, original) {
       @Override
       protected boolean accept(InspectionToolWrapper entry) {
         return super.accept(entry) && acceptTool(entry);
@@ -609,8 +630,8 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   }
 
   @Override
-  public void selectProfile(String name) {
-    myProfiles.selectProfile(name);
+  public void selectProfile(Profile profile) {
+    myProfiles.selectProfile(profile);
   }
 
   @Override
@@ -630,18 +651,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
     return "configured profiles: " + StringUtil.join(myPanels.keySet(), ", ");
   }
 
-  protected Collection<String> getKnownNames() {
-    return ContainerUtil.map(myPanels.keySet(), new Function<Profile, String>() {
-      @Override
-      public String fun(Profile profile) {
-        return profile.getName();
-      }
-    });
-  }
-
-  private boolean hasName(final @NotNull String name, boolean shared) {
-    for (Map.Entry<Profile, SingleInspectionProfilePanel> e : myPanels.entrySet()) {
-      if (name.equals(e.getKey().getName()) && shared == e.getValue().isProfileShared()) {
+  private boolean hasName(@NotNull final String name, boolean shared) {
+    for (SingleInspectionProfilePanel p : myPanels.values()) {
+      if (name.equals(p.getCurrentProfileName()) && shared == p.isProfileShared()) {
         return true;
       }
     }
@@ -657,6 +669,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
   @Override
   public JComponent getPreferredFocusedComponent() {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
-    return getProfilePanel(inspectionProfile).getPreferredFocusedComponent();
+    SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
+    return panel == null ? null : panel.getPreferredFocusedComponent();
   }
 }

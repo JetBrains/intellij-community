@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.action;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,11 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.Collection;
 
-public class HgContinueRebaseAction extends HgProcessRebaseAction {
+public class HgContinueRebaseAction extends HgProcessStateAction {
+
+  public HgContinueRebaseAction() {
+    super(Repository.State.REBASING);
+  }
 
   @Override
   protected void execute(@NotNull final Project project,

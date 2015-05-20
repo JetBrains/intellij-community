@@ -219,6 +219,8 @@ public class RemoteUtil {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if (method.getDeclaringClass() == Object.class) {
+        if ("equals".equals(method.getName())) return proxy == args[0];
+        if ("hashCode".equals(method.getName())) return hashCode();
         return method.invoke(myRemote, args);
       }
       else {

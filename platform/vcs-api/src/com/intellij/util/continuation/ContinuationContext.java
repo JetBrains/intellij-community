@@ -15,7 +15,7 @@
  */
 package com.intellij.util.continuation;
 
-import com.intellij.openapi.vcs.CalledInAny;
+import org.jetbrains.annotations.CalledInAny;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 

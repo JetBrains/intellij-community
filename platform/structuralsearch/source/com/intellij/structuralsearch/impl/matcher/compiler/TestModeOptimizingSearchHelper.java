@@ -28,7 +28,7 @@ public class TestModeOptimizingSearchHelper extends OptimizingSearchHelperBase {
   }
 
   protected void doAddSearchWordInCode(final String refname) {
-    append(refname, "reserved in code:");
+    append(refname, "in code:");
   }
 
   @Override

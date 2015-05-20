@@ -57,10 +57,16 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import):
     
     dotted = patch_qt_on_import + '.'
     original_import = __import__
-    
+
+    from _pydev_imps._pydev_sys_patch import patch_sys_module, patch_reload, cancel_patches_in_sys_module
+
+    patch_sys_module()
+    patch_reload()
+
     def patched_import(name, *args, **kwargs):
         if patch_qt_on_import == name or name.startswith(dotted):
             builtins.__import__ = original_import
+            cancel_patches_in_sys_module()
             _internal_patch_qt() # Patch it only when the user would import the qt module
         return original_import(name, *args, **kwargs)
     
@@ -68,8 +74,8 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import):
         import builtins
     except ImportError:
         import __builtin__ as builtins
-    builtins.__import__ = patched_import 
-    
+    builtins.__import__ = patched_import
+
     
 def _internal_patch_qt():
     try:
@@ -85,7 +91,8 @@ def _internal_patch_qt():
     
     _original_thread_init = QtCore.QThread.__init__
     _original_runnable_init = QtCore.QRunnable.__init__
-    
+    _original_QThread = QtCore.QThread
+
     
     class FuncWrapper:
         
@@ -113,15 +120,24 @@ def _internal_patch_qt():
             
     
     class ThreadWrapper(QtCore.QThread):  # Wrapper for QThread
-        
+
         def __init__(self, *args, **kwargs):
-            _original_thread_init(self)
-    
-            self._original_run = self.run
-            self.run = self._new_run
+            _original_thread_init(self, *args, **kwargs)
+
+            # In PyQt5 the program hangs when we try to call original run method of QThread class.
+            # So we need to distinguish instances of QThread class and instances of QThread inheritors.
+            if self.__class__.run == _original_QThread.run:
+                self.run = self._exec_run
+            else:
+                self._original_run = self.run
+                self.run = self._new_run
             self._original_started = self.started
             self.started = StartedSignalWrapper(self, self.started)
-            
+
+        def _exec_run(self):
+            set_trace_in_qt()
+            return self.exec_()
+
         def _new_run(self):
             set_trace_in_qt()
             return self._original_run()
@@ -129,7 +145,7 @@ def _internal_patch_qt():
     class RunnableWrapper(QtCore.QRunnable):  # Wrapper for QRunnable
         
         def __init__(self, *args, **kwargs):
-            _original_runnable_init(self)
+            _original_runnable_init(self, *args, **kwargs)
     
             self._original_run = self.run
             self.run = self._new_run

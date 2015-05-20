@@ -27,11 +27,13 @@ import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Comparing;
@@ -39,6 +41,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -243,6 +246,11 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
           @Override
           public void run() {
             if (myProject.isDisposed()) return;
+            if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
+              DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
+              return;
+            }
+            
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             final PsiFile file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
             if (file == null) {
@@ -292,6 +300,7 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     result.addAll(myCachedInspectionFixes);
     result.addAll(myCachedIntentions);
     result.addAll(myCachedGutters);
+    result = DumbService.getInstance(myProject).filterByDumbAwareness(result);
     Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
       @Override
       public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
@@ -320,6 +329,11 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
     if (a instanceof LowPriorityAction) {
       return group - 3;
+    }
+    if (a instanceof SuppressIntentionActionFromFix) {
+      if (((SuppressIntentionActionFromFix)a).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
+        return group - 1;
+      }
     }
     if (a instanceof QuickFixWrapper) {
       final LocalQuickFix quickFix = ((QuickFixWrapper)a).getFix();

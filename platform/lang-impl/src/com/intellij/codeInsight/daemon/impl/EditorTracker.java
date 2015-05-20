@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,12 @@ public class EditorTracker extends AbstractProjectComponent {
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<Window, List<Editor>>();
   private final Map<Window, WindowFocusListener> myWindowToWindowFocusListenerMap = new HashMap<Window, WindowFocusListener>();
   private final Map<Editor, Window> myEditorToWindowMap = new HashMap<Editor, Window>();
-  private List<Editor> myActiveEditors = Collections.emptyList();
+  private List<Editor> myActiveEditors = Collections.emptyList(); // accessed in EDT only
 
   private final EventDispatcher<EditorTrackerListener> myDispatcher = EventDispatcher.create(EditorTrackerListener.class);
 
   private IdeFrameImpl myIdeFrame;
-  private Window myActiveWindow = null;
+  private Window myActiveWindow;
 
   public EditorTracker(Project project,
                        final WindowManager windowManager,
@@ -186,7 +186,8 @@ public class EditorTracker extends AbstractProjectComponent {
   }
 
   @NotNull
-  public List<Editor> getActiveEditors() {
+  List<Editor> getActiveEditors() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return myActiveEditors;
   }
 
@@ -210,6 +211,7 @@ public class EditorTracker extends AbstractProjectComponent {
   }
 
   void setActiveEditors(@NotNull List<Editor> editors) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myActiveEditors = editors;
 
     if (LOG.isDebugEnabled()) {

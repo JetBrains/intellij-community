@@ -140,10 +140,11 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
       PyParameterTableModelItem info = parameters.get(index);
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
-      if (parameterNames.contains(name)) {
+      final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
+      if (parameterNames.contains(nameWithoutStars)) {
         return PyBundle.message("ANN.duplicate.param.name");
       }
-      parameterNames.add(name);
+      parameterNames.add(nameWithoutStars);
 
       if (name.equals("*")) {
         hadSingleStar = true;
@@ -155,16 +156,25 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
         if (hadKeywordContainer) {
           return PyBundle.message("ANN.starred.param.after.kwparam");
         }
-        if (hadSingleStar) {
+        if (hadSingleStar || hadPositionalContainer) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
+        }
+        if (!isNameValid(name.substring(1), myProject)) {
+          return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name");
         }
         hadPositionalContainer = true;
       }
       else if (name.startsWith("**")) {
-        hadKeywordContainer = true;
         if (hadSingleStar && !hadParamsAfterSingleStar) {
           return PyBundle.message("ANN.named.arguments.after.star");
         }
+        if (hadKeywordContainer) {
+          return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star");
+        }
+        if (!isNameValid(name.substring(2), myProject)) {
+          return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name");
+        }
+        hadKeywordContainer = true;
       }
       else {
         if (!isNameValid(name, myProject)) {
@@ -189,14 +199,21 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
           }
         }
       }
-      if (parameter.getOldIndex() < 0 && !parameter.getName().startsWith("*")) {
-        if (StringUtil.isEmpty(info.defaultValueCodeFragment.getText()))
+      if (parameter.getOldIndex() < 0) {
+        if (!parameter.getName().startsWith("*")) {
+          if (StringUtil.isEmpty(info.defaultValueCodeFragment.getText())) {
+            return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
+          }
+          if (StringUtil.isEmptyOrSpaces(parameter.getName())) {
+            return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing");
+          }
+        }
+      }
+      else if (myMethod.getParameters().get(parameter.getOldIndex()).getDefaultInSignature() &&
+               StringUtil.isEmptyOrSpaces(parameter.getDefaultValue())) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
-        if (StringUtil.isEmptyOrSpaces(parameter.getName()))
-          return PyBundle.message("refactoring.change.signature.dialog.validation.parameter.missing");
       }
     }
-
 
     return null;
   }

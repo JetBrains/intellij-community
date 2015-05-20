@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ResolveTestCase;
 
@@ -28,6 +29,30 @@ public class TypeInference18Test extends ResolveTestCase {
 
   public void testIDEA122406() throws Exception {
     doTest();
+  }
+
+  public void testSecondConflictResolution() throws Exception {
+    doTestMethodCall();
+  }
+
+  public void testSecondConflictResolution1() throws Exception {
+    doTestMethodCall();
+  }
+
+  public void testSecondConflictResolution2() throws Exception {
+    doTestMethodCall();
+  }
+
+  public void testLambdaChainConflictResolution() throws Exception {
+    doTestMethodCall();
+  }
+
+  public void testCachedSubstitutionDuringOverloadResolution() throws Exception {
+    PsiReference ref = configureByFile("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
+    assertNotNull(ref);
+    PsiMethodReferenceExpression methodCallExpression = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethodReferenceExpression.class, false);
+    assertNotNull(methodCallExpression);
+    assertNotNull(methodCallExpression.resolve());
   }
 
   private LanguageLevel myOldLanguageLevel;
@@ -44,6 +69,14 @@ public class TypeInference18Test extends ResolveTestCase {
   protected void tearDown() throws Exception {
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(myOldLanguageLevel);
     super.tearDown();
+  }
+
+  private void doTestMethodCall() throws Exception {
+    PsiReference ref = configureByFile("/codeInsight/daemonCodeAnalyzer/lambda/resolve/" + getTestName(false) + ".java");
+    assertNotNull(ref);
+    PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(ref.getElement(), PsiMethodCallExpression.class);
+    assertNotNull(methodCallExpression);
+    assertNotNull(methodCallExpression.resolveMethod());
   }
 
   private void doTest() throws Exception {

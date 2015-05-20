@@ -60,7 +60,7 @@ public class VcsTestUtil {
    * @param name   Name of the directory.
    * @return reference to the created or already existing directory.
    */
-  public static VirtualFile createDir(@NotNull final Project project, @NotNull final VirtualFile parent, @NotNull final String name) {
+  public static VirtualFile findOrCreateDir(@NotNull final Project project, @NotNull final VirtualFile parent, @NotNull final String name) {
     return new WriteCommandAction<VirtualFile>(project) {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {

@@ -258,6 +258,7 @@ public class PythonPathEditor extends SdkPathEditor {
         setAdded(data.getAddedPathFiles());
         setExcluded(data.getExcludedPathFiles());
         result.addAll(myExcluded);
+        result.addAll(myAdded);
       }
       else if (modificator.getSdkAdditionalData() == null) {
         myAdded.clear();

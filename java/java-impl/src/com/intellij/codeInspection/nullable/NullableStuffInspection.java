@@ -40,6 +40,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
     private JButton myConfigureAnnotationsButton;
     private JCheckBox myIgnoreExternalSuperNotNull;
     private JCheckBox myNNParameterOverridesNA;
+    private JCheckBox myRequireNNFieldsInitialized;
 
     private OptionsPanel() {
       super(new BorderLayout());
@@ -56,6 +57,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       myNNParameterOverridesNA.addActionListener(actionListener);
       myReportNotAnnotatedGetter.addActionListener(actionListener);
       myIgnoreExternalSuperNotNull.addActionListener(actionListener);
+      myRequireNNFieldsInitialized.addActionListener(actionListener);
       myConfigureAnnotationsButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -74,6 +76,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       myReportNotAnnotatedGetter.setSelected(REPORT_NOT_ANNOTATED_GETTER);
       myIgnoreExternalSuperNotNull.setSelected(IGNORE_EXTERNAL_SUPER_NOTNULL);
       myNNParameterOverridesNA.setSelected(REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED);
+      myRequireNNFieldsInitialized.setSelected(REQUIRE_NOTNULL_FIELDS_INITIALIZED);
 
       myIgnoreExternalSuperNotNull.setEnabled(myNAMethodOverridesNN.isSelected());
     }
@@ -84,6 +87,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       REPORT_NOT_ANNOTATED_GETTER = myReportNotAnnotatedGetter.isSelected();
       IGNORE_EXTERNAL_SUPER_NOTNULL = myIgnoreExternalSuperNotNull.isSelected();
       REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = myNNParameterOverridesNA.isSelected();
+      REQUIRE_NOTNULL_FIELDS_INITIALIZED = myRequireNNFieldsInitialized.isSelected();
       REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL;
 
       myIgnoreExternalSuperNotNull.setEnabled(myNAMethodOverridesNN.isSelected());

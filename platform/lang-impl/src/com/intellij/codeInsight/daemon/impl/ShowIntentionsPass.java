@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -78,7 +79,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   @NotNull
   public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull final Editor editor, @NotNull final PsiFile file, final int passId) {
-    final int offset = editor.getCaretModel().getOffset();
+    final Integer expectedCaretOffset = editor.getUserData(EditorActionUtil.EXPECTED_CARET_OFFSET);
+    final int offset = expectedCaretOffset != null ? expectedCaretOffset : editor.getCaretModel().getOffset();
     final Project project = file.getProject();
 
     final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
@@ -272,11 +274,19 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     final Document hostDocument = hostEditor.getDocument();
     HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(hostDocument, offset, true);
-    if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
+    if (infoAtCursor == null) {
       intentions.errorFixesToShow.addAll(fixes);
     }
     else {
-      intentions.inspectionFixesToShow.addAll(fixes);
+      final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
+      for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
+        if (fix.notError() || !isError) {
+          intentions.inspectionFixesToShow.add(fix);
+        }
+        else {
+          intentions.errorFixesToShow.add(fix);
+        }
+      }
     }
 
     for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {

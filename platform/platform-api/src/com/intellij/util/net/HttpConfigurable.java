@@ -44,8 +44,10 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectObjectProcedure;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.RequestConfig;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -62,11 +64,10 @@ import java.util.Set;
 @State(
   name = "HttpConfigurable",
   storages = {
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml"),
     // we use two storages due to backward compatibility, see http://crucible.labs.intellij.net/cru/CR-IC-5142
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/proxy.settings.xml")
-  },
-  storageChooser = LastStorageChooserForWrite.class
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
+  }
 )
 public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent {
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
@@ -440,6 +441,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @NotNull
   public CredentialsProvider setProxyCredentials(@NotNull CredentialsProvider provider, boolean useProxy) {
     if (useProxy && PROXY_AUTHENTICATION) {
+      String ntlmUserPassword = PROXY_LOGIN.replace('\\', '/') + ":" + getPlainProxyPassword();
+      provider.setCredentials(new AuthScope(PROXY_HOST, PROXY_PORT, AuthScope.ANY_REALM, AuthSchemes.NTLM), new NTCredentials(ntlmUserPassword));
       provider.setCredentials(new AuthScope(PROXY_HOST, PROXY_PORT), new UsernamePasswordCredentials(PROXY_LOGIN, getPlainProxyPassword()));
     }
 

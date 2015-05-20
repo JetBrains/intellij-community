@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -67,7 +68,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     final int startOffset = doc.getLineStartOffset(line);
     final TextRange lineRange = new TextRange(startOffset, doc.getLineEndOffset(line));
     final int offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), startOffset, " \t");
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = DebuggerUtilsEx.findElementAt(file, offset);
     if (element != null && !(element instanceof PsiCompiledElement)) {
       do {
         final PsiElement parent = element.getParent();
@@ -102,6 +103,17 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         public void visitLambdaExpression(PsiLambdaExpression expression) {
           targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++, null));
+        }
+
+        @Override
+        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+          PsiElement element = expression.resolve();
+          if (element instanceof PsiMethod) {
+            PsiElement navMethod = element.getNavigationElement();
+            if (navMethod instanceof PsiMethod) {
+              targets.add(new MethodSmartStepTarget(((PsiMethod)navMethod), null, expression, true, null));
+            }
+          }
         }
 
         @Override

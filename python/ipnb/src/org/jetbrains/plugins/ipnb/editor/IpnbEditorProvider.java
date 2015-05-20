@@ -19,7 +19,6 @@ import org.jetbrains.plugins.ipnb.IpnbFileType;
 public class IpnbEditorProvider implements FileEditorProvider, DumbAware {
   @NonNls private static final String SELECTED_CELL = "selected";
   @NonNls private static final String ID = "id";
-  @NonNls private static final String TOP = "top";
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
@@ -40,10 +39,9 @@ public class IpnbEditorProvider implements FileEditorProvider, DumbAware {
   @NotNull
   @Override
   public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
-    final IpnbEditorState state = new IpnbEditorState(-1, 0, 0);
+    final IpnbEditorState state = new IpnbEditorState(-1, 0);
     final Element child = sourceElement.getChild(SELECTED_CELL);
     state.setSelectedIndex(child == null ? 0 : Integer.parseInt(child.getAttributeValue(ID)));
-    state.setSelectedTop(child == null ? 0 : Integer.parseInt(child.getAttributeValue(TOP)));
     return state;
   }
 
@@ -51,10 +49,8 @@ public class IpnbEditorProvider implements FileEditorProvider, DumbAware {
   public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
     IpnbEditorState editorState = (IpnbEditorState)state;
     final int id = editorState.getSelectedIndex();
-    final int location = editorState.getSelectedTop();
     final Element element = new Element(SELECTED_CELL);
     element.setAttribute(ID, String.valueOf(id));
-    element.setAttribute(TOP, String.valueOf(location));
     targetElement.addContent(element);
   }
 

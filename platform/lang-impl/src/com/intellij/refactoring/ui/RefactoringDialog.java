@@ -16,8 +16,10 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -90,6 +92,11 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   @Override
   protected final void doOKAction() {
+    if (DumbService.isDumb(myProject)) {
+      Messages.showMessageDialog(myProject, "Refactoring is not available while indexing is in progress", "Indexing", null);
+      return;
+    }
+
     doAction();
   }
 

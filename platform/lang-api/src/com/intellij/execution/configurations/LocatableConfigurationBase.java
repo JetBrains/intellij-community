@@ -18,8 +18,9 @@ package com.intellij.execution.configurations;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,13 +35,12 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
 
   private boolean myNameIsGenerated;
 
-  protected LocatableConfigurationBase(Project project,
-                                       ConfigurationFactory factory, String name) {
+  protected LocatableConfigurationBase(Project project, @NotNull ConfigurationFactory factory, String name) {
     super(project, factory, name);
   }
 
   @Override
-  @Transient
+  @Attribute("nameIsGenerated")
   public boolean isGeneratedName() {
     return suggestedName() != null && myNameIsGenerated;
   }
@@ -65,20 +65,23 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
-    myNameIsGenerated = "true".equals(element.getAttributeValue(ATTR_NAME_IS_GENERATED));
+
+    if (!isNewSerializationUsed()) {
+      myNameIsGenerated = "true".equals(element.getAttributeValue(ATTR_NAME_IS_GENERATED));
+    }
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    if (myNameIsGenerated && suggestedName() != null) {
+
+    if (!isNewSerializationUsed() && myNameIsGenerated && suggestedName() != null) {
       element.setAttribute(ATTR_NAME_IS_GENERATED, "true");
     }
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-
   }
 
   /**

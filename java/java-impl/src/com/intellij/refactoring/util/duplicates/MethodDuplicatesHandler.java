@@ -257,6 +257,16 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   }
 
   public static List<Match> hasDuplicates(final PsiFile file, final PsiMember member) {
+    final DuplicatesFinder duplicatesFinder = createDuplicatesFinder(member);
+    if (duplicatesFinder == null) {
+      return Collections.emptyList();
+    }
+
+    return duplicatesFinder.findDuplicates(file);
+  }
+
+  @Nullable
+  public static DuplicatesFinder createDuplicatesFinder(PsiMember member) {
     PsiElement[] pattern;
     ReturnValue matchedReturnValue = null;
     if (member instanceof PsiMethod) {
@@ -288,17 +298,14 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       pattern = new PsiElement[]{((PsiField)member).getInitializer()};
     }
     if (pattern.length == 0) {
-      return Collections.emptyList();
+      return null;
     }
     final List<? extends PsiVariable> inputVariables = 
       member instanceof PsiMethod ? Arrays.asList(((PsiMethod)member).getParameterList().getParameters()) : new ArrayList<PsiVariable>();
-    final DuplicatesFinder duplicatesFinder =
-      new DuplicatesFinder(pattern, 
-                           new InputVariables(inputVariables, member.getProject(), new LocalSearchScope(pattern), false), 
-                           matchedReturnValue,
-                           new ArrayList<PsiVariable>());
-
-    return duplicatesFinder.findDuplicates(file);
+    return new DuplicatesFinder(pattern,
+                                new InputVariables(inputVariables, member.getProject(), new LocalSearchScope(pattern), false),
+                                matchedReturnValue,
+                                new ArrayList<PsiVariable>());
   }
 
   static String getStatusMessage(final int duplicatesNo) {

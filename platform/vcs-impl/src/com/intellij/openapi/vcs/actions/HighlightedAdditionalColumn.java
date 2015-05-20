@@ -18,31 +18,27 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.HighlightAnnotationsActions;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
 import java.awt.*;
 import java.util.Map;
 
-/**
- * @author Konstantin Bulenkov
- */
 class HighlightedAdditionalColumn extends AnnotationFieldGutter {
-  private final HighlightAnnotationsActions myHighlighting;
 
   HighlightedAdditionalColumn(FileAnnotation annotation,
                               Editor editor,
                               LineAnnotationAspect aspect,
                               TextAnnotationPresentation presentation,
-                              final HighlightAnnotationsActions highlighting,
-                              Couple<Map<String, Color>> colorScheme) {
+                              Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
     super(annotation, editor, aspect, presentation, colorScheme);
-    myHighlighting = highlighting;
   }
 
   @Override
   public String getLineText(int line, Editor editor) {
-    return myHighlighting.isLineBold(line) ? "*" : "";
+    VcsRevisionNumber revision = myAnnotation.originalRevision(line);
+    VcsRevisionNumber currentRevision = myAnnotation.getCurrentRevision();
+    return currentRevision != null && currentRevision.equals(revision) ? "*" : "";
   }
 }

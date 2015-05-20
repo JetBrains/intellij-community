@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 
@@ -218,6 +220,11 @@ public class FunctionExprent extends Exprent {
     this.lstOperands = operands;
 
     addBytecodeOffsets(bytecodeOffsets);
+  }
+
+  public FunctionExprent(int funcType, Exprent operand, Set<Integer> bytecodeOffsets) {
+    this(funcType, new ArrayList<Exprent>(1), bytecodeOffsets);
+    lstOperands.add(operand);
   }
 
   @Override
@@ -599,4 +606,25 @@ public class FunctionExprent extends Exprent {
   public void setImplicitType(VarType implicitType) {
     this.implicitType = implicitType;
   }
+  
+  // *****************************************************************************
+  // IMatchable implementation
+  // *****************************************************************************
+  
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+
+    if(!super.match(matchNode, engine)) {
+      return false;
+    }
+    
+    Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
+    if(type != null) {
+      if(this.funcType != type.intValue()) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
 }

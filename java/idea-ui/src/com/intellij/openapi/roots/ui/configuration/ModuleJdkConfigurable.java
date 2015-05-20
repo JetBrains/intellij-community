@@ -44,7 +44,6 @@ import java.awt.event.ActionListener;
  */
 public abstract class ModuleJdkConfigurable implements Disposable {
   private JdkComboBox myCbModuleJdk;
-  private Sdk mySelectedModuleJdk = null;
   private JPanel myJdkPanel;
   private ClasspathEditor myModuleEditor;
   private final ProjectSdksModel myJdksModel;
@@ -76,18 +75,6 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     myJdksModel = jdksModel;
     myJdksModel.addListener(myListener);
     init();
-  }
-
-  /**
-   * @return null if JDK should be inherited
-   */
-  @Nullable
-  public Sdk getSelectedModuleJdk() {
-    return myJdksModel.findSdk(mySelectedModuleJdk);
-  }
-
-  public boolean isInheritJdk() {
-    return myCbModuleJdk.getSelectedItem()instanceof JdkComboBox.ProjectJdkComboBoxItem;
   }
 
   public JComponent createComponent() {
@@ -171,9 +158,9 @@ public abstract class ModuleJdkConfigurable implements Disposable {
     myFreeze = true;
     final String jdkName = getRootModel().getSdkName();
     if (jdkName != null && !getRootModel().isSdkInherited()) {
-      mySelectedModuleJdk = myJdksModel.findSdk(jdkName);
-      if (mySelectedModuleJdk != null) {
-        myCbModuleJdk.setSelectedJdk(mySelectedModuleJdk);
+      Sdk selectedModuleJdk = myJdksModel.findSdk(jdkName);
+      if (selectedModuleJdk != null) {
+        myCbModuleJdk.setSelectedJdk(selectedModuleJdk);
       } else {
         myCbModuleJdk.setInvalidJdk(jdkName);
         clearCaches();

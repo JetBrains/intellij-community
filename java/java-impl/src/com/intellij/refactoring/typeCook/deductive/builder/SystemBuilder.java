@@ -711,6 +711,12 @@ public class SystemBuilder {
             system.addSubtypeConstraint(evaluateType(retExpr, system), reType);
           }
         }
+
+        @Override
+        public void visitClass(PsiClass aClass) {}
+
+        @Override
+        public void visitLambdaExpression(PsiLambdaExpression expression) {}
       });
 
       return;
@@ -747,8 +753,7 @@ public class SystemBuilder {
           @Override public void visitReturnStatement(final PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
 
-            final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
-
+            final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiLambdaExpression.class);
             if (method != null) {
               system.addSubtypeConstraint(evaluateType(statement.getReturnValue(), system), getType(method));
             }

@@ -20,12 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_BOOLEAN;
-import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.JAVA_PSI_INFO;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
 public class AssertStatementPostfixTemplate extends StringBasedPostfixTemplate {
 
   public AssertStatementPostfixTemplate() {
-    super("assert", "assert expr", JAVA_PSI_INFO, IS_BOOLEAN);
+    super("assert", "assert expr", selectorTopmost(IS_BOOLEAN));
   }
 
   @Nullable

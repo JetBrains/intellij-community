@@ -183,8 +183,13 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     return myColumnInfos;
   }
 
+
+  protected int sortAdjustedIndex(final int index) {
+    return myCollectionPanel.getTable().convertRowIndexToModel(index);
+  }
+
   protected final void doEdit() {
-    doEdit(myCollectionElements.get(myCollectionPanel.getTable().getSelectedRow()));
+    doEdit(myCollectionElements.get(sortAdjustedIndex(myCollectionPanel.getTable().getSelectedRow())));
   }
 
   protected void doEdit(final T t) {
@@ -223,7 +228,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
         if (selected == null || selected.length == 0) return;
         final List<T> selectedElements = new ArrayList<T>(selected.length);
         for (final int i : selected) {
-          selectedElements.add(myCollectionElements.get(i));
+          selectedElements.add(myCollectionElements.get(sortAdjustedIndex(i)));
         }
 
         doRemove(selectedElements);
@@ -369,6 +374,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
     /**
      * return negative value to disable auto-edit
+     *
      * @return
      */
     protected int getColumnToEditAfterAddition() {
@@ -378,7 +384,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     protected void afterAddition(final JTable table, final int rowIndex) {
       table.setRowSelectionInterval(rowIndex, rowIndex);
       final int column = getColumnToEditAfterAddition();
-      if (column >= 0 ) {
+      if (column >= 0) {
         table.editCellAt(rowIndex, column);
       }
     }
@@ -412,7 +418,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     @Override
     @NotNull
     protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
-      return new DomCollectionChildDescription[] {getDomCollectionControl(e).getChildDescription()};
+      return new DomCollectionChildDescription[]{getDomCollectionControl(e).getChildDescription()};
     }
 
     @Override
@@ -441,7 +447,6 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
                                                   final DomCollectionChildDescription description) {
       return getDomCollectionControl(e).createDefaultAction(name, icon, type);
     }
-
   }
 
   public static class EditAction extends AnAction {
@@ -487,7 +492,8 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       if (control != null) {
         final JTable table = control.getComponent().getTable();
         enabled = table != null && table.getSelectedRowCount() > 0;
-      } else {
+      }
+      else {
         enabled = false;
       }
       e.getPresentation().setEnabled(enabled);

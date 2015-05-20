@@ -1,7 +1,6 @@
 <component>
   <actions>
-    
-    
+
     <action id="ExternalSystem.RefreshAllProjects"
             class="com.intellij.openapi.externalSystem.action.RefreshAllExternalProjectsAction"
             icon="AllIcons.Actions.Refresh"/>
@@ -16,22 +15,153 @@
     <action id="ExternalSystem.OpenConfig"
             class="com.intellij.openapi.externalSystem.action.OpenExternalConfigAction"
             use-shortcut-of="EditSource"/>
+    <action id="ExternalSystem.ShowSettings"
+            class="com.intellij.openapi.externalSystem.action.ShowExternalSystemSettingsAction"
+            icon="AllIcons.General.ProjectSettings">
+    </action>
 
-    <!--Tool window actions-->
-    <group id="ExternalSystem.ToolWindow.Toolbar">
+    <action id="ExternalSystem.ToggleAutoImport"
+            class="com.intellij.openapi.externalSystem.action.ToggleAutoImportAction">
+    </action>
+
+    <action id="ExternalSystem.OpenTasksActivationManager"
+            class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
+    </action>
+
+    <action id="ExternalSystem.ExpandAll" class="com.intellij.openapi.externalSystem.action.ExternalSystemTreeAction$ExpandAll"
+            text="Expand All"
+            icon="AllIcons.Actions.Expandall"
+            use-shortcut-of="ExpandAll"/>
+    <action id="ExternalSystem.CollapseAll" class="com.intellij.openapi.externalSystem.action.ExternalSystemTreeAction$CollapseAll"
+            text="Collapse All"
+            icon="AllIcons.Actions.Collapseall"
+            use-shortcut-of="CollapseAll"/>
+
+    <action id="ExternalSystem.RunTask"
+            class="com.intellij.openapi.externalSystem.action.task.RunExternalSystemTaskAction"
+            text="_Run Task"
+            description="Execute selected tasks"
+            icon="AllIcons.Actions.Execute">
+    </action>
+    <action id="ExternalSystem.AssignShortcut"
+            class="com.intellij.openapi.externalSystem.action.task.AssignShortcutAction" text="Assign Shortcut..."
+            description="Assign shortcut to the selected task">
+    </action>
+    <action id="ExternalSystem.AssignRunConfigurationShortcut"
+            class="com.intellij.openapi.externalSystem.action.task.AssignRunConfigurationShortcutAction" text="Assign Shortcut..."
+            description="Assign shortcut to the selected Run Configuration">
+    </action>
+
+    <action id="ExternalSystem.BeforeSync"
+            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeSyncTaskAction" text="Execute Before Sync"
+            description="Execute selected task before the project import">
+    </action>
+    <action id="ExternalSystem.AfterSync"
+            class="com.intellij.openapi.externalSystem.action.task.ToggleAfterSyncTaskAction" text="Execute After Sync"
+            description="Execute selected task after the project import">
+    </action>
+    <action id="ExternalSystem.BeforeCompile"
+            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeCompileTasksAction" text="Execute Before Make"
+            description="Execute selected task before Make">
+    </action>
+    <action id="ExternalSystem.AfterCompile"
+            class="com.intellij.openapi.externalSystem.action.task.ToggleAfterCompileTasksAction" text="Execute After Make"
+            description="Execute selected task after Make">
+    </action>
+    <action id="ExternalSystem.BeforeRebuild"
+            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeRebuildTasksAction" text="Execute Before Rebuild"
+            description="Execute selected task before full rebuild">
+    </action>
+    <action id="ExternalSystem.AfterRebuild"
+            class="com.intellij.openapi.externalSystem.action.task.ToggleAfterRebuildTasksAction" text="Execute After Rebuild"
+            description="Execute selected task after full rebuild">
+    </action>
+    <action id="ExternalSystem.BeforeRun"
+            class="com.intellij.openapi.externalSystem.action.task.ToggleBeforeRunTaskAction" text="Execute Before Run/Debug..."
+            description="Execute selected task before launching Run/Debug configuration">
+    </action>
+
+    <action id="ExternalSystem.GroupTasks"
+            class="com.intellij.openapi.externalSystem.action.task.GroupTasksAction" text="Group Tasks">
+    </action>
+    <action id="ExternalSystem.ShowInheritedTasks"
+            class="com.intellij.openapi.externalSystem.action.task.ShowInheritedTasksAction" text="Display tasks inherited from sub-projects">
+    </action>
+
+    <group id="ExternalSystemView.BaseProjectMenu">
+      <reference ref="ExternalSystem.OpenConfig"/>
+      <separator/>
+      <reference id="ExternalSystem.RefreshProject"/>
+      <reference id="ExternalSystem.DetachProject"/>
+
+    </group>
+
+    <group id="ExternalSystemView.ProjectMenu" popup="true">
+      <reference ref="ExternalSystemView.BaseProjectMenu"/>
+      <separator/>
+      <reference id="ExternalSystem.ToggleAutoImport"/>
+      <separator/>
+      <reference id="ExternalSystem.OpenTasksActivationManager"/>
+    </group>
+
+    <group id="ExternalSystemView.ActionsToolbar.LeftPanel">
       <reference id="ExternalSystem.RefreshAllProjects"/>
       <reference id="ExternalSystem.AttachProject"/>
       <reference ref="ExternalSystem.DetachProject"/>
+      <!--<reference id="ExternalSystem.Run/>-->
+    </group>
+    <group id="ExternalSystemView.ActionsToolbar.CenterPanel">
+      <separator/>
+      <reference id="ExternalSystem.ExpandAll"/>
+      <reference id="ExternalSystem.CollapseAll"/>
+    </group>
+    <group id="ExternalSystemView.ActionsToolbar.RightPanel">
     </group>
 
-    <!--Context menu action-->
-    <group id="ExternalSystem.Tree.Context" popup="true">
-      <reference ref="ExternalSystem.OpenConfig"/>
-      <reference id="ExternalSystem.RefreshProject"/>
-      <reference ref="ExternalSystem.DetachProject"/>
-      <separator/>
-      <reference ref="RunContextGroup"/>
+    <group id="ExternalSystemView.TaskActivationGroup">
+      <reference id="ExternalSystem.BeforeSync"/>
+      <reference id="ExternalSystem.AfterSync"/>
+      <reference id="ExternalSystem.BeforeCompile"/>
+      <reference id="ExternalSystem.AfterCompile"/>
+      <reference id="ExternalSystem.BeforeRebuild"/>
+      <reference id="ExternalSystem.AfterRebuild"/>
+      <!--<reference id="ExternalSystem.BeforeRun"/>-->
     </group>
-    
+
+    <group id="ExternalSystemView.ActionsToolbar">
+      <reference ref="ExternalSystemView.ActionsToolbar.LeftPanel"/>
+      <separator/>
+      <reference ref="ExternalSystemView.ActionsToolbar.CenterPanel"/>
+      <separator/>
+      <reference ref="ExternalSystemView.ActionsToolbar.RightPanel"/>
+      <separator/>
+      <reference id="ExternalSystem.ShowSettings" order="last"/>
+    </group>
+
+    <group id="ExternalSystemView.TaskMenu" popup="true">
+      <reference ref="RunContextGroup"/>
+      <separator/>
+      <reference id="EditSource"/>
+      <separator/>
+      <reference ref="ExternalSystemView.TaskActivationGroup"/>
+      <separator/>
+      <reference id="ExternalSystem.AssignShortcut"/>
+    </group>
+
+    <group id="ExternalSystemView.RunConfigurationMenu" popup="true"  class="com.intellij.openapi.externalSystem.action.ExternalSystemRunConfigurationMenu">
+      <separator/>
+      <action id="ExternalSystem.EditRunConfiguration"
+              text="Edit Run Configuration..." icon="AllIcons.Actions.Edit"
+              class="com.intellij.openapi.externalSystem.action.EditExternalSystemRunConfigurationAction" />
+      <action id="ExternalSystem.RemoveRunConfiguration"
+              text="Remove Run Configuration" icon="AllIcons.General.Remove"
+              class="com.intellij.openapi.externalSystem.action.RemoveExternalSystemRunConfigurationAction" />
+      <separator/>
+      <reference ref="ExternalSystemView.TaskActivationGroup"/>
+      <separator/>
+      <reference id="ExternalSystem.AssignRunConfigurationShortcut"/>
+    </group>
+
+
   </actions>
 </component>

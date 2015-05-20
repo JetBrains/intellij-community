@@ -17,12 +17,12 @@ package org.jetbrains.idea.svn16;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -58,29 +58,29 @@ public class SvnTestDirtyScopeStateTest extends Svn16TestCase {
     vcsDirtyScopeManager.fileDirty(fileB);
 
     final Collection<FilePath> dirty1 = vcsDirtyScopeManager.whatFilesDirty(list);
-    Assert.assertTrue(dirty1.contains(new FilePathImpl(file)));
-    Assert.assertTrue(dirty1.contains(new FilePathImpl(fileB)));
+    Assert.assertTrue(dirty1.contains(VcsUtil.getFilePath(file)));
+    Assert.assertTrue(dirty1.contains(VcsUtil.getFilePath(fileB)));
 
-    Assert.assertTrue(! dirty1.contains(new FilePathImpl(fileC)));
-    Assert.assertTrue(! dirty1.contains(new FilePathImpl(fileD)));
+    Assert.assertTrue(! dirty1.contains(VcsUtil.getFilePath(fileC)));
+    Assert.assertTrue(! dirty1.contains(VcsUtil.getFilePath(fileD)));
 
     vcsDirtyScopeManager.retrieveScopes();
 
     final Collection<FilePath> dirty2 = vcsDirtyScopeManager.whatFilesDirty(list);
-    Assert.assertTrue(dirty2.contains(new FilePathImpl(file)));
-    Assert.assertTrue(dirty2.contains(new FilePathImpl(fileB)));
+    Assert.assertTrue(dirty2.contains(VcsUtil.getFilePath(file)));
+    Assert.assertTrue(dirty2.contains(VcsUtil.getFilePath(fileB)));
 
-    Assert.assertTrue(! dirty2.contains(new FilePathImpl(fileC)));
-    Assert.assertTrue(! dirty2.contains(new FilePathImpl(fileD)));
+    Assert.assertTrue(! dirty2.contains(VcsUtil.getFilePath(fileC)));
+    Assert.assertTrue(! dirty2.contains(VcsUtil.getFilePath(fileD)));
 
     vcsDirtyScopeManager.changesProcessed();
 
     final Collection<FilePath> dirty3 = vcsDirtyScopeManager.whatFilesDirty(list);
-    Assert.assertTrue(! dirty3.contains(new FilePathImpl(file)));
-    Assert.assertTrue(! dirty3.contains(new FilePathImpl(fileB)));
+    Assert.assertTrue(! dirty3.contains(VcsUtil.getFilePath(file)));
+    Assert.assertTrue(! dirty3.contains(VcsUtil.getFilePath(fileB)));
 
-    Assert.assertTrue(! dirty3.contains(new FilePathImpl(fileC)));
-    Assert.assertTrue(! dirty3.contains(new FilePathImpl(fileD)));
+    Assert.assertTrue(! dirty3.contains(VcsUtil.getFilePath(fileC)));
+    Assert.assertTrue(! dirty3.contains(VcsUtil.getFilePath(fileD)));
   }
 
   @Test
@@ -108,8 +108,8 @@ public class SvnTestDirtyScopeStateTest extends Svn16TestCase {
     }.execute().throwException();
 
 
-    final FilePathImpl fp = new FilePathImpl(file);
-    final FilePathImpl fpB = new FilePathImpl(fileB);
+    final FilePath fp = VcsUtil.getFilePath(file);
+    final FilePath fpB = VcsUtil.getFilePath(fileB);
     final long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < (start + 3000)) {
       synchronized (this) {

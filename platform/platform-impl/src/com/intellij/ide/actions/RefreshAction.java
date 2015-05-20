@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,7 @@ import javax.swing.*;
  * provides a convenience method to register its shortcut on a component
  */
 public class RefreshAction extends AnAction implements DumbAware {
-  public RefreshAction() {
-  }
+  public RefreshAction() { }
 
   public RefreshAction(String text) {
     super(text);

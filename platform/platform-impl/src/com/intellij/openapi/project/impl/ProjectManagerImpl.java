@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,17 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.stores.ComponentStoreImpl;
+import com.intellij.openapi.components.impl.stores.*;
 import com.intellij.openapi.components.impl.stores.ComponentStoreImpl.ReloadComponentStoreStatus;
-import com.intellij.openapi.components.impl.stores.FileBasedStorage;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
-import com.intellij.openapi.components.impl.stores.StorageUtil;
-import com.intellij.openapi.components.store.StateStorageBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
@@ -46,7 +45,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -71,6 +69,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -94,6 +93,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   private ProjectImpl myDefaultProject; // Only used asynchronously in save and dispose, which itself are synchronized.
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   private Element myDefaultProjectRootElement; // Only used asynchronously in save and dispose, which itself are synchronized.
+  private boolean myDefaultProjectConfigurationChanged;
 
   private final List<Project> myOpenProjects = new ArrayList<Project>();
   private Project[] myOpenProjectsArrayCache = {};
@@ -222,6 +222,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     }
   }
 
+  public static int TEST_PROJECTS_CREATED = 0;
   private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = false;
   private static final int MAX_LEAKY_PROJECTS = 42;
   @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<Project, String>();
@@ -229,25 +230,46 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   @Override
   @Nullable
   public Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
+    return newProject(projectName, filePath, useDefaultProjectSettings, isDummy, ApplicationManager.getApplication().isUnitTestMode());
+  }
+
+  @Nullable
+  public Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy,
+                            boolean optimiseTestLoadSpeed) {
     filePath = toCanonicalName(filePath);
 
     //noinspection ConstantConditions
-    if (LOG_PROJECT_LEAKAGE_IN_TESTS && ApplicationManager.getApplication().isUnitTestMode()) {
-      for (int i = 0; i < 42; i++) {
-        if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
-        System.gc();
-        TimeoutUtil.sleep(100);
-        System.gc();
-      }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      TEST_PROJECTS_CREATED++;
+      if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
+        for (int i = 0; i < 42; i++) {
+          if (myProjects.size() < MAX_LEAKY_PROJECTS) break;
+          System.gc();
+          TimeoutUtil.sleep(100);
+          System.gc();
+        }
 
-      if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
-        List<Project> copy = new ArrayList<Project>(myProjects.keySet());
-        myProjects.clear();
-        throw new TooManyProjectLeakedException(copy);
+        if (myProjects.size() >= MAX_LEAKY_PROJECTS) {
+          List<Project> copy = new ArrayList<Project>(myProjects.keySet());
+          myProjects.clear();
+          throw new TooManyProjectLeakedException(copy);
+        }
       }
     }
 
-    ProjectImpl project = createProject(projectName, filePath, false, ApplicationManager.getApplication().isUnitTestMode());
+    File projectFile = new File(filePath);
+    if (projectFile.isFile()) {
+      FileUtil.delete(projectFile);
+    }
+    else {
+      File[] files = new File(projectFile, Project.DIRECTORY_STORE_FOLDER).listFiles();
+      if (files != null) {
+        for (File file : files) {
+          FileUtil.delete(file);
+        }
+      }
+    }
+    ProjectImpl project = createProject(projectName, filePath, false, optimiseTestLoadSpeed);
     try {
       initProject(project, useDefaultProjectSettings ? (ProjectImpl)getDefaultProject() : null);
       if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
@@ -290,13 +312,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
 
     boolean succeed = false;
     try {
-      if (template != null) {
-        project.getStateStore().loadProjectFromTemplate(template);
-      }
-      else {
+      if (template == null) {
         project.getStateStore().load();
       }
-      project.loadProjectComponents();
+      else {
+        project.getStateStore().loadProjectFromTemplate(template);
+      }
       project.init();
       succeed = true;
     }
@@ -377,7 +398,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
           try {
             myDefaultProject = createProject(null, "", true, ApplicationManager.getApplication().isUnitTestMode());
             initProject(myDefaultProject, null);
-            myDefaultProjectRootElement = null;
           }
           catch (Throwable t) {
             PluginManager.processException(t);
@@ -493,10 +513,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       startupManager.runWhenProjectIsInitialized(new Runnable() {
         @Override
         public void run() {
-          final TrackingPathMacroSubstitutor macroSubstitutor =
-            ((ProjectEx)project).getStateStore().getStateStorageManager().getMacroSubstitutor();
-          if (macroSubstitutor != null) {
-            StorageUtil.notifyUnknownMacros(macroSubstitutor, project, null);
+          TrackingPathMacroSubstitutor substitutor = ((ProjectEx)project).getStateStore().getStateStorageManager().getMacroSubstitutor();
+          if (substitutor != null) {
+            StorageUtil.notifyUnknownMacros(substitutor, project, null);
           }
         }
       });
@@ -687,10 +706,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       }
     }
 
-    if (causes.isEmpty()) {
-      return false;
-    }
-    return ComponentStoreImpl.reloadStore(causes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED;
+    return !causes.isEmpty() &&
+           ComponentStoreImpl.reloadStore(causes, ((ProjectEx)project).getStateStore()) == ReloadComponentStoreStatus.RESTART_AGREED;
   }
 
   @Override
@@ -701,7 +718,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   @Override
   public void unblockReloadingProjectOnExternalChanges() {
     if (myReloadBlockCount.decrementAndGet() == 0 && myChangedFilesAlarm.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(restartApplicationOrReloadProjectTask, ModalityState.NON_MODAL, ApplicationManager.getApplication().getDisposed());
     }
   }
 
@@ -866,7 +883,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
         listener.projectClosing(project);
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.error("From listener "+listener+" ("+listener.getClass()+")", e);
       }
     }
   }
@@ -959,17 +976,30 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     return true;
   }
 
-  private static boolean ensureCouldCloseIfUnableToSave(@NotNull final Project project) {
-    final ProjectImpl.UnableToSaveProjectNotification[] notifications =
-      NotificationsManager.getNotificationsManager().getNotificationsOfType(ProjectImpl.UnableToSaveProjectNotification.class, project);
-    if (notifications.length == 0) return true;
+  private static boolean ensureCouldCloseIfUnableToSave(@NotNull Project project) {
+    UnableToSaveProjectNotification[] notifications =
+      NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification.class, project);
+    if (notifications.length == 0) {
+      return true;
+    }
 
-    final String fileNames = StringUtil.join(notifications[0].getFileNames(), "\n");
+    StringBuilder message = new StringBuilder();
+    message.append(String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
+                                 ApplicationNamesInfo.getInstance().getProductName()));
 
-    final String msg = String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
-                                     ApplicationNamesInfo.getInstance().getProductName());
-    return Messages.showDialog(project, msg, "Unsaved Project", "Read-only files:\n\n" + fileNames, new String[]{"Yes", "No"}, 0, 1,
-                               Messages.getWarningIcon()) == 0;
+    message.append("\n\nRead-only files:\n");
+    int count = 0;
+    VirtualFile[] files = notifications[0].myFiles;
+    for (VirtualFile file : files) {
+      if (count == 10) {
+        message.append('\n').append("and ").append(files.length - count).append(" more").append('\n');
+      }
+      else {
+        message.append(file.getPath()).append('\n');
+        count++;
+      }
+    }
+    return Messages.showYesNoDialog(project, message.toString(), "Unsaved Project", Messages.getWarningIcon()) == Messages.YES;
   }
 
 
@@ -980,7 +1010,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
       myDefaultProject.save();
     }
 
-    if (myDefaultProjectRootElement == null) {
+    if (!myDefaultProjectConfigurationChanged) {
       // we are not ready to save
       return null;
     }
@@ -997,10 +1027,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
     if (myDefaultProjectRootElement != null) {
       myDefaultProjectRootElement.detach();
     }
+    myDefaultProjectConfigurationChanged = false;
   }
 
   public void setDefaultProjectRootElement(@NotNull Element defaultProjectRootElement) {
     myDefaultProjectRootElement = defaultProjectRootElement;
+    myDefaultProjectConfigurationChanged = true;
   }
 
   @Override
@@ -1019,5 +1051,35 @@ public class ProjectManagerImpl extends ProjectManagerEx implements PersistentSt
   @NotNull
   public String getPresentableName() {
     return ProjectBundle.message("project.default.settings");
+  }
+
+  public static class UnableToSaveProjectNotification extends Notification {
+    private Project myProject;
+    public VirtualFile[] myFiles;
+
+    public UnableToSaveProjectNotification(@NotNull final Project project, final VirtualFile[] readOnlyFiles) {
+      super("Project Settings", "Could not save project", "Unable to save project files. Please ensure project files are writable and you have permissions to modify them." +
+                                                           " <a href=\"\">Try to save project again</a>.", NotificationType.ERROR, new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          final UnableToSaveProjectNotification unableToSaveProjectNotification = (UnableToSaveProjectNotification)notification;
+          final Project _project = unableToSaveProjectNotification.myProject;
+          notification.expire();
+
+          if (_project != null && !_project.isDisposed()) {
+            _project.save();
+          }
+        }
+      });
+
+      myProject = project;
+      myFiles = readOnlyFiles;
+    }
+
+    @Override
+    public void expire() {
+      myProject = null;
+      super.expire();
+    }
   }
 }

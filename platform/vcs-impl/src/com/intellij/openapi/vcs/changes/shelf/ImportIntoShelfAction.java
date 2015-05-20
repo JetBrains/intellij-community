@@ -40,7 +40,7 @@ import java.util.List;
  */
 public class ImportIntoShelfAction extends DumbAwareAction {
   public ImportIntoShelfAction() {
-    super("Import patches...", "Copies patch file to shelf", null);
+    super("Import Patches...", "Copies a patch file to the shelf", null);
   }
 
   @Override

@@ -1,118 +1,73 @@
 package git4idea.log;
 
-import com.intellij.mock.MockVirtualFile;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
-import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
-import git4idea.repo.GitBranchTrackInfo;
-import git4idea.repo.GitRemote;
-import git4idea.test.GitMockRepositoryManager;
-import git4idea.test.MockGitRepository;
-import org.easymock.EasyMock;
+import git4idea.branch.GitBranchUtil;
+import git4idea.test.GitSingleRepoTest;
+import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
-public class GitRefManagerTest extends UsefulTestCase {
+import static git4idea.test.GitExecutor.cd;
+import static git4idea.test.GitExecutor.git;
 
-  public static final MockVirtualFile ROOT = new MockVirtualFile("mockFile");
+public abstract class GitRefManagerTest extends GitSingleRepoTest {
 
-  public void testEmpty() {
-    check(Collections.<VcsRef>emptyList(), Collections.<VcsRef>emptyList());
+  @NotNull
+  protected Collection<VcsRef> given(@NotNull String... refs) throws IOException {
+    Collection<VcsRef> result = ContainerUtil.newArrayList();
+    cd(myProjectRoot);
+    Hash hash = HashImpl.build(git("rev-parse HEAD"));
+    for (String refName : refs) {
+      if (isHead(refName)) {
+        result.add(ref(hash, "HEAD", GitRefManager.HEAD));
+      }
+      else if (isRemoteBranch(refName)) {
+        git("update-ref refs/remotes/" + refName + " " + hash.asString());
+        result.add(ref(hash, refName, GitRefManager.REMOTE_BRANCH));
+      }
+      else if (isTag(refName)) {
+        git("update-ref " + refName + " " + hash.asString());
+        result.add(ref(hash, GitBranchUtil.stripRefsPrefix(refName), GitRefManager.TAG));
+      }
+      else {
+        git("update-ref refs/heads/" + refName + " " + hash.asString());
+        result.add(ref(hash, refName, GitRefManager.LOCAL_BRANCH));
+      }
+    }
+    setUpTracking(result);
+    myRepo.update();
+    return result;
   }
 
-  public void testSingle() {
-    check(given("HEAD"),
-          expect("HEAD"));
-  }
-
-  public void testHeadIsMoreImportantThanBranch() {
-    check(given("master", "HEAD"),
-          expect("HEAD", "master"));
-  }
-
-  public void testLocalBranchesAreComparedAsStrings() {
-    check(given("release", "feature"),
-          expect("feature", "release"));
-  }
-
-  public void testTagIsTheLessImportant() {
-    check(given("tag/v1", "origin/master"),
-          expect("origin/master", "tag/v1"));
-  }
-
-  public void testMasterIsMoreImportant() {
-    check(given("feature", "master"),
-          expect("master", "feature"));
-  }
-
-  public void testOriginMasterIsMoreImportant() {
-    check(given("origin/master", "origin/aaa"),
-          expect("origin/master", "origin/aaa"));
-  }
-
-  public void testRemoteBranchHavingTrackingBranchIsMoreImportant() {
-    check(given("feature", "origin/aaa", "origin/feature"),
-          expect("feature", "origin/feature", "origin/aaa"));
-  }
-
-  public void testSeveral1() {
-    check(given("tag/v1", "feature", "HEAD", "master"),
-          expect("HEAD", "master", "feature", "tag/v1"));
-  }
-
-  public void testSeveral2() {
-    check(given("origin/master", "origin/great_feature", "tag/v1", "release", "HEAD", "master"),
-          expect("HEAD", "master", "release", "origin/master", "origin/great_feature", "tag/v1"));
-  }
-
-  // may happen e.g. in multi-repo case
-  public void testTwoMasters() {
-    check(given("master", "master"),
-          expect("master", "master"));
-  }
-
-  private static Collection<VcsRef> given(String... refs) {
-    return convertToRefs(refs);
-  }
-
-  private static List<VcsRef> expect(String... refs) {
-    return new ArrayList<VcsRef>(convertToRefs(refs));
-  }
-
-  private static List<VcsRef> convertToRefs(String[] refs) {
-    return ContainerUtil.map(refs, new Function<String, VcsRef>() {
+  @NotNull
+  protected List<VcsRef> expect(@NotNull String... refNames) {
+    final Set<VcsRef> refs = GitTestUtil.readAllRefs(myProjectRoot, ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
+    return ContainerUtil.map2List(refNames, new Function<String, VcsRef>() {
       @Override
-      public VcsRef fun(String name) {
-        return ref(name);
+      public VcsRef fun(@NotNull final String refName) {
+        VcsRef item = ContainerUtil.find(refs, new Condition<VcsRef>() {
+          @Override
+          public boolean value(VcsRef ref) {
+            return ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName));
+          }
+        });
+        assertNotNull("Ref " + refName + " not found", item);
+        return item;
       }
     });
-  }
-
-  private static VcsRef ref(String name) {
-    String randomHash = randomHash();
-    if (isHead(name)) {
-      return ref(randomHash, name, GitRefManager.HEAD);
-    }
-    if (isRemoteBranch(name)) {
-      return ref(randomHash, name, GitRefManager.REMOTE_BRANCH);
-    }
-    if (isTag(name)) {
-      return ref(randomHash, name, GitRefManager.TAG);
-    }
-    return ref(randomHash, name, GitRefManager.LOCAL_BRANCH);
-  }
-
-  private static String randomHash() {
-    return String.valueOf(new Random().nextInt());
   }
 
   private static boolean isHead(String name) {
@@ -120,88 +75,32 @@ public class GitRefManagerTest extends UsefulTestCase {
   }
 
   private static boolean isTag(String name) {
-    return name.startsWith("tag/");
+    return name.startsWith("refs/tags/");
   }
 
   private static boolean isRemoteBranch(String name) {
     return name.startsWith("origin/");
   }
 
-  private static boolean isLocalBranch(String name) {
-    return !isHead(name) && !isTag(name) && !isRemoteBranch(name);
+  private VcsRef ref(Hash hash, String name, VcsRefType type) {
+    return new VcsRefImpl(hash, name, type, myProjectRoot);
   }
 
-  private static VcsRef ref(String hash, String name, VcsRefType type) {
-    return new VcsRefImpl(HashImpl.build(hash), name, type, ROOT);
-  }
-
-  private static void check(Collection<VcsRef> unsorted, List<VcsRef> expected) {
-    // for the sake of simplicity we check only names of references
-    List<VcsRef> actual = sort(unsorted);
-    assertEquals("Collections size don't match", expected.size(), actual.size());
-    for (int i = 0; i < actual.size(); i++) {
-      assertEquals("Incorrect element at place " + i, expected.get(i).getName(), actual.get(i).getName());
-    }
-  }
-
-  private static List<VcsRef> sort(final Collection<VcsRef> refs) {
-    final GitMockRepositoryManager manager = new GitMockRepositoryManager();
-    manager.add(new MockGitRepository(EasyMock.createMock(Project.class), ROOT) {
-      @NotNull
-      @Override
-      public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
-        List<GitBranchTrackInfo> infos = new ArrayList<GitBranchTrackInfo>();
-        List<VcsRef> remoteRefs = ContainerUtil.findAll(refs, new Condition<VcsRef>() {
+  private void setUpTracking(@NotNull Collection<VcsRef> refs) {
+    cd(myProjectRoot);
+    for (final VcsRef ref : refs) {
+      if (ref.getType() == GitRefManager.LOCAL_BRANCH) {
+        final String localBranch = ref.getName();
+        if (ContainerUtil.exists(refs, new Condition<VcsRef>() {
           @Override
-          public boolean value(VcsRef ref) {
-            return isRemoteBranch(ref.getName());
+          public boolean value(VcsRef remoteRef) {
+            return remoteRef.getType() == GitRefManager.REMOTE_BRANCH && remoteRef.getName().replace("origin/", "").equals(localBranch);
           }
-        });
-        List<VcsRef> localRefs = ContainerUtil.findAll(refs, new Condition<VcsRef>() {
-          @Override
-          public boolean value(VcsRef ref) {
-            return isLocalBranch(ref.getName());
-          }
-        });
-
-        for (final VcsRef localRef : localRefs) {
-          final VcsRef trackedRef = ContainerUtil.find(remoteRefs, new Condition<VcsRef>() {
-            @Override
-            public boolean value(VcsRef remoteRef) {
-              return localRef.getName().equals(remoteRef.getName().substring("origin/".length()));
-            }
-          });
-          if (trackedRef != null) {
-            infos.add(new GitBranchTrackInfo(new GitLocalBranch(localRef.getName(), HashImpl.build(randomHash())),
-                                             new GitRemoteBranch(trackedRef.getName(), HashImpl.build(randomHash())) {
-                                               @NotNull
-                                               @Override
-                                               public String getNameForRemoteOperations() {
-                                                 return trackedRef.getName().substring("origin/".length());
-                                               }
-
-                                               @NotNull
-                                               @Override
-                                               public String getNameForLocalOperations() {
-                                                 return trackedRef.getName();
-                                               }
-
-                                               @NotNull
-                                               @Override
-                                               public GitRemote getRemote() {
-                                                 return GitRemote.DOT;
-                                               }
-
-                                               @Override
-                                               public boolean isRemote() {
-                                                 return true;
-                                               }
-                                             }, true));
-          }
+        })) {
+          git("config branch." + localBranch + ".remote origin");
+          git("config branch." + localBranch + ".merge refs/heads/" + localBranch);
         }
-        return infos;
       }
-    });
-    return ContainerUtil.sorted(refs, new GitRefManager(manager).getComparator());
+    }
   }
 }

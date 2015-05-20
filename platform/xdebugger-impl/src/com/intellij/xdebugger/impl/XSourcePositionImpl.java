@@ -15,6 +15,8 @@
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -22,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
@@ -63,12 +66,31 @@ public class XSourcePositionImpl implements XSourcePosition {
   @Nullable
   public static XSourcePositionImpl createByOffset(@Nullable VirtualFile file, final int offset) {
     if (file == null) return null;
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) {
-      return null;
+
+    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+
+      if (document == null) {
+        return null;
+      }
+      int line = offset < document.getTextLength() ? document.getLineNumber(offset) : -1;
+      return new XSourcePositionImpl(file, line, offset);
     }
-    int line = offset < document.getTextLength() ? document.getLineNumber(offset) : -1;
-    return new XSourcePositionImpl(file, line, offset);
+    finally {
+      lock.finish();
+    }
+  }
+
+  @Nullable
+  public static XSourcePositionImpl createByElement(@Nullable PsiElement element) {
+    if (element == null) return null;
+
+    VirtualFile file = element.getContainingFile().getVirtualFile();
+
+    if (file == null) return null;
+
+    return createByOffset(file, element.getTextOffset());
   }
 
   /**
@@ -80,33 +102,53 @@ public class XSourcePositionImpl implements XSourcePosition {
       return null;
     }
 
-    int offset;
-    if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
-      offset = -1;
-    }
-    else {
-      Document document = file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null;
-      if (document == null) {
-        return null;
+    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      int offset;
+      if (file instanceof LightVirtualFile || file instanceof HttpVirtualFile) {
+        offset = -1;
       }
-      if (line < 0) {
-        line = 0;
-      }
+      else {
 
-      offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
+        Document document = file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null;
+        if (document == null) {
+          return null;
+        }
+        if (line < 0) {
+          line = 0;
+        }
+
+        offset = line < document.getLineCount() ? document.getLineStartOffset(line) : -1;
+      }
+      return new XSourcePositionImpl(file, line, offset);
     }
-    return new XSourcePositionImpl(file, line, offset);
+    finally {
+      lock.finish();
+    }
   }
 
   @Override
   @NotNull
   public Navigatable createNavigatable(@NotNull Project project) {
-    return createOpenFileDescriptor(project, this);
+    return doCreateOpenFileDescriptor(project, this);
   }
 
   @NotNull
   public static OpenFileDescriptor createOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
-    return position.getOffset() != -1 ? new OpenFileDescriptor(project, position.getFile(), position.getOffset()) : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
+    Navigatable navigatable = position.createNavigatable(project);
+    if (navigatable instanceof OpenFileDescriptor) {
+      return (OpenFileDescriptor)navigatable;
+    }
+    else {
+      return doCreateOpenFileDescriptor(project, position);
+    }
+  }
+
+  @NotNull
+  public static OpenFileDescriptor doCreateOpenFileDescriptor(@NotNull Project project, @NotNull XSourcePosition position) {
+    return position.getOffset() != -1
+           ? new OpenFileDescriptor(project, position.getFile(), position.getOffset())
+           : new OpenFileDescriptor(project, position.getFile(), position.getLine(), 0);
   }
 
   @Override

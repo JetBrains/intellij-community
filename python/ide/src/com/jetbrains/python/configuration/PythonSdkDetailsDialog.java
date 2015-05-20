@@ -285,7 +285,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
         myProjectSdksModel.addSdk(sdk);
       }
       refreshSdkList();
-      mySdkList.setSelectedValue(sdk, true);
+      mySdkList.setSelectedValue(myProjectSdksModel.findSdk(sdk.getName()), true);
       mySdkListChanged = true;
     }
   }

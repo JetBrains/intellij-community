@@ -1,7 +1,3 @@
-// Copyright (c) 2009 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 package org.jetbrains.jsonProtocol;
 
 import java.lang.annotation.ElementType;
@@ -21,7 +17,7 @@ public @interface JsonField {
    * Specifies JSON property name, which otherwise is derived from the method name (optional "get"
    * prefix is truncated with the first letter decapitalization).
    */
-  String jsonLiteralName() default "";
+  String name() default "";
 
   // read any primitive value as String (true as true, number as string - don't try to parse)
   boolean allowAnyPrimitiveValue() default false;
@@ -29,4 +25,6 @@ public @interface JsonField {
   boolean allowAnyPrimitiveValueAndMap() default false;
 
   boolean optional() default false;
+
+  String primitiveValue() default "";
 }

@@ -113,6 +113,32 @@ public class PyTypeModelBuilder {
     }
   }
 
+  static class OptionalType extends TypeModel {
+    private final TypeModel type;
+
+    private OptionalType(TypeModel type) {
+      this.type = type;
+    }
+
+    @Override
+    void accept(TypeVisitor visitor) {
+      visitor.optional(this);
+    }
+  }
+
+  static class TupleType extends TypeModel {
+    private final List<TypeModel> members;
+
+    public TupleType(List<TypeModel> members) {
+      this.members = members;
+    }
+
+    @Override
+    void accept(TypeVisitor visitor) {
+      visitor.tuple(this);
+    }
+  }
+
   private static TypeModel _(String name) {
     return new NamedType(name);
   }
@@ -194,27 +220,62 @@ public class PyTypeModelBuilder {
       }
     }
     else if (type instanceof PyUnionType && allowUnions) {
+      final PyUnionType unionType = (PyUnionType)type;
       if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type)) {
-        result = new UnknownType(build(((PyUnionType)type).excludeNull(myContext), true));
+        result = new UnknownType(build(unionType.excludeNull(myContext), true));
       }
       else {
-        result = new OneOf(
-          Collections2.transform(((PyUnionType)type).getMembers(), new Function<PyType, TypeModel>() {
-            @Override
-            public TypeModel apply(PyType t) {
-              return build(t, false);
-            }
-          }));
+        final PyType optionalType = getOptionalType(unionType);
+        if (optionalType != null) {
+          return new OptionalType(build(optionalType, true));
+        }
+
+        result = new OneOf(Collections2.transform(unionType.getMembers(), new Function<PyType, TypeModel>() {
+          @Override
+          public TypeModel apply(PyType t) {
+            return build(t, false);
+          }
+        }));
       }
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       result = build((PyCallableType)type);
+    }
+    else if (type instanceof PyTupleType) {
+      final List<TypeModel> elementModels = new ArrayList<TypeModel>();
+      final PyTupleType tupleType = (PyTupleType)type;
+      for (int i = 0; i < tupleType.getElementCount(); i++) {
+        final PyType elementType = tupleType.getElementType(i);
+        elementModels.add(build(elementType, true));
+      }
+      result = new TupleType(elementModels);
     }
     if (result == null) {
       result = type != null ? _(type.getName()) : _(PyNames.UNKNOWN_TYPE);
     }
     myVisited.put(type, result);
     return result;
+  }
+
+  @Nullable
+  private static PyType getOptionalType(@NotNull PyUnionType type) {
+    final Collection<PyType> members = type.getMembers();
+    if (members.size() == 2) {
+      boolean foundNone = false;
+      PyType optional = null;
+      for (PyType member : members) {
+        if (PyNoneType.INSTANCE.equals(member)) {
+          foundNone = true;
+        }
+        else if (member != null) {
+          optional = member;
+        }
+      }
+      if (foundNone) {
+        return optional;
+      }
+    }
+    return null;
   }
 
   private TypeModel build(@NotNull PyCallableType type) {
@@ -243,6 +304,10 @@ public class PyTypeModelBuilder {
     void param(ParamType text);
 
     void unknown(UnknownType type);
+
+    void optional(OptionalType type);
+
+    void tuple(TupleType type);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
@@ -266,9 +331,11 @@ public class PyTypeModelBuilder {
     public void unknown(UnknownType type) {
       final TypeModel nested = type.type;
       if (nested != null) {
+        add("Union[");
         nested.accept(this);
+        add(", " + PyNames.UNKNOWN_TYPE);
+        add("]");
       }
-      add(" | " + PyNames.UNKNOWN_TYPE);
     }
   }
 
@@ -310,7 +377,9 @@ public class PyTypeModelBuilder {
         add("...");
         return;
       }
-      processList(oneOf.oneOfTypes, " | ");
+      add("Union[");
+      processList(oneOf.oneOfTypes, ", ");
+      add("]");
       myDepth--;
     }
 
@@ -393,6 +462,20 @@ public class PyTypeModelBuilder {
     @Override
     public void unknown(UnknownType type) {
       type.type.accept(this);
+    }
+
+    @Override
+    public void optional(OptionalType type) {
+      add("Optional[");
+      type.type.accept(this);
+      add("]");
+    }
+
+    @Override
+    public void tuple(TupleType type) {
+      add("Tuple[");
+      processList(type.members, ", ");
+      add("]");
     }
   }
 }

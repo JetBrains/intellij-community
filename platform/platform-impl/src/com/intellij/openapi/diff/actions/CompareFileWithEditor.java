@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
+@Deprecated
 public class CompareFileWithEditor extends BaseDiffAction {
   @Nullable
   private static Document getEditingDocument(final DataContext dataContext) {

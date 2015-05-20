@@ -15,14 +15,16 @@
  */
 package com.intellij.codeInsight.template.postfix.templates;
 
-import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_THROWABLE;
+import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
+
 public class ThrowExceptionPostfixTemplate extends StringBasedPostfixTemplate {
   public ThrowExceptionPostfixTemplate() {
-    super("throw", "throw expr", JavaPostfixTemplatesUtils.JAVA_PSI_INFO, JavaPostfixTemplatesUtils.IS_THROWABLE);
+    super("throw", "throw expr", selectorTopmost(IS_THROWABLE));
   }
 
   @Nullable

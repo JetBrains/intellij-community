@@ -30,13 +30,13 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
     assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                    getRtJar(), getJDomJar());
+                    getRtJarJdk17(), getJDomJar());
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY,
                     getJDomJar());
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
                     getJDomJar());
     assertClasspath(myProject, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                    getRtJar(), getJDomJar());
+                    getRtJarJdk17(), getJDomJar());
   }
 
   public void testModuleSourcesAndOutput() throws Exception {
@@ -50,7 +50,7 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
                     testOutput, output);
     assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
-                    getRtJar(), testOutput, output);
+                    getRtJarJdk17(), testOutput, output);
   }
 
   public void testLibraryScope() throws Exception {

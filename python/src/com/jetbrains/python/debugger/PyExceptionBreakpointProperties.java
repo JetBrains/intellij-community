@@ -25,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperties<PyExceptionBreakpointProperties> {
-  @Attribute("notifyAlways")
-  public boolean myNotifyAlways;
   @Attribute("notifyOnlyOnFirst")
   public boolean myNotifyOnlyOnFirst;
   @Attribute("notifyOnTerminate")
   public boolean myNotifyOnTerminate;
+  @Attribute("ignoreLibraries")
+  public boolean myIgnoreLibraries;
 
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -40,6 +40,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   public PyExceptionBreakpointProperties(@NotNull final String exception) {
     myException = exception;
     myNotifyOnTerminate = true;
+    myIgnoreLibraries = false;
   }
 
   @Override
@@ -50,9 +51,9 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   @Override
   public void loadState(final PyExceptionBreakpointProperties state) {
     myException = state.myException;
-    myNotifyAlways = state.myNotifyAlways;
     myNotifyOnlyOnFirst = state.myNotifyOnlyOnFirst;
     myNotifyOnTerminate = state.myNotifyOnTerminate;
+    myIgnoreLibraries = state.myIgnoreLibraries;
   }
 
   public boolean isNotifyOnTerminate() {
@@ -63,20 +64,20 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     myNotifyOnTerminate = notifyOnTerminate;
   }
 
-  public boolean isNotifyAlways() {
-    return myNotifyAlways;
-  }
-
-  public void setNotifyAlways(boolean notifyAlways) {
-    myNotifyAlways = notifyAlways;
-  }
-
   public boolean isNotifyOnlyOnFirst() {
     return myNotifyOnlyOnFirst;
   }
 
   public void setNotifyOnlyOnFirst(boolean notifyOnlyOnFirst) {
     myNotifyOnlyOnFirst = notifyOnlyOnFirst;
+  }
+
+  public void setIgnoreLibraries(boolean ignoreLibraries) {
+    myIgnoreLibraries = ignoreLibraries;
+  }
+
+  public boolean isIgnoreLibraries() {
+    return myIgnoreLibraries;
   }
 
   public String getExceptionBreakpointId() {
@@ -87,8 +88,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   public ExceptionBreakpointCommand createAddCommand(RemoteDebugger debugger) {
     return ExceptionBreakpointCommand.addExceptionBreakpointCommand(debugger, getExceptionBreakpointId(),
                                                                     new AddExceptionBreakpointCommand.ExceptionBreakpointNotifyPolicy(
-                                                                      isNotifyAlways(),
-                                                                      isNotifyOnTerminate(), isNotifyOnlyOnFirst()));
+                                                                      isNotifyOnTerminate(), isNotifyOnlyOnFirst(), isIgnoreLibraries()));
   }
 
   @Override

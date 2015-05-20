@@ -1,9 +1,14 @@
 package org.jetbrains.plugins.gradle.service;
 
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
+import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -110,6 +115,51 @@ public class GradleInstallationManager {
   @Nullable
   public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
     return doGetGradleHome(project, linkedProjectPath);
+  }
+
+  @Nullable
+  public Sdk getGradleJdk(@Nullable Project project, @NotNull String linkedProjectPath) {
+    return doGetGradleJdk(project, linkedProjectPath);
+  }
+
+  @Nullable
+  private Sdk doGetGradleJdk(@Nullable Project project, String linkedProjectPath) {
+    if (project == null) {
+      return null;
+    }
+
+    final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
+    if (settings == null) {
+      return null;
+    }
+
+    final String gradleJvm = settings.getGradleJvm();
+    final Sdk sdk;
+    try {
+      sdk = ExternalSystemJdkUtil.getJdk(project, gradleJvm);
+    }
+    catch (ExternalSystemJdkException e) {
+      throw new ExternalSystemJdkException(
+        String.format("Invalid Gradle JDK configuration found. <a href='%s'>Open Gradle Settings</a> \n",
+                      OpenExternalSystemSettingsCallback.ID),
+        linkedProjectPath, e, OpenExternalSystemSettingsCallback.ID);
+    }
+
+    if (sdk == null && gradleJvm != null) {
+      throw new ExternalSystemJdkException(
+        String.format("Invalid Gradle JDK configuration found. <a href='%s'>Open Gradle Settings</a> \n",
+                      OpenExternalSystemSettingsCallback.ID),
+        linkedProjectPath, null, OpenExternalSystemSettingsCallback.ID);
+    }
+
+    final File sdkHomePath = sdk != null && sdk.getHomePath() != null ? new File(sdk.getHomePath()) : null;
+    if (sdkHomePath != null && JdkUtil.checkForJre(sdkHomePath.getPath()) && !JdkUtil.checkForJdk(sdkHomePath)) {
+      throw new ExternalSystemJdkException(
+        String.format("Please, use JDK instead of JRE for Gradle importer. <a href='%s'>Open Gradle Settings</a> \n",
+                      OpenExternalSystemSettingsCallback.ID),
+        linkedProjectPath, null, OpenExternalSystemSettingsCallback.ID);
+    }
+    return sdk;
   }
 
   /**

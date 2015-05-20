@@ -18,6 +18,7 @@
 
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
@@ -30,9 +31,9 @@ import java.util.Map;
 
 public class MavenRunnerSettings implements Cloneable {
 
-  @NonNls public static final String USE_INTERNAL_JAVA = "#JAVA_INTERNAL";
-  @NonNls public static final String USE_PROJECT_JDK = "#USE_PROJECT_JDK";
-  @NonNls public static final String USE_JAVA_HOME = "#JAVA_HOME";
+  @NonNls public static final String USE_INTERNAL_JAVA = ExternalSystemJdkUtil.USE_INTERNAL_JAVA;
+  @NonNls public static final String USE_PROJECT_JDK = ExternalSystemJdkUtil.USE_PROJECT_JDK;
+  @NonNls public static final String USE_JAVA_HOME = ExternalSystemJdkUtil.USE_JAVA_HOME;
 
   private boolean runMavenInBackground = true;
   @NotNull private String jreName = USE_PROJECT_JDK;

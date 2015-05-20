@@ -19,6 +19,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NotNull;
@@ -94,8 +95,8 @@ public abstract class FileTemplateBase implements FileTemplate {
 
   @Override
   @NotNull
-  public final String[] getUnsetAttributes(@NotNull Properties properties) throws ParseException {
-    return FileTemplateUtil.calculateAttributes(getText(), properties, false);
+  public final String[] getUnsetAttributes(@NotNull Properties properties, Project project) throws ParseException {
+    return FileTemplateUtil.calculateAttributes(getText(), properties, false, project);
   }
 
   @Override

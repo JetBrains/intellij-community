@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,12 +58,15 @@ public class XDebuggerInstanceTreeCreator implements DebuggerTreeCreator<Pair<XI
     final XValueNodeImpl root = new XValueNodeImpl(tree, null, descriptor.getSecond(),
                                                    new InstanceEvaluatorTreeRootValue(descriptor.getFirst(), descriptor.getSecond()));
     tree.setRoot(root, false);
-    tree.expandNodesOnLoad(new Condition<TreeNode>() {
+    Condition<TreeNode> visibleRootCondition = new Condition<TreeNode>() {
       @Override
       public boolean value(TreeNode node) {
         return node.getParent() == root;
       }
-    });
+    };
+    tree.expandNodesOnLoad(visibleRootCondition);
+    tree.selectNodeOnLoad(visibleRootCondition);
+
     return tree;
   }
 

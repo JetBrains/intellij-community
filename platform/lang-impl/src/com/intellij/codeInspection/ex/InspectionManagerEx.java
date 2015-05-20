@@ -25,9 +25,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -35,29 +33,22 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
 
 public class InspectionManagerEx extends InspectionManagerBase {
-  private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private final NotNullLazyValue<ContentManager> myContentManager;
   private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<GlobalInspectionContextImpl>();
-  private final AtomicBoolean myToolsAreInitialized = new AtomicBoolean(false);
   private GlobalInspectionContextImpl myGlobalInspectionContext;
-
 
   public InspectionManagerEx(final Project project) {
     super(project);
@@ -101,7 +92,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
       if (language != null) {
         final List<InspectionSuppressor> suppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(language);
         for (InspectionSuppressor suppressor : suppressors) {
-          final SuppressQuickFix[] suppressActions = suppressor.getSuppressActions(null, tool.getShortName());
+          final SuppressQuickFix[] suppressActions = suppressor.getSuppressActions(null, toolWrapper.getID());
           Collections.addAll(actions, suppressActions);
         }
       }
@@ -114,15 +105,6 @@ public class InspectionManagerEx extends InspectionManagerBase {
     });
   }
 
-  private static void processText(@NotNull @NonNls String descriptionText,
-                                  @NotNull InspectionToolWrapper tool,
-                                  @NotNull SearchableOptionsRegistrar myOptionsRegistrar) {
-    if (ApplicationManager.getApplication().isDisposed()) return;
-    final Set<String> words = myOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
-    for (String word : words) {
-      myOptionsRegistrar.addOption(word, tool.getShortName(), tool.getDisplayName(), InspectionToolsConfigurable.ID, InspectionToolsConfigurable.DISPLAY_NAME);
-    }
-  }
 
   @NotNull
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
@@ -182,28 +164,4 @@ public class InspectionManagerEx extends InspectionManagerBase {
     return myContentManager;
   }
 
-  public void buildInspectionSearchIndexIfNecessary() {
-    if (!myToolsAreInitialized.getAndSet(true)) {
-      final SearchableOptionsRegistrar myOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-      final InspectionToolRegistrar toolRegistrar = InspectionToolRegistrar.getInstance();
-      final Application app = ApplicationManager.getApplication();
-      if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
-
-      app.executeOnPooledThread(new Runnable(){
-        @Override
-        public void run() {
-          List<InspectionToolWrapper> tools = toolRegistrar.createTools();
-          for (InspectionToolWrapper toolWrapper : tools) {
-            processText(toolWrapper.getDisplayName().toLowerCase(), toolWrapper, myOptionsRegistrar);
-
-            final String description = toolWrapper.loadDescription();
-            if (description != null) {
-              @NonNls String descriptionText = HTML_PATTERN.matcher(description).replaceAll(" ");
-              processText(descriptionText, toolWrapper, myOptionsRegistrar);
-            }
-          }
-        }
-      });
-    }
-  }
 }

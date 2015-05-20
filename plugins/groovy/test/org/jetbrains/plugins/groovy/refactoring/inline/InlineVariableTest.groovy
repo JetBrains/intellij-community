@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.refactoring.inline
 
-import com.intellij.codeInsight.TargetElementUtilBase
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -125,15 +125,15 @@ public class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   }
 
   public static void performInline(Project project, Editor editor) {
-    PsiElement element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
-                                                                         TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+                                                                         TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     assertInstanceOf(element, GrVariable);
 
     GroovyInlineLocalHandler.invoke(project, editor, element as GrVariable);
   }
 
   public static void performDefInline(Project project, Editor editor) {
-    PsiReference reference = TargetElementUtilBase.findReference(editor);
+    PsiReference reference = TargetElementUtil.findReference(editor);
     assertTrue(reference instanceof PsiReferenceExpression);
     final PsiElement local = reference.resolve();
     assertTrue(local instanceof PsiLocalVariable);

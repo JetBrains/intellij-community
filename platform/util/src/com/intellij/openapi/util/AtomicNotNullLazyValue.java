@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
-
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("AtomicNotNullLazyValue");
   private volatile T myValue;
 
   @Override
@@ -32,10 +32,15 @@ public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
     if (value != null) {
       return value;
     }
+    //noinspection SynchronizeOnThis
     synchronized (this) {
       value = myValue;
       if (value == null) {
-        myValue = value = compute();
+        RecursionGuard.StackStamp stamp = ourGuard.markStack();
+        value = compute();
+        if (stamp.mayCacheNow()) {
+          myValue = value;
+        }
       }
     }
     return value;

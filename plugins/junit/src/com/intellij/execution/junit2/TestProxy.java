@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.junit2;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.junit2.events.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.info.TestInfo;
+import com.intellij.execution.junit2.states.ComparisonFailureState;
 import com.intellij.execution.junit2.states.IgnoredState;
 import com.intellij.execution.junit2.states.Statistics;
 import com.intellij.execution.junit2.states.TestState;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -108,7 +109,7 @@ public class TestProxy extends AbstractTestProxy {
     return myParent;
   }
 
-  public Navigatable getDescriptor(final Location location, final TestConsoleProperties testConsoleProperties) {
+  public Navigatable getDescriptor(@Nullable Location location, @NotNull TestConsoleProperties properties) {
     return getState().getDescriptor(location);
   }
 
@@ -132,7 +133,7 @@ public class TestProxy extends AbstractTestProxy {
     return getState().getMagnitude();
   }
 
-  public Location getLocation(final Project project, GlobalSearchScope searchScope) {
+  public Location getLocation(@NotNull final Project project, @NotNull GlobalSearchScope searchScope) {
     final Location location = getInfo().getLocation(project, searchScope);
     if (location == null) {
       return checkParentParameterized(project, searchScope);
@@ -325,10 +326,19 @@ public class TestProxy extends AbstractTestProxy {
 
   @Override
   @Nullable
-  public AssertEqualsDiffViewerProvider getDiffViewerProvider() {
-    if (myState instanceof AssertEqualsDiffViewerProvider) {
-      return (AssertEqualsDiffViewerProvider)myState;
+  public DiffHyperlink getDiffViewerProvider() {
+    if (myState instanceof ComparisonFailureState) {
+      return ((ComparisonFailureState)myState).getHyperlink();
     }
+
+    for (TestProxy proxy : getChildren()) {
+      if (!proxy.isDefect()) continue;
+      final DiffHyperlink provider = proxy.getDiffViewerProvider();
+      if (provider != null) {
+        return provider;
+      }
+    }
+
     return null;
   }
 }

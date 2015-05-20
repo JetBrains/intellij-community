@@ -27,8 +27,7 @@ setProperty("ch", "$home/community")
 setProperty("pythonCommunityHome", "$ch/python")
 setProperty("pythonEduHome", "$ch/python/edu")
 requireProperty("jdk_bundled_mac", "1.7")
-def jdk_bundled_version = p("jdk_bundled_mac") == "1.8" ? "jdk8_mac_redist.tar" : "jdk_mac_redist.tar"
-ant.copy(file: "${home}/build/jdk/${jdk_bundled_version}", tofile: "${home}/build/jdk/jdk_mac_redist_for_${buildNumber}.tar")
+getBundledJDK(new File("${home}/build/jdk/mac"), "jdk" + p("jdk_bundled_mac"), ".tar", "${home}/build/jdk/jdk_mac_redist_for_${buildNumber}.tar")
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonEduHome/resources/idea/PyCharmEduApplicationInfo.xml", collapseAttributes: "true")
@@ -170,7 +169,7 @@ public layoutEducational(String classesPath, Set usedJars) {
 
   def appInfo = appInfoFile()
   if (!dryRun) {
-    wireBuildDate(buildNumber, appInfo)
+    wireBuildDate("PE-${buildNumber}", appInfo)
   }
 
   Map args = [
@@ -194,14 +193,13 @@ public layoutEducational(String classesPath, Set usedJars) {
     "$pythonEduHome/resources"]
   buildWinLauncher(ch, "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfo, "$pythonEduHome/build/pycharm_edu_launcher.properties", system_selector, resourcePaths)
-  //signExe(launcher)
   executeExternalAnt(["dirName": "${paths.distWin}/bin", "fileName": "pycharm.exe"], "$home/build/signBuild.xml")
 
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
 
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
-            "pycharmEDU-", false, true, ".py", system_selector)
+            "pycharmEDU-", false, true, system_selector)
 
   String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
@@ -214,12 +212,14 @@ public layoutEducational(String classesPath, Set usedJars) {
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    layouts.layoutPlugin("learn-python") {
+    layouts.layoutPlugin("interactive-learning")
+    layouts.layoutPlugin("interactive-learning-python") {
       dir("courses") {
-        fileset(dir: "$pythonEduHome/learn-python/resources/courses")
+        fileset(dir: "$pythonEduHome/interactive-learning-python/resources/courses")
       }
     }
     layouts.layoutPlugin("course-creator")
+    layouts.layoutPlugin("course-creator-python")
   }
 
   layouts.layoutCommunityPlugins(ch)
@@ -255,6 +255,10 @@ private layoutFull(Map args, String target, Set usedJars) {
             exclude(name: "**/tips/**")
           }
         }
+      }
+
+      jar("educational.jar") {
+        module("educational")
       }
 
       jar("pycharm-pydev.jar") {
@@ -411,5 +415,6 @@ private layoutMac(Map _args, String target) {
   args.help_id = "PE"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
+  args.executable = "pycharm"
   layoutMacApp(target, ch, args)
 }

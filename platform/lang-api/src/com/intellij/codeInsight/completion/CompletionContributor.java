@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.Pair;
@@ -234,7 +235,9 @@ public abstract class CompletionContributor {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
       @Override
       public List<CompletionContributor> compute() {
-        return forLanguage(PsiUtilCore.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset()));
+        PsiElement position = parameters.getPosition();
+        List<CompletionContributor> all = forLanguage(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()));
+        return DumbService.getInstance(position.getProject()).filterByDumbAwareness(all);
       }
     });
   }

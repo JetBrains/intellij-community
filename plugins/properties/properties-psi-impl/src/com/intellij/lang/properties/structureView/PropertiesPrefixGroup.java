@@ -20,6 +20,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.editor.PropertiesAnchorizer;
 import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.editor.ResourceBundlePropertyStructureViewElement;
 import com.intellij.lang.properties.psi.Property;
@@ -95,25 +96,33 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
       if (!(treeElement instanceof StructureViewTreeElement)) {
         continue;
       }
-      final Object value = ((StructureViewTreeElement)treeElement).getValue();
+      Object value = ((StructureViewTreeElement)treeElement).getValue();
+      if (value instanceof PropertiesAnchorizer.PropertyAnchor) {
+        value = ((PropertiesAnchorizer.PropertyAnchor)value).getRepresentative();
+      }
       if (!(value instanceof IProperty)) {
         continue;
       }
       final String key = ((IProperty) value).getUnescapedKey();
-      if (key == null || key.equals(myPrefix)) {
+      if (key == null) {
         continue;
       }
-      List<String> keyWords = StringUtil.split(key, mySeparator);
-      boolean startsWith = prefixWords.size() < keyWords.size();
-      if (startsWith) {
-        for (int i = 0; i < prefixWords.size(); i++) {
-          String prefixWord = prefixWords.get(i);
-          String keyWord = keyWords.get(i);
-          if (!Comparing.strEqual(keyWord, prefixWord)) {
-            startsWith = false;
-            break;
+      boolean startsWith;
+      if (!key.equals(myPrefix)) {
+        List<String> keyWords = StringUtil.split(key, mySeparator);
+        startsWith = prefixWords.size() < keyWords.size();
+        if (startsWith) {
+          for (int i = 0; i < prefixWords.size(); i++) {
+            String prefixWord = prefixWords.get(i);
+            String keyWord = keyWords.get(i);
+            if (!Comparing.strEqual(keyWord, prefixWord)) {
+              startsWith = false;
+              break;
+            }
           }
         }
+      } else {
+        startsWith = true;
       }
       if (startsWith) {
         result.add(treeElement);

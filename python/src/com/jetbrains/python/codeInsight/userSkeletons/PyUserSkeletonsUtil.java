@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.userSkeletons;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -24,8 +23,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -65,9 +63,7 @@ public class PyUserSkeletonsUtil {
   private static List<String> getPossibleUserSkeletonsPaths() {
     final List<String> result = new ArrayList<String>();
     result.add(PathManager.getConfigPath() + File.separator + USER_SKELETONS_DIR);
-    result.add(ApplicationManager.getApplication().isInternal()
-               ? StringUtil.join(new String[]{PythonHelpersLocator.getPythonCommunityPath(), "helpers", USER_SKELETONS_DIR}, File.separator)
-               : PythonHelpersLocator.getHelperPath(USER_SKELETONS_DIR));
+    result.add(PythonHelpersLocator.getHelperPath(USER_SKELETONS_DIR));
     return result;
   }
 
@@ -75,7 +71,7 @@ public class PyUserSkeletonsUtil {
   public static VirtualFile getUserSkeletonsDirectory() {
     if (ourUserSkeletonsDirectory == null) {
       for (String path : getPossibleUserSkeletonsPaths()) {
-        ourUserSkeletonsDirectory = LocalFileSystem.getInstance().findFileByPath(path);
+        ourUserSkeletonsDirectory = StandardFileSystems.local().findFileByPath(path);
         if (ourUserSkeletonsDirectory != null) {
           break;
         }

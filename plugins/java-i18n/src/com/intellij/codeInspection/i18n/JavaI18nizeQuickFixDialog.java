@@ -139,8 +139,8 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       link.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
-          final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
-          final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
+          final FileTemplateConfigurable configurable = new FileTemplateConfigurable(myProject);
+          final FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
           SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -149,6 +149,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
           });
           boolean ok = ShowSettingsUtil.getInstance().editConfigurable(myPanel, configurable);
           if (ok) {
+            FileTemplateManager.getInstance(myProject).saveAllTemplates();
             somethingChanged();
             if (myShowJavaCodeInfo) {
               suggestAvailableResourceBundleExpressions();
@@ -203,7 +204,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     if (templateName == null) return;
 
     if (myShowJavaCodeInfo) {
-      FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
+      FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
       boolean showResourceBundleSuggester = template.getText().contains("${" + RESOURCE_BUNDLE_OPTION_KEY + "}");
       myJavaCodeInfoPanel.setVisible(showResourceBundleSuggester);
     }
@@ -253,7 +254,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
     String templateName = getTemplateName();
     LOG.assertTrue(templateName != null);
-    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
+    FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
     Map<String, String> attributes = new THashMap<String, String>();
     attributes.put(PROPERTY_KEY_OPTION_KEY, propertyKey);
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());

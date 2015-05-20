@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,9 @@ public interface Content extends UserDataHolder, ComponentContainer {
   @NonNls String PROP_DESCRIPTION = "description";
   @NonNls 
   String PROP_COMPONENT = "component";
+
+  Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
+  Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
 
   String PROP_ALERT = "alerting";
 

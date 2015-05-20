@@ -24,7 +24,6 @@ import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +39,13 @@ import java.util.Map;
   name = "NotificationConfiguration",
   storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/notifications.xml")
 )
-public class NotificationsConfigurationImpl extends NotificationsConfiguration implements ApplicationComponent,
-                                                                                          PersistentStateComponent<Element> {
+public class NotificationsConfigurationImpl
+    extends NotificationsConfiguration
+    implements ApplicationComponent, PersistentStateComponent<Element> {
+
   private static final Logger LOG = Logger.getInstance(NotificationsConfiguration.class);
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
+  private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
 
   private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR = new Comparator<NotificationSettings>() {
     @Override
@@ -57,6 +59,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   private final MessageBus myMessageBus;
 
   public boolean SHOW_BALLOONS = true;
+  public boolean SYSTEM_NOTIFICATIONS = true;
 
   public NotificationsConfigurationImpl(@NotNull MessageBus bus) {
     myMessageBus = bus;
@@ -184,7 +187,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
 
   @Override
   public synchronized Element getState() {
-    @NonNls Element element = new Element("NotificationsConfiguration");
+    Element element = new Element("NotificationsConfiguration");
 
     NotificationSettings[] sortedNotifications = myIdToSettingsMap.values().toArray(new NotificationSettings[myIdToSettingsMap.size()]);
     Arrays.sort(sortedNotifications, NOTIFICATION_SETTINGS_COMPARATOR);
@@ -197,13 +200,18 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
       element.setAttribute(SHOW_BALLOONS_ATTRIBUTE, "false");
     }
 
+    //noinspection NonPrivateFieldAccessedInSynchronizedContext
+    if (!SYSTEM_NOTIFICATIONS) {
+      element.setAttribute(SYSTEM_NOTIFICATIONS_ATTRIBUTE, "false");
+    }
+
     return element;
   }
 
   @Override
   public synchronized void loadState(final Element state) {
     myIdToSettingsMap.clear();
-    for (@NonNls Element child : state.getChildren("notification")) {
+    for (Element child : state.getChildren("notification")) {
       final NotificationSettings settings = NotificationSettings.load(child);
       if (settings != null) {
         final String id = settings.getGroupId();
@@ -212,9 +220,15 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
       }
     }
     doRemove("Log Only");
+
     if ("false".equals(state.getAttributeValue(SHOW_BALLOONS_ATTRIBUTE))) {
       //noinspection NonPrivateFieldAccessedInSynchronizedContext
       SHOW_BALLOONS = false;
+    }
+
+    if ("false".equals(state.getAttributeValue(SYSTEM_NOTIFICATIONS_ATTRIBUTE))) {
+      //noinspection NonPrivateFieldAccessedInSynchronizedContext
+      SYSTEM_NOTIFICATIONS = false;
     }
   }
 }

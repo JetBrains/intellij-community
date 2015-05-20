@@ -64,11 +64,11 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
    * which is important because these details will be constantly visible to the user,
    * thus it would be annoying to re-load them from VCS if the cache overflows.
    */
-  @NotNull private final Map<Hash, VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
+  @NotNull private final Map<Integer, VcsCommitMetadata> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
 
   private final VcsUserRegistryImpl myUserRegistry;
 
-  private final VcsLogHashMap myHashMap;
+  private final VcsLogHashMapImpl myHashMap;
   private final ContainingBranchesGetter myContainingBranchesGetter;
 
   @NotNull private final VcsLogRefresher myRefresher;
@@ -84,22 +84,21 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
-    myMiniDetailsGetter = new MiniDetailsGetter(this, logProviders);
-    myDetailsGetter = new CommitDetailsGetter(this, logProviders);
     mySettings = settings;
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
 
     try {
-      myHashMap = new VcsLogHashMap(myProject, logProviders);
+      myHashMap = new VcsLogHashMapImpl(myProject, logProviders);
     }
     catch (IOException e) {
       throw new RuntimeException(e); // TODO: show a message to the user & fallback to using in-memory Hashes
     }
+    myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
+    myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
 
     myFilterer = new VcsLogFiltererImpl(myProject, myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter,
-                                                       uiProperties.isBek() ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal,
-                                                       visiblePackConsumer);
+                                        PermanentGraph.SortType.values()[uiProperties.getBekSortType()], visiblePackConsumer);
 
     myDataPackUpdateHandler = new Consumer<DataPack>() {
       @Override
@@ -108,15 +107,16 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
       }
     };
 
-    myRefresher = new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache,
-                                          myDataPackUpdateHandler, new Consumer<Exception>() {
-      @Override
-      public void consume(Exception e) {
-        if (!(e instanceof ProcessCanceledException)) {
-          LOG.error(e);
-        }
-      }
-    }, mySettings.getRecentCommitsCount());
+    myRefresher =
+      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache, myDataPackUpdateHandler,
+                              new Consumer<Exception>() {
+                                @Override
+                                public void consume(Exception e) {
+                                  if (!(e instanceof ProcessCanceledException)) {
+                                    LOG.error(e);
+                                  }
+                                }
+                              }, mySettings.getRecentCommitsCount());
   }
 
   @NotNull
@@ -136,7 +136,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   }
 
   @NotNull
-  public VcsLogHashMap getHashMap() {
+  public VcsLogHashMapImpl getHashMap() {
     return myHashMap;
   }
 
@@ -153,7 +153,7 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
         myDataPackUpdateHandler.consume(dataPack);
         initSw.report();
       }
-    }, "Loading recent history...");
+    }, "Loading History...");
   }
 
   private void readCurrentUser() {
@@ -218,10 +218,11 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
     return myContainingBranchesGetter;
   }
 
-  void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
-    myDataLoaderQueue.run(new Task.Backgroundable(myProject, title) {
+  private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
+    myDataLoaderQueue.run(new Task.Backgroundable(myProject, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
         try {
           task.consume(indicator);
         }
@@ -249,8 +250,8 @@ public class VcsLogDataHolder implements Disposable, VcsLogDataProvider {
   }
 
   @Nullable
-  public VcsCommitMetadata getTopCommitDetails(@NotNull Hash hash) {
-    return myTopCommitsDetailsCache.get(hash);
+  public VcsCommitMetadata getTopCommitDetails(@NotNull Integer commitId) {
+    return myTopCommitsDetailsCache.get(commitId);
   }
 
   public CommitDetailsGetter getCommitDetailsGetter() {

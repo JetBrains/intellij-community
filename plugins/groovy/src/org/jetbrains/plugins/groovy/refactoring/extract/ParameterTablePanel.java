@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -146,9 +147,9 @@ public abstract class ParameterTablePanel extends JPanel {
       }
     });
 
-    myTable.setPreferredScrollableViewportSize(new Dimension(250, myTable.getRowHeight() * 5));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(250, myTable.getRowHeight() * 5));
     myTable.setShowGrid(false);
-    myTable.setIntercellSpacing(new Dimension(0, 0));
+    myTable.setIntercellSpacing(JBUI.emptySize());
     @NonNls final InputMap inputMap = myTable.getInputMap();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
     @NonNls final ActionMap actionMap = myTable.getActionMap();

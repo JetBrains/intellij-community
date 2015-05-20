@@ -24,7 +24,7 @@ import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -140,11 +140,18 @@ public abstract class ZenCodingGenerator {
   }
   
   @Nullable
-  public UnnamedConfigurable createConfigurable() {
+  public Configurable createConfigurable() {
     return null;
   }
 
   public boolean hasCompletionItem() {
     return false;
+  }
+  
+  public boolean isHtml(@NotNull CustomTemplateCallback callback) {
+    return false;
+  }
+  
+  public void disableEmmet() {
   }
 }

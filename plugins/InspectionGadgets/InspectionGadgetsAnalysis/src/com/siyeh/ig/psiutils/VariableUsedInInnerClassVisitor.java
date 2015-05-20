@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor {
@@ -43,6 +44,14 @@ class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor {
     final boolean wasInInnerClass = inInnerClass;
     if (!inInnerClass) {
       inInnerClass = true;
+      if (aClass instanceof PsiAnonymousClass) {
+        final PsiExpressionList argumentList = ((PsiAnonymousClass)aClass).getArgumentList();
+        if (argumentList != null) {
+          for (PsiClass localAndAnonymousClasses : PsiTreeUtil.findChildrenOfType(argumentList, PsiClass.class)) {
+            localAndAnonymousClasses.accept(this);
+          }
+        }
+      }
       PsiElement child = aClass.getLBrace();
       while (child != null) {
         child.accept(this);

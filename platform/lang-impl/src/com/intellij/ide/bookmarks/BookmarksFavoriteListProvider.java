@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,13 @@ import java.util.Set;
  * User: Vassiliy.Kudryashov
  */
 public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider<Bookmark> implements BookmarksListener {
+  private final BookmarkManager myBookmarkManager;
+  private final FavoritesManager myFavoritesManager;
 
-  public BookmarksFavoriteListProvider(Project project) {
+  public BookmarksFavoriteListProvider(Project project, BookmarkManager bookmarkManager, FavoritesManager favoritesManager) {
     super(project, "Bookmarks");
+    myBookmarkManager = bookmarkManager;
+    myFavoritesManager = favoritesManager;
     project.getMessageBus().connect(project).subscribe(BookmarksListener.TOPIC, this);
     updateChildren();
   }
@@ -67,7 +71,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
   private void updateChildren() {
     if (myProject.isDisposed()) return;
     myChildren.clear();
-    List<Bookmark> bookmarks = BookmarkManager.getInstance(myProject).getValidBookmarks();
+    List<Bookmark> bookmarks = myBookmarkManager.getValidBookmarks();
     for (final Bookmark bookmark : bookmarks) {
       AbstractTreeNode<Bookmark> child = new AbstractTreeNode<Bookmark>(myProject, bookmark) {
         @NotNull
@@ -100,7 +104,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
       child.setParent(myNode);
       myChildren.add(child);
     }
-    FavoritesManager.getInstance(myProject).fireListeners(getListName(myProject));
+    myFavoritesManager.fireListeners(getListName(myProject));
   }
 
   @Nullable

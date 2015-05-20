@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -37,7 +38,7 @@ import static com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode.createIn
  */
 public class XVariablesView extends XVariablesViewBase {
   public static final Key<Map<Pair<VirtualFile, Integer>, Set<XValueNodeImpl>>> DEBUG_VARIABLES = Key.create("debug.variables");
-  public static final Key<Map<VirtualFile, Long>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
+  public static final Key<ObjectLongHashMap<VirtualFile>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
@@ -67,11 +68,22 @@ public class XVariablesView extends XVariablesViewBase {
   }
 
   @Override
-  protected void clear() {
-    XDebuggerTree tree = getTree();
+  public void dispose() {
+    clearInlineData(getTree());
+    super.dispose();
+  }
+
+  private static void clearInlineData(XDebuggerTree tree) {
     tree.getProject().putUserData(DEBUG_VARIABLES, null);
     tree.getProject().putUserData(DEBUG_VARIABLES_TIMESTAMPS, null);
+    tree.updateEditor();
+  }
+
+  @Override
+  protected void clear() {
+    XDebuggerTree tree = getTree();
     tree.setSourcePosition(null);
+    clearInlineData(tree);
 
     XDebuggerTreeNode node;
     XDebugSession session = getSession(getPanel());

@@ -65,8 +65,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   private static FileHighlightingSetting getDefaultHighlightingSetting(@NotNull Project project, final VirtualFile virtualFile) {
     if (virtualFile != null) {
       DefaultHighlightingSettingProvider[] providers = DefaultHighlightingSettingProvider.EP_NAME.getExtensions();
-      List<DefaultHighlightingSettingProvider> filtered =
-        DumbService.getInstance(project).filterByDumbAwareness(Arrays.asList(providers));
+      List<DefaultHighlightingSettingProvider> filtered = DumbService.getInstance(project).filterByDumbAwareness(providers);
       for (DefaultHighlightingSettingProvider p : filtered) {
         FileHighlightingSetting setting = p.getDefaultSetting(project, virtualFile);
         if (setting != null) {
@@ -156,7 +155,11 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   public boolean shouldInspect(@NotNull PsiElement psiRoot) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
 
-    if (!shouldHighlight(psiRoot)) return false;
+    final FileHighlightingSetting settingForRoot = getHighlightingSettingForRoot(psiRoot);
+    if (settingForRoot == FileHighlightingSetting.SKIP_HIGHLIGHTING ||
+        settingForRoot == FileHighlightingSetting.SKIP_INSPECTION) {
+      return false;
+    }
     final Project project = psiRoot.getProject();
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
@@ -166,9 +169,6 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (ProjectScope.getLibrariesScope(project).contains(virtualFile) && !fileIndex.isInContent(virtualFile)) return false;
 
-    if (SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile)) return false;
-
-    final FileHighlightingSetting settingForRoot = getHighlightingSettingForRoot(psiRoot);
-    return settingForRoot != FileHighlightingSetting.SKIP_INSPECTION;
+    return !SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile);
   }
 }

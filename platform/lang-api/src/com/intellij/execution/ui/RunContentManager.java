@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.execution.ui;
 import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.wm.ToolWindow;
@@ -28,57 +27,49 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * The manager of tabs in the Run/Debug toolwindows.
+ *
+ * @see com.intellij.execution.ExecutionManager#getContentManager()
+ */
 public interface RunContentManager {
   Topic<RunContentWithExecutorListener> TOPIC =
     Topic.create("Run Content", RunContentWithExecutorListener.class);
 
+  /** @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead (to be removed in IDEA 16) */
   @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead
-   */
   DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
+  /**
+   * Returns the content descriptor for the selected run configuration in the last activated Run/Debug toolwindow.
+   *
+   * @return the content descriptor, or null if there are no active run or debug configurations.
+   */
   @Nullable
   RunContentDescriptor getSelectedContent();
 
+  /**
+   * Returns the content descriptor for the selected run configuration in the toolwindow corresponding to the specified executor.
+   *
+   * @param executor the executor (e.g. {@link com.intellij.execution.executors.DefaultRunExecutor#getRunExecutorInstance()} or
+   *                 {@link com.intellij.execution.executors.DefaultDebugExecutor#getDebugExecutorInstance()})
+   * @return the content descriptor, or null if there is no selected run configuration in the specified toolwindow.
+   */
   @Nullable
-  RunContentDescriptor getSelectedContent(Executor runnerInfo);
+  RunContentDescriptor getSelectedContent(Executor executor);
 
+  /**
+   * Returns the list of content descriptors for all currently displayed run/debug configurations.
+   */
   @NotNull
   List<RunContentDescriptor> getAllDescriptors();
 
   /**
-   * @deprecated use {@link #getReuseContent(ExecutionEnvironment)}
-   * to remove in IDEA 15
-   */
-  @Deprecated
-  @Nullable
-  RunContentDescriptor getReuseContent(Executor requestor, @Nullable RunContentDescriptor contentToReuse);
-
-  /**
-   * @deprecated use {@link #getReuseContent(ExecutionEnvironment)}
-   * to remove in IDEA 15
-   */
-  @Deprecated
-  @Nullable
-  RunContentDescriptor getReuseContent(Executor requestor, @NotNull ExecutionEnvironment executionEnvironment);
-
-  @Nullable
-  /**
    * To reduce number of open contents RunContentManager reuses
    * some of them during showRunContent (for ex. if a process was stopped)
    */
-  RunContentDescriptor getReuseContent(@NotNull ExecutionEnvironment executionEnvironment);
-
-  /**
-   * @deprecated use {@link #getReuseContent(ExecutionEnvironment)}
-   * to remove in IDEA 15
-   */
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
   @Nullable
-  RunContentDescriptor getReuseContent(Executor requestor, DataContext dataContext);
+  RunContentDescriptor getReuseContent(@NotNull ExecutionEnvironment executionEnvironment);
 
   @Nullable
   RunContentDescriptor findContentDescriptor(Executor requestor, ProcessHandler handler);
@@ -94,30 +85,6 @@ public interface RunContentManager {
   void toFrontRunContent(Executor requestor, RunContentDescriptor descriptor);
 
   void toFrontRunContent(Executor requestor, ProcessHandler handler);
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated Use {@link RunContentManager#TOPIC} instead
-   * to remove in IDEA 15
-   */
-  void addRunContentListener(@NotNull RunContentListener listener);
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated Use {@link RunContentManager#TOPIC} instead
-   * to remove in IDEA 15
-   */
-  void removeRunContentListener(RunContentListener listener);
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated Use {@link RunContentManager#TOPIC} instead
-   * to remove in IDEA 15
-   */
-  void addRunContentListener(@NotNull RunContentListener myContentListener, Executor executor);
 
   @Nullable
   ToolWindow getToolWindowByDescriptor(@NotNull RunContentDescriptor descriptor);

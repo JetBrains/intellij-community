@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
@@ -57,8 +56,6 @@ public class GrHighlightExitPointHandler extends HighlightUsagesHandlerBase<PsiE
 
   @Override
   public void computeUsages(List<PsiElement> targets) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN);
-
     PsiElement parent = myTarget.getParent();
     if (!(parent instanceof GrReturnStatement) && !(parent instanceof GrThrowStatement)) return;
 
@@ -78,5 +75,11 @@ public class GrHighlightExitPointHandler extends HighlightUsagesHandlerBase<PsiE
 
   private static boolean isCorrectReturn(@Nullable PsiElement e) {
     return e instanceof GrReturnStatement || e instanceof GrThrowStatement || e instanceof GrExpression;
+  }
+
+  @Nullable
+  @Override
+  public String getFeatureId() {
+    return ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN;
   }
 }

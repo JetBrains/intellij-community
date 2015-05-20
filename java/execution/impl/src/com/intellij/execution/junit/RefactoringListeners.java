@@ -150,6 +150,23 @@ public class RefactoringListeners {
       return psiClass.getQualifiedName();
     }
   }
+  
+  public static class RefactorPackageByClass extends RenameElement<PsiClass> {
+    public RefactorPackageByClass(final Accessor<PsiClass> accessor) {
+      super(accessor, "*");
+    }
+
+    public PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
+      return JavaPsiFacade.getInstance(psiClass.getProject())
+        .findClass(qualifiedName.replace('$', '.').replace("\\*", psiClass.getName()), 
+                   GlobalSearchScope.moduleScope(JavaExecutionUtil.findModule(psiClass)));
+    }
+
+    public String getQualifiedName(final PsiClass psiClass) {
+      final String qualifiedName = psiClass.getQualifiedName();
+      return qualifiedName != null ? StringUtil.getPackageName(qualifiedName) : null;
+    }
+  }
 
   private static class ClassPackageAccessor implements RefactoringListeners.Accessor<PsiPackage> {
     private final PsiPackage myContainingPackage;

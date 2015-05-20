@@ -18,16 +18,15 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.ExternalizablePath;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiPackage;
 
 import java.util.*;
 
@@ -174,26 +173,6 @@ public class TestData implements Cloneable
     return data;
   }
 
-  public String getGeneratedName(JavaRunConfigurationModule runconfigurationmodule) {
-    if (TestType.PACKAGE.getType().equals(TEST_OBJECT)) if (getPackageName().length() == 0) return "<default>";
-    else return getPackageName();
-    String name = JavaExecutionUtil.getPresentableClassName(getMainClassName());
-    if (TestType.METHOD.getType().equals(TEST_OBJECT)) {
-      return name + '.' + getMethodName();
-    }
-    else if (TestType.SUITE.getType().equals(TEST_OBJECT)) {
-      return getSuiteName();
-    }
-    else {
-      if (TestType.PATTERN.getType().equals(TEST_OBJECT)) {
-        final int size = myPatterns.size();
-        if (size == 0) return "Temp suite";
-        return StringUtil.getShortName(myPatterns.iterator().next()) + (size > 1 ? " and " + (size - 1) + " more" : "");
-      }
-      return name;
-    }
-  }
-
   public String getMainClassName() {
     return MAIN_CLASS_NAME == null ? "" : MAIN_CLASS_NAME;
   }
@@ -215,28 +194,6 @@ public class TestData implements Cloneable
     PsiPackage psipackage = JUnitUtil.getContainingPackage(psiclass);
     PACKAGE_NAME = psipackage == null ? "" : psipackage.getQualifiedName();
     return JavaExecutionUtil.findModule(psiclass);
-  }
-
-  public boolean isConfiguredByElement(PsiElement element) {
-    if (TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
-      if (element instanceof PsiPackage) {
-        return Comparing.strEqual(PACKAGE_NAME, ((PsiPackage) element).getQualifiedName());
-      } else if (element instanceof PsiDirectory) {
-        final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
-        return psiPackage != null && Comparing.strEqual(PACKAGE_NAME, psiPackage.getQualifiedName());
-      }
-    }
-
-    element = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
-    if (element instanceof PsiMethod && TEST_OBJECT.equals(TestType.METHOD.getType())) {
-      final PsiClass aClass = ((PsiMethod) element).getContainingClass();
-      return aClass != null &&
-             Comparing.strEqual(MAIN_CLASS_NAME, JavaExecutionUtil.getRuntimeQualifiedName(aClass)) &&
-          Comparing.strEqual(METHOD_NAME, ((PsiMethod) element).getName());
-    } else if (element instanceof PsiClass && TEST_OBJECT.equals(TestType.CLASS.getType())) {
-      return Comparing.strEqual(MAIN_CLASS_NAME, JavaExecutionUtil.getRuntimeQualifiedName((PsiClass) element));
-    }
-    return false;
   }
 
   public Map<String, String> getEnvs() {

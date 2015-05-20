@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.psi.Callable;
+import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyTypedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,22 +51,22 @@ public class TypeEvalContext {
   private String myTraceIndent = "";
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<PyTypedElement, PyType>();
-  private final Map<Callable, PyType> myEvaluatedReturn = new HashMap<Callable, PyType>();
+  private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<PyCallable, PyType>();
   private final ThreadLocal<Set<PyTypedElement>> myEvaluating = new ThreadLocal<Set<PyTypedElement>>() {
     @Override
     protected Set<PyTypedElement> initialValue() {
       return new HashSet<PyTypedElement>();
     }
   };
-  private final ThreadLocal<Set<Callable>> myEvaluatingReturn = new ThreadLocal<Set<Callable>>() {
+  private final ThreadLocal<Set<PyCallable>> myEvaluatingReturn = new ThreadLocal<Set<PyCallable>>() {
     @Override
-    protected Set<Callable> initialValue() {
-      return new HashSet<Callable>();
+    protected Set<PyCallable> initialValue() {
+      return new HashSet<PyCallable>();
     }
   };
 
-  private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, @Nullable PsiFile origin) {
-    myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, origin);
+  private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
+    myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
   }
 
   @Override
@@ -83,17 +83,29 @@ public class TypeEvalContext {
     return myConstraints.myAllowDataFlow || element.getContainingFile() == myConstraints.myOrigin;
   }
 
-  public boolean allowLocalUsages(@NotNull PsiElement element) {
-    return myConstraints.myAllowStubToAST && myConstraints.myAllowDataFlow && element.getContainingFile() == myConstraints.myOrigin;
+  public boolean allowCallContext(@NotNull PsiElement element) {
+    return myConstraints.myAllowCallContext && element.getContainingFile() == myConstraints.myOrigin;
+  }
+
+  /**
+   * Create a context for code completion.
+   * <p/>
+   * It is as detailed as {@link TypeEvalContext#userInitiated(Project, PsiFile)}, but allows inferring types based on the context in which
+   * the analyzed code was called or may be called. Since this is basically guesswork, the results should be used only for code completion.
+   */
+  public static TypeEvalContext codeCompletion(@NotNull final Project project, @Nullable final PsiFile origin) {
+    return CACHE.getContext(project, new TypeEvalContext(true, true, true, origin));
   }
 
   /**
    * Create the most detailed type evaluation context for user-initiated actions.
    * <p/>
-   * Should be used for code completion, go to definition, find usages, refactorings, documentation.
+   * Should be used go to definition, find usages, refactorings, documentation.
+   * <p/>
+   * For code completion see {@link TypeEvalContext#codeCompletion(Project, PsiFile)}.
    */
   public static TypeEvalContext userInitiated(@NotNull final Project project, @Nullable final PsiFile origin) {
-    return CACHE.getContext(project, new TypeEvalContext(true, true, origin));
+    return CACHE.getContext(project, new TypeEvalContext(true, true, false, origin));
   }
 
   /**
@@ -103,20 +115,18 @@ public class TypeEvalContext {
    * Inspections should not create a new type evaluation context. They should re-use the context of the inspection session.
    */
   public static TypeEvalContext codeAnalysis(@NotNull final Project project, @Nullable final PsiFile origin) {
-    return CACHE.getContext(project, new TypeEvalContext(false, false, origin));
+    return CACHE.getContext(project, new TypeEvalContext(false, false, false, origin));
   }
 
   /**
    * Create the most shallow type evaluation context for code insight purposes when other more detailed contexts are not available.
    * It's use should be minimized.
-   * <p/>
-   * <p/>
    *
    * @param project pass project here to enable cache. Pass null if you do not have any project.
    *                <strong>Always</strong> do your best to pass project here: it increases performance!
    */
   public static TypeEvalContext codeInsightFallback(@Nullable final Project project) {
-    final TypeEvalContext anchor = new TypeEvalContext(false, false, null);
+    final TypeEvalContext anchor = new TypeEvalContext(false, false, false, null);
     if (project != null) {
       return CACHE.getContext(project, anchor);
     }
@@ -129,7 +139,7 @@ public class TypeEvalContext {
    * Should be used only when normal code insight context is not enough for getting good results.
    */
   public static TypeEvalContext deepCodeInsight(@NotNull final Project project) {
-    return CACHE.getContext(project, new TypeEvalContext(false, true, null));
+    return CACHE.getContext(project, new TypeEvalContext(false, true, false, null));
   }
 
   public TypeEvalContext withTracing() {
@@ -181,7 +191,7 @@ public class TypeEvalContext {
         }
       }
       final PyType type = element.getType(this, Key.INSTANCE);
-      assertValid(type, element);
+       assertValid(type, element);
       synchronized (myEvaluated) {
         myEvaluated.put(element, type);
       }
@@ -193,8 +203,8 @@ public class TypeEvalContext {
   }
 
   @Nullable
-  public PyType getReturnType(@NotNull final Callable callable) {
-    final Set<Callable> evaluating = myEvaluatingReturn.get();
+  public PyType getReturnType(@NotNull final PyCallable callable) {
+    final Set<PyCallable> evaluating = myEvaluatingReturn.get();
     if (evaluating.contains(callable)) {
       return null;
     }

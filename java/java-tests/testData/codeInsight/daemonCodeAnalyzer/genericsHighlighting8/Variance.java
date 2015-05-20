@@ -142,7 +142,7 @@ class S1 {
     }
 
     void bar(List<? extends S1> k) {
-        f<error descr="'f(java.util.List<capture<? extends S1>>, capture<? extends S1>)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, S1)'">(k,  k.get(0))</error>;
+        f<error descr="'f(java.util.List<T>, T)' in 'S1' cannot be applied to '(java.util.List<capture<? extends S1>>, S1)'">(k,  k.get(0))</error>;
     }
 }
 
@@ -152,7 +152,7 @@ class S2 {
     }
 
     void bar(List<? extends S2> k) {
-        f<error descr="'f(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
+        f<error descr="'f(java.util.List<java.lang.Object>, java.util.List<java.lang.Object>)' in 'S2' cannot be applied to '(java.util.List<capture<? extends S2>>, java.util.List<capture<? extends S2>>)'">(k, k)</error>;
     }
 }
 
@@ -162,7 +162,7 @@ class S3 {
     }
 
     void bar(Map<? extends S3, ? extends S3> k) {
-        f<error descr="'f(java.util.Map<capture<? extends S3>,capture<? extends S3>>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
+        f<error descr="'f(java.util.Map<java.lang.Object,java.lang.Object>)' in 'S3' cannot be applied to '(java.util.Map<capture<? extends S3>,capture<? extends S3>>)'">(k)</error>;
     }
 }
 

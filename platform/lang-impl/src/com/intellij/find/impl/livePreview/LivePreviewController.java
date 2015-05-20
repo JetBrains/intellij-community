@@ -199,7 +199,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
 
       final int offset;
-      if ((!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) || copy.isGlobal()) {
+      if (!selectionModel.hasSelection() || copy.isGlobal()) {
         copy.setGlobal(true);
         offset = 0;
       } else {
@@ -220,10 +220,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   }
 
   public boolean canReplace() {
-    if (mySearchResults != null && mySearchResults.getCursor() != null &&
-        !isReplaceDenied() && (mySearchResults.getFindModel().isGlobal() ||
-                                                       !mySearchResults.getEditor().getSelectionModel()
-                                                         .hasBlockSelection()) ) {
+    if (mySearchResults != null && mySearchResults.getCursor() != null && !isReplaceDenied()) {
 
       final String replacement = getStringToReplace(getEditor(), mySearchResults.getCursor());
       return replacement != null;

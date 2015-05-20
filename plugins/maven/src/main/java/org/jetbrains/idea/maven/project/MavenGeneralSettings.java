@@ -27,6 +27,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -128,8 +129,11 @@ public class MavenGeneralSettings implements Cloneable {
 
   public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
     if (value == null) return; // null may come from deserializator
-    this.outputLevel = value;
-    changed();
+    if (!Comparing.equal(this.outputLevel, value)) {
+      MavenServerManager.getInstance().setLoggingLevel(value);
+      this.outputLevel = value;
+      changed();
+    }
   }
 
   public boolean isWorkOffline() {
@@ -149,7 +153,7 @@ public class MavenGeneralSettings implements Cloneable {
   public void setMavenHome(@NotNull final String mavenHome) {
     if (!Comparing.equal(this.mavenHome, mavenHome)) {
       this.mavenHome = mavenHome;
-
+      MavenServerManager.getInstance().setMavenHome(mavenHome);
       myDefaultPluginsCache = null;
       changed();
     }
@@ -215,6 +219,7 @@ public class MavenGeneralSettings implements Cloneable {
 
     if (!Comparing.equal(this.overriddenLocalRepository, overridenLocalRepository)) {
       this.overriddenLocalRepository = overridenLocalRepository;
+      MavenServerManager.getInstance().shutdown(true);
       changed();
     }
   }
@@ -228,11 +233,12 @@ public class MavenGeneralSettings implements Cloneable {
     return result;
   }
 
-  @NotNull
+  @Nullable
   public VirtualFile getEffectiveSuperPom() {
     return MavenUtil.resolveSuperPomFile(getEffectiveMavenHome());
   }
 
+  @SuppressWarnings("unused")
   public boolean isDefaultPlugin(String groupId, String artifactId) {
     return getDefaultPlugins().contains(groupId + ":" + artifactId);
   }
@@ -243,11 +249,14 @@ public class MavenGeneralSettings implements Cloneable {
 
     result = new THashSet<String>();
 
-    Element superProject = MavenJDOMUtil.read(getEffectiveSuperPom(), null);
-    for (Element each : MavenJDOMUtil.findChildrenByPath(superProject, "build.pluginManagement.plugins", "plugin")) {
-      String groupId = MavenJDOMUtil.findChildValueByPath(each, "groupId", "org.apache.maven.plugins");
-      String artifactId = MavenJDOMUtil.findChildValueByPath(each, "artifactId", null);
-      result.add(groupId + ":" + artifactId);
+    VirtualFile effectiveSuperPom = getEffectiveSuperPom();
+    if (effectiveSuperPom != null) {
+      Element superProject = MavenJDOMUtil.read(effectiveSuperPom, null);
+      for (Element each : MavenJDOMUtil.findChildrenByPath(superProject, "build.pluginManagement.plugins", "plugin")) {
+        String groupId = MavenJDOMUtil.findChildValueByPath(each, "groupId", "org.apache.maven.plugins");
+        String artifactId = MavenJDOMUtil.findChildValueByPath(each, "artifactId", null);
+        result.add(groupId + ":" + artifactId);
+      }
     }
 
     myDefaultPluginsCache = result;

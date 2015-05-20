@@ -22,6 +22,8 @@ import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,6 +36,11 @@ public class MockDumbService extends DumbService {
 
   public MockDumbService(Project project) {
     myProject = project;
+  }
+
+  @Override
+  public ModificationTracker getModificationTracker() {
+    return new SimpleModificationTracker();
   }
 
   @Override
@@ -72,6 +79,15 @@ public class MockDumbService extends DumbService {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public void setAlternativeResolveEnabled(boolean enabled) {
+  }
+
+  @Override
+  public boolean isAlternativeResolveEnabled() {
+    return false;
   }
 
   public void smartInvokeLater(@NotNull final Runnable runnable) {

@@ -19,7 +19,7 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.OptionsContainingConfigurable;
-import com.intellij.lang.Language;
+import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class NewCodeStyleSettingsPanel extends JPanel {
+public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel");
 
   private final Configurable myTab;
@@ -86,23 +86,9 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     }
   }
 
-  public void setLanguageSelector(final LanguageSelector langSelector) {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
-      configurable.getPanel().setLanguageSelector(langSelector);
-    }
-  }
-
   public void onSomethingChanged() {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       ((CodeStyleAbstractConfigurable)myTab).onSomethingChanged();
-    }
-  }
-
-  public void setLanguage(Language language) {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
-      configurable.getPanel().setPanelLanguage(language);
     }
   }
 
@@ -120,5 +106,13 @@ public class NewCodeStyleSettingsPanel extends JPanel {
       return ((CodeStyleAbstractConfigurable)myTab).getPanel();
     }
     return null;
+  }
+
+  @Override
+  public void tabChanged(@NotNull TabbedLanguageCodeStylePanel source, @NotNull String tabTitle) {
+    CodeStyleAbstractPanel panel = getSelectedPanel();
+    if (panel instanceof TabbedLanguageCodeStylePanel && panel != source) {
+      ((TabbedLanguageCodeStylePanel)panel).changeTab(tabTitle);
+    }
   }
 }

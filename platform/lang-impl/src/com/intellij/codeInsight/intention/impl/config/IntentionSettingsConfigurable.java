@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class IntentionSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, MasterDetails {
   private IntentionSettingsPanel myPanel;
@@ -38,7 +38,8 @@ public class IntentionSettingsConfigurable extends BaseConfigurable implements S
       myPanel = new IntentionSettingsPanel();
     }
     JPanel component = myPanel.getComponent();
-    component.setPreferredSize(new Dimension(800, 600));
+    component.setPreferredSize(JBUI.size(800, 600));
+    component.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
     return component;
   }
 

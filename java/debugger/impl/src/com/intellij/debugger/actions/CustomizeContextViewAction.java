@@ -29,7 +29,6 @@ import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
@@ -88,13 +87,15 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
 
   @Override
   public void update(AnActionEvent e) {
-    final XDebuggerManager debuggerManager = XDebuggerManager.getInstance(getEventProject(e));
-    final XDebugSession currentSession = debuggerManager.getCurrentSession();
-    if (currentSession != null) {
-      final XDebugProcess process = currentSession.getDebugProcess();
-      e.getPresentation().setVisible(process instanceof JavaDebugProcess);
-      e.getPresentation().setEnabled(process instanceof JavaDebugProcess);
-      e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
+    e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
+    Project project = getEventProject(e);
+    if (project != null) {
+      final XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
+      if (currentSession != null) {
+        e.getPresentation().setEnabledAndVisible(currentSession.getDebugProcess() instanceof JavaDebugProcess);
+        return;
+      }
     }
+    e.getPresentation().setEnabledAndVisible(false);
   }
 }

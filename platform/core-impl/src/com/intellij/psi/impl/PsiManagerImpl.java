@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
   private final Project myProject;
-  private final FileIndexFacade myExcludedFileIndex;
+  private final FileIndexFacade myFileIndex;
   private final MessageBus myMessageBus;
   private final PsiModificationTracker myModificationTracker;
 
@@ -70,11 +70,11 @@ public class PsiManagerImpl extends PsiManagerEx {
   public PsiManagerImpl(Project project,
                         FileDocumentManager fileDocumentManager,
                         PsiBuilderFactory psiBuilderFactory,
-                        FileIndexFacade excludedFileIndex,
+                        FileIndexFacade fileIndex,
                         MessageBus messageBus,
                         PsiModificationTracker modificationTracker) {
     myProject = project;
-    myExcludedFileIndex = excludedFileIndex;
+    myFileIndex = fileIndex;
     myMessageBus = messageBus;
     myModificationTracker = modificationTracker;
 
@@ -83,7 +83,7 @@ public class PsiManagerImpl extends PsiManagerEx {
 
     boolean isProjectDefault = project.isDefault();
 
-    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, excludedFileIndex);
+    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, fileIndex);
 
     myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)modificationTracker);
     Collections.addAll(myTreeChangePreprocessors, Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject));
@@ -113,9 +113,6 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public boolean isInProject(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    if (file != null && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) return true;
-
     if (element instanceof PsiDirectoryContainer) {
       PsiDirectory[] dirs = ((PsiDirectoryContainer)element).getDirectories();
       for (PsiDirectory dir : dirs) {
@@ -124,6 +121,7 @@ public class PsiManagerImpl extends PsiManagerEx {
       return true;
     }
 
+    PsiFile file = element.getContainingFile();
     VirtualFile virtualFile = null;
     if (file != null) {
       virtualFile = file.getViewProvider().getVirtualFile();
@@ -131,9 +129,10 @@ public class PsiManagerImpl extends PsiManagerEx {
     else if (element instanceof PsiFileSystemItem) {
       virtualFile = ((PsiFileSystemItem)element).getVirtualFile();
     }
+    if (file != null && file.isPhysical() && virtualFile instanceof LightVirtualFile) return true;
 
     if (virtualFile != null) {
-      return myExcludedFileIndex.isInContent(virtualFile);
+      return myFileIndex.isInContent(virtualFile);
     }
     return false;
   }
@@ -181,25 +180,20 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public PsiFile findFile(@NotNull VirtualFile file) {
+    ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findFile(file);
   }
 
   @Override
   @Nullable
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+    ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);
-  }
-
-  @TestOnly
-  public void cleanupForNextTest() {
-    myFileManager.cleanupForNextTest();
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
   }
 
   @Override
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
-
     return myFileManager.findDirectory(file);
   }
 
@@ -463,39 +457,27 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   @Override
   public void registerRunnableToRunOnChange(@NotNull final Runnable runnable) {
-    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
         if (isPhysical) runnable.run();
-      }
-
-      @Override
-      public void afterPsiChanged(boolean isPhysical) {
       }
     });
   }
 
   @Override
   public void registerRunnableToRunOnAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
       @Override
       public void beforePsiChanged(boolean isPhysical) {
         runnable.run();
-      }
-
-      @Override
-      public void afterPsiChanged(boolean isPhysical) {
       }
     });
   }
 
   @Override
   public void registerRunnableToRunAfterAnyChange(@NotNull final Runnable runnable) { // includes non-physical changes
-    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
-      @Override
-      public void beforePsiChanged(boolean isPhysical) {
-      }
-
+    myMessageBus.connect().subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener.Adapter() {
       @Override
       public void afterPsiChanged(boolean isPhysical) {
         runnable.run();
@@ -533,5 +515,11 @@ public class PsiManagerImpl extends PsiManagerEx {
   @Override
   public boolean isBatchFilesProcessingMode() {
     return myBatchFilesProcessingModeCount.get() > 0;
+  }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myFileManager.cleanupForNextTest();
   }
 }

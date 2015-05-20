@@ -38,8 +38,9 @@ import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.editor.event.DocumentAdapter
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
@@ -54,7 +55,6 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
-import com.intellij.testFramework.EditorTestUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
@@ -154,10 +154,11 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
     assertEquals 'iterable', lookup.currentItem.lookupString
     edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
-    assertEquals 'iterable2', lookup.currentItem.lookupString
+    assert lookup.currentItem.lookupString == 'iterable2'
 
     type "r"
-    myFixture.assertPreferredCompletionItems 2, "iter", "iterable", 'iterable2'
+    assert lookup.items[0].lookupString == 'iter'
+    assert lookup.currentItem.lookupString == 'iterable2'
 
   }
 
@@ -247,7 +248,6 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """
   }
 
-
   public void "test popup in javadoc reference"() {
     myFixture.configureByText("a.java", """
     /**
@@ -256,6 +256,30 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       class Foo {}
     """)
     type 'O'
+    assert lookup
+  }
+
+  public void "test popup after hash in javadoc"() {
+    myFixture.configureByText("a.java", """
+    /**
+    * {@link String<caret>}
+    */
+      class Foo {}
+    """)
+    type '#'
+    assert lookup
+  }
+
+  public void "test popup in javadoc local reference"() {
+    myFixture.configureByText("a.java", """
+    /**
+    * {@link #<caret>}
+    */
+      class Foo {
+        void foo() {}
+      }
+    """)
+    type 'f'
     assert lookup
   }
 
@@ -286,6 +310,19 @@ class Foo {
     """)
     type 'o'
     assert !lookup
+  }
+  
+  public void "test autopopup in javadoc parameter name"() {
+    myFixture.configureByText("a.java", """
+class Foo {
+  /**
+  * @param <caret>
+  */
+  void foo2(Object oooooooo) {}
+}
+    """)
+    type 'o'
+    assert lookup
   }
 
   public void testPrefixLengthDependentSorting() {
@@ -916,6 +953,15 @@ class Foo {
     for (a1 in 0..actions) {
       for (a2 in 0..actions) {
         myFixture.configureByText("$a1 $a2 .java", src)
+        myFixture.editor.document.addDocumentListener(new DocumentAdapter() {
+          @Override
+          void documentChanged(DocumentEvent e) {
+            if (e.newFragment.toString().contains("a")) {
+              fail(e.toString())
+            }
+            super.documentChanged(e)
+          }
+        })
         myFixture.type 'i'
         joinSomething(a1)
         myFixture.type 'f'
@@ -924,7 +970,13 @@ class Foo {
 
         joinAutopopup()
         joinCompletion()
-        myFixture.checkResult(result)
+        try {
+          myFixture.checkResult(result)
+        }
+        catch (e) {
+          println "actions: $a1 $a2"
+          throw e
+        }
         assert !lookup
       }
     }
@@ -938,7 +990,13 @@ class Foo {
 
       joinAutopopup()
       joinCompletion()
-      myFixture.checkResult(result)
+      try {
+        myFixture.checkResult(result)
+      }
+      catch (e) {
+        println "actions: $a1"
+        throw e
+      }
       assert !lookup
     }
 
@@ -951,7 +1009,13 @@ class Foo {
 
       joinAutopopup()
       joinCompletion()
-      myFixture.checkResult(result)
+      try {
+        myFixture.checkResult(result)
+      }
+      catch (e) {
+        println "actions: $a1"
+        throw e
+      }
       assert !lookup
     }
 
@@ -1115,6 +1179,21 @@ public class UTest {
     assert myFixture.lookupElementStrings == ['new', 'nextWord']
   }
 
+  public void testExactMatchesTemplateFirst() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    myFixture.configureByText("a.java", """
+public class Test {
+    void itar() {}
+
+    void foo() {
+        ita<caret>
+    }
+}""")
+    type 'r'
+    assert myFixture.lookupElementStrings == ['itar', 'itar']
+    assert myFixture.lookup.currentItem instanceof LiveTemplateLookupElement
+  }
+
   public void testUpdatePrefixMatchingOnTyping() {
     myFixture.addClass("class CertificateEncodingException {}")
     myFixture.addClass("class CertificateException {}")
@@ -1188,42 +1267,6 @@ public class UTest {
     assert !lookup
   }
 
-  public void testBlockSelection() {
-    doTestBlockSelection """
-class Foo {{
-  <caret>tx;
-  tx;
-}}""", '\n', '''
-class Foo {{
-  toString()x;
-  toString()<caret>x;
-}}'''
-  }
-
-  public void testBlockSelectionTab() {
-    doTestBlockSelection """
-class Foo {{
-  <caret>tx;
-  tx;
-}}""", '\t', '''
-class Foo {{
-  toString();
-  toString()<caret>;
-}}'''
-  }
-
-  public void testBlockSelectionBackspace() {
-    doTestBlockSelection """
-class Foo {{
-  <caret>t;
-  t;
-}}""", '\b\t', '''
-class Foo {{
-  toString();
-  toString()<caret>;
-}}'''
-  }
-
   public void testMulticaret() {
     doTestMulticaret """
 class Foo {{
@@ -1266,29 +1309,6 @@ class Foo {{
     assert lookup
     type toType
     myFixture.checkResult textAfter
-  }
-
-  private doTestBlockSelection(final String textBefore, final String toType, final String textAfter) {
-    EditorTestUtil.disableMultipleCarets()
-    try {
-      myFixture.configureByText "a.java", textBefore
-      edt {
-        def caret = myFixture.editor.offsetToLogicalPosition(myFixture.editor.caretModel.offset)
-        myFixture.editor.selectionModel.setBlockSelection(caret, new LogicalPosition(caret.line + 1, caret.column + 1))
-      }
-      type 'toStr'
-      assert lookup
-      type toType
-      myFixture.checkResult textAfter
-      def start = myFixture.editor.selectionModel.blockStart
-      def end = myFixture.editor.selectionModel.blockEnd
-      assert start.line == end.line - 1
-      assert start.column == end.column
-      assert end == myFixture.editor.caretModel.logicalPosition
-    }
-    finally {
-      EditorTestUtil.enableMultipleCarets()
-    }
   }
 
   public void "test two non-imported classes when space selects first autopopup item"() {
@@ -1579,7 +1599,7 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo {{ <caret> }}"
     myFixture.type('a')
     joinAutopopup()
-    myFixture.type('\na')
+    myFixture.type('\nf')
     joinCompletion()
     assert lookup
   }
@@ -1712,7 +1732,7 @@ class Foo {
   public void "test autopopup after package completion"() {
     myFixture.addClass("package foo.bar.goo; class Foo {}")
     myFixture.configureByText "a.java", "class Foo { { foo.b<caret> } }"
-    myFixture.completeBasic()
+    assert myFixture.completeBasic() == null
     assert myFixture.editor.document.text.contains('foo.bar. ')
     joinAutopopup()
     joinCompletion()
@@ -1731,23 +1751,17 @@ class Foo {{
   }
   
   public void "test show popup with single live template if show_live_tempate_in_completion option is enabled"() {
-    def oldValue = LiveTemplateCompletionContributor.ourShowTemplatesInTests
-    try {
-      LiveTemplateCompletionContributor.ourShowTemplatesInTests = false
-      myFixture.configureByText "a.java", """
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, getTestRootDisposable())
+    myFixture.configureByText "a.java", """
 class Foo {{
-  ita<caret>
+ita<caret>
 """
-      type 'r'
-      assert lookup == null
-      
-      LiveTemplateCompletionContributor.ourShowTemplatesInTests = true
-      type '\br'
-      assert lookup
-      assert myFixture.lookupElementStrings == ['itar']
-    }
-    finally {
-      LiveTemplateCompletionContributor.ourShowTemplatesInTests = oldValue
-    }
+    type 'r'
+    assert lookup == null
+    
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    type '\br'
+    assert lookup
+    assert myFixture.lookupElementStrings == ['itar']
   }
 }

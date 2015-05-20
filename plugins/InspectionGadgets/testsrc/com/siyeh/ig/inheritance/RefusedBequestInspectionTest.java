@@ -1,10 +1,29 @@
 package com.siyeh.ig.inheritance;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class RefusedBequestInspectionTest extends IGInspectionTestCase {
+public class RefusedBequestInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/inheritance/refused_bequest", new RefusedBequestInspection());
+  public void testRefusedBequest() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new RefusedBequestInspection();
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package org.junit;\n" +
+      "@Retention(RetentionPolicy.RUNTIME)\n" +
+      "@Target(ElementType.METHOD)\n" +
+      "public @interface Before {\n" +
+      "}"
+    };
   }
 }

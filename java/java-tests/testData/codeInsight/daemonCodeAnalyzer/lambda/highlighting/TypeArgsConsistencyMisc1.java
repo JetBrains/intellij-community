@@ -32,7 +32,7 @@ class Test1 {
         I<Object> lO =  x->x;
         bar2("", lO);
 
-        I<String> lS =  <error descr="Incompatible return type List<String> in lambda expression">x->x</error>;
+        I<String> lS =  x-><error descr="Bad return type in lambda expression: List<String> cannot be converted to String">x</error>;
         bar2("", lS);
 
         bar2("", x -> x);
@@ -66,9 +66,9 @@ class Test2 {
     {
         bar(x -> x);
         bar1(x -> x);
-        bar2(1, <error descr="Incompatible return type List<Integer> in lambda expression">x -> x</error>);
-        bar2("", <error descr="Incompatible return type List<String> in lambda expression">x -> x</error>);
-        bar3(<error descr="Incompatible return type List<String> in lambda expression">x -> x</error>, "");
+        bar2(1, x -> <error descr="Bad return type in lambda expression: List<Integer> cannot be converted to Integer">x</error>);
+        bar2("", x -> <error descr="Bad return type in lambda expression: List<String> cannot be converted to String">x</error>);
+        bar3(x -> <error descr="Bad return type in lambda expression: List<String> cannot be converted to String">x</error>, "");
     }
 }
 

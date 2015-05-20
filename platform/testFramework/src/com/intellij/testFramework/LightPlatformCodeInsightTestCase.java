@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -30,8 +31,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -39,6 +40,7 @@ import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -142,7 +144,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * Same as configureByFile but text is provided directly.
    * @param fileName - name of the file.
    * @param fileText - data file text.
-   * @throws java.io.IOException
    */
   @NotNull
   protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) {
@@ -176,6 +177,25 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         EditorTestUtil.setCaretsAndSelection(myEditor, caretsState);
         setupEditorForInjectedLanguage();
         result.setResult(document);
+      }
+    }.execute().getResultObject();
+  }
+
+  @NotNull
+  protected static Editor configureFromFileTextWithoutPSI(@NonNls @NotNull final String fileText) {
+    return new WriteCommandAction<Editor>(null) {
+      @Override
+      protected void run(@NotNull Result<Editor> result) throws Throwable {
+        final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+        EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+
+        String newFileText = fakeDocument.getText();
+        Document document = EditorFactory.getInstance().createDocument(newFileText);
+        final Editor editor = EditorFactory.getInstance().createEditor(document);
+        ((EditorImpl)editor).setCaretActive();
+
+        EditorTestUtil.setCaretsAndSelection(editor, caretsState);
+        result.setResult(editor);
       }
     }.execute().getResultObject();
   }
@@ -351,6 +371,35 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
+  protected static void checkResultByTextWithoutPSI(final String message,
+                                                    @NotNull final Editor editor,
+                                                    @NotNull final String fileText,
+                                                    final boolean ignoreTrailingSpaces,
+                                                    final String filePath) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+
+        if (ignoreTrailingSpaces) {
+          ((DocumentImpl)fakeDocument).stripTrailingSpaces(getProject());
+        }
+
+        EditorTestUtil.CaretAndSelectionState carets = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+
+        String newFileText = fakeDocument.getText();
+        String fileText = editor.getDocument().getText();
+        String failMessage = getMessage("Text mismatch", message);
+        if (filePath != null && !newFileText.equals(fileText)) {
+          throw new FileComparisonFailure(failMessage, newFileText, fileText, filePath);
+        }
+        assertEquals(failMessage, newFileText, fileText);
+
+        EditorTestUtil.verifyCaretAndSelectionState(editor, carets, message);
+      }
+    });
+  }
+
   private static String getMessage(@NonNls String engineMessage, String userMessage) {
     if (userMessage == null) return engineMessage;
     return userMessage + " [" + engineMessage + "]";
@@ -384,41 +433,81 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     }
   }
 
-  protected void caretUp() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
+  protected void caretRight() {
+    caretRight(getEditor());
   }
-  protected void deleteLine() {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    EditorActionHandler action = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_LINE);
-    action.execute(getEditor(), DataManager.getInstance().getDataContext());
-  }
-  protected static void type(char c) {
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    final DataContext dataContext = DataManager.getInstance().getDataContext();
-    if (c == '\n') {
-      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(getEditor(), dataContext);
-    }
-    else if (c == '\b') {
-      actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE).execute(getEditor(), dataContext);
-    }
-    else {
-      // typed action is always executed in host editor context
-      actionManager.getTypedAction().actionPerformed(InjectedLanguageUtil.getTopLevelEditor(getEditor()), c, dataContext);
-    }
+  public static void caretRight(Editor editor) {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, editor);
   }
 
-  protected static void type(@NonNls String s) {
+  protected void caretUp() {
+    caretUp(getEditor());
+  }
+
+  public static void caretUp(Editor editor) {
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, editor);
+  }
+
+  protected void deleteLine() {
+    deleteLine(getEditor(),getProject());
+  }
+  public static void deleteLine(Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE, editor,project);
+  }
+
+  protected void type(@NonNls @NotNull String s) {
     for (char c : s.toCharArray()) {
       type(c);
     }
   }
-  protected static void backspace() {
-    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+  protected void type(char c) {
+    type(c, getEditor(),getProject());
   }
-  protected static void delete() {
-    executeAction(IdeActions.ACTION_EDITOR_DELETE);
+
+  public static void type(char c, @NotNull Editor editor, Project project) {
+    if (c == '\n') {
+      executeAction(IdeActions.ACTION_EDITOR_ENTER, editor,project);
+    }
+    else {
+      EditorActionManager actionManager = EditorActionManager.getInstance();
+      final DataContext dataContext = DataManager.getInstance().getDataContext();
+      TypedAction action = actionManager.getTypedAction();
+      action.actionPerformed(editor, c, dataContext);
+    }
+  }
+
+  protected void backspace() {
+    backspace(getEditor(),getProject());
+  }
+
+  public static void backspace(@NotNull final Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_BACKSPACE, editor,project);
+  }
+
+  protected void ctrlShiftF7() {
+    HighlightUsagesHandler.invoke(getProject(), getEditor(), getFile());
+  }
+
+  protected void ctrlW() {
+    ctrlW(getEditor(),getProject());
+  }
+
+  public static void ctrlW(@NotNull Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET, editor,project);
+  }
+
+  public void ctrlD() {
+    ctrlD(getEditor(),getProject());
+  }
+  public static void ctrlD(@NotNull Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_DUPLICATE, editor, project);
+  }
+
+  protected void delete() {
+    delete(getEditor(), getProject());
+  }
+  public static void delete(@NotNull final Editor editor, Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_DELETE, editor, project);
   }
 
   protected static void home() {
@@ -438,11 +527,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected static void moveCaretToPreviousWordWithSelection() {
-    executeAction("EditorPreviousWordWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_PREVIOUS_WORD_WITH_SELECTION);
   }
 
   protected static void moveCaretToNextWordWithSelection() {
-    executeAction("EditorNextWordWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_NEXT_WORD_WITH_SELECTION);
   }
 
   protected static void cutLineBackward() {
@@ -490,12 +579,18 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected static void executeAction(@NonNls @NotNull final String actionId) {
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+    executeAction(actionId, getEditor());
+  }
+  protected static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor) {
+    executeAction(actionId, editor, getProject());
+  }
+  public static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor, Project project) {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
       public void run() {
-        EditorTestUtil.executeAction(getEditor(), actionId);
+        EditorTestUtil.executeAction(editor, actionId);
       }
-    }, "", null);
+    }, "", null, editor.getDocument());
   }
 
   protected static DataContext getCurrentEditorDataContext() {

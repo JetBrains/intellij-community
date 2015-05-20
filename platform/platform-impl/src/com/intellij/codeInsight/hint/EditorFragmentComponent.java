@@ -150,7 +150,6 @@ public class EditorFragmentComponent extends JPanel {
 
   /**
    * @param y <code>y</code> coordinate in layered pane coordinate system.
-   * @param hideByAnyKey
    */
   @Nullable
   public static LightweightHint showEditorFragmentHintAt(Editor editor,
@@ -158,7 +157,9 @@ public class EditorFragmentComponent extends JPanel {
                                                          int y,
                                                          boolean showUpward,
                                                          boolean showFolding,
-                                                         boolean hideByAnyKey) {
+                                                         boolean hideByAnyKey,
+                                                         boolean hideByScrolling,
+                                                         boolean useCaretRowBackground) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     Document document = editor.getDocument();
 
@@ -184,14 +185,13 @@ public class EditorFragmentComponent extends JPanel {
     
     int endLine = Math.min(document.getLineNumber(range.getEndOffset()) + 1, document.getLineCount() - 1);
 
-    //if (editor.logicalPositionToXY(new LogicalPosition(startLine, 0)).y >= editor.logicalPositionToXY(new LogicalPosition(endLine, 0)).y) return null;
     if (startLine >= endLine) return null;
 
-    EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true);
-
+    EditorFragmentComponent fragmentComponent = createEditorFragmentComponent(editor, startLine, endLine, showFolding, true, 
+                                                                              useCaretRowBackground);
 
     if (showUpward) {
-      y -= fragmentComponent.getPreferredSize().height + 10;
+      y -= fragmentComponent.getPreferredSize().height;
       y  = Math.max(0,y);
     }
 
@@ -201,6 +201,7 @@ public class EditorFragmentComponent extends JPanel {
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManager.HIDE_BY_ANY_KEY : 0) |
+                                                                      (hideByScrolling ? HintManager.HIDE_BY_SCROLLING : 0) |
                                                                       HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_MOUSEOVER,
                                                      0, false, new HintHint(editor, p));
     return hint;
@@ -210,9 +211,17 @@ public class EditorFragmentComponent extends JPanel {
                                                                       int startLine,
                                                                       int endLine,
                                                                       boolean showFolding, boolean showGutter) {
+    return createEditorFragmentComponent(editor, startLine, endLine, showFolding, showGutter, true);
+  }
+  
+  public static EditorFragmentComponent createEditorFragmentComponent(Editor editor,
+                                                                      int startLine,
+                                                                      int endLine,
+                                                                      boolean showFolding, boolean showGutter,
+                                                                      boolean useCaretRowBackground) {
     final EditorEx editorEx = (EditorEx)editor;
     final Color old = editorEx.getBackgroundColor();
-    Color backColor = getBackgroundColor(editor);
+    Color backColor = getBackgroundColor(editor, useCaretRowBackground);
     editorEx.setBackgroundColor(backColor);
     EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine,
                                                                             showFolding, showGutter);
@@ -230,13 +239,17 @@ public class EditorFragmentComponent extends JPanel {
     if (rootPane == null) return null;
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point point = SwingUtilities.convertPoint(editorComponent, -2, 0, layeredPane);
-    return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey);
+    return showEditorFragmentHintAt(editor, range, point.y, true, showFolding, hideByAnyKey, true, false);
   }
 
   public static Color getBackgroundColor(Editor editor){
+    return getBackgroundColor(editor, true);
+  }
+  
+  public static Color getBackgroundColor(Editor editor, boolean useCaretRowBackground){
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color color = colorsScheme.getColor(EditorColors.CARET_ROW_COLOR);
-    if (color == null){
+    if (!useCaretRowBackground || color == null){
       color = colorsScheme.getDefaultBackground();
     }
     return color;

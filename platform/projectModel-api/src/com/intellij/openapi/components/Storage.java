@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,18 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
   @NonNls String id() default "default";
+
+  @Deprecated
   boolean isDefault() default true;
+
   @NonNls String file() default "";
+
   StorageScheme scheme() default StorageScheme.DEFAULT;
+
+  /**
+   * If deprecated: Data will be removed on write. And ignored on read if (and only if) new storage exists.
+   */
+  boolean deprecated() default false;
 
   /**
    * You must not store components with different roaming types in one file ({@link #file()}).
@@ -34,5 +43,6 @@ public @interface Storage {
   RoamingType roamingType() default RoamingType.PER_USER;
 
   Class<? extends StateStorage> storageClass() default StateStorage.class;
-  Class<? extends StateSplitter> stateSplitter() default StateSplitter.class;
+
+  Class<? extends StateSplitter> stateSplitter() default StateSplitterEx.class;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,14 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -70,11 +72,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
     if(place != null && DocumentUtil.isValidOffset(place.getOffset(), place.getDocument())) {
       Breakpoint breakpoint = manager.findBreakpoint(place.getDocument(), place.getOffset(), MethodBreakpoint.CATEGORY);
       if(breakpoint == null) {
-        final int methodLine = place.getDocument().getLineNumber(place.getOffset());
-        MethodBreakpoint methodBreakpoint = manager.addMethodBreakpoint(place.getDocument(), methodLine);
-        if(methodBreakpoint != null) {
-          RequestManagerImpl.createRequests(methodBreakpoint);
-        }
+        manager.addMethodBreakpoint(place.getDocument(), place.getDocument().getLineNumber(place.getOffset()));
       }
       else {
         manager.removeBreakpoint(breakpoint);

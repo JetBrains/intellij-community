@@ -1,5 +1,5 @@
 <project name="n" default="main">
-  <p4counter property="p1"/>
+  <dirname property="p1"/>
   <target name="main">
     <echo message="p1=${<ref>p1}"/>
   </target>

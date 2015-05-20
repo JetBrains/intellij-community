@@ -22,13 +22,16 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
@@ -186,7 +189,7 @@ public class ExceptionUtil {
 
     PsiMethod method = (PsiMethod)resolveResult.getElement();
     if (method != null) {
-      addExceptions(result, getExceptionsByMethod(method, resolveResult.getSubstitutor()));
+      addExceptions(result, getExceptionsByMethod(method, resolveResult.getSubstitutor(), element));
     }
 
     addExceptions(result, getThrownExceptions(element.getChildren()));
@@ -195,12 +198,16 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  private static List<PsiClassType> getExceptionsByMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
-    List<PsiClassType> result = ContainerUtil.newArrayList();
-
+  private static List<PsiClassType> getExceptionsByMethod(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
+                                                          @NotNull PsiElement place) {
     PsiClassType[] referenceTypes = method.getThrowsList().getReferencedTypes();
+    if (referenceTypes.length == 0) return Collections.emptyList();
+
+    GlobalSearchScope scope = place.getResolveScope();
+
+    List<PsiClassType> result = ContainerUtil.newArrayList();
     for (PsiType type : referenceTypes) {
-      type = substitutor.substitute(type);
+      type = PsiClassImplUtil.correctType(substitutor.substitute(type), scope);
       if (type instanceof PsiClassType) {
         result.add((PsiClassType)type);
       }
@@ -346,7 +353,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(@NotNull PsiElement[] elements) {
+  public static List<PsiClassType> getUnhandledExceptions(final @NotNull PsiElement[] elements) {
     final List<PsiClassType> array = ContainerUtil.newArrayList();
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -363,6 +370,7 @@ public class ExceptionUtil {
 
       @Override
       public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
+        if (ArrayUtil.find(elements, expression) < 0) return;
         addExceptions(array, getUnhandledExceptions(expression, null));
         visitElement(expression);
       }
@@ -407,7 +415,12 @@ public class ExceptionUtil {
   public static List<PsiClassType> getUnhandledExceptions(@NotNull final PsiCallExpression methodCall,
                                                           @Nullable final PsiElement topElement,
                                                           final boolean includeSelfCalls) {
-    final JavaResolveResult result = methodCall.resolveMethodGenerics();
+    //exceptions only influence the invocation type after overload resolution is complete
+    if (MethodCandidateInfo.isOverloadCheck()) {
+      return Collections.emptyList();
+    }
+    final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(methodCall.getArgumentList());
+    final JavaResolveResult result = properties != null ? properties.getInfo() : methodCall.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
     if (method == null) {
       return Collections.emptyList();
@@ -442,13 +455,14 @@ public class ExceptionUtil {
           }
         });
         if (candidates.size() > 1) {
-          final List<PsiClassType> ex = collectSubstituted(substitutor, thrownExceptions);
+          GlobalSearchScope scope = methodCall.getResolveScope();
+          final List<PsiClassType> ex = collectSubstituted(substitutor, thrownExceptions, scope);
           for (Pair<PsiMethod, PsiSubstitutor> pair : candidates) {
             final PsiClassType[] exceptions = pair.first.getThrowsList().getReferencedTypes();
             if (exceptions.length == 0) {
               return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, PsiClassType.EMPTY_ARRAY);
             }
-            retainExceptions(ex, collectSubstituted(pair.second, exceptions));
+            retainExceptions(ex, collectSubstituted(pair.second, exceptions, scope));
           }
           return getUnhandledExceptions(methodCall, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()]));
         }
@@ -465,12 +479,15 @@ public class ExceptionUtil {
     final PsiLambdaExpression expression = PsiTreeUtil.getParentOfType(methodCall, PsiLambdaExpression.class);
     final PsiSubstitutor substitutor;
     if (expression != null) {
-      substitutor = ourThrowsGuard.doPreventingRecursion(expression, false, new Computable<PsiSubstitutor>() {
+      final PsiElement parent = methodCall.getParent();
+      final boolean callInReturnStatement = parent == expression || 
+                                            parent instanceof PsiReturnStatement && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class) == expression;
+      substitutor = callInReturnStatement ? ourThrowsGuard.doPreventingRecursion(expression, false, new Computable<PsiSubstitutor>() {
         @Override
         public PsiSubstitutor compute() {
           return result.getSubstitutor();
         }
-      });
+      }) : result.getSubstitutor();
     } else {
       substitutor = result.getSubstitutor();
     }
@@ -502,10 +519,10 @@ public class ExceptionUtil {
     ex.addAll(replacement);
   }
 
-  public static List<PsiClassType> collectSubstituted(PsiSubstitutor substitutor, PsiClassType[] thrownExceptions) {
+  public static List<PsiClassType> collectSubstituted(PsiSubstitutor substitutor, PsiClassType[] thrownExceptions, GlobalSearchScope scope) {
     final List<PsiClassType> ex = new ArrayList<PsiClassType>();
     for (PsiClassType thrownException : thrownExceptions) {
-      final PsiType psiType = substitutor.substitute(thrownException);
+      final PsiType psiType = PsiClassImplUtil.correctType(substitutor.substitute(thrownException), scope);
       if (psiType instanceof PsiClassType) {
         ex.add((PsiClassType)psiType);
       }
@@ -517,7 +534,7 @@ public class ExceptionUtil {
   public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceVariable resource) {
     PsiMethod method = PsiUtil.getResourceCloserMethod(resource);
     PsiSubstitutor substitutor = PsiUtil.resolveGenericsClassInType(resource.getType()).getSubstitutor();
-    return method != null ? getExceptionsByMethod(method, substitutor) : Collections.<PsiClassType>emptyList();
+    return method != null ? getExceptionsByMethod(method, substitutor, resource) : Collections.<PsiClassType>emptyList();
   }
 
   @NotNull
@@ -583,7 +600,7 @@ public class ExceptionUtil {
       List<PsiClassType> result = ContainerUtil.newArrayList();
 
       for (PsiClassType referencedType : referencedTypes) {
-        final PsiType type = GenericsUtil.eliminateWildcards(substitutor.substitute(referencedType), false);
+        final PsiType type = PsiClassImplUtil.correctType(GenericsUtil.eliminateWildcards(substitutor.substitute(referencedType), false), element.getResolveScope());
         if (!(type instanceof PsiClassType)) continue;
         PsiClassType classType = (PsiClassType)type;
         PsiClass exceptionClass = ((PsiClassType)type).resolve();

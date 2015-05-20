@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
@@ -37,7 +36,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   public static final int OPEN_PROJECT_NEW_WINDOW = 0;
   public static final int OPEN_PROJECT_SAME_WINDOW = 1;
 
-  @NonNls public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
+  public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
 
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
@@ -49,7 +48,6 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   private boolean myUseSafeWrite = true;
   private final PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
-  private boolean myConfirmExtractFiles = true;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
@@ -96,6 +94,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myBrowserPath = browserPath;
   }
 
+  @SuppressWarnings("unused")
   @Deprecated
   public boolean showTipsOnStartup() {
     return isShowTipsOnStartup();
@@ -199,12 +198,16 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myUseDefaultBrowser = value;
   }
 
+  @SuppressWarnings("unused")
+  @Transient
+  @Deprecated
   public boolean isConfirmExtractFiles() {
-    return myConfirmExtractFiles;
+    return true;
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public void setConfirmExtractFiles(boolean value) {
-    myConfirmExtractFiles = value;
   }
 
   public boolean isConfirmExit() {

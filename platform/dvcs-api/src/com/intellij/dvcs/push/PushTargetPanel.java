@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.push;
 
+import com.intellij.dvcs.push.ui.PushTargetEditorListener;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +28,12 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
   /**
    * @param isActive true if appropriate repository changes will be pushed, a.e. if repository checked
    */
-  abstract public void render(@NotNull ColoredTreeCellRenderer renderer, boolean isSelected, boolean isActive);
+  abstract public void render(@NotNull ColoredTreeCellRenderer renderer,
+                              boolean isSelected,
+                              boolean isActive,
+                              @Nullable String forceRenderedText);
 
-  @NotNull
+  @Nullable
   abstract public T getValue();
 
   public abstract void fireOnCancel();
@@ -40,4 +44,12 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
   public abstract ValidationInfo verify();
 
   public abstract void setFireOnChangeAction(@NotNull Runnable action);
+
+  /**
+   * Add an ability to track edit field process
+   */
+  public abstract void addTargetEditorListener(@NotNull PushTargetEditorListener listener);
+
+  public void forceUpdateEditableUiModel(@NotNull String forcedText) {
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,6 @@ import javax.swing.tree.DefaultTreeModel;
  * @author Konstantin Bulenkov
  */
 public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
-  private final ProjectViewPsiTreeChangeListener myPsiTreeChangeListener;
-  private final FileStatusListener myFileStatusListener;
-  private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
-  private final FavoritesListener myFavoritesListener;
 
   public FavoritesViewTreeBuilder(@NotNull Project project,
                                   JTree tree,
@@ -67,7 +63,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
           treeStructure,
           new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID));
     final MessageBusConnection bus = myProject.getMessageBus().connect(this);
-    myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
+    ProjectViewPsiTreeChangeListener psiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
       @Override
       protected DefaultMutableTreeNode getRootNode() {
         return FavoritesViewTreeBuilder.this.getRootNode();
@@ -99,13 +95,13 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         queueUpdate(true);
       }
     });
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeListener);
-    myFileStatusListener = new MyFileStatusListener();
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-    myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
-    CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeListener, this);
+    FileStatusListener fileStatusListener = new MyFileStatusListener();
+    FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener, this);
+    CopyPasteUtil.DefaultCopyPasteListener copyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
+    CopyPasteManager.getInstance().addContentChangedListener(copyPasteListener, this);
 
-    myFavoritesListener = new FavoritesListener() {
+    FavoritesListener favoritesListener = new FavoritesListener() {
       @Override
       public void rootsChanged() {
         updateFromRoot();
@@ -122,7 +118,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
     };
     initRootNode();
-    FavoritesManager.getInstance(myProject).addFavoritesListener(myFavoritesListener);
+    FavoritesManager.getInstance(myProject).addFavoritesListener(favoritesListener, this);
   }
 
   @NotNull
@@ -206,16 +202,6 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
     }
     return null;
-  }
-
-  @Override
-  public final void dispose() {
-    super.dispose();
-    FavoritesManager.getInstance(myProject).removeFavoritesListener(myFavoritesListener);
-
-    PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
-    CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
   }
 
   @Override

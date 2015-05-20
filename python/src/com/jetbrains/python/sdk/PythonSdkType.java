@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,6 +186,7 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @NotNull
   @Override
   public Collection<String> suggestHomePaths() {
     List<String> candidates = new ArrayList<String>();
@@ -255,7 +256,7 @@ public class PythonSdkType extends SdkType {
 
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
-    final boolean is_windows = SystemInfo.isWindows;
+    final boolean isWindows = SystemInfo.isWindows;
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
@@ -270,16 +271,16 @@ public class PythonSdkType extends SdkType {
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         // TODO: add a better, customizable filtering
         if (!file.isDirectory()) {
-          if (is_windows) {
+          if (isWindows) {
             String path = file.getPath();
-            boolean looks_executable = false;
+            boolean looksExecutable = false;
             for (String ext : WINDOWS_EXECUTABLE_SUFFIXES) {
               if (path.endsWith(ext)) {
-                looks_executable = true;
+                looksExecutable = true;
                 break;
               }
             }
-            return looks_executable && super.isFileVisible(file, showHiddenFiles);
+            return looksExecutable && super.isFileVisible(file, showHiddenFiles);
           }
         }
         return super.isFileVisible(file, showHiddenFiles);
@@ -597,7 +598,8 @@ public class PythonSdkType extends SdkType {
             final PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
             if (manager != null) {
               try {
-                manager.runVagrant(((VagrantNotStartedException)e.getCause()).getVagrantFolder());
+                VagrantNotStartedException cause = (VagrantNotStartedException)e.getCause();
+                manager.runVagrant(cause.getVagrantFolder(), cause.getMachineName());
               }
               catch (ExecutionException e1) {
                 throw new RuntimeException(e1);

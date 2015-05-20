@@ -209,7 +209,7 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private static int findIndex(String actionId, List<AnAction> actions, ActionManager actionManager) {
+  private static int findIndex(String actionId, List<? extends AnAction> actions, ActionManager actionManager) {
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
       if (action instanceof ActionStub) {
@@ -394,7 +394,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  public final void addAll(Collection<AnAction> actionList) {
+  public final void addAll(Collection<? extends AnAction> actionList) {
     for (AnAction each : actionList) {
       add(each);
     }

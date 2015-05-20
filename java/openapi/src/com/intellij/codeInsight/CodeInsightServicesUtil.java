@@ -54,7 +54,7 @@ public class CodeInsightServicesUtil {
               op.replace(inverted);
             }
           }
-          if (tokenType == JavaTokenType.ANDAND && booleanExpression.getParent() instanceof PsiExpression) {
+          if (tokenType == JavaTokenType.ANDAND && booleanExpression.getParent() instanceof PsiPolyadicExpression) {
             final PsiParenthesizedExpression parth = (PsiParenthesizedExpression)factory.createExpressionFromText("(a)", expression);
             parth.getExpression().replace(expression);
             return parth;

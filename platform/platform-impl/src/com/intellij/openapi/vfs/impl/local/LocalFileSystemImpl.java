@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,11 +53,11 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   private final FileWatcher myWatcher;
 
   private static class WatchRequestImpl implements WatchRequest {
-    private final boolean myToWatchRecursively;
-    private String myFSRootPath;
+    private final String myFSRootPath;
+    private final boolean myWatchRecursively;
     private boolean myDominated;
 
-    public WatchRequestImpl(String rootPath, boolean toWatchRecursively) throws FileNotFoundException {
+    public WatchRequestImpl(String rootPath, boolean watchRecursively) throws FileNotFoundException {
       int index = rootPath.indexOf(JarFileSystem.JAR_SEPARATOR);
       if (index >= 0) rootPath = rootPath.substring(0, index);
 
@@ -73,7 +73,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
 
       myFSRootPath = rootFile.getAbsolutePath();
-      myToWatchRecursively = toWatchRecursively;
+      myWatchRecursively = watchRecursively;
     }
 
     @Override
@@ -84,7 +84,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
     @Override
     public boolean isToWatchRecursively() {
-      return myToWatchRecursively;
+      return myWatchRecursively;
     }
 
     @Override
@@ -112,8 +112,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @Override
-  public void initComponent() {
-  }
+  public void initComponent() { }
 
   @Override
   public void disposeComponent() {
@@ -387,6 +386,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     });
   }
 
+  @NotNull
   @Override
   public Set<WatchRequest> replaceWatchedRoots(@NotNull final Collection<WatchRequest> watchRequests,
                                                @Nullable final Collection<String> _recursiveRoots,

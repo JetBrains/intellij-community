@@ -16,8 +16,13 @@
 package org.jetbrains.jps.indices;
 
 /**
+ * Indexes the ignored files in a project.
+ *
  * @author nik
  */
 public interface IgnoredFileIndex {
+  /**
+   * Checks if the specified filename is ignored (listed under Settings | File Types | Files and folders to ignore).
+   */
   boolean isIgnored(String fileName);
 }

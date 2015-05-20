@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class NestedMemberAccess {
   private static final int METHOD_ACCESS_METHOD = 4;
 
   private boolean noSynthFlag;
-  private Map<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
+  private final Map<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
 
 
   public void propagateMemberAccess(ClassNode root) {
@@ -67,7 +67,7 @@ public class NestedMemberAccess {
       computeMethodTypes(nd);
     }
 
-    for (MethodWrapper method : node.wrapper.getMethods()) {
+    for (MethodWrapper method : node.getWrapper().getMethods()) {
       computeMethodType(node, method);
     }
   }
@@ -220,7 +220,7 @@ public class NestedMemberAccess {
       return;
     }
 
-    for (MethodWrapper meth : node.wrapper.getMethods()) {
+    for (MethodWrapper meth : node.getWrapper().getMethods()) {
 
       if (meth.root != null) {
 
@@ -327,8 +327,8 @@ public class NestedMemberAccess {
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(invexpr.getClassname());
 
     MethodWrapper methsource = null;
-    if (node != null && node.wrapper != null) {
-      methsource = node.wrapper.getMethodWrapper(invexpr.getName(), invexpr.getStringDescriptor());
+    if (node != null && node.getWrapper() != null) {
+      methsource = node.getWrapper().getMethodWrapper(invexpr.getName(), invexpr.getStringDescriptor());
     }
 
     if (methsource == null || !mapMethodType.containsKey(methsource)) {
@@ -440,7 +440,7 @@ public class NestedMemberAccess {
         }
       }
       if (hide) {
-        node.wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(invexpr.getName(), invexpr.getStringDescriptor()));
+        node.getWrapper().getHiddenMembers().add(InterpreterUtil.makeUniqueKey(invexpr.getName(), invexpr.getStringDescriptor()));
       }
     }
 

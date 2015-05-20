@@ -19,7 +19,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -57,7 +56,6 @@ public class HgRebaseCommand {
         new HgCommandExecutor(project)
           .executeInCurrentThread(repo.getRoot(), "rebase", ContainerUtil.list(args));
       repo.update();
-      project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project, null);
       return result;
     }
     finally {

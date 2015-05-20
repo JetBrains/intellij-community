@@ -1,4 +1,4 @@
-// "Create Field 'field'" "true"
+// "Create field 'field'" "true"
 class A{
     {
         Outer.f(field<caret>);

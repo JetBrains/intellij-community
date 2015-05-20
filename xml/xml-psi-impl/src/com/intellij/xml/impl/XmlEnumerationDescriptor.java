@@ -1,6 +1,7 @@
 package com.intellij.xml.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
@@ -23,7 +24,7 @@ public abstract class XmlEnumerationDescriptor<T extends XmlElement> {
   public abstract String[] getEnumeratedValues();
 
   public String[] getValuesForCompletion() {
-    return getEnumeratedValues();
+    return StringUtil.filterEmptyStrings(getEnumeratedValues());
   }
 
   public PsiElement getValueDeclaration(XmlElement attributeValue, String value) {

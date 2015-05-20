@@ -91,6 +91,9 @@ target(name: "compile", description: "Compile module python") {
     fileset(dir: "${ideaPlugins}/IntelliLang/lib") {
       include(name: "*.jar")
     }
+    fileset(dir: "${pluginHome}/ipnb/lib") {
+      include(name: "*.jar")
+    }
   }
 
   ant.path(id: "sourcepath") {
@@ -103,6 +106,7 @@ target(name: "compile", description: "Compile module python") {
       include(name: "openapi/src")
       include(name: "psi-api/src")
       include(name: "IntelliLang-python/src")
+      include(name: "ipnb/src")
     }
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
@@ -142,24 +146,45 @@ target(name: "compile", description: "Compile module python") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
-    fileset(dir: "${pluginHome}/IntelliLang-python/src") {
+    fileset(dir: "${pluginHome}/IntelliLang-python/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
+    }
+    fileset(dir: "${pluginHome}/IntelliLang-python/src") {
+      include(name: "resources/*.xml")
     }
     fileset(dir: "${pluginHome}/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
     fileset(dir: "${home}/colorSchemes/src")
+    fileset(dir: "${pluginHome}/ipnb/resources") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
   }
 
   //copy plugin.xml
   ant.mkdir(dir: "${classesDir}/META-INF")
   ant.copy(todir: "${classesDir}/META-INF") {
-    fileset(file: "${pluginHome}/pluginSrc/META-INF/*.xml")
+    fileset(file: "${pluginHome}/pluginSrc/META-INF/python-plugin-core.xml")
     fileset(file: "${pluginHome}/pluginResources/META-INF/*.xml")
+    fileset(file: "${pluginHome}/build/python-plugin-dependencies.xml")
   }
 
+  // set version to PyCharm current version from ApplicationInfo.xml
+  ant.loadfile(property: "appInfo", srcFile: "${pluginHome}/resources/idea/PyCharmCoreApplicationInfo.xml") {
+  }
+
+  major = ("${appInfo}" =~ /major\s*=\s*\"([^"])\"/)[0][1]
+  minor = ("${appInfo}" =~ /minor\s*=\s*\"([^"])\"/)[0][1]
+
+
+  ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
+                    match: "@@PYCHARM_VERSION@@",
+                    replace: "${major}.${minor}")
+
+  // set since-build to the current idea build number
   ant.replace(file: "${classesDir}/META-INF/plugin.xml") {
     replacefilter(token: "@@BUILD_NUMBER@@", value: "${buildNumber}")
   }
@@ -188,6 +213,12 @@ target(name: "zip", description: "Generate zip plugin file") {
   // copy plugin jar
   ant.mkdir(dir: "${plugindir}/lib")
   ant.move(file: "${output}/python-community.jar", todir: "${plugindir}/lib")
+
+  ant.copy(todir: "${plugindir}/lib") {
+    fileset(dir: "${pluginHome}/ipnb/lib") {
+      include(name: "*.jar")
+    }
+  }
 
   ant.mkdir(dir: "${plugindir}/helpers")
   ant.copy(todir: "${plugindir}/helpers") {

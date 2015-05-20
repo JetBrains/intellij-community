@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -44,20 +43,21 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
   private final String myTestFrameworkName;
+
   private boolean myIsTestingFinished = false;
-  private TestLocationProvider myLocator = null;
+  private SMTestLocator myLocator = null;
   private TestProxyPrinterProvider myTestProxyPrinterProvider = null;
 
-  public GeneralIdBasedToSMTRunnerEventsConvertor(@NotNull SMTestProxy.SMRootTestProxy testsRootProxy,
-                                                  @NotNull String testFrameworkName) {
+  public GeneralIdBasedToSMTRunnerEventsConvertor(@NotNull SMTestProxy.SMRootTestProxy testsRootProxy, @NotNull String testFrameworkName) {
     myTestsRootProxy = testsRootProxy;
     myTestsRootNode = new Node(0, null, testsRootProxy);
     myTestFrameworkName = testFrameworkName;
     myNodeByIdMap.put(myTestsRootNode.getId(), myTestsRootNode);
   }
 
-  public void setLocator(@NotNull TestLocationProvider customLocator) {
-    myLocator = customLocator;
+  @Override
+  public void setLocator(@NotNull SMTestLocator locator) {
+    myLocator = locator;
   }
 
   public void addEventsListener(@NotNull SMTRunnerEventsListener listener) {
@@ -67,7 +67,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public void onStartTesting() {
     addToInvokeLater(new Runnable() {
       public void run() {
-        myTestsRootNode.setState(State.RUNNING);
+        myTestsRootNode.setState(State.RUNNING, GeneralIdBasedToSMTRunnerEventsConvertor.this);
         myTestsRootProxy.setStarted();
         fireOnTestingStarted();
       }
@@ -492,7 +492,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private void setNodeAndAncestorsRunning(@NotNull Node lowestNode) {
     Node node = lowestNode;
     while (node != null && node != myTestsRootNode && node.getState() == State.NOT_RUNNING) {
-      node.setState(State.RUNNING);
+      node.setState(State.RUNNING, this);
       SMTestProxy proxy = node.getProxy();
       proxy.setStarted();
       if (proxy.isSuite()) {
@@ -506,7 +506,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   }
 
   private void terminateNode(@NotNull Node node, @NotNull State terminateState) {
-    node.setState(terminateState);
+    node.setState(terminateState, this);
     myRunningTestNodes.remove(node);
   }
 
@@ -568,15 +568,17 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return myState;
     }
 
-    public void setState(@NotNull State newState) {
+    public void setState(@NotNull State newState, @NotNull GeneralIdBasedToSMTRunnerEventsConvertor convertor) {
       boolean accepted = false;
       if (myState == State.NOT_RUNNING || myState == State.RUNNING) {
         accepted = myState.ordinal() < newState.ordinal();
       }
-      if (!accepted) {
-        throw new RuntimeException("Illegal state change [" + myState + " -> " + newState + "]: " + toString());
+      if (accepted) {
+        myState = newState;
       }
-      myState = newState;
+      else {
+        convertor.logProblem("Illegal state change [" + myState + " -> " + newState + "]: " + toString(), false);
+      }
     }
 
     @Override

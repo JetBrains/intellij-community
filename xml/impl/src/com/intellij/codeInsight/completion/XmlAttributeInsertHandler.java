@@ -17,7 +17,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -34,7 +33,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.XmlNamespaceHelper;
-import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,10 +63,6 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     final Document document = editor.getDocument();
     final int caretOffset = editor.getCaretModel().getOffset();
     final PsiFile file = context.getFile();
-    if (file.getLanguage() == HTMLLanguage.INSTANCE &&
-        HtmlUtil.isSingleHtmlAttribute((String)item.getObject())) {
-      return;
-    }
 
     final CharSequence chars = document.getCharsSequence();
     if (!CharArrayUtil.regionMatches(chars, caretOffset, "=\"") && !CharArrayUtil.regionMatches(chars, caretOffset, "='")) {

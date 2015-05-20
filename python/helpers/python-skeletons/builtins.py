@@ -186,6 +186,15 @@ def locals():
     return {}
 
 
+def max(*args, key=None, default=None):
+    """Return the largest item in an iterable or the largest of two or more
+    arguments.
+
+    :rtype: object | unknown
+    """
+    pass
+
+
 def map(function, sequence, *sequence_1):
     """Return a list of the results of applying the function to the items of
     the argument sequence(s).
@@ -193,6 +202,15 @@ def map(function, sequence, *sequence_1):
     :type function: ((T) -> V) | None
     :type sequence: collections.Iterable[T]
     :rtype: list[V] | bytes | str
+    """
+    pass
+
+
+def min(*args, key=None, default=None):
+    """Return the smallest item in an iterable or the smallest of two or more
+    arguments.
+
+    :rtype: object | unknown
     """
     pass
 

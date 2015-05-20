@@ -18,16 +18,14 @@ package com.intellij.internal.statistic;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public abstract class UsagesCollector {
-  public static ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");
+  public static final ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");
 
-  public abstract @NotNull Set<UsageDescriptor> getUsages(@Nullable Project project) throws CollectUsagesException;
+  public abstract @NotNull Set<UsageDescriptor> getUsages() throws CollectUsagesException;
 
   public abstract @NotNull GroupDescriptor getGroupId();
 }

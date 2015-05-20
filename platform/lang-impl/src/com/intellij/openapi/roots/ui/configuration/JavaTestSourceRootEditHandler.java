@@ -65,7 +65,7 @@ public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase
   @Nullable
   @Override
   public Icon getFolderUnderRootIcon() {
-    return AllIcons.Modules.TestSourceFolder;
+    return AllIcons.Modules.SourceFolder;
   }
 
   @Override

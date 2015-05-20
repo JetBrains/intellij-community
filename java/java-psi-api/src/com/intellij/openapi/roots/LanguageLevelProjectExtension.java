@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -34,11 +35,24 @@ public abstract class LanguageLevelProjectExtension {
 
   public abstract void setLanguageLevel(@NotNull LanguageLevel languageLevel);
 
-  public abstract void languageLevelsChanged();
+  private Boolean myDefault;
 
   /**
-   * Project reloading is not needed on language level changes
-   * @deprecated to remove in IDEA 15
+   * Auto-detect language level from project JDK maximum possible level.
+   * @return null if the property is not set yet (e.g. after migration).
    */
-  public abstract void reloadProjectOnLanguageLevelChange(@NotNull LanguageLevel languageLevel, boolean forceReload);
+  @Nullable
+  public Boolean getDefault() {
+    return myDefault;
+  }
+
+  public void setDefault(@Nullable Boolean value) {
+    myDefault = value;
+  }
+
+  public boolean isDefault() {
+    return myDefault != null && myDefault;
+  }
+
+  public abstract void languageLevelsChanged();
 }

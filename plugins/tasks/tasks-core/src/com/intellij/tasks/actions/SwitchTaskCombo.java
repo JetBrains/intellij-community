@@ -17,21 +17,19 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.TaskSettings;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,34 +39,15 @@ import javax.swing.*;
  */
 public class SwitchTaskCombo extends ComboBoxAction implements DumbAware {
 
-  private static final Key<ComboBoxButton> BUTTON_KEY = Key.create("SWITCH_TASK_BUTTON");
-
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    final IdeFrameImpl ideFrame = findFrame(e);
-    final ComboBoxButton button = (ComboBoxButton)ideFrame.getRootPane().getClientProperty(BUTTON_KEY);
-    if (button == null || !button.isShowing()) return;
-    button.showPopup();
-  }
-
-  private static IdeFrameImpl findFrame(AnActionEvent e) {
-    return IJSwingUtilities.findParentOfType(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), IdeFrameImpl.class);
-  }
-
   public JComponent createCustomComponent(final Presentation presentation) {
-    return new ComboBoxButton(presentation) {
-      public void addNotify() {
-        super.addNotify();
-        final IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, this);
-        assert frame != null;
-        frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, this);
-      }
-
+    ComboBoxButton button = new ComboBoxButton(presentation) {
       @Override
       protected JBPopup createPopup(Runnable onDispose) {
         return SwitchTaskAction.createPopup(DataManager.getInstance().getDataContext(this), onDispose, false);
       }
     };
+    button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+    return button;
   }
 
   @NotNull
@@ -79,9 +58,10 @@ public class SwitchTaskCombo extends ComboBoxAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
     Presentation presentation = e.getPresentation();
-    if (project == null || project.isDisposed() || (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) && findFrame(e) == null)) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    ComboBoxButton button = (ComboBoxButton)presentation.getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+    if (project == null || project.isDisposed() || button == null) {
       presentation.setEnabled(false);
       presentation.setText("");
       presentation.setIcon(null);

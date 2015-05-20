@@ -17,4 +17,5 @@ package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 public interface ServersTreeNode {
 
+  Object getValue();
 }

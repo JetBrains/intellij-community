@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
-import com.intellij.util.pico.IdeaPicoContainer;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
 import java.lang.reflect.Field;
@@ -40,13 +41,13 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
     myFixture = fixture;
     myProviders = providers;
 
-    myContainer = new IdeaPicoContainer();
+    myContainer = new DefaultPicoContainer();
     myContainer.registerComponentInstance(this);
   }
 
   private <M extends ModuleFixtureBuilder> M createModuleBuilder(Class<M> key) {
     Class<? extends ModuleFixtureBuilder> implClass = myProviders.get(key);
-    assert implClass != null: key;
+    Assert.assertNotNull(key.toString(), implClass);
     final ConstructorInjectionComponentAdapter adapter = new ConstructorInjectionComponentAdapter(implClass, implClass);
     return (M)adapter.getComponentInstance(myContainer);
   }

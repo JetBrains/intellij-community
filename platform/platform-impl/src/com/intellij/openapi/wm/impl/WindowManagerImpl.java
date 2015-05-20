@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,10 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.Patches;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
@@ -39,7 +37,6 @@ import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.UIUtil;
@@ -54,8 +51,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,7 +62,8 @@ import java.util.Set;
  */
 @State(
   name = "WindowManager",
-  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/window.manager.xml", roamingType = RoamingType.DISABLED)}
+  defaultStateAsResource = true,
+  storages = @Storage(file = StoragePathMacros.APP_CONFIG + "/window.manager.xml", roamingType = RoamingType.DISABLED)
 )
 public final class WindowManagerImpl extends WindowManagerEx implements NamedComponent, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
@@ -118,18 +114,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   private final WindowAdapter myActivationListener;
   private final DataManager myDataManager;
   private final ActionManagerEx myActionManager;
-  private final UISettings myUiSettings;
 
   /**
    * invoked by reflection
    */
   public WindowManagerImpl(DataManager dataManager,
                            ActionManagerEx actionManager,
-                           UISettings uiSettings,
                            MessageBus bus) {
     myDataManager = dataManager;
     myActionManager = actionManager;
-    myUiSettings = uiSettings;
     if (myDataManager instanceof DataManagerImpl) {
         ((DataManagerImpl)myDataManager).setWindowManager(this);
     }
@@ -148,9 +141,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     myWindowWatcher = new WindowWatcher();
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
-    if (Patches.SUN_BUG_ID_4218084) {
-      keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, new SUN_BUG_ID_4218084_Patch());
-    }
     myLayout = new DesktopLayout();
     myProject2Frame = new HashMap<Project, IdeFrameImpl>();
     myDialogsToDispose = new HashMap<Project, Set<JDialog>>();
@@ -225,7 +215,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
   @Override
   public final Rectangle getScreenBounds() {
-    return ScreenUtil.getAllScreensShape().getBounds();
+    return ScreenUtil.getAllScreensRectangle();
   }
 
   @Override
@@ -418,7 +408,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   @Override
-  @Nullable
   public final StatusBar getStatusBar(final Project project) {
     if (!myProject2Frame.containsKey(project)) {
       return null;
@@ -522,7 +511,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
   public void showFrame() {
     final IdeFrameImpl frame = new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(),
-                                                myActionManager, myUiSettings, myDataManager,
+                                                myActionManager, myDataManager,
                                                 ApplicationManager.getApplication());
     myProject2Frame.put(null, frame);
 
@@ -592,7 +581,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       frame.setProject(project);
     }
     else {
-      frame = new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(), myActionManager, myUiSettings,
+      frame = new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(), myActionManager,
                                myDataManager, ApplicationManager.getApplication());
 
       final Rectangle bounds = ProjectFrameBounds.getInstance(project).getBounds();
@@ -831,66 +820,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @NotNull
   public final String getComponentName() {
     return "WindowManager";
-  }
-
-  /**
-   * We cannot clear selected menu path just by changing of focused window. Under Windows LAF
-   * focused window changes sporadically when user clicks on menu item or sub-menu. The problem
-   * is that all popups under Windows LAF always has native window ancestor. This window isn't
-   * focusable but by mouse click focused window changes in this manner:
-   * InitialFocusedWindow->null
-   * null->InitialFocusedWindow
-   * To fix this problem we use alarm to accumulate such focus events.
-   */
-  private static final class SUN_BUG_ID_4218084_Patch implements PropertyChangeListener {
-    private final Alarm myAlarm;
-    private Window myInitialFocusedWindow;
-    private Window myLastFocusedWindow;
-    private final Runnable myClearSelectedPathRunnable;
-
-    public SUN_BUG_ID_4218084_Patch() {
-      myAlarm = new Alarm();
-      myClearSelectedPathRunnable = new Runnable() {
-        @Override
-        public void run() {
-          if (myInitialFocusedWindow != myLastFocusedWindow) {
-            MenuSelectionManager.defaultManager().clearSelectedPath();
-          }
-        }
-      };
-    }
-
-    @Override
-    public void propertyChange(final PropertyChangeEvent e) {
-      if (myAlarm.getActiveRequestCount() == 0) {
-        myInitialFocusedWindow = (Window)e.getOldValue();
-        final MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
-        if (selectedPath.length == 0) { // there is no visible popup
-          return;
-        }
-        Component firstComponent = null;
-        for (final MenuElement menuElement : selectedPath) {
-          final Component component = menuElement.getComponent();
-          if (component instanceof JMenuBar) {
-            firstComponent = component;
-            break;
-          } else if (component instanceof JPopupMenu) {
-            firstComponent = ((JPopupMenu) component).getInvoker();
-            break;
-          }
-        }
-        if (firstComponent == null) {
-          return;
-        }
-        final Window window = SwingUtilities.getWindowAncestor(firstComponent);
-        if (window != myInitialFocusedWindow) { // focused window doesn't have popup
-          return;
-        }
-      }
-      myLastFocusedWindow = (Window)e.getNewValue();
-      myAlarm.cancelAllRequests();
-      myAlarm.addRequest(myClearSelectedPathRunnable, 150);
-    }
   }
 
   public WindowWatcher getWindowWatcher() {

@@ -33,7 +33,7 @@ public class CreateParameterFix extends AddParamBase {
 
     @NotNull
     public String getText() {
-        return "Create Parameter '" + myReference.getReferencedName() + "'";
+        return "Create parameter '" + myReference.getReferencedName() + "'";
     }
 
     protected String getParamName() {

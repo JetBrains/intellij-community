@@ -44,10 +44,9 @@ import java.util.*;
 @State(
   name = "TemplateSettings",
   storages = {
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml"),
-    @Storage(file = StoragePathMacros.APP_CONFIG + "/templates.xml")
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/templates.xml"),
+    @Storage(file = StoragePathMacros.APP_CONFIG + "/other.xml", deprecated = true)
   },
-  storageChooser = LastStorageChooserForWrite.class,
   additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
@@ -194,14 +193,15 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
 
 
+      @NotNull
       @Override
-      public boolean shouldBeSaved(@NotNull final TemplateGroup template) {
+      public State getState(@NotNull TemplateGroup template) {
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
-            return true;
+            return State.POSSIBLY_CHANGED;
           }
         }
-        return false;
+        return State.NON_PERSISTENT;
       }
 
       @Override
@@ -452,12 +452,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  private void readDefTemplate(DefaultLiveTemplatesProvider provider, String defTemplate, boolean registerTemplate)
-    throws JDOMException, InvalidDataException, IOException {
-    String templateName = getDefaultTemplateName(defTemplate);
+  private void readDefTemplate(DefaultLiveTemplatesProvider provider, String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
     if (inputStream != null) {
-      TemplateGroup group = readTemplateFile(JDOMUtil.load(inputStream), templateName, true, registerTemplate, provider.getClass().getClassLoader());
+      TemplateGroup group = readTemplateFile(JDOMUtil.load(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
       if (group != null && group.getReplace() != null) {
         for (TemplateImpl template : myTemplates.get(group.getReplace())) {
           removeTemplate(template);
@@ -639,10 +637,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
         }
       }
     }
-  }
-
-  public SchemesManager<TemplateGroup,TemplateGroup> getSchemesManager() {
-    return mySchemesManager;
   }
 
   public List<TemplateGroup> getTemplateGroups() {

@@ -54,7 +54,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     new DialogWrapper(myProject) {
       {
         init();
-        setTitle("Configure annotations");
+        setTitle("Configure Annotations");
       }
 
       @Override

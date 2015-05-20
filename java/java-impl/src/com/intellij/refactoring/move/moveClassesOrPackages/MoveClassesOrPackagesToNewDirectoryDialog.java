@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.DocumentAdapter;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashSet;
@@ -51,7 +53,7 @@ import java.util.Set;
 /**
  * @author ven
  */
-public class MoveClassesOrPackagesToNewDirectoryDialog extends RefactoringDialog {
+public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
   private static final Logger LOG = Logger.getInstance("com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesToNewDirectoryDialog");
 
   private final PsiDirectory myDirectory;
@@ -124,6 +126,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends RefactoringDialog
       myPreserveSourceRoot.setSelected(sameModule);
     }
     init();
+    for (PsiElement element : elementsToMove) {
+      if (element.getContainingFile() != null) {
+        myOpenInEditor.add(initOpenInEditorCb(), BorderLayout.WEST);
+        break;
+      }
+    }
   }
 
   private TextFieldWithBrowseButton myDestDirectoryField;
@@ -132,6 +140,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends RefactoringDialog
   private JPanel myRootPanel;
   private JLabel myNameLabel;
   private JCheckBox myPreserveSourceRoot;
+  private JPanel myOpenInEditor;
 
   private boolean isSearchInNonJavaFiles() {
     return mySearchForTextOccurrencesCheckBox.isSelected();
@@ -179,7 +188,12 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends RefactoringDialog
     final boolean searchForTextOccurences = isSearchInNonJavaFiles();
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;
     refactoringSettings.MOVE_SEARCH_FOR_TEXT = searchForTextOccurences;
-    invokeRefactoring(createRefactoringProcessor(project, directory, aPackage, searchInComments, searchForTextOccurences));
+    saveOpenInEditorOption();
+    final BaseRefactoringProcessor refactoringProcessor =
+      createRefactoringProcessor(project, directory, aPackage, searchInComments, searchForTextOccurences);
+    if (refactoringProcessor != null) {
+      invokeRefactoring(refactoringProcessor);
+    }
   }
 
   @Override
@@ -218,11 +232,27 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends RefactoringDialog
 
     MoveClassesOrPackagesProcessor processor = createMoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
         searchInComments, searchForTextOccurences, myMoveCallback);
-
+    
+    processor.setOpenInEditor(isOpenInEditor());
     if (processor.verifyValidPackageName()) {
       return processor;
     }
     return null;
+  }
+
+  @Override
+  protected String getMovePropertySuffix() {
+    return "ClassWithTarget";
+  }
+
+  @Override
+  protected String getCbTitle() {
+    return "Open moved classes in editor";
+  }
+
+  @Override
+  protected boolean isEnabledByDefault() {
+    return false;
   }
 }
 

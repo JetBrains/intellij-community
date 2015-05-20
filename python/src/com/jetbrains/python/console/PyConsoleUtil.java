@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -56,7 +56,7 @@ public class PyConsoleUtil {
     return prompt != null && IPYTHON_PAGING_PROMPT.equals(prompt.trim());
   }
 
-  static String processPrompts(final LanguageConsoleImpl languageConsole, String string) {
+  static String processPrompts(final LanguageConsoleView languageConsole, String string) {
     // Change prompt
     for (String prompt : PROMPTS) {
       if (string.startsWith(prompt)) {

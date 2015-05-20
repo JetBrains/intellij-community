@@ -27,4 +27,6 @@ public interface VcsUserRegistry {
   @NotNull
   Set<VcsUser> getUsers();
 
+  @NotNull
+  VcsUser createUser(@NotNull String name, @NotNull String email);
 }

@@ -12,8 +12,8 @@ public abstract class ContextDependentAsyncResultConsumer<T> implements Consumer
 
   @Override
   public final void consume(T result) {
-    Vm vm = context.getVm();
-    if (vm.isAttached() && !vm.getSuspendContextManager().isContextObsolete(context)) {
+    Vm vm = context.getValueManager().getVm();
+    if (vm.getAttachStateManager().isAttached() && !vm.getSuspendContextManager().isContextObsolete(context)) {
       consume(result, vm);
     }
   }

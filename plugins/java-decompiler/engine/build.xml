@@ -11,7 +11,7 @@
 
   <!-- external dependencies, adjust to your own -->
   <path id="junit">
-    <file name="${basedir}/../../../lib/junit-4.11.jar"/>
+    <file name="${basedir}/../../../lib/junit-4.12.jar"/>
     <file name="${basedir}/../../../lib/hamcrest-core-1.3.jar"/>
     <file name="${basedir}/../../../lib/hamcrest-library-1.3.jar"/>
   </path>

@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
@@ -55,12 +56,12 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   private final ChangeListListener myChangeListListener = new MyChangeListListener();
   private final boolean myShowingAllChangeLists;
   private final EventDispatcher<SelectedListChangeListener> myDispatcher = EventDispatcher.create(SelectedListChangeListener.class);
-  private Collection<Change> myAllChanges;
-  private Map<Change, LocalChangeList> myChangeListsMap;
-
   private final ChangesBrowserExtender myExtender;
   private final Disposable myParentDisposable;
   private final Runnable myRebuildListListener;
+  private Collection<Change> myAllChanges;
+  private Map<Change, LocalChangeList> myChangeListsMap;
+  private boolean myInRebuildList;
 
   // todo terrible constructor
   public MultipleChangeListBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
@@ -152,8 +153,6 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     myDispatcher.getMulticaster().selectedListChanged();
   }
 
-  private boolean myInRebuildList;
-
   @Override
   public void rebuildList() {
     if (myInRebuildList) return;
@@ -229,15 +228,105 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   }
 
   @Override
-  protected List<AnAction> createDiffActions(final Change change) {
-    List<AnAction> actions = super.createDiffActions(change);
-    actions.add(new MoveAction(change));
+  protected List<AnAction> createDiffActions() {
+    List<AnAction> actions = super.createDiffActions();
+    actions.add(new MoveAction());
     return actions;
   }
 
+  private void updateListsInChooser() {
+    Runnable runnable = new Runnable() {
+      public void run() {
+        if (myChangeListChooser != null && myShowingAllChangeLists) {
+          myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeListsCopy());
+        }
+      }
+    };
+    if (SwingUtilities.isEventDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(MultipleChangeListBrowser.this));
+    }
+  }
+
+  private static class Extender implements ChangesBrowserExtender {
+    private final Project myProject;
+    private final MultipleChangeListBrowser myBrowser;
+    private final AnAction[] myAdditionalActions;
+
+    private Extender(final Project project, final MultipleChangeListBrowser browser, AnAction[] additionalActions) {
+      myProject = project;
+      myBrowser = browser;
+      myAdditionalActions = additionalActions;
+    }
+
+    public void addToolbarActions(final DialogWrapper dialogWrapper) {
+      final Icon icon = AllIcons.Actions.Refresh;
+      if (myBrowser.myChangesToDisplay == null) {
+        myBrowser.addToolbarAction(new AnAction("Refresh Changes") {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            myBrowser.rebuildList();
+          }
+
+          @Override
+          public void update(AnActionEvent e) {
+            e.getPresentation().setIcon(icon);
+          }
+        });
+      }
+      RollbackDialogAction rollback = new RollbackDialogAction();
+      EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, myBrowser);
+      myBrowser.addToolbarAction(rollback);
+
+      final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myBrowser);
+      editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);
+      myBrowser.addToolbarAction(editSourceAction);
+
+      myBrowser.addToolbarAction(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
+
+      final List<AnAction> actions = AdditionalLocalChangeActionsInstaller.calculateActions(myProject, myBrowser.getAllChanges());
+      if (actions != null) {
+        for (AnAction action : actions) {
+          myBrowser.addToolbarAction(action);
+        }
+      }
+      if (myAdditionalActions != null && myAdditionalActions.length > 0) {
+        for (int i = 0; i < myAdditionalActions.length; i++) {
+          final AnAction action = myAdditionalActions[i];
+          myBrowser.addToolbarAction(action);
+        }
+      }
+    }
+
+    public void addSelectedListChangeListener(final SelectedListChangeListener listener) {
+      myBrowser.addSelectedListChangeListener(listener);
+    }
+
+    public Collection<AbstractVcs> getAffectedVcses() {
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      final Set<AbstractVcs> vcses = new HashSet<AbstractVcs>(Arrays.asList(vcsManager.getAllActiveVcss()));
+      final Set<AbstractVcs> result = new HashSet<AbstractVcs>();
+      for (Change change : myBrowser.myAllChanges) {
+        if (vcses.isEmpty()) break;
+        final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myBrowser.myProject);
+        if (vcs != null) {
+          result.add(vcs);
+          vcses.remove(vcs);
+        }
+      }
+      return result;
+    }
+
+    public List<Change> getCurrentIncludedChanges() {
+      return myBrowser.getCurrentIncludedChanges();
+    }
+  }
+
   private class ChangeListChooser extends JPanel {
-    private final JComboBox myChooser;
     private final static int MAX_LEN = 35;
+    private final JComboBox myChooser;
 
     public ChangeListChooser(List<? extends ChangeList> lists) {
       super(new BorderLayout(4, 2));
@@ -294,105 +383,17 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
     }
   }
 
-  private void updateListsInChooser() {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        if (myChangeListChooser != null && myShowingAllChangeLists) {
-          myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeListsCopy());
-        }
-      }
-    };
-    if (SwingUtilities.isEventDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(MultipleChangeListBrowser.this));
-    }
-  }
-
   private class MoveAction extends MoveChangesToAnotherListAction {
-    private final Change myChange;
-
-    public MoveAction(final Change change) {
-      myChange = change;
+    @Override
+    protected boolean isEnabled(AnActionEvent e) {
+      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
+      if (change == null) return false;
+      return super.isEnabled(e);
     }
 
     public void actionPerformed(AnActionEvent e) {
-      askAndMove(myProject, Collections.singletonList(myChange), null);
-    }
-  }
-
-  private static class Extender implements ChangesBrowserExtender {
-    private final Project myProject;
-    private final MultipleChangeListBrowser myBrowser;
-    private final AnAction[] myAdditionalActions;
-
-    private Extender(final Project project, final MultipleChangeListBrowser browser, AnAction[] additionalActions) {
-      myProject = project;
-      myBrowser = browser;
-      myAdditionalActions = additionalActions;
-    }
-
-    public void addToolbarActions(final DialogWrapper dialogWrapper) {
-      final Icon icon = AllIcons.Actions.Refresh;
-      if (myBrowser.myChangesToDisplay == null) {
-        myBrowser.addToolbarAction(new AnAction("Refresh Changes") {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            myBrowser.rebuildList();
-          }
-
-          @Override
-          public void update(AnActionEvent e) {
-            e.getPresentation().setIcon(icon);
-          }
-        });
-      }
-      RollbackDialogAction rollback = new RollbackDialogAction();
-      EmptyAction.setupAction(rollback, IdeActions.CHANGES_VIEW_ROLLBACK, myBrowser);
-      myBrowser.addToolbarAction(rollback);
-
-      final EditSourceInCommitAction editSourceAction = new EditSourceInCommitAction(dialogWrapper);
-      editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myBrowser);
-      myBrowser.addToolbarAction(editSourceAction);
-
-      myBrowser.addToolbarAction(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
-
-      final List<AnAction> actions = AdditionalLocalChangeActionsInstaller.calculateActions(myProject, myBrowser.getAllChanges());
-      if (actions != null) {
-        for (AnAction action : actions) {
-          myBrowser.addToolbarAction(action);
-        }
-      }
-      if (myAdditionalActions != null && myAdditionalActions.length > 0) {
-        for (int i = 0; i < myAdditionalActions.length; i++) {
-          final AnAction action = myAdditionalActions[i];
-          myBrowser.addToolbarAction(action);
-        }
-      }
-    }
-
-    public void addSelectedListChangeListener(final SelectedListChangeListener listener) {
-      myBrowser.addSelectedListChangeListener(listener);
-    }
-
-    public Collection<AbstractVcs> getAffectedVcses() {
-      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-      final Set<AbstractVcs> vcses = new HashSet<AbstractVcs>(Arrays.asList(vcsManager.getAllActiveVcss()));
-      final Set<AbstractVcs> result = new HashSet<AbstractVcs>();
-      for (Change change : myBrowser.myAllChanges) {
-        if (vcses.isEmpty()) break;
-        final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myBrowser.myProject);
-        if (vcs != null) {
-          result.add(vcs);
-          vcses.remove(vcs);
-        }
-      }
-      return result;
-    }
-
-    public List<Change> getCurrentIncludedChanges() {
-      return myBrowser.getCurrentIncludedChanges();
+      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
+      askAndMove(myProject, Collections.singletonList(change), null);
     }
   }
 }

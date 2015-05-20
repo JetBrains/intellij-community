@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,15 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,9 +43,10 @@ import java.util.List;
  * @author cdr
 */
 public class LocalInspectionsPassFactory extends AbstractProjectComponent implements MainHighlightingPassFactory {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory");
   public LocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
-    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, new int[]{/*, Pass.POPUP_HINTS*/}, true, Pass.LOCAL_INSPECTIONS);
+    highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, ArrayUtil.EMPTY_INT_ARRAY, true, Pass.LOCAL_INSPECTIONS);
   }
 
   @Override
@@ -68,6 +72,7 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
                                                                @NotNull Document document,
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     final TextRange textRange = file.getTextRange();
+    LOG.assertTrue(textRange != null, "textRange is null for " + file + " (" + PsiUtilCore.getVirtualFile(file) + ")");
     return new MyLocalInspectionsPass(file, document, textRange, LocalInspectionsPass.EMPTY_PRIORITY_RANGE, highlightInfoProcessor);
   }
 
@@ -76,11 +81,11 @@ public class LocalInspectionsPassFactory extends AbstractProjectComponent implem
   }
 
   private static class MyLocalInspectionsPass extends LocalInspectionsPass {
-    public MyLocalInspectionsPass(PsiFile file,
-                                  Document document,
-                                  @NotNull TextRange textRange,
-                                  TextRange visibleRange,
-                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    private MyLocalInspectionsPass(PsiFile file,
+                                   Document document,
+                                   @NotNull TextRange textRange,
+                                   TextRange visibleRange,
+                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {
       super(file, document, textRange.getStartOffset(), textRange.getEndOffset(), visibleRange, true, highlightInfoProcessor);
     }
 

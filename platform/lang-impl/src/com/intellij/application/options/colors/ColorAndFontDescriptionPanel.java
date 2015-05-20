@@ -15,319 +15,115 @@
  */
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColorPanel;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.FontUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author cdr
  */
 public class ColorAndFontDescriptionPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.colors.ColorAndFontDescriptionPanel");
 
-  private final ColorPanel myBackgroundChooser = new ColorPanel();
-  private final ColorPanel myForegroundChooser = new ColorPanel();
-  private final ColorPanel myEffectsColorChooser = new ColorPanel();
-  private final ColorPanel myErrorStripeColorChooser = new ColorPanel();
+  private JPanel myPanel;
 
-  private final JCheckBox myCbBackground = new JCheckBox(ApplicationBundle.message("checkbox.color.background"));
-  private final JCheckBox myCbForeground = new JCheckBox(ApplicationBundle.message("checkbox.color.foreground"));
-  private final JCheckBox myCbEffects = new JCheckBox(ApplicationBundle.message("checkbox.color.effects"));
-  private final JCheckBox myCbErrorStripe = new JCheckBox(ApplicationBundle.message("checkbox.color.error.stripe.mark"));
+  private ColorPanel myBackgroundChooser;
+  private ColorPanel myForegroundChooser;
+  private ColorPanel myEffectsColorChooser;
+  private ColorPanel myErrorStripeColorChooser;
 
-  private static final String BORDERED_EFFECT = ApplicationBundle.message("combobox.effect.bordered");
-  private static final String UNDERSCORED_EFFECT = ApplicationBundle.message("combobox.effect.underscored");
-  private static final String BOLD_UNDERSCORED_EFFECT = ApplicationBundle.message("combobox.effect.boldunderscored");
-  private static final String UNDERWAVED_EFFECT = ApplicationBundle.message("combobox.effect.underwaved");
-  private static final String STRIKEOUT_EFFECT = ApplicationBundle.message("combobox.effect.strikeout");
-  private static final String BOLD_DOTTED_LINE_EFFECT = ApplicationBundle.message("combobox.effect.bold.dottedline");
+  private JBCheckBox myCbBackground;
+  private JBCheckBox myCbForeground;
+  private JBCheckBox myCbEffects;
+  private JBCheckBox myCbErrorStripe;
 
-  private final JComboBox myEffectsCombo = new JComboBox(
-    new String[]{UNDERSCORED_EFFECT, BOLD_UNDERSCORED_EFFECT, UNDERWAVED_EFFECT, BORDERED_EFFECT, STRIKEOUT_EFFECT, BOLD_DOTTED_LINE_EFFECT});
+  private Map<String, EffectType> myEffectsMap;
+  {
+    Map<String, EffectType> map = ContainerUtil.newLinkedHashMap();
+    map.put(ApplicationBundle.message("combobox.effect.underscored"), EffectType.LINE_UNDERSCORE);
+    map.put(ApplicationBundle.message("combobox.effect.boldunderscored"), EffectType.BOLD_LINE_UNDERSCORE);
+    map.put(ApplicationBundle.message("combobox.effect.underwaved"), EffectType.WAVE_UNDERSCORE);
+    map.put(ApplicationBundle.message("combobox.effect.bordered"), EffectType.BOXED);
+    map.put(ApplicationBundle.message("combobox.effect.strikeout"), EffectType.STRIKEOUT);
+    map.put(ApplicationBundle.message("combobox.effect.bold.dottedline"), EffectType.BOLD_DOTTED_LINE);
+    myEffectsMap = Collections.unmodifiableMap(map);
+  }
+  private JComboBox myEffectsCombo;
 
-  private final JCheckBox myCbBold = new JCheckBox(ApplicationBundle.message("checkbox.font.bold"));
-  private final JCheckBox myCbItalic = new JCheckBox(ApplicationBundle.message("checkbox.font.italic"));
-  private boolean updatingEffects;
-  private ActionListener myActionListener;
+  private JBCheckBox myCbBold;
+  private JBCheckBox myCbItalic;
   private JLabel myLabelFont;
+  private JTextPane myInheritanceLabel;
 
-  private final JLabel myInheritanceLabel = new JLabel("X");
-  private final JCheckBox myInheritAttributesBox = new JCheckBox(ApplicationBundle.message("label.inherit.attributes"));
-
+  private JBCheckBox myInheritAttributesBox;
 
   public ColorAndFontDescriptionPanel() {
     super(new BorderLayout());
+    add(myPanel, BorderLayout.CENTER);
 
-    JPanel settingsPanel = createSettingsPanel();
-
-    add(settingsPanel, BorderLayout.CENTER);
     setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 4));
-
+    myEffectsCombo.setModel(new CollectionComboBoxModel(ContainerUtil.newArrayList(myEffectsMap.keySet())));
     myEffectsCombo.setRenderer(new ListCellRendererWrapper<String>() {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        setText(value != null ? value : "Invalid");
+        setText(value != null ? value : "<invalid>");
       }
     });
-  }
 
-  private JPanel createSettingsPanel() {
-    JPanel settingsPanel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.weightx = 1;
-    gbConstraints.weighty = 0;
-    gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
-
-    settingsPanel.add(createFontSettingsPanel(), gbConstraints);
-    settingsPanel.add(createColorSettingsPanel(), gbConstraints);
-    gbConstraints.weighty = 1;
-    settingsPanel.add(new TailPanel(), gbConstraints);
-    settingsPanel.add(createInheritancePanel(), gbConstraints);
-    return settingsPanel;
-  }
-
-  private JPanel createInheritancePanel() {
-    JPanel inheritancePanel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    gbConstraints.weightx = 1;
-    gbConstraints.gridwidth = 2;
-    inheritancePanel.add(myInheritAttributesBox, gbConstraints);
-    gbConstraints.gridy = 1;
-    gbConstraints.insets = new Insets(0, 20, 0,0);
-    inheritancePanel.add(myInheritanceLabel, gbConstraints);
-    myInheritAttributesBox.addActionListener(new ActionListener(){
+    ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (myActionListener != null) {
-          myActionListener.actionPerformed(e);
-        }
+        onSettingsChanged(e);
+      }
+    };
+    for (JBCheckBox c : new JBCheckBox[]{myCbBackground, myCbForeground, myCbEffects, myCbErrorStripe, myCbItalic, myCbBold, myInheritAttributesBox}) {
+      c.addActionListener(actionListener);
+    }
+    for (ColorPanel c : new ColorPanel[]{myBackgroundChooser, myForegroundChooser, myEffectsColorChooser, myErrorStripeColorChooser}) {
+      c.addActionListener(actionListener);
+    }
+    myEffectsCombo.addActionListener(actionListener);
+    Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", false);
+    myInheritanceLabel.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        onHyperLinkClicked(e);
       }
     });
-    return inheritancePanel;
+    myInheritanceLabel.setBorder(BorderFactory.createEmptyBorder());
+    myLabelFont.setVisible(false); // hide for now as it doesn't look that good
   }
 
-  private JPanel createFontSettingsPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.weightx = 0;
-    gbConstraints.weighty = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.gridy = 1;
-    gbConstraints.gridx = 1;
-    myLabelFont = new JLabel(ApplicationBundle.message("label.font.type"));
-    panel.add(myLabelFont, gbConstraints);
-    gbConstraints.gridx = 2;
-    panel.add(myCbBold, gbConstraints);
-    gbConstraints.gridx = 3;
-    panel.add(myCbItalic, gbConstraints);
-    gbConstraints.gridx = 4;
-    gbConstraints.weightx = 1;
-    panel.add(new TailPanel(), gbConstraints);
-
-    myCbBold.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myActionListener != null) {
-          myActionListener.actionPerformed(e);
-        }
-      }
-    });
-    myCbItalic.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myActionListener != null) {
-          myActionListener.actionPerformed(e);
-        }
-      }
-    });
-    return panel;
+  protected void onHyperLinkClicked(HyperlinkEvent e) {
   }
 
-  private JPanel createColorSettingsPanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridBagLayout());
-
-    GridBagConstraints gc = new GridBagConstraints();
-    gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.weightx = 0;
-    gc.weighty = 1;
-    gc.gridwidth = 1;
-
-    gc.gridx = 0;
-    gc.gridy = 0;
-    panel.add(myCbForeground, gc);
-
-    gc.gridy++;
-    panel.add(myCbBackground, gc);
-
-    gc.gridy++;
-    panel.add(myCbErrorStripe, gc);
-
-    gc.gridy++;
-    panel.add(myCbEffects, gc);
-
-    gc.gridy++;
-    gc.insets = new Insets(0, 10, 0, 0);
-    gc.weighty = 0;
-    panel.add(myEffectsCombo, gc);
-
-    gc.gridx = 1;
-    gc.gridy = 0;
-    panel.add(myForegroundChooser, gc);
-
-    gc.gridy++;
-    panel.add(myBackgroundChooser, gc);
-
-    gc.gridy++;
-    panel.add(myErrorStripeColorChooser, gc);
-
-    gc.gridy += 2;
-    panel.add(myEffectsColorChooser, gc);
-
-    gc.gridx = 2;
-    gc.gridy = 0;
-    gc.weightx = 1;
-    panel.add(new TailPanel(), gc);
-
-    gc.gridy++;
-    panel.add(new TailPanel(), gc);
-
-    gc.gridy++;
-    panel.add(new TailPanel(), gc);
-
-    gc.gridy++;
-    panel.add(new TailPanel(), gc);
-
-
-    myEffectsColorChooser.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myActionListener != null) {
-            myActionListener.actionPerformed(e);
-          }
-        }
-      }
-    );
-
-    myForegroundChooser.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myActionListener != null) {
-            myActionListener.actionPerformed(e);
-          }
-        }
-      }
-    );
-
-    myCbForeground.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          myForegroundChooser.setEnabled(myCbForeground.isSelected());
-          if (myActionListener != null) {
-            myActionListener.actionPerformed(e);
-          }
-        }
-      }
-    );
-
-    myBackgroundChooser.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myActionListener != null) {
-            myActionListener.actionPerformed(e);
-          }
-        }
-      }
-    );
-    myErrorStripeColorChooser.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myActionListener != null) {
-            myActionListener.actionPerformed(e);
-          }
-        }
-      }
-    );
-
-    myCbBackground.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          myBackgroundChooser.setEnabled(myCbBackground.isSelected());
-          if (myActionListener != null) {
-            myActionListener.actionPerformed(e);
-          }
-        }
-      }
-    );
-    myCbErrorStripe.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          myErrorStripeColorChooser.setEnabled(myCbErrorStripe.isSelected());
-          if (myActionListener != null) {
-            myActionListener.actionPerformed(e);
-          }
-        }
-      }
-    );
-
-
-    myCbEffects.addActionListener(
-      new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          boolean checked = myCbEffects.isSelected();
-          myEffectsColorChooser.setEnabled(checked);
-          myEffectsCombo.setEnabled(checked);
-          if (myActionListener != null) {
-            myActionListener.actionPerformed(e);
-          }
-        }
-      }
-    );
-
-    myEffectsCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (!updatingEffects) {
-          if (myActionListener != null) {
-            myActionListener.actionPerformed(e);
-          }
-        }
-      }
-    });
-
-    return panel;
-  }
-
-  public void setActionListener(ActionListener actionListener) {
-    myActionListener = actionListener;
+  protected void onSettingsChanged(ActionEvent e) {
+    myErrorStripeColorChooser.setEnabled(myCbErrorStripe.isSelected());
+    myForegroundChooser.setEnabled(myCbForeground.isSelected());
+    myBackgroundChooser.setEnabled(myCbBackground.isSelected());
+    myEffectsColorChooser.setEnabled(myCbEffects.isSelected());
+    myEffectsCombo.setEnabled(myCbEffects.isSelected());
   }
 
   public void resetDefault() {
@@ -391,34 +187,13 @@ public class ColorAndFontDescriptionPanel extends JPanel {
 
     if (description.isEffectsColorEnabled() && description.isEffectsColorChecked()) {
       myEffectsCombo.setEnabled(true);
-      updatingEffects = true;
-      if (effectType == EffectType.BOXED) {
-        myEffectsCombo.setSelectedItem(BORDERED_EFFECT);
-      }
-      else if (effectType == EffectType.LINE_UNDERSCORE) {
-        myEffectsCombo.setSelectedItem(UNDERSCORED_EFFECT);
-      }
-      else if (effectType == EffectType.WAVE_UNDERSCORE) {
-        myEffectsCombo.setSelectedItem(UNDERWAVED_EFFECT);
-      }
-      else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-        myEffectsCombo.setSelectedItem(BOLD_UNDERSCORED_EFFECT);
-      }
-      else if (effectType == EffectType.STRIKEOUT) {
-        myEffectsCombo.setSelectedItem(STRIKEOUT_EFFECT);
-      }
-      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
-        myEffectsCombo.setSelectedItem(BOLD_DOTTED_LINE_EFFECT);
-      }
-      else {
-        myEffectsCombo.setSelectedItem(null);
-      }
-      updatingEffects = false;
+      myEffectsCombo.getModel().setSelectedItem(ContainerUtil.reverseMap(myEffectsMap).get(effectType));
     }
     else {
       myEffectsCombo.setEnabled(false);
     }
     setInheritanceInfo(description);
+    myLabelFont.setEnabled(myCbBold.isEnabled() || myCbItalic.isEnabled());
   }
 
 
@@ -426,30 +201,32 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     Pair<ColorSettingsPage, AttributesDescriptor> baseDescriptor = description.getBaseAttributeDescriptor();
     if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
       String attrName = baseDescriptor.second.getDisplayName();
+      String attrLabel = attrName.replaceAll(ColorOptionsTree.NAME_SEPARATOR, FontUtil.rightArrow(UIUtil.getLabelFont()));
       ColorSettingsPage settingsPage = baseDescriptor.first;
-      String pageName = "?";
+      String style = "<div style=\"text-align:right\" vertical-align=\"top\">";
+      String tooltipText;
+      String labelText;
       if (settingsPage != null) {
-        pageName = settingsPage.getDisplayName();
+        String pageName = settingsPage.getDisplayName();
+        tooltipText = "'" + attrLabel + "' from<br>'" + pageName + "' section";
+        labelText = style + "'" + attrLabel + "'<br>of <a href=\"" + attrName + "\">" + pageName;
       }
-      String tooltipText = attrName + " (" + pageName + ")";
-      String labelText = tooltipText;
-      if (labelText.length() > 30 && pageName.length() >= 4) {
-        labelText = attrName + " (" + pageName.substring(0, 4) + "...)";
+      else {
+        tooltipText = attrLabel;
+        labelText = style + attrLabel + "<br>&nbsp;";
       }
+
       myInheritanceLabel.setText(labelText);
       myInheritanceLabel.setToolTipText(tooltipText);
-      myInheritanceLabel.setForeground(myLabelFont.getForeground());
       myInheritanceLabel.setEnabled(description.isInherited());
       myInheritAttributesBox.setEnabled(true);
       myInheritAttributesBox.setSelected(description.isInherited());
       setEditEnabled(!description.isInherited(), description);
     }
     else {
-      myInheritanceLabel.setText("X");
-      myInheritanceLabel.setIcon(null);
-      myInheritanceLabel.setDisabledIcon(null);
+      myInheritanceLabel.setToolTipText(null);
+      myInheritanceLabel.setText("<html><br>&nbsp;");
       myInheritanceLabel.setEnabled(true);
-      myInheritanceLabel.setForeground(myLabelFont.getBackground());
       myInheritAttributesBox.setEnabled(false);
       myInheritAttributesBox.setSelected(false);
       setEditEnabled(true, description);
@@ -507,29 +284,8 @@ public class ColorAndFontDescriptionPanel extends JPanel {
         description.setEffectColor(myEffectsColorChooser.getSelectedColor());
 
         if (myEffectsCombo.isEnabled()) {
-          Object effectType = myEffectsCombo.getModel().getSelectedItem();
-
-          if (BORDERED_EFFECT.equals(effectType)) {
-            description.setEffectType(EffectType.BOXED);
-          }
-          else if (UNDERWAVED_EFFECT.equals(effectType)) {
-            description.setEffectType(EffectType.WAVE_UNDERSCORE);
-          }
-          else if (UNDERSCORED_EFFECT.equals(effectType)) {
-            description.setEffectType(EffectType.LINE_UNDERSCORE);
-          }
-          else if (BOLD_UNDERSCORED_EFFECT.equals(effectType)) {
-            description.setEffectType(EffectType.BOLD_LINE_UNDERSCORE);
-          }
-          else if (STRIKEOUT_EFFECT.equals(effectType)) {
-            description.setEffectType(EffectType.STRIKEOUT);
-          }
-          else if (BOLD_DOTTED_LINE_EFFECT.equals(effectType)) {
-            description.setEffectType(EffectType.BOLD_DOTTED_LINE);
-          }
-          else {
-            LOG.assertTrue(false);
-          }
+          String effectType = (String)myEffectsCombo.getModel().getSelectedItem();
+          description.setEffectType(myEffectsMap.get(effectType));
         }
       }
       description.apply(scheme);

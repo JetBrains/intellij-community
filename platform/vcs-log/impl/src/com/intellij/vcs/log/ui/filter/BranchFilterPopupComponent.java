@@ -31,34 +31,67 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
+  private VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
   public BranchFilterPopupComponent(@NotNull VcsLogUiProperties uiProperties,
-                                    @NotNull FilterModel<VcsLogBranchFilter> filterModel) {
+                                    @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
     super("Branch", uiProperties, filterModel);
+    myBranchFilterModel = filterModel;
   }
 
   @NotNull
   @Override
   protected String getText(@NotNull VcsLogBranchFilter filter) {
-    return displayableText(filter.getBranchNames());
+    boolean positiveMatch = !filter.getBranchNames().isEmpty();
+    Collection<String> names = positiveMatch ? filter.getBranchNames() : addMinusPrefix(filter.getExcludedBranchNames());
+    return displayableText(names);
   }
 
   @Nullable
   @Override
   protected String getToolTip(@NotNull VcsLogBranchFilter filter) {
-    return tooltip(filter.getBranchNames());
+    boolean positiveMatch = !filter.getBranchNames().isEmpty();
+    Collection<String> names = positiveMatch ? filter.getBranchNames() : filter.getExcludedBranchNames();
+    String tooltip = tooltip(names);
+    return positiveMatch ? tooltip : "not in " + tooltip;
   }
 
   @NotNull
   @Override
   protected VcsLogBranchFilter createFilter(@NotNull Collection<String> values) {
-    return new VcsLogBranchFilterImpl(values);
+    Collection<String> acceptedBranches = ContainerUtil.newArrayList();
+    Collection<String> excludedBranches = ContainerUtil.newArrayList();
+    for (String value : values) {
+      if (value.startsWith("-")) {
+        excludedBranches.add(value.substring(1));
+      }
+      else {
+        acceptedBranches.add(value);
+      }
+    }
+    return new VcsLogBranchFilterImpl(acceptedBranches, excludedBranches);
   }
 
   @Override
   @NotNull
-  protected Collection<String> getValues(@Nullable VcsLogBranchFilter filter) {
-    return filter == null ? Collections.<String>emptySet() : filter.getBranchNames();
+  protected Collection<String> getTextValues(@Nullable VcsLogBranchFilter filter) {
+    if (filter == null) return Collections.emptySet();
+    return ContainerUtil.newArrayList(ContainerUtil.concat(filter.getBranchNames(), addMinusPrefix(filter.getExcludedBranchNames())));
+  }
+
+  @NotNull
+  private static List<String> addMinusPrefix(@NotNull Collection<String> branchNames) {
+    return ContainerUtil.map(branchNames, new Function<String, String>() {
+      @Override
+      public String fun(String branchName) {
+        return "-" + branchName;
+      }
+    });
+  }
+
+  @Override
+  protected boolean supportsNegativeValues() {
+    return true;
   }
 
   @Override
@@ -73,21 +106,22 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
       public AnAction fun(String name) {
         return createPredefinedValueAction(Collections.singleton(name));
       }
-    }));
+    }, myBranchFilterModel.getVisibleRoots()));
     return actionGroup;
   }
 
   public static ActionGroup constructActionGroup(@NotNull VcsLogDataPack dataPack, @Nullable ActionGroup recentItemsGroup,
-                                                 @NotNull Function<String, AnAction> actionGetter) {
-    Groups groups = prepareGroups(dataPack);
+                                                 @NotNull Function<String, AnAction> actionGetter, @Nullable Collection<VirtualFile> visibleRoots) {
+    Groups groups = prepareGroups(dataPack, visibleRoots);
     return getFilteredActionGroup(groups, recentItemsGroup, actionGetter);
   }
 
-  private static Groups prepareGroups(@NotNull VcsLogDataPack dataPack) {
+  private static Groups prepareGroups(@NotNull VcsLogDataPack dataPack, @Nullable Collection<VirtualFile> visibleRoots) {
     Groups filteredGroups = new Groups();
     Collection<VcsRef> allRefs = dataPack.getRefs().getBranches();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
+      if (visibleRoots != null && !visibleRoots.contains(root)) continue;
       Collection<VcsRef> refs = entry.getValue();
       VcsLogProvider provider = dataPack.getLogProviders().get(root);
       VcsLogRefManager refManager = provider.getReferenceManager();
@@ -173,9 +207,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
   @Override
   protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    if (values.size() > 1) { // all branches are in the popup => no need to save single one, only in case of multiple selection
-      myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<String>(values));
-    }
+    myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<String>(values));
   }
 
   @NotNull

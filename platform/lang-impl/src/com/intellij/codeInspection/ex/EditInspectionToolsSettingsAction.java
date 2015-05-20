@@ -102,7 +102,7 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
     return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
       @Override
       public void run() {
-        errorsConfigurable.selectProfile(inspectionProfile.getName());
+        errorsConfigurable.selectProfile(inspectionProfile);
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {

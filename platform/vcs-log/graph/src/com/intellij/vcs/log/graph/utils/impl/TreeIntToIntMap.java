@@ -23,19 +23,19 @@ import org.jetbrains.annotations.NotNull;
 public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableIntToIntMap {
 
   public static UpdatableIntToIntMap newInstance(@NotNull final BooleanFunction<Integer> thisIsVisible, final int longSize) {
-    if (longSize < 0)
-      throw new NegativeArraySizeException("size < 0: " + longSize);
+    if (longSize < 0) throw new NegativeArraySizeException("size < 0: " + longSize);
 
-    if (longSize == 0)
-      return IDIntToIntMap.EMPTY;
+    if (longSize == 0) return IDIntToIntMap.EMPTY;
 
     int countLevels; // longSize -> countLevels: 1..2 -> 2; 3..4 -> 3;  5..8 -> 4
-    if (longSize == 1)
+    if (longSize == 1) {
       countLevels = 2;
-    else
+    }
+    else {
       countLevels = countDigits(longSize - 1) + 1;
+    }
 
-    int[] emptyTree = new int[(1<<(countLevels - 1))];
+    int[] emptyTree = new int[(1 << (countLevels - 1))];
     TreeIntToIntMap intToIntMap = new TreeIntToIntMap(thisIsVisible, longSize, countLevels, emptyTree);
     intToIntMap.update(0, longSize - 1);
     return intToIntMap;
@@ -50,8 +50,7 @@ public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     return count;
   }
 
-  @NotNull
-  private final BooleanFunction<Integer> myThisIsVisible;
+  @NotNull private final BooleanFunction<Integer> myThisIsVisible;
 
   private final int myLongSize;
   private final int myCountLevels;
@@ -83,8 +82,9 @@ public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
     for (int level = 0; level < myCountLevels - 1; level++) {
       int child = node << 1;
       int countInChildNode = getCountInNode(child);
-      if (countInChildNode > shortIndex)
+      if (countInChildNode > shortIndex) {
         node = child;
+      }
       else {
         node = child + 1;
         shortIndex -= countInChildNode;
@@ -114,8 +114,7 @@ public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
   }
 
   private int updateNodeCount(int node) {
-    if (isLastLevel(node))
-      return getCountInLastLevel(node);
+    if (isLastLevel(node)) return getCountInLastLevel(node);
 
     int child = node << 1;
     myTree[node] = updateNodeCount(child) + updateNodeCount(child + 1);
@@ -124,17 +123,21 @@ public class TreeIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
 
   private int getCountInLastLevel(int node) {
     node -= myTree.length;
-    if (node < myLongSize && myThisIsVisible.fun(node))
+    if (node < myLongSize && myThisIsVisible.fun(node)) {
       return 1;
-    else
+    }
+    else {
       return 0;
+    }
   }
 
   private int getCountInNode(int node) {
-    if (isLastLevel(node))
+    if (isLastLevel(node)) {
       return getCountInLastLevel(node);
-    else
+    }
+    else {
       return myTree[node];
+    }
   }
 
 }

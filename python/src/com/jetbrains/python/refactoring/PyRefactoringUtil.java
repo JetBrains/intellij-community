@@ -297,8 +297,8 @@ public class PyRefactoringUtil {
     final FindUsagesHandler handler = new PyFindUsagesHandlerFactory().createFindUsagesHandler(element, forHighlightUsages);
     assert handler != null;
     final List<PsiElement> elementsToProcess = new ArrayList<PsiElement>();
-    elementsToProcess.addAll(Arrays.asList(handler.getPrimaryElements()));
-    elementsToProcess.addAll(Arrays.asList(handler.getSecondaryElements()));
+    Collections.addAll(elementsToProcess, handler.getPrimaryElements());
+    Collections.addAll(elementsToProcess, handler.getSecondaryElements());
     for (PsiElement e : elementsToProcess) {
       handler.processElementUsages(e, new Processor<UsageInfo>() {
         @Override

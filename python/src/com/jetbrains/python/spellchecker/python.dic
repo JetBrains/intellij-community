@@ -919,6 +919,7 @@ ihave
 ilog
 imagetext
 imagnumber
+imatmul
 imode
 impls
 importfile
@@ -1242,6 +1243,7 @@ mapdict
 mapstar
 markedsectionclose
 markobject
+matmul
 maxamount
 maxbinsize
 maxcache
@@ -1702,6 +1704,7 @@ ripemd
 rlecoderengine
 rledecoderengine
 rlshift
+rmatmul
 rmcolorizer
 rmenu
 rmod

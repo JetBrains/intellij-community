@@ -190,17 +190,17 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
   @Override
   @Nullable
   public Object getData(String dataId) {
-    if (DomModelTreeView.DATA_KEY.is(dataId)) {
+    if (DATA_KEY.is(dataId)) {
       return this;
     }
     final SimpleNode simpleNode = getTree().getSelectedNode();
     if (simpleNode instanceof AbstractDomElementNode) {
       final DomElement domElement = ((AbstractDomElementNode)simpleNode).getDomElement();
       if (domElement != null && domElement.isValid()) {
-        if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
           final XmlElement tag = domElement.getXmlElement();
           if (tag instanceof Navigatable) {
-            return new Navigatable[] { (Navigatable)tag };
+            return tag;
           }
         }
       }

@@ -62,12 +62,6 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return new XmlCompiledPattern();
   }
 
-  @Override
-  public boolean canProcess(@NotNull FileType fileType) {
-    return fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP ||
-           fileType == StdFileTypes.JSPX || fileType == StdFileTypes.XHTML;
-  }
-
   public boolean isMyLanguage(@NotNull Language language) {
     return language instanceof XMLLanguage;
   }
@@ -147,14 +141,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         elementToReplace.replace(replacement);
       }
       else {
-        final PsiElement nextSibling = elementToReplace.getNextSibling();
         elementToReplace.delete();
-        assert nextSibling != null;
-        if (nextSibling.isValid()) {
-          if (nextSibling instanceof PsiWhiteSpace) {
-            nextSibling.delete();
-          }
-        }
       }
     }
   }
@@ -221,8 +208,12 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
       return new Configuration[]{
         createSearchTemplateInfo("xml tag", "<'a/>", HTML_XML, StdFileTypes.XML),
         createSearchTemplateInfo("xml attribute", "<'_tag 'attribute=\"'_value\"/>", HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("html attribute", "<'_tag 'attribute />", HTML_XML, StdFileTypes.HTML),
         createSearchTemplateInfo("xml attribute value", "<'_tag '_attribute=\"'value\"/>", HTML_XML, StdFileTypes.XML),
+        createSearchTemplateInfo("html attribute value", "<'_tag '_attribute='value />", HTML_XML, StdFileTypes.HTML),
         createSearchTemplateInfo("xml/html tag value", "<table>'_content*</table>", HTML_XML, StdFileTypes.HTML),
+        createSearchTemplateInfo("<li> not contained in <ul> or <ol>", "[!within( \"<'_tag:[regex( ul|ol )] />\" )]<li />",
+                                 HTML_XML, StdFileTypes.HTML)
       };
     }
   }

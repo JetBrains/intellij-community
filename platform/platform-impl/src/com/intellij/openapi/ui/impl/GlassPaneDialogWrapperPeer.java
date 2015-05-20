@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -131,8 +132,19 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
   private void createDialog(final Window owner) throws GlasspanePeerUnavailableException {
     Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (!(active instanceof JDialog) && owner instanceof IdeFrame) {
-      final JFrame frame = (JFrame) owner;
-      final JComponent glassPane = (JComponent) frame.getGlassPane();
+
+      Component glassPane;
+
+      // Not all successor of IdeFrame are frames
+      if (owner instanceof JFrame) {
+        glassPane = ((JFrame)owner).getGlassPane();
+      }
+      else if (owner instanceof JDialog) {
+        glassPane = ((JDialog)owner).getGlassPane();
+      }
+      else {
+        throw new IllegalStateException("Cannot find glass pane for " + owner.getClass().getName());
+      }
 
       assert glassPane instanceof IdeGlassPaneEx : "GlassPane should be instance of IdeGlassPane!";
       myDialog = new MyDialog((IdeGlassPaneEx) glassPane, myWrapper, myProject);
@@ -580,7 +592,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     }
 
     private void createShadow() {
-      if (!UISettings.isRemoteDesktopConnected()) {
+      if (!UISettings.isRemoteDesktopConnected() && !JBUI.isHiDPI()) {
         shadow = ShadowBorderPainter.createShadow(this, getWidth(), getHeight());
       }
     }

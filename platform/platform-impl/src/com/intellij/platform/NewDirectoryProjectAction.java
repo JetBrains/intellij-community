@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.projectImport.ProjectOpenedCallback;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ import java.io.File;
 public class NewDirectoryProjectAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(NewDirectoryProjectAction.class);
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     NewDirectoryProjectDialog dlg = new NewDirectoryProjectDialog(project);
@@ -58,7 +60,20 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
 
   @Nullable
   protected Project generateProject(Project project, NewDirectoryProjectDialog dlg) {
-    final File location = new File(FileUtil.toSystemDependentName(dlg.getNewProjectLocation()));
+    final DirectoryProjectGenerator generator = dlg.getProjectGenerator();
+    return doGenerateProject(project, dlg.getNewProjectLocation(), generator, new Function<VirtualFile, Object>() {
+      @Override
+      public Object fun(VirtualFile file) {
+        return showSettings(generator, file);
+      }
+    });
+  }
+
+  public static Project doGenerateProject(@Nullable final Project project,
+                                          @NotNull final String locationString,
+                                          @Nullable final DirectoryProjectGenerator generator,
+                                          @NotNull final Function<VirtualFile, Object> settingsComputable) {
+    final File location = new File(FileUtil.toSystemDependentName(locationString));
     if (!location.exists() && !location.mkdirs()) {
       String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.getAbsolutePath());
       Messages.showErrorDialog(project, message, ActionsBundle.message("action.NewDirectoryProject.title"));
@@ -84,15 +99,13 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
       }
     }
 
-    @SuppressWarnings("unchecked") final DirectoryProjectGenerator<Object> generator = dlg.getProjectGenerator();
-
     String generatorName = generator == null ? "empty" : ConvertUsagesUtil.ensureProperKey(generator.getName());
     UsageTrigger.trigger("NewDirectoryProjectAction." + generatorName);
 
     Object settings = null;
     if (generator != null) {
       try {
-        settings = showSettings(generator, baseDir);
+        settings = settingsComputable.fun(baseDir);
       }
       catch (ProcessCanceledException e) {
         return null;

@@ -216,7 +216,9 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
 
   @Override
   public boolean isOn(String oldQName) {
-    return Comparing.strEqual(myPathPattern, oldQName);
+    return Comparing.strEqual(myPathPattern, oldQName) ||
+           Comparing.strEqual(oldQName + "//*", myPathPattern) ||
+           Comparing.strEqual(oldQName + "/*", myPathPattern);
   }
 
   @Nullable

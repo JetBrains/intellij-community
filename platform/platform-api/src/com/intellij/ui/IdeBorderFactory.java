@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.border.IdeaTitledBorder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -60,18 +61,18 @@ public class IdeBorderFactory {
   }
 
   public static Border createEmptyBorder(Insets insets) {
-    return new EmptyBorder(insets);
+    return new EmptyBorder(JBInsets.create(insets));
   }
 
   public static Border createEmptyBorder() {
     return createEmptyBorder(0);
   }
   public static Border createEmptyBorder(int thickness) {
-    return new EmptyBorder(thickness, thickness, thickness, thickness);
+    return new EmptyBorder(new JBInsets(thickness, thickness, thickness, thickness));
   }
 
   public static Border createEmptyBorder(int top, int left, int bottom, int right) {
-    return new EmptyBorder(top, left, bottom, right);
+    return new EmptyBorder(new JBInsets(top, left, bottom, right));
   }
 
   public static TitledBorder createTitledBorder(String s) {

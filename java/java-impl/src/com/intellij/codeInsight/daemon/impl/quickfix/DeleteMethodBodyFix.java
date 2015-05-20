@@ -45,7 +45,7 @@ public class DeleteMethodBodyFix implements IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return QuickFixBundle.message("delete.body.family");
+    return getText();
   }
 
   @Override

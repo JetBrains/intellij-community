@@ -63,14 +63,14 @@ public class Parsing {
     return false;
   }
 
-  protected boolean parseIdentifierOrSkip() {
+  protected boolean parseIdentifierOrSkip(@NotNull IElementType... validSuccessiveTokens) {
     if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
       myBuilder.advanceLexer();
       return true;
     }
     else {
       final PsiBuilder.Marker nameExpected = myBuilder.mark();
-      if (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK) {
+      if (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK && !atAnyOfTokens(validSuccessiveTokens)) {
         myBuilder.advanceLexer();
       }
       nameExpected.error(PyBundle.message("PARSE.expected.identifier"));

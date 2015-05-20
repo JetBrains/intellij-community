@@ -24,6 +24,10 @@ public class CantRunException extends ExecutionException {
     super(message);
   }
 
+  public CantRunException(String s, Throwable cause) {
+    super(s, cause);
+  }
+
   public static CantRunException noModuleConfigured(final String moduleName) {
     if (moduleName.trim().length() == 0) {
       return new CantRunException(ExecutionBundle.message("no.module.defined.error.message"));

@@ -15,25 +15,21 @@
  */
 package com.intellij.codeInsight.template.emmet.nodes;
 
-import com.google.common.base.Joiner;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-/**
- * @author Eugene.Kudelevsky
- */
 public class TemplateNode extends ZenCodingNode {
-  private static final Joiner JOINER = Joiner.on(",");
   private final TemplateToken myTemplateToken;
   @Nullable private final ZenCodingGenerator myGenerator;
 
@@ -60,7 +56,7 @@ public class TemplateNode extends ZenCodingNode {
     String templateKey = templateToken.getKey();
     if (myGenerator != null && StringUtil.containsChar(templateKey, '$') && callback.findApplicableTemplate(templateKey) == null) {
       String newTemplateKey = ZenCodingUtil.replaceMarkers(templateKey, numberInIteration, totalIterations, surroundedText);
-      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey, templateToken.getAttribute2Value());
+      TemplateToken newTemplateToken = new TemplateToken(newTemplateKey, templateToken.getAttributes());
       TemplateImpl template = myGenerator.createTemplateByKey(newTemplateKey);
       if (template != null) {
         template.setDeactivated(true);
@@ -71,15 +67,15 @@ public class TemplateNode extends ZenCodingNode {
 
     GenerationNode node = new GenerationNode(templateToken, numberInIteration, totalIterations,
                                              surroundedText, insertSurroundedTextAtTheEnd, parent);
-    return Arrays.asList(node);
+    return Collections.singletonList(node);
   }
 
   @Override
   public String toString() {
     String result = myTemplateToken.getKey();
-    List<Couple<String>> attributes = myTemplateToken.getAttribute2Value();
+    Map<String, String> attributes = myTemplateToken.getAttributes();
     if (!attributes.isEmpty()) {
-      result += "[" + JOINER.join(myTemplateToken.getAttribute2Value()) + "]";
+      result += ContainerUtil.toString(attributes);
     }
     return "Template(" + result + ")";
   }
@@ -89,8 +85,8 @@ public class TemplateNode extends ZenCodingNode {
     TemplateImpl template = myTemplateToken.getTemplate();
     if (template != null) {
       int result = template.getTemplateText().length();
-      for (Couple<String> attribute : myTemplateToken.getAttribute2Value()) {
-        result += attribute.first.length() + attribute.second.length() + 4; //plus space, eq, quotes
+      for (Map.Entry<String, String> attribute : myTemplateToken.getAttributes().entrySet()) {
+        result += attribute.getKey().length() + attribute.getValue().length() + 4; //plus space, eq, quotes
       }
       return result;
     }

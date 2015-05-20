@@ -111,11 +111,11 @@ public class MarkerType {
 
   private static PsiElement getParentMethod(PsiElement element) {
     final PsiElement parent = element.getParent();
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(element);
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(parent);
     return interfaceMethod != null ? interfaceMethod : parent;
   }
 
-  public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for overriding methods";
+  public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for Overriding Methods";
   public static final MarkerType OVERRIDEN_METHOD = new MarkerType(new NullableFunction<PsiElement, String>() {
     @Override
     public String fun(PsiElement element) {

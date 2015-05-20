@@ -83,7 +83,7 @@ public class IdeaGateway {
   }
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {
-    return isVersioned(f) && !f.isDirectory() && areContentChangesVersioned(f.getName());
+    return isVersioned(f) && !f.isDirectory() && !f.getFileType().isBinary();
   }
 
   public boolean areContentChangesVersioned(@NotNull String fileName) {

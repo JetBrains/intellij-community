@@ -17,14 +17,12 @@
 package com.intellij.execution.junit2.states;
 
 import com.intellij.execution.junit2.segments.ObjectReader;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
-public class ComparisonFailureState extends FaultyState implements AbstractTestProxy.AssertEqualsMultiDiffViewProvider {
+public class ComparisonFailureState extends FaultyState {
   private DiffHyperlink myHyperlink;
   @NonNls
   protected static final String EXPECTED_VALUE_MESSAGE_TEXT = "expected:<";
@@ -48,30 +46,7 @@ public class ComparisonFailureState extends FaultyState implements AbstractTestP
     myHyperlink.printOn(printer);
   }
 
-  public String getExpected() {
-    return myHyperlink.getLeft();
-  }
-
-  public String getActual() {
-    return myHyperlink.getRight();
-  }
-
-  public void openDiff(final Project project) {
-    if (myHyperlink != null) myHyperlink.openDiff(project);
-  }
-
-  @Override
-  public void openMultiDiff(Project project, AbstractTestProxy.AssertEqualsDiffChain chain) {
-    if (myHyperlink != null) {
-      myHyperlink.openMultiDiff(project, chain);
-    }
-  }
-
-  @Override
-  public String getFilePath() {
-    if (myHyperlink != null) {
-      return myHyperlink.getFilePath();
-    }
-    return null;
+  public DiffHyperlink getHyperlink() {
+    return myHyperlink;
   }
 }

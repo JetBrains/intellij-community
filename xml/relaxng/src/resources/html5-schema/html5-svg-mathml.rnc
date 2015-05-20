@@ -13,6 +13,9 @@ SVG.foreignObject.content |=
 	|	common.inner.flow
 	)
 
+SVG.Core.attrib &= common.attrs.aria?
+SVG.Core.attrib &= aria.global?
+
 annotation-xml.model.svg |= svg
 
 annotation-xml.model.xhtml |=

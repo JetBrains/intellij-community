@@ -228,6 +228,18 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testInstantiationAcceptanceWithNameArg() throws Exception {
+    myFixture.addClass("package p;\n" +
+                       "public class Root extends javafx.scene.layout.GridPane{\n" +
+                       "  public Root(@javafx.beans.NamedArg(\"axis\") javafx.scene.Node node ) {\n" +
+                       "    super(node)\n" +
+                       "  }\n" +
+                       "  public javafx.beans.property.Property<javafx.scene.Node> axis;" +
+                       "  public void setAxis() {}" + 
+                       "} ");
+    doTest(getTestName(true) + ".fxml");
+  }
+
   public void testFqnTagNames() throws Exception {
     doTest();
   }
@@ -279,6 +291,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
   }
 
   public void testBooleanPropertyWithoutField() throws Exception {
+    doTest();
+  }
+
+  public void testShortNamesInRootType() throws Exception {
     doTest();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
 public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.AddAnnotationPsiFix");
   protected final String myAnnotation;
-  protected final String[] myAnnotationsToRemove;
-  protected final PsiNameValuePair[] myPairs; // not used when registering local quick fix
+  private final String[] myAnnotationsToRemove;
+  private final PsiNameValuePair[] myPairs; // not used when registering local quick fix
   protected final String myText;
 
   public AddAnnotationPsiFix(@NotNull String fqn,
@@ -121,7 +121,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
 
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final PsiModifierList modifierList = myModifierListOwner.getModifierList();
-    LOG.assertTrue(modifierList != null);
+    LOG.assertTrue(modifierList != null, myModifierListOwner + " ("+myModifierListOwner.getClass()+")");
     if (modifierList.findAnnotation(myAnnotation) != null) return;
     final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace = annotationsManager.chooseAnnotationsPlace(myModifierListOwner);
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.NOWHERE) return;

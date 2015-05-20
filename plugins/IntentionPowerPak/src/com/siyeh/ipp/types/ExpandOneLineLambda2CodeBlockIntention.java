@@ -18,6 +18,7 @@ package com.siyeh.ipp.types;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -39,30 +40,15 @@ public class ExpandOneLineLambda2CodeBlockIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-    LOG.assertTrue(lambdaExpression != null);
-    final PsiElement body = lambdaExpression.getBody();
-    LOG.assertTrue(body instanceof PsiExpression);
-    String blockText = "{";
-    blockText += PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression)) ? "" : "return ";
-    blockText +=  body.getText() + ";}";
-
-    final String resultedLambdaText = lambdaExpression.getParameterList().getText() + "->" + blockText;
-    final PsiExpression expressionFromText =
-      JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(resultedLambdaText, lambdaExpression);
-    lambdaExpression.replace(expressionFromText);
+    RefactoringUtil.expandExpressionLambdaToCodeBlock(element);
   }
 
-  
 
   private static class LambdaExpressionPredicate implements PsiElementPredicate {
     @Override
     public boolean satisfiedBy(PsiElement element) {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-      if (lambdaExpression != null) {
-        return lambdaExpression.getBody() instanceof PsiExpression;
-      }
-      return false;
+      return lambdaExpression != null && lambdaExpression.getBody() instanceof PsiExpression;
     }
   }
 }

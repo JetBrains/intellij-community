@@ -182,7 +182,14 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         if (element != null) {
           final PsiReference ref = element.getReference();
           assert ref != null;
+          final PsiElement typeParams = createReferenceTypeParameterList(aSuper, ref);
           PsiElement newElement = ref.bindToElement(aSuper);
+          if (typeParams != null && newElement instanceof PsiJavaCodeReferenceElement) {
+            final PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)newElement).getParameterList();
+            if (parameterList != null) {
+              parameterList.replace(typeParams);
+            }
+          }
 
           if (newElement.getParent() instanceof PsiTypeElement) {
             if (newElement.getParent().getParent() instanceof PsiTypeCastExpression) {
@@ -192,6 +199,22 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
         }
       }
     }
+  }
+
+  private static PsiElement createReferenceTypeParameterList(PsiClass aSuper, PsiReference ref) {
+    PsiElement typeParams = null;
+    if (ref instanceof PsiJavaCodeReferenceElement) {
+      final JavaResolveResult result = ((PsiJavaCodeReferenceElement)ref).advancedResolve(false);
+      final PsiElement aClass = result.getElement();
+      if (aClass instanceof PsiClass) {
+        final PsiSubstitutor substitutor =
+          TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)aClass, result.getSubstitutor());
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
+        final PsiClassType classType = factory.createType(aSuper, substitutor);
+        typeParams = factory.createReferenceFromText(classType.getCanonicalText(), aClass).getParameterList();
+      }
+    }
+    return typeParams;
   }
 
   private static void fixPossiblyRedundantCast(PsiTypeCastExpression cast) throws IncorrectOperationException {

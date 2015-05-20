@@ -35,33 +35,8 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
   public void testReformatAndOptimizeMultipleFiles() throws IOException {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
-
     performReformatActionOnSelectedFiles(files);
     checkFormationAndImportsOptimizationFor(files);
-  }
-
-  public void testReformatSingleSelectedFile() throws IOException {
-    List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
-    PsiFile fileToReformat = files.get(0);
-    List<PsiFile> shouldNotBeFormatted = files.subList(1, files.size());
-    injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
-
-    performReformatActionOnSelectedFile(fileToReformat);
-
-    checkFormationAndImportsOptimizationFor(Arrays.asList(fileToReformat));
-    checkNoProcessingWasPerformedOn(shouldNotBeFormatted);
-  }
-
-  public void testReformatAndOptimizeFileFromEditor() throws IOException {
-    List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);
-    injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
-
-    PsiFile fileToFormat = files.get(0);
-    List<PsiFile> shouldNotBeFormatted = files.subList(1, files.size());
-
-    performReformatActionOnFileInEditor(fileToFormat);
-    checkFormationAndImportsOptimizationFor(Arrays.asList(fileToFormat));
-    checkNoProcessingWasPerformedOn(shouldNotBeFormatted);
   }
 
   public void testOptimizeAndReformatOnlySelectedFiles() throws IOException {
@@ -77,58 +52,14 @@ public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
     checkNoProcessingWasPerformedOn(noProcessing);
   }
 
-  public void testOptimizeAndReformatAllFilesInDirectoryIncludeSubdirs() throws IOException {
-    TestFileStructure fileStructure = getThreeLevelDirectoryStructure();
-    injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true).setProcessDirectory(true).setIncludeSubdirs(true));
-    PsiFile fileInEditor = fileStructure.getFilesAtLevel(2).get(0);
-    List<PsiFile> shouldNotBeFormatted = fileStructure.getFilesAtLevel(1);
-
-    performReformatActionOnFileInEditor(fileInEditor);
-
-    checkFormationAndImportsOptimizationFor(fileStructure.getFilesAtLevel(2), fileStructure.getFilesAtLevel(3));
-    checkNoProcessingWasPerformedOn(shouldNotBeFormatted);
-  }
-
-  public void testOptimizeAndReformatAllFilesInDirectoryExcludeSubdirs() throws IOException {
-    TestFileStructure fileStructure = getThreeLevelDirectoryStructure();
-    injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true).setIncludeSubdirs(false));
-
-    performReformatActionOnSelectedFiles(fileStructure.getFilesAtLevel(2));
-
-    checkFormationAndImportsOptimizationFor(fileStructure.getFilesAtLevel(2));
-    checkNoProcessingWasPerformedOn(fileStructure.getFilesAtLevel(1), fileStructure.getFilesAtLevel(3));
-  }
-
   public void testOptimizeAndReformatInModule() throws IOException {
     Module module = createModuleWithSourceRoot("newModule");
     VirtualFile srcDir = ModuleRootManager.getInstance(module).getSourceRoots()[0];
     List<PsiFile> files = createTestFiles(srcDir, classNames);
     injectMockDialogFlags(new MockReformatFileSettings().setOptimizeImports(true));
 
-    performReformatActionOnModule(module, files.subList(0, 1));
+    performReformatActionOnModule(module, ContainerUtil.newArrayList(srcDir));
 
     checkFormationAndImportsOptimizationFor(files);
-  }
-
-  private TestFileStructure getThreeLevelDirectoryStructure() throws IOException {
-    TestFileStructure fileStructure = new TestFileStructure(getModule(), getTempRootDirectory());
-
-    fileStructure.createDirectoryAndMakeItCurrent("dir");
-    addFilesToCurrentDirectory(fileStructure);
-
-    fileStructure.createDirectoryAndMakeItCurrent("innerDir");
-    addFilesToCurrentDirectory(fileStructure);
-
-    fileStructure.createDirectoryAndMakeItCurrent("innerInnerDir");
-    addFilesToCurrentDirectory(fileStructure);
-
-    return fileStructure;
-  }
-
-  private void addFilesToCurrentDirectory(TestFileStructure fileStructure) throws IOException {
-    for (int i = 0; i < 5; i++) {
-      String className = "Test" + i;
-      fileStructure.addTestFile("Test" + i + ".java", getUntouchedJavaSourceForTotalProcessing(className));
-    }
   }
 }

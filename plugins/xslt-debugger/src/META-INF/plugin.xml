@@ -1,4 +1,4 @@
-<idea-plugin version="2" url="http://confluence.jetbrains.com/display/CONTEST/XSLT-Debugger">
+<idea-plugin version="2" url="https://confluence.jetbrains.com/display/CONTEST/XSLT-Debugger">
   <name>XSLT-Debugger</name>
   <id>XSLT-Debugger</id>
 
@@ -7,7 +7,7 @@
   ]]></description>
 
   <version>1.4</version>
-  <vendor email="sascha.weinreuter@cit.de">Sascha Weinreuter</vendor>
+  <vendor>JetBrains</vendor>
   <idea-version since-build="96.1"/>
 
   <depends>XPathView</depends>
@@ -20,6 +20,7 @@
   </change-notes>
 
   <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter" />
     <xdebugger.breakpointType implementation="org.intellij.plugins.xsltDebugger.XsltBreakpointType"/>
 
     <programRunner implementation="org.intellij.plugins.xsltDebugger.XsltDebuggerRunner"/>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,12 +48,6 @@ public class CoreJarVirtualFile extends VirtualFile {
     if (parent != null) {
       parent.myChildren.add(this);
     }
-  }
-
-  /** @deprecated to be removed in IDEA 15 */
-  @SuppressWarnings({"deprecation", "UnusedDeclaration"})
-  public CoreJarVirtualFile(@NotNull CoreJarHandler handler, @NotNull JarHandlerBase.EntryInfo e, @Nullable CoreJarVirtualFile parent) {
-    this(handler, e.shortName, new FileAttributes(e.isDirectory, false, false, false, e.length, e.timestamp, false), parent);
   }
 
   @NotNull

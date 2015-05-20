@@ -16,20 +16,20 @@
 
 package com.intellij.tasks.trello;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.tasks.config.BaseRepositoryEditor;
+import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.trello.model.TrelloBoard;
 import com.intellij.tasks.trello.model.TrelloList;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,22 +44,6 @@ import java.util.List;
  */
 public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepository> {
   private static final Logger LOG = Logger.getInstance(TrelloRepositoryEditor.class);
-
-  private static final TrelloBoard UNSPECIFIED_BOARD = new TrelloBoard() {
-    @NotNull
-    @Override
-    public String getName() {
-      return "-- from all boards --";
-    }
-  };
-
-  private final static TrelloList UNSPECIFIED_LIST = new TrelloList() {
-    @NotNull
-    @Override
-    public String getName() {
-      return "-- from all lists --";
-    }
-  };
 
   private ComboBox myBoardComboBox;
   private ComboBox myListComboBox;
@@ -82,19 +66,19 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     myPasswordText.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        String password = String.valueOf(myPasswordText.getPassword());
+        final String password = String.valueOf(myPasswordText.getPassword());
         if (password.isEmpty() || password.equals(myRepository.getPassword())) {
           return;
         }
-        LOG.debug("Authentication token was changed");
         myRepository.setPassword(password);
-        new BoardsDownloader(UNSPECIFIED_BOARD) {
+        new BoardsComboBoxUpdater() {
           @Override
-          protected List<TrelloBoard> download() throws Exception {
+          @NotNull
+          protected List<TrelloBoard> fetch(@NotNull ProgressIndicator indicator) throws Exception {
             myRepository.setCurrentUser(myRepository.fetchUserByToken());
-            return super.download();
+            return super.fetch(indicator);
           }
-        }.runOnPooledThread();
+        }.queue();
         doApply();
       }
     });
@@ -102,13 +86,19 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     myBoardComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        TrelloBoard board = (TrelloBoard)e.getItem();
+        final TrelloBoard board = (TrelloBoard)e.getItem();
         if (e.getStateChange() == ItemEvent.DESELECTED || board.equals(myRepository.getCurrentBoard())) {
           return;
         }
-        if (board != UNSPECIFIED_BOARD) {
+        if (board != TrelloRepository.UNSPECIFIED_BOARD) {
           myRepository.setCurrentBoard(board);
-          new ListsDownloader(UNSPECIFIED_LIST).runOnPooledThread();
+          new ListsComboBoxUpdater() {
+            @Nullable
+            @Override
+            public TrelloList getSelectedItem() {
+              return TrelloRepository.UNSPECIFIED_LIST;
+            }
+          }.queue();
         }
         else {
           myRepository.setCurrentBoard(null);
@@ -119,64 +109,93 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
         doApply();
       }
     });
-    myBoardComboBox.setRenderer(new TrelloBoardRenderer("Set token first"));
+    myBoardComboBox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer<TrelloBoard>("Set token first") {
+      @NotNull
+      @Override
+      protected String getDescription(@NotNull TrelloBoard board) {
+        return board.isClosed() ? board.getName() + " (closed)" : board.getName();
+      }
+    });
 
     myListComboBox.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         // only selection event is considered
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          TrelloList list = (TrelloList)e.getItem();
-          myRepository.setCurrentList(list != UNSPECIFIED_LIST ? list : null);
+          final TrelloList list = (TrelloList)e.getItem();
+          myRepository.setCurrentList(list);
           doApply();
         }
       }
     });
-    myListComboBox.setRenderer(new TrelloListRenderer("Select board first"));
-
-    // Initial setup:
-    if (myRepository.getCurrentUser() != null) {
-      new BoardsDownloader(myRepository.getCurrentBoard()) {
-        @Override
-        protected List<TrelloBoard> download() throws Exception {
-          LOG.debug("Updating information about boards available to user when repository setting are shown");
-          List<TrelloBoard> boards = super.download();
-          if (myBoard == null) {
-            return boards;
-          }
-          int i = boards.indexOf(myBoard);
-          // update information about selected board
-          // if it's open and thus downloaded with other boards of user, take info from there,
-          // otherwise issue a separate request
-          myBoard = i >= 0 ? boards.get(i) : myRepository.fetchBoardById(myBoard.getId());
-          myRepository.setCurrentBoard(myBoard);
-          return boards;
+    myListComboBox.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer<TrelloList>("Select board first") {
+      @NotNull
+      @Override
+      protected String getDescription(@NotNull TrelloList list) {
+        String text = list.getName();
+        if (list.isClosed() && list.isMoved()) {
+          text += " (archived,moved)";
         }
-      }.runOnPooledThread();
-    }
-
-    if (myRepository.getCurrentBoard() != null) {
-      new ListsDownloader(myRepository.getCurrentList()) {
-        @Override
-        protected List<TrelloList> download() throws Exception {
-          LOG.debug("Updating information about lists of board " + myRepository.getCurrentBoard() + " when repository setting are shown");
-          List<TrelloList> lists = super.download();
-          if (myList == null) {
-            return lists;
-          }
-          int i = lists.indexOf(myList);
-          myList = i >= 0 ? lists.get(i) : myRepository.fetchListById(myList.getId());
-          TrelloBoard currentBoard = myRepository.getCurrentBoard();
-          if (currentBoard != null && !myList.getIdBoard().equals(currentBoard.getId())) {
-            myList.setMoved(true);
-          }
-          myRepository.setCurrentList(myList);
-          return lists;
+        else if (list.isMoved()) {
+          text += " (moved)";
         }
-      }.runOnPooledThread();
-    }
+        else if (list.isClosed()) {
+          text += " (archived)";
+        }
+        return text;
+      }
+    });
 
     installListener(myAllCardsCheckBox);
+
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      public void run() {
+        initialize();
+      }
+    });
+  }
+
+  private void initialize() {
+    if (myRepository.getCurrentUser() != null) {
+      new BoardsComboBoxUpdater() {
+        @Override
+        @NotNull
+        protected List<TrelloBoard> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+          final List<TrelloBoard> boards = super.fetch(indicator);
+          TrelloBoard currentBoard = getSelectedItem();
+          if (currentBoard != null && currentBoard != TrelloRepository.UNSPECIFIED_BOARD) {
+            final int i = boards.indexOf(currentBoard);
+            // update information about selected board
+            // if it's open and thus downloaded with other boards of user, take info from there,
+            // otherwise issue a separate request
+            currentBoard = i >= 0 ? boards.get(i) : myRepository.fetchBoardById(currentBoard.getId());
+            myRepository.setCurrentBoard(currentBoard);
+          }
+          return boards;
+        }
+      }.queue();
+    }
+
+    if (myRepository.getCurrentBoard() != null && myRepository.getCurrentBoard() != TrelloRepository.UNSPECIFIED_BOARD) {
+      new ListsComboBoxUpdater() {
+        @Override
+        @NotNull
+        protected List<TrelloList> fetch(@NotNull ProgressIndicator indicator) throws Exception {
+          final List<TrelloList> lists = super.fetch(indicator);
+          TrelloList currentList = myRepository.getCurrentList();
+          if (currentList != null && currentList != TrelloRepository.UNSPECIFIED_LIST) {
+            final int i = lists.indexOf(currentList);
+            currentList = i >= 0 ? lists.get(i) : myRepository.fetchListById(currentList.getId());
+            final TrelloBoard currentBoard = myRepository.getCurrentBoard();
+            if (currentBoard != null && !currentList.getIdBoard().equals(currentBoard.getId())) {
+              currentList.setMoved(true);
+            }
+            myRepository.setCurrentList(currentList);
+          }
+          return lists;
+        }
+      }.queue();
+    }
   }
 
   @Nullable
@@ -213,152 +232,67 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
   }
 
 
-  private abstract class Downloader<T> implements Runnable {
-
-    private final ModalityState myModalityState = ModalityState.current();
-
-    protected abstract T download() throws Exception;
-
-    protected void updateUI(T result) {
-      // empty
+  private class BoardsComboBoxUpdater extends TaskUiUtil.ComboBoxUpdater<TrelloBoard> {
+    public BoardsComboBoxUpdater() {
+      super(TrelloRepositoryEditor.this.myProject, "Downloading Trello boards...", myBoardComboBox);
     }
 
-    protected void handleException(Exception e) {
-      // empty
-    }
-
+    @NotNull
     @Override
-    public void run() {
-      try {
-        final T result;
-        synchronized (myRepository) {
-          result = download();
-        }
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            updateUI(result);
-          }
-        }, myModalityState);
-      }
-      catch (final Exception e) {
-        LOG.warn(e);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            handleException(e);
-          }
-        }, myModalityState);
-      }
-    }
-
-    public void runOnPooledThread() {
-      ApplicationManager.getApplication().executeOnPooledThread(this);
-    }
-  }
-
-  private class BoardsDownloader extends Downloader<List<TrelloBoard>> {
-    protected TrelloBoard myBoard;
-
-    private BoardsDownloader(TrelloBoard selectedBoard) {
-      myBoard = selectedBoard;
-    }
-
-    @Override
-    protected List<TrelloBoard> download() throws Exception {
+    protected List<TrelloBoard> fetch(@NotNull ProgressIndicator indicator) throws Exception {
       return myRepository.fetchUserBoards();
     }
 
-    @SuppressWarnings("unchecked")
+    @Nullable
     @Override
-    protected void updateUI(List<TrelloBoard> boards) {
-      myBoardComboBox.setModel(new DefaultComboBoxModel(boards.toArray()));
-      myBoardComboBox.insertItemAt(UNSPECIFIED_BOARD, 0);
-      // explicitly add missing closed board
-      if (!(myBoard == null || myBoard == UNSPECIFIED_BOARD) && !boards.contains(myBoard)) {
-        myBoardComboBox.addItem(myBoard);
-      }
-      myBoardComboBox.setSelectedItem(myBoard == null ? UNSPECIFIED_BOARD : myBoard);
+    public TrelloBoard getExtraItem() {
+      return TrelloRepository.UNSPECIFIED_BOARD;
+    }
+
+    @Nullable
+    @Override
+    public TrelloBoard getSelectedItem() {
+      return myRepository.getCurrentBoard();
     }
 
     @Override
-    protected void handleException(Exception e) {
-      myBoardComboBox.removeAllItems();
+    protected void handleError() {
+      super.handleError();
       myListComboBox.removeAllItems();
+    }
+
+    @Override
+    protected boolean addSelectedItemIfMissing() {
+      return true;
     }
   }
 
-  private class ListsDownloader extends Downloader<List<TrelloList>> {
-    protected TrelloList myList;
-
-    private ListsDownloader(TrelloList selectedList) {
-      this.myList = selectedList;
+  private class ListsComboBoxUpdater extends TaskUiUtil.ComboBoxUpdater<TrelloList> {
+    public ListsComboBoxUpdater() {
+      super(TrelloRepositoryEditor.this.myProject, "Downloading Trello lists...", myListComboBox);
     }
 
+    @NotNull
     @Override
-    protected List<TrelloList> download() throws Exception {
+    protected List<TrelloList> fetch(@NotNull ProgressIndicator indicator) throws Exception {
       return myRepository.fetchBoardLists();
     }
 
-    @SuppressWarnings("unchecked")
+    @Nullable
     @Override
-    protected void updateUI(List<TrelloList> lists) {
-      myListComboBox.setModel(new DefaultComboBoxModel(lists.toArray()));
-      myListComboBox.insertItemAt(UNSPECIFIED_LIST, 0);
-      // explicitly add moved or archived list to combobox: see IDEA-111819 for details
-      if (!(myList == null || myList == UNSPECIFIED_LIST) && !lists.contains(myList)) {
-        myListComboBox.addItem(myList);
-      }
-      myListComboBox.setSelectedItem(myList == null ? UNSPECIFIED_LIST : myList);
+    public TrelloList getExtraItem() {
+      return TrelloRepository.UNSPECIFIED_LIST;
     }
 
+    @Nullable
     @Override
-    protected void handleException(Exception e) {
-      myListComboBox.removeAllItems();
-    }
-  }
-
-  private static class TrelloBoardRenderer extends ListCellRendererWrapper<TrelloBoard> {
-    private String myNullDescription;
-
-    private TrelloBoardRenderer(String nullDescription) {
-      this.myNullDescription = nullDescription;
+    public TrelloList getSelectedItem() {
+      return myRepository.getCurrentList();
     }
 
     @Override
-    public void customize(JList list, TrelloBoard board, int index, boolean selected, boolean hasFocus) {
-      if (board == null) {
-        setText(myNullDescription);
-        return;
-      }
-      setText(board.isClosed() ? board.getName() + " (closed)" : board.getName());
-    }
-  }
-
-  private static class TrelloListRenderer extends ListCellRendererWrapper<TrelloList> {
-    private String myNullDescription;
-
-    private TrelloListRenderer(String nullDescription) {
-      this.myNullDescription = nullDescription;
-    }
-
-    @Override
-    public void customize(JList list, TrelloList trelloList, int index, boolean selected, boolean hasFocus) {
-      if (trelloList == null) {
-        setText(myNullDescription);
-        return;
-      }
-      String text = trelloList.getName();
-      if (trelloList.isClosed() && trelloList.isMoved()) {
-        text += " (archived,moved)";
-      }
-      else if (trelloList.isMoved()) {
-        text += " (moved)";
-      }
-      else if (trelloList.isClosed()) {
-        text += " (archived)";
-      }
-      setText(text);
+    protected boolean addSelectedItemIfMissing() {
+      return true;
     }
   }
 }

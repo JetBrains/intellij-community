@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +41,12 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   private boolean isErrorStripeChecked;
   private boolean isInherited;
 
-  public ColorAndFontDescription(String name, String group, String type, EditorColorsScheme scheme, final Icon icon, final String toolTip) {
+  public ColorAndFontDescription(@NotNull String name,
+                                 @Nullable String group,
+                                 @Nullable String type,
+                                 @Nullable EditorColorsScheme scheme,
+                                 @Nullable Icon icon,
+                                 @Nullable String toolTip) {
     myName = name;
     myGroup = group;
     myType = type;
@@ -239,5 +245,15 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   @Nullable
   public Pair<ColorSettingsPage,AttributesDescriptor> getBaseAttributeDescriptor() {
     return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return this == o;
+  }
+
+  @Override
+  public int hashCode() {
+    return System.identityHashCode(this);
   }
 }

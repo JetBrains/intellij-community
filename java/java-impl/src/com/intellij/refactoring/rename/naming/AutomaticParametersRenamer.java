@@ -46,7 +46,7 @@ public class AutomaticParametersRenamer extends AutomaticRenamer {
   }
 
   public String getDialogTitle() {
-    return "Rename parameters";
+    return "Rename Parameters";
   }
 
   public String getDialogDescription() {

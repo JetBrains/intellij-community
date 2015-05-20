@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.codeInsight.JavaCodeInsightSettingsFacade;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -120,7 +119,7 @@ public class GrStaticChecker {
           return checkJavaLangClassMember(place, containingClass, member) || member.hasModifierProperty(PsiModifier.STATIC);
         }
 
-        return !isStatic || !filterStaticAfterInstanceQualifier || JavaCodeInsightSettingsFacade.getInstance(member.getProject()).isShowStaticAfterInstance();
+        return !isStatic || !filterStaticAfterInstanceQualifier;
       }
 
       PsiElement qualifierResolved = ((GrReferenceExpression)qualifier).resolve();
@@ -142,7 +141,7 @@ public class GrStaticChecker {
     if (member instanceof PsiClass) {
       return false;
     }
-    return !isStatic || !filterStaticAfterInstanceQualifier || JavaCodeInsightSettingsFacade.getInstance(member.getProject()).isShowStaticAfterInstance();
+    return !isStatic || !filterStaticAfterInstanceQualifier;
   }
 
   private static boolean checkJavaLangClassMember(PsiElement place, PsiClass containingClass, PsiModifierListOwner member) {

@@ -15,7 +15,9 @@
  */
 package pkg;
 
+import java.lang.annotation.Annotation;
 import java.util.*;
+import java.util.Arrays;
 import java.util.function.IntBinaryOperator;
 import java.util.function.Supplier;
 
@@ -63,6 +65,10 @@ public class TestClassLambda {
     list.removeIf(s -> (bottom >= s.length() && s.length() <= top));
   }
 
+  public static void testLambda7(Annotation[] annotations) {
+    Arrays.stream(annotations).map(Annotation::annotationType);
+  }
+
   public static OptionalInt reduce(IntBinaryOperator op) {
     return null;
   }
@@ -73,5 +79,13 @@ public class TestClassLambda {
 
   public static int localMax(int first, int second) {
     return 0;
+  }
+
+  public void nestedLambdas() {
+    int a =5;
+    Runnable r1 = () -> {
+      Runnable r2 = () -> { System.out.println("hello2" + a); };
+      System.out.println("hello1" + a);
+    };
   }
 }

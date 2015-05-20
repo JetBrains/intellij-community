@@ -16,11 +16,13 @@
 
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.MoveCallback;
@@ -59,7 +61,14 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   }
 
   public static boolean isValidTarget(PsiElement psiElement) {
-    return (psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer) && psiElement.getManager().isInProject(psiElement);
+    if (!(psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer)) return false;
+    return psiElement.getManager().isInProject(psiElement) || isInScratches(psiElement);
+  }
+
+  protected static boolean isInScratches(PsiElement psiElement) {
+    VirtualFile virtualFile = psiElement instanceof PsiFileSystemItem ? ((PsiFileSystemItem)psiElement).getVirtualFile() : null;
+    if (virtualFile != null && ScratchFileService.getInstance().getRootType(virtualFile) != null) return true;
+    return false;
   }
 
   public void doMove(final PsiElement[] elements, final PsiElement targetContainer) {

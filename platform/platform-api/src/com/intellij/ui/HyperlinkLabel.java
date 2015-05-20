@@ -84,6 +84,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     enforceBackgroundOutsideText(textBackgroundColor);
     setHyperlinkText(text);
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    setOpaque(false);
   }
 
   public void addNotify() {
@@ -237,4 +238,8 @@ public class HyperlinkLabel extends HighlightableComponent {
     }
   }
 
+  @Override
+  public void updateUI() {
+    setFont(UIUtil.getLabelFont());
+  }
 }

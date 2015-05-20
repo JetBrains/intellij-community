@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,14 +368,16 @@ public abstract class InplaceRefactoring {
 
     final int offset = myEditor.getCaretModel().getOffset();
 
+    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    TextRange range = myScope.getTextRange();
+    assert range != null;
+    RangeMarker rangeMarker = topLevelEditor.getDocument().createRangeMarker(range);
+
     Template template = builder.buildInlineTemplate();
     template.setToShortenLongNames(false);
     template.setToReformat(false);
-    TextRange range = myScope.getTextRange();
-    assert range != null;
     myHighlighters = new ArrayList<RangeHighlighter>();
-    Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
-    topLevelEditor.getCaretModel().moveToOffset(range.getStartOffset());
+    topLevelEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
     restoreOldCaretPositionAndSelection(offset);

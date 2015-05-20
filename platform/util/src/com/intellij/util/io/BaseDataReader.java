@@ -62,6 +62,16 @@ public abstract class BaseDataReader {
       }
     };
 
+    SleepingPolicy BLOCKING = new SleepingPolicy() {
+      @Override
+      public int getTimeToSleep(boolean wasActive) {
+        // in blocking mode we need to sleep only when we have reached end of the stream
+        // so it can be a long sleeping
+        return 50;
+      }
+    };
+
+
     int getTimeToSleep(boolean wasActive);
   }
 

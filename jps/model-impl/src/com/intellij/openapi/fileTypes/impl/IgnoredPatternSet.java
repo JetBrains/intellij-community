@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ public class IgnoredPatternSet {
         addIgnoreMask(ignoredFile);
       }
     }
-
   }
 
   void addIgnoreMask(@NotNull String ignoredFile) {
@@ -65,7 +64,7 @@ public class IgnoredPatternSet {
     return fileName.endsWith(FileUtil.ASYNC_DELETE_EXTENSION);
   }
 
-  void clearPatterns() {
+  public void clearPatterns() {
     myMasks.clear();
     myIgnorePatterns.removeAllAssociations(Boolean.TRUE);
   }

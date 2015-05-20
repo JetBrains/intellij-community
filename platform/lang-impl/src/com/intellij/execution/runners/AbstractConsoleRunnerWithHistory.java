@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
-import com.intellij.execution.console.*;
+import com.intellij.execution.console.ConsoleExecuteAction;
+import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -31,6 +33,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,9 +46,10 @@ import java.awt.*;
 import java.util.List;
 
 /**
+ * This class provides basic functionality for running consoles.
+ * It launches external process and handles line input with history
+ *
  * @author oleg
- *         This class provides basic functionality for running consoles.
- *         It launches external process and handles line input with history
  */
 public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleView> {
   private final String myConsoleTitle;
@@ -85,8 +89,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   private void initConsoleUI(Process process) {
     // Init console view
     myConsoleView = createConsoleView();
-    if (myConsoleView instanceof LanguageConsoleViewImpl) {
-      ((LanguageConsoleViewImpl)myConsoleView).setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
+    if (myConsoleView instanceof JComponent) {
+      ((JComponent)myConsoleView).setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
     }
     myProcessHandler = createProcessHandler(process);
 
@@ -129,7 +133,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     contentDescriptor.setFocusComputable(new Computable<JComponent>() {
       @Override
       public JComponent compute() {
-        return getLanguageConsole().getConsoleEditor().getContentComponent();
+        return getConsoleView().getConsoleEditor().getContentComponent();
       }
     });
     contentDescriptor.setAutoFocusContent(isAutoFocusContent());
@@ -137,9 +141,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
     // tool bar actions
     final List<AnAction> actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
-    registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
+    registerActionShortcuts(actions, getConsoleView().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
-    panel.updateUI();
 
     showConsole(defaultExecutor, contentDescriptor);
   }
@@ -184,7 +187,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   }
 
   protected void finishConsole() {
-    myConsoleView.getConsole().setEditable(false);
+    myConsoleView.setEditable(false);
   }
 
   protected abstract T createConsoleView();
@@ -233,25 +236,9 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM);
   }
 
-  public LanguageConsoleImpl getLanguageConsole() {
-    return (LanguageConsoleImpl)myConsoleView.getConsole();
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  /**
-   * @deprecated to remove in IDEA 14
-   */
-  public static AnAction createConsoleExecAction(@NotNull LanguageConsoleView console,
-                                                 @NotNull ProcessHandler processHandler,
-                                                 @NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(console, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
-                                    consoleExecuteActionHandler);
-  }
-
   protected AnAction createConsoleExecAction(@NotNull ProcessBackedConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, consoleExecuteActionHandler.getEmptyExecuteAction(),
-                                    consoleExecuteActionHandler);
+    String emptyAction = consoleExecuteActionHandler.getEmptyExecuteAction();
+    return new ConsoleExecuteAction(myConsoleView, consoleExecuteActionHandler, emptyAction, consoleExecuteActionHandler);
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,6 @@ import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -58,6 +56,8 @@ import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import javax.tools.*;
@@ -252,9 +252,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
 
     // begin compilation round
-    final Mappings delta = pd.dataManager.getMappings().createDelta();
-    final Callbacks.Backend mappingsCallback = delta.getCallback();
-    final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, mappingsCallback, chunk.getPresentableShortName());
+    final OutputFilesSink outputSink = new OutputFilesSink(context, outputConsumer, JavaBuilderUtil.getDependenciesRegistrar(context), chunk.getPresentableShortName());
     try {
       if (hasSourcesToCompile) {
         final AtomicReference<String> ref = COMPILER_VERSION_INFO.get(context);
@@ -323,9 +321,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     finally {
-      if (JavaBuilderUtil.updateMappings(context, delta, dirtyFilesHolder, chunk, files, outputSink.getSuccessfullyCompiled())) {
-        exitCode = ExitCode.ADDITIONAL_PASS_REQUIRED;
-      }
+      JavaBuilderUtil.registerFilesToCompile(context, files);
+      JavaBuilderUtil.registerSuccessfullyCompiled(context, outputSink.getSuccessfullyCompiled());
     }
 
     return exitCode;
@@ -368,15 +365,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
       LOG.debug("Compiling chunk [" + chunk.getName() + "] with options: \"" + StringUtil.join(options, " ") + "\"");
     }
     try {
-      final boolean rc;
-      if (!shouldForkCompilerProcess(context, chunk, compilingTool)) {
-        final Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, options, compilingTool);
-        if (_platformCp == null) {
-          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, 
+      final int chunkSdkVersion = getChunkSdkVersion(chunk);
+      
+      final Collection<File> _platformCp = calcEffectivePlatformCp(platformCp, chunkSdkVersion, options, compilingTool);
+      if (_platformCp == null) {
+        context.processMessage(
+          new CompilerMessage(
+            BUILDER_NAME, BuildMessage.Kind.ERROR,
             "Compact compilation profile was requested, but target platform for module \"" + chunk.getName() + "\" differs from javac's platform (" + System.getProperty("java.version") + ")\nCompilation profiles are not supported for such configuration"
-          ));
-          return true;
-        }
+          )
+        );
+        return true;
+      }
+      final boolean rc;
+      if (!shouldForkCompilerProcess(context, chunkSdkVersion)) {
         rc = JavacMain.compile(
           options, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, context.getCancelStatus(), compilingTool
         );
@@ -392,7 +394,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final List<String> vmOptions = getCompilationVMOptions(context, compilingTool);
         final ExternalJavacServer server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
-          context, options, vmOptions, files, classpath, platformCp, sourcePath, outs, diagnosticSink, classesConsumer, sdkHome, compilingTool
+          context, options, vmOptions, files, classpath, _platformCp, sourcePath, outs, diagnosticSink, classesConsumer, sdkHome, compilingTool
         );
       }
       return rc;
@@ -435,15 +437,19 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  private static boolean shouldForkCompilerProcess(CompileContext context, ModuleChunk chunk, JavaCompilingTool tool) {
+  private static boolean shouldForkCompilerProcess(CompileContext context, final int chunkSdkVersion) {
     final int compilerSdkVersion = getCompilerSdkVersion(context);
-    if (compilerSdkVersion < 9) {
+    if (compilerSdkVersion < 9 || chunkSdkVersion < 0) {
       // javac up to version 9 supports all previous releases
+      // or: was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
-    final int chunkSdkVersion = getChunkSdkVersion(chunk);
-    if (chunkSdkVersion < 0) {
-      return false; // was not able to determine jdk version, assuming in-process compiler
+    if (chunkSdkVersion >= 9 && compilerSdkVersion != chunkSdkVersion) {
+      // For these SDK versions libraries are stored in jimage files with unknown format and currently
+      // there is no way to specify full platform classpath for cross-compilation purposes.
+      // We have for fork compiler process with corresponding SDK runtime to ensure that compiler resolves platform classes 
+      // against the SDK version specified for the given chunk.
+      return true;
     }
     // according to JEP 182: Retiring javac "one plus three back" policy
     return Math.abs(compilerSdkVersion - chunkSdkVersion) > 3; 
@@ -452,7 +458,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
   // If platformCp of the build process is the same as the target plafform, do not specify platformCp explicitly
   // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
   @Nullable
-  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, List<String> options, JavaCompilingTool compilingTool) {
+  private static Collection<File> calcEffectivePlatformCp(Collection<File> platformCp, final int chunkSdkVersion, List<String> options, JavaCompilingTool compilingTool) {
+    if (chunkSdkVersion >= 9) {
+      // if chunk's SDK is 9 or higher, there is no way to specify full classpath 
+      // because platform classes are stored in jimage binary files with unknown format
+      // returning empty path so that javac will resolve against its own bootclasspath 
+      return Collections.emptyList();
+    }
+    
     if (ourDefaultRtJar == null || !(compilingTool instanceof JavacCompilerTool)) {
       return platformCp;
     }
@@ -599,7 +612,21 @@ public class JavaBuilder extends ModuleLevelBuilder {
       assert cached != null : context;
     }
 
-    List<String> options = new ArrayList<String>(cached);
+    List<String> options = new ArrayList<String>();
+    JpsModule module = chunk.representativeTarget().getModule();
+    File baseDirectory = JpsModelSerializationDataService.getBaseDirectory(module);
+    if (baseDirectory != null) {
+      //this is a temporary workaround to allow passing per-module compiler options for Eclipse compiler in form
+      // -properties $MODULE_DIR$/.settings/org.eclipse.jdt.core.prefs
+      String stringToReplace = "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$";
+      String moduleDirPath = FileUtil.toCanonicalPath(baseDirectory.getAbsolutePath());
+      for (String s : cached) {
+        options.add(StringUtil.replace(s, stringToReplace, moduleDirPath));
+      }
+    }
+    else {
+      options.addAll(cached);
+    }
     addCompilationOptions(options, context, chunk, profile);
     return options;
   }
@@ -649,9 +676,15 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
     
     if (bytecodeTarget == null) {
-      // last resort and backward compatibility: 
-      // check if user explicitly defined bytecode target in additional compiler options
-      bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
+      if (!StringUtil.isEmpty(langLevel)) {
+        // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
+        bytecodeTarget = langLevel;
+      }
+      else {
+        // last resort and backward compatibility: 
+        // check if user explicitly defined bytecode target in additional compiler options
+        bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
+      }
     }
 
     final int compilerSdkVersion = getCompilerSdkVersion(context);
@@ -716,18 +749,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static String getLanguageLevel(JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    if (level != null) {
-      switch (level) {
-        case JDK_1_3: return "1.3";
-        case JDK_1_4: return "1.4";
-        case JDK_1_5: return "1.5";
-        case JDK_1_6: return "1.6";
-        case JDK_1_7: return "1.7";
-        case JDK_1_8: return "8";
-        case JDK_1_9: return "9";
-      }
-    }
-    return null;
+    return level != null ? level.getComplianceOption() : null;
   }
 
   private static boolean isEncodingSet(List<String> options) {

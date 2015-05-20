@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import java.beans.PropertyChangeListener;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 
 public class CoreEncodingProjectManager extends EncodingProjectManager {
   @Override
@@ -93,26 +92,10 @@ public class CoreEncodingProjectManager extends EncodingProjectManager {
 
   }
 
-  @Override
-  public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-
-  }
-
   @Nullable
   @Override
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return null;
-  }
-
-  @NotNull
-  @Override
-  public Map<VirtualFile, Charset> getAllMappings() {
-    return Collections.emptyMap();
-  }
-
-  @Override
-  public void setMapping(@NotNull Map<VirtualFile, Charset> result) {
-
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
-import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -214,8 +213,8 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
     final HashSet<String> libs = new HashSet<String>();
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
-        readClasspathEntry(model, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(), new HashSet<String>(),
-                           testPattern, (Element)o, 0, EclipseModuleManager.EMPTY, expander.getExpandMacroMap(), libs);
+        readClasspathEntry(model, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(),
+                           testPattern, (Element)o, 0, null, expander.getExpandMacroMap(), libs);
       }
       catch (ConversionException e) {
         throw new IOException(e);

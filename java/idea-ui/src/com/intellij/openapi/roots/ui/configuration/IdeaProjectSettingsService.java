@@ -101,7 +101,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
 
   @Override
   public void openContentEntriesSettings(final Module module) {
-    ModulesConfigurator.showDialog(myProject, module.getName(), ContentEntriesEditor.NAME);
+    ModulesConfigurator.showDialog(myProject, module.getName(), CommonContentEntriesEditor.NAME);
   }
 
   @Override

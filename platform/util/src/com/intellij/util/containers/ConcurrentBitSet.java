@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import gnu.trove.TLongFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -78,23 +79,14 @@ public class ConcurrentBitSet {
    * @return new bit value
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
-  public boolean flip(int bitIndex) {
-    if (bitIndex < 0) {
-      throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
-    }
-
-    AtomicLongArray array = getOrCreateArray(bitIndex);
-
-    int wordIndexInArray = wordIndexInArray(bitIndex);
-
-    long word;
-    long newWord;
-    do {
-      word = array.get(wordIndexInArray);
-      newWord = word ^ (1L << bitIndex);
-    }
-    while (!array.compareAndSet(wordIndexInArray, word, newWord));
-    return (newWord & (1L << bitIndex)) != 0;
+  public boolean flip(final int bitIndex) {
+    long prevWord = changeWord(bitIndex, new TLongFunction() {
+      @Override
+      public long execute(long word) {
+        return word ^ (1L << bitIndex);
+      }
+    });
+    return (prevWord & (1L << bitIndex)) == 0;
   }
 
   /**
@@ -104,7 +96,18 @@ public class ConcurrentBitSet {
    * @return previous value
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
-  public boolean set(int bitIndex) {
+  public boolean set(final int bitIndex) {
+    final long mask = 1L << bitIndex;
+    long prevWord = changeWord(bitIndex, new TLongFunction() {
+      @Override
+      public long execute(long word) {
+        return word | mask;
+      }
+    });
+    return (prevWord & mask) != 0;
+  }
+
+  long changeWord(int bitIndex, @NotNull TLongFunction change) {
     if (bitIndex < 0) {
       throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
     }
@@ -114,14 +117,12 @@ public class ConcurrentBitSet {
     int wordIndexInArray = wordIndexInArray(bitIndex);
     long word;
     long newWord;
-    boolean previousBit;
     do {
       word = array.get(wordIndexInArray);
-      previousBit = (word & (1L << bitIndex)) != 0;
-      newWord = word | (1L << bitIndex);
+      newWord = change.execute(word);
     }
     while (!array.compareAndSet(wordIndexInArray, word, newWord));
-    return previousBit;
+    return word;
   }
 
   /**
@@ -147,24 +148,14 @@ public class ConcurrentBitSet {
    * @throws IndexOutOfBoundsException if the specified index is negative
    * @return previous value
    */
-  public boolean clear(int bitIndex) {
-    if (bitIndex < 0) {
-      throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
-    }
-
-    AtomicLongArray array = getOrCreateArray(bitIndex);
-
-    int wordIndexInArray = wordIndexInArray(bitIndex);
-    long word;
-    long newWord;
-    boolean previousBit;
-    do {
-      word = array.get(wordIndexInArray);
-      previousBit = (word & (1L << bitIndex)) != 0;
-      newWord = word & ~ (1L << bitIndex);
-    }
-    while (!array.compareAndSet(wordIndexInArray, word, newWord));
-    return previousBit;
+  public boolean clear(final int bitIndex) {
+    long prevWord = changeWord(bitIndex, new TLongFunction() {
+      @Override
+      public long execute(long word) {
+        return word & ~(1L << bitIndex);
+      }
+    });
+    return (prevWord & (1L << bitIndex)) != 0;
   }
 
   @NotNull
@@ -200,6 +191,10 @@ public class ConcurrentBitSet {
    * @throws IndexOutOfBoundsException if the specified index is negative
    */
   public boolean get(int bitIndex) {
+    return (getWord(bitIndex) & (1L<<bitIndex)) != 0;
+  }
+
+  long getWord(int bitIndex) {
     if (bitIndex < 0) {
       throw new IndexOutOfBoundsException("bitIndex < 0: " + bitIndex);
     }
@@ -207,12 +202,11 @@ public class ConcurrentBitSet {
     int arrayIndex = arrayIndex(bitIndex);
     AtomicLongArray array = arrays.get(arrayIndex);
     if (array == null) {
-      return false;
+      return 0;
     }
 
     int wordIndexInArray = wordIndexInArray(bitIndex);
-    long word = array.get(wordIndexInArray);
-    return (word & (1L<<bitIndex)) != 0;
+    return array.get(wordIndexInArray);
   }
 
   /**
@@ -322,6 +316,7 @@ public class ConcurrentBitSet {
   *
   * @return the hash code value for this bit set
   */
+  @Override
   public int hashCode() {
     long h = 1234;
     for (int a = 0; a<arrays.length();a++) {
@@ -365,6 +360,7 @@ public class ConcurrentBitSet {
   * {@code false} otherwise
   * @see #size()
   */
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof ConcurrentBitSet)) {
       return false;
@@ -401,6 +397,7 @@ public class ConcurrentBitSet {
   *
   * @return a string representation of this bit set
   */
+  @Override
   public String toString() {
     StringBuilder b = new StringBuilder();
     b.append('{');

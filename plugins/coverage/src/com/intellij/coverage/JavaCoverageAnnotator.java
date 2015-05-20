@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myTestDirCoverageInfos =
     new HashMap<VirtualFile, PackageAnnotator.PackageCoverageInfo>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new HashMap<String, PackageAnnotator.ClassCoverageInfo>();
+  private final WeakHashMap<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos =
+    new WeakHashMap<PsiElement, PackageAnnotator.SummaryCoverageInfo>();
 
   public JavaCoverageAnnotator(final Project project) {
     super(project);
@@ -71,6 +74,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     myDirCoverageInfos.clear();
     myTestDirCoverageInfos.clear();
     myClassCoverageInfos.clear();
+    myExtensionCoverageInfos.clear();
   }
 
   protected Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
@@ -144,14 +148,14 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  public static String getCoverageInformationString(PackageAnnotator.PackageCoverageInfo info, boolean subCoverageActive) {
+  public static String getCoverageInformationString(PackageAnnotator.SummaryCoverageInfo info, boolean subCoverageActive) {
     if (info == null) return null;
     if (info.totalClassCount == 0 || info.totalLineCount == 0) return null;
     if (subCoverageActive) {
-      return info.coveredClassCount + info.coveredLineCount > 0 ? "covered" : null;
+      return info.coveredClassCount + info.getCoveredLineCount() > 0 ? "covered" : null;
     }
     return (int)((double)info.coveredClassCount / info.totalClassCount * 100) +  "% classes, " +
-           (int)((double)info.coveredLineCount / info.totalLineCount * 100) + "% lines covered";
+           (int)((double)info.getCoveredLineCount() / info.totalLineCount * 100) + "% lines covered";
   }
 
   /**
@@ -184,10 +188,9 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
                                                     boolean flatten) {
     if (psiPackage == null) return null;
     final boolean subCoverageActive = coverageDataManager.isSubCoverageActive();
-    PackageAnnotator.PackageCoverageInfo info;
     if (module != null) {
       final PsiDirectory[] directories = psiPackage.getDirectories(GlobalSearchScope.moduleScope(module));
-      PackageAnnotator.PackageCoverageInfo result = null;
+      PackageAnnotator.SummaryCoverageInfo result = null;
       for (PsiDirectory directory : directories) {
         final VirtualFile virtualFile = directory.getVirtualFile();
         result = merge(result, myDirCoverageInfos.get(virtualFile));
@@ -196,49 +199,27 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       return getCoverageInformationString(result, subCoverageActive);
     }
     else {
-      info = getPackageCoverageInfo(psiPackage, flatten);
+      PackageAnnotator.PackageCoverageInfo info = getPackageCoverageInfo(psiPackage, flatten);
+      return getCoverageInformationString(info, subCoverageActive);
     }
-    return getCoverageInformationString(info, subCoverageActive);
   }
 
   public PackageAnnotator.PackageCoverageInfo getPackageCoverageInfo(@NotNull PsiPackage psiPackage, boolean flattenPackages) {
     final String qualifiedName = psiPackage.getQualifiedName();
     return flattenPackages ? myFlattenPackageCoverageInfos.get(qualifiedName) : myPackageCoverageInfos.get(qualifiedName);
   }
-  
-  public String getPackageClassPercentage(@NotNull final PsiPackage psiPackage, boolean flatten) {
-    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
-    if (packageCoverageInfo == null) return null;
-    return getPercentage(packageCoverageInfo.coveredClassCount, packageCoverageInfo.totalClassCount);
-  }
-  
-  public String getPackageMethodPercentage(PsiPackage psiPackage, boolean flatten) {
-    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
-    if (packageCoverageInfo == null) return null;
-    return getPercentage(packageCoverageInfo.coveredMethodCount, packageCoverageInfo.totalMethodCount);
-  }
 
-  public String getPackageLinePercentage(final PsiPackage psiPackage, boolean flatten) {
-    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo = getPackageCoverageInfo(psiPackage, flatten);
-    if (packageCoverageInfo == null) return null;
-    return getPercentage(packageCoverageInfo.coveredLineCount, packageCoverageInfo.totalLineCount);
-  }
-
-  public String getClassLinePercentage(String classFQName) {
-    final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
+  public String getLineCoveredPercentage(@Nullable PackageAnnotator.SummaryCoverageInfo info) {
     if (info == null) return null;
-    final int coveredLines = info.fullyCoveredLineCount + info.partiallyCoveredLineCount;
-    return getPercentage(coveredLines, info.totalLineCount);
+    return getPercentage(info.getCoveredLineCount(), info.totalLineCount);
   }
-  
-  public String getClassMethodPercentage(String classFQName) {
-    final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
+
+  public String getMethodCoveredPercentage(@Nullable PackageAnnotator.SummaryCoverageInfo info) {
     if (info == null) return null;
     return getPercentage(info.coveredMethodCount, info.totalMethodCount);
   }
 
-  public String getClassCoveredPercentage(String classFQName) {
-    final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
+  public String getClassCoveredPercentage(@Nullable PackageAnnotator.SummaryCoverageInfo info) {
     if (info == null) return null;
     return getPercentage(info.coveredClassCount, info.totalClassCount);
   }
@@ -247,8 +228,8 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return (int)((double)covered /total * 100) +"% (" + covered + "/" + total + ")";
   }
 
-  public static PackageAnnotator.PackageCoverageInfo merge(final PackageAnnotator.PackageCoverageInfo info,
-                                                           final PackageAnnotator.PackageCoverageInfo testInfo) {
+  public static PackageAnnotator.SummaryCoverageInfo merge(@Nullable final PackageAnnotator.SummaryCoverageInfo info,
+                                                           @Nullable final PackageAnnotator.SummaryCoverageInfo testInfo) {
     if (info == null) return testInfo;
     if (testInfo == null) return info;
     final PackageAnnotator.PackageCoverageInfo coverageInfo = new PackageAnnotator.PackageCoverageInfo();
@@ -256,7 +237,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     coverageInfo.coveredClassCount = info.coveredClassCount + testInfo.coveredClassCount;
 
     coverageInfo.totalLineCount = info.totalLineCount + testInfo.totalLineCount;
-    coverageInfo.coveredLineCount = info.coveredLineCount + testInfo.coveredLineCount;
+    coverageInfo.coveredLineCount = info.getCoveredLineCount() + testInfo.getCoveredLineCount();
     return coverageInfo;
   }
 
@@ -279,5 +260,21 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   @Nullable
   public PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(String classFQName) {
     return myClassCoverageInfos.get(classFQName);
+  }
+
+  public PackageAnnotator.SummaryCoverageInfo getExtensionCoverageInfo(PsiNamedElement value) {
+    PackageAnnotator.SummaryCoverageInfo cachedInfo = myExtensionCoverageInfos.get(value);
+    if (cachedInfo != null) {
+      return cachedInfo;
+    }
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
+      PackageAnnotator.SummaryCoverageInfo info = extension.getSummaryCoverageInfo(this, value);
+      if (info != null) {
+        myExtensionCoverageInfos.put(value, info);
+        return info;
+      }
+    }
+
+    return null;
   }
 }

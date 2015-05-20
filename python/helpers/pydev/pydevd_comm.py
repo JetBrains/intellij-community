@@ -57,12 +57,9 @@ each command has a format:
     * JAVA - remote debugger, the java end
     * PYDB - pydevd, the python end
 '''
+
 from pydevd_constants import * #@UnusedWildImport
-
-import sys
-
 from _pydev_imps import _pydev_time as time, _pydev_thread
-from _pydev_imps import _pydev_thread as thread
 import _pydev_threading as threading
 from _pydev_imps._pydev_socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 from pydev_imports import _queue
@@ -137,6 +134,7 @@ CMD_ENABLE_DONT_TRACE = 141
 CMD_SHOW_CONSOLE = 142
 
 CMD_GET_ARRAY = 143
+CMD_STEP_INTO_MY_CODE = 144
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -191,6 +189,7 @@ ID_TO_MEANING = {
     '901':'CMD_ERROR',
 
     '143':'CMD_GET_ARRAY',
+    '144':'CMD_STEP_INTO_MY_CODE',
     }
 
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
@@ -246,28 +245,19 @@ def SetGlobalDebugger(dbg):
 #=======================================================================================================================
 # PyDBDaemonThread
 #=======================================================================================================================
-class PyDBDaemonThread:
-    
+class PyDBDaemonThread(threading.Thread):
     created_pydb_daemon_threads = {}
 
     def __init__(self):
-        # Note: subclasses are always daemon threads.
+        threading.Thread.__init__(self)
+        self.setDaemon(True)
         self.killReceived = False
         self.dontTraceMe = True
-
-    def setName(self, name):
-        self.name = name
-
-    def start(self):
-        import pydev_monkey
-        start_new_thread = pydev_monkey.get_original_start_new_thread(_pydev_thread)
-        start_new_thread(self.run, ())
+        self.is_pydev_daemon_thread = True
 
     def run(self):
         created_pydb_daemon = self.created_pydb_daemon_threads
         created_pydb_daemon[self] = 1
-        dummy_thread = threading.currentThread()
-        dummy_thread.is_pydev_daemon_thread = True
         try:
             try:
                 if IS_JYTHON:
@@ -275,7 +265,7 @@ class PyDBDaemonThread:
                     ss = PyCore.PySystemState()
                     # Note: Py.setSystemState() affects only the current thread.
                     PyCore.Py.setSystemState(ss)
-        
+
                 self.OnRun()
             except:
                 if sys is not None and traceback is not None:
@@ -292,16 +282,16 @@ class PyDBDaemonThread:
 
     def stopTrace(self):
         if self.dontTraceMe:
-            
+
             disable_tracing = True
-    
+
             if pydevd_vm_type.GetVmType() == pydevd_vm_type.PydevdVmType.JYTHON and sys.hexversion <= 0x020201f0:
                 # don't run untraced threads if we're in jython 2.2.1 or lower
                 # jython bug: if we start a thread and another thread changes the tracing facility
                 # it affects other threads (it's not set only for the thread but globally)
                 # Bug: http://sourceforge.net/tracker/index.php?func=detail&aid=1870039&group_id=12867&atid=112867
                 disable_tracing = False
-    
+
             if disable_tracing:
                 pydevd_tracing.SetTrace(None)  # no debugging on this thread
 
@@ -454,6 +444,8 @@ class WriterThread(PyDBDaemonThread):
             if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
                 traceback.print_exc()
 
+    def empty(self):
+        return self.cmdQueue.empty()
 
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
 
-public class RangeMarkerWindow implements RangeMarkerEx {
-
+class RangeMarkerWindow implements RangeMarkerEx {
   private final DocumentWindow myDocumentWindow;
-  private final RangeMarkerEx  myHostMarker;
-  private final int            myStartShift;
-  private final int            myEndShift;
+  private final RangeMarkerEx myHostMarker;
+  private final int myStartShift;
+  private final int myEndShift;
 
   /**
    * Creates new <code>RangeMarkerWindow</code> object with the given data.
@@ -51,7 +50,7 @@ public class RangeMarkerWindow implements RangeMarkerEx {
    * @param endShift        similar to the 'startShift' argument but specifies difference between the target injected host end offset
    *                        and end offset of the given host range marker at the injected text
    */
-  public RangeMarkerWindow(@NotNull DocumentWindow documentWindow, RangeMarkerEx hostMarker, int startShift, int endShift) {
+  RangeMarkerWindow(@NotNull DocumentWindow documentWindow, RangeMarkerEx hostMarker, int startShift, int endShift) {
     myDocumentWindow = documentWindow;
     myHostMarker = hostMarker;
     myStartShift = startShift;
@@ -111,7 +110,7 @@ public class RangeMarkerWindow implements RangeMarkerEx {
   }
 
   @Override
-  public void documentChanged(final DocumentEvent e) {
+  public void documentChanged(@NotNull final DocumentEvent e) {
     myHostMarker.documentChanged(e);
   }
   @Override

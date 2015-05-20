@@ -37,7 +37,7 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
       return null;
     }
 
-    List<AnAction> actions = ActionUtil.getActions(((LanguageConsoleView)consoleView).getConsole().getConsoleEditor().getComponent());
+    List<AnAction> actions = ActionUtil.getActions(((LanguageConsoleView)consoleView).getConsoleEditor().getComponent());
     ConsoleExecuteAction action = ContainerUtil.findInstance(actions, ConsoleExecuteAction.class);
     return action == null || !action.isEnabled() ? null : action;
   }

@@ -36,12 +36,14 @@ public abstract class GradleCompilingTestCase extends GradleImportingTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
     super.setUpInWriteAction();
+
+    final GradleResourceCompilerConfigurationGenerator buildConfigurationGenerator = new GradleResourceCompilerConfigurationGenerator(myProject);
     CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
       @Override
       public boolean execute(CompileContext context) {
         AccessToken token = ReadAction.start();
         try {
-          new GradleResourceCompilerConfigurationGenerator(myProject, context).generateBuildConfiguration();
+          buildConfigurationGenerator.generateBuildConfiguration(context);
         }
         finally {
           token.finish();

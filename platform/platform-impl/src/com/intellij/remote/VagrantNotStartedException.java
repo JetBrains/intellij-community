@@ -20,13 +20,20 @@ package com.intellij.remote;
  */
 public class VagrantNotStartedException extends RuntimeException {
   private String myVagrantFolder;
+  private String myMachineName;
 
-  public VagrantNotStartedException(String message, String vagrantFolder) {
+  public VagrantNotStartedException(String message, String vagrantFolder, String machineName) {
     super(message);
     myVagrantFolder = vagrantFolder;
+
+    myMachineName = machineName;
   }
 
   public String getVagrantFolder() {
     return myVagrantFolder;
+  }
+
+  public String getMachineName() {
+    return myMachineName;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
     return with(new PatternCondition<Collection<T>>("all") {
       public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         for (final T t : collection) {
-          if (!pattern.getCondition().accepts(t, context)) return false;
+          if (!pattern.accepts(t, context)) return false;
         }
         return true;
       }
@@ -52,7 +52,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
     return with(new PatternCondition<Collection<T>>("atLeastOne") {
       public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         for (final T t : collection) {
-          if (pattern.getCondition().accepts(t, context)) return true;
+          if (pattern.accepts(t, context)) return true;
         }
         return false;
       }
@@ -64,11 +64,11 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
       public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         List<T> filtered = new ArrayList<T>();
         for (final T t : collection) {
-          if (elementPattern.getCondition().accepts(t, context)) {
+          if (elementPattern.accepts(t, context)) {
             filtered.add(t);
           }
         }
-        return continuationPattern.getCondition().accepts(filtered, context);
+        return continuationPattern.accepts(filtered, context);
       }
     });
   }
@@ -77,7 +77,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
     return with(new PatternCondition<Collection<T>>("first") {
       public boolean accepts(@NotNull final Collection<T> collection, final ProcessingContext context) {
         return !collection.isEmpty() &&
-               elementPattern.getCondition().accepts(collection.iterator().next(), context);
+               elementPattern.accepts(collection.iterator().next(), context);
       }
     });
   }
@@ -116,7 +116,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
         for (final T t : collection) {
           last = t;
         }
-        return elementPattern.getCondition().accepts(last, context);
+        return elementPattern.accepts(last, context);
       }
     });
   }

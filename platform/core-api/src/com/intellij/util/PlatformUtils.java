@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -25,12 +22,14 @@ import org.jetbrains.annotations.Nullable;
 public class PlatformUtils {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
+  // NOTE: If you add any new prefixes to this list, please update the IntelliJPlatformProduct class in DevKit plugin
   public static final String IDEA_PREFIX = "idea";
   public static final String IDEA_CE_PREFIX = "Idea";
   public static final String APPCODE_PREFIX = "AppCode";
   public static final String CLION_PREFIX = "CLion";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
+  public static final String PYCHARM_EDU_PREFIX = "PyCharmEdu";
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";
@@ -45,7 +44,7 @@ public class PlatformUtils {
   }
 
   public static boolean isIntelliJ() {
-    return isIdea() || isCommunity();
+    return isIdeaUltimate() || isIdeaCommunity();
   }
 
   public static boolean isIdeaUltimate() {
@@ -53,7 +52,7 @@ public class PlatformUtils {
   }
 
   public static boolean isIdeaCommunity() {
-    return is(COMMUNITY_PREFIX);
+    return is(IDEA_CE_PREFIX);
   }
 
   public static boolean isRubyMine() {
@@ -73,7 +72,7 @@ public class PlatformUtils {
   }
 
   public static boolean isPyCharm() {
-    return isPyCharmPro() || isPyCharmCommunity();
+    return isPyCharmPro() || isPyCharmCommunity() || isPyCharmEducational();
   }
 
   public static boolean isPyCharmPro() {
@@ -81,7 +80,11 @@ public class PlatformUtils {
   }
 
   public static boolean isPyCharmCommunity() {
-    return is(PYCHARM_PREFIX2);
+    return is(PYCHARM_CE_PREFIX);
+  }
+
+  public static boolean isPyCharmEducational() {
+    return is(PYCHARM_EDU_PREFIX);
   }
 
   public static boolean isPhpStorm() {
@@ -103,32 +106,4 @@ public class PlatformUtils {
   private static boolean is(String idePrefix) {
     return idePrefix.equals(getPlatformPrefix());
   }
-
-  /** @deprecated not a common API; use DevKit's PsiUtil.isIdeaProject() when needed (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isIdeaProject(@Nullable Project project) { return false; }
-
-  /** @deprecated use {@link #IDEA_CE_PREFIX} (to remove in IDEA 15) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static final String COMMUNITY_PREFIX = IDEA_CE_PREFIX;
-
-  /** @deprecated use {@link #isIdeaUltimate()} (to remove in IDEA 15) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isIdea() { return isIdeaUltimate(); }
-
-  /** @deprecated use {@link #isIdeaCommunity()} (to remove in IDEA 15) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isCommunity() { return isIdeaCommunity(); }
-
-  /** @deprecated use {@link #PYCHARM_CE_PREFIX} (to remove in IDEA 14) */
-  @SuppressWarnings("UnusedDeclaration")
-  public static final String PYCHARM_PREFIX2 = PYCHARM_CE_PREFIX;
-
-  /** @deprecated to remove in IDEA 14 */
-  @SuppressWarnings("UnusedDeclaration")
-  public static final String FLEX_PREFIX = "Flex";
-
-  /** @deprecated to remove in IDEA 14 */
-  @SuppressWarnings("UnusedDeclaration")
-  public static boolean isFlexIde() { return false; }
 }

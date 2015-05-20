@@ -15,18 +15,17 @@
  */
 package com.intellij.openapi.project;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,60 +34,15 @@ import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class CacheUpdateRunner extends DumbModeTask {
+public class CacheUpdateRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
   private static final Key<Boolean> FAILED_TO_INDEX = Key.create("FAILED_TO_INDEX");
   private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
-  private final Project myProject;
-  private final Collection<CacheUpdater> myUpdaters;
-  private CacheUpdateSession mySession;
-
-  CacheUpdateRunner(@NotNull Project project, @NotNull Collection<CacheUpdater> updaters) {
-    myProject = project;
-    myUpdaters = updaters;
-  }
-
-  @Override
-  public String toString() {
-    return new ArrayList<CacheUpdater>(myUpdaters).toString();
-  }
-
-  private int queryNeededFiles(@NotNull ProgressIndicator indicator) {
-    // can be queried twice in DumbService
-    return getSession(indicator).getFilesToUpdate().size();
-  }
-
-  @NotNull
-  private CacheUpdateSession getSession(@NotNull ProgressIndicator indicator) {
-    CacheUpdateSession session = mySession;
-    if (session == null) {
-      mySession = session = new CacheUpdateSession(myUpdaters, indicator);
-    }
-    return session;
-  }
-
-  private void processFiles(@NotNull final ProgressIndicator indicator, boolean processInReadAction) {
-    try {
-      Collection<VirtualFile> files = mySession.getFilesToUpdate();
-
-      processFiles(indicator, processInReadAction, files, myProject, new Consumer<FileContent>() {
-        @Override
-        public void consume(FileContent content) {
-          mySession.processFile(content);
-        }
-      });
-    }
-    catch (ProcessCanceledException e) {
-      mySession.canceled();
-      throw e;
-    }
-  }
 
   public static void processFiles(final ProgressIndicator indicator,
                                   boolean processInReadAction,
@@ -103,15 +57,20 @@ public class CacheUpdateRunner extends DumbModeTask {
       // need set here to handle queue.pushbacks after checkCancelled() in order
       // not to count the same file several times
       final Set<VirtualFile> processed = new THashSet<VirtualFile>();
+      private boolean fileNameWasShownAfterRestart;
 
       @Override
       public void consume(VirtualFile virtualFile) {
         indicator.checkCanceled();
         synchronized (processed) {
-          processed.add(virtualFile);
+          boolean added = processed.add(virtualFile);
           indicator.setFraction(processed.size() / total);
-          if (ApplicationManager.getApplication().isInternal()) {
+          if (!added) {
             indicator.setText2(virtualFile.getPresentableUrl());
+            fileNameWasShownAfterRestart = true;
+          } else if (fileNameWasShownAfterRestart) {
+            indicator.setText2("");
+            fileNameWasShownAfterRestart = false;
           }
         }
       }
@@ -131,58 +90,63 @@ public class CacheUpdateRunner extends DumbModeTask {
     }
   }
 
-  private void updatingDone() {
-    try {
-      mySession.updatingDone();
-    }
-    catch (ProcessCanceledException e) {
-      mySession.canceled();
-      throw e;
-    }
-  }
-
-  private static boolean processSomeFilesWhileUserIsInactive(@NotNull final FileContentQueue queue,
-                                                             @NotNull final Consumer<VirtualFile> progressUpdater,
+  private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
+                                                             @NotNull Consumer<VirtualFile> progressUpdater,
                                                              final boolean processInReadAction,
-                                                             @NotNull final Project project,
-                                                             @NotNull final Consumer<FileContent> fileProcessor) {
+                                                             @NotNull Project project,
+                                                             @NotNull Consumer<FileContent> fileProcessor) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
       @Override
       protected boolean isCancelable() {
         return true; // the inner indicator must be always cancelable
       }
     };
-
+    final ApplicationAdapter canceller = new ApplicationAdapter() {
+      @Override
+      public void beforeWriteActionStart(Object action) {
+        innerIndicator.cancel();
+      }
+    };
     final Application application = ApplicationManager.getApplication();
-    final AtomicBoolean isFinished = new AtomicBoolean();
-
-    ProgressIndicatorUtils.runWithWriteActionPriority(new Runnable() {
+    application.invokeAndWait(new Runnable() {
       @Override
       public void run() {
-        int threadsCount = Registry.intValue("caches.indexerThreadsCount");
-        if (threadsCount <= 0) {
-          threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
-        }
-        if (threadsCount == 1 || application.isWriteAccessAllowed()) {
-          Runnable process =
-            new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, project, fileProcessor);
-          ProgressManager.getInstance().runProcess(process, innerIndicator);
-        }
-        else {
-          AtomicBoolean[] finishedRefs = new AtomicBoolean[threadsCount];
-          Future<?>[] futures = new Future<?>[threadsCount];
-          for (int i = 0; i < threadsCount; i++) {
-            AtomicBoolean ref = new AtomicBoolean();
-            finishedRefs[i] = ref;
-            Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, project, fileProcessor);
-            futures[i] = ApplicationManager.getApplication().executeOnPooledThread(process);
-          }
-          isFinished.set(waitForAll(finishedRefs, futures));
-        }
+        application.addApplicationListener(canceller);
       }
-    }, innerIndicator);
+    }, ModalityState.any());
+
+    final AtomicBoolean isFinished = new AtomicBoolean();
+    try {
+      int threadsCount = indexingThreadCount();
+      if (threadsCount == 1 || application.isWriteAccessAllowed()) {
+        Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, project, fileProcessor);
+        ProgressManager.getInstance().runProcess(process, innerIndicator);
+      }
+      else {
+        AtomicBoolean[] finishedRefs = new AtomicBoolean[threadsCount];
+        Future<?>[] futures = new Future<?>[threadsCount];
+        for (int i = 0; i < threadsCount; i++) {
+          AtomicBoolean ref = new AtomicBoolean();
+          finishedRefs[i] = ref;
+          Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, project, fileProcessor);
+          futures[i] = ApplicationManager.getApplication().executeOnPooledThread(process);
+        }
+        isFinished.set(waitForAll(finishedRefs, futures));
+      }
+    }
+    finally {
+      application.removeApplicationListener(canceller);
+    }
 
     return isFinished.get();
+  }
+
+  public static int indexingThreadCount() {
+    int threadsCount = Registry.intValue("caches.indexerThreadsCount");
+    if (threadsCount <= 0) {
+      threadsCount = Math.max(1, Math.min(PROC_COUNT - 1, 4));
+    }
+    return threadsCount;
   }
 
   private static boolean waitForAll(@NotNull AtomicBoolean[] finishedRefs, @NotNull Future<?>[] futures) {
@@ -207,21 +171,6 @@ public class CacheUpdateRunner extends DumbModeTask {
       LOG.error(throwable);
     }
     return false;
-  }
-
-  @Override
-  public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-    indicator.checkCanceled();
-    indicator.setIndeterminate(true);
-    indicator.setText(IdeBundle.message("progress.indexing.scanning"));
-    int count = queryNeededFiles(indicator);
-
-    indicator.setIndeterminate(false);
-    indicator.setText(IdeBundle.message("progress.indexing.updating"));
-    if (count > 0) {
-      processFiles(indicator, true);
-    }
-    updatingDone();
   }
 
   private static class MyRunnable implements Runnable {

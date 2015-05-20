@@ -31,7 +31,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     if (file == null) return null;
 
     final Project project = psiFile.getProject();
-    if (!Utils.isEnabled(settings)) return null;
+    if (project.isDisposed() || !Utils.isEnabled(settings)) return null;
 
     // Get editorconfig settings
     final String filePath = Utils.getFilePath(project, file);

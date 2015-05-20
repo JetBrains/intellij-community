@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -207,7 +208,10 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     final String namespace = getNamespace(tag, text);
     XmlNSDescriptor nsDescriptor = tag.getNSDescriptor(namespace,true);
 
-    final XmlDocument document = ((XmlFile)tag.getContainingFile()).getDocument();
+    final PsiFile file = tag.getContainingFile();
+    if (!(file instanceof XmlFile)) return null;
+
+    final XmlDocument document = ((XmlFile)file).getDocument();
 
     if (nsDescriptor == null) { // import
       nsDescriptor = (XmlNSDescriptor)document.getMetaData();

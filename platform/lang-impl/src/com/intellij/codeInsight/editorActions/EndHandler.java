@@ -41,11 +41,11 @@ public class EndHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(final Editor editor, DataContext dataContext) {
+  protected void doExecute(final Editor editor, Caret caret, DataContext dataContext) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.SMART_END_ACTION) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       return;
     }
@@ -53,7 +53,7 @@ public class EndHandler extends EditorActionHandler {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null) {
       if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       return;
     }
@@ -62,17 +62,15 @@ public class EndHandler extends EditorActionHandler {
 
     if (file == null) {
       if (myOriginalHandler != null){
-        myOriginalHandler.execute(editor, dataContext);
+        myOriginalHandler.execute(editor, caret, dataContext);
       }
       return;
     }
 
     final EditorNavigationDelegate[] extensions = EditorNavigationDelegate.EP_NAME.getExtensions();
-    if (extensions != null) {
-      for (EditorNavigationDelegate delegate : extensions) {
-        if (delegate.navigateToLineEnd(editor, dataContext) == EditorNavigationDelegate.Result.STOP) {
-          return;
-        }
+    for (EditorNavigationDelegate delegate : extensions) {
+      if (delegate.navigateToLineEnd(editor, dataContext) == EditorNavigationDelegate.Result.STOP) {
+        return;
       }
     }
 
@@ -84,7 +82,7 @@ public class EndHandler extends EditorActionHandler {
     if (caretOffset < length) {
       final int offset1 = CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t");
       if (offset1 < 0 || chars.charAt(offset1) == '\n' || chars.charAt(offset1) == '\r') {
-        int offset2 = CharArrayUtil.shiftForward(chars, offset1 + 1, " \t");
+        final int offset2 = CharArrayUtil.shiftForward(chars, offset1 + 1, " \t");
         boolean isEmptyLine = offset2 >= length || chars.charAt(offset2) == '\n' || chars.charAt(offset2) == '\r';
         if (isEmptyLine) {
 
@@ -108,7 +106,7 @@ public class EndHandler extends EditorActionHandler {
                     return;
                   }
                   editor.getSelectionModel().removeSelection();
-                  EditorModificationUtil.insertStringAtCaret(editor, lineIndent);
+                  document.replaceString(offset1 + 1, offset2, lineIndent);
                 }
               }
               else {
@@ -136,7 +134,7 @@ public class EndHandler extends EditorActionHandler {
     }
 
     if (myOriginalHandler != null){
-      myOriginalHandler.execute(editor, dataContext);
+      myOriginalHandler.execute(editor, caret, dataContext);
     }
   }
 }

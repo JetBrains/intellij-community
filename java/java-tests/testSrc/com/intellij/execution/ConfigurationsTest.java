@@ -9,6 +9,7 @@ import com.intellij.execution.junit.*;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.module.Module;
@@ -135,8 +136,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     JUnitConfiguration configuration = createConfiguration(testA);
     JavaParameters parameters = checkCanRun(configuration);
     CHECK.empty(parameters.getVMParametersList().getList());
+    final SegmentedOutputStream notifications = new SegmentedOutputStream(System.out);
     assertTrue(JUnitStarter.checkVersion(parameters.getProgramParametersList().getArray(),
-                                         new SegmentedOutputStream(System.out)));
+                                         new PrintStream(notifications)));
     assertTrue(parameters.getProgramParametersList().getList().contains(testA.getQualifiedName()));
     assertEquals(JUnitStarter.class.getName(), parameters.getMainClass());
     assertEquals(myJdk.getHomeDirectory().getPresentableUrl(), parameters.getJdkPath());
@@ -426,7 +428,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     if (state instanceof TestPackage) {
       @SuppressWarnings("UnusedDeclaration")
       final JavaParameters parameters = ((TestPackage)state).getJavaParameters();
-      ((TestPackage)state).findTests();
+      final SearchForTestsTask task = ((TestPackage)state).createSearchingForTestsTask();
+      assertNotNull(task);
+      task.startSearch();
     }
     try {
       configuration.checkConfiguration();

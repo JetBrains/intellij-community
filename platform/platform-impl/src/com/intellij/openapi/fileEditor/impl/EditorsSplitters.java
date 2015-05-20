@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -42,8 +41,10 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdePanePanel;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
@@ -58,8 +59,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.io.File;
 import java.util.*;
@@ -80,7 +79,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private static final EditorEmptyTextPainter ourPainter = ServiceManager.getService(EditorEmptyTextPainter.class);
 
   private EditorWindow myCurrentWindow;
-  final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
+  private final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
 
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
@@ -95,7 +94,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
-    setTransferHandler(new MyTransferHandler());
     clear();
 
     if (createOwnDockableContainer) {
@@ -119,6 +117,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   public void clear() {
+    for (EditorWindow window : myWindows) {
+      window.dispose();
+    }
     removeAll();
     myWindows.clear();
     setCurrentWindow(null);
@@ -155,14 +156,12 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @Override
   protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-
-    if (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0) {
-      g.setColor(UIUtil.isUnderDarcula()? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
-      g.drawLine(0, 0, getWidth(), 0);
-    }
-
     if (showEmptyText()) {
+      Graphics2D gg = IdeBackgroundUtil.withFrameBackground(g, this);
+      super.paintComponent(gg);
+      g.setColor(UIUtil.isUnderDarcula() ? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
+      g.drawLine(0, 0, getWidth(), 0);
+
       ourPainter.paintEmptyText(this, g);
     }
   }
@@ -457,6 +456,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   private void setCurrentWindow(@Nullable final EditorWindow currentWindow) {
+    if (currentWindow != null && !myWindows.contains(currentWindow)) {
+      throw new IllegalArgumentException(currentWindow + " is not a member of this container");
+    }
     myCurrentWindow = currentWindow;
   }
 
@@ -653,6 +655,21 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
+  void addWindow(EditorWindow window) {
+    myWindows.add(window);
+  }
+
+  void removeWindow(EditorWindow window) {
+    myWindows.remove(window);
+    if (myCurrentWindow == window) {
+      myCurrentWindow = null;
+    }
+  }
+
+  boolean containsWindow(EditorWindow window) {
+    return myWindows.contains(window);
+  }
+
   //---------------------------------------------------------
 
   public EditorWithProviderComposite[] getEditorsComposites() {
@@ -768,24 +785,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
-  private final class MyTransferHandler extends TransferHandler {
-    private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
-
-    @Override
-    public boolean importData(JComponent comp, Transferable t) {
-      if (myFileDropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-        myFileDropHandler.handleDrop(t, myManager.getProject(), myCurrentWindow);
-        return true;
-      }
-      return false;
-    }
-
-    @Override
-    public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
-      return myFileDropHandler.canHandleDrop(transferFlavors);
-    }
-  }
-
   private abstract static class ConfigTreeReader<T> {
     @Nullable
     public T process(@Nullable Element element, @Nullable T context) {
@@ -847,8 +846,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         try {
           final FileEditorManagerImpl fileEditorManager = getManager();
           Element historyElement = file.getChild(HistoryEntry.TAG);
-          VirtualFile virtualFile = HistoryEntry.getVirtualFile(historyElement);
-          Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+          final VirtualFile virtualFile = HistoryEntry.getVirtualFile(historyElement);
+          Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
+            @Override
+            public Document compute() {
+              return virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null;
+            }
+          });
           final HistoryEntry entry = new HistoryEntry(fileEditorManager.getProject(), historyElement);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
@@ -889,7 +893,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           public void run() {
             JPanel panel = new JPanel(new BorderLayout());
             panel.setOpaque(false);
-            Splitter splitter = new Splitter(orientation, proportion, 0.1f, 0.9f);
+            Splitter splitter = new OnePixelSplitter(orientation, proportion, 0.1f, 0.9f);
             panel.add(splitter, BorderLayout.CENTER);
             splitter.setFirstComponent(firstComponent);
             splitter.setSecondComponent(secondComponent);

@@ -250,7 +250,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     final PsiPackageStatement packageStatement = javaFile.getPackageStatement();
     final PsiElement elementToHighlight = packageStatement != null ? packageStatement : file;
 
-    final boolean required = isJavaDocRequired(aPackage);
+    final boolean required = aPackage != null && isJavaDocRequired(aPackage);
     if (docComment != null) {
       if (IGNORE_DEPRECATED && docComment.findTagByName("deprecated") != null) {
         return null;
@@ -949,7 +949,8 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     return options.REQUIRED_TAGS.contains(tag);
   }
 
-  private boolean isJavaDocRequired(PsiModifierListOwner psiElement) {
+  private boolean isJavaDocRequired(@NotNull final PsiModifierListOwner element) {
+    PsiModifierListOwner psiElement = element;
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     int actualAccess = getAccessNumber(refUtil.getAccessModifier(psiElement));
     if (psiElement instanceof PsiPackage) {

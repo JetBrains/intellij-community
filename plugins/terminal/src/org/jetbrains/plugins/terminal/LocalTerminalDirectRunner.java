@@ -89,7 +89,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
     Map<String, String> envs = new HashMap<String, String>(System.getenv());
     envs.put("TERM", "xterm-256color");
-    EncodingEnvironmentUtil.fixDefaultEncodingIfMac(envs, getProject());
+    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
     try {
       return PtyProcess.exec(getCommand(), envs, directory != null ? directory : currentProjectFolder());
     }
@@ -117,6 +117,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   protected TtyConnector createTtyConnector(PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset);
+  }
+
+  @Override
+  public String runningTargetName() {
+    return "Local Terminal";
   }
 
   @Override

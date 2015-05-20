@@ -15,147 +15,165 @@
  */
 package com.intellij.embedding;
 
-import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerBase;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class IndentEatingLexer extends MasqueradingLexer {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ *  This masquerading lexer cuts out `myIndent` spaces/tabs after each newline in the text passed to this lexer.
+ *  The string without these parts (indents) is then passed to a delegate lexer to lex correctly without these indents.
+ *  The production of this lexer can also be effectively used in {@link com.intellij.embedding.MasqueradingPsiBuilderAdapter}
+ *  to parse the text without these indents.
+ */
+public class IndentEatingLexer extends MasqueradingLexer.SmartDelegate {
+  private final int myIndent;
+  @NotNull
+  private CharSequence myBuffer;
+  @NotNull
+  private List<DeletedIndentInfo> myDeletions;
+
+  private int myCurrentDelta;
+  private int myTotalDelta;
+  private int myCurrentDelIndex;
+
   public IndentEatingLexer(@NotNull Lexer delegate, int baseIndent) {
-    super(new MyLexer(delegate, baseIndent));
+    super(delegate);
+    myIndent = baseIndent;
+    myBuffer = "";
+    myDeletions = Collections.emptyList();
   }
 
-
-  @Nullable
   @Override
-  public IElementType getMasqueTokenType() {
-    if (isForeignToken()) {
-      return null;
-    }
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    myBuffer = buffer;
+    myDeletions = findAllDeletions(buffer, startOffset, endOffset);
 
-    return getTokenType();
+    myCurrentDelta = 0;
+    myTotalDelta = 0;
+    if (myDeletions.isEmpty()) {
+      super.start(buffer, startOffset, endOffset, initialState);
+      return;
+    }
+    CharSequence newSequence = deleteIndents(buffer, startOffset, endOffset);
+
+    super.start(newSequence, 0, newSequence.length(), initialState);
+
+    myTotalDelta = startOffset;
+    myCurrentDelIndex = 0;
+    updateDeltas();
   }
 
-  @Nullable
+  private void updateDeltas() {
+    myTotalDelta += myCurrentDelta;
+    myCurrentDelta = 0;
+    while (myCurrentDelIndex < myDeletions.size()) {
+      final DeletedIndentInfo info = myDeletions.get(myCurrentDelIndex);
+      if (info.getShrunkPos() >= super.getTokenStart()
+        && info.getShrunkPos() <= super.getTokenEnd()) {
+        myCurrentDelta += info.getLength();
+        myCurrentDelIndex++;
+      }
+      else {
+        break;
+      }
+    }
+  }
+
   @Override
-  public String getMasqueTokenText() {
-    if (getMasqueTokenType() == null) {
-      return null;
-    }
-
-    return getTokenText();
+  public void advance() {
+    super.advance();
+    updateDeltas();
   }
 
-  public boolean isForeignToken() {
-    return myDelegate.getTokenType() == TokenType.DUMMY_HOLDER;
-  }
-
-  @Nullable
   @Override
-  public IElementType getTokenType() {
-    final IElementType type = myDelegate.getTokenType();
-    if (type == TokenType.DUMMY_HOLDER) {
-      return TokenType.WHITE_SPACE;
-    }
-    return type;
+  public int getTokenStart() {
+    return super.getTokenStart() + myTotalDelta;
   }
 
-  private static class MyLexer extends LayeredLexer {
+  @Override
+  public int getTokenEnd() {
+    return super.getTokenEnd() + myTotalDelta + myCurrentDelta;
+  }
 
-    public MyLexer(Lexer baseLexer, int indent) {
-      super(baseLexer);
+  @NotNull
+  @Override
+  public String getTokenText() {
+    return myBuffer.subSequence(getTokenStart(), getTokenEnd()).toString();
+  }
 
-      registerLayer(new MyWhiteSpaceLexer(indent), TokenType.WHITE_SPACE);
+  @NotNull
+  private List<DeletedIndentInfo> findAllDeletions(@NotNull CharSequence buffer, int startOffset, int endOffset) {
+    List<DeletedIndentInfo> result = new ArrayList<DeletedIndentInfo>();
+
+    int offset = startOffset;
+    while (offset < endOffset) {
+      final int newline = StringUtil.indexOf(buffer, '\n', offset, endOffset);
+      if (newline < 0) {
+        break;
+      }
+      int charsToDelete = 0;
+
+      char c;
+      while (charsToDelete < myIndent
+          && newline + charsToDelete + 1 < endOffset
+          && (c = buffer.charAt(newline + charsToDelete + 1)) != '\n'
+          && Character.isWhitespace(c)) {
+        charsToDelete++;
+      }
+
+      if (charsToDelete > 0) {
+        result.add(new DeletedIndentInfo(newline + 1, charsToDelete));
+      }
+      offset = newline + charsToDelete + 1;
     }
 
-    private class MyWhiteSpaceLexer extends LexerBase {
-      int myIndent;
+    return result;
+  }
 
-      CharSequence myBuffer;
-      int myState;
-      int myStart;
-      int myEnd;
+  @NotNull
+  private CharSequence deleteIndents(@NotNull CharSequence buffer, int startOffset, int endOffset) {
+    StringBuilder result = new StringBuilder();
 
-      int[] myPositions = new int[0];
+    int offset = startOffset;
+    for (DeletedIndentInfo deletion : myDeletions) {
+      result.append(buffer.subSequence(offset, deletion.getRealPos()));
+      deletion.setShrunkPos(result.length());
+      offset = deletion.getRealPos() + deletion.getLength();
+    }
+    result.append(buffer.subSequence(offset, endOffset));
 
-      public MyWhiteSpaceLexer(int indent) {
-        myIndent = indent;
-      }
+    return result.toString();
+  }
 
-      @Override
-      public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
-        myBuffer = buffer;
-        myState = initialState;
-        myStart = startOffset;
-        myEnd = endOffset;
+  private static class DeletedIndentInfo {
+    private final int realPos;
+    private final int length;
+    private int shrunkPos;
 
-        initPositions();
-      }
+    public DeletedIndentInfo(int realPos, int length) {
+      this.realPos = realPos;
+      this.length = length;
+      shrunkPos = -1;
+    }
 
-      private void initPositions() {
-        final String s = myBuffer.subSequence(myStart, myEnd).toString();
-        // next after newline
-        final int i = s.lastIndexOf('\n') + 1;
+    public void setShrunkPos(int shrunkPos) {
+      this.shrunkPos = shrunkPos;
+    }
 
-        if (i == 0 || i == s.length()) {
-          myPositions = new int[]{myStart, myEnd};
-        }
-        else if (s.length() - i > myIndent) {
-          myPositions = new int[]{myStart, myStart + i, myStart + i + myIndent, myEnd};
-        }
-        else {
-          myPositions = new int[]{myStart, myStart + i, myEnd};
-        }
-      }
+    public int getRealPos() {
+      return realPos;
+    }
 
-      @Override
-      public int getState() {
-        return myState;
-      }
+    public int getLength() {
+      return length;
+    }
 
-      @Nullable
-      @Override
-      public IElementType getTokenType() {
-        if (myState + 1 >= myPositions.length) {
-          return null;
-        }
-        if (myState == 1) {
-          return TokenType.DUMMY_HOLDER;
-        }
-        return TokenType.WHITE_SPACE;
-      }
-
-      @Override
-      public int getTokenStart() {
-        return myPositions[myState];
-      }
-
-      @Override
-      public int getTokenEnd() {
-        if (myState + 1 >= myPositions.length) {
-          return myEnd;
-        }
-        return myPositions[myState + 1];
-      }
-
-      @Override
-      public void advance() {
-        myState++;
-      }
-
-      @NotNull
-      @Override
-      public CharSequence getBufferSequence() {
-        return myBuffer;
-      }
-
-      @Override
-      public int getBufferEnd() {
-        return myEnd;
-      }
+    public int getShrunkPos() {
+      return shrunkPos;
     }
   }
 }

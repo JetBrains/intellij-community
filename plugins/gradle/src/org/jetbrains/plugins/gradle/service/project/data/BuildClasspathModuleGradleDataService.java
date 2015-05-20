@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.service.project.data;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -44,10 +45,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
@@ -55,6 +53,8 @@ import java.util.Set;
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public class BuildClasspathModuleGradleDataService implements ProjectDataService<BuildScriptClasspathData, Module> {
+
+  private static final Logger LOG = Logger.getInstance(BuildClasspathModuleGradleDataService.class);
 
   @NotNull
   @Override
@@ -85,7 +85,7 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
       @Override
       protected Set<String> create(String externalProjectPath) {
         GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(externalProjectPath);
-        if (settings == null || settings.getDistributionType() == null) return null;
+        if (settings == null || settings.getDistributionType() == null) return Collections.emptySet();
 
         final Set<String> gradleSdkLibraries = ContainerUtil.newLinkedHashSet();
         File gradleHome =
@@ -116,7 +116,9 @@ public class BuildClasspathModuleGradleDataService implements ProjectDataService
 
         String externalModulePath = moduleDataNode.getData().getLinkedExternalProjectPath();
         GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedExternalProjectPath);
-        if (settings == null || settings.getDistributionType() == null) continue;
+        if (settings == null || settings.getDistributionType() == null) {
+          LOG.warn("Gradle SDK distribution type was not configured for the project at " + linkedExternalProjectPath);
+        }
 
         final Set<String> buildClasspath = ContainerUtil.newLinkedHashSet();
         BuildScriptClasspathData buildScriptClasspathData = node.getData();

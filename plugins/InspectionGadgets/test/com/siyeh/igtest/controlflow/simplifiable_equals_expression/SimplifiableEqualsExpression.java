@@ -3,19 +3,19 @@ package com.siyeh.igtest.controlflow.simplifiable_equals_expression;
 public class SimplifiableEqualsExpression {
 
   void foo(String namespace) {
-    if (namespace != null && namespace.equals("")) {
+    if (<warning descr="Unnecessary 'null' check before 'equals()' call">namespace != null</warning> && namespace.equals("")) {
       return;
     }
   }
 
   void bar(String namespace) {
-    if (namespace == null || !namespace.equals("")) {
+    if (<warning descr="Unnecessary 'null' check before 'equals()' call">namespace == null</warning> || !namespace.equals("")) {
       return;
     }
   }
 
   void baz(Integer i) {
-    if (i != null && i.equals(1)) {
+    if (<warning descr="Unnecessary 'null' check before 'equals()' call">i != null</warning> && i.equals(1)) {
       return;
     }
   }
@@ -27,7 +27,7 @@ public class SimplifiableEqualsExpression {
   }
 
   void bas(String s) {
-    if (s != null && s.equalsIgnoreCase("yes")) {
+    if (<warning descr="Unnecessary 'null' check before 'equalsIgnoreCase()' call">s != null</warning> && s.equalsIgnoreCase("yes")) {
       return;
     }
   }

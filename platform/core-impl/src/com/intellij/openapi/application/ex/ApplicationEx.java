@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,21 @@ public interface ApplicationEx extends Application {
   boolean isDoNotSave();
 
   /**
+   * Executes {@code process} in a separate thread in the application thread pool (see {@link #executeOnPooledThread(Runnable)}).
+   * The process is run inside read action (see {@link #runReadAction(Runnable)})
+   * It is guaranteed that no other read or write action is run before the process start running.
+   * If the process is running for too long, a progress window shown with {@code progressTitle} and a button with {@code cancelText}.
+   * This method can be called from the EDT only.
+   * @return true if process run successfully and was not canceled.
+   */
+  boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable Project project,
+                                                          @NotNull String progressTitle,
+                                                          boolean canBeCanceled,
+                                                          String cancelText,
+                                                          JComponent parentComponent,
+                                                          @NotNull Runnable process);
+
+  /**
    * @param force if true, no additional confirmations will be shown. The application is guaranteed to exit
    * @param exitConfirmed if true, suppresses any shutdown confirmation. However, if there are any background processes or tasks running,
    *                      a corresponding confirmation will be shown with the possibility to cancel the operation
@@ -112,7 +127,7 @@ public interface ApplicationEx extends Application {
   void runEdtSafeAction(@NotNull Runnable runnable);
 
   /**
-   * Grab the lock and run the action, in a non-blocking fashion
+   * Tries to acquire the read lock and run the {@code action}
    *
    * @return true if action was run while holding the lock, false if was unable to get the lock and action was not run
    */

@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.CharArrayUtil;
 import groovy.lang.GroovyObject;
+import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
@@ -62,10 +63,14 @@ import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
+import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -330,6 +335,24 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final Collection<TaskData> tasks = ContainerUtil.newArrayList();
     final String moduleConfigPath = ideModule.getData().getLinkedExternalProjectPath();
 
+    ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
+
+    if (externalProject != null) {
+      for (ExternalTask task : externalProject.getTasks().values()) {
+        String taskName = task.getName();
+        if (taskName.trim().isEmpty() || isIdeaTask(taskName)) {
+          continue;
+        }
+        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, moduleConfigPath, task.getDescription());
+        taskData.setGroup(task.getGroup());
+        ideModule.createChild(ProjectKeys.TASK, taskData);
+        taskData.setInherited(StringUtil.equals(task.getName(), task.getQName()));
+        tasks.add(taskData);
+      }
+
+      return tasks;
+    }
+
     for (GradleTask task : gradleModule.getGradleProject().getTasks()) {
       String taskName = task.getName();
       if (taskName == null || taskName.trim().isEmpty() || isIdeaTask(taskName)) {
@@ -345,15 +368,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @NotNull
   @Override
-  public Collection<TaskData> filterRootProjectTasks(@NotNull List<TaskData> allTasks) {
-    return allTasks;
-  }
-
-  @NotNull
-  @Override
   public Set<Class> getExtraProjectModelClasses() {
-    return ContainerUtil.<Class>set(
-      GradleBuild.class, ExternalProject.class, ModuleExtendedModel.class, BuildScriptClasspathModel.class);
+    Set<Class> result = ContainerUtil.<Class>set(GradleBuild.class, ExternalProject.class, ModuleExtendedModel.class);
+    if (!ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID) || !resolverCtx.isPreviewMode()) {
+      result.add(BuildScriptClasspathModel.class);
+    }
+    return result;
   }
 
   @NotNull
@@ -365,7 +385,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
       ModelBuildScriptClasspathBuilderImpl.class,
-      GsonBuilder.class
+      GsonBuilder.class,
+      ShortTypeHandling.class
     );
   }
 
@@ -423,7 +444,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       final String[] lines = {
         "gradle.taskGraph.beforeTask { Task task ->",
         "    if (task instanceof JavaForkOptions) {",
-        "        task.jvmArgs '" + debuggerSetup.trim() + '\'',
+        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib') && !it?.startsWith('-Xrunjdwp')}",
+        "        jvmArgs << '" + debuggerSetup.trim() + '\'',
+        "        task.jvmArgs jvmArgs",
         "    }" +
         "}",
       };
@@ -472,6 +495,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(EmptyModuleType.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ProjectImportAction.class));
     ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(Init.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(org.slf4j.Logger.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(Log4jLoggerFactory.class));
     for (String entry : additionalEntries) {
       classPath.add(entry);
     }
@@ -547,12 +572,59 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
     for (IdeaSourceDirectory dir : dirs) {
       ExternalSystemSourceType dirSourceType = type;
-      if (dir.isGenerated() && !dirSourceType.isGenerated()) {
-        final ExternalSystemSourceType generatedType =
-          ExternalSystemSourceType.from(dirSourceType.isTest(), dir.isGenerated(), dirSourceType.isResource(), dirSourceType.isExcluded());
-        dirSourceType = generatedType != null ? generatedType : dirSourceType;
+      try {
+        if (dir.isGenerated() && !dirSourceType.isGenerated()) {
+          final ExternalSystemSourceType generatedType = ExternalSystemSourceType.from(
+            dirSourceType.isTest(), dir.isGenerated(), dirSourceType.isResource(), dirSourceType.isExcluded()
+          );
+          dirSourceType = generatedType != null ? generatedType : dirSourceType;
+        }
+      }
+      catch (UnsupportedMethodException e) {
+        // org.gradle.tooling.model.idea.IdeaSourceDirectory.isGenerated method supported only since Gradle 2.2
+        LOG.warn(e.getMessage());
+        printToolingProxyDiagnosticInfo(dir);
+      }
+      catch (Throwable e) {
+        LOG.debug(e);
+        printToolingProxyDiagnosticInfo(dir);
       }
       contentRoot.storePath(dirSourceType, dir.getDirectory().getAbsolutePath());
+    }
+  }
+
+  private static void printToolingProxyDiagnosticInfo(@Nullable Object obj) {
+    if (!LOG.isDebugEnabled() || obj == null) return;
+
+    LOG.debug(String.format("obj: %s", obj));
+    final Class<?> aClass = obj.getClass();
+    LOG.debug(String.format("obj class: %s", aClass));
+    LOG.debug(String.format("classloader: %s", aClass.getClassLoader()));
+    for (Method m : aClass.getDeclaredMethods()) {
+      LOG.debug(String.format("obj m: %s", m));
+    }
+
+    if (obj instanceof Proxy) {
+      try {
+        final Field hField = ReflectionUtil.findField(obj.getClass(), null, "h");
+        hField.setAccessible(true);
+        final Object h = hField.get(obj);
+        final Field delegateField = ReflectionUtil.findField(h.getClass(), null, "delegate");
+        delegateField.setAccessible(true);
+        final Object delegate = delegateField.get(h);
+        LOG.debug(String.format("delegate: %s", delegate));
+        LOG.debug(String.format("delegate class: %s", delegate.getClass()));
+        LOG.debug(String.format("delegate classloader: %s", delegate.getClass().getClassLoader()));
+        for (Method m : delegate.getClass().getDeclaredMethods()) {
+          LOG.debug(String.format("delegate m: %s", m));
+        }
+      }
+      catch (NoSuchFieldException e) {
+        LOG.debug(e);
+      }
+      catch (IllegalAccessException e) {
+        LOG.debug(e);
+      }
     }
   }
 
@@ -641,7 +713,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
       if (unresolved) {
         // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
-        libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
+        libraryName = binaryPath.getPath().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
         int i = libraryName.indexOf(' ');
         if (i >= 0) {
           i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
@@ -668,6 +740,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           if (matcher.matches()) {
             final String classifier = matcher.group(1);
             libraryName += (":" + classifier);
+          }
+          else {
+            final String artifactId = StringUtil.trimEnd(StringUtil.trimEnd(libraryFileName, moduleVersion.getVersion()), "-");
+            libraryName = String.format("%s:%s:%s",
+                                        moduleVersion.getGroup(),
+                                        artifactId,
+                                        moduleVersion.getVersion());
           }
         }
       }

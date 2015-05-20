@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.javaee;
 
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -28,8 +28,7 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class ResourceRegistrarImpl implements ResourceRegistrar {
-
-  private final Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> myResources = new HashMap<String, Map<String, ExternalResourceManagerExImpl.Resource>>();
+  private final Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> myResources = new THashMap<String, Map<String, ExternalResourceManagerExImpl.Resource>>();
   private final List<String> myIgnored = new ArrayList<String>();
 
   @Override
@@ -43,7 +42,7 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
   }
 
   public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, @Nullable Class klass, @Nullable ClassLoader classLoader) {
-    final Map<String, ExternalResourceManagerExImpl.Resource> map = ExternalResourceManagerExImpl.getMap(myResources, version, true);
+    Map<String, ExternalResourceManagerExImpl.Resource> map = ExternalResourceManagerExImpl.getMap(myResources, version, true);
     assert map != null;
     resource = new String(resource); // enforce copying; todo remove after final migration to JDK 1.7
     map.put(resource, new ExternalResourceManagerExImpl.Resource(fileName, klass, classLoader));
@@ -75,10 +74,12 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
     addStdResource(resource, version, ExternalResourceManagerEx.STANDARD_SCHEMAS + fileName, clazz);
   }
 
+  @NotNull
   public Map<String, Map<String, ExternalResourceManagerExImpl.Resource>> getResources() {
     return myResources;
   }
 
+  @NotNull
   public List<String> getIgnored() {
     return myIgnored;
   }

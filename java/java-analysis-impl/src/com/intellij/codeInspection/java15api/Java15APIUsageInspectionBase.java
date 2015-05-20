@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package com.intellij.codeInspection.java15api;
 
 import com.intellij.ToolExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -30,6 +32,7 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -42,7 +45,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.THashSet;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +53,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.ref.Reference;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -106,16 +109,17 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     return result;
   }
 
-  private static void loadForbiddenApi(@NonNls String fileName, Set<String> set) {
+  private static void loadForbiddenApi(String fileName, Set<String> set) {
+    URL resource = Java15APIUsageInspectionBase.class.getResource(fileName);
+    if (resource == null) {
+      Logger.getInstance(Java15APIUsageInspectionBase.class).warn("not found: " + fileName);
+      return;
+    }
+
     try {
-      Class<?> aClass = Java15APIUsageInspectionBase.class;
-      BufferedReader reader = new BufferedReader(new InputStreamReader(aClass.getResourceAsStream(fileName), CharsetToolkit.UTF8_CHARSET));
+      BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), CharsetToolkit.UTF8_CHARSET));
       try {
-        do {
-          String line = reader.readLine();
-          if (line == null) break;
-          set.add(line);
-        } while(true);
+        set.addAll(FileUtil.loadLines(reader));
       }
       finally {
         reader.close();
@@ -296,6 +300,32 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
       }
     }
 
+    @Override
+    public void visitMethod(PsiMethod method) {
+      super.visitMethod(method);
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE);
+      if (annotation != null) {
+        final Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
+        if (module != null) {
+          final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
+          final PsiMethod[] methods = method.findSuperMethods();
+          for (PsiMethod superMethod : methods) {
+            if (superMethod instanceof PsiCompiledElement) {
+              if (!isForbiddenApiUsage(superMethod, languageLevel)) {
+                return;
+              }
+            }
+            else {
+              return;
+            }
+          }
+          if (methods.length > 0) {
+            registerError(annotation.getNameReferenceElement(), languageLevel);
+          }
+        }
+      }
+    }
+
     private LanguageLevel getEffectiveLanguageLevel(Module module) {
       if (myEffectiveLanguageLevel != null) return myEffectiveLanguageLevel;
       return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
@@ -303,6 +333,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
 
     private void registerError(PsiJavaCodeReferenceElement reference, LanguageLevel api) {
       if (reference != null && isInProject(reference)) {
+        //noinspection DialogTitleCapitalization
         myHolder.registerProblem(reference, InspectionsBundle.message("inspection.1.5.problem.descriptor", getShortName(api)));
       }
     }
@@ -354,8 +385,11 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     return nextForbiddenApi != null && isForbiddenSignature(signature, nextLanguageLevel, nextForbiddenApi);
   }
 
+  /**
+   * please leave public for JavaAPIUsagesInspectionTest#testCollectSinceApiUsages
+   */
   @Nullable
-  private static String getSignature(@Nullable PsiMember member) {
+  public static String getSignature(@Nullable PsiMember member) {
     if (member instanceof PsiClass) {
       return ((PsiClass)member).getQualifiedName();
     }
