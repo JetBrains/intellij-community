@@ -43,7 +43,7 @@ import java.util.*;
 
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
-  private final DfaValueFactory myFactory;
+  protected final DfaValueFactory myFactory;
 
   private final List<EqClass> myEqClasses;
   private final Stack<DfaValue> myStack;
@@ -587,7 +587,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return applyRelationCondition((DfaRelationValue)dfaCond);
   }
 
-  private boolean applyRelationCondition(DfaRelationValue dfaRelation) {
+  protected boolean applyRelationCondition(DfaRelationValue dfaRelation) {
     DfaValue dfaLeft = dfaRelation.getLeftOperand();
     DfaValue dfaRight = dfaRelation.getRightOperand();
     if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;

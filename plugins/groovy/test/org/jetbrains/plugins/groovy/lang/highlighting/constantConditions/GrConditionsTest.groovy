@@ -108,4 +108,10 @@ def test(a) {
 }
 '''
   }
+
+  void "test constant value conditions"() { doTest() }
+
+  void "test unknown value conditions"() { doTest() }
+
+  void "test boolean variable conditions"() { doTest() }
 }

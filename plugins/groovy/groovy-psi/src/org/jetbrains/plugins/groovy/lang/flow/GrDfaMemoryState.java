@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.flow;
 import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.DfaVariableState;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtil;
 
 import java.math.BigDecimal;
@@ -53,10 +54,33 @@ public class GrDfaMemoryState extends DfaMemoryStateImpl {
     }
     else if (value instanceof DfaVariableValue) {
       final DfaVariableValue variableValue = (DfaVariableValue)value;
+
       final DfaConstValue constantValue = getConstantValue(variableValue);
       if (constantValue != null) {
         return coerceTo(to, constantValue);
       }
+
+      final DfaPsiType type = variableValue.getTypeValue() != null ? variableValue.getTypeValue().getDfaType() : null;
+      if (type != null && type.getPsiType().equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+        final boolean notNull = isNotNull(variableValue);
+        final DfaConstValue.Factory constFactory = myFactory.getConstFactory();
+        final DfaRelationValue.Factory relationFactory = myFactory.getRelationFactory();
+        final DfaValue dfaTrue = myFactory.getBoxedFactory().createBoxed(
+          constFactory.getTrue()
+        );
+        applyRelationCondition(
+          relationFactory.createRelation(variableValue, dfaTrue, DfaRelation.EQ, !to)
+        );
+        if (notNull) {
+          final DfaValue dfaFalse = myFactory.getBoxedFactory().createBoxed(
+            constFactory.getFalse()
+          );
+          applyRelationCondition(
+            relationFactory.createRelation(variableValue, dfaFalse, DfaRelation.EQ, to)
+          );  
+        }
+      }
+
       final GrDfaVariableState newState = getVariableState(variableValue).withTruth(to ? TRUE : FALSE);
       if (newState != null) {
         setVariableState(variableValue, newState);

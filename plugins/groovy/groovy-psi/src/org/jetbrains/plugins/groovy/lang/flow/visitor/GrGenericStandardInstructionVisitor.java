@@ -265,7 +265,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     final GrDfaMemoryState state = (GrDfaMemoryState)memoryState;
     final DfaValue value = state.pop();
     final GrDfaConstValueFactory constFactory = myFactory.getConstFactory();
-    if (value == constFactory.getFalse() || value == constFactory.getTrue() || value == DfaUnknownValue.getInstance()) {
+    if (value == DfaUnknownValue.getInstance()) {
       state.push(value);
       return nextInstruction(instruction, state);
     }
