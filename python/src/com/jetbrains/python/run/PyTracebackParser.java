@@ -29,12 +29,9 @@ import java.util.regex.Pattern;
  */
 public class PyTracebackParser extends TraceBackParser {
 
-  @NotNull
-  private static final Pattern PATTERN = Pattern.compile("File \"([^\"]+)\", line (\\d+)");
-
 
   public PyTracebackParser() {
-    super(PATTERN);
+    super(Pattern.compile("File \"([^\"]+)\", line (\\d+)"));
   }
 
   @NotNull
