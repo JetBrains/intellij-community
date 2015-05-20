@@ -28,17 +28,14 @@ public class SimpleDiffPanel extends DiffPanelBase {
   private static final String GOOD_CONTENT = "GoodContent";
   private static final String ERROR_CONTENT = "ErrorContent";
 
-  @NotNull private final JComponent myEditorsPanel;
-
   public SimpleDiffPanel(@NotNull JComponent editorPanel,
                          @NotNull DataProvider dataProvider,
                          @NotNull DiffContext context) {
     super(context.getProject(), dataProvider, context);
-    myEditorsPanel = editorPanel;
 
     JPanel centerPanel = new JPanel(new BorderLayout());
     centerPanel.add(myNotificationsPanel, BorderLayout.NORTH);
-    centerPanel.add(myEditorsPanel, BorderLayout.CENTER);
+    centerPanel.add(editorPanel, BorderLayout.CENTER);
 
     myContentPanel.add(centerPanel, GOOD_CONTENT);
     myContentPanel.add(DiffUtil.createMessagePanel("Error"), ERROR_CONTENT);

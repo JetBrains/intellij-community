@@ -135,7 +135,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
     List<JComponent> titles = DiffUtil.createTextTitles(myRequest, ContainerUtil.list(myEditor, myEditor));
     OnesideContentPanel contentPanel = new OnesideContentPanel(titles, myEditor);
 
-    myPanel = new OnesideDiffPanel(myProject, contentPanel, myEditor, this, myContext);
+    myPanel = new OnesideDiffPanel(myProject, contentPanel, this, myContext);
 
     myFoldingModel = new MyFoldingModel(myEditor, this);
 
