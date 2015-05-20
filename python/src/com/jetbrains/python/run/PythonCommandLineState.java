@@ -150,6 +150,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     else {
       consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectory()));
     }
+    consoleView.addMessageFilter(new UrlFilter()); // Url filter is always nice to have
   }
 
   private TextConsoleBuilder createConsoleBuilder(Project project) {
