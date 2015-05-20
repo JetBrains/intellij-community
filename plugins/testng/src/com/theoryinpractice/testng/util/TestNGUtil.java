@@ -437,13 +437,12 @@ public class TestNGUtil {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
         final Collection<PsiClass> set = new LinkedHashSet<PsiClass>();
-        PsiManager manager = PsiManager.getInstance(filter.getProject());
-        GlobalSearchScope scope = filter.getScope();
-        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-        scope = projectScope.intersectWith(scope);
-        for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
+        final PsiManager manager = PsiManager.getInstance(filter.getProject());
+        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
+        final GlobalSearchScope scope = projectScope.intersectWith(filter.getScope());
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
               if (filter.isAccepted(psiClass)) {
                 if (indicator != null) {
                   indicator.setText2("Found test class " + psiClass.getQualifiedName());
@@ -451,8 +450,8 @@ public class TestNGUtil {
                 set.add(psiClass);
               }
             }
-          });
-        }
+          }
+        });
         holder[0] = set.toArray(new PsiClass[set.size()]);
       }
     };
