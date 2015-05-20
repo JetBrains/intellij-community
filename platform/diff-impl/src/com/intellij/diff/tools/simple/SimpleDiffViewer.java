@@ -203,7 +203,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
           public CompareData compute() {
             List<LineFragment> fragments = Collections.<LineFragment>singletonList(new LineFragmentImpl(0, 0, 0, getLineCount(document),
                                                                                                         0, 0, 0, document.getTextLength()));
-            return new CompareData(fragments, false, 0, document.getModificationStamp());
+            return new CompareData(fragments, false);
           }
         });
 
@@ -219,7 +219,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
           public CompareData compute() {
             List<LineFragment> fragments = Collections.<LineFragment>singletonList(new LineFragmentImpl(0, getLineCount(document), 0, 0,
                                                                                                         0, document.getTextLength(), 0, 0));
-            return new CompareData(fragments, false, document.getModificationStamp(), 0);
+            return new CompareData(fragments, false);
           }
         });
 
@@ -247,7 +247,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       boolean isEqualContents = (lineFragments == null || lineFragments.isEmpty()) &&
                                 StringUtil.equals(document1.getCharsSequence(), document2.getCharsSequence());
 
-      return apply(new CompareData(lineFragments, isEqualContents, data.getStamp1(), data.getStamp2()));
+      return apply(new CompareData(lineFragments, isEqualContents));
     }
     catch (DiffTooBigException ignore) {
       return applyNotification(DiffNotifications.DIFF_TOO_BIG);
@@ -266,9 +266,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return new Runnable() {
       @Override
       public void run() {
-        if (getEditor1() != null && getEditor1().getDocument().getModificationStamp() != data.getStamp1()) return;
-        if (getEditor2() != null && getEditor2().getDocument().getModificationStamp() != data.getStamp2()) return;
-
         if (myFoldingModel != null) myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
         clearDiffPresentation();
 
@@ -939,14 +936,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private static class CompareData {
     @Nullable private final List<LineFragment> myFragments;
     private final boolean myEqualContent;
-    private final long myStamp1;
-    private final long myStamp2;
 
-    public CompareData(@Nullable List<LineFragment> fragments, boolean equalContent, long stamp1, long stamp2) {
+    public CompareData(@Nullable List<LineFragment> fragments, boolean equalContent) {
       myFragments = fragments;
       myEqualContent = equalContent;
-      myStamp1 = stamp1;
-      myStamp2 = stamp2;
     }
 
     @Nullable
@@ -956,14 +949,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     public boolean isEqualContent() {
       return myEqualContent;
-    }
-
-    public long getStamp1() {
-      return myStamp1;
-    }
-
-    public long getStamp2() {
-      return myStamp2;
     }
   }
 
