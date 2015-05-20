@@ -23,9 +23,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +53,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
+                        @MagicConstant(valuesFromClass = Pass.class)
                         int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
@@ -60,6 +63,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
                         Icon icon,
+                        @MagicConstant(valuesFromClass = Pass.class)
                         int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
@@ -87,6 +91,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
+                        @MagicConstant(valuesFromClass = Pass.class)
                         int updatePass,
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler) {
