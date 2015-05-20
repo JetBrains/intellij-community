@@ -157,9 +157,15 @@ public abstract class DependenciesBuilder {
     return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
   }
 
-  public static void analyzeFileDependencies(PsiFile file, DependencyProcessor processor) {
+  public static void analyzeFileDependencies(@NotNull PsiFile file, @NotNull DependencyProcessor processor) {
+    analyzeFileDependencies(file, processor, DependencyVisitorFactory.VisitorOptions.fromSettings(file.getProject()));
+  }
+
+  public static void analyzeFileDependencies(@NotNull PsiFile file,
+                                             @NotNull DependencyProcessor processor,
+                                             @NotNull DependencyVisitorFactory.VisitorOptions options) {
     file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    file.accept(DependenciesVisitorFactory.getInstance().createVisitor(processor));
+    file.accept(DependencyVisitorFactory.createVisitor(file, processor, options));
     file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, null);
   }
 
