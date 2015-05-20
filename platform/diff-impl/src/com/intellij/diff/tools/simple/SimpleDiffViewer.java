@@ -345,14 +345,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     if (myDiffChanges.isEmpty()) return;
     if (getEditor1() == null || getEditor2() == null) return;
 
-    Side side;
-    if (e.getDocument() == getEditor1().getDocument()) {
-      side = Side.LEFT;
-    }
-    else if (e.getDocument() == getEditor2().getDocument()) {
-      side = Side.RIGHT;
-    }
-    else {
+    Side side = null;
+    if (e.getDocument() == getEditor(Side.LEFT).getDocument()) side = Side.LEFT;
+    if (e.getDocument() == getEditor(Side.RIGHT).getDocument()) side = Side.RIGHT;
+    if (side == null) {
       LOG.warn("Unknown document changed");
       return;
     }
@@ -471,7 +467,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   @CalledInAwt
   private List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
-    EditorEx editor = side.select(getEditor1(), getEditor2());
+    EditorEx editor = getEditor(side);
     if (editor == null) return Collections.emptyList();
 
     final BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -491,7 +487,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @Nullable
   @CalledInAwt
   private SimpleDiffChange getSelectedChange(@NotNull Side side) {
-    EditorEx editor = side.select(getEditor1(), getEditor2());
+    EditorEx editor = getEditor(side);
     if (editor == null) return null;
 
     int caretLine = editor.getCaretModel().getLogicalPosition().line;
@@ -651,7 +647,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     protected boolean isSomeChangeSelected(@NotNull Side side) {
       if (myDiffChanges.isEmpty()) return false;
 
-      Editor editor = side.select(getEditor1(), getEditor2());
+      Editor editor = getEditor(side);
       if (editor == null) return false;
 
       List<Caret> carets = editor.getCaretModel().getAllCarets();
@@ -786,7 +782,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     private AllLinesIterator(@NotNull Side side) {
       mySide = side;
 
-      Editor editor = mySide.select(getEditor1(), getEditor2());
+      Editor editor = getEditor(mySide);
       assert editor != null;
       myDocument = editor.getDocument();
     }
@@ -837,7 +833,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       int line1 = change.getStartLine(mySide);
       int line2 = change.getEndLine(mySide);
 
-      Editor editor = mySide.select(getEditor1(), getEditor2());
+      Editor editor = getEditor(mySide);
       assert editor != null;
       Document document = editor.getDocument();
 

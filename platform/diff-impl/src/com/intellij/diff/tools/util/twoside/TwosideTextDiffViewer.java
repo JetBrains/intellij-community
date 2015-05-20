@@ -254,13 +254,13 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @NotNull
   public EditorEx getCurrentEditor() {
     //noinspection ConstantConditions
-    return getCurrentSide().select(getEditor1(), getEditor2());
+    return getEditor(getCurrentSide());
   }
 
   @NotNull
   public DocumentContent getCurrentContent() {
     //noinspection ConstantConditions
-    return getCurrentSide().select(getActualContent1(), getActualContent2());
+    return getActualContent(getCurrentSide());
   }
 
   @Nullable
@@ -274,6 +274,11 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   }
 
   @Nullable
+  protected EditorEx getEditor(@NotNull Side side) {
+    return side.select(myEditor1, myEditor2);
+  }
+
+  @Nullable
   public DocumentContent getActualContent1() {
     return myActualContent1;
   }
@@ -281,6 +286,11 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
   @Nullable
   public DocumentContent getActualContent2() {
     return myActualContent2;
+  }
+
+  @Nullable
+  protected DocumentContent getActualContent(@NotNull Side side) {
+    return side.select(myActualContent1, myActualContent2);
   }
 
   //
@@ -297,7 +307,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
 
   @CalledInAwt
   protected void scrollToLine(@NotNull Side side, int line) {
-    Editor editor = side.select(getEditor1(), getEditor2());
+    Editor editor = getEditor(side);
     if (editor == null) return;
     DiffUtil.scrollEditor(editor, line, false);
     setCurrentSide(side);
@@ -377,7 +387,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       if (editor != getEditor1() && editor != getEditor2()) return null;
       Side side = Side.fromLeft(editor == getEditor1());
 
-      DocumentContent content = side.select(getActualContent1(), getActualContent2());
+      DocumentContent content = getActualContent(side);
       if (content == null) return null;
 
       int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
@@ -436,7 +446,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       if (myScrollToLine == null) return false;
       Side side = myScrollToLine.first;
       Integer line = myScrollToLine.second;
-      if (side.select(getEditors()) == null) return false;
+      if (getEditor(side) == null) return false;
 
       scrollToLine(side, line);
       return true;
