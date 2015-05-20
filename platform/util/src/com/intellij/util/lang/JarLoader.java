@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -75,6 +77,10 @@ class JarLoader extends Loader {
     }
   }
 
+  private static final AtomicInteger myGetResourceRequests = new AtomicInteger();
+  private static final AtomicLong myOpenTime = new AtomicLong();
+  private static final AtomicLong myCloseTime = new AtomicLong();
+
   @Override
   @Nullable
   Resource getResource(String name, boolean flag) {
@@ -109,35 +115,55 @@ class JarLoader extends Loader {
   }
 
   private void releaseZipFile(ZipFile zipFile) throws IOException {
-    // Closing of zip file when myCanLockJar=true happens in ZipFile.finalize
-    if (!myCanLockJar) {
-      zipFile.close();
+    long started = System.nanoTime();
+    try {
+      // Closing of zip file when myCanLockJar=true happens in ZipFile.finalize
+      if (!myCanLockJar) {
+        zipFile.close();
+      }
+    } finally {
+      myCloseTime.addAndGet(System.nanoTime() - started);
     }
   }
 
   @NotNull
   private ZipFile getZipFile() throws IOException {
-    // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
-    // such number of times so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
-    if (myCanLockJar) {
-      SoftReference<ZipFile> zipFileSoftReference = myZipFileSoftReference;
-      if(zipFileSoftReference != null) {
-        ZipFile existingZipFile = zipFileSoftReference.get();
-        if (existingZipFile != null) return existingZipFile;
-      }
-      synchronized (ourLock) {
-        zipFileSoftReference = myZipFileSoftReference;
-        if(zipFileSoftReference != null) {
+    @SuppressWarnings("unused") int requests = myGetResourceRequests.incrementAndGet();
+
+    long started = System.nanoTime();
+    try {
+
+      // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
+      // such number of times so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
+      if (myCanLockJar) {
+        SoftReference<ZipFile> zipFileSoftReference = myZipFileSoftReference;
+        if (zipFileSoftReference != null) {
           ZipFile existingZipFile = zipFileSoftReference.get();
           if (existingZipFile != null) return existingZipFile;
         }
-        // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
-        ZipFile zipFile = new ZipFile(myCanonicalFile);
-        myZipFileSoftReference = new SoftReference<ZipFile>(zipFile);
-        return zipFile;
+        synchronized (ourLock) {
+          zipFileSoftReference = myZipFileSoftReference;
+          if (zipFileSoftReference != null) {
+            ZipFile existingZipFile = zipFileSoftReference.get();
+            if (existingZipFile != null) return existingZipFile;
+          }
+          // ZipFile's native implementation (ZipFile.c, zip_util.c) has path -> file descriptor cache
+          ZipFile zipFile = new ZipFile(myCanonicalFile);
+          myZipFileSoftReference = new SoftReference<ZipFile>(zipFile);
+          return zipFile;
+        }
       }
-    } else {
-      return new ZipFile(myCanonicalFile);
+      else {
+        return new ZipFile(myCanonicalFile);
+      }
+    } finally {
+      myOpenTime.addAndGet(System.nanoTime() - started);
+      //if (requests % 1000 == 0) {
+      //  int factor = 1000000;
+      //  System.out.println(
+      //    "Jar loading :" + getClass().getClassLoader() + "," + requests + ", ot:" + (myOpenTime.get() / factor) + ", ct:" +
+      //    (myCloseTime.get() / factor));
+      //}
     }
   }
 
