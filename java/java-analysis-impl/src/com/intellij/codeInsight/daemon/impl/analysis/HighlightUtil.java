@@ -941,6 +941,10 @@ public class HighlightUtil extends HighlightUtilBase {
         isAllowed &= modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
       }
 
+      if (containingClass != null && containingClass.isInterface()) {
+        isAllowed &= !PsiModifier.NATIVE.equals(modifier);
+      }
+
       if (containingClass != null && containingClass.isAnnotationType()) {
         isAllowed &= !PsiModifier.STATIC.equals(modifier);
         isAllowed &= !PsiModifier.DEFAULT.equals(modifier);

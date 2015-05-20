@@ -36,6 +36,7 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   public void testStaticMethodCalls() { doTest(false, false); }
   public void testStaticMethodCallsAndOverloadResolution() { doTest(false, false); }
   public void testDefaultMethodOverrideEquivalentObject() { doTest(false, false); }
+  public void testModifierNativeInInterface() { doTest(false, false); }
   public void testStaticMethods() { doTest(false, false); }
   public void testFinalStaticDefaultMethods() { doTest(false, false); }
   public void testIDEA122720() { doTest(false, false); }
