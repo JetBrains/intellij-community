@@ -19,7 +19,6 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UnorderedPair;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -36,14 +35,8 @@ class StateMerger {
   private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
 
   @Nullable
-  List<DfaMemoryStateImpl> mergeByFacts(List<DfaMemoryStateImpl> states) {
-    MultiMap<Fact, DfaMemoryStateImpl> statesByFact = MultiMap.createLinked();
-    for (DfaMemoryStateImpl state : states) {
-      ProgressManager.checkCanceled();
-      for (Fact fact : getFacts(state)) {
-        statesByFact.putValue(fact, state);
-      }
-    }
+  public List<DfaMemoryStateImpl> mergeByFacts(List<DfaMemoryStateImpl> states) {
+    final MultiMap<Fact, DfaMemoryStateImpl> statesByFact = statesByFact(states);
 
     for (final Fact fact : statesByFact.keySet()) {
       if (statesByFact.get(fact).size() == states.size() || fact.myPositive) continue;
@@ -56,8 +49,8 @@ class StateMerger {
       MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts1 = mapByUnrelatedFacts(fact, statesByFact.get(fact));
       MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts2 = mapByUnrelatedFacts(fact, statesWithNegations);
 
-      Replacements replacements = new Replacements(states);
-      for (Set<Fact> key : statesByUnrelatedFacts1.keySet()) {
+      final Replacements replacements = new Replacements(states);
+      for (final Set<Fact> key : statesByUnrelatedFacts1.keySet()) {
         final Collection<DfaMemoryStateImpl> group1 = statesByUnrelatedFacts1.get(key);
         final Collection<DfaMemoryStateImpl> group2 = statesByUnrelatedFacts2.get(key);
         if (group1.isEmpty() || group2.isEmpty()) continue;
@@ -83,6 +76,17 @@ class StateMerger {
     return null;
   }
 
+  private MultiMap<Fact, DfaMemoryStateImpl> statesByFact(List<DfaMemoryStateImpl> states) {
+    final MultiMap<Fact, DfaMemoryStateImpl> statesByFact = MultiMap.createLinked();
+    for (DfaMemoryStateImpl state : states) {
+      ProgressManager.checkCanceled();
+      for (Fact fact : getFacts(state)) {
+        statesByFact.putValue(fact, state);
+      }
+    }
+    return statesByFact;
+  }
+
   @NotNull
   private MultiMap<Set<Fact>, DfaMemoryStateImpl> mapByUnrelatedFacts(Fact fact,
                                                                       Collection<DfaMemoryStateImpl> states1) {
@@ -103,11 +107,11 @@ class StateMerger {
   }
 
   private void restoreOtherInequalities(Fact removedFact, Collection<DfaMemoryStateImpl> mergedGroup, DfaMemoryStateImpl state) {
-    Set<DfaConstValue> inequalitiesToRestore = null;
+    Set<DfaValue> inequalitiesToRestore = null;
     for (DfaMemoryStateImpl member : mergedGroup) {
       LinkedHashSet<Fact> memberFacts = getFacts(member);
       if (memberFacts.contains(removedFact)) {
-        Set<DfaConstValue> otherInequalities = getOtherInequalities(removedFact, memberFacts, member);
+        Set<DfaValue> otherInequalities = getOtherInequalities(removedFact, memberFacts, member);
         if (inequalitiesToRestore == null) {
           inequalitiesToRestore = otherInequalities;
         } else {
@@ -117,20 +121,26 @@ class StateMerger {
     }
     if (inequalitiesToRestore != null) {
       DfaRelationValue.Factory relationFactory = state.getFactory().getRelationFactory();
-      for (DfaConstValue toRestore : inequalitiesToRestore) {
+      for (DfaValue toRestore : inequalitiesToRestore) {
         state.applyCondition(relationFactory.createRelation(removedFact.myVar, toRestore, DfaRelation.EQ, true));
       }
     }
   }
 
-  private static Set<DfaConstValue> getOtherInequalities(Fact removedFact, LinkedHashSet<Fact> memberFacts, DfaMemoryStateImpl state) {
-    Set<DfaConstValue> otherInequalities = ContainerUtil.newLinkedHashSet();
+  private static Set<DfaValue> getOtherInequalities(Fact removedFact, LinkedHashSet<Fact> memberFacts, DfaMemoryStateImpl state) {
+    Set<DfaValue> otherInequalities = ContainerUtil.newLinkedHashSet();
     Set<DfaValue> eqValues = ContainerUtil.newHashSet(state.getEquivalentValues((DfaValue)removedFact.myArg));
     for (Fact candidate : memberFacts) {
-      if (candidate.myType == FactType.equality && !candidate.myPositive && candidate.myVar == removedFact.myVar &&
-          !eqValues.contains((DfaValue)candidate.myArg) &&
-          candidate.myArg instanceof DfaConstValue) {
-        otherInequalities.add((DfaConstValue)candidate.myArg);
+      if (candidate.myType == FactType.equality
+          && !candidate.myPositive
+          && candidate.myVar == removedFact.myVar
+          && !eqValues.contains((DfaValue)candidate.myArg)
+          && (
+            candidate.myArg instanceof DfaConstValue
+            || candidate.myArg instanceof DfaBoxedValue && ((DfaBoxedValue)candidate.myArg).getWrappedValue() instanceof DfaConstValue
+          )
+        ) {
+        otherInequalities.add((DfaValue)candidate.myArg);
       }
     }
     return otherInequalities;
