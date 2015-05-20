@@ -19,7 +19,7 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.projectRoots.LanguageTestDataChecker;
+import com.intellij.openapi.projectRoots.OutOfSourcesChecker;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -67,7 +67,7 @@ public class CheckinHandlerUtil {
     for (VirtualFile file : selectedFiles) {
       if (file.isValid()) {
         if (isUnderProjectFileDir(projectFileDir, file) || !isFileUnderSourceRoot(project, file)
-            || isLanguageTestData(project, file)) {
+            || isOutOfSources(project, file)) {
           continue;
         }
         PsiFile psiFile = psiManager.findFile(file);
@@ -86,10 +86,10 @@ public class CheckinHandlerUtil {
     return index.isInContent(file) && !index.isInLibrarySource(file);
   }
 
-  private static boolean isLanguageTestData(@NotNull Project project, @NotNull VirtualFile file) {
-    for (LanguageTestDataChecker checker : LanguageTestDataChecker.EP_NAME.getExtensions()) {
+  private static boolean isOutOfSources(@NotNull Project project, @NotNull VirtualFile file) {
+    for (OutOfSourcesChecker checker : OutOfSourcesChecker.EP_NAME.getExtensions()) {
       if (checker.getFileType() == file.getFileType()
-          && checker.isTestData(project, file)) {
+          && checker.isOutOfSources(project, file)) {
         return true;
       }
     }

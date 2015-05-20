@@ -21,22 +21,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Files for which #isTestData returns true won't be processed by
- * Optimize Imports, Reformat Code and Rearrange Code actions during before-commit stage.
- *
- * When developing language plugin it is improperly to perform any modification actions
- * for language test data files (files that looks like source code, but are used only as test data)
- * on commit, even if appropriate checkboxes in commit dialog are turned on.
- */
-public interface LanguageTestDataChecker {
+public interface OutOfSourcesChecker {
 
-  ExtensionPointName<LanguageTestDataChecker> EP_NAME =
-    new ExtensionPointName<LanguageTestDataChecker>("com.intellij.languageTestDataChecker");
+  ExtensionPointName<OutOfSourcesChecker> EP_NAME = new ExtensionPointName<OutOfSourcesChecker>("com.intellij.outOfSourcesChecker");
 
   @NotNull
   FileType getFileType();
 
-  boolean isTestData(@NotNull Project project, @NotNull VirtualFile virtualFile);
+  /**
+   * During automatic code changes, like ones, performed before commit (Reformat, Rearrange code, Optimize imports),
+   * we do not want to touch source files, which are not compiled or executed (like "test data" source files, used in tests).
+   *
+   * Provides information whether file is out of sources, so is not compiled or executed. If it is out of sources,
+   * no automatic code changing actions would be performed on it.
+   */
+  boolean isOutOfSources(@NotNull Project project, @NotNull VirtualFile virtualFile);
 
 }

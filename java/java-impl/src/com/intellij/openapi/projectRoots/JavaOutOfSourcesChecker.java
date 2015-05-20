@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-public class JavaLanguageTestDataChecker implements LanguageTestDataChecker {
+public class JavaOutOfSourcesChecker implements OutOfSourcesChecker {
 
   @Override
   @NotNull
@@ -33,7 +33,7 @@ public class JavaLanguageTestDataChecker implements LanguageTestDataChecker {
   }
 
   @Override
-  public boolean isTestData(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  public boolean isOutOfSources(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     return !index.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES);
   }
