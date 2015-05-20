@@ -235,6 +235,7 @@ public class OnesideDiffChange {
 
     @Nullable
     public GutterIconRenderer createRenderer() {
+      if (myViewer.isStateIsOutOfDate()) return null;
       if (!myViewer.isEditable(mySide.other(), true)) return null;
       boolean bothEditable = myViewer.isEditable(mySide, true);
 
