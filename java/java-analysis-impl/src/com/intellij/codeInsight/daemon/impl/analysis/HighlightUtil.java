@@ -1522,6 +1522,12 @@ public class HighlightUtil extends HighlightUtilBase {
               .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", format(aClass), formatClass(superClass))).create();
           }
         }
+
+        if (expr instanceof PsiSuperExpression && !classT.isInheritor(aClass, false)) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(qualifier)
+            .descriptionAndTooltip(JavaErrorMessages.message("no.enclosing.instance.in.scope", format(aClass))).create();
+        }
       }
     }
 
