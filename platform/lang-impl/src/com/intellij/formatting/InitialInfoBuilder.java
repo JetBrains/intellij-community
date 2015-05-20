@@ -64,7 +64,7 @@ class InitialInfoBuilder {
   private LeafBlockWrapper                 myLastTokenBlock;
   private SpacingImpl                      myCurrentSpaceProperty;
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
-  private boolean                          myReadOnlyMode;
+  private boolean                          myInsideFormatRestrictingTag;
 
   private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
 
@@ -84,7 +84,7 @@ class InitialInfoBuilder {
     myCurrentWhiteSpace = new WhiteSpace(0, true);
     myOptions = options;
     myPositionOfInterest = positionOfInterest;
-    myReadOnlyMode = false;
+    myInsideFormatRestrictingTag = false;
     myFormatterTagHandler = new FormatterTagHandler(settings);
   }
 
@@ -169,8 +169,10 @@ class InitialInfoBuilder {
 
     myCurrentWhiteSpace.append(blockStartOffset, myModel, myOptions);
 
-    boolean isReadOnly = isReadOnly(rootBlock, rootBlockIsRightBlock);
-    if (myCollectAlignmentsInsideFormattingRange && !isReadOnly && rootBlock.getAlignment() != null) {
+    boolean isInsideFormattingRanges = isInsideFormattingRanges(rootBlock, rootBlockIsRightBlock);
+    if (myCollectAlignmentsInsideFormattingRange && rootBlock.getAlignment() != null
+        && isInsideFormattingRanges && !myInsideFormatRestrictingTag)
+    {
       myAlignmentsInsideRangeToModify.add(rootBlock.getAlignment());
     }
 
@@ -299,10 +301,10 @@ class InitialInfoBuilder {
 
     switch (myFormatterTagHandler.getFormatterTag(rootBlock)) {
       case ON:
-        myReadOnlyMode = false;
+        myInsideFormatRestrictingTag = false;
         break;
       case OFF:
-        myReadOnlyMode = true;
+        myInsideFormatRestrictingTag = true;
         break;
       case NONE:
         break;
@@ -338,7 +340,7 @@ class InitialInfoBuilder {
 
     info.setSpaceProperty(myCurrentSpaceProperty);
     myCurrentWhiteSpace = new WhiteSpace(textRange.getEndOffset(), false);
-    if (myReadOnlyMode) myCurrentWhiteSpace.setReadOnly(true);
+    if (myInsideFormatRestrictingTag) myCurrentWhiteSpace.setReadOnly(true);
     myPreviousBlock = info;
 
     if (myPositionOfInterest != -1 && (textRange.contains(myPositionOfInterest) || textRange.getEndOffset() == myPositionOfInterest)) {
@@ -358,9 +360,9 @@ class InitialInfoBuilder {
     }
   }
 
-  private boolean isReadOnly(final Block block, boolean rootIsRightBlock) {
-    if (myAffectedRanges == null) return false;
-    return myAffectedRanges.isReadOnly(block.getTextRange(), rootIsRightBlock);
+  private boolean isInsideFormattingRanges(final Block block, boolean rootIsRightBlock) {
+    if (myAffectedRanges == null) return true;
+    return !myAffectedRanges.isReadOnly(block.getTextRange(), rootIsRightBlock);
   }
 
   public Map<AbstractBlockWrapper, Block> getBlockToInfoMap() {

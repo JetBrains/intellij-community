@@ -524,7 +524,7 @@ class FormatProcessor {
   }
 
   private boolean isReformatSelectedRangesContext() {
-    return myReformatContext && myAlignmentsInsideRangesToModify != null;
+    return myReformatContext && !ContainerUtil.isEmpty(myAlignmentsInsideRangesToModify);
   }
 
   private boolean isCurrentBlockAlignmentUsedInRangesToModify() {
