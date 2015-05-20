@@ -378,7 +378,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     public void actionPerformed(@NotNull AnActionEvent e) {
       assert getEditor1() != null && getEditor2() != null;
       setCurrentSide(getCurrentSide().other());
-      myPanel.requestFocus();
+      myContext.requestFocus();
     }
 
     @Override

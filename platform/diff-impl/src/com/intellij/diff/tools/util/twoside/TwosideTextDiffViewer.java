@@ -366,7 +366,7 @@ public abstract class TwosideTextDiffViewer extends TextDiffViewerBase {
       }
 
       setCurrentSide(getCurrentSide().other());
-      myPanel.requestFocus();
+      myContext.requestFocus();
       getCurrentEditor().getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
   }
