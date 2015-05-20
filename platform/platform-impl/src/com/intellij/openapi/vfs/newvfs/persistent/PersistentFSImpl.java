@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -277,7 +278,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                                  @NotNull FileAttributes attributes) {
     String name = file.getName();
     if (!name.isEmpty()) {
-      if (namesEqual(fs, name, FSRecords.getName(id))) return false; // TODO: Handle root attributes change.
+      if (namesEqual(fs, name, FSRecords.getNameSequence(id))) return false; // TODO: Handle root attributes change.
     }
     else {
       if (areChildrenLoaded(id)) return false; // TODO: hack
@@ -305,8 +306,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.getParent(id);
   }
 
-  private static boolean namesEqual(@NotNull VirtualFileSystem fs, @NotNull String n1, String n2) {
-    return fs.isCaseSensitive() ? n1.equals(n2) : n1.equalsIgnoreCase(n2);
+  private static boolean namesEqual(@NotNull VirtualFileSystem fs, @NotNull CharSequence n1, CharSequence n2) {
+    return Comparing.equal(n1, n2, fs.isCaseSensitive());
   }
 
   @Override
@@ -380,7 +381,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     for (final int childId : children) {
-      if (namesEqual(fs, childName, FSRecords.getName(childId))) return childId;
+      if (namesEqual(fs, childName, FSRecords.getNameSequence(childId))) return childId;
     }
 
     final VirtualFile fake = new FakeVirtualFile(parent, childName);
