@@ -49,21 +49,6 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     myExistential = existential;
     myContext = context;
     myParameter = parameter;
-    if (parameter != null) {
-      final PsiClassType[] boundTypes = parameter.getExtendsListTypes();
-      if (boundTypes.length > 0) {
-        PsiType result = null;
-        for (PsiType type : boundTypes) {
-          if (result == null) {
-            result = type;
-          }
-          else {
-            result = GenericsUtil.getGreatestLowerBound(result, type);
-          }
-        }
-        myUpperBound = result;
-      }
-    }
   }
 
   @Override

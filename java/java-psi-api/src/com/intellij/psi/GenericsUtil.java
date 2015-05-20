@@ -297,7 +297,7 @@ public class GenericsUtil {
       }
       else if (substituted instanceof PsiCapturedWildcardType) {
         final PsiType extendsBound = ((PsiCapturedWildcardType)substituted).getUpperBound();
-        if (acceptExtendsBound(extendsType, extendsBound) || extendsType.equals(substitutor.substitute(extendsBound))) {
+        if (acceptExtendsBound(extendsType, extendsBound) || extendsType.equals(extendsBound)) {
           return null;
         }
       }
