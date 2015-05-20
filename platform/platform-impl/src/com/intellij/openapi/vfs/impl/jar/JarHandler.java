@@ -65,7 +65,12 @@ public class JarHandler extends ZipHandler {
   protected File getFileToUse() {
     File fileWithMirrorResolved = myFileWithMirrorResolved;
     if (fileWithMirrorResolved == null) {
-      myFileWithMirrorResolved = fileWithMirrorResolved = getMirrorFile(getFile());
+      File file = getFile();
+      fileWithMirrorResolved = getMirrorFile(file);
+      if (FileUtil.compareFiles(file, fileWithMirrorResolved) == 0) {
+        fileWithMirrorResolved = file;
+      }
+      myFileWithMirrorResolved = fileWithMirrorResolved;
     }
     return fileWithMirrorResolved;
   }
@@ -118,12 +123,11 @@ public class JarHandler extends ZipHandler {
         try {
           FileInputStream is = new FileInputStream(originalFile);
           try {
-            byte[] buffer = new byte[20 * 1024];
-
             sha1 = MessageDigest.getInstance("SHA1");
             sha1.update(String.valueOf(originalAttributes.length).getBytes(Charset.defaultCharset()));
             sha1.update((byte)0);
 
+            byte[] buffer = new byte[20 * 1024];
             while (true) {
               int read = is.read(buffer);
               if (read < 0) break;

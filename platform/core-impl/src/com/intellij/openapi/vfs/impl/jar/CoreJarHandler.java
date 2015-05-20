@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class CoreJarHandler extends ZipHandler {
     if (file == null) {
       FileAttributes attributes = new FileAttributes(info.isDirectory, false, false, false, info.length, info.timestamp, false);
       EntryInfo parent = info.parent;
-      file = new CoreJarVirtualFile(this, info.shortName, attributes, parent != null ? getOrCreateFile(parent, entries) : null);
+      file = new CoreJarVirtualFile(this, info.shortName.toString(), attributes, parent != null ? getOrCreateFile(parent, entries) : null);
       entries.put(info, file);
     }
     return file;
