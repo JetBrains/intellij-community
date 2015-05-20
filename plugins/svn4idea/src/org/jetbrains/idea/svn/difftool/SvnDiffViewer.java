@@ -5,7 +5,6 @@ import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.FrameDiffTool.ToolbarComponents;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.EmptyContent;
-import com.intellij.diff.impl.ModifiablePanel;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.tools.ErrorDiffTool;
@@ -23,6 +22,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -60,7 +60,7 @@ public class SvnDiffViewer implements DiffViewer {
 
   @NotNull private final JPanel myPanel;
   @NotNull private final Splitter mySplitter;
-  @NotNull private final ModifiablePanel myNotificationPanel;
+  @NotNull private final Wrapper myNotificationPanel;
 
   @NotNull private final DiffViewer myContentViewer;
   @NotNull private final DiffViewer myPropertiesViewer;
@@ -85,7 +85,7 @@ public class SvnDiffViewer implements DiffViewer {
     mySplitter.setProportion(mySettings.getSplitterProportion());
     mySplitter.setFirstComponent(myContentViewer.getComponent());
 
-    myNotificationPanel = new ModifiablePanel();
+    myNotificationPanel = new Wrapper();
 
     MyPropertyContext propertyContext = initPropertyContext(context);
     myPropertiesViewer = createPropertiesViewer(propertyRequest, propertyContext);
