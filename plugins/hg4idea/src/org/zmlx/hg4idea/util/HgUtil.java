@@ -42,6 +42,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -509,6 +510,12 @@ public abstract class HgUtil {
     else {
       return FileStatus.UNKNOWN;
     }
+  }
+
+  @NotNull
+  public static byte[] loadContent(@NotNull Project project, @Nullable HgRevisionNumber revisionNumber, @NotNull HgFile fileToCat) {
+    HgCommandResult result = new HgCatCommand(project).execute(fileToCat, revisionNumber, fileToCat.toFilePath().getCharset());
+    return result != null && result.getExitValue() == 0 ? result.getBytesOutput() : new byte[0];
   }
 
   public static String removePasswordIfNeeded(@NotNull String path) {

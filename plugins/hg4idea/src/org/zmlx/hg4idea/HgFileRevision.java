@@ -19,8 +19,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgCatCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.IOException;
@@ -103,9 +101,8 @@ public class HgFileRevision implements VcsFileRevision {
 
   @NotNull
   public byte[] loadContent() throws IOException, VcsException {
-    HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myFile);
-    HgCommandResult result = new HgCatCommand(myProject).execute(fileToCat, myRevisionNumber, myFile.toFilePath().getCharset());
-    return result != null && result.getExitValue() == 0 ? result.getBytesOutput() : new byte[0];
+    final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myFile);
+    return HgUtil.loadContent(myProject, myRevisionNumber, fileToCat);
   }
 
   public byte[] getContent() throws IOException, VcsException {

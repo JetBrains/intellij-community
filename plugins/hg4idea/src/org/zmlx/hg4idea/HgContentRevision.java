@@ -14,19 +14,14 @@ package org.zmlx.hg4idea;
 
 import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.impl.ContentRevisionCache;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgCatCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgUtil;
-
-import java.io.IOException;
 
 public class HgContentRevision implements ContentRevision {
 
@@ -53,48 +48,13 @@ public class HgContentRevision implements ContentRevision {
   @Override
   public String getContent() throws VcsException {
     if (myRevisionNumber.isWorkingVersion()) return VcsUtil.getFileContent(myHgFile.getFile().getPath());
-
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
-    FilePath filePath = fileToCat.toFilePath();
-    try {
-      return ContentRevisionCache
-        .getOrLoadAsString(myProject, filePath, myRevisionNumber, HgVcs.getKey(), ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
-                           new Throwable2Computable<byte[], VcsException, IOException>() {
-                             @Override
-                             public byte[] compute() throws VcsException, IOException {
-                               return loadContent(fileToCat);
-                             }
-                           }, filePath.getCharset());
-    }
-    catch (IOException e) {
-      throw new VcsException(e);
-    }
+    return CharsetToolkit.bytesToString(HgUtil.loadContent(myProject, myRevisionNumber, fileToCat), getFile().getCharset());
   }
 
-  @NotNull
-  private byte[] loadContent(@NotNull HgFile fileToCat) {
-    HgCommandResult result = new HgCatCommand(myProject).execute(fileToCat, myRevisionNumber, getFile().getCharset());
-    return result != null && result.getExitValue() == 0 ? result.getBytesOutput() : new byte[0];
-  }
-
-
-  @Nullable
-  public byte[] getContentAsBytes() throws VcsException {
+  public byte[] getContentAsBytes() {
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
-    try {
-      return ContentRevisionCache
-        .getOrLoadAsBytes(myProject, VcsUtil.getFilePath(fileToCat.getFile()), myRevisionNumber, HgVcs.getKey(),
-                          ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
-                          new Throwable2Computable<byte[], VcsException, IOException>() {
-                            @Override
-                            public byte[] compute() throws VcsException, IOException {
-                              return loadContent(fileToCat);
-                            }
-                          });
-    }
-    catch (IOException e) {
-      throw new VcsException(e);
-    }
+    return HgUtil.loadContent(myProject, myRevisionNumber, fileToCat);
   }
 
   @NotNull
