@@ -274,7 +274,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     myChangeDecorator = changeDecorator;
   }
 
-  public void setDoubleClickHandler(final Runnable doubleClickHandler) {
+  public void setDoubleClickHandler(@NotNull final Runnable doubleClickHandler) {
     myDoubleClickHandler = doubleClickHandler;
   }
 
