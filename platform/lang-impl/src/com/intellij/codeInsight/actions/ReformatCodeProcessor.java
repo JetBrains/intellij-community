@@ -125,7 +125,14 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
           }
 
           CaretVisualPositionKeeper caretPositionKeeper = new CaretVisualPositionKeeper(document);
-          CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
+
+          if (processChangedTextOnly) {
+            CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
+          }
+          else {
+            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, ranges);
+          }
+
           caretPositionKeeper.restoreOriginalLocation();
 
           if (before != null) {
