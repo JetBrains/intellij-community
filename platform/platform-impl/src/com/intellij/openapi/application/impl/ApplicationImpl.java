@@ -17,6 +17,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
+import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.*;
@@ -36,6 +37,7 @@ import com.intellij.openapi.components.impl.stores.IApplicationStore;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.components.impl.stores.StoresFactory;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -1069,12 +1071,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   private static void assertIsDispatchThread(Status status, @NotNull String message) {
     if (isDispatchThread(status)) return;
-    throw new RuntimeException(message +
+    final Attachment dump = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
+    throw new LogEventException(message,
               " EventQueue.isDispatchThread()="+EventQueue.isDispatchThread()+
               " isDispatchThread()="+isDispatchThread(getStatus())+
               " Toolkit.getEventQueue()="+Toolkit.getDefaultToolkit().getSystemEventQueue()+
               " Current thread: " + describe(Thread.currentThread())+
-              " SystemEventQueueThread: " + describe(getEventQueueThread()) +"\n"+ ThreadDumper.dumpThreadsToString()+"\n-----------");
+              " SystemEventQueueThread: " + describe(getEventQueueThread()), dump);
   }
 
   @Override

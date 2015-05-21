@@ -667,7 +667,7 @@ public class FileUtil extends FileUtilRt {
     if (path == null || path.isEmpty()) {
       return path;
     }
-    else if (".".equals(path)) {
+    if (".".equals(path)) {
       return "";
     }
 
@@ -677,7 +677,8 @@ public class FileUtil extends FileUtilRt {
     }
 
     StringBuilder result = new StringBuilder(path.length());
-    int start = processRoot(path, result), dots = 0;
+    int start = processRoot(path, result);
+    int dots = 0;
     boolean separator = true;
 
     for (int i = start; i < path.length(); ++i) {
@@ -720,7 +721,7 @@ public class FileUtil extends FileUtilRt {
     return result.toString();
   }
 
-  private static int processRoot(String path, StringBuilder result) {
+  private static int processRoot(@NotNull String path, @NotNull StringBuilder result) {
     if (SystemInfo.isWindows && path.length() > 1 && path.charAt(0) == '/' && path.charAt(1) == '/') {
       result.append("//");
 
@@ -742,20 +743,18 @@ public class FileUtil extends FileUtilRt {
 
       return shareEnd;
     }
-    else if (path.length() > 0 && path.charAt(0) == '/') {
+    if (!path.isEmpty() && path.charAt(0) == '/') {
       result.append('/');
       return 1;
     }
-    else if (path.length() > 2 && path.charAt(1) == ':' && path.charAt(2) == '/') {
+    if (path.length() > 2 && path.charAt(1) == ':' && path.charAt(2) == '/') {
       result.append(path, 0, 3);
       return 3;
     }
-    else {
-      return 0;
-    }
+    return 0;
   }
 
-  private static void processDots(StringBuilder result, int dots, int start) {
+  private static void processDots(@NotNull StringBuilder result, int dots, int start) {
     if (dots == 2) {
       int pos = -1;
       if (!StringUtil.endsWith(result, "/../") && !StringUtil.equals(result, "../")) {

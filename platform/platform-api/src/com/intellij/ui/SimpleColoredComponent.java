@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -737,7 +738,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     final List<Object[]> searchMatches = new ArrayList<Object[]>();
 
-    UIUtil.applyRenderingHints(g);
+    UISettings.setupAntialiasing(g);
     applyAdditionalHints(g);
     final Font ownFont = getFont();
     if (ownFont != null) {

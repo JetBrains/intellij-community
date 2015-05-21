@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -171,7 +172,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final FontMetrics fontMetrics = g.getFontMetrics();
       final int infoWidth = fontMetrics.charsWidth(info.toCharArray(), 0, info.length());
       final int infoHeight = fontMetrics.getAscent();
-      UIUtil.applyRenderingHints(g2);
+      UISettings.setupAntialiasing(g);
       g2.setColor(UIUtil.getLabelForeground());
       g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + infoHeight + (barHeight - infoHeight) / 2 - 1);
 

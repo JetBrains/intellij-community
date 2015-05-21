@@ -206,7 +206,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         Collection<VirtualFile> files = ContainerUtil.map2Set(events, new Function<VFileEvent, VirtualFile>() {
           @Override
           public VirtualFile fun(VFileEvent event) {
-            VirtualFile file = event instanceof VFileCreateEvent ? null : event.getFile();
+            VirtualFile file = event instanceof VFileCreateEvent ? /* avoid expensive find child here */ null : event.getFile();
             return file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
           }
         });

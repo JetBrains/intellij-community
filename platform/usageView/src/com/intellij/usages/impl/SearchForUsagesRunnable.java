@@ -417,7 +417,9 @@ class SearchForUsagesRunnable implements Runnable {
             final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
             final String message = UsageViewBundle.message("dialog.no.usages.found.in",
                                                            StringUtil.decapitalize(myPresentation.getUsagesString()),
-                                                           myPresentation.getScopeText());
+                                                           myPresentation.getScopeText(),
+                                                           myPresentation.getContextText()
+                                                           );
 
             if (notFoundActions.isEmpty()) {
               List<String> lines = new ArrayList<String>();

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.ui.LCDRenderingScope;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,6 +27,7 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.java2d.pipe.LCDTextRenderer;
 
 import java.awt.*;
 import java.util.*;

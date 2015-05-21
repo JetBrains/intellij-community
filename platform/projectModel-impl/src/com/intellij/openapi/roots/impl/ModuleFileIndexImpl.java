@@ -16,13 +16,16 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -45,14 +48,25 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   @Override
   public boolean iterateContent(@NotNull ContentIterator iterator) {
-    VirtualFile[] contentRoots = ModuleRootManager.getInstance(myModule).getContentRoots();
-    for (VirtualFile contentRoot : contentRoots) {
-      VirtualFile parent = contentRoot.getParent();
-      if (parent != null) {
-        DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
-        if (parentInfo.isInProject() && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
-      }
+    final List<VirtualFile> contentRoots = ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
+      @Override
+      public List<VirtualFile> compute() {
+        if (myModule.isDisposed()) return Collections.emptyList();
+        
+        List<VirtualFile> result = ContainerUtil.newArrayList();
+        for (VirtualFile contentRoot : ModuleRootManager.getInstance(myModule).getContentRoots()) {
+          VirtualFile parent = contentRoot.getParent();
+          if (parent != null) {
+            DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
+            if (parentInfo.isInProject() && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
+          }
+          result.add(contentRoot);
+        }
 
+        return result;
+      }
+    });
+    for (VirtualFile contentRoot : contentRoots) {
       boolean finished = VfsUtilCore.iterateChildrenRecursively(contentRoot, myContentFilter, iterator);
       if (!finished) return false;
     }
@@ -194,14 +208,20 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
 
   private class ContentFilter implements VirtualFileFilter {
     @Override
-    public boolean accept(@NotNull VirtualFile file) {
-      if (file.isDirectory()) {
-        DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);
-        return info.isInProject() && myModule.equals(info.getModule());
-      }
-      else {
-        return !myFileTypeRegistry.isFileIgnored(file);
-      }
+    public boolean accept(@NotNull final VirtualFile file) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          if (myModule.isDisposed()) return false;
+          if (file.isDirectory()) {
+            DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);
+            return info.isInProject() && myModule.equals(info.getModule());
+          }
+          else {
+            return !myFileTypeRegistry.isFileIgnored(file);
+          }
+        }
+      });
     }
   }
 }

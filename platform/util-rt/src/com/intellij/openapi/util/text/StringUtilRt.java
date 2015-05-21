@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String toUpperCase(@NotNull String s) {
+  public static CharSequence toUpperCase(@NotNull CharSequence s) {
     StringBuilder answer = null;
 
     for (int i = 0; i < s.length(); i++) {
@@ -43,7 +43,7 @@ public class StringUtilRt {
       char upcased = toUpperCase(c);
       if (answer == null && upcased != c) {
         answer = new StringBuilder(s.length());
-        answer.append(s.substring(0, i));
+        answer.append(s.subSequence(0, i));
       }
 
       if (answer != null) {
@@ -51,7 +51,7 @@ public class StringUtilRt {
       }
     }
 
-    return answer == null ? s : answer.toString();
+    return answer == null ? s : answer;
   }
 
   @Contract(pure = true)

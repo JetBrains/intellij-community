@@ -21,10 +21,14 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
+import com.intellij.javadoc.JavadocConfiguration;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -34,12 +38,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.impl.source.javadoc.PsiInlineDocTagImpl;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.javadoc.PsiInlineDocTag;
+import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -86,6 +86,7 @@ public class JavaDocInfoGenerator {
 
   private final Project    myProject;
   private final PsiElement myElement;
+  private final JavaSdkVersion mySdkVersion;
 
   interface InheritDocProvider<T> {
     Pair<T, InheritDocProvider<T>> getInheritDoc();
@@ -202,6 +203,9 @@ public class JavaDocInfoGenerator {
   public JavaDocInfoGenerator(Project project, PsiElement element) {
     myProject = project;
     myElement = element;
+    
+    Sdk jdk = JavadocConfiguration.getSdk(myProject);
+    mySdkVersion = jdk == null ? null : JavaSdk.getInstance().getVersion(jdk);
   }
 
   @Nullable
@@ -1317,9 +1321,7 @@ public class JavaDocInfoGenerator {
           generateLinkValue(tag, buffer, false);
         }
         else if (tagName.equals(LITERAL_TAG)) {
-          final PsiElement[] dataElements = tag instanceof PsiInlineDocTagImpl ?((PsiInlineDocTagImpl)tag).getDataElementsIgnoreWhitespaces()
-                                                                               : tag.getDataElements();
-          generateLiteralValue(buffer, dataElements);
+          generateLiteralValue(buffer, tag);
         }
         else if (tagName.equals(CODE_TAG)) {
           generateCodeValue(tag, buffer);
@@ -1348,16 +1350,41 @@ public class JavaDocInfoGenerator {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
+  private void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
     buffer.append("<code>");
-    generateLiteralValue(buffer, tag.getDataElements());
+    generateLiteralValue(buffer, tag);
     buffer.append("</code>");
   }
 
-  private static void generateLiteralValue(StringBuilder buffer, final PsiElement[] dataElements) {
-    for (PsiElement element : dataElements) {
-      appendPlainText(element.getText(), buffer);
+  private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag) {
+    StringBuilder tmpBuffer = new StringBuilder();
+    for (PsiElement element : tag.getDataElements()) {
+      appendPlainText(element.getText(), tmpBuffer);
     }
+    if ((mySdkVersion == null || mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) && isInPre(tag)) {
+      buffer.append(tmpBuffer);
+    }
+    else {
+      buffer.append(StringUtil.trimLeading(tmpBuffer));
+    }
+  }
+  
+  private static boolean isInPre(PsiDocTag tag) {
+    PsiElement sibling = tag.getPrevSibling();
+    while (sibling != null) {
+      if (sibling instanceof PsiDocToken) {
+        String text = sibling.getText().toLowerCase();
+        int pos = text.lastIndexOf("pre>");
+        if (pos > 0) {
+          switch (text.charAt(pos - 1)) {
+            case '<' : return true;
+            case '/' : return false;
+          }
+        }
+      }
+      sibling = sibling.getPrevSibling();
+    }
+    return false;
   }
 
   private static void appendPlainText(@NonNls String text, final StringBuilder buffer) {

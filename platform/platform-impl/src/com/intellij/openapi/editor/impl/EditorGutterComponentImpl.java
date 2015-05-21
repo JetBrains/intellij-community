@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -204,7 +205,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         g.setTransform(transform);
       }
 
-      UISettings.setupAntialiasing(g);
+      EditorUIUtil.setupAntialiasing(g);
       Color backgroundColor = getBackground();
       paintLineNumbersBackground(g, clip, backgroundColor);
       paintAnnotationsBackground(g, clip, backgroundColor);

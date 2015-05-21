@@ -58,7 +58,7 @@ class IconObjectRenderer extends ToStringBasedRenderer implements FullValueEvalu
     return new ImageObjectRenderer.IconPopupEvaluator(DebuggerBundle.message("message.node.show.icon"), evaluationContext) {
       @Override
       protected Icon getData() {
-        return ImageObjectRenderer.getIcon(myEvaluationContext, valueDescriptor.getValue(), "iconToBytes");
+        return ImageObjectRenderer.getIcon(getEvaluationContext(), valueDescriptor.getValue(), "iconToBytes");
       }
     };
   }

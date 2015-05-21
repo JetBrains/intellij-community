@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -213,7 +214,7 @@ public class AboutPopup {
       super.paintChildren(g);
 
       Graphics2D g2 = (Graphics2D)g;
-      UIUtil.applyRenderingHints(g);
+      UISettings.setupAntialiasing(g);
 
       Font labelFont = JBUI.Fonts.label();
       if (SystemInfo.isWindows) {

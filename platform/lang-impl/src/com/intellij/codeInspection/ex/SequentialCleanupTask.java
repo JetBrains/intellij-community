@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -30,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 class SequentialCleanupTask implements SequentialTask {
+  private static final Logger LOG = Logger.getInstance(SequentialCleanupTask.class);
 
   private final Project myProject;
   private final LinkedHashMap<PsiFile, List<HighlightInfo>> myResults;
@@ -63,7 +66,15 @@ class SequentialCleanupTask implements SequentialTask {
     Collections.reverse(infos); //sort bottom - top
     for (HighlightInfo info : infos) {
       for (final Pair<HighlightInfo.IntentionActionDescriptor, TextRange> actionRange : info.quickFixActionRanges) {
-        actionRange.getFirst().getAction().invoke(myProject, null, file);
+        try {
+          actionRange.getFirst().getAction().invoke(myProject, null, file);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
     }
     return true;

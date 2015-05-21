@@ -26,6 +26,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author max
@@ -55,20 +56,20 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       if (UIUtil.isUnderAquaLookAndFeel()) {
         if (state == ActionButtonComponent.PUSHED) {
           ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, ALPHA_40, size.width, size.height, ALPHA_20));
-          g.fillRoundRect(2, 2, size.width - 3, size.height - 3, 4, 4);
+          ((Graphics2D)g).fill(getShape(size));
           g.setColor(ALPHA_30);
-          g.drawRoundRect(2, 2, size.width - 3, size.height - 3, 4, 4);
+          ((Graphics2D)g).draw(getShape(size));
         }
         else if (state == ActionButtonComponent.POPPED) {
           ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, bg, 0, size.height, ColorUtil.darker(bg, 2)));
-          g.fillRoundRect(2, 2, size.width - 3, size.height - 3, 4, 4);
+          ((Graphics2D)g).fill(getShape(size));
         }
       }
       else {
         final boolean dark = UIUtil.isUnderDarcula();
         g.setColor(
           state == ActionButtonComponent.PUSHED ? ColorUtil.shift(bg, dark ? 1d / 0.7d : 0.7d) : dark ? Gray._255.withAlpha(40) : ALPHA_40);
-        g.fillRoundRect(2, 2, size.width - 3, size.height - 3, 4, 4);
+        ((Graphics2D)g).fill(getShape(size));
       }
     }
     finally {
@@ -88,26 +89,29 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       if (UIUtil.isUnderAquaLookAndFeel()) {
         if (state == ActionButtonComponent.POPPED) {
           g.setColor(JBColor.GRAY);
-          g.drawRoundRect(2, 2, size.width - 3, size.height - 3, 4, 4);
+          ((Graphics2D)g).draw(getShape(size));
         }
       }
       else {
         final double shift = UIUtil.isUnderDarcula() ? 1 / 0.49 : 0.49;
         g.setColor(ColorUtil.shift(UIUtil.getPanelBackground(), shift));
         ((Graphics2D)g).setStroke(BASIC_STROKE);
-        g.drawRoundRect(2, 2, size.width - 3, size.height - 3, 4, 4);
+        ((Graphics2D)g).draw(getShape(size));
       }
     }
     finally {
       config.restore();
     }
   }
+  private static Shape getShape(Dimension size) {
+    return new RoundRectangle2D.Double(2, 0, size.width - 3, size.height - 3, 4, 4);
+  }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
     final int width = icon.getIconWidth();
     final int height = icon.getIconHeight();
     final int x = (int)Math.ceil((actionButton.getWidth() - width) / 2) + 1;
-    final int y = (int)Math.ceil((actionButton.getHeight() - height) / 2) + 1;
+    final int y = (int)Math.ceil((actionButton.getHeight() - height) / 2) ;
     paintIconAt(g, actionButton, icon, x, y);
   }
 

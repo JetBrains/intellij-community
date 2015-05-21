@@ -25,10 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
@@ -50,6 +47,7 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -197,7 +195,7 @@ public class SwingHelper {
     rootPane.revalidate();
     rootPane.repaint();
 
-    LOG.info("DialogWrapper '" + dialogWrapper.getTitle() + "' has been resized (added width: " + dw + ", added height: " + dh + ")");
+    LOG.info("DialogWrapper '" + dialogWrapper.getTitle() + "' has been re-sized (added width: " + dw + ", added height: " + dh + ")");
   }
 
   public static <T> void updateItems(@NotNull JComboBox comboBox,
@@ -275,7 +273,8 @@ public class SwingHelper {
     textFieldWithHistory.addPopupMenuListener(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        setHistory(textFieldWithHistory, historyProvider.produce(), true);
+        List<String> history = historyProvider.produce();
+        setHistory(textFieldWithHistory, ContainerUtil.notNullize(history), true);
         // one-time initialization
         textFieldWithHistory.removePopupMenuListener(this);
       }
@@ -564,6 +563,19 @@ public class SwingHelper {
       fileChooserDescriptor
     );
     return textFieldWithHistoryWithBrowseButton;
+  }
+
+  @NotNull
+  public static <C extends JComponent> ComponentWithBrowseButton<C> wrapWithInfoButton(@NotNull final C component,
+                                                                                       @NotNull String infoButtonTooltip,
+                                                                                       @NotNull ActionListener listener) {
+    ComponentWithBrowseButton<C> comp = new ComponentWithBrowseButton<C>(component, listener);
+    FixedSizeButton uiHelpButton = comp.getButton();
+    uiHelpButton.setToolTipText(infoButtonTooltip);
+    uiHelpButton.setIcon(UIUtil.getBalloonInformationIcon());
+    uiHelpButton.setHorizontalAlignment(SwingConstants.CENTER);
+    uiHelpButton.setVerticalAlignment(SwingConstants.CENTER);
+    return comp;
   }
 
   private static class CopyLinkAction extends AnAction {

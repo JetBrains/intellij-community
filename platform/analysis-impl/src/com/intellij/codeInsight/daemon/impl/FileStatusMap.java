@@ -65,7 +65,8 @@ public class FileStatusMap implements Disposable {
   }
 
   @Nullable("null means the file is clean")
-  static TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
+  // used in scala
+  public static TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
 
     FileStatusMap me = DaemonCodeAnalyzerEx.getInstanceEx(editor.getProject()).getFileStatusMap();

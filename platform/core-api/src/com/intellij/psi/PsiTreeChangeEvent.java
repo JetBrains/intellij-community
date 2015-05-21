@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,12 @@ public abstract class PsiTreeChangeEvent extends EventObject {
   @NonNls public static final String PROP_ROOTS = "roots";
 
   @NonNls public static final String PROP_FILE_TYPES = "propFileTypes";
-  @NonNls public static final String PROP_UNLOADED_PSI = "propUnloadedPsi";
+
+  @NonNls
+  /**
+   * In the event with this property the {@link #getOldValue()} contains virtual file of the change
+   */
+  public static final String PROP_UNLOADED_PSI = "propUnloadedPsi";
 
   protected PsiElement myParent;
   protected PsiElement myOldParent;
@@ -99,6 +104,5 @@ public abstract class PsiTreeChangeEvent extends EventObject {
   public PsiFile getFile() {
     return myFile;
   }
-
 }
 

@@ -290,5 +290,10 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
         fireContentChanged(current, t);
       }
     }
+    else {
+      if (notifyOthers) {
+        setSystemClipboardContent(t);
+      }
+    }
   }
 }

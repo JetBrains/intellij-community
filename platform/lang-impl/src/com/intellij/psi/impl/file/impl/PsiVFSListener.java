@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -687,9 +687,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
   private void handleVfsChangeWithoutPsi(@NotNull VirtualFile vFile) {
     if (!myReportedUnloadedPsiChange && isInRootModel(vFile)) {
       PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-      event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
-      myManager.beforePropertyChange(event);
-      myManager.propertyChanged(event);
+      myFileManager.firePropertyChangedForUnloadedPsi(event, vFile);
       myReportedUnloadedPsiChange = true;
     }
   }

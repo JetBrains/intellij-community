@@ -154,11 +154,19 @@ public class FileManagerImpl implements FileManager {
     if (parentDir != null) {
       event.setParent(parentDir);
       myManager.childrenChanged(event);
-    } else {
-      event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
-      myManager.beforePropertyChange(event);
-      myManager.propertyChanged(event);
     }
+    else {
+      firePropertyChangedForUnloadedPsi(event, vFile);
+    }
+  }
+
+  void firePropertyChangedForUnloadedPsi(@NotNull PsiTreeChangeEventImpl event, @NotNull VirtualFile vFile) {
+    event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
+    event.setOldValue(vFile);
+    event.setNewValue(vFile);
+
+    myManager.beforePropertyChange(event);
+    myManager.propertyChanged(event);
   }
 
   @Override
@@ -405,6 +413,7 @@ public class FileManagerImpl implements FileManager {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       LOG.error("File is not valid:" + vFile);
+      return null;
     }
 
     if (!vFile.isDirectory()) return null;

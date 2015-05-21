@@ -170,8 +170,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   private void unsetPsiContent() {
     if (!(myContent instanceof PsiFileContent)) return;
-    final Document cachedDocument = getCachedDocument();
-    setContent(cachedDocument == null ? new VirtualFileContent() : new DocumentContent());
+    setContent(new VirtualFileContent());
   }
 
   public void beforeDocumentChanged(@Nullable PsiFile psiCause) {
@@ -358,9 +357,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
       myDocument = document == null ? null : new SoftReference<Document>(document);
     }
-    if (document != null && getContent() instanceof VirtualFileContent) {
-      setContent(new DocumentContent());
-    }
     return document;
   }
 
@@ -527,30 +523,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
   private long getLastCommittedStamp(Document document) {
     return PsiDocumentManager.getInstance(myManager.getProject()).getLastCommittedStamp(document);
-  }
-
-  private class DocumentContent implements Content {
-    @NonNls
-    @Override
-    public String toString() {
-      final Document document = getDocument();
-      return "DocumentContent{size=" + (document == null ? null : document.getTextLength()) + "}";
-    }
-
-    @NotNull
-    @Override
-    public CharSequence getText() {
-      final Document document = getDocument();
-      assert document != null;
-      return getLastCommittedText(document);
-    }
-
-    @Override
-    public long getModificationStamp() {
-      Document document = getCachedDocument();
-      if (document != null) return getLastCommittedStamp(document);
-      return myVirtualFile.getModificationStamp();
-    }
   }
 
   private class PsiFileContent implements Content {

@@ -1761,6 +1761,10 @@ public class UIUtil {
     return image;
   }
 
+  /** This method is intended to use when user settings are not accessible yet.
+   *  Use it to set up default RenderingHints.
+   *  @param g
+   */
   public static void applyRenderingHints(final Graphics g) {
     Graphics2D g2d = (Graphics2D)g;
     Toolkit tk = Toolkit.getDefaultToolkit();

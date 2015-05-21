@@ -18,11 +18,13 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.lang.java.JavaDocumentationProvider;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -32,6 +34,8 @@ import java.io.IOException;
  * @author yole
  */
 public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
+  private boolean myUseJava8Sdk;
+  
   public void testSimpleField() throws Exception {
     doTestField();
   }
@@ -127,6 +131,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   public void testCode() throws Exception {
+    useJava8();
     doTestField();
   }
 
@@ -258,12 +263,37 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testHtmlLinkWithRef() throws Exception {
     verifyJavaDoc(getTestClass());
   }
+  
+  public void testMultipleSpacesInLiteral() throws Exception {
+    useJava8();
+    verifyJavaDoc(getTestClass());
+  }
+
+  public void testLegacySpacesInLiteral() throws Exception {
+    useJava7();
+    verifyJavaDoc(getTestClass());
+  }
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return myUseJava8Sdk ? IdeaTestUtil.getMockJdk18() : IdeaTestUtil.getMockJdk17();
+  }
   
+  private void useJava8() {
+    myUseJava8Sdk = true;
+    setUpJdk();
+  }
+  
+  private void useJava7() {
+    myUseJava8Sdk = false;
+    setUpJdk();
+  }
+
   private static String replaceEnvironmentDependentContent(String html) {
     return StringUtil.convertLineSeparators(html.trim()).replaceAll("<base href=\"[^\"]*\">", "<base href=\"placeholder\">");
   }

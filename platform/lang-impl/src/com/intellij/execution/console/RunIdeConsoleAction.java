@@ -262,9 +262,12 @@ public class RunIdeConsoleAction extends DumbAwareAction {
                                                      @NotNull RunContentDescriptor descriptor,
                                                      @NotNull ScriptEngine engine) {
     Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-    if (!bindings.containsKey(IDE)) {
-      bindings.put(IDE, new IDE(project, descriptor));
+    RunIdeConsoleAction.IDE ide = ObjectUtils.tryCast(bindings.get(IDE), RunIdeConsoleAction.IDE.class);
+    if (ide == null) {
+      ide = new IDE(project);
+      bindings.put(IDE, ide);
     }
+    ide.updateDescriptor(descriptor);
     return descriptor;
   }
 
@@ -305,11 +308,10 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     public final Project project;
 
     private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
-    private final WeakReference<RunContentDescriptor> descriptor;
+    private WeakReference<RunContentDescriptor> descriptor = new WeakReference<RunContentDescriptor>(null);
 
-    IDE(Project project, RunContentDescriptor descriptor) {
+    IDE(Project project) {
       this.project = project;
-      this.descriptor = new WeakReference<RunContentDescriptor>(descriptor);
     }
 
     public void print(Object o) {
@@ -326,6 +328,12 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
     public Object get(Object key) {
       return bindings.get(key);
+    }
+
+    private void updateDescriptor(RunContentDescriptor currentDescriptor) {
+      if (descriptor.get() != currentDescriptor) {
+        this.descriptor = new WeakReference<RunContentDescriptor>(currentDescriptor);
+      }
     }
   }
 }

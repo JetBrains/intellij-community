@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -96,6 +98,16 @@ class TypeCorrector extends PsiTypeMapper {
 
     PsiFile file = psiClass.getContainingFile();
     if (file == null || !file.getViewProvider().isPhysical()) {
+      return psiClass;
+    }
+
+    final VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) {
+      return psiClass;
+    }
+    
+    final FileIndexFacade index = FileIndexFacade.getInstance(file.getProject());
+    if (!index.isInSource(vFile) && !index.isInLibrarySource(vFile) && !index.isInLibraryClasses(vFile)) {
       return psiClass;
     }
 

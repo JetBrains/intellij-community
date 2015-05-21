@@ -5,7 +5,7 @@ class Test {
      @Nullable private final String baseFile1;
 
 
-     public Test(@NotNull String <warning descr="Constructor parameter for @Nullable field is annotated @NotNull">baseFile</warning>) {
+     public Test(@NotNull String baseFile) {
          this.baseFile = baseFile;
          this.baseFile1 = null;
      }
@@ -19,3 +19,37 @@ class Test {
          }
      }
 }
+
+class Test2 {
+  @Nullable Object member;
+
+  public Test2(@NotNull Object member) {
+    this.member = member;
+  }
+
+  public void setMember(@Nullable Object member) {
+    this.member = member;
+  }
+}
+
+class Test3 {
+  @Nullable final Object <warning descr="@Nullable field is always initialized not-null">member</warning>;
+
+  public Test3(@NotNull Object member) {
+    this.member = member;
+  }
+
+}
+
+class Test4 {
+  @Nullable Object member;
+
+  public Test4(@NotNull Object member) {
+    this.member = member;
+  }
+
+  public Test4(int a) {
+    this.member = null;
+  }
+}
+

@@ -31,9 +31,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -186,6 +188,11 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
+      Object oldValue = event.getOldValue();
+      if (oldValue instanceof VirtualFile && ProjectCoreUtil.isProjectOrWorkspaceFile((VirtualFile)oldValue)) {
+        // ignore workspace.xml
+        return;
+      }
       myFileStatusMap.markAllFilesDirty(event);
     }
   }
@@ -223,6 +230,11 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
       myFileStatusMap.markAllFilesDirty(child);
       return;
     }
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null && ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) {
+      // ignore workspace.xml
+      return;
+    }
 
     int fileLength = file.getTextLength();
     if (!file.getViewProvider().isPhysical()) {
@@ -248,7 +260,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   }
 
   @Nullable
-  private static PsiElement getChangeHighlightingScope(PsiElement element) {
+  private static PsiElement getChangeHighlightingScope(@NotNull PsiElement element) {
     DefaultChangeLocalityDetector defaultDetector = null;
     for (ChangeLocalityDetector detector : Extensions.getExtensions(EP_NAME)) {
       if (detector instanceof DefaultChangeLocalityDetector) {

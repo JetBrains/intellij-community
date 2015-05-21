@@ -224,7 +224,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return FileUtil.normalize(path);
   }
 
-  private static boolean isAbsoluteFileOrDriveLetter(File file) {
+  private static boolean isAbsoluteFileOrDriveLetter(@NotNull File file) {
     String path = file.getPath();
     if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
       // just drive letter.

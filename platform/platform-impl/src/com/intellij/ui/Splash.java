@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.StartupProgress;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;

@@ -129,6 +129,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public PsiDirectory getParentDirectory() {
     VirtualFile parentFile = myFile.getParent();
     if (parentFile == null) return null;
+    if (!parentFile.isValid()) {
+      LOG.error("Invalid parent: " + parentFile + " of dir " + myFile + ", dir.valid=" + myFile.isValid());
+      return null;
+    }
     return myManager.findDirectory(parentFile);
   }
 
@@ -172,6 +176,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public PsiFile findFile(@NotNull String name) {
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
+    if (!childVFile.isValid()) {
+      LOG.error("Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid());
+      return null;
+    }
     return myManager.findFile(childVFile);
   }
 
