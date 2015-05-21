@@ -278,6 +278,7 @@ class CheckOutputThread(PyDBDaemonThread):
                     pydevd_tracing.SetTrace(None)  # no debugging on this thread
                     
             while not self.killReceived:
+                time.sleep(0.3)
                 if not self.pyDb.haveAliveThreads() and self.pyDb.writer.empty() \
                         and not has_data_to_redirect():
                     try:
@@ -291,7 +292,6 @@ class CheckOutputThread(PyDBDaemonThread):
 
                 self.pyDb.checkOutputRedirect()
 
-                time.sleep(0.3)
 
     def doKillPydevThread(self):
         self.killReceived = True
