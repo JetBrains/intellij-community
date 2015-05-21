@@ -392,7 +392,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           mySkipFocusGain = false;
           return;
         }
-        search.setText("");
+        String text = "";
+        if (myEditor != null) {
+          text = myEditor.getSelectionModel().getSelectedText();
+          text = text == null ? "" : text.trim();
+        }
+
+        search.setText(text);
         search.getTextEditor().setForeground(UIUtil.getLabelForeground());
         //titleIndex = new TitleIndexes();
         editor.setColumns(SEARCH_FIELD_COLUMNS);
@@ -410,7 +416,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         //  myPopup.cancel();
         //  myPopup = null;
         //}
-        rebuildList("");
+        rebuildList(text);
       }
 
       @Override
