@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.impl.ActionPopupMenuImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.Function;
@@ -99,18 +100,12 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
                   final MouseEvent me = (MouseEvent)e.getInputEvent();
                   final Component c = me.getComponent();
                   if (c != null && c.isShowing()) {
+                    final DataContext delegate = DataManager.getInstance().getDataContext(c, me.getX(), me.getY());
+                    final DataContext dataContext = new MyDataContext(element, delegate);
                     popupMenu.setDataContextProvider(new Getter<DataContext>() {
                       @Override
                       public DataContext get() {
-                        final DataContext delegate = DataManager.getInstance().getDataContext(c, me.getX(), me.getY());
-                        return new DataContext() {
-                          @Nullable
-                          @Override
-                          public Object getData(@NonNls String dataId) {
-                            if (Location.DATA_KEY.is(dataId))  return new PsiLocation<PsiElement>(element);
-                            return delegate.getData(dataId);
-                          }
-                        };
+                        return dataContext;
                       }
                     });
                     popupMenu.getComponent().show(c, me.getX(), me.getY());
@@ -127,5 +122,22 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  }
+
+  private static class MyDataContext extends UserDataHolderBase implements DataContext {
+    private final PsiElement myElement;
+    private final DataContext myDelegate;
+
+    public MyDataContext(PsiElement element, DataContext delegate) {
+      myElement = element;
+      myDelegate = delegate;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (Location.DATA_KEY.is(dataId)) return new PsiLocation<PsiElement>(myElement);
+      return myDelegate.getData(dataId);
+    }
   }
 }
