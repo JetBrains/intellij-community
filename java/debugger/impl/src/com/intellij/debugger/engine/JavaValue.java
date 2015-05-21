@@ -27,7 +27,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.tree.render.ToStringBasedRenderer;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
@@ -156,29 +155,14 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               }
             }
             else if (value.length() > XValueNode.MAX_VALUE_LENGTH) {
-              node.setFullValueEvaluator(new XFullValueEvaluator() {
+              node.setFullValueEvaluator(new JavaFullValueEvaluator(myEvaluationContext) {
                 @Override
-                public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
-                  myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+                public void evaluate(@NotNull final XFullValueEvaluationCallback callback) throws Exception {
+                  final ValueDescriptorImpl fullValueDescriptor = myValueDescriptor.getFullValueDescriptor();
+                  fullValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
                     @Override
-                    public Priority getPriority() {
-                      return Priority.NORMAL;
-                    }
-
-                    @Override
-                    protected void commandCancelled() {
-                      callback.errorOccurred(DebuggerBundle.message("error.context.has.changed"));
-                    }
-
-                    @Override
-                    public void contextAction() throws Exception {
-                      final ValueDescriptorImpl fullValueDescriptor = myValueDescriptor.getFullValueDescriptor();
-                      fullValueDescriptor.updateRepresentation(myEvaluationContext, new DescriptorLabelListener() {
-                        @Override
-                        public void labelChanged() {
-                          callback.evaluated(fullValueDescriptor.getValueText());
-                        }
-                      });
+                    public void labelChanged() {
+                      callback.evaluated(fullValueDescriptor.getValueText());
                     }
                   });
                 }
@@ -189,6 +173,47 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         });
       }
     });
+  }
+
+  public abstract static class JavaFullValueEvaluator extends XFullValueEvaluator {
+    private final EvaluationContextImpl myEvaluationContext;
+
+    public JavaFullValueEvaluator(@NotNull String linkText, EvaluationContextImpl evaluationContext) {
+      super(linkText);
+      myEvaluationContext = evaluationContext;
+    }
+
+    public JavaFullValueEvaluator(EvaluationContextImpl evaluationContext) {
+      myEvaluationContext = evaluationContext;
+    }
+
+    public abstract void evaluate(@NotNull XFullValueEvaluationCallback callback) throws Exception;
+
+    protected EvaluationContextImpl getEvaluationContext() {
+      return myEvaluationContext;
+    }
+
+    @Override
+    public void startEvaluation(@NotNull final XFullValueEvaluationCallback callback) {
+      if (callback.isObsolete()) return;
+      myEvaluationContext.getManagerThread().schedule(new SuspendContextCommandImpl(myEvaluationContext.getSuspendContext()) {
+        @Override
+        public Priority getPriority() {
+          return Priority.NORMAL;
+        }
+
+        @Override
+        protected void commandCancelled() {
+          callback.errorOccurred(DebuggerBundle.message("error.context.has.changed"));
+        }
+
+        @Override
+        public void contextAction() throws Exception {
+          if (callback.isObsolete()) return;
+          evaluate(callback);
+        }
+      });
+    }
   }
 
   private static String truncateToMaxLength(String value) {
