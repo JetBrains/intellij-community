@@ -18,8 +18,8 @@ package com.intellij.diff.tools.binary;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
 import com.intellij.diff.tools.util.DiffNotifications;
@@ -41,13 +41,13 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-public class BinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
-  public static final Logger LOG = Logger.getInstance(BinaryDiffViewer.class);
+public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
+  public static final Logger LOG = Logger.getInstance(TwosideBinaryDiffViewer.class);
 
   @NotNull private final MyStatusPanel myStatusPanel;
 
-  public BinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
-    super(context, request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
+  public TwosideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
+    super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
 
     myStatusPanel = new MyStatusPanel();
     new MyFocusOppositePaneAction().setupAction(myPanel);
@@ -70,15 +70,6 @@ public class BinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
       indicator.checkCanceled();
 
       List<DiffContent> contents = myRequest.getContents();
-
-      if (contents.get(0) instanceof EmptyContent) {
-        return applyNotification(DiffNotifications.INSERTED_CONTENT);
-      }
-
-      if (contents.get(1) instanceof EmptyContent) {
-        return applyNotification(DiffNotifications.REMOVED_CONTENT);
-      }
-
       if (!(contents.get(0) instanceof FileContent) || !(contents.get(1) instanceof FileContent)) {
         return applyNotification(null);
       }
@@ -138,22 +129,9 @@ public class BinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
   // Getters
   //
 
-  @Nullable
-  FileEditor getEditor1() {
-    BinaryEditorHolder holder = getEditorHolders().get(0);
-    return holder != null ? holder.getEditor() : null;
-  }
-
-  @Nullable
-  FileEditor getEditor2() {
-    BinaryEditorHolder holder = getEditorHolders().get(1);
-    return holder != null ? holder.getEditor() : null;
-  }
-
   @NotNull
   FileEditor getCurrentEditor() {
-    //noinspection ConstantConditions
-    return getCurrentSide().select(getEditor1(), getEditor2());
+    return getCurrentEditorHolder().getEditor();
   }
 
   @NotNull
@@ -177,14 +155,8 @@ public class BinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
   private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      assert getEditor1() != null && getEditor2() != null;
       setCurrentSide(getCurrentSide().other());
       myContext.requestFocus();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(getEditor1() != null && getEditor2() != null);
     }
   }
 

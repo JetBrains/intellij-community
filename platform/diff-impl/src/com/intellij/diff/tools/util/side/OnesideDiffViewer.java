@@ -17,12 +17,12 @@ package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.util.DiffDataKeys;
-import com.intellij.diff.tools.util.FocusTrackerSupport.TwosideFocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUtil;
@@ -36,25 +36,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
-public abstract class TwosideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
+public abstract class OnesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
   @NotNull protected final SimpleDiffPanel myPanel;
-  @NotNull protected final TwosideContentPanel myContentPanel;
+  @NotNull protected final OnesideContentPanel myContentPanel;
 
-  @NotNull private final List<T> myHolders;
+  @NotNull private final Side mySide;
+  @NotNull private final T myHolder;
 
-  @NotNull private final TwosideFocusTrackerSupport myFocusTrackerSupport;
-
-  public TwosideDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request, @NotNull EditorHolderFactory<T> factory) {
+  public OnesideDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request, @NotNull EditorHolderFactory<T> factory) {
     super(context, request);
 
-    myHolders = createEditorHolders(factory);
+    mySide = Side.fromRight(myRequest.getContents().get(0) instanceof EmptyContent);
+    myHolder = createEditorHolder(factory);
 
-    List<JComponent> titlePanels = createTitles();
-    myFocusTrackerSupport = new TwosideFocusTrackerSupport(myHolders);
-    myContentPanel = new TwosideContentPanel(myHolders, titlePanels);
+    JComponent titlePanels = createTitle();
+    myContentPanel = new OnesideContentPanel(myHolder, titlePanels);
 
     myPanel = new SimpleDiffPanel(myContentPanel, this, context);
   }
@@ -62,22 +60,8 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   @Override
   @CalledInAwt
   protected void onDispose() {
-    destroyEditorHolders();
+    destroyEditorHolder();
     super.onDispose();
-  }
-
-  @Override
-  @CalledInAwt
-  protected void processContextHints() {
-    super.processContextHints();
-    myFocusTrackerSupport.processContextHints(myRequest, myContext);
-  }
-
-  @Override
-  @CalledInAwt
-  protected void updateContextHints() {
-    super.updateContextHints();
-    myFocusTrackerSupport.updateContextHints(myRequest, myContext);
   }
 
   //
@@ -85,26 +69,19 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   //
 
   @NotNull
-  protected List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
-    List<DiffContent> contents = myRequest.getContents();
-
-    List<T> holders = new ArrayList<T>(2);
-    for (int i = 0; i < 2; i++) {
-      DiffContent content = contents.get(i);
-      holders.add(factory.create(content, myContext));
-    }
-    return holders;
+  protected T createEditorHolder(@NotNull EditorHolderFactory<T> factory) {
+    DiffContent content = mySide.select(myRequest.getContents());
+    return factory.create(content, myContext);
   }
 
-  private void destroyEditorHolders() {
-    for (T holder : myHolders) {
-      Disposer.dispose(holder);
-    }
+  private void destroyEditorHolder() {
+    Disposer.dispose(myHolder);
   }
 
   @NotNull
-  protected List<JComponent> createTitles() {
-    return DiffUtil.createSimpleTitles(myRequest);
+  protected JComponent createTitle() {
+    List<JComponent> simpleTitles = DiffUtil.createSimpleTitles(myRequest);
+    return mySide.select(simpleTitles);
   }
 
   //
@@ -121,36 +98,32 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   @Override
   public JComponent getPreferredFocusedComponent() {
     if (!myPanel.isGoodContent()) return null;
-    return getCurrentEditorHolder().getPreferredFocusedComponent();
+    return getEditorHolder().getPreferredFocusedComponent();
   }
 
   @NotNull
-  public Side getCurrentSide() {
-    return myFocusTrackerSupport.getCurrentSide();
-  }
-
-  protected void setCurrentSide(@NotNull Side side) {
-    myFocusTrackerSupport.setCurrentSide(side);
+  public Side getSide() {
+    return mySide;
   }
 
   @NotNull
-  protected List<T> getEditorHolders() {
-    return myHolders;
+  protected DiffContent getContent() {
+    return mySide.select(myRequest.getContents());
   }
 
   @NotNull
-  protected T getCurrentEditorHolder() {
-    return getCurrentSide().select(getEditorHolders());
+  protected T getEditorHolder() {
+    return myHolder;
   }
 
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
     if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return DiffUtil.getVirtualFile(myRequest, getCurrentSide());
+      return DiffUtil.getVirtualFile(myRequest, mySide);
     }
     else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
-      return getCurrentSide().select(myRequest.getContents());
+      return getContent();
     }
     return super.getData(dataId);
   }
@@ -162,7 +135,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   @Nullable
   @Override
   protected OpenFileDescriptor getOpenFileDescriptor() {
-    return getCurrentSide().select(getRequest().getContents()).getOpenFileDescriptor();
+    return getContent().getOpenFileDescriptor();
   }
 
   public static <T extends EditorHolder> boolean canShowRequest(@NotNull DiffContext context,
@@ -173,12 +146,11 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
     List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
     if (contents.size() != 2) return false;
 
-    boolean canShow = true;
-    boolean wantShow = false;
-    for (DiffContent content : contents) {
-      canShow &= factory.canShowContent(content, context);
-      wantShow |= factory.wantShowContent(content, context);
-    }
-    return canShow && wantShow;
+    DiffContent content1 = contents.get(0);
+    DiffContent content2 = contents.get(1);
+
+    if (content1 instanceof EmptyContent && factory.wantShowContent(content2, context)) return true;
+    if (content2 instanceof EmptyContent && factory.wantShowContent(content1, context)) return true;
+    return false;
   }
 }

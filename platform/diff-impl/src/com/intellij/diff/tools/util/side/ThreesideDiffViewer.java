@@ -19,7 +19,6 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
@@ -38,8 +37,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,21 +51,14 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   @NotNull protected final ThreesideContentPanel myContentPanel;
 
   @NotNull private final List<T> myHolders;
-  @NotNull private final List<? extends DiffContent> myActualContents;
 
   @NotNull private final ThreesideFocusTrackerSupport myFocusTrackerSupport;
 
   public ThreesideDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request, @NotNull EditorHolderFactory<T> factory) {
     super(context, request);
 
-    myActualContents = ContainerUtil.map(myRequest.getContents(), new Function<DiffContent, DiffContent>() {
-      @Override
-      public DiffContent fun(DiffContent content) {
-        return content instanceof EmptyContent ? null : content;
-      }
-    });
-
     myHolders = createEditorHolders(factory);
+
     List<JComponent> titlePanel = createTitles();
     myFocusTrackerSupport = new ThreesideFocusTrackerSupport(myHolders);
     myContentPanel = new ThreesideContentPanel(myHolders, titlePanel);
@@ -99,12 +89,13 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   @NotNull
   protected List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
+    List<DiffContent> contents = myRequest.getContents();
+
     List<T> holders = new ArrayList<T>(3);
     for (int i = 0; i < 3; i++) {
-      DiffContent content = myActualContents.get(i);
+      DiffContent content = contents.get(i);
       holders.add(factory.create(content, myContext));
     }
-
     return holders;
   }
 
@@ -137,11 +128,6 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   }
 
   @NotNull
-  protected List<? extends DiffContent> getActualContents() {
-    return myActualContents;
-  }
-
-  @NotNull
   public ThreeSide getCurrentSide() {
     return myFocusTrackerSupport.getCurrentSide();
   }
@@ -150,14 +136,13 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myFocusTrackerSupport.setCurrentSide(side);
   }
 
-
   @NotNull
   protected List<T> getEditorHolders() {
     return myHolders;
   }
 
   @NotNull
-  public T getCurrentEditorHolder() {
+  protected T getCurrentEditorHolder() {
     return getCurrentSide().select(getEditorHolders());
   }
 
@@ -168,7 +153,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
       return DiffUtil.getVirtualFile(myRequest, getCurrentSide());
     }
     else if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
-      return getCurrentSide().select(getActualContents());
+      return getCurrentSide().select(myRequest.getContents());
     }
     return super.getData(dataId);
   }
@@ -180,7 +165,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   @Nullable
   @Override
   protected OpenFileDescriptor getOpenFileDescriptor() {
-    return getCurrentSide().selectNotNull(getRequest().getContents()).getOpenFileDescriptor();
+    return getCurrentSide().select(getRequest().getContents()).getOpenFileDescriptor();
   }
 
   public static <T extends EditorHolder> boolean canShowRequest(@NotNull DiffContext context,
@@ -194,7 +179,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     boolean canShow = true;
     boolean wantShow = false;
     for (DiffContent content : contents) {
-      canShow &= factory.canShowContent(content, context); // TODO: support EmptyContent
+      canShow &= factory.canShowContent(content, context);
       wantShow |= factory.wantShowContent(content, context);
     }
     return canShow && wantShow;

@@ -89,8 +89,6 @@ public class OnesideDiffChange {
   }
 
   private void doInstallActionHighlighters() {
-    if (myViewer.getDocument(Side.LEFT) == null || myViewer.getDocument(Side.RIGHT) == null) return;
-
     boolean leftEditable = myViewer.isEditable(Side.LEFT, false);
     boolean rightEditable = myViewer.isEditable(Side.RIGHT, false);
 
@@ -281,7 +279,6 @@ public class OnesideDiffChange {
           public void actionPerformed(AnActionEvent e) {
             final Project project = e.getProject();
             final Document document = myViewer.getDocument(sourceSide.other());
-            assert document != null;
 
             DiffUtil.executeWriteCommand(document, project, "Replace change", new Runnable() {
               @Override

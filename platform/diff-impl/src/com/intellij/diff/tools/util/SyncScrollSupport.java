@@ -55,6 +55,10 @@ public class SyncScrollSupport {
     private boolean myDisabled = false;
     private boolean myDuringSyncScroll = false;
 
+    public TwosideSyncScrollSupport(@NotNull List<? extends Editor> editors, @NotNull SyncScrollable scrollable) {
+      this(Side.LEFT.select(editors), Side.RIGHT.select(editors), scrollable);
+    }
+
     public TwosideSyncScrollSupport(@NotNull Editor editor1, @NotNull Editor editor2, @NotNull SyncScrollable scrollable) {
       myEditor1 = editor1;
       myEditor2 = editor2;
