@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Key;
@@ -30,8 +29,7 @@ import java.awt.*;
 
 public abstract class DataManager {
   public static DataManager getInstance() {
-    Application application = ApplicationManager.getApplication();
-    return application != null ? application.getComponent(DataManager.class) : null;
+    return ApplicationManager.getApplication().getComponent(DataManager.class);
   }
 
   @NonNls public static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
