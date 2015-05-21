@@ -138,8 +138,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (!isAllowPsiModification()) {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
-    List<Throwable> throwables = new ArrayList<Throwable>(0);
     synchronized(PsiLock.LOCK){
+      List<Throwable> throwables = new ArrayList<Throwable>(0);
       final PomModelAspect aspect = transaction.getTransactionAspect();
       startTransaction(transaction);
       try{
@@ -209,10 +209,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         finally {
           DebugUtil.finishPsiModification();
         }
+        if (!throwables.isEmpty()) CompoundRuntimeException.doThrow(throwables);
       }
     }
-
-    if (!throwables.isEmpty()) CompoundRuntimeException.doThrow(throwables);
   }
 
   @Nullable
