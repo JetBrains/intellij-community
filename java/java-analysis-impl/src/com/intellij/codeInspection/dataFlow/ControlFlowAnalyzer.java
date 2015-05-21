@@ -1516,12 +1516,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                   return contract.arguments.length == paramCount;
                 }
               });
-              return Result.create(applicable, contractAnno);
+              return Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
             }
             catch (Exception ignored) {
             }
           }
-          return Result.create(Collections.<MethodContract>emptyList(), contractAnno, method);
+          return Result.create(Collections.<MethodContract>emptyList(), contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
       });
     }
