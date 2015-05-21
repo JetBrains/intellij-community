@@ -355,6 +355,7 @@
                     serviceImplementation="com.intellij.codeInspection.ex.ProjectInspectionProfilesVisibleTreeState"/>
 
     <!-- Editor -->
+    <search.topHitProvider implementation="com.intellij.application.options.editor.EditorOptionsTopHitProvider"/>
     <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptions" id="preferences.editor" key="title.editor"
                              bundle="messages.ApplicationBundle" order="after preferences.lookFeel"
                              childrenEPName="com.intellij.editorOptionsProvider"/>
@@ -601,6 +602,7 @@
     <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
 
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.EditorSmartKeysOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorSmartKeysConfigurable" id="editor.preferences.smartKeys"
                            displayName="Smart Keys"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"
@@ -610,12 +612,15 @@
     <!-- Colors & Fonts-->
     <applicationConfigurable groupId="editor" groupWeight="180" dynamic="true" instance="com.intellij.application.options.colors.ColorAndFontOptions"
                            id="reference.settingsdialog.IDE.editor.colors" key="title.colors.and.fonts" bundle="messages.ApplicationBundle"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.EditorTabsOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorTabsConfigurable" id="editor.preferences.tabs"
                            displayName="Editor Tabs"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.CodeFoldingOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.CodeFoldingConfigurable" id="editor.preferences.folding"
                            key="group.code.folding" bundle="messages.ApplicationBundle"/>
     <editorOptionsProvider instance="com.intellij.application.options.CodeCompletionOptions" id="editor.preferences.completion"
                            key="title.code.completion" bundle="messages.ApplicationBundle"/>
+    <search.topHitProvider implementation="com.intellij.application.options.editor.AutoImportOptionsTopHitProvider"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.AutoImportOptionsConfigurable" id="editor.preferences.import"
                            key="auto.import" bundle="messages.ApplicationBundle"/>
 
