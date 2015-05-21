@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.HashMap;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.cookie.CookiePolicy;
-import org.apache.commons.httpclient.methods.GetMethod;
+import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -183,19 +182,16 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
   }
 
-  private static MyFetchResult doCheckUrl(String url) {
-    final HttpClient client = new HttpClient();
-    client.setTimeout(3000);
-    client.setConnectionTimeout(3000);
-    // see http://hc.apache.org/httpclient-3.x/cookies.html
-    client.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
+  private static MyFetchResult doCheckUrl(@NotNull String url) {
     try {
-      final GetMethod method = new GetMethod(url);
-      final int code = client.executeMethod(method);
-
-      return code == HttpStatus.SC_OK || code == HttpStatus.SC_REQUEST_TIMEOUT
-             ? MyFetchResult.OK 
-             : MyFetchResult.NONEXISTENCE;
+      return HttpRequests.request(url).connectTimeout(3000).readTimeout(3000).connect(new HttpRequests.RequestProcessor<MyFetchResult>() {
+        @Override
+        public MyFetchResult process(@NotNull HttpRequests.Request request) throws IOException {
+          URLConnection connection = request.getConnection();
+          int code = connection instanceof HttpURLConnection ? ((HttpURLConnection)connection).getResponseCode() : 0;
+          return code == 200 || code == 408 ? MyFetchResult.OK : MyFetchResult.NONEXISTENCE;
+        }
+      });
     }
     catch (UnknownHostException e) {
       LOG.info(e);
