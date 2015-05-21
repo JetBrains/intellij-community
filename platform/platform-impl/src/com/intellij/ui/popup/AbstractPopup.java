@@ -1123,7 +1123,9 @@ public class AbstractPopup implements JBPopup {
     mySpeedSearchPatternField = new JTextField();
     if (SystemInfo.isMac) {
       Font f = mySpeedSearchPatternField.getFont();
-      mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
+      if (f != null) {
+        mySpeedSearchPatternField.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
+      }
     }
   }
 
