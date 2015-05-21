@@ -804,7 +804,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
     ProgressManager.checkCanceled();
-    myContentlessIndicesUpdateQueue.ensureUpToDate(); // some content full indices depends on contentless ones
+    myContentlessIndicesUpdateQueue.ensureUpToDate(); // some contentful indices depends on contentless ones
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!needsFileContentLoading(indexId)) {
       return; //indexed eagerly in foreground while building unindexed file list
     }
