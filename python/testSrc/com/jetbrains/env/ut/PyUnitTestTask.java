@@ -7,6 +7,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -15,17 +16,20 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
-import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Processor;
@@ -43,6 +47,8 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Tasks to run unit test configurations.
@@ -315,6 +321,36 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   public int passedTestsCount() {
     return myTestProxy.collectChildren(NOT_SUIT.and(Filter.PASSED)).size();
+  }
+
+  /**
+   * Gets highlighted information from test console. Some parts of output (like file links) may be highlighted, and you need to check them.
+   *
+   * @return pair of [[ranges], [texts]] where range is [from,to] in doc. for each region, and "text" is text extracted from this region.
+   * For example assume that in document "spam eggs ham" words "ham" and "spam" are highlighted.
+   * You should have 2 ranges (0, 4) and (10, 13) and 2 strings (spam and ham)
+   */
+  @NotNull
+  public final Pair<List<Pair<Integer, Integer>>, List<String>> getHighlightedStrings() {
+    final ConsoleView console = myConsoleView.getConsole();
+    assert console instanceof ConsoleViewImpl : "Console has no editor!";
+    final Editor editor = ((ConsoleViewImpl)console).getEditor();
+    final List<String> resultStrings = new ArrayList<String>();
+    final List<Pair<Integer, Integer>> resultRanges = new ArrayList<Pair<Integer, Integer>>();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        for (final RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
+          if (highlighter instanceof RangeHighlighterEx) {
+            final int start = ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset();
+            final int end = ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset();
+            resultRanges.add(Pair.create(start, end));
+            resultStrings.add(editor.getDocument().getText().substring(start, end));
+          }
+        }
+      }
+    });
+    return Pair.create(resultRanges, resultStrings);
   }
 
   public void assertFinished() {
