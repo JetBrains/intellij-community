@@ -561,6 +561,8 @@
     <executionTargetProvider implementation="com.intellij.execution.DefaultExecutionTargetProvider"/>
     <projectService serviceImplementation="com.intellij.execution.RunConfigurationProducerService" />
 
+    <codeInsight.lineMarkerProvider implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider" language=""/>
+
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.DefaultFindUsagesHandlerFactory" id="default" order="last"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.DefaultUsageTargetProvider" id="default" order="last"/>
 

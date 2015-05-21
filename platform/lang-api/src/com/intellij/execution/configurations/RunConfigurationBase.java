@@ -25,6 +25,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -120,6 +121,10 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public boolean canRunOn(@NotNull ExecutionTarget target) {
     return true;
+  }
+
+  public boolean isLineMarkerPlace(PsiElement place, PsiElement sourceElement) {
+    return place == sourceElement;
   }
 
   public final boolean equals(final Object obj) {
