@@ -222,6 +222,10 @@ public class NetUtils {
       indicator.checkCanceled();
     }
 
+    if (total < expectedContentSize) {
+      throw new IOException(String.format("Connection closed at byte %d. Expected %d bytes.", total, expectedContentSize));
+    }
+
     return total;
   }
 
