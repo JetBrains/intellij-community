@@ -818,69 +818,32 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
   // Actions
   //
 
-  private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
+  private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<OnesideDiffChange> {
+    @NotNull
     @Override
-    public boolean canGoNext() {
-      List<OnesideDiffChange> diffChanges = getDiffChanges();
-      if (diffChanges == null || diffChanges.isEmpty()) return false;
+    protected List<OnesideDiffChange> getChanges() {
+      return ContainerUtil.notNullize(getDiffChanges());
+    }
 
-      int line = myEditor.getCaretModel().getLogicalPosition().line;
-      OnesideDiffChange lastChange = diffChanges.get(diffChanges.size() - 1);
-      if (lastChange.getLine1() <= line) return false;
-
-      return true;
+    @NotNull
+    @Override
+    protected EditorEx getEditor() {
+      return myEditor;
     }
 
     @Override
-    public void goNext() {
-      List<OnesideDiffChange> diffChanges = getDiffChanges();
-      assert diffChanges != null;
-      int line = myEditor.getCaretModel().getLogicalPosition().line;
-
-      OnesideDiffChange next = null;
-      for (int i = 0; i < diffChanges.size(); i++) {
-        OnesideDiffChange change = diffChanges.get(i);
-        if (change.getLine1() <= line) continue;
-
-        next = change;
-        break;
-      }
-
-      assert next != null;
-
-      DiffUtil.scrollEditor(myEditor, next.getLine1(), true);
+    protected int getStartLine(@NotNull OnesideDiffChange change) {
+      return change.getLine1();
     }
 
     @Override
-    public boolean canGoPrev() {
-      List<OnesideDiffChange> diffChanges = getDiffChanges();
-      if (diffChanges == null || diffChanges.isEmpty()) return false;
-
-      int line = myEditor.getCaretModel().getLogicalPosition().line;
-      OnesideDiffChange firstChange = diffChanges.get(0);
-      if (firstChange.getLine2() > line) return false;
-
-      return true;
+    protected int getEndLine(@NotNull OnesideDiffChange change) {
+      return change.getLine2();
     }
 
     @Override
-    public void goPrev() {
-      List<OnesideDiffChange> diffChanges = getDiffChanges();
-      assert diffChanges != null;
-      int line = myEditor.getCaretModel().getLogicalPosition().line;
-
-      OnesideDiffChange prev = null;
-      for (int i = 0; i < diffChanges.size(); i++) {
-        OnesideDiffChange change = diffChanges.get(i);
-        if (change.getLine2() <= line) continue;
-
-        prev = diffChanges.get(i - 1);
-        break;
-      }
-
-      if (prev == null) prev = diffChanges.get(diffChanges.size() - 1);
-
-      DiffUtil.scrollEditor(myEditor, prev.getLine1(), true);
+    protected void scrollToChange(@NotNull OnesideDiffChange change) {
+      DiffUtil.scrollEditor(myEditor, change.getLine1(), true);
     }
   }
 
