@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,10 +131,9 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
              }
          );
          Matcher matcher = ourMethodHeading.matcher(externalDoc);
-         final StringBuilder buffer = new StringBuilder();
+         StringBuilder buffer = new StringBuilder("<h3>");
          DocumentationManager.createHyperlink(buffer, className, className, false);
-         //noinspection HardCodedStringLiteral
-         return matcher.replaceFirst("<H3>" + buffer.toString() + "</H3>");
+         return matcher.replaceFirst(buffer.append("</h3>").toString());
       }
     }
     return externalDoc;

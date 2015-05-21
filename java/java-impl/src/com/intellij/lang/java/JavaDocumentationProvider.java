@@ -555,14 +555,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
 
   @Nullable
-  private static String fetchExternalJavadoc(final PsiElement element, String fromUrl, JavaDocExternalFilter filter) {
+  private static String fetchExternalJavadoc(final PsiElement element, String fromUrl, @NotNull JavaDocExternalFilter filter) {
     try {
       String externalDoc = filter.getExternalDocInfoForElement(fromUrl, element);
-      if (externalDoc != null && externalDoc.length() > 0) {
+      if (!StringUtil.isEmpty(externalDoc)) {
         return externalDoc;
       }
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
       //try to generate some javadoc
     }
     return null;
@@ -778,7 +778,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
     return fetchExternalJavadoc(element, project, docUrls);
   }
 
@@ -797,9 +797,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {
-    final JavaDocExternalFilter docFilter = new JavaDocExternalFilter(project);
-
-    return fetchExternalJavadoc(element, docURLs, docFilter);
+    return fetchExternalJavadoc(element, docURLs, new JavaDocExternalFilter(project));
   }
 
   public static String fetchExternalJavadoc(PsiElement element, List<String> docURLs, @NotNull JavaDocExternalFilter docFilter) {
