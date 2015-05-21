@@ -27,6 +27,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrDereferenceInstruction;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
@@ -40,6 +41,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -50,46 +53,29 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mOPTIONAL
 
 public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
 
-  public interface Arguments {
-    @NotNull
-    GrNamedArgument[] getNamedArguments();
+  public abstract class Arguments {
 
     @NotNull
-    GrExpression[] getExpressionArguments();
-
-    @NotNull
-    GrClosableBlock[] getClosureArguments();
-
-    int runArguments();
-  }
-
-  public abstract class ArgumentsBase implements Arguments {
-
-    @NotNull
-    @Override
-    public GrNamedArgument[] getNamedArguments() {
+    protected GrNamedArgument[] getNamedArguments() {
       return GrNamedArgument.EMPTY_ARRAY;
     }
 
     @NotNull
-    @Override
-    public GrClosableBlock[] getClosureArguments() {
+    protected GrClosableBlock[] getClosureArguments() {
       return GrClosableBlock.EMPTY_ARRAY;
     }
 
     @NotNull
-    @Override
-    public GrExpression[] getExpressionArguments() {
+    protected GrExpression[] getExpressionArguments() {
       return GrExpression.EMPTY_ARRAY;
     }
 
-    @Override
     public int runArguments() {
       return visitArguments(getNamedArguments(), getExpressionArguments(), getClosureArguments());
     }
   }
 
-  public class CallBasedArguments extends ArgumentsBase {
+  public class CallBasedArguments extends Arguments {
 
     private final GrCall myCall;
 
@@ -116,7 +102,37 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     }
   }
 
-  public final Arguments EMPTY = new ArgumentsBase() {
+  public class MergedArguments extends Arguments {
+
+    private final @NotNull GrExpression[] myExpressions;
+    private final @NotNull Arguments myArguments;
+
+    public MergedArguments(@NotNull GrExpression[] expressionArguments,
+                           @NotNull Arguments arguments) {
+      myExpressions = expressionArguments;
+      myArguments = arguments;
+    }
+
+    @NotNull
+    @Override
+    protected GrNamedArgument[] getNamedArguments() {
+      return myArguments.getNamedArguments();
+    }
+
+    @NotNull
+    @Override
+    public GrExpression[] getExpressionArguments() {
+      return ArrayUtil.mergeArrays(myExpressions, myArguments.getExpressionArguments());
+    }
+
+    @NotNull
+    @Override
+    protected GrClosableBlock[] getClosureArguments() {
+      return myArguments.getClosureArguments();
+    }
+  }
+
+  public final Arguments EMPTY = new Arguments() {
     @Override
     public int runArguments() {
       return 0;
@@ -129,10 +145,18 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     myAnalyzer = analyzer;
   }
 
+  /**
+   * Assuming that qualifier is not processed yet.
+   * Entry point for GrMethodCall
+   */
   void processMethodCall(@NotNull GrMethodCall methodCall) {
     processMethodCall(methodCall.getInvokedExpression(), methodCall);
   }
 
+  /**
+   * Assuming that qualifier is not processed yet
+   * Here we choose hoe to process each particular call
+   */
   private void processMethodCall(@NotNull GrExpression invokedExpression, @NotNull GrMethodCall call) {
     if (invokedExpression instanceof GrReferenceExpression) {
       final GrReferenceExpression reference = (GrReferenceExpression)invokedExpression;
@@ -165,44 +189,57 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     }
   }
 
+  /**
+   * Assuming that qualifier is not processed yet
+   * Processes calls with implicit call() call.
+   */
   private void processCallableCall(@NotNull GrMethodCall call) {
-    final GrExpression invoked = call.getInvokedExpression();
-    final PsiType type = invoked.getType();
-    if (type != null) {
-      final GrArgumentList argumentList = call.getArgumentList();
-      final GroovyResolveResult[] resolveResults = ResolveUtil.getMethodCandidates(type, "call", call, argumentList.getExpressionTypes());
-      if (resolveResults.length == 1) {
-        final GroovyResolveResult result = resolveResults[0];
-        if (result.isValidResult()) {
-          invoked.accept(myAnalyzer);
-          processMethodCallStraight(call, result, new CallBasedArguments(call));
-          return;
-        }
-      }
+    if (!processCallableCallInner(call)) {
+      fallback(call.getInvokedExpression(), new CallBasedArguments(call));
     }
-    fallback(invoked, new CallBasedArguments(call));
   }
 
+  /**
+   * Assuming that qualifier is not processed yet
+   */
+  private boolean processCallableCallInner(@NotNull GrMethodCall call) {
+    final GrExpression invoked = call.getInvokedExpression();
+    final PsiType type = invoked.getType();
+    final GrArgumentList argumentList = call.getArgumentList();
+    if (type == null || argumentList == null) return false;
+
+    final GroovyResolveResult[] resolveResults = ResolveUtil.getMethodCandidates(type, "call", call, argumentList.getExpressionTypes());
+    if (resolveResults.length != 1 || !resolveResults[0].isValidResult()) return false;
+
+    processMethodCall(call, invoked, resolveResults[0], new CallBasedArguments(call));
+    return true;
+  }
+
+  /**
+   * Assuming that qualifier is not processed yet.
+   * Chooses how to process regular calls.
+   * Processes safe calls then redirects to regular processing
+   * or
+   * redirects as is.
+   */
   void processMethodCall(@NotNull GrExpression highlight,
                          @NotNull GrReferenceExpression invokedReference,
                          @NotNull Arguments arguments) {
     final GroovyResolveResult result = invokedReference.advancedResolve();
     final GrExpression qualifier = invokedReference.getQualifierExpression();
-    if (qualifier != null) {
-      qualifier.accept(myAnalyzer);
-    }
-    else {
-      myAnalyzer.pushUnknown();
-    }
     if (invokedReference.getDotTokenType() == mOPTIONAL_DOT) {
-      myAnalyzer.addInstruction(new DupInstruction<V>()); // save qualifier for later use
+      if (qualifier != null) {
+        qualifier.accept(myAnalyzer);
+      }
+      else {
+        myAnalyzer.pushUnknown();
+      }
       myAnalyzer.pushNull();
       myAnalyzer.addInstruction(new BinopInstruction(DfaRelation.NE, invokedReference));
       final ConditionalGotoInstruction gotoToNotNull = myAnalyzer.addInstruction(new ConditionalGotoInstruction(null, true, qualifier));
 
       // not null branch
-      // qualifier is on top of stack
-      processMethodCallStraight(highlight, result, arguments);
+      processMethodCall(highlight, qualifier, result, arguments);
 
       final GotoInstruction<V> gotoEnd = myAnalyzer.addInstruction(new GotoInstruction<V>(null));
       gotoToNotNull.setOffset(myAnalyzer.flow.getNextOffset());
@@ -213,25 +250,27 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       for (int i = 0; i < argumentsToPop; i++) {
         myAnalyzer.pop();
       }
-      myAnalyzer.pop();        // pop duplicated qualifier
       myAnalyzer.pushNull();
       gotoEnd.setOffset(myAnalyzer.flow.getNextOffset());
     }
     else {
-      processMethodCallStraight(highlight, result, arguments);
+      processMethodCall(highlight, qualifier, result, arguments);
     }
   }
 
   /**
-   * Assuming that qualifier is already processed
+   * Assuming that qualifier is not processed yet.
+   * Processes regular calls.
    */
-  void processMethodCallStraight(@NotNull GrExpression highlight,
-                                 @NotNull GroovyResolveResult result,
-                                 @NotNull final GrExpression... expressionArguments) {
-    processMethodCallStraight(
+  void processMethodCall(@NotNull GrExpression highlight,
+                         @Nullable GrExpression qualifier,
+                         @NotNull GroovyResolveResult result,
+                         @NotNull final GrExpression... expressionArguments) {
+    processMethodCall(
       highlight,
+      qualifier,
       result,
-      new ArgumentsBase() {
+      new Arguments() {
         @NotNull
         @Override
         public GrExpression[] getExpressionArguments() {
@@ -242,7 +281,37 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
   }
 
   /**
-   * Assuming that qualifier is already processed
+   * Assuming that qualifier is not processed yet.
+   * Processes regular calls.
+   */
+  void processMethodCall(@NotNull GrExpression highlight,
+                         @Nullable GrExpression qualifier,
+                         @NotNull GroovyResolveResult result,
+                         @NotNull Arguments arguments) {
+    final PsiElement element = result.getElement();
+    if (qualifier != null && element instanceof GrGdkMethod) {
+      // simulate static method call
+      // i.e instead of a++ call next(a)
+      myAnalyzer.pushUnknown(); // qualifier
+      processMethodCallStraight(
+        highlight,
+        new GroovyResolveResultImpl(((GrGdkMethod)element).getStaticMethod(), result.isAccessible()),
+        new MergedArguments(new GrExpression[]{qualifier}, arguments)
+      );
+    }
+    else {
+      if (qualifier == null) {
+        myAnalyzer.pushUnknown();
+      }
+      else {
+        qualifier.accept(myAnalyzer);
+      }
+      processMethodCallStraight(highlight, result, arguments);
+    }
+  }
+
+  /**
+   * Assuming that qualifier is already processed.
    * This is where actual instructions are being added.
    */
   void processMethodCallStraight(@NotNull GrExpression highlight,
@@ -310,21 +379,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     final GroovyResolveResult[] results = arguments == EMPTY
                                           ? indexProperty.multiResolveGetter(false)
                                           : indexProperty.multiResolveSetter(false);
-    final ArgumentsBase mergedArguments = new ArgumentsBase() {
-      @NotNull
-      @Override
-      public GrExpression[] getExpressionArguments() {
-        return ArrayUtil.mergeArrays(indexProperty.getExpressionArguments(), arguments.getExpressionArguments());
-      }
-
-      @Override
-      public int runArguments() {
-        for (GrExpression arg : indexProperty.getExpressionArguments()) {
-          arg.accept(myAnalyzer);
-        }
-        return indexProperty.getExpressionArguments().length + arguments.runArguments();
-      }
-    };
+    final Arguments mergedArguments = new MergedArguments(indexProperty.getExpressionArguments(), arguments);
     if (results.length == 1 && results[0].isValidResult()) {
       invokedExpression.accept(myAnalyzer); // qualifier
       processMethodCallStraight(indexProperty, results[0], mergedArguments);
@@ -334,9 +389,14 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     }
   }
 
-  private void fallback(@NotNull GrExpression invoked, @NotNull Arguments arguments) {
-    invoked.accept(myAnalyzer); // qualifier
-    myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(invoked)); // dereference qualifier
+  /**
+   * Assuming that qualifier is not processed yet.
+   */
+  private void fallback(@Nullable GrExpression invoked, @NotNull Arguments arguments) {
+    if (invoked != null) {
+      invoked.accept(myAnalyzer); // qualifier
+      myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(invoked)); // dereference qualifier
+    }
 
     final int argumentsCount = arguments.runArguments();
     for (int i = 0; i < argumentsCount; i++) {

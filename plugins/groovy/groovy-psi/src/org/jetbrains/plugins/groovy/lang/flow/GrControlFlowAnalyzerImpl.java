@@ -190,7 +190,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       finishElement(expression);
     }
     else {
-      myExpressionHelper.assign(left, right, callHelper.new ArgumentsBase() {
+      myExpressionHelper.assign(left, right, callHelper.new Arguments() {
         @Override
         public int runArguments() {
           myExpressionHelper.binaryOperation(expression, left, right, ASSIGNMENTS_TO_OPERATORS.get(op), expression.multiResolve(false));
@@ -796,20 +796,36 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       pushUnknown();
     }
     else {
-      operand.accept(this);
-      if (expression.getOperationTokenType() == mLNOT) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (tokenType == mLNOT) {
+        operand.accept(this);
         coerceToBoolean(operand);
         addInstruction(new NotInstruction<V>());
       }
+      else if (tokenType == mINC || tokenType == mDEC) {
+        final boolean postfix = expression.isPostfix();
+
+        operand.accept(this);
+        if (postfix) {
+          addInstruction(new DupInstruction<V>());
+        }
+
+        final GroovyResolveResult[] results = expression.multiResolve(false);
+        callHelper.processMethodCall(
+          expression, operand, results.length == 1 ? results[0] : GroovyResolveResult.EMPTY_RESULT
+        );
+
+        addInstruction(new GrAssignInstruction<V>(null, expression, false));
+
+        if (postfix) {
+          pop(); // pop result value, leave old qualifier on top of the stack
+        }
+      }
       else {
         final GroovyResolveResult[] results = expression.multiResolve(false);
-        if (results.length == 1) {
-          callHelper.processMethodCallStraight(expression, results[0]);
-        }
-        else {
-          pop();
-          pushUnknown();
-        }
+        callHelper.processMethodCall(
+          expression, operand, results.length == 1 ? results[0] : GroovyResolveResult.EMPTY_RESULT
+        );
       }
     }
 
@@ -938,7 +954,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       }
     }
     push(factory.createLiteralValue(gstring), gstring);
-    
+
     finishElement(gstring);
   }
 

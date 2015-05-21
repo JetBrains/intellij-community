@@ -83,7 +83,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
   }
 
   void assign(@NotNull GrExpression left, @NotNull final GrExpression right) {
-    assign(left, right, myAnalyzer.callHelper.new ArgumentsBase() {
+    assign(left, right, myAnalyzer.callHelper.new Arguments() {
       @NotNull
       @Override
       public GrExpression[] getExpressionArguments() {
@@ -92,7 +92,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     });
   }
 
-  void assign(@NotNull GrExpression left, @NotNull GrExpression anchor, GrCFCallHelper.Arguments argumentsProvider) {
+  void assign(@NotNull GrExpression left, @NotNull GrExpression anchor, GrCFCallHelper<V>.Arguments argumentsProvider) {
     if (left instanceof GrReferenceExpression) {
       final GroovyResolveResult result = ((GrReferenceExpression)left).advancedResolve();
       final PsiElement element = result.getElement();
@@ -163,12 +163,12 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
                        @NotNull GrExpression right,
                        @NotNull IElementType operatorToken,
                        @NotNull GroovyResolveResult[] resolveResults) {
-    left.accept(myAnalyzer);
     if (resolveResults.length == 1 && resolveResults[0].isValidResult() && !(operatorToken == mEQUAL || operatorToken == mNOT_EQUAL)) {
       final GroovyResolveResult result = resolveResults[0];
-      myAnalyzer.callHelper.processMethodCallStraight(anchor, result, right);
+      myAnalyzer.callHelper.processMethodCall(anchor, left, result, right);
     }
     else {
+      left.accept(myAnalyzer);
       right.accept(myAnalyzer);
       myAnalyzer.addInstruction(new BinopInstruction<V>(MAP.get(operatorToken), anchor));
     }
