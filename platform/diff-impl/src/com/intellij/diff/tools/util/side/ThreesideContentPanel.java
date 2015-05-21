@@ -20,6 +20,7 @@ import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.diff.tools.util.ThreeDiffSplitter;
 import com.intellij.diff.util.Side;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.CalledInAwt;
@@ -38,7 +39,10 @@ public class ThreesideContentPanel extends JPanel {
   public ThreesideContentPanel(@NotNull List<? extends EditorHolder> holders, @NotNull List<JComponent> titleComponents) {
     super(new BorderLayout());
     assert holders.size() == 3;
-    myBaseEditor = holders.get(1) instanceof TextEditorHolder ? ((TextEditorHolder)holders.get(1)).getEditor() : null;
+    assert titleComponents.size() == 3;
+
+    EditorHolder baseHolder = ThreeSide.BASE.select(holders);
+    myBaseEditor = baseHolder instanceof TextEditorHolder ? ((TextEditorHolder)baseHolder).getEditor() : null;
 
     ArrayList<JComponent> components = new ArrayList<JComponent>(3);
     for (int i = 0; i < 3; i++) {

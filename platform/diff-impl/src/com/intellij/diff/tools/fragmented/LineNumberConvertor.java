@@ -173,20 +173,6 @@ public class LineNumberConvertor {
     public LineNumberConvertor build() {
       return new LineNumberConvertor(myFragments1, myFragments2, myInvertedFragments1, myInvertedFragments2);
     }
-
-    @NotNull
-    public static LineNumberConvertor createLeft(int lines) {
-      Builder builder = new Builder();
-      builder.put1(0, 0, lines);
-      return builder.build();
-    }
-
-    @NotNull
-    public static LineNumberConvertor createRight(int lines) {
-      Builder builder = new Builder();
-      builder.put2(0, 0, lines);
-      return builder.build();
-    }
   }
 
   /*
