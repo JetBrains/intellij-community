@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.repo;
 
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -196,7 +197,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     HgRepoInfo currentInfo = readRepoInfo();
     // update only if something changed!!!   if update every time - new log will be refreshed every time, too.
     // Then blinking and do not work properly;
-    Project project = getProject();
+    final Project project = getProject();
     if (!project.isDisposed() && !currentInfo.equals(myInfo)) {
       myInfo = currentInfo;
       HgCommandResult branchCommandResult = new HgBranchesCommand(project, getRoot()).collectBranches();
@@ -207,9 +208,14 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
       else {
         myOpenedBranches = HgBranchesCommand.collectNames(branchCommandResult);
       }
-      if (!project.isDisposed()) {
-        project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
-      }
+
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        public void run() {
+          if (!project.isDisposed()) {
+            project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
+          }
+        }
+      });
     }
   }
 
