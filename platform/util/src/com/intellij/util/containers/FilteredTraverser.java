@@ -49,13 +49,23 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
   protected abstract Self newInstance(Meta<T> meta);
 
   @NotNull
-  public final JBIterable<T> rawIterable() {
-    return rawIterableImpl().filter(newResultFilter());
+  public JBIterable<T> rawIterable() {
+    return preOrderTraversal();
   }
 
   @NotNull
-  protected JBIterable<T> rawIterableImpl() {
-    return preOrderTraversal(getRoots());
+  public final JBIterable<T> preOrderTraversal() {
+    return preOrderTraversal(getRoots()).filter(newResultFilter());
+  }
+
+  @NotNull
+  public final JBIterable<T> postOrderTraversal() {
+    return postOrderTraversal(getRoots()).filter(newResultFilter());
+  }
+
+  @NotNull
+  public final JBIterable<T> breadthFirstTraversal() {
+    return breadthFirstTraversal(getRoots()).filter(newResultFilter());
   }
 
   @NotNull

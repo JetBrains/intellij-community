@@ -164,6 +164,10 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return this == EMPTY ? of(elements) : append(Arrays.asList(elements));
   }
 
+  public final JBIterable<E> append(@Nullable E e) {
+    return e == null ? this : this == EMPTY ? of(e) : append(Collections.singleton(e));
+  }
+
   /**
    * Returns the elements from this fluent iterable that satisfy a condition. The
    * resulting fluent iterable's iterator does not support {@code remove()}.
