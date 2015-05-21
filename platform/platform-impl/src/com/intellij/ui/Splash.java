@@ -166,7 +166,7 @@ public class Splash extends JDialog implements StartupProgress {
     if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
       final LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
-        UISettings.setupAntialiasing(g);
+        UIUtil.applyRenderingHints(g);
         g.setFont(new Font(UIUtil.ARIAL_FONT_NAME, Font.BOLD, JBUI.scale(SystemInfo.isUnix ? 10 : 11)));
 
         g.setColor(textColor);
