@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -270,7 +271,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       }
 
       final GraphicsConfig c = GraphicsUtil.setupAAPainting(g);
-      GraphicsUtil.setupAntialiasing(g, true, true);
+      UISettings.setupAntialiasing(g);
 
       int arc = 8;
       Color bg = getBackground();

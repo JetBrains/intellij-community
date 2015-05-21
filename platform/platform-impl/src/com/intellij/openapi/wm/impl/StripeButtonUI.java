@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
@@ -146,6 +147,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
 
     // paint text
 
+    UISettings.setupAntialiasing(g2);
     if(text!=null){
       if(model.isEnabled()){
         if(model.isArmed()&&model.isPressed()||model.isSelected()){

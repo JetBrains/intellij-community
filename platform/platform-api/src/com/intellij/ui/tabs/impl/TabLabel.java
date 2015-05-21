@@ -156,9 +156,7 @@ public class TabLabel extends JPanel {
 
       @Override
       protected void applyAdditionalHints(@NotNull Graphics2D g) {
-        if (!SystemInfo.isJavaVersionAtLeast("1.7") && g.getComposite() instanceof AlphaComposite && (((AlphaComposite)g.getComposite()).getAlpha() < 1)) {
-          g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
-        }
+        UISettings.setupAntialiasing(g);
       }
     };
     label.setOpaque(false);

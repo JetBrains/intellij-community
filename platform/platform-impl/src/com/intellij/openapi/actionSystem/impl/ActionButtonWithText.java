@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.util.ui.EmptyIcon;
@@ -86,7 +87,7 @@ public class ActionButtonWithText extends ActionButton {
     look.paintIconAt(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
-    UIUtil.applyRenderingHints(g);
+    UISettings.setupAntialiasing(g);
     g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
     SwingUtilities2.drawStringUnderlineCharAt(this, g, text,
                                               getMnemonicCharIndex(text),

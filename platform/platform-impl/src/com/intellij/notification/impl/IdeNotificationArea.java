@@ -204,7 +204,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      UIUtil.applyRenderingHints(g);
+      UISettings.setupAntialiasing(g);
 
       Font originalFont = g.getFont();
       Color originalColor = g.getColor();

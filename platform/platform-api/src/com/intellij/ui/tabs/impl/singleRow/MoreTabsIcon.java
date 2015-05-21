@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
@@ -46,7 +47,7 @@ public abstract class MoreTabsIcon {
     AllIcons.General.MoreTabs.paintIcon(c, graphics, iconX, iconY);
     Graphics g = graphics.create();
     try {
-      GraphicsUtil.setupAntialiasing(g, true, true);
+      UISettings.setupAntialiasing(g);
       UIUtil.drawStringWithHighlighting(g, String.valueOf(myCounter),
                                         iconX + AllIcons.General.MoreTabs.getIconWidth() + 2,
                                         iconY + AllIcons.General.MoreTabs.getIconHeight() - 5,

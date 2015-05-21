@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
@@ -84,7 +85,7 @@ public class TextPanel extends JComponent {
     final Graphics2D g2 = (Graphics2D)g;
     g2.setFont(getFont());
 
-    UIUtil.applyRenderingHints(g2);
+    UISettings.setupAntialiasing(g);
 
     final FontMetrics fm = g2.getFontMetrics();
     final int sWidth = fm.stringWidth(s);

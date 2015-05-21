@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
@@ -174,7 +175,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
       Graphics2D gg = !Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(myEditor)) ?
                       IdeBackgroundUtil.withEditorBackground(g, this) : (Graphics2D)g;
       UIUtil.setupComposite(gg);
-      UISettings.setupAntialiasing(gg);
+      EditorUIUtil.setupAntialiasing(gg);
       myEditor.paint(gg);
     }
     finally {

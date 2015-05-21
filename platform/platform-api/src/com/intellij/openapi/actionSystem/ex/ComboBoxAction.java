@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -391,8 +392,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public void paint(Graphics g) {
-      GraphicsUtil.setupAntialiasing(g);
-      GraphicsUtil.setupAAPainting(g);
+      UISettings.setupAntialiasing(g);
       final Dimension size = getSize();
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
 

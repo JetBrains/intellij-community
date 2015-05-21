@@ -1761,16 +1761,6 @@ public class UIUtil {
     return image;
   }
 
-  public static void applyRenderingHints(final Graphics g) {
-    Graphics2D g2d = (Graphics2D)g;
-    Toolkit tk = Toolkit.getDefaultToolkit();
-    //noinspection HardCodedStringLiteral
-    Map map = (Map)tk.getDesktopProperty("awt.font.desktophints");
-    if (map != null) {
-      g2d.addRenderingHints(map);
-    }
-  }
-
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
       return RetinaImage.create(width, height, type);

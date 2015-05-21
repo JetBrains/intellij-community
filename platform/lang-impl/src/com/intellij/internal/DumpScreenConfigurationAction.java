@@ -15,12 +15,14 @@
  */
 package com.intellij.internal;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -212,7 +214,7 @@ public class DumpScreenConfigurationAction extends DumbAwareAction {
       g = g.create();
       if (g instanceof Graphics2D) {
         Graphics2D g2d = (Graphics2D)g;
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        UISettings.setupAntialiasing(g);
       }
       for (int i = 0; i < myScreenList.size(); i++) {
         ScreenInfo info = myScreenList.get(i);
