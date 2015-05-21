@@ -1,10 +1,11 @@
 package org.jetbrains.ide
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.junit.rules.ExternalResource
 import javax.swing.SwingUtilities
-import com.intellij.openapi.application.WriteAction
 
 fun invokeAndWaitIfNeed(runnable: () -> Unit) {
   if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
@@ -25,6 +26,7 @@ public class FixtureRule() : ExternalResource() {
 
   override fun before() {
     PlatformTestCase.initPlatformLangPrefix()
+    UsefulTestCase.replaceIdeEventQueueSafely()
 
     invokeAndWaitIfNeed { projectFixture.setUp() }
   }
