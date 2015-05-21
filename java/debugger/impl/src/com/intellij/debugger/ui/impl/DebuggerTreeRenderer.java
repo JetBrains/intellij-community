@@ -101,6 +101,9 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         nodeIcon = new LayeredIcon(nodeIcon, AllIcons.Nodes.StaticMark);
       }
     }
+    else if (isParameter(valueDescriptor)) {
+      nodeIcon = PlatformIcons.PARAMETER_ICON;
+    }
     else if (valueDescriptor.isEnumConstant()) {
       nodeIcon = PlatformIcons.ENUM_ICON;
     }
@@ -126,6 +129,20 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeIcon = composite;
     }
     return nodeIcon;
+  }
+
+  private static boolean isParameter(ValueDescriptorImpl valueDescriptor) {
+    if (valueDescriptor instanceof LocalVariableDescriptorImpl) {
+      try {
+        return ((LocalVariableDescriptorImpl)valueDescriptor).getLocalVariable().getVariable().isArgument();
+      }
+      catch (EvaluateException ignored) {
+      }
+    }
+    else if (valueDescriptor instanceof ArgumentValueDescriptorImpl) {
+      return ((ArgumentValueDescriptorImpl)valueDescriptor).isParameter();
+    }
+    return false;
   }
 
   public static SimpleColoredText getDescriptorText(DebuggerContextImpl debuggerContext,
