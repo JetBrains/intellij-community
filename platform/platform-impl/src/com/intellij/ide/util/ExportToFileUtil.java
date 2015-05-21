@@ -33,8 +33,11 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -121,7 +124,17 @@ public class ExportToFileUtil {
       myExporter = exporter;
 
       myTfFile = new TextFieldWithBrowseButton();
-      myTfFile.addBrowseFolderListener(null, null, myProject, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+      myTfFile.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(), myProject) {
+        @NotNull
+        @Override
+        protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+          String res = super.chosenFileToResultingText(chosenFile);
+          if (chosenFile.isDirectory()) {
+            res += File.separator + PathUtil.getFileName(myExporter.getDefaultFilePath());
+          }
+          return res;
+        }
+      });
 
       setTitle(IdeBundle.message("title.export.preview"));
       setOKButtonText(IdeBundle.message("button.save"));
