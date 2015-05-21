@@ -413,6 +413,7 @@ public class FileManagerImpl implements FileManager {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       LOG.error("File is not valid:" + vFile);
+      return null;
     }
 
     if (!vFile.isDirectory()) return null;

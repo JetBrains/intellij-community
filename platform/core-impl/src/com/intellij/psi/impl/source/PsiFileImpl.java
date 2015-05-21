@@ -493,8 +493,13 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   @Nullable
   public PsiDirectory getContainingDirectory() {
-    final VirtualFile parentFile = getViewProvider().getVirtualFile().getParent();
+    VirtualFile file = getViewProvider().getVirtualFile();
+    final VirtualFile parentFile = file.getParent();
     if (parentFile == null) return null;
+    if (!parentFile.isValid()) {
+      LOG.error("Invalid parent: " + parentFile + " of file " + file + ", file.valid=" + file.isValid());
+      return null;
+    }
     return getManager().findDirectory(parentFile);
   }
 
