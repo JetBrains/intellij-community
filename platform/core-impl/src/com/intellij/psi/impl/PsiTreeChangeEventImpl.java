@@ -127,6 +127,10 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
   @NotNull
   @Override
   public String toString() {
-    return "PsiTreeChangeEventImpl{" + myCode + (isGenericChange ? " (generic)" : "") + '}';
+    return "PsiTreeChangeEventImpl{" + myCode
+           + (isGenericChange ? " (generic)" : "")
+           + (myPropertyName == null ? "" : " ("+myPropertyName+")")
+           + (myFile == null ? "" : " in file "+myFile.getName())
+           +'}';
   }
 }
