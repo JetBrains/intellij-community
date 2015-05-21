@@ -92,11 +92,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
                                                                      myFile.getVirtualFile(),
                                                                      myProject, myInfoProvider);
 
-    if (elements == null || elements.length == 0) {
-      return;
-    }
-
-    if (!XmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
+    if (elements == null || elements.length == 0 || !XmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
       elements = PsiElement.EMPTY_ARRAY;
       final FileViewProvider provider = myFile.getViewProvider();
       for (Language language : provider.getLanguages()) {
