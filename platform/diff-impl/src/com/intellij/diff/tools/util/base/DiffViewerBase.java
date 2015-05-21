@@ -125,7 +125,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   @CalledInAwt
-  public final void rediff(boolean trySync) {
+  public void rediff(boolean trySync) {
     if (isDisposed()) return;
     abortRediff();
 
