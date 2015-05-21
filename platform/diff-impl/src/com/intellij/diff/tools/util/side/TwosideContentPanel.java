@@ -29,30 +29,27 @@ public class TwosideContentPanel extends JPanel {
   @Nullable private final DiffSplitter mySplitter;
 
   public TwosideContentPanel(@NotNull List<? extends EditorHolder> holders, @NotNull List<JComponent> titleComponents) {
-    this(titleComponents, getComponent(holders.get(0)), getComponent(holders.get(1)));
-    assert holders.size() == 2;
-  }
-
-  public TwosideContentPanel(@NotNull List<JComponent> titleComponents,
-                             @Nullable JComponent editor1,
-                             @Nullable JComponent editor2) {
     super(new BorderLayout());
+    assert holders.size() == 2;
     assert titleComponents.size() == 2;
 
-    if (editor1 != null && editor2 != null) {
+    EditorHolder holder1 = holders.get(0);
+    EditorHolder holder2 = holders.get(1);
+
+    if (holder1 != null && holder2 != null) {
       mySplitter = new DiffSplitter();
-      mySplitter.setFirstComponent(new MyPanel(editor1, titleComponents.get(0)));
-      mySplitter.setSecondComponent(new MyPanel(editor2, titleComponents.get(1)));
+      mySplitter.setFirstComponent(new HolderPanel(holder1, titleComponents.get(0)));
+      mySplitter.setSecondComponent(new HolderPanel(holder2, titleComponents.get(1)));
       mySplitter.setHonorComponentsMinimumSize(false);
       add(mySplitter, BorderLayout.CENTER);
     }
     else {
       mySplitter = null;
-      if (editor1 != null) {
-        add(new MyPanel(editor1, titleComponents.get(0)), BorderLayout.CENTER);
+      if (holder1 != null) {
+        add(new HolderPanel(holder1, titleComponents.get(0)), BorderLayout.CENTER);
       }
-      else if (editor2 != null) {
-        add(new MyPanel(editor2, titleComponents.get(1)), BorderLayout.CENTER);
+      else if (holder2 != null) {
+        add(new HolderPanel(holder2, titleComponents.get(1)), BorderLayout.CENTER);
       }
     }
   }
@@ -69,18 +66,5 @@ public class TwosideContentPanel extends JPanel {
   @Nullable
   public DiffSplitter getSplitter() {
     return mySplitter;
-  }
-
-  private static class MyPanel extends JPanel {
-    public MyPanel(@NotNull JComponent editor, @Nullable JComponent title) {
-      super(new BorderLayout());
-      add(editor, BorderLayout.CENTER);
-      if (title != null) add(title, BorderLayout.NORTH);
-    }
-  }
-
-  @Nullable
-  private static JComponent getComponent(@Nullable EditorHolder holder) {
-    return holder != null ? holder.getComponent() : null;
   }
 }

@@ -42,7 +42,7 @@ public class ThreesideContentPanel extends JPanel {
 
     ArrayList<JComponent> components = new ArrayList<JComponent>(3);
     for (int i = 0; i < 3; i++) {
-      components.add(new MyPanel(holders.get(i), titleComponents.get(i)));
+      components.add(new HolderPanel(holders.get(i), titleComponents.get(i)));
     }
 
     mySplitter = new ThreeDiffSplitter(components);
@@ -65,13 +65,5 @@ public class ThreesideContentPanel extends JPanel {
 
   public void setScrollbarPainter(@NotNull ButtonlessScrollBarUI.ScrollbarRepaintCallback painter) {
     if (myBaseEditor != null) myBaseEditor.registerScrollBarRepaintCallback(painter);
-  }
-
-  private static class MyPanel extends JPanel {
-    public MyPanel(@NotNull EditorHolder holder, @Nullable JComponent title) {
-      super(new BorderLayout());
-      add(holder.getComponent(), BorderLayout.CENTER);
-      if (title != null) add(title, BorderLayout.NORTH);
-    }
   }
 }
