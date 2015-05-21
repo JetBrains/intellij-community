@@ -69,6 +69,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -826,11 +827,12 @@ public class FindDialog extends DialogWrapper {
 
     findOptionsPanel.add(regExPanel);
 
-    mySearchContext = new ComboBox(new Object[] {FindBundle.message("find.context.anywhere.scope.label"),
-      FindBundle.message("find.context.in.comments.scope.label"), FindBundle.message("find.context.in.literals.scope.label"),
-      FindBundle.message("find.context.except.comments.scope.label"),
-      FindBundle.message("find.context.except.literals.scope.label"),
-      FindBundle.message("find.context.except.comments.and.literals.scope.label")});
+    mySearchContext = new ComboBox(new Object[] { getPresentableName(FindModel.SearchContext.ANY),
+      getPresentableName(FindModel.SearchContext.IN_COMMENTS),
+      getPresentableName(FindModel.SearchContext.IN_STRING_LITERALS),
+      getPresentableName(FindModel.SearchContext.EXCEPT_COMMENTS),
+      getPresentableName(FindModel.SearchContext.EXCEPT_STRING_LITERALS),
+      getPresentableName(FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS)});
     mySearchContext.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -871,6 +873,24 @@ public class FindDialog extends DialogWrapper {
     myCbPreserveCase.addActionListener(actionListener);
 
     return findOptionsPanel;
+  }
+
+  public static String getPresentableName(@NotNull FindModel.SearchContext searchContext) {
+    @PropertyKey(resourceBundle = "messages.FindBundle") String messageKey = null;
+    if (searchContext == FindModel.SearchContext.ANY) {
+      messageKey = "find.context.anywhere.scope.label";
+    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS) {
+      messageKey = "find.context.except.comments.scope.label";
+    } else if (searchContext == FindModel.SearchContext.EXCEPT_STRING_LITERALS) {
+      messageKey = "find.context.except.literals.scope.label";
+    } else if (searchContext == FindModel.SearchContext.EXCEPT_COMMENTS_AND_STRING_LITERALS) {
+      messageKey = "find.context.except.comments.and.literals.scope.label";
+    } else if (searchContext == FindModel.SearchContext.IN_COMMENTS) {
+      messageKey = "find.context.in.comments.scope.label";
+    } else if (searchContext == FindModel.SearchContext.IN_STRING_LITERALS) {
+      messageKey = "find.context.in.literals.scope.label";
+    }
+    return messageKey != null ? FindBundle.message(messageKey) : searchContext.toString();
   }
 
   private void setupRegExpSetting() {
