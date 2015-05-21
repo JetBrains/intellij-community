@@ -29,8 +29,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile = null;
@@ -467,11 +467,22 @@ class PrintDialog extends DialogWrapper {
   }
 
   private static JComboBox createFontNamesComboBox() {
-    JComboBox comboBox = new JComboBox();
     GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
     Font[] fonts = graphicsEnvironment.getAllFonts();
+    List<String> fontNames = new ArrayList<String>(fonts.length + 5);
     for (Font font : fonts) {
-      comboBox.addItem(font.getName());
+      fontNames.add(font.getName());
+    }
+    fontNames.add(Font.DIALOG);
+    fontNames.add(Font.DIALOG_INPUT);
+    fontNames.add(Font.SERIF);
+    fontNames.add(Font.SANS_SERIF);
+    fontNames.add(Font.MONOSPACED);
+    Collections.sort(fontNames);
+    
+    JComboBox comboBox = new JComboBox();
+    for (String fontName : fontNames) {
+      comboBox.addItem(fontName);
     }
     return comboBox;
   }
