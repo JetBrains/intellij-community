@@ -345,14 +345,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   // Getters
   //
 
-  private int getCurrentStartLine(@NotNull SimpleThreesideDiffChange change) {
-    return change.getStartLine(getCurrentSide());
-  }
-
-  private int getCurrentEndLine(@NotNull SimpleThreesideDiffChange change) {
-    return change.getEndLine(getCurrentSide());
-  }
-
   @NotNull
   protected List<SimpleThreesideDiffChange> getDiffChanges() {
     return myDiffChanges;
@@ -398,74 +390,32 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
   // Actions
   //
 
-  private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
+  private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<SimpleThreesideDiffChange> {
+    @NotNull
     @Override
-    public boolean canGoNext() {
-      if (myDiffChanges.isEmpty()) return false;
+    protected List<SimpleThreesideDiffChange> getChanges() {
+      return myDiffChanges;
+    }
 
-      EditorEx editor = getCurrentEditor();
-      int line = editor.getCaretModel().getLogicalPosition().line;
-      if (line == editor.getDocument().getLineCount() - 1) return false;
-
-      SimpleThreesideDiffChange lastChange = myDiffChanges.get(myDiffChanges.size() - 1);
-      if (getCurrentStartLine(lastChange) <= line) return false;
-
-      return true;
+    @NotNull
+    @Override
+    protected EditorEx getEditor() {
+      return getCurrentEditor();
     }
 
     @Override
-    public void goNext() {
-      EditorEx editor = getCurrentEditor();
-
-      int line = editor.getCaretModel().getLogicalPosition().line;
-
-      SimpleThreesideDiffChange next = null;
-      for (int i = 0; i < myDiffChanges.size(); i++) {
-        SimpleThreesideDiffChange change = myDiffChanges.get(i);
-        if (getCurrentStartLine(change) <= line) continue;
-
-        next = change;
-        break;
-      }
-
-      assert next != null;
-      doScrollToChange(next, true);
+    protected int getStartLine(@NotNull SimpleThreesideDiffChange change) {
+      return change.getStartLine(getCurrentSide());
     }
 
     @Override
-    public boolean canGoPrev() {
-      if (myDiffChanges.isEmpty()) return false;
-
-      EditorEx editor = getCurrentEditor();
-      int line = editor.getCaretModel().getLogicalPosition().line;
-      if (line == 0) return false;
-
-      SimpleThreesideDiffChange firstChange = myDiffChanges.get(0);
-      if (getCurrentEndLine(firstChange) > line) return false;
-      if (getCurrentStartLine(firstChange) >= line) return false;
-
-      return true;
+    protected int getEndLine(@NotNull SimpleThreesideDiffChange change) {
+      return change.getEndLine(getCurrentSide());
     }
 
     @Override
-    public void goPrev() {
-      EditorEx editor = getCurrentEditor();
-
-      int line = editor.getCaretModel().getLogicalPosition().line;
-
-      SimpleThreesideDiffChange prev = null;
-      for (int i = 0; i < myDiffChanges.size(); i++) {
-        SimpleThreesideDiffChange change = myDiffChanges.get(i);
-
-        SimpleThreesideDiffChange next = i < myDiffChanges.size() - 1 ? myDiffChanges.get(i + 1) : null;
-        if (next == null || getCurrentEndLine(next) > line || getCurrentStartLine(next) >= line) {
-          prev = change;
-          break;
-        }
-      }
-
-      assert prev != null;
-      doScrollToChange(prev, true);
+    protected void scrollToChange(@NotNull SimpleThreesideDiffChange change) {
+      doScrollToChange(change, true);
     }
   }
 

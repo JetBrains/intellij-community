@@ -453,69 +453,32 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   // Actions
   //
 
-  private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {
+  private class MyPrevNextDifferenceIterable extends PrevNextDifferenceIterableBase<SimpleDiffChange> {
+    @NotNull
     @Override
-    public boolean canGoNext() {
-      if (myDiffChanges.isEmpty()) return false;
+    protected List<SimpleDiffChange> getChanges() {
+      return myDiffChanges;
+    }
 
-      EditorEx editor = getCurrentEditor();
-      int line = editor.getCaretModel().getLogicalPosition().line;
-      if (line == editor.getDocument().getLineCount() - 1) return false;
-
-      SimpleDiffChange lastChange = myDiffChanges.get(myDiffChanges.size() - 1);
-      if (lastChange.getStartLine(getCurrentSide()) <= line) return false;
-
-      return true;
+    @NotNull
+    @Override
+    protected EditorEx getEditor() {
+      return getCurrentEditor();
     }
 
     @Override
-    public void goNext() {
-      int line = getCurrentEditor().getCaretModel().getLogicalPosition().line;
-
-      SimpleDiffChange next = null;
-      for (int i = 0; i < myDiffChanges.size(); i++) {
-        SimpleDiffChange change = myDiffChanges.get(i);
-        if (change.getStartLine(getCurrentSide()) <= line) continue;
-
-        next = change;
-        break;
-      }
-
-      assert next != null;
-      doScrollToChange(next, true);
+    protected int getStartLine(@NotNull SimpleDiffChange change) {
+      return change.getStartLine(getCurrentSide());
     }
 
     @Override
-    public boolean canGoPrev() {
-      if (myDiffChanges.isEmpty()) return false;
-
-      int line = getCurrentEditor().getCaretModel().getLogicalPosition().line;
-      if (line == 0) return false;
-
-      SimpleDiffChange firstChange = myDiffChanges.get(0);
-      if (firstChange.getEndLine(getCurrentSide()) > line) return false;
-      if (firstChange.getStartLine(getCurrentSide()) >= line) return false;
-
-      return true;
+    protected int getEndLine(@NotNull SimpleDiffChange change) {
+      return change.getEndLine(getCurrentSide());
     }
 
     @Override
-    public void goPrev() {
-      int line = getCurrentEditor().getCaretModel().getLogicalPosition().line;
-
-      SimpleDiffChange prev = null;
-      for (int i = 0; i < myDiffChanges.size(); i++) {
-        SimpleDiffChange change = myDiffChanges.get(i);
-
-        SimpleDiffChange next = i < myDiffChanges.size() - 1 ? myDiffChanges.get(i + 1) : null;
-        if (next == null || next.getEndLine(getCurrentSide()) > line || next.getStartLine(getCurrentSide()) >= line) {
-          prev = change;
-          break;
-        }
-      }
-
-      assert prev != null;
-      doScrollToChange(prev, true);
+    protected void scrollToChange(@NotNull SimpleDiffChange change) {
+      doScrollToChange(change, true);
     }
   }
 
