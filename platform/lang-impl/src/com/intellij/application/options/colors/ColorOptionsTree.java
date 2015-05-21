@@ -83,12 +83,15 @@ public class ColorOptionsTree extends Tree {
 
   @Nullable
   public ColorAndFontDescription getSelectedDescriptor() {
+    Object selectedValue = getSelectedValue();
+    return selectedValue instanceof ColorAndFontDescription ? (ColorAndFontDescription)selectedValue : null;
+  }
+
+  @Nullable
+  public Object getSelectedValue() {
     Object selectedNode = getLastSelectedPathComponent();
     if (selectedNode instanceof DefaultMutableTreeNode) {
-      Object selectedValue = ((DefaultMutableTreeNode)selectedNode).getUserObject();
-      if (selectedValue instanceof ColorAndFontDescription) {
-        return (ColorAndFontDescription)selectedValue;
-      }
+      return ((DefaultMutableTreeNode)selectedNode).getUserObject();
     }
     return null;
   }
@@ -105,11 +108,24 @@ public class ColorOptionsTree extends Tree {
     }));
   }
 
+  @Nullable
+  public Object selectFirstItem() {
+    Object root = myTreeModel.getRoot();
+    if (root != null && myTreeModel.getChildCount(root) > 0) {
+      Object first = myTreeModel.getChild(root, 0);
+      if (first instanceof MyTreeNode) {
+        selectPath(new TreePath(((MyTreeNode)first).getPath()));
+        return ((MyTreeNode)first).getUserObject();
+      }
+    }
+    return null;
+  }
+
   public void selectOptionByName(@NotNull final String optionName) {
     selectPath(findOption(myTreeModel.getRoot(), new DescriptorMatcher() {
       @Override
       public boolean matches(@NotNull Object data) {
-        return StringUtil.containsIgnoreCase(data.toString(), optionName);
+        return !optionName.isEmpty() &&  StringUtil.containsIgnoreCase(data.toString(), optionName);
       }
     }));
   }
