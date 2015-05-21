@@ -56,10 +56,10 @@ public class TestNGTreeHierarchyTest {
     final String className = "a.ATest";
     listener.onSuiteStart(className, true);
     for(String methodName : new String[] {"test1", "test2"}) {
-      listener.onConfigurationSuccess(Collections.singletonList(className), "setUp");
+      listener.onConfigurationSuccess(Collections.singletonList(className), "setUp", 0);
       listener.onTestStart(className, methodName);
-      listener.onTestFinished(methodName);
-      listener.onConfigurationSuccess(Collections.singletonList(className), "tearDown");
+      listener.onTestFinished(methodName, 0);
+      listener.onConfigurationSuccess(Collections.singletonList(className), "tearDown", 0);
     }
     listener.onSuiteFinish(className);
 
@@ -102,7 +102,7 @@ public class TestNGTreeHierarchyTest {
         for (XmlInclude include : aClass.getIncludedMethods()) {
           final String methodName = include.getName();
           listener.onTestStart(classFQName, methodName);
-          listener.onTestFinished(methodName);
+          listener.onTestFinished(methodName, 0);
         }
       }
     }

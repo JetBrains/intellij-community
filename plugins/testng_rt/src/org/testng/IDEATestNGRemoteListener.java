@@ -42,11 +42,11 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public synchronized void onConfigurationSuccess(ITestResult result) {
-    onConfigurationSuccess(getTestHierarchy(result), getTestMethodName(result));
+    onConfigurationSuccess(getTestHierarchy(result), getTestMethodName(result), result.getEndMillis() - result.getStartMillis());
   }
 
   public synchronized void onConfigurationFailure(ITestResult result) {
-    onConfigurationFailure(getTestHierarchy(result), getTestMethodName(result), result.getThrowable());
+    onConfigurationFailure(getTestHierarchy(result), getTestMethodName(result), result.getThrowable(), result.getEndMillis() - result.getStartMillis());
   }
 
   public synchronized void onConfigurationSkip(ITestResult itr) {}
@@ -74,11 +74,11 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public synchronized void onTestSuccess(ITestResult result) {
-    onTestFinished(getTestMethodNameWithParams(result));
+    onTestFinished(getTestMethodNameWithParams(result), result.getEndMillis() - result.getStartMillis());
   }
 
   public synchronized void onTestFailure(ITestResult result) {
-    onTestFailure(result.getThrowable(), getTestMethodNameWithParams(result));
+    onTestFailure(result.getThrowable(), getTestMethodNameWithParams(result), result.getEndMillis() - result.getStartMillis());
   }
 
   public synchronized void onTestSkipped(ITestResult result) {
@@ -113,16 +113,16 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     return hierarchy;
   }
 
-  public void onConfigurationSuccess(List<String> classFQName, String testMethodName) {
+  public void onConfigurationSuccess(List<String> classFQName, String testMethodName, long duration) {
     onSuiteStart(classFQName, true);
     fireTestStarted(testMethodName, classFQName.get(0));
-    onTestFinished(testMethodName);
+    onTestFinished(testMethodName, duration);
   }
 
-  public void onConfigurationFailure(List<String> classFQName, String testMethodName, Throwable throwable) {
+  public void onConfigurationFailure(List<String> classFQName, String testMethodName, Throwable throwable, long duration) {
     onSuiteStart(classFQName, true);
     fireTestStarted(testMethodName, classFQName.get(0));
-    onTestFailure(throwable, testMethodName);
+    onTestFailure(throwable, testMethodName, duration);
   }
   
   public boolean onSuiteStart(String classFQName, boolean provideLocation) {
@@ -172,13 +172,16 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     fireTestStarted(methodName, classFQName.get(0), paramString, invocationCount);
   }
   
-  public void onTestFinished(String methodName) {
-    myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) + "\']");
+  public void onTestFinished(String methodName, long duration) {
+    myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) + (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") + "\']");
   }
 
-  public void onTestFailure(Throwable ex, String methodName) {
+  public void onTestFailure(Throwable ex, String methodName, long duration) {
     final Map<String, String> attrs = new HashMap<String, String>();
     attrs.put("name", methodName);
+    if (duration > 0) {
+      attrs.put("duration", Long.toString(duration));
+    }
     final String failureMessage = ex.getMessage();
     ComparisonFailureData notification;
     try {
@@ -189,7 +192,6 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     }
     ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
-    onTestFinished(methodName);
   }
 
   private static String getClassName(ITestResult result) {
