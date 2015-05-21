@@ -249,7 +249,7 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
   }
 
   @Nullable
-  private static PathInfo getInfoForDocJar(@NotNull final VirtualFile file, @NotNull Project project) {
+  private static PathInfo getInfoForDocJar(@NotNull final VirtualFile file, @NotNull final Project project) {
     final OrderRootType javaDocRootType = JavadocOrderRootType.getInstance();
     if (javaDocRootType == null) {
       return null;
@@ -257,13 +257,13 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
 
     class LibraryProcessor implements Processor<Library> {
       PathInfo result;
-      String moduleName;
+      Module module;
 
       @Override
       public boolean process(Library library) {
         for (VirtualFile root : library.getFiles(javaDocRootType)) {
           if (VfsUtilCore.isAncestor(root, file, false)) {
-            result = new PathInfo(file, root, moduleName, true);
+            result = new PathInfo(file, root, getModuleNameQualifier(project, module), true);
             return false;
           }
         }
@@ -280,14 +280,14 @@ final class DefaultWebServerRootsProvider extends WebServerRootsProvider {
           continue;
         }
 
-        processor.moduleName = module.getName();
+        processor.module = module;
         ModuleRootManager.getInstance(module).orderEntries().forEachLibrary(processor);
         if (processor.result != null) {
           return processor.result;
         }
       }
 
-      processor.moduleName = null;
+      processor.module = null;
       for (Library library : LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
         if (!processor.process(library)) {
           return processor.result;

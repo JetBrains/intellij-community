@@ -565,7 +565,7 @@ public class StringUtil extends StringUtilRt {
             buffer.append("\\").append(ch);
           }
           else if (!isPrintableUnicode(ch)) {
-            String hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
+            CharSequence hexCode = StringUtilRt.toUpperCase(Integer.toHexString(ch));
             buffer.append("\\u");
             int paddingCount = 4 - hexCode.length();
             while (paddingCount-- > 0) {
@@ -824,7 +824,7 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static String capitalize(@NotNull String s) {
     if (s.isEmpty()) return s;
-    if (s.length() == 1) return StringUtilRt.toUpperCase(s);
+    if (s.length() == 1) return StringUtilRt.toUpperCase(s).toString();
 
     // Optimization
     if (Character.isUpperCase(s.charAt(0))) return s;
@@ -2967,7 +2967,7 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String toUpperCase(@NotNull String a) {
-    return StringUtilRt.toUpperCase(a);
+    return StringUtilRt.toUpperCase(a).toString();
   }
 
   @Contract(pure = true)
