@@ -62,7 +62,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @NotNull
   private final GlobalInspectionContextImpl myContext;
-  protected static String ourOutputPath;
+  private static String ourOutputPath;
   private InspectionNode myToolNode;
 
   private static final Object lock = new Object();
@@ -200,7 +200,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (refElement == null) return;
     if (descriptors.length == 0) return;
     if (filterSuppressed) {
-      if (ourOutputPath == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
+      if (!isOutputPathSet() || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
         synchronized (lock) {
           Map<RefEntity, CommonProblemDescriptor[]> problemElements = getProblemElements();
           CommonProblemDescriptor[] problems = problemElements.get(refElement);
@@ -310,7 +310,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     return isDisposed;
   }
 
-  private void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
+  private synchronized void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
     final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
     exportResults(descriptions, refElement, parentNode);
     final List list = parentNode.getChildren();
@@ -850,7 +850,11 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     };
   }
 
-  public static void setOutputPath(final String output) {
+  public synchronized static void setOutputPath(final String output) {
     ourOutputPath = output;
+  }
+
+  private synchronized static boolean isOutputPathSet() {
+    return ourOutputPath != null;
   }
 }
