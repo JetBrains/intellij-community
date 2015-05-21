@@ -32,7 +32,6 @@ import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil.DocumentData;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -54,14 +53,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowFocusListener;
 import java.util.*;
 import java.util.List;
 
@@ -103,7 +98,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @Override
   @CalledInAwt
   protected void onDispose() {
-    myModifierProvider.destroy();
     destroyChangedBlocks();
     super.onDispose();
   }
@@ -984,86 +978,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  public class ModifierProvider {
-    private boolean myShiftPressed;
-    private boolean myCtrlPressed;
-    private boolean myAltPressed;
-
-    private Window myWindow;
-
-    private final WindowFocusListener myWindowFocusListener = new WindowFocusListener() {
-      @Override
-      public void windowGainedFocus(WindowEvent e) {
-        resetState();
-      }
-
-      @Override
-      public void windowLostFocus(WindowEvent e) {
-        resetState();
-      }
-    };
-
+  public class ModifierProvider extends KeyboardModifierListener {
     public void init() {
-      // we can use KeyListener on Editors, but Ctrl+Click will not work with focus in other place.
-      // ex: commit dialog with focus in commit message
-      IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
-        @Override
-        public boolean dispatch(AWTEvent e) {
-          if (e instanceof KeyEvent) {
-            onKeyEvent((KeyEvent)e);
-          }
-          return false;
-        }
-      }, SimpleDiffViewer.this);
-
-      myWindow = UIUtil.getWindow(myPanel);
-      if (myWindow != null) {
-        myWindow.addWindowFocusListener(myWindowFocusListener);
-      }
+      init(myPanel, SimpleDiffViewer.this);
     }
 
-    public void destroy() {
-      if (myWindow != null) {
-        myWindow.removeWindowFocusListener(myWindowFocusListener);
-      }
-    }
-
-    private void onKeyEvent(KeyEvent e) {
-      final int keyCode = e.getKeyCode();
-      if (keyCode == KeyEvent.VK_SHIFT) {
-        myShiftPressed = e.getID() == KeyEvent.KEY_PRESSED;
-        updateActions();
-      }
-      if (keyCode == KeyEvent.VK_CONTROL) {
-        myCtrlPressed = e.getID() == KeyEvent.KEY_PRESSED;
-        updateActions();
-      }
-      if (keyCode == KeyEvent.VK_ALT) {
-        myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
-        updateActions();
-      }
-    }
-
-    private void resetState() {
-      myShiftPressed = false;
-      myAltPressed = false;
-      myCtrlPressed = false;
-      updateActions();
-    }
-
-    public boolean isShiftPressed() {
-      return myShiftPressed;
-    }
-
-    public boolean isCtrlPressed() {
-      return myCtrlPressed;
-    }
-
-    public boolean isAltPressed() {
-      return myAltPressed;
-    }
-
-    public void updateActions() {
+    public void onModifiersChanged() {
       for (SimpleDiffChange change : myDiffChanges) {
         change.updateGutterActions(false);
       }
