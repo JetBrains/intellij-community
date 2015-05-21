@@ -167,13 +167,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     cleanupTools();
     setCurrentScope(scope);
 
-    DefaultInspectionToolPresentation.setOutputPath(null);
     final Runnable action = new Runnable() {
       @Override
       public void run() {
-        performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
         DefaultInspectionToolPresentation.setOutputPath(outputPath);
         try {
+          performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
           exportResults(inspectionsResults, outputPath);
         }
         finally {
