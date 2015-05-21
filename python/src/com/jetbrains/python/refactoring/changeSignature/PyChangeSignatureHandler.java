@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -130,11 +131,10 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     if (psiFile == null) return true;
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile != null) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(virtualFile)) {
-        String message =
-            RefactoringBundle.getCannotRefactorMessage("Function is not under the source root");
-          CommonRefactoringUtil.showErrorHint(project, editor, message,
-                                              REFACTORING_NAME, REFACTORING_NAME);
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      if (fileIndex.isExcluded(virtualFile) || (fileIndex.isInLibraryClasses(virtualFile) && !fileIndex.isInContent(virtualFile))) {
+        String message = RefactoringBundle.getCannotRefactorMessage("Function is not under the source root");
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, REFACTORING_NAME);
         return true;
       }
     }
