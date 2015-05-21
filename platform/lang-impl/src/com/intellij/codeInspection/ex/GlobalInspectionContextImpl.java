@@ -167,27 +167,27 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     cleanupTools();
     setCurrentScope(scope);
 
-    DefaultInspectionToolPresentation.setOutputPath(outputPath);
-    try {
-      final Runnable action = new Runnable() {
-        @Override
-        public void run() {
-          performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
+    DefaultInspectionToolPresentation.setOutputPath(null);
+    final Runnable action = new Runnable() {
+      @Override
+      public void run() {
+        performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
+        DefaultInspectionToolPresentation.setOutputPath(outputPath);
+        try {
           exportResults(inspectionsResults, outputPath);
         }
-      };
-      if (isOfflineInspections) {
-        ApplicationManager.getApplication().runReadAction(action);
+        finally {
+          DefaultInspectionToolPresentation.setOutputPath(null);
+        }
       }
-      else {
-        action.run();
-      }
+    };
+    if (isOfflineInspections) {
+      ApplicationManager.getApplication().runReadAction(action);
     }
-    finally {
-      DefaultInspectionToolPresentation.setOutputPath(null);
+    else {
+      action.run();
     }
   }
-  
 
   private void exportResults(@NotNull List<File> inspectionsResults, @Nullable String outputPath) {
     @NonNls final String ext = ".xml";
