@@ -15,7 +15,6 @@
  */
 package org.jetbrains.io;
 
-import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,11 +23,7 @@ import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.CustomPortServerManager;
 import org.jetbrains.ide.PooledThreadExecutor;
 
@@ -36,7 +31,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.util.Map;
 
 public class BuiltInServer implements Disposable {
   static final Logger LOG = Logger.getInstance(BuiltInServer.class);
@@ -59,7 +53,8 @@ public class BuiltInServer implements Disposable {
   public static BuiltInServer start(int workerCount, int firstPort, int portsCount, boolean tryAnyPort) throws Throwable {
     EventLoopGroup eventLoopGroup = new NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE);
     ChannelRegistrar channelRegistrar = new ChannelRegistrar();
-    ServerBootstrap bootstrap = createServerBootstrap(eventLoopGroup, channelRegistrar, null);
+    ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
+    configureChildHandler(bootstrap, channelRegistrar);
     int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
     BuiltInServer server = new BuiltInServer(eventLoopGroup, port);
     bindCustomPorts(server);
@@ -70,32 +65,14 @@ public class BuiltInServer implements Disposable {
     return port;
   }
 
-  @NotNull
-  static ServerBootstrap createServerBootstrap(@NotNull EventLoopGroup eventLoopGroup,
-                                               @NotNull final ChannelRegistrar channelRegistrar,
-                                               @Nullable Map<String, Object> xmlRpcHandlers) {
-    ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
-    if (xmlRpcHandlers == null) {
-      final PortUnificationServerHandler portUnificationServerHandler = new PortUnificationServerHandler();
-      bootstrap.childHandler(new ChannelInitializer() {
-        @Override
-        protected void initChannel(Channel channel) throws Exception {
-          channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler);
-        }
-      });
-    }
-    else {
-      final XmlRpcDelegatingHttpRequestHandler handler = new XmlRpcDelegatingHttpRequestHandler(xmlRpcHandlers);
-      bootstrap.childHandler(new ChannelInitializer() {
-        @Override
-        protected void initChannel(Channel channel) throws Exception {
-          channel.pipeline().addLast(channelRegistrar);
-          NettyUtil.addHttpServerCodec(channel.pipeline());
-          channel.pipeline().addLast(handler);
-        }
-      });
-    }
-    return bootstrap;
+  static void configureChildHandler(@NotNull ServerBootstrap bootstrap, @NotNull final ChannelRegistrar channelRegistrar) {
+    final PortUnificationServerHandler portUnificationServerHandler = new PortUnificationServerHandler();
+    bootstrap.childHandler(new ChannelInitializer() {
+      @Override
+      protected void initChannel(Channel channel) throws Exception {
+        channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler);
+      }
+    });
   }
 
   private static void bindCustomPorts(@NotNull BuiltInServer server) {
@@ -163,24 +140,5 @@ public class BuiltInServer implements Disposable {
 
   public static void replaceDefaultHandler(@NotNull ChannelHandlerContext context, @NotNull ChannelHandler channelHandler) {
     context.pipeline().replace(DelegatingHttpRequestHandler.class, "replacedDefaultHandler", channelHandler);
-  }
-
-  @ChannelHandler.Sharable
-  private static final class XmlRpcDelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
-    private final Map<String, Object> handlers;
-
-    public XmlRpcDelegatingHttpRequestHandler(Map<String, Object> handlers) {
-      this.handlers = handlers;
-    }
-
-    @Override
-    protected boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws IOException {
-      if (handlers.isEmpty()) {
-        // not yet initialized, for example, P2PTransport could add handlers after we bound.
-        return false;
-      }
-
-      return request.method() == HttpMethod.POST && XmlRpcServer.SERVICE.getInstance().process(urlDecoder.path(), request, context, handlers);
-    }
   }
 }
