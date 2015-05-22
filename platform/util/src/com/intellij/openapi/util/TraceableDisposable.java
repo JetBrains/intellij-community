@@ -42,7 +42,7 @@ public class TraceableDisposable {
     }
   }
 
-  public void kill(@NotNull Throwable throwable) {
+  public void killExceptionally(@NotNull Throwable throwable) {
     if (CREATE_TRACE != null) {
       KILL_TRACE = throwable;
     }
@@ -58,7 +58,7 @@ public class TraceableDisposable {
     }
 
     @Override
-    public void printStackTrace(PrintStream s) {
+    public void printStackTrace(@NotNull PrintStream s) {
       //noinspection IOResourceOpenedButNotSafelyClosed
       PrintWriter writer = new PrintWriter(s);
       printStackTrace(writer);
