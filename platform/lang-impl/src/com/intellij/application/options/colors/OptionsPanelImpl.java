@@ -125,10 +125,6 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
         }
       }
     }
-    if (description == null) {
-      Object firstItem = myOptionsTree.selectFirstItem();
-      if (firstItem instanceof ColorAndFontDescription) description = (ColorAndFontDescription)firstItem;
-    }
     if (description != null) {
       myProperties.setValue(SELECTED_COLOR_OPTION_PROPERTY, description.getType());
       myOptionsPanel.reset(description);

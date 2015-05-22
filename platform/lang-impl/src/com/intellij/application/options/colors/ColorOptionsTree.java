@@ -108,19 +108,6 @@ public class ColorOptionsTree extends Tree {
     }));
   }
 
-  @Nullable
-  public Object selectFirstItem() {
-    Object root = myTreeModel.getRoot();
-    if (root != null && myTreeModel.getChildCount(root) > 0) {
-      Object first = myTreeModel.getChild(root, 0);
-      if (first instanceof MyTreeNode) {
-        selectPath(new TreePath(((MyTreeNode)first).getPath()));
-        return ((MyTreeNode)first).getUserObject();
-      }
-    }
-    return null;
-  }
-
   public void selectOptionByName(@NotNull final String optionName) {
     selectPath(findOption(myTreeModel.getRoot(), new DescriptorMatcher() {
       @Override
