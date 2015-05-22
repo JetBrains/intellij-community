@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,8 +69,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
         @Override
         protected ContentManager compute() {
           ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-          ToolWindow toolWindow =
-            toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
+          ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
           ContentManager contentManager = toolWindow.getContentManager();
           toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
           new ContentManagerWatcher(toolWindow, contentManager);
@@ -112,7 +111,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
                                                    @NotNull final ProblemHighlightType highlightType,
                                                    @Nullable final HintAction hintAction,
                                                    boolean onTheFly,
-                                                   final LocalQuickFix... fixes) {
+                                                   @Nullable LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, onTheFly);
   }
 
@@ -135,11 +134,11 @@ public class InspectionManagerEx extends InspectionManagerBase {
     return inspectionContext;
   }
 
-  public void setProfile(final String name) {
+  public void setProfile(@NotNull String name) {
     myCurrentProfileName = name;
   }
 
-  public void closeRunningContext(GlobalInspectionContextImpl globalInspectionContext){
+  void closeRunningContext(@NotNull GlobalInspectionContextImpl globalInspectionContext){
     myRunningContexts.remove(globalInspectionContext);
   }
 
@@ -148,20 +147,9 @@ public class InspectionManagerEx extends InspectionManagerBase {
     return myRunningContexts;
   }
 
-  @NotNull
-  @Deprecated
-  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                   @NotNull final String descriptionTemplate,
-                                                   @NotNull final ProblemHighlightType highlightType,
-                                                   @Nullable final HintAction hintAction,
-                                                   final LocalQuickFix... fixes) {
-
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, true);
-  }
-
   @TestOnly
+  @NotNull
   public NotNullLazyValue<ContentManager> getContentManager() {
     return myContentManager;
   }
-
 }

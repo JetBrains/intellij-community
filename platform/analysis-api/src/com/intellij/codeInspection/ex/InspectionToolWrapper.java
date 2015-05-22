@@ -233,7 +233,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return getShortName();
   }
 
-  public void cleanup(Project project) {
+  public void cleanup(@NotNull Project project) {
     T tool = myTool;
     if (tool != null) {
       tool.cleanup(project);

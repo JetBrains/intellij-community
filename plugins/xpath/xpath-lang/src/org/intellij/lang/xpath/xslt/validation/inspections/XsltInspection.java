@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath.xslt.validation.inspections;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressIntentionAction;
@@ -26,23 +25,28 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class XsltInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
-    public boolean isEnabledByDefault() {
-        return true;
-    }
+abstract class XsltInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
-    public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement psiElement) {
-        final List<? extends IntentionAction> actions = InspectionUtil.getSuppressActions(this, false);
-        return actions.toArray(new SuppressInspectionAction[actions.size()]);
-    }
+  @Override
+  @NotNull
+  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement psiElement) {
+    final List<SuppressIntentionAction> actions = InspectionUtil.getSuppressActions(this, false);
+    return actions.toArray(new SuppressIntentionAction[actions.size()]);
+  }
 
-    public boolean isSuppressedFor(@NotNull PsiElement element) {
-        return InspectionUtil.isSuppressed(this, element);
-    }
+  @Override
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
+    return InspectionUtil.isSuppressed(this, element);
+  }
 
-    @Nls
-    @NotNull
-    public String getGroupDisplayName() {
-        return "XSLT";
-    }
+  @Override
+  @Nls
+  @NotNull
+  public String getGroupDisplayName() {
+    return "XSLT";
+  }
 }

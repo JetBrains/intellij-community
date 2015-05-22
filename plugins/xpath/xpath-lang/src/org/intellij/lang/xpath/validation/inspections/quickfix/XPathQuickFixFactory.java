@@ -38,50 +38,48 @@ import org.intellij.lang.xpath.validation.inspections.XPathInspection;
 import org.jetbrains.annotations.NotNull;
 
 public interface XPathQuickFixFactory {
-    Fix<XPathExpression>[] createImplicitTypeConversionFixes(XPathExpression expression, XPathType type, boolean explicit);
+  Fix<XPathExpression>[] createImplicitTypeConversionFixes(XPathExpression expression, XPathType type, boolean explicit);
 
-    Fix<XPathExpression>[] createRedundantTypeConversionFixes(XPathExpression expression);
+  Fix<XPathExpression>[] createRedundantTypeConversionFixes(XPathExpression expression);
 
-    Fix<XPathNodeTest>[] createUnknownNodeTestFixes(XPathNodeTest test);
+  Fix<XPathNodeTest>[] createUnknownNodeTestFixes(XPathNodeTest test);
 
-    SuppressIntentionAction[] getSuppressActions(XPathInspection inspection);
+  @NotNull
+  SuppressIntentionAction[] getSuppressActions(XPathInspection inspection);
 
-    boolean isSuppressedFor(PsiElement element, XPathInspection inspection);
+  boolean isSuppressedFor(PsiElement element, XPathInspection inspection);
 
-    abstract class Fix<E extends PsiElement> extends LocalQuickFixAndIntentionActionOnPsiElement {
-        protected Fix(E element) {
-          super(element);
-        }
-
-        public boolean startInWriteAction() {
-            return true;
-        }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project,
-                                 @NotNull PsiFile file,
-                                 @NotNull PsiElement startElement,
-                                 @NotNull PsiElement endElement) {
-            return startElement.isValid() && startElement.getParent().isValid();
-        }
-
-      @Override
-      public void invoke(@NotNull Project project,
-                         @NotNull PsiFile file,
-                         Editor editor, @NotNull PsiElement startElement,
-                         @NotNull PsiElement endElement) {
-        if(!FileModificationService.getInstance().prepareFileForWrite(file)) {
-            return;
-        }
-
-            try {
-                invokeImpl(project, file);
-            } catch (IncorrectOperationException e) {
-                Logger.getInstance(getClass().getName()).error(e);
-            }
-        }
-
-
-        protected abstract void invokeImpl(Project project, PsiFile file) throws IncorrectOperationException;
+  abstract class Fix<E extends PsiElement> extends LocalQuickFixAndIntentionActionOnPsiElement {
+    protected Fix(E element) {
+      super(element);
     }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project,
+                               @NotNull PsiFile file,
+                               @NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement) {
+      return startElement.isValid() && startElement.getParent().isValid();
+    }
+
+    @Override
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       Editor editor, @NotNull PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) {
+        return;
+      }
+
+      try {
+        invokeImpl(project, file);
+      }
+      catch (IncorrectOperationException e) {
+        Logger.getInstance(getClass().getName()).error(e);
+      }
+    }
+
+
+    protected abstract void invokeImpl(Project project, PsiFile file) throws IncorrectOperationException;
+  }
 }
