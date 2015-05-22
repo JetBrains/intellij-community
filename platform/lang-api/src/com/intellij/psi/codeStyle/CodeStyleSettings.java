@@ -619,7 +619,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   @NotNull
   public IndentOptions getIndentOptionsByFile(@Nullable PsiFile file, @Nullable TextRange formatRange, boolean ignoreDocOptions,
                                               @Nullable Processor<FileIndentOptionsProvider> providerProcessor) {
-    if (file != null && file.isValid() && file.isWritable()) {
+    if (file != null && file.isValid()) {
       boolean isFullReformat = isFileFullyCoveredByRange(file, formatRange);
       if (!ignoreDocOptions && !isFullReformat) {
         IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(file);
