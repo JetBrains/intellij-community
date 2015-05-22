@@ -91,6 +91,8 @@ public class CacheUpdateRunner extends DumbModeTask {
     }
   }
 
+  private static final int FILE_SIZE_TO_SHOW_THRESHOLD = 500 * 1024;
+
   public static void processFiles(final ProgressIndicator indicator,
                                   boolean processInReadAction,
                                   Collection<VirtualFile> files,
@@ -104,7 +106,7 @@ public class CacheUpdateRunner extends DumbModeTask {
       // need set here to handle queue.pushbacks after checkCancelled() in order
       // not to count the same file several times
       final Set<VirtualFile> processed = new THashSet<VirtualFile>();
-      private boolean fileNameWasShownAfterRestart;
+      private boolean fileNameWasShown;
 
       @Override
       public void consume(VirtualFile virtualFile) {
@@ -112,12 +114,12 @@ public class CacheUpdateRunner extends DumbModeTask {
         synchronized (processed) {
           boolean added = processed.add(virtualFile);
           indicator.setFraction(processed.size() / total);
-          if (!added) {
+          if (!added || virtualFile.getLength() > FILE_SIZE_TO_SHOW_THRESHOLD) {
             indicator.setText2(virtualFile.getPresentableUrl());
-            fileNameWasShownAfterRestart = true;
-          } else if (fileNameWasShownAfterRestart) {
+            fileNameWasShown = true;
+          } else if (fileNameWasShown) {
             indicator.setText2("");
-            fileNameWasShownAfterRestart = false;
+            fileNameWasShown = false;
           }
         }
       }
