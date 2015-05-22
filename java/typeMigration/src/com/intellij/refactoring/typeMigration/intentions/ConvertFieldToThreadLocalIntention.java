@@ -70,7 +70,6 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
     LOG.assertTrue(psiField != null);
-    psiField.normalizeDeclaration();
     final Query<PsiReference> refs = ReferencesSearch.search(psiField);
 
     final Set<PsiElement> elements = new HashSet<PsiElement>();
@@ -79,6 +78,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
       elements.add(reference.getElement());
     }
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
+    psiField.normalizeDeclaration();
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
