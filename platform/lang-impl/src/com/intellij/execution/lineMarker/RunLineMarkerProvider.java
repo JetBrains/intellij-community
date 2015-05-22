@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -87,16 +88,19 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
               return new AnAction() {
                 @Override
                 public void actionPerformed(AnActionEvent e) {
+                  List<AnAction> actions = new ArrayList<AnAction>();
                   Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
-                  List<AnAction> actions = ContainerUtil.mapNotNull(executors,
-                                                                    new Function<Executor, AnAction>() {
-                                                                      @Override
-                                                                      public AnAction fun(Executor executor) {
-                                                                        return ActionManager.getInstance().getAction(executor.getContextActionId());
-                                                                      }
-                                                                    });
-                  ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, new DefaultActionGroup(actions));
+                  actions.addAll(ContainerUtil.mapNotNull(executors,
+                                                          new Function<Executor, AnAction>() {
+                                                            @Override
+                                                            public AnAction fun(Executor executor) {
+                                                              return ActionManager.getInstance().getAction(executor.getContextActionId());
+                                                            }
+                                                          }));
+                  actions.add(Separator.getInstance());
+                  actions.addAll(RunLineMarkerContributor.getActions(element));
 
+                  ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, new DefaultActionGroup(actions));
                   final MouseEvent me = (MouseEvent)e.getInputEvent();
                   final Component c = me.getComponent();
                   if (c != null && c.isShowing()) {

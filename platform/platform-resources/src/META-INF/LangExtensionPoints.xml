@@ -430,6 +430,7 @@
                     interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
     <extensionPoint name="runConfigurationProducer"
                     interface="com.intellij.execution.actions.RunConfigurationProducer"/>
+    <extensionPoint name="runLineMarkerContributor" interface="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>

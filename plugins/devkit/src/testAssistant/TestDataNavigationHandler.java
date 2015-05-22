@@ -49,10 +49,16 @@ import java.util.List;
 */
 public class TestDataNavigationHandler implements GutterIconNavigationHandler<PsiMethod> {
   public void navigate(MouseEvent e, final PsiMethod elt) {
-    navigate(elt, new RelativePoint(e));
+    List<String> fileNames = getFileNames(elt);
+
+    if (fileNames == null || fileNames.isEmpty()) {
+      return;
+    }
+    navigate(new RelativePoint(e), fileNames, elt.getProject());
   }
 
-  public static void navigate(PsiMethod method, final RelativePoint point) {
+  @Nullable
+  static List<String> getFileNames(PsiMethod method) {
     List<String> fileNames = null;
     String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(method.getContainingClass());
     if (testDataPath != null) {
@@ -62,13 +68,9 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     if (fileNames == null || fileNames.isEmpty()) {
       fileNames = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
     }
-    
-    if (fileNames == null || fileNames.isEmpty()) {
-      return;
-    }
-    navigate(point, fileNames, method.getProject());
+    return fileNames;
   }
-  
+
   public static void navigate(@NotNull final RelativePoint point,
                               @NotNull List<String> testDataFiles, 
                               final Project project) {

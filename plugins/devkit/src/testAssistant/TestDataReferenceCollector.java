@@ -53,12 +53,13 @@ public class TestDataReferenceCollector {
       myLogMessages.add("Found no parameters annotated with @TestDataFile");
     }
 
-    if (result == null || result.isEmpty()) {
+    if (result.isEmpty()) {
       result = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
     }
     return result;
   }
 
+  @NotNull
   private List<String> collectTestDataReferences(final PsiMethod method,
                                                  final Map<String, Computable<String>> argumentMap,
                                                  final HashSet<PsiMethod> proceed) {
