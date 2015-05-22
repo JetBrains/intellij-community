@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.flow;
 
 import com.intellij.codeInspection.dataFlow.AbstractDataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;

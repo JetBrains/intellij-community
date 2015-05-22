@@ -25,7 +25,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
@@ -64,7 +63,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
   }
 
   private final GrControlFlowAnalyzerImpl<V> myAnalyzer;
-
+  private final Stack<GrUnaryExpression> myDelayed = ContainerUtil.newStack();
 
   public GrCFExpressionHelper(GrControlFlowAnalyzerImpl<V> analyzer) {
     myAnalyzer = analyzer;
@@ -76,6 +75,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     initializer.accept(myAnalyzer);
     boxUnbox(variable.getDeclaredType(), initializer.getNominalType());
     myAnalyzer.addInstruction(new GrAssignInstruction(dfaVariableValue, initializer, true));
+    processDelayed();
   }
 
   @NotNull
@@ -109,12 +109,14 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     left.accept(myAnalyzer);
     argumentsProvider.runArguments();
     myAnalyzer.addInstruction(new GrAssignInstruction(getFactory().createValue(left), anchor, false));
+    processDelayed();
   }
 
   void assign(@NotNull GrExpression left, @NotNull DfaValue right) {
     left.accept(myAnalyzer);
     myAnalyzer.push(right);
     myAnalyzer.addInstruction(new GrAssignInstruction<V>(getFactory().createValue(left), null, false));
+    processDelayed();
   }
 
   void assignTuple(@NotNull GrExpression[] lValues, @Nullable GrExpression right) {
@@ -151,9 +153,11 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved) && !writing) {
       // groovy property getter
       myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(referenceExpression, (PsiMethod)resolved, null));
+      processDelayed();
     }
     else {
       myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(qualifier));
+      processDelayed();
       // push value
       myAnalyzer.push(getFactory().createValue(referenceExpression), referenceExpression, writing);
     }
@@ -172,6 +176,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
       left.accept(myAnalyzer);
       right.accept(myAnalyzer);
       myAnalyzer.addInstruction(new BinopInstruction<V>(MAP.get(operatorToken), anchor));
+      processDelayed();
     }
   }
 
@@ -183,7 +188,29 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
       myAnalyzer.addInstruction(new GrDummyInstruction<V>("BOXING"));
     }
   }
-  
+
+  void processIncrementDecrement(GrUnaryExpression expression) {
+    final GrExpression operand = expression.getOperand();
+    assert operand != null;
+    operand.accept(myAnalyzer);
+    final GroovyResolveResult[] results = expression.multiResolve(false);
+    myAnalyzer.callHelper.processMethodCall(
+      expression, operand, results.length == 1 ? results[0] : GroovyResolveResult.EMPTY_RESULT
+    );
+    myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, expression, false));
+  }
+
+  void processDelayed() {
+    for (GrUnaryExpression expression = myDelayed.tryPop(); expression != null; expression = myDelayed.tryPop()) {
+      processIncrementDecrement(expression);
+      myAnalyzer.pop();
+    }
+  }
+
+  void delay(@NotNull GrUnaryExpression expression) {
+    myDelayed.push(expression);
+  }
+
   @Contract("null -> false")
   public static boolean shouldCheckReturn(GroovyPsiElement element) {
     if (!(element instanceof GrExpression)

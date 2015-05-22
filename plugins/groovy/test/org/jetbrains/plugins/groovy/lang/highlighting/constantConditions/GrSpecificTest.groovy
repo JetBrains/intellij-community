@@ -92,4 +92,6 @@ def range4(@Nullable a) {
   void "test strings"() { doTest() }
 
   void "test methods with default parameters"() { doTest() }
+
+  void "test unary operator overloads"() { doTest() }
 }

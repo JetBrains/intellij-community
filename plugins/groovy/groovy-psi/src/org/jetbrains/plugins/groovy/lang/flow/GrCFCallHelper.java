@@ -328,6 +328,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       arguments.getClosureArguments(),
       result
     ));
+    myAnalyzer.expressionHelper.processDelayed();
     final PsiElement resultElement = result.getElement();
     final List<MethodContract> contracts = resultElement instanceof PsiMethod
                                            ? ControlFlowAnalyzer.getMethodCallContracts((PsiMethod)resultElement, null)

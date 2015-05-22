@@ -80,14 +80,14 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   final Stack<PsiElement> elementStack = new Stack<PsiElement>();
   final ControlFlowImpl<V> flow = new ControlFlowImpl<V>();
 
-  private final GrCFExpressionHelper<V> myExpressionHelper;
+  final GrCFExpressionHelper<V> expressionHelper;
   final GrCFExceptionHelper<V> exceptionHelper;
   final GrCFCallHelper<V> callHelper;
 
   public GrControlFlowAnalyzerImpl(@NotNull GrDfaValueFactory factory, @NotNull PsiElement block) {
     this.factory = factory;
     codeFragment = block;
-    myExpressionHelper = new GrCFExpressionHelper<V>(this);
+    expressionHelper = new GrCFExpressionHelper<V>(this);
     exceptionHelper = new GrCFExceptionHelper<V>(this);
     callHelper = new GrCFCallHelper<V>(this);
   }
@@ -146,7 +146,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         final GrExpression[] initializers = ((GrListOrMap)tupleInitializer).getInitializers();
         // iterate over tuple variables and initialize each 
         for (int i = 0; i < Math.min(variables.length, initializers.length); i++) {
-          myExpressionHelper.initialize(variables[i], initializers[i]);
+          expressionHelper.initialize(variables[i], initializers[i]);
           pop();
         }
         // iterate over rest initializers and evaluate them
@@ -160,7 +160,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       for (GrVariable variable : variables) {
         final GrExpression initializer = variable.getInitializerGroovy();
         if (initializer != null) {
-          myExpressionHelper.initialize(variable, initializer);
+          expressionHelper.initialize(variable, initializer);
           pop();
         }
       }
@@ -181,19 +181,19 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (op == mASSIGN) {
       startElement(expression);
       if (left instanceof GrTupleExpression) {
-        myExpressionHelper.assignTuple(((GrTupleExpression)left).getExpressions(), right);
+        expressionHelper.assignTuple(((GrTupleExpression)left).getExpressions(), right);
         pushUnknown(); // so there will be value to pop in finishElement()
       }
       else {
-        myExpressionHelper.assign(left, right);
+        expressionHelper.assign(left, right);
       }
       finishElement(expression);
     }
     else {
-      myExpressionHelper.assign(left, right, callHelper.new Arguments() {
+      expressionHelper.assign(left, right, callHelper.new Arguments() {
         @Override
         public int runArguments() {
-          myExpressionHelper.binaryOperation(expression, left, right, ASSIGNMENTS_TO_OPERATORS.get(op), expression.multiResolve(false));
+          expressionHelper.binaryOperation(expression, left, right, ASSIGNMENTS_TO_OPERATORS.get(op), expression.multiResolve(false));
           return 1;
         }
       });
@@ -224,7 +224,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     if (arrayDeclaration != null) {
       for (GrExpression dimension : arrayDeclaration.getBoundExpressions()) {
         dimension.accept(this);
-        myExpressionHelper.boxUnbox(PsiType.INT, dimension.getType());
+        expressionHelper.boxUnbox(PsiType.INT, dimension.getType());
         pop();
       }
       exceptionHelper.addConditionalRuntimeThrow();
@@ -696,7 +696,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       pushUnknown();
       final GotoInstruction<V> toEnd = addInstruction(new GotoInstruction<V>(null));
       ifInitialized.setOffset(flow.getNextOffset());
-      myExpressionHelper.initialize(parameter, initializer);
+      expressionHelper.initialize(parameter, initializer);
       toEnd.setOffset(flow.getNextOffset());
     }
     else {
@@ -776,7 +776,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
 
         // not null branch
         // qualifier is on top of stack
-        myExpressionHelper.dereference(qualifierExpression, referenceExpression, writing);
+        expressionHelper.dereference(qualifierExpression, referenceExpression, writing);
         final GotoInstruction<V> gotoEnd = addInstruction(new GotoInstruction<V>(null));
         gotoToNull.setOffset(flow.getNextOffset());
 
@@ -786,7 +786,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         gotoEnd.setOffset(flow.getNextOffset());
       }
       else {
-        myExpressionHelper.dereference(qualifierExpression, referenceExpression, writing);
+        expressionHelper.dereference(qualifierExpression, referenceExpression, writing);
       }
     }
 
@@ -809,22 +809,12 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         addInstruction(new NotInstruction<V>());
       }
       else if (tokenType == mINC || tokenType == mDEC) {
-        final boolean postfix = expression.isPostfix();
-
         operand.accept(this);
-        if (postfix) {
-          addInstruction(new DupInstruction<V>());
+        if (expression.isPostfix()) {
+          expressionHelper.delay(expression);
         }
-
-        final GroovyResolveResult[] results = expression.multiResolve(false);
-        callHelper.processMethodCall(
-          expression, operand, results.length == 1 ? results[0] : GroovyResolveResult.EMPTY_RESULT
-        );
-
-        addInstruction(new GrAssignInstruction<V>(null, expression, false));
-
-        if (postfix) {
-          pop(); // pop result value, leave old qualifier on top of the stack
+        else {
+          expressionHelper.processIncrementDecrement(expression);
         }
       }
       else {
@@ -870,7 +860,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
     else {
       final GroovyResolveResult[] resolveResults = expression.multiResolve(false);
-      myExpressionHelper.binaryOperation(expression, left, right, operatorToken, resolveResults);
+      expressionHelper.binaryOperation(expression, left, right, operatorToken, resolveResults);
     }
 
     finishElement(expression);
@@ -1000,6 +990,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       for (GrExpression expression : listOrMap.getInitializers()) {
         expression.accept(this);
         pop();
+        expressionHelper.processDelayed();
       }
     }
 
@@ -1028,6 +1019,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     }
     if (shouldCheckReturn(element)) {
       addInstruction(new CheckReturnValueInstruction<V>(element));
+      expressionHelper.processDelayed();
       exceptionHelper.returnCheckingFinally(false, element);
     }
     else if (element instanceof GrStatement && element.getParent() instanceof GrStatementOwner) {
