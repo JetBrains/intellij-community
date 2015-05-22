@@ -222,7 +222,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
         paintAnnotations(g, clip);
         paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset);
-        paintFoldingLines((Graphics2D)g, clip);
+        paintFoldingLines(g, clip);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintLineNumbers(g, clip);
       }
