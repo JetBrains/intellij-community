@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.NullableConsumer;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
@@ -54,10 +55,10 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private final Sdk[] myExistingSdks;
   private final NullableConsumer<Sdk> myCallback;
 
-  private static final String LOCAL = "Add Local";
-  private static final String REMOTE = "Add Remote";
-  private static final String VIRTUALENV = "Create VirtualEnv";
-  private static final String MORE = "More...";
+  private static final String LOCAL = PyBundle.message("sdk.details.step.add.local");
+  private static final String REMOTE = PyBundle.message("sdk.details.step.add.remote");
+  private static final String VIRTUALENV = PyBundle.message("sdk.details.step.create.virtual.env");
+  private static final String MORE = PyBundle.message("sdk.details.step.show.more");
   private boolean myNewProject;
 
   public static void show(final Project project,
@@ -148,9 +149,9 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
       remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks), myCallback);
     }
     else {
-      Messages.showErrorDialog("The Remote Hosts Access plugin is missing. Please enable the plugin in " +
-                               ShowSettingsUtil.getSettingsMenuName() +
-                               " | Plugins.", "Add Remote Interpreter");
+      final String pathToPluginsPage = ShowSettingsUtil.getSettingsMenuName() + " | Plugins";
+      Messages.showErrorDialog(PyBundle.message("remote.interpreter.error.plugin.missing", pathToPluginsPage),
+                               PyBundle.message("remote.interpreter.add.title"));
     }
   }
 

@@ -25,6 +25,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.NullableFunction;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class EditSdkDialog extends DialogWrapper {
 
   protected EditSdkDialog(Project project, SdkModificator sdk, final NullableFunction<String, String> nameValidator) {
     super(project, true);
-    setTitle("Edit Python Interpreter");
+    setTitle(PyBundle.message("sdk.edit.dialog.title"));
     myNameTextField.setText(sdk.getName());
     myNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -58,7 +59,7 @@ public class EditSdkDialog extends DialogWrapper {
       }
     });
     myInterpreterPathTextField.setText(sdk.getHomePath());
-    myInterpreterPathTextField.addBrowseFolderListener("Specify Interpreter Path", null, project,
+    myInterpreterPathTextField.addBrowseFolderListener(PyBundle.message("sdk.edit.dialog.specify.interpreter.path"), null, project,
                                                        PythonSdkType.getInstance().getHomeChooserDescriptor());
     myRemoveAssociationLabel.setVisible(false);
     if (PythonSdkType.getVirtualEnvRoot(sdk.getHomePath()) == null) {
@@ -73,7 +74,8 @@ public class EditSdkDialog extends DialogWrapper {
           final String basePath = project.getBasePath();
           if (basePath != null && !path.equals(FileUtil.toSystemIndependentName(basePath))) {
             myAssociateCheckbox.setEnabled(false);
-            myAssociateCheckbox.setText("Associate this virtual environment with " + FileUtil.toSystemDependentName(path));
+            myAssociateCheckbox.setText(PyBundle.message("sdk.edit.dialog.associate.virtual.env.with.path",
+                                                         FileUtil.toSystemDependentName(path)));
             myRemoveAssociationLabel.setVisible(true);
           }
         }
@@ -86,7 +88,7 @@ public class EditSdkDialog extends DialogWrapper {
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         myAssociateCheckbox.setSelected(false);
         myAssociateCheckbox.setEnabled(true);
-        myAssociateCheckbox.setText("Associate this environment with current project");
+        myAssociateCheckbox.setText(PyBundle.message("sdk.edit.dialog.associate.virtual.env.current.project"));
         myRemoveAssociationLabel.setVisible(false);
         myAssociationRemoved = true;
         return true;
