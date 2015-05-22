@@ -24,9 +24,6 @@ import com.intellij.util.ArrayUtil;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import static org.jetbrains.plugins.groovy.lang.flow.GrDfaVariableState.Truth.FALSE;
-import static org.jetbrains.plugins.groovy.lang.flow.GrDfaVariableState.Truth.TRUE;
-
 public class GrDfaMemoryState extends DfaMemoryStateImpl {
 
   public GrDfaMemoryState(DfaValueFactory factory) {
@@ -77,11 +74,15 @@ public class GrDfaMemoryState extends DfaMemoryStateImpl {
           );
           applyRelationCondition(
             relationFactory.createRelation(variableValue, dfaFalse, DfaRelation.EQ, to)
-          );  
+          );
         }
       }
 
-      final GrDfaVariableState newState = getVariableState(variableValue).withTruth(to ? TRUE : FALSE);
+      final GrDfaVariableState newState = getVariableState(variableValue).withTruth(
+        to
+        ? GrDfaVariableState.Truth.TRUE
+        : GrDfaVariableState.Truth.FALSE
+      );
       if (newState != null) {
         setVariableState(variableValue, newState);
         return true;
