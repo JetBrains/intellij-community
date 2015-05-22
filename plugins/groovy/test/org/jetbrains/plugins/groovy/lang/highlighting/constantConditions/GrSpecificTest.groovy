@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.highlighting.constantConditions
 
 
 class GrSpecificTest extends GrConstantConditionsTestBase {
-  
+
   void "test literals are not null"() {
     testHighlighting '''
 def testList() {
@@ -90,4 +90,6 @@ def range4(@Nullable a) {
   }
 
   void "test strings"() { doTest() }
+
+  void "test methods with default parameters"() { doTest() }
 }

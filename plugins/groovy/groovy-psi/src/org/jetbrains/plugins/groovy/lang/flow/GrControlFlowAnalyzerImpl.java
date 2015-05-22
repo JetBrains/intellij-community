@@ -691,7 +691,13 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     startElement(parameter);
     final GrExpression initializer = parameter.getInitializerGroovy();
     if (initializer != null) {
+      pushUnknown();
+      final ConditionalGotoInstruction<V> ifInitialized = addInstruction(new ConditionalGotoInstruction<V>(null, false, null));
+      pushUnknown();
+      final GotoInstruction<V> toEnd = addInstruction(new GotoInstruction<V>(null));
+      ifInitialized.setOffset(flow.getNextOffset());
       myExpressionHelper.initialize(parameter, initializer);
+      toEnd.setOffset(flow.getNextOffset());
     }
     else {
       pushUnknown();
