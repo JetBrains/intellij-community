@@ -307,4 +307,5 @@ public interface IdeActions {
   String ACTION_SEARCH_EVERYWHERE = "SearchEverywhere";
   
   String ACTION_MARK_ALL_NOTIFICATIONS_AS_READ = "MarkNotificationsAsRead";
+  String ACTION_SWITCHER = "Switcher";
 }
