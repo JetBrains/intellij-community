@@ -71,7 +71,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   }
 
   public void cancel(@NotNull Throwable cause) {
-    myTraceableDisposable.kill("Daemon Progress Canceled because of "+cause);
+    myTraceableDisposable.kill(cause);
     super.cancel();
   }
 
