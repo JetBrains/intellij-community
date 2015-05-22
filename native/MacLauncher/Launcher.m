@@ -231,7 +231,26 @@ NSBundle *findMatchingVm() {
             return jdkBundle;
         }
     }
-
+    
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    
+    NSString *pathForFile = [NSString stringWithFormat:@"%@/%@.jdk", getPreferencesFolderPath(), getExecutable()];
+    
+    if ([fileManager fileExistsAtPath:pathForFile]){
+        NSString* fileContents = [NSString stringWithContentsOfFile:pathForFile encoding:NSUTF8StringEncoding error:nil];
+        NSArray* allLinedStrings = [fileContents componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+        if (allLinedStrings.count > 0) {
+            NSString* jdkFromProfile = allLinedStrings[0];
+            NSBundle *jdkBundle = [NSBundle bundleWithPath:jdkFromProfile];
+            if (jdkBundle != nil && ![jvmVersion(jdkBundle) isEqualToString:@"0"]) {
+                // If the user chooses a VM, use it even if it doesn't satisfy Info.pList
+                debugLog(@"User VM from IDE profile:");
+                debugLog([jdkBundle bundlePath]);
+                return jdkBundle;
+            }
+        }
+    }
+    
     NSArray *vmBundles = [allVms() sortedArrayUsingFunction:compareVMVersions context:NULL];
 
     if (isDebugEnabled()) {

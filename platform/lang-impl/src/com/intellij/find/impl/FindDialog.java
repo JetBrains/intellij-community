@@ -487,9 +487,9 @@ public class FindDialog extends DialogWrapper {
     topOptionsPanel.setLayout(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, 0));
     topOptionsPanel.add(createFindOptionsPanel());
     optionsPanel.add(topOptionsPanel, gbConstraints);
-    
+
     JPanel resultsOptionPanel = null;
-    
+
     if (myModel.isMultipleFiles()) {
       optionsPanel.add(createGlobalScopePanel(), gbConstraints);
       gbConstraints.weightx = 1;
@@ -675,11 +675,12 @@ public class FindDialog extends DialogWrapper {
     }
 
     findSettings.setWholeWordsOnly(myModel.isWholeWordsOnly());
-    findSettings.setInStringLiteralsOnly(myModel.isInStringLiteralsOnly());
-    findSettings.setInCommentsOnly(myModel.isInCommentsOnly());
-    findSettings.setExceptComments(myModel.isExceptComments());
-    findSettings.setExceptStringLiterals(myModel.isExceptStringLiterals());
-    findSettings.setExceptCommentsAndLiterals(myModel.isExceptCommentsAndStringLiterals());
+    boolean saveContextBetweenRestarts = false;
+    findSettings.setInStringLiteralsOnly(saveContextBetweenRestarts && myModel.isInStringLiteralsOnly());
+    findSettings.setInCommentsOnly(saveContextBetweenRestarts && myModel.isInCommentsOnly());
+    findSettings.setExceptComments(saveContextBetweenRestarts && myModel.isExceptComments());
+    findSettings.setExceptStringLiterals(saveContextBetweenRestarts && myModel.isExceptStringLiterals());
+    findSettings.setExceptCommentsAndLiterals(saveContextBetweenRestarts && myModel.isExceptCommentsAndStringLiterals());
 
     findSettings.setRegularExpressions(myModel.isRegularExpressions());
     if (!myModel.isMultipleFiles()){
