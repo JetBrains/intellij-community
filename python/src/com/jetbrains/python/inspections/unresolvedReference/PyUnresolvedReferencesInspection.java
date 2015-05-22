@@ -144,8 +144,15 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public boolean isEnabled(@NotNull PsiElement anchor) {
       if (myIsEnabled == null) {
         final boolean isPyCharm = PlatformUtils.isPyCharm();
-        myIsEnabled = (isPyCharm && PythonSdkType.getSdk(anchor) != null || !isPyCharm) &&
-                      !PySkeletonRefresher.isGeneratingSkeletons();
+        if (PySkeletonRefresher.isGeneratingSkeletons()) {
+          myIsEnabled = false;
+        }
+        else if (isPyCharm) {
+          myIsEnabled = PythonSdkType.getSdk(anchor) != null || PyUtil.isInScratchFile(anchor);
+        }
+        else {
+          myIsEnabled = true;
+        }
       }
       return myIsEnabled;
     }
