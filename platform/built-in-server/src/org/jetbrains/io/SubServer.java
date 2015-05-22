@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
-final class SubServer implements CustomPortServerManager.CustomPortService, Disposable {
+public final class SubServer implements CustomPortServerManager.CustomPortService, Disposable {
   private ChannelRegistrar channelRegistrar;
 
   private final CustomPortServerManager user;

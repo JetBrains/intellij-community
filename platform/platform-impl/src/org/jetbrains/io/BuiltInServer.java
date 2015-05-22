@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.net.NetUtils;
@@ -24,7 +23,6 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.CustomPortServerManager;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
@@ -55,10 +53,7 @@ public class BuiltInServer implements Disposable {
     ChannelRegistrar channelRegistrar = new ChannelRegistrar();
     ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(eventLoopGroup);
     configureChildHandler(bootstrap, channelRegistrar);
-    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
-    BuiltInServer server = new BuiltInServer(eventLoopGroup, port);
-    bindCustomPorts(server);
-    return server;
+    return new BuiltInServer(eventLoopGroup, bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar));
   }
 
   public int getPort() {
@@ -73,21 +68,6 @@ public class BuiltInServer implements Disposable {
         channel.pipeline().addLast(channelRegistrar, portUnificationServerHandler);
       }
     });
-  }
-
-  private static void bindCustomPorts(@NotNull BuiltInServer server) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
-    for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
-      try {
-        new SubServer(customPortServerManager, server).bind(customPortServerManager.getPort());
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
   }
 
   private static int bind(int firstPort, int portsCount, boolean tryAnyPort, @NotNull ServerBootstrap bootstrap, @NotNull ChannelRegistrar channelRegistrar) throws Throwable {

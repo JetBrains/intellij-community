@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
+import org.jetbrains.io.SubServer;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -97,6 +98,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
 
         try {
           server = BuiltInServer.start(workerCount, defaultPort, PORTS_COUNT, true);
+          bindCustomPorts(server);
         }
         catch (Throwable e) {
           LOG.info(e);
@@ -126,5 +128,20 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
   @Nullable
   public Disposable getServerDisposable() {
     return server;
+  }
+
+  private static void bindCustomPorts(@NotNull BuiltInServer server) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
+    for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
+      try {
+        new SubServer(customPortServerManager, server).bind(customPortServerManager.getPort());
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
   }
 }
