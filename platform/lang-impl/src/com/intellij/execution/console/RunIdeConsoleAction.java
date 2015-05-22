@@ -57,6 +57,7 @@ import javax.script.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
@@ -214,12 +215,6 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     selectContent(descriptor);
   }
 
-  private static void printInContent(RunContentDescriptor descriptor, Object o, ConsoleViewContentType contentType) {
-    selectContent(descriptor);
-    ConsoleViewImpl consoleView = (ConsoleViewImpl)descriptor.getExecutionConsole();
-    consoleView.print(o + "\n", contentType);
-  }
-
   private static void selectContent(RunContentDescriptor descriptor) {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     ConsoleViewImpl consoleView = ObjectUtils.assertNotNull((ConsoleViewImpl)descriptor.getExecutionConsole());
@@ -231,10 +226,18 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     PsiFile psiFile = ObjectUtils.assertNotNull(PsiManager.getInstance(project).findFile(file));
 
     WeakReference<RunContentDescriptor> ref = psiFile.getCopyableUserData(DESCRIPTOR_KEY);
-    RunContentDescriptor existing = ref == null ? null : ref.get();
-    if (existing != null && existing.getExecutionConsole() != null) {
-      return ensureIdeBound(project, existing, engine);
+    RunContentDescriptor descriptor = ref == null ? null : ref.get();
+    if (descriptor == null || descriptor.getExecutionConsole() == null) {
+      descriptor = createConsoleView(project, engine, psiFile);
+      psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
     }
+    ensureIdeBound(project, engine);
+
+    return descriptor;
+  }
+
+  @NotNull
+  private static RunContentDescriptor createConsoleView(@NotNull Project project, @NotNull ScriptEngine engine, @NotNull PsiFile psiFile) {
     ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
@@ -243,32 +246,28 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
     toolbar.setTargetComponent(consoleView.getComponent());
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
-    final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, null, panel, file.getName()) {
+
+    final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, null, panel, psiFile.getName()) {
       @Override
       public boolean isContentReuseProhibited() {
         return true;
       }
     };
-
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
     toolbarActions.addAll(consoleView.createConsoleActions());
     toolbarActions.add(new CloseAction(executor, descriptor, project));
-    psiFile.putCopyableUserData(DESCRIPTOR_KEY, new WeakReference<RunContentDescriptor>(descriptor));
     ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor);
-    return ensureIdeBound(project, descriptor, engine);
+
+    new ScriptEngineOutputHandler(descriptor).installOn(engine);
+
+    return descriptor;
   }
 
-  private static RunContentDescriptor ensureIdeBound(@NotNull Project project,
-                                                     @NotNull RunContentDescriptor descriptor,
-                                                     @NotNull ScriptEngine engine) {
+  private static void ensureIdeBound(@NotNull Project project, @NotNull ScriptEngine engine) {
     Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
-    RunIdeConsoleAction.IDE ide = ObjectUtils.tryCast(bindings.get(IDE), RunIdeConsoleAction.IDE.class);
-    if (ide == null) {
-      ide = new IDE(project);
-      bindings.put(IDE, ide);
+    if (!bindings.containsKey(IDE)) {
+      bindings.put(IDE, new IDE(project));
     }
-    ide.updateDescriptor(descriptor);
-    return descriptor;
   }
 
   private static class MyRunAction extends DumbAwareAction {
@@ -303,23 +302,60 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     }
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  private static class ScriptEngineOutputHandler {
+    private WeakReference<RunContentDescriptor> myDescriptor;
+
+    private ConsoleWriter myStdOutWriter = new ConsoleWriter(ConsoleViewContentType.NORMAL_OUTPUT);
+    private ConsoleWriter myStdErrWriter = new ConsoleWriter(ConsoleViewContentType.ERROR_OUTPUT);
+
+    public ScriptEngineOutputHandler(@NotNull RunContentDescriptor descriptor) {
+      myDescriptor = new WeakReference<RunContentDescriptor>(descriptor);
+    }
+
+    public void installOn(@NotNull ScriptEngine engine) {
+      ScriptContext context = engine.getContext();
+      context.setWriter(myStdOutWriter);
+      context.setErrorWriter(myStdErrWriter);
+      engine.setContext(context);
+    }
+
+    private class ConsoleWriter extends Writer {
+      private final ConsoleViewContentType myOutputType;
+
+      private ConsoleWriter(ConsoleViewContentType outputType) {
+        myOutputType = outputType;
+      }
+
+      @Override
+      public void write(char[] cbuf, int off, int len) throws IOException {
+        RunContentDescriptor descriptor = myDescriptor.get();
+        ConsoleViewImpl console = ObjectUtils.tryCast(descriptor != null ? descriptor.getExecutionConsole() : null, ConsoleViewImpl.class);
+        if (console == null) {
+          //TODO ignore ?
+          throw new IOException("The console is not available.");
+        }
+        console.print(new String(cbuf, off, len), myOutputType);
+      }
+
+      @Override
+      public void flush() throws IOException {
+      }
+
+      @Override
+      public void close() throws IOException {
+      }
+    }
+  }
+
   public static class IDE {
     public final Application application = ApplicationManager.getApplication();
     public final Project project;
 
     private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
-    private WeakReference<RunContentDescriptor> descriptor = new WeakReference<RunContentDescriptor>(null);
 
     IDE(Project project) {
       this.project = project;
-    }
-
-    public void print(Object o) {
-      printInContent(descriptor.get(), o, ConsoleViewContentType.NORMAL_OUTPUT);
-    }
-
-    public void error(Object o) {
-      printInContent(descriptor.get(), o, ConsoleViewContentType.ERROR_OUTPUT);
     }
 
     public Object put(Object key, Object value) {
@@ -328,12 +364,6 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
     public Object get(Object key) {
       return bindings.get(key);
-    }
-
-    private void updateDescriptor(RunContentDescriptor currentDescriptor) {
-      if (descriptor.get() != currentDescriptor) {
-        this.descriptor = new WeakReference<RunContentDescriptor>(currentDescriptor);
-      }
     }
   }
 }
