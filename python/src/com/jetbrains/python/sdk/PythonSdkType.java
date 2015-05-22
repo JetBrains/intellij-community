@@ -844,6 +844,7 @@ public class PythonSdkType extends SdkType {
     return null;
   }
 
+  @NotNull
   public static LanguageLevel getLanguageLevelForSdk(@Nullable Sdk sdk) {
     if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
       final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
