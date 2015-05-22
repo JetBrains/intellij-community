@@ -17,10 +17,14 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.TestDataProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +43,28 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     }
     catch (Exception e) {
       e.printStackTrace();
+    }
+    finally {
+      Disposer.dispose(console);
+    }
+  }
+
+  public void testTypingAfterMultipleCR() throws Exception {
+    final EditorActionManager actionManager = EditorActionManager.getInstance();
+    final TypedAction typedAction = actionManager.getTypedAction();
+    final TestDataProvider dataContext = new TestDataProvider(getProject());
+
+    final ConsoleViewImpl console = createConsole();
+    final Editor editor = console.getEditor();
+    try {
+      console.print("System output\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+      console.print("\r\r\r\r\r\r\r", ConsoleViewContentType.NORMAL_OUTPUT);
+      console.flushDeferredText();
+
+      typedAction.actionPerformed(editor, '1', dataContext);
+      typedAction.actionPerformed(editor, '2', dataContext);
+
+      assertEquals("System output\n12", editor.getDocument().getText());
     }
     finally {
       Disposer.dispose(console);
