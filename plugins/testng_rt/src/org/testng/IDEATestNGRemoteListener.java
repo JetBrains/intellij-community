@@ -189,9 +189,6 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   public void onTestFailure(Throwable ex, String methodName, long duration) {
     final Map<String, String> attrs = new HashMap<String, String>();
     attrs.put("name", methodName);
-    if (duration > 0) {
-      attrs.put("duration", Long.toString(duration));
-    }
     final String failureMessage = ex.getMessage();
     ComparisonFailureData notification;
     try {
@@ -202,6 +199,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     }
     ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
+    onTestFinished(methodName, duration);
   }
 
   private static String getClassName(ITestResult result) {
