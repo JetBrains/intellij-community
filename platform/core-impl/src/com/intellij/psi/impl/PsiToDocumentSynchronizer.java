@@ -111,7 +111,6 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
       }
     }
 
-    psiFile.getViewProvider().contentsSynchronized();
   }
 
   boolean isInsideAtomicChange(@NotNull PsiFile file) {

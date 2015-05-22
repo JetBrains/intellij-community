@@ -239,10 +239,11 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
     Document document = containingFileByTree != null ? manager.getCachedDocument(containingFileByTree) : null;
+    boolean docSynced = false;
     if (document != null) {
       final int oldLength = containingFileByTree.getTextLength();
-      boolean success = synchronizer.commitTransaction(document);
-      if (success) {
+      docSynced = synchronizer.commitTransaction(document);
+      if (docSynced) {
         BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), containingFileByTree, oldLength, true);
       }
     }
@@ -251,6 +252,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
                              ApplicationManager.getApplication().hasWriteAction(CommitToPsiFileAction.class);
       if (!isFromCommit && !synchronizer.isIgnorePsiEvents()) {
         reparseParallelTrees(containingFileByTree);
+        if (docSynced) {
+          containingFileByTree.getViewProvider().contentsSynchronized();
+        }
       }
     }
 
