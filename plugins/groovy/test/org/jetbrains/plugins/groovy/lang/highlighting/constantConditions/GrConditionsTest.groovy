@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting.constantConditions
 
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class GrConditionsTest extends GrConstantConditionsTestBase {
 
   void "test ternary expression"() {

@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting.constantConditions
 
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class GrSpecificTest extends GrConstantConditionsTestBase {
 
   void "test literals are not null"() {

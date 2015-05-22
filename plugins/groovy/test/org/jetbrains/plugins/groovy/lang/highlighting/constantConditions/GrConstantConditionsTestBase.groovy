@@ -16,9 +16,11 @@
 package org.jetbrains.plugins.groovy.lang.highlighting.constantConditions
 
 import com.intellij.codeInspection.InspectionProfileEntry
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.codeInspection.dataflow.GrConstantConditionsInspection
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 
+@CompileStatic
 abstract class GrConstantConditionsTestBase extends GrHighlightingTestBase {
 
   InspectionProfileEntry[] customInspections
@@ -34,7 +36,7 @@ abstract class GrConstantConditionsTestBase extends GrHighlightingTestBase {
   GrConstantConditionsTestBase() {
     def inspection = new GrConstantConditionsInspection()
     inspection.UNKNOWN_MEMBERS_ARE_NULLABLE = false
-    customInspections = [inspection]
+    customInspections = [inspection] as InspectionProfileEntry[]
   }
 }
 
