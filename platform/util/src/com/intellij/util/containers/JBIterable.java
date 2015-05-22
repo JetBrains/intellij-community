@@ -19,7 +19,9 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,7 +119,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Override
   public String toString() {
-    return ContainerUtil.toCollection(myIterable).toString();
+    return "(" + StringUtil.join(takeWhile(Conditions.countDown(50)), ", ") + ")";
   }
 
   /**
@@ -190,6 +192,46 @@ public abstract class JBIterable<E> implements Iterable<E> {
     //noinspection unchecked
     return (JBIterable<T>)filter(Conditions.instanceOf(type));
   }
+
+  public final JBIterable<E> takeWhile(@NotNull final Condition<? super E> condition) {
+    final JBIterable<E> it = this;
+    return new JBIterable<E>() {
+      @Override
+      public Iterator<E> iterator() {
+        final Iterator<E> iterator = it.iterator();
+        //noinspection unchecked
+        return new Iterator<E>() {
+          E cur = (E)ObjectUtils.NULL;
+          boolean acquired;
+
+          @Override
+          public boolean hasNext() {
+            if (acquired) return cur != ObjectUtils.NULL;
+            boolean b = iterator.hasNext();
+            cur = b ? iterator.next() : null;
+            acquired = true;
+            b &= condition.value(cur);
+            //noinspection unchecked
+            cur = b ? cur : (E)ObjectUtils.NULL;
+            return b;
+          }
+
+          @Override
+          public E next() {
+            if (cur == ObjectUtils.NULL) throw new NoSuchElementException();
+            acquired = false;
+            return cur;
+          }
+
+          @Override
+          public void remove() {
+            iterator.remove();
+          }
+        };
+      }
+    };
+  }
+
 
   /**
    * Returns a fluent iterable that applies {@code function} to each element of this
