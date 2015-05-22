@@ -17,8 +17,8 @@ package com.intellij.psi.codeStyle.arrangement
 
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
-import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
 
 class JavaRearrangerFieldReferenceTest extends AbstractJavaRearrangerTest {
 
@@ -448,4 +448,61 @@ public class TmpTest {
       ]
     );
   }
+
+  void "test only dependencies withing same initialization scope"() {
+    doTest(
+      initial: '''
+public class TestArrangementBuilder {
+    private String theString = "";
+    private static final TestArrangement DEFAULT = new TestArrangementBuilder().build();
+
+    public TestArrangement build() {
+        return new TestArrangement(theString);
+    }
+
+    public class TestArrangement {
+        private final String theString;
+
+        public TestArrangement() {
+            this("");
+        }
+
+        public TestArrangement(@NotNull String aString) {
+            theString = aString;
+        }
+    }
+}
+''',
+      expected: '''
+public class TestArrangementBuilder {
+    private static final TestArrangement DEFAULT = new TestArrangementBuilder().build();
+    private String theString = "";
+
+    public TestArrangement build() {
+        return new TestArrangement(theString);
+    }
+
+    public class TestArrangement {
+        private final String theString;
+
+        public TestArrangement() {
+            this("");
+        }
+
+        public TestArrangement(@NotNull String aString) {
+            theString = aString;
+        }
+    }
+}
+''',
+      rules: [
+        rule(PUBLIC, STATIC, FINAL),
+        rule(PRIVATE, STATIC, FINAL),
+        rule(PRIVATE, FINAL),
+        rule(PRIVATE)
+      ]
+    )
+  }
+
+
 }
