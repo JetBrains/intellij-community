@@ -828,7 +828,8 @@ public class PyUtil {
     return guessLanguageLevel(project);
   }
 
-  private static LanguageLevel guessLanguageLevel(@NotNull Project project) {
+  @NotNull
+  public static LanguageLevel guessLanguageLevel(@NotNull Project project) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     if (moduleManager != null) {
       for (Module projectModule : moduleManager.getModules()) {

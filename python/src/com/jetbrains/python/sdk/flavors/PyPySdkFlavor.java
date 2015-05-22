@@ -77,8 +77,9 @@ public class PyPySdkFlavor extends PythonSdkFlavor {
     return "PyPy";
   }
 
+  @NotNull
   @Override
-  public LanguageLevel getLanguageLevel(Sdk sdk) {
+  public LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
     final String versionString = sdk.getVersionString();
     if (versionString != null) {
       final Matcher matcher = VERSION_STRING_RE.matcher(versionString);
