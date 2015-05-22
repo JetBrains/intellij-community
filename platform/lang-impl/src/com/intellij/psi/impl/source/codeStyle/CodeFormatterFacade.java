@@ -228,7 +228,7 @@ public class CodeFormatterFacade {
           }
 
           final FormattingModel originalModel = CoreFormatterUtil.buildModel(builder, file, mySettings, FormattingMode.REFORMAT);
-          final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
+          final FormattingModel model = new DocumentBasedFormattingModel(originalModel,
                                                                          document,
                                                                          project, mySettings, file.getFileType(), file);
 

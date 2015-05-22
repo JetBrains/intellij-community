@@ -425,7 +425,7 @@ class FormatProcessor {
       final int shiftInside = calcShift(oldBlockIndent, whiteSpaceIndent, options);
 
       if (shiftInside != 0 || !oldBlockIndent.equals(whiteSpaceIndent)) {
-        final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
+        final TextRange newBlockRange = model.shiftIndentInsideRange(block.getNode(), currentBlockRange, shiftInside);
         shift += newBlockRange.getLength() - block.getLength();
       }
     }
