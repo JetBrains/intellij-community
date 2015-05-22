@@ -21,6 +21,7 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.testng.IDEATestNGRemoteListener;
+import org.testng.ITestContext;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
@@ -50,6 +51,26 @@ public class TestNGTreeHierarchyTest {
                   "##teamcity[testStarted name='test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
                   "\n" +
                   "##teamcity[testFinished name='test1']\n");
+  }
+
+  @Test
+  public void testSkipTestMethod() throws Exception {
+
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    listener.onStart((ITestContext)null);
+    listener.onTestSkipped(Collections.singletonList("ATest"), "testName", "testName");
+    listener.onFinish((ITestContext)null);
+
+    Assert.assertEquals("output: " + buf, "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testIgnored name='testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName']\n" +
+                                          "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   @Test
