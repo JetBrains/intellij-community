@@ -19,7 +19,6 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
@@ -44,23 +43,30 @@ public class BuiltInServer implements Disposable {
 
   private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
 
+  final EventLoopGroup eventLoopGroup;
+  private final int port;
+
   public boolean isRunning() {
     return !channelRegistrar.isEmpty();
   }
 
-  public void start(int port) {
-    start(1, port, 1, false);
+  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup, int port) {
+    this.eventLoopGroup = eventLoopGroup;
+    this.port = port;
   }
 
-  public int start(int workerCount, int firstPort, int portsCount, boolean tryAnyPort) {
-    if (isRunning()) {
-      throw new IllegalStateException("server already started");
-    }
-
-    NioEventLoopGroup eventLoopGroup = new NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE);
+  @NotNull
+  public static BuiltInServer start(int workerCount, int firstPort, int portsCount, boolean tryAnyPort) throws Throwable {
+    EventLoopGroup eventLoopGroup = new NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE);
+    ChannelRegistrar channelRegistrar = new ChannelRegistrar();
     ServerBootstrap bootstrap = createServerBootstrap(eventLoopGroup, channelRegistrar, null);
-    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap);
-    bindCustomPorts(firstPort, port, eventLoopGroup);
+    int port = bind(firstPort, portsCount, tryAnyPort, bootstrap, channelRegistrar);
+    BuiltInServer server = new BuiltInServer(eventLoopGroup, port);
+    bindCustomPorts(server);
+    return server;
+  }
+
+  public int getPort() {
     return port;
   }
 
@@ -92,19 +98,14 @@ public class BuiltInServer implements Disposable {
     return bootstrap;
   }
 
-  private void bindCustomPorts(int firstPort, int port, NioEventLoopGroup eventLoopGroup) {
+  private static void bindCustomPorts(@NotNull BuiltInServer server) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
     for (CustomPortServerManager customPortServerManager : CustomPortServerManager.EP_NAME.getExtensions()) {
       try {
-        int customPortServerManagerPort = customPortServerManager.getPort();
-        SubServer subServer = new SubServer(customPortServerManager, eventLoopGroup);
-        Disposer.register(this, subServer);
-        if (customPortServerManager.isAvailableExternally() || (customPortServerManagerPort != firstPort && customPortServerManagerPort != port)) {
-          subServer.bind(customPortServerManagerPort);
-        }
+        new SubServer(customPortServerManager, server).bind(customPortServerManager.getPort());
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -112,7 +113,7 @@ public class BuiltInServer implements Disposable {
     }
   }
 
-  private int bind(int firstPort, int portsCount, boolean tryAnyPort, ServerBootstrap bootstrap) {
+  private static int bind(int firstPort, int portsCount, boolean tryAnyPort, @NotNull ServerBootstrap bootstrap, @NotNull ChannelRegistrar channelRegistrar) throws Throwable {
     InetAddress loopbackAddress = NetUtils.getLoopbackAddress();
     for (int i = 0; i < portsCount; i++) {
       int port = firstPort + i;
@@ -139,8 +140,7 @@ public class BuiltInServer implements Disposable {
         return port;
       }
       else if (!tryAnyPort && i == (portsCount - 1)) {
-        LOG.error(future.cause());
-        return -1;
+        throw future.cause();
       }
     }
 
@@ -151,8 +151,7 @@ public class BuiltInServer implements Disposable {
       return ((InetSocketAddress)future.channel().localAddress()).getPort();
     }
     else {
-      LOG.error(future.cause());
-      return -1;
+      throw future.cause();
     }
   }
 

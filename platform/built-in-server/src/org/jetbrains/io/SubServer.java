@@ -16,32 +16,38 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.EventLoopGroup;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.CustomPortServerManager;
 
 import java.net.InetSocketAddress;
 
 final class SubServer implements CustomPortServerManager.CustomPortService, Disposable {
-  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
+  private ChannelRegistrar channelRegistrar;
 
   private final CustomPortServerManager user;
-  private final ServerBootstrap bootstrap;
+  private final BuiltInServer server;
 
-  public SubServer(@NotNull CustomPortServerManager user, @NotNull EventLoopGroup eventLoopGroup) {
+  public SubServer(@NotNull CustomPortServerManager user, @NotNull BuiltInServer server) {
     this.user = user;
+    this.server = server;
+
     user.setManager(this);
-    bootstrap = BuiltInServer.createServerBootstrap(eventLoopGroup, channelRegistrar, user.createXmlRpcHandlers());
   }
 
   public boolean bind(int port) {
-    if (!user.isAvailableExternally() && port == BuiltInServerManager.getInstance().getPort()) {
+    if (port == server.getPort() || port == -1) {
       return true;
     }
 
+    if (channelRegistrar == null) {
+      Disposer.register(server, this);
+      channelRegistrar = new ChannelRegistrar();
+    }
+
+    ServerBootstrap bootstrap = BuiltInServer.createServerBootstrap(server.eventLoopGroup, channelRegistrar, user.createXmlRpcHandlers());
     try {
       bootstrap.localAddress(user.isAvailableExternally() ? new InetSocketAddress(port) : new InetSocketAddress(NetUtils.getLoopbackAddress(), port));
       channelRegistrar.add(bootstrap.bind().syncUninterruptibly().channel());
@@ -60,11 +66,13 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
 
   @Override
   public boolean isBound() {
-    return !channelRegistrar.isEmpty();
+    return channelRegistrar != null && !channelRegistrar.isEmpty();
   }
 
   private void stop() {
-    channelRegistrar.close(false);
+    if (channelRegistrar != null) {
+      channelRegistrar.close(false);
+    }
   }
 
   @Override
