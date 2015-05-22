@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -81,6 +82,12 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
    */
   public boolean isSuspendThreadSupported() {
     return mySuspendThreadSupported;
+  }
+
+  public enum StandardPanels {SUSPEND_POLICY, ACTIONS, DEPENDENCY}
+
+  public EnumSet<StandardPanels> getVisibleStandardPanels() {
+    return EnumSet.allOf(StandardPanels.class);
   }
 
   @NotNull

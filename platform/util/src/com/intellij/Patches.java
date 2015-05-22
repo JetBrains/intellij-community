@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,4 +108,10 @@ public class Patches {
    * fixed in JDK8
    */
   public static final boolean JDK_BUG_ID_7103570 = true;
+
+  /**
+   * Support default methods in JDI
+   * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
+   */
+  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_40");
 }

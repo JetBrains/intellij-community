@@ -49,10 +49,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
@@ -124,10 +121,18 @@ public abstract class PyTestCase extends UsefulTestCase {
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    new LightTempDirTestFixtureImpl(true));
+                                                                                    createTempDirFixture());
     myFixture.setUp();
 
     myFixture.setTestDataPath(getTestDataPath());
+  }
+
+  /**
+   * @return fixture to be used as temporary dir.
+   */
+  @NotNull
+  protected TempDirTestFixture createTempDirFixture() {
+    return new LightTempDirTestFixtureImpl(true); // "tmp://" dir by default
   }
 
   protected String getTestDataPath() {

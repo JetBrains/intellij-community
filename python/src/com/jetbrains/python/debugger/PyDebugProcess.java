@@ -61,6 +61,7 @@ import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -854,7 +855,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        elementRef.set(element);
+        if (!(element instanceof PyImportElement)) {
+          if (elementRef.isNull()) {
+            elementRef.set(element);
+          }
+        }
         return false;
       }
 
