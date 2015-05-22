@@ -608,7 +608,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     // e = $exception$
     addInstruction(new PushInstruction(factory.getVarFactory().createVariableValue(catchClauseParameter, false), null));
     addInstruction(new PushInstruction(exceptionHolder, null));
-    addInstruction(new GrAssignInstruction<V>(null, null, false));
+    addInstruction(new GrAssignInstruction<V>());
     addInstruction(new PopInstruction());
 
     addInstruction(new FlushVariableInstruction(exceptionHolder));
@@ -669,7 +669,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     gotoInstruction.setOffset(flow.getInstructionCount());
     addInstruction(new PushInstruction(exceptionHelper.getExceptionHolder(cd), null));
     addInstruction(new SwapInstruction());
-    addInstruction(new GrAssignInstruction<V>(null, null, false));
+    addInstruction(new GrAssignInstruction<V>());
     addInstruction(new PopInstruction());
     exceptionHelper.addThrowCode(cd, statement);
 
@@ -1027,11 +1027,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       throw new AssertionError("Expected " + element + ", popped " + popped);
     }
     if (shouldCheckReturn(element)) {
-      addInstruction(new CheckReturnValueInstruction<V>(
-        element instanceof GrReturnStatement
-        ? ((GrReturnStatement)element).getReturnValue()
-        : element
-      ));
+      addInstruction(new CheckReturnValueInstruction<V>(element));
       exceptionHelper.returnCheckingFinally(false, element);
     }
     else if (element instanceof GrStatement && element.getParent() instanceof GrStatementOwner) {

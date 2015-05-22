@@ -25,6 +25,7 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,8 +68,10 @@ public abstract class BranchingInstruction extends Instruction {
     return !isConstTrue && myIsTrueReachable != myIsFalseReachable;
   }
 
-  public static boolean isBoolConst(PsiElement condition) {
+  @Contract("null -> false")
+  public static boolean isBoolConst(@Nullable PsiElement condition) {
     //if (!(condition instanceof PsiLiteralExpression)) return false;
+    if (condition == null) return false;
     @NonNls String text = condition.getText();
     return "true".equals(text) || "false".equals(text);
   }

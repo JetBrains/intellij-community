@@ -26,16 +26,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public class GrInstanceofInstruction<V extends GrInstructionVisitor<V>> extends InstanceofInstruction<V> {
 
+  private @NotNull final GrExpression operand;
+  private @NotNull final PsiType type;
 
-  private final GrExpression operand;
-  private final PsiType type;
-
-  public GrInstanceofInstruction(GrExpression operand, PsiType type) {
+  public GrInstanceofInstruction(@NotNull GrExpression operand, @NotNull PsiType type) {
     super(DfaRelation.INSTANCEOF, operand, operand.getProject());
     this.operand = operand;
     this.type = type;
   }
-
 
   @NotNull
   @Override

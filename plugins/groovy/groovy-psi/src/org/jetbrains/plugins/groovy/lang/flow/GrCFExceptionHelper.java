@@ -112,7 +112,7 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
     if (nextCatch != null) {
       myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(nextCatch), null, false));
       myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(currentDescriptor), null, true));
-      myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
+      myAnalyzer.addInstruction(new GrAssignInstruction<V>());
       myAnalyzer.addInstruction(new PopInstruction());
     }
     addThrowCode(nextCatch, null);
@@ -194,7 +194,7 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
     if (cd == null) return;
     myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(cd), null));
     myAnalyzer.addInstruction(new PushInstruction(myAnalyzer.factory.createTypeValue(ref, Nullness.NOT_NULL), null));
-    myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
+    myAnalyzer.addInstruction(new GrAssignInstruction<V>());
     myAnalyzer.addInstruction(new PopInstruction());
   }
 
@@ -219,7 +219,7 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
     if (finallyDescriptor != null) {
       myAnalyzer.addInstruction(new PushInstruction(myString, null));
       myAnalyzer.addInstruction(new PushInstruction(getExceptionHolder(finallyDescriptor), null));
-      myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
+      myAnalyzer.addInstruction(new GrAssignInstruction<V>());
       myAnalyzer.addInstruction(new PopInstruction());
       myAnalyzer.addInstruction(new GotoInstruction(finallyDescriptor.getJumpOffset(myAnalyzer.flow)));
     }
@@ -248,7 +248,7 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
       myAnalyzer.push(myError);
       ifRuntime.setOffset(myAnalyzer.flow.getNextOffset());
 
-      myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, null, false));
+      myAnalyzer.addInstruction(new GrAssignInstruction<V>());
       myAnalyzer.pop();
 
       addThrowCode(cd, null);

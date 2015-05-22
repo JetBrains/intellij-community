@@ -26,6 +26,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.instruction.*;
@@ -182,7 +183,8 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
       myAnalyzer.addInstruction(new GrDummyInstruction<V>("BOXING"));
     }
   }
-
+  
+  @Contract("null -> false")
   public static boolean shouldCheckReturn(GroovyPsiElement element) {
     if (!(element instanceof GrExpression)
         || element instanceof GrConditionalExpression

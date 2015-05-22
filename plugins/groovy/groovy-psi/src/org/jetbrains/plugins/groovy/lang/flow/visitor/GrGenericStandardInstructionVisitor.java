@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
 import org.jetbrains.plugins.groovy.lang.flow.GrDfaMemoryState;
@@ -152,10 +153,10 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     return result;
   }
 
-  protected boolean checkNotNullable(DfaMemoryState state,
-                                     DfaValue value,
-                                     GrNullabilityProblem problem,
-                                     PsiElement anchor) {
+  protected boolean checkNotNullable(@NotNull DfaMemoryState state,
+                                     @NotNull DfaValue value,
+                                     @NotNull GrNullabilityProblem problem,
+                                     @Nullable PsiElement anchor) {
     boolean notNullable = state.checkNotNullable(value);
     if (notNullable && problem != passingNullableArgumentToNonAnnotatedParameter) {
       state.applyCondition(myRunner.getFactory().getRelationFactory().createRelation(
@@ -166,7 +167,7 @@ public class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInst
     return notNullable;
   }
 
-  protected void report(boolean ok, boolean ephemeral, GrNullabilityProblem problem, PsiElement anchor) {
+  protected void report(boolean ok, boolean ephemeral, @NotNull GrNullabilityProblem problem, @Nullable PsiElement anchor) {
   }
 
   @Override
