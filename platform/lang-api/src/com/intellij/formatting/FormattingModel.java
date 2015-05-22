@@ -70,7 +70,7 @@ public interface FormattingModel {
    * by the specified amount.
    *
    *
-   * @param node the owner of the text range, if defined
+   * @param node the owner of the text range, if defined.
    * @param range  the text range to indent.
    * @param indent the amount by which every line should be indented.
    * @return the text range covering the block with added indents.
