@@ -16,6 +16,7 @@
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -97,6 +98,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
 
   private static void generateMissedTests(final PsiClass testClass, PsiClass srcClass) {
     if (testClass != null) {
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(testClass)) return;
       final TestFramework framework = TestFrameworks.detectFramework(testClass);
       if (framework != null) {
         final Project project = testClass.getProject();
