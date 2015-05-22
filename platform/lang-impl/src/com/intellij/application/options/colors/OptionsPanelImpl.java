@@ -17,6 +17,7 @@
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.ActionCallback;
@@ -36,6 +37,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OptionsPanelImpl extends JPanel implements OptionsPanel {
+  public static final String SELECTED_COLOR_OPTION_PROPERTY = "selected.color.option.type";
 
   private final ColorOptionsTree myOptionsTree;
   private final ColorAndFontDescriptionPanel myOptionsPanel;
@@ -43,6 +45,8 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   private final ColorAndFontOptions myOptions;
   private final SchemesPanel mySchemesProvider;
   private final String myCategoryName;
+
+  private final PropertiesComponent myProperties;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
@@ -53,6 +57,7 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
     myOptions = options;
     mySchemesProvider = schemesProvider;
     myCategoryName = categoryName;
+    myProperties = PropertiesComponent.getInstance();
 
     myOptionsPanel = new ColorAndFontDescriptionPanel() {
       @Override
@@ -109,8 +114,19 @@ public class OptionsPanelImpl extends JPanel implements OptionsPanel {
   }
 
   private void processListValueChanged() {
-    ColorAndFontDescription description = myOptionsTree.getSelectedDescriptor();
+    Object selectedValue = myOptionsTree.getSelectedValue();
+    ColorAndFontDescription description = selectedValue instanceof ColorAndFontDescription ? (ColorAndFontDescription)selectedValue : null;
+    if (description == null) {
+      if (selectedValue == null) {
+        String preselectedType = myProperties.getValue(SELECTED_COLOR_OPTION_PROPERTY);
+        if (preselectedType != null) {
+          myOptionsTree.selectOptionByType(preselectedType);
+          description = myOptionsTree.getSelectedDescriptor();
+        }
+      }
+    }
     if (description != null) {
+      myProperties.setValue(SELECTED_COLOR_OPTION_PROPERTY, description.getType());
       myOptionsPanel.reset(description);
       myDispatcher.getMulticaster().selectedOptionChanged(description);
     }

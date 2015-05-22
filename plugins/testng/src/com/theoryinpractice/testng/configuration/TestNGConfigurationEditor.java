@@ -110,7 +110,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JPanel myListenersPanel;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
-  private final ArrayList<Map.Entry> propertiesList = new ArrayList<Map.Entry>();
+  private final ArrayList<Map.Entry<String, String>> propertiesList = new ArrayList<Map.Entry<String, String>>();
   private TestNGListenersTableModel listenerModel;
 
   private TestNGConfiguration config;
@@ -468,9 +468,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     textFieldWithBrowseButton
       .addBrowseFolderListener("TestNG", "Select .properties file for test properties", project, propertiesFileDescriptor);
 
-    propertiesTableView = new TableView();
-    propertiesTableView.setModelAndUpdateColumns(propertiesTableModel);
-    propertiesTableView.setShowGrid(true);
+    propertiesTableView = new TableView(propertiesTableModel);
 
     myPropertiesPanel.add(
       ToolbarDecorator.createDecorator(propertiesTableView)

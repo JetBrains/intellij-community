@@ -125,7 +125,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final FilePath path, final AbstractVcs vcs,
                               final String repositoryPath) {
-    showFileHistory(vcsHistoryProvider, null, path, repositoryPath, vcs);
+    showFileHistory(vcsHistoryProvider, vcs.getAnnotationProvider(), path, repositoryPath, vcs);
   }
 
   public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider, final FilePath path,

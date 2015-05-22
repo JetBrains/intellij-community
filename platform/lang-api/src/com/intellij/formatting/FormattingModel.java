@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,11 +69,13 @@ public interface FormattingModel {
    * Indents every line except for the first in the specified text range representing a multiline block
    * by the specified amount.
    *
+   *
+   * @param node the owner of the text range, if defined.
    * @param range  the text range to indent.
    * @param indent the amount by which every line should be indented.
    * @return the text range covering the block with added indents.
    */
-  TextRange shiftIndentInsideRange(TextRange range, int indent);
+  TextRange shiftIndentInsideRange(ASTNode node, TextRange range, int indent);
 
   /**
    * Commits the changes made by the formatter to the document. Called after the formatter

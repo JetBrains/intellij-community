@@ -58,19 +58,34 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       myInvocationCount = 0;
       myMethodName = testMethodName;
     }
-    final String paramString = parameters.length > 0 || myInvocationCount > 0 
-                               ? "[" + getParamsSpace(myInvocationCount, parameters) + getParamsString(parameters) + "]" 
-                               : null;
-    myParamsMap.put(result, paramString);
+    String paramString = getParamsString(parameters, myInvocationCount);
+    if (paramString != null) {
+      myParamsMap.put(result, paramString);
+    }
     onTestStart(getTestHierarchy(result), testMethodName, paramString, myInvocationCount);
     myInvocationCount++;
   }
 
-  public static String getParamsSpace(Integer invocationCount, Object[] parameters) {
-    if (invocationCount > 0) {
-      return invocationCount + (parameters.length > 0 ? " " : "");
+  public static String getParamsString(Object[] parameters, int invocationCount) {
+    String paramString = "";
+    if (parameters.length > 0) {
+      StringBuilder buf = new StringBuilder();
+      for (int i = 0; i < parameters.length; i++) {
+        if (i > 0) {
+          buf.append(", ");
+        }
+        buf.append(parameters[i].toString());
+      }
+      paramString = "[" + buf.toString() + "]";
     }
-    return "";
+    if (invocationCount > 0) {
+      paramString += getParamsSpace(invocationCount);
+    }
+    return paramString.length() > 0 ? paramString : null;
+  }
+
+  public static String getParamsSpace(Integer invocationCount) {
+    return " (" + invocationCount + ")";
   }
 
   public synchronized void onTestSuccess(ITestResult result) {
@@ -150,7 +165,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       String currentClassName = getShortName(fqName);
       myPrintStream.print("\n##teamcity[testSuiteStarted name =\'" + escapeName(currentClassName));
       if (provideLocation) {
-        myPrintStream.print("\' locationHint = \'java:suite://" + fqName);
+        myPrintStream.print("\' locationHint = \'java:suite://" + escapeName(fqName));
       }
       myPrintStream.println("\']");
       myCurrentSuites.add(currentClassName);
@@ -160,11 +175,6 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   public void onSuiteFinish(String suiteName) {
     myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(suiteName) + "\']");
-  }
-
-  //testOnly
-  public void onTestStart(String classFQName, String methodName) {
-    onTestStart(Collections.singletonList(classFQName), methodName, null, -1);
   }
 
   public void onTestStart(List<String> classFQName, String methodName, String paramString, Integer invocationCount) {
@@ -179,9 +189,6 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   public void onTestFailure(Throwable ex, String methodName, long duration) {
     final Map<String, String> attrs = new HashMap<String, String>();
     attrs.put("name", methodName);
-    if (duration > 0) {
-      attrs.put("duration", Long.toString(duration));
-    }
     final String failureMessage = ex.getMessage();
     ComparisonFailureData notification;
     try {
@@ -192,6 +199,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     }
     ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
+    onTestFinished(methodName, duration);
   }
 
   private static String getClassName(ITestResult result) {
@@ -207,7 +215,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private void fireTestStarted(String methodName, String className, String paramString, Integer invocationCount) {
-    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName) + (paramString != null ? paramString : "") +
+    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName + (paramString != null ? paramString : "")) +
                           "\' locationHint=\'java:test://" + escapeName(className + "." + methodName +  ( invocationCount >= 0 ? "[" + invocationCount + "]" : "")) + "\']");
   }
 
@@ -218,17 +226,6 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       methodName += paramString;
     }
     return methodName;
-  }
-
-  private static String getParamsString(Object[] parameters) {
-    StringBuilder buf = new StringBuilder(); 
-    for (int i = 0; i < parameters.length; i++) {
-      if (i > 0) {
-        buf.append(", ");
-      }
-      buf.append(parameters[i].toString());
-    }
-    return buf.toString();
   }
 
   private static String getTrace(Throwable tr) {

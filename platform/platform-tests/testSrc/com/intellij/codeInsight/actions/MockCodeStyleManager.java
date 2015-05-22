@@ -71,6 +71,11 @@ public class MockCodeStyleManager extends CodeStyleManager {
     myFormattedLinesForFile.put(file, formattedLines);
   }
 
+  @Override
+  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+    throw new UnsupportedOperationException("com.intellij.codeInsight.actions.MockCodeStyleManager.reformatTextWithContext(...)");
+  }
+
   @NotNull
   @Override
   public Project getProject() {

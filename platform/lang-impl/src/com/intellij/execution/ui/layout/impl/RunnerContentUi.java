@@ -1692,7 +1692,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         Dimension leftMinSize = myLeft.getMinimumSize();
         Dimension rightMinSize = myRight.getMinimumSize();
 
-        int delta = (prefSize.width - size.width) / 2;
+        // see IDEA-140557, always shrink left component last
+        int delta = 0;
+        //int delta = (prefSize.width - size.width) / 2;
 
         myLeft.setBounds(0, 0, myLeft.getPreferredSize().width - delta, parent.getHeight());
         int rightX = (int)myLeft.getBounds().getMaxX();

@@ -16,6 +16,7 @@
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -28,7 +29,9 @@ import org.testng.xml.XmlTest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 public class TestNGTreeHierarchyTest {
  
@@ -44,9 +47,34 @@ public class TestNGTreeHierarchyTest {
     doTest(suite, "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                   "\n" +
-                  "##teamcity[testStarted name='test1' locationHint='java:test://a.ATest.test1']\n" +
+                  "##teamcity[testStarted name='test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
                   "\n" +
                   "##teamcity[testFinished name='test1']\n");
+  }
+
+  @Test
+  public void testOneTestMethodWithMultipleInvocationCount() throws Exception {
+    final XmlSuite suite = new XmlSuite();
+    final XmlTest test = new XmlTest();
+    final XmlClass xmlClass = new XmlClass("a.ATest", false);
+    xmlClass.getIncludedMethods().add(new XmlInclude("test1", Arrays.asList(0, 1, 2), 0));
+    test.getClasses().add(xmlClass);
+    suite.getTests().add(test);
+
+    doTest(suite, "\n" +
+                  "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
+                  "\n" +
+                  "##teamcity[testStarted name='test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
+                  "\n" +
+                  "##teamcity[testFinished name='test1']\n" +
+                  "\n" +
+                  "##teamcity[testStarted name='test1 (1)' locationHint='java:test://a.ATest.test1|[1|]']\n" +
+                  "\n" +
+                  "##teamcity[testFinished name='test1 (1)']\n" +
+                  "\n" +
+                  "##teamcity[testStarted name='test1 (2)' locationHint='java:test://a.ATest.test1|[2|]']\n" +
+                  "\n" +
+                  "##teamcity[testFinished name='test1 (2)']\n");
   }
 
   @Test
@@ -57,7 +85,7 @@ public class TestNGTreeHierarchyTest {
     listener.onSuiteStart(className, true);
     for(String methodName : new String[] {"test1", "test2"}) {
       listener.onConfigurationSuccess(Collections.singletonList(className), "setUp", 0);
-      listener.onTestStart(className, methodName);
+      listener.onTestStart(Collections.singletonList(className), methodName, null, -1);
       listener.onTestFinished(methodName, 0);
       listener.onConfigurationSuccess(Collections.singletonList(className), "tearDown", 0);
     }
@@ -101,8 +129,15 @@ public class TestNGTreeHierarchyTest {
         final String classFQName = aClass.getName();
         for (XmlInclude include : aClass.getIncludedMethods()) {
           final String methodName = include.getName();
-          listener.onTestStart(classFQName, methodName);
-          listener.onTestFinished(methodName, 0);
+          List<Integer> numbers = include.getInvocationNumbers();
+          if (numbers.isEmpty()) {
+            numbers = Collections.singletonList(0);
+          }
+          for (Integer integer : numbers) {
+            final String paramsString = IDEATestNGRemoteListener.getParamsString(ArrayUtil.EMPTY_OBJECT_ARRAY, integer);
+            listener.onTestStart(Collections.singletonList(classFQName), methodName, paramsString, integer);
+            listener.onTestFinished(methodName + (paramsString != null ? paramsString : ""), 0);
+          }
         }
       }
     }

@@ -423,7 +423,8 @@ public class PsiImplUtil {
         return wildcardType.isSuper() ? wildcardType.getBound() : PsiCapturedWildcardType.create(wildcardType, expression);
       }
       else {
-        return ((PsiCapturedWildcardType)type).getUpperBound();
+        final PsiType upperBound = ((PsiCapturedWildcardType)type).getUpperBound();
+        return upperBound instanceof PsiWildcardType ? doNormalizeWildcardByPosition(upperBound, expression, toplevel) : upperBound;
       }
     }
 

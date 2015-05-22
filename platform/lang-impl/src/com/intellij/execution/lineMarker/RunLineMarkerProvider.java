@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.impl.ActionPopupMenuImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.Function;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -86,31 +88,28 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
               return new AnAction() {
                 @Override
                 public void actionPerformed(AnActionEvent e) {
+                  List<AnAction> actions = new ArrayList<AnAction>();
                   Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
-                  List<AnAction> actions = ContainerUtil.mapNotNull(executors,
-                                                                    new Function<Executor, AnAction>() {
-                                                                      @Override
-                                                                      public AnAction fun(Executor executor) {
-                                                                        return ActionManager.getInstance().getAction(executor.getContextActionId());
-                                                                      }
-                                                                    });
-                  ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, new DefaultActionGroup(actions));
+                  actions.addAll(ContainerUtil.mapNotNull(executors,
+                                                          new Function<Executor, AnAction>() {
+                                                            @Override
+                                                            public AnAction fun(Executor executor) {
+                                                              return ActionManager.getInstance().getAction(executor.getContextActionId());
+                                                            }
+                                                          }));
+                  actions.add(Separator.getInstance());
+                  actions.addAll(RunLineMarkerContributor.getActions(element));
 
+                  ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, new DefaultActionGroup(actions));
                   final MouseEvent me = (MouseEvent)e.getInputEvent();
                   final Component c = me.getComponent();
                   if (c != null && c.isShowing()) {
+                    final DataContext delegate = DataManager.getInstance().getDataContext(c, me.getX(), me.getY());
+                    final DataContext dataContext = new MyDataContext(element, delegate);
                     popupMenu.setDataContextProvider(new Getter<DataContext>() {
                       @Override
                       public DataContext get() {
-                        final DataContext delegate = DataManager.getInstance().getDataContext(c, me.getX(), me.getY());
-                        return new DataContext() {
-                          @Nullable
-                          @Override
-                          public Object getData(@NonNls String dataId) {
-                            if (Location.DATA_KEY.is(dataId))  return new PsiLocation<PsiElement>(element);
-                            return delegate.getData(dataId);
-                          }
-                        };
+                        return dataContext;
                       }
                     });
                     popupMenu.getComponent().show(c, me.getX(), me.getY());
@@ -127,5 +126,22 @@ public class RunLineMarkerProvider implements LineMarkerProvider {
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
+  }
+
+  private static class MyDataContext extends UserDataHolderBase implements DataContext {
+    private final PsiElement myElement;
+    private final DataContext myDelegate;
+
+    public MyDataContext(PsiElement element, DataContext delegate) {
+      myElement = element;
+      myDelegate = delegate;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (Location.DATA_KEY.is(dataId)) return new PsiLocation<PsiElement>(myElement);
+      return myDelegate.getData(dataId);
+    }
   }
 }

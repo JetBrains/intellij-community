@@ -164,7 +164,16 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     reformatText(file, ranges, null);
   }
 
+  @Override
+  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
+    reformatText(file, ranges, null, true);
+  }
+
   public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor) throws IncorrectOperationException {
+    reformatText(file, ranges, editor, false);
+  }
+
+  public void reformatText(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges, @Nullable Editor editor, boolean reformatContext) throws IncorrectOperationException {
     if (ranges.isEmpty()) {
       return;
     }
@@ -181,6 +190,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     transformAllChildren(treeElement);
 
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(), file.getLanguage());
+    codeFormatter.setReformatContext(reformatContext);
+
     LOG.assertTrue(file.isValid(), "File name: " + file.getName() + " , class: " + file.getClass().getSimpleName());
 
     if (editor == null) {

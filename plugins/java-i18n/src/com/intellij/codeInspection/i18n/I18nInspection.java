@@ -403,6 +403,12 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return null;
   }
 
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "nls";
+  }
+
   @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {

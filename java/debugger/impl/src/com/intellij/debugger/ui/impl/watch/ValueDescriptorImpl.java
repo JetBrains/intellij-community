@@ -94,6 +94,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     assertValueReady();
     return myValue instanceof ArrayReference; 
   }
+
+
   
   public boolean isDirty() {
     assertValueReady();
@@ -122,6 +124,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public boolean isPrimitive() {
     assertValueReady();
     return myValue instanceof PrimitiveValue; 
+  }
+
+  public boolean isEnumConstant() {
+    assertValueReady();
+    return myValue instanceof ObjectReference && isEnumConstant(((ObjectReference)myValue));
   }
   
   public boolean isValueValid() {
