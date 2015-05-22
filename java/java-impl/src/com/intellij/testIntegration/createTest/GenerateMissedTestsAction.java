@@ -79,7 +79,7 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
     }
     
     if (testClasses.size() == 1) {
-      generateMissedTests((PsiClass)testClasses.get(0), srcClass);
+      generateMissedTests((PsiClass)testClasses.get(0), srcClass, editor);
       return;
     }
 
@@ -89,20 +89,20 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
       .setItemChoosenCallback(new Runnable() {
       @Override
       public void run() {
-        generateMissedTests((PsiClass)list.getSelectedValue(), srcClass);
+        generateMissedTests((PsiClass)list.getSelectedValue(), srcClass, editor);
       }
     })
       .setTitle("Choose Test")
       .createPopup().showInBestPositionFor(editor);
   }
 
-  private static void generateMissedTests(final PsiClass testClass, PsiClass srcClass) {
+  private static void generateMissedTests(final PsiClass testClass, PsiClass srcClass, Editor srcEditor) {
     if (testClass != null) {
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(testClass)) return;
       final TestFramework framework = TestFrameworks.detectFramework(testClass);
       if (framework != null) {
         final Project project = testClass.getProject();
         final Editor editor = CodeInsightUtil.positionCursor(project, testClass.getContainingFile(), testClass.getLBrace());
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(testClass)) return;
         final MissedTestsDialog dialog = new MissedTestsDialog(project, srcClass, testClass, framework);
         if (dialog.showAndGet()) {
           WriteCommandAction.runWriteCommandAction(project, new Runnable() {
@@ -112,6 +112,9 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
             }
           });
         }
+      }
+      else {
+        HintManager.getInstance().showErrorHint(srcEditor, "Failed to detect test framework for " + testClass.getQualifiedName());
       }
     }
   }
