@@ -64,7 +64,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     myNamedArguments = namedArguments;
     myExpressionArguments = expressionArguments;
     myClosureArguments = closureArguments;
-    myTargetMethod = (PsiMethod)result.getElement();
+    myTargetMethod = result.getElement() instanceof PsiMethod ? (PsiMethod)result.getElement() : null;
     myReturnType = myTargetMethod == null ? null : myTargetMethod.getReturnType();
     myShouldFlushFields = !(call instanceof GrNewExpression && myReturnType != null && myReturnType.getArrayDimensions() > 0)
                           && !isPureCall(myTargetMethod);
