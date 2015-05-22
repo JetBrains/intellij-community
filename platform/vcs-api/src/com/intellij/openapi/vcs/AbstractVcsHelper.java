@@ -146,11 +146,16 @@ public abstract class AbstractVcsHelper {
     return showMergeDialog(files, provider);
   }
 
-  public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, FilePath path, final AbstractVcs vcs,
-                                       final String repositoryPath);
+  public abstract void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
+                                       @NotNull FilePath path,
+                                       @NotNull AbstractVcs vcs,
+                                       @Nullable String repositoryPath);
 
-  public abstract void showFileHistory(VcsHistoryProvider vcsHistoryProvider, AnnotationProvider annotationProvider, FilePath path,
-                                       final String repositoryPath, final AbstractVcs vcs);
+  public abstract void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
+                                       @Nullable AnnotationProvider annotationProvider,
+                                       @NotNull FilePath path,
+                                       @Nullable String repositoryPath,
+                                       @NotNull final AbstractVcs vcs);
 
   /**
    * Shows the "Rollback Changes" dialog with the specified list of changes.

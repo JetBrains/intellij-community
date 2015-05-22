@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
@@ -46,19 +45,17 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   private final LimitHistoryCheck myLimitHistoryCheck;
   private FileHistoryPanelImpl myFileHistoryPanel;
   private final VcsHistoryProvider myVcsHistoryProvider;
-  private final AnnotationProvider myAnnotationProvider;
   @NotNull private final FilePath myPath;
   private final AbstractVcs myVcs;
   private final FileHistoryRefresherI myRefresherI;
   private volatile VcsAbstractHistorySession mySession;
   private final BufferedListConsumer<VcsFileRevision> myBuffer;
 
-  public FileHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider,
+  public FileHistorySessionPartner(final VcsHistoryProvider vcsHistoryProvider,
                                    @NotNull final FilePath path,
                                    final AbstractVcs vcs,
                                    final FileHistoryRefresherI refresherI) {
     myVcsHistoryProvider = vcsHistoryProvider;
-    myAnnotationProvider = annotationProvider;
     myPath = path;
     myLimitHistoryCheck = new LimitHistoryCheck(vcs.getProject(), path.getPath());
     myVcs = vcs;
