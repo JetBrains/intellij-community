@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,8 @@ class FormatProcessor {
   private static final int BULK_REPLACE_OPTIMIZATION_CRITERIA = 3000;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatProcessor");
+  private Set<Alignment> myAlignmentsInsideRangesToModify = null;
+  private boolean myReformatContext;
 
   private LeafBlockWrapper myCurrentBlock;
 
@@ -164,23 +166,21 @@ class FormatProcessor {
                          @Nullable FormatTextRanges affectedRanges,
                          @NotNull FormattingProgressCallback progressCallback)
   {
-    this(docModel, rootBlock, settings, indentOptions, affectedRanges, -1, progressCallback);
+    this(docModel, rootBlock, new FormatOptions(settings, indentOptions, affectedRanges, false), progressCallback);
   }
 
-  public FormatProcessor(final FormattingDocumentModel docModel,
-                         Block rootBlock,
-                         CodeStyleSettings settings,
-                         CommonCodeStyleSettings.IndentOptions indentOptions,
-                         @Nullable FormatTextRanges affectedRanges,
-                         int interestingOffset,
-                         @NotNull FormattingProgressCallback progressCallback)
+  public FormatProcessor(FormattingDocumentModel model,
+                         Block block,
+                         FormatOptions options,
+                         @NotNull FormattingProgressCallback callback)
   {
-    myProgressCallback = progressCallback;
-    myDefaultIndentOption = indentOptions;
-    mySettings = settings;
-    myDocument = docModel.getDocument();
-    myCurrentState = new WrapBlocksState(rootBlock, docModel, affectedRanges, interestingOffset);
-    myRightMargin = getRightMargin(rootBlock);
+    myProgressCallback = callback;
+    myDefaultIndentOption = options.myIndentOptions;
+    mySettings = options.mySettings;
+    myDocument = model.getDocument();
+    myReformatContext = options.myReformatContext;
+    myCurrentState = new WrapBlocksState(block, model, options.myAffectedRanges, options.myInterestingOffset);
+    myRightMargin = getRightMargin(block);
   }
 
   private int getRightMargin(Block rootBlock) {
@@ -427,7 +427,7 @@ class FormatProcessor {
       final int shiftInside = calcShift(oldBlockIndent, whiteSpaceIndent, options);
 
       if (shiftInside != 0 || !oldBlockIndent.equals(whiteSpaceIndent)) {
-        final TextRange newBlockRange = model.shiftIndentInsideRange(currentBlockRange, shiftInside);
+        final TextRange newBlockRange = model.shiftIndentInsideRange(block.getNode(), currentBlockRange, shiftInside);
         shift += newBlockRange.getLength() - block.getLength();
       }
     }
@@ -474,6 +474,12 @@ class FormatProcessor {
     final SpacingImpl spaceProperty = myCurrentBlock.getSpaceProperty();
     final WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
+    if (isReformatSelectedRangesContext()) {
+      if (isCurrentBlockAlignmentUsedInRangesToModify() && whiteSpace.isReadOnly()) {
+        whiteSpace.setReadOnly(false);
+      }
+    }
+
     whiteSpace.arrangeLineFeeds(spaceProperty, this);
 
     if (!whiteSpace.containsLineFeeds()) {
@@ -515,6 +521,27 @@ class FormatProcessor {
     }
 
     myCurrentBlock = myCurrentBlock.getNextBlock();
+  }
+
+  private boolean isReformatSelectedRangesContext() {
+    return myReformatContext && !ContainerUtil.isEmpty(myAlignmentsInsideRangesToModify);
+  }
+
+  private boolean isCurrentBlockAlignmentUsedInRangesToModify() {
+    AbstractBlockWrapper block = myCurrentBlock;
+    AlignmentImpl alignment = myCurrentBlock.getAlignment();
+
+    while (alignment == null
+           && block != null
+           && block.getStartOffset() == myCurrentBlock.getStartOffset())
+    {
+      block = block.getParent();
+      if (block != null) {
+        alignment = block.getAlignment();
+      }
+    }
+
+    return myAlignmentsInsideRangesToModify.contains(alignment);
   }
 
   private boolean shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace space) {
@@ -1247,12 +1274,7 @@ class FormatProcessor {
                                @NotNull final CommonCodeStyleSettings.IndentOptions options)
   {
     if (oldIndent.equals(newIndent)) return 0;
-    if (options.USE_TAB_CHARACTER) {
-      return (newIndent.tabs - oldIndent.getTabsCount(options)) * options.TAB_SIZE;
-    }
-    else {
-      return newIndent.whiteSpaces - oldIndent.getSpacesCount(options);
-    }
+    return newIndent.getSpacesCount(options) - oldIndent.getSpacesCount(options);
   }
 
   /**
@@ -1339,6 +1361,7 @@ class FormatProcessor {
       myWrapper = InitialInfoBuilder.prepareToBuildBlocksSequentially(
         root, model, affectedRanges, mySettings, myDefaultIndentOption, interestingOffset, myProgressCallback
       );
+      myWrapper.setCollectAlignmentsInsideFormattingRange(myReformatContext);
     }
 
     @Override
@@ -1364,6 +1387,7 @@ class FormatProcessor {
       myTextRangeToWrapper = buildTextRangeToInfoMap(myFirstTokenBlock);
       myLastWhiteSpace = new WhiteSpace(getLastBlock().getEndOffset(), false);
       myLastWhiteSpace.append(myModel.getTextLength(), myModel, myDefaultIndentOption);
+      myAlignmentsInsideRangesToModify = myWrapper.getAlignmentsInsideRangeToModify();
     }
   }
 
@@ -1528,6 +1552,36 @@ class FormatProcessor {
       for (Map.Entry<Editor, Integer> entry : myCaretOffsets.entrySet()) {
         entry.getKey().getCaretModel().moveToOffset(entry.getValue());
       }
+    }
+  }
+
+
+  public static class FormatOptions {
+    private CodeStyleSettings mySettings;
+    private CommonCodeStyleSettings.IndentOptions myIndentOptions;
+
+    private FormatTextRanges myAffectedRanges;
+    private boolean myReformatContext;
+
+    private int myInterestingOffset;
+
+    public FormatOptions(CodeStyleSettings settings,
+                         CommonCodeStyleSettings.IndentOptions options,
+                         FormatTextRanges ranges,
+                         boolean reformatContext) {
+      this(settings, options, ranges, reformatContext, -1);
+    }
+
+    public FormatOptions(CodeStyleSettings settings,
+                         CommonCodeStyleSettings.IndentOptions options,
+                         FormatTextRanges ranges,
+                         boolean reformatContext,
+                         int interestingOffset) {
+      mySettings = settings;
+      myIndentOptions = options;
+      myAffectedRanges = ranges;
+      myReformatContext = reformatContext;
+      myInterestingOffset = interestingOffset;
     }
   }
 }

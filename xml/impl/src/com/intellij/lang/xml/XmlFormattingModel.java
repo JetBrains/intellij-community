@@ -50,24 +50,7 @@ public class XmlFormattingModel extends PsiBasedFormattingModel {
   }
 
   @Override
-  public TextRange shiftIndentInsideRange(TextRange textRange, int shift) {
-    return shiftIndentInsideWithPsi(textRange, shift);
-  }
-
-  @Override
   public void commitChanges() {
-  }
-
-
-  private TextRange shiftIndentInsideWithPsi(final TextRange textRange, final int shift) {
-    final int offset = textRange.getStartOffset();
-
-    ASTNode leafElement = findElementAt(offset);
-    while (leafElement != null && !leafElement.getTextRange().equals(textRange)) {
-      leafElement = leafElement.getTreeParent();
-    }
-
-    return textRange;
   }
 
   @Override

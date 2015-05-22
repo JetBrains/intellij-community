@@ -31,6 +31,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +96,14 @@ public class IconLineMarkerProvider implements LineMarkerProvider {
     }
     else if (element instanceof PsiVariable) {
       PsiVariable var = (PsiVariable)element;
-      return resolveIconInfo(var.getType(), var.getInitializer());
+
+      PsiUtilCore.ensureValid(var);
+      final PsiType type = var.getType();
+      if (!type.isValid()) {
+        PsiUtil.ensureValidType(type, "in variable: " + var + " of " + var.getClass());
+      }
+
+      return resolveIconInfo(type, var.getInitializer());
     }
     return null;
   }

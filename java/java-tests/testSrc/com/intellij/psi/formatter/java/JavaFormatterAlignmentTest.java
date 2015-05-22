@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
@@ -592,5 +593,68 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "    int    a           = 2;\n" +
       "    String superString = \"\";\n" +
       "}");
+  }
+
+  public void test_Shift_All_AlignedParameters() {
+    myLineRange = new TextRange(2, 2);
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTextTest(
+      Action.REFORMAT_WITH_CONTEXT,
+      "public class Test {\n" +
+      "  \n" +
+      "    public void fooooo(String foo,\n" +
+      "                    String booo,\n" +
+      "                    String kakadoo) {\n" +
+      "\n" +
+      "    }\n" +
+      "\n" +
+      "}",
+
+      "public class Test {\n" +
+      "\n" +
+      "    public void fooooo(String foo,\n" +
+      "                       String booo,\n" +
+      "                       String kakadoo) {\n" +
+      "\n" +
+      "    }\n" +
+      "\n" +
+      "}"
+    );
+  }
+
+  public void test_Align_UnselectedField_IfNeeded() {
+    myLineRange = new TextRange(2, 2);
+    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    doTextTest(
+      Action.REFORMAT_WITH_CONTEXT,
+      "public class Test {\n" +
+      "    public int    i = 1;\n" +
+      "    public String iiiiiiiiii = 2;\n" +
+      "}",
+      "public class Test {\n" +
+      "    public int    i          = 1;\n" +
+      "    public String iiiiiiiiii = 2;\n" +
+      "}"
+    );
+  }
+
+  public void test_Align_UnselectedVariable_IfNeeded() {
+    myLineRange = new TextRange(3, 3);
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doTextTest(
+      Action.REFORMAT_WITH_CONTEXT,
+      "public class Test {\n" +
+      "    public void test() {\n" +
+      "        int s = 2;\n" +
+      "        String sssss = 3;\n" +
+      "    }\n" +
+      "}",
+      "public class Test {\n" +
+      "    public void test() {\n" +
+      "        int    s     = 2;\n" +
+      "        String sssss = 3;\n" +
+      "    }\n" +
+      "}"
+    );
   }
 }

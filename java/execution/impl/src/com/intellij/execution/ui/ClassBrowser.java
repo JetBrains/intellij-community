@@ -60,7 +60,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     final PsiClass psiClass = dialog.getSelected();
     if (psiClass == null) return null;
     onClassChoosen(psiClass);
-    return JavaExecutionUtil.getRuntimeQualifiedName(psiClass);
+    return psiClass.getQualifiedName();
   }
 
   protected TreeClassChooser createClassChooser(ClassFilter.ClassFilterWithScope classFilter) {

@@ -99,7 +99,7 @@ abstract class CodeStyleManagerRunnable<T> {
       myModel = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);
 
       if (document != null && useDocumentBaseFormattingModel()) {
-        myModel = new DocumentBasedFormattingModel(myModel.getRootBlock(), document, myCodeStyleManager.getProject(), mySettings,
+        myModel = new DocumentBasedFormattingModel(myModel, document, myCodeStyleManager.getProject(), mySettings,
                                                    file.getFileType(), file);
       }
 

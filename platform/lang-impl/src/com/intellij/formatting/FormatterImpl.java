@@ -47,6 +47,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.formatting.FormatProcessor.FormatOptions;
+
 public class FormatterImpl extends FormatterEx
   implements IndentFactory,
              WrapFactory,
@@ -255,14 +257,23 @@ public class FormatterImpl extends FormatterEx
                      final CodeStyleSettings settings,
                      final CommonCodeStyleSettings.IndentOptions indentOptions,
                      final FormatTextRanges affectedRanges) throws IncorrectOperationException {
+    format(model, settings, indentOptions, affectedRanges, false);
+  }
+
+  public void format(final FormattingModel model,
+                     final CodeStyleSettings settings,
+                     final CommonCodeStyleSettings.IndentOptions indentOptions,
+                     final FormatTextRanges affectedRanges,
+                     final boolean formatContextAroundRanges) throws IncorrectOperationException {
     try {
       validateModel(model);
       SequentialTask task = new MyFormattingTask() {
         @NotNull
         @Override
         protected FormatProcessor buildProcessor() {
+          FormatOptions options = new FormatOptions(settings, indentOptions, affectedRanges, formatContextAroundRanges);
           FormatProcessor processor = new FormatProcessor(
-            model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, affectedRanges, getProgressCallback()
+            model.getDocumentModel(), model.getRootBlock(), options, getProgressCallback()
           );
           processor.format(model, true);
           return processor;
@@ -522,8 +533,9 @@ public class FormatterImpl extends FormatterEx
                                                              @Nullable FormatTextRanges affectedRanges,
                                                              int interestingOffset)
   {
+    FormatOptions options = new FormatOptions(settings, indentOptions, affectedRanges, false, interestingOffset);
     FormatProcessor processor = new FormatProcessor(
-      docModel, rootBlock, settings, indentOptions, affectedRanges, interestingOffset, FormattingProgressCallback.EMPTY
+      docModel, rootBlock, options, FormattingProgressCallback.EMPTY
     );
     while (!processor.iteration()) ;
     return processor;

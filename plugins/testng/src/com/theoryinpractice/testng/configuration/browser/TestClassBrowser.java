@@ -62,7 +62,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
       return null;
     } else {
       onClassChoosen(psiclass);
-      return JavaExecutionUtil.getRuntimeQualifiedName(psiclass);
+      return psiclass.getQualifiedName();
     }
   }
 

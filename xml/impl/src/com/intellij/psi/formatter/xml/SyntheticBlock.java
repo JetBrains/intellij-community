@@ -59,11 +59,23 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     if (!(child1 instanceof AbstractXmlBlock) || !(child2 instanceof AbstractXmlBlock)) {
       return null;
     }
-    final ASTNode node1 = ((AbstractBlock)child1).getNode();
-    final ASTNode node2 = ((AbstractBlock)child2).getNode();
+    ASTNode node1 = ((AbstractBlock)child1).getNode();
+    ASTNode node2 = ((AbstractBlock)child2).getNode();
 
-    final IElementType type1 = node1.getElementType();
-    final IElementType type2 = node2.getElementType();
+    IElementType type1 = node1.getElementType();
+    IElementType type2 = node2.getElementType();
+
+    if (type2 == XmlElementType.XML_COMMENT) {
+      // Do not remove any spaces except extra blank lines
+      return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+    }
+    if (type1 == XmlElementType.XML_COMMENT) {
+      ASTNode prev = node1.getTreePrev();
+      if (prev != null) {
+        node1 = prev;
+        type1 = prev.getElementType();
+      }
+    }
 
     boolean firstIsText = isTextFragment(node1);
     boolean secondIsText = isTextFragment(node2);

@@ -256,7 +256,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   @NotNull
-  private List<PsiField> getReferencedFields(@NotNull PsiField field) {
+  private List<PsiField> getReferencedFields(@NotNull final PsiField field) {
     final List<PsiField> referencedElements = new ArrayList<PsiField>();
 
     PsiExpression fieldInitializer = field.getInitializer();
@@ -280,7 +280,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         PsiElement ref = expression.resolve();
-        if (ref instanceof PsiField && containingClassFields.contains(ref)) {
+        if (ref instanceof PsiField && containingClassFields.contains(ref) && hasSameStaticModifier(field, (PsiField)ref)) {
           referencedElements.add((PsiField)ref);
         }
         else if (ref instanceof PsiMethod && myCurrentMethodLookupDepth < MAX_METHOD_LOOKUP_DEPTH) {
@@ -296,6 +296,10 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     return referencedElements;
   }
 
+  private static boolean hasSameStaticModifier(@NotNull PsiField first, @NotNull PsiField second) {
+    boolean isSecondFieldStatic = second.hasModifierProperty(PsiModifier.STATIC);
+    return first.hasModifierProperty(PsiModifier.STATIC) ? isSecondFieldStatic : !isSecondFieldStatic;
+  }
 
   @Nullable
   private static PsiElement getPreviousNonWsComment(@Nullable PsiElement element, int minOffset) {

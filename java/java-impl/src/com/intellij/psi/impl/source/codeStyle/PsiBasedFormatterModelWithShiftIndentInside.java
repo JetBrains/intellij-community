@@ -34,7 +34,6 @@ import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,21 +52,14 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
   }
 
   @Override
-  public TextRange shiftIndentInsideRange(TextRange textRange, int shift) {
-    return shiftIndentInsideWithPsi(textRange, shift);
+  public TextRange shiftIndentInsideRange(ASTNode node, TextRange textRange, int shift) {
+    return shiftIndentInsideWithPsi(node, textRange, shift);
   }
 
 
-  private TextRange shiftIndentInsideWithPsi(final TextRange textRange, final int shift) {
-    final int offset = textRange.getStartOffset();
-
-    ASTNode leafElement = findElementAt(offset);
-    while (leafElement != null && !leafElement.getTextRange().equals(textRange)) {
-      leafElement = leafElement.getTreeParent();
-    }
-
-    if (leafElement != null && leafElement.getTextRange().equals(textRange) && ShiftIndentInsideHelper.mayShiftIndentInside(leafElement)) {
-      return new ShiftIndentInsideHelper(StdFileTypes.JAVA, myProject).shiftIndentInside(leafElement, shift).getTextRange();
+  private TextRange shiftIndentInsideWithPsi(ASTNode node, final TextRange textRange, final int shift) {
+    if (node != null && node.getTextRange().equals(textRange) && ShiftIndentInsideHelper.mayShiftIndentInside(node)) {
+      return new ShiftIndentInsideHelper(StdFileTypes.JAVA, myProject).shiftIndentInside(node, shift).getTextRange();
     } else {
       return textRange;
     }

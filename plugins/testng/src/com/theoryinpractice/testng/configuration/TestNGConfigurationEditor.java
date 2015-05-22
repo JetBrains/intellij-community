@@ -44,10 +44,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaCodeFragment;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -110,7 +107,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
   private JPanel myListenersPanel;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
-  private final ArrayList<Map.Entry> propertiesList = new ArrayList<Map.Entry>();
+  private final ArrayList<Map.Entry<String, String>> propertiesList = new ArrayList<Map.Entry<String, String>>();
   private TestNGListenersTableModel listenerModel;
 
   private TestNGConfiguration config;
@@ -403,6 +400,9 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     classField.setComponent(new EditorTextFieldWithBrowseButton(project, true, new JavaCodeFragment.VisibilityChecker() {
       @Override
       public Visibility isDeclarationVisible(PsiElement declaration, PsiElement place) {
+        if (declaration instanceof PsiClass && place.getParent() instanceof PsiJavaCodeReferenceElement) {
+          return Visibility.VISIBLE;
+        }
         try {
           if (declaration instanceof PsiClass &&
               new TestClassBrowser(project, TestNGConfigurationEditor.this).getFilter().isAccepted((PsiClass)declaration)) {
@@ -468,9 +468,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
     textFieldWithBrowseButton
       .addBrowseFolderListener("TestNG", "Select .properties file for test properties", project, propertiesFileDescriptor);
 
-    propertiesTableView = new TableView();
-    propertiesTableView.setModelAndUpdateColumns(propertiesTableModel);
-    propertiesTableView.setShowGrid(true);
+    propertiesTableView = new TableView(propertiesTableModel);
 
     myPropertiesPanel.add(
       ToolbarDecorator.createDecorator(propertiesTableView)

@@ -1538,6 +1538,7 @@
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
     <programRunner implementation="com.intellij.execution.jar.JarApplicationDebuggerRunner"/>
+    <codeInsight.lineMarkerProvider implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider" language="JAVA"/>
 
     <generation.topLevelFactory language="JAVA" implementationClass="com.intellij.psi.impl.JavaFactoryProvider"/>
 

@@ -218,7 +218,8 @@ public abstract class PythonSdkFlavor {
   @NotNull
   public abstract String getName();
 
-  public LanguageLevel getLanguageLevel(Sdk sdk) {
+  @NotNull
+  public LanguageLevel getLanguageLevel(@NotNull Sdk sdk) {
     final String version = sdk.getVersionString();
     final String prefix = getName() + " ";
     if (version != null && version.startsWith(prefix)) {
