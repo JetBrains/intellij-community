@@ -811,7 +811,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private Icon scaleIcon(Icon icon) {
     if (Registry.is("editor.scale.gutter.icons")) {
-      return IconUtil.scale(icon, (double)myEditor.getLineHeight() / 17);
+      return IconUtil.scale(icon, (double)myEditor.getLineHeight() / JBUI.scale(17));
     }
     return icon;
   }
