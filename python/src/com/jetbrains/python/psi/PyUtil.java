@@ -832,11 +832,18 @@ public class PyUtil {
   public static LanguageLevel guessLanguageLevel(@NotNull Project project) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     if (moduleManager != null) {
+      LanguageLevel maxLevel = null;
       for (Module projectModule : moduleManager.getModules()) {
         final Sdk sdk = PythonSdkType.findPythonSdk(projectModule);
         if (sdk != null) {
-          return PythonSdkType.getLanguageLevelForSdk(sdk);
+          final LanguageLevel level = PythonSdkType.getLanguageLevelForSdk(sdk);
+          if (maxLevel == null || maxLevel.isOlderThan(level)) {
+            maxLevel = level;
+          }
         }
+      }
+      if (maxLevel != null) {
+        return maxLevel;
       }
     }
     return LanguageLevel.getDefault();
