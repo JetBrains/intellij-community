@@ -356,6 +356,7 @@ public class FileSystemUtil {
     @SuppressWarnings({"OctalInteger", "SpellCheckingInspection"})
     private interface LibC extends Library {
       int S_MASK = 0177777;
+      int S_IFMT = 0170000;
       int S_IFLNK = 0120000;  // symbolic link
       int S_IFREG = 0100000;  // regular file
       int S_IFDIR = 0040000;  // directory
@@ -427,7 +428,7 @@ public class FileSystemUtil {
       if (res != 0) return null;
 
       int mode = getModeFlags(buffer) & LibC.S_MASK;
-      boolean isSymlink = (mode & LibC.S_IFLNK) == LibC.S_IFLNK;
+      boolean isSymlink = (mode & LibC.S_IFMT) == LibC.S_IFLNK;
       if (isSymlink) {
         if (!loadFileStatus(path, buffer)) {
           return FileAttributes.BROKEN_SYMLINK;
@@ -435,8 +436,8 @@ public class FileSystemUtil {
         mode = getModeFlags(buffer) & LibC.S_MASK;
       }
 
-      boolean isDirectory = (mode & LibC.S_IFDIR) == LibC.S_IFDIR;
-      boolean isSpecial = !isDirectory && (mode & LibC.S_IFREG) == 0;
+      boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
+      boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
       long size = buffer.getLong(myOffsets[OFF_SIZE]);
       long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME]) : buffer.getLong(myOffsets[OFF_TIME]);
       long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myOffsets[OFF_TIME] + 4) : buffer.getLong(myOffsets[OFF_TIME] + 8);
