@@ -266,7 +266,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
   private static void ensureIdeBound(@NotNull Project project, @NotNull ScriptEngine engine) {
     Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
     if (!bindings.containsKey(IDE)) {
-      bindings.put(IDE, new IDE(project));
+      bindings.put(IDE, new IDE(project, engine));
     }
   }
 
@@ -353,9 +353,19 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     public final Project project;
 
     private final Map<Object, Object> bindings = ContainerUtil.newConcurrentMap();
+    private final ScriptEngine myEngine;
 
-    IDE(Project project) {
+    IDE(Project project, ScriptEngine engine) {
       this.project = project;
+      myEngine = engine;
+    }
+
+    public void print(Object o) {
+      print(myEngine.getContext().getWriter(), o);
+    }
+
+    public void error(Object o) {
+      print(myEngine.getContext().getErrorWriter(), o);
     }
 
     public Object put(Object key, Object value) {
@@ -364,6 +374,15 @@ public class RunIdeConsoleAction extends DumbAwareAction {
 
     public Object get(Object key) {
       return bindings.get(key);
+    }
+
+    private static void print(Writer writer, Object o) {
+      try {
+        writer.append(String.valueOf(o));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }
