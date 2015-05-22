@@ -2216,7 +2216,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       Collection<VirtualFile> allFilesToUpdate = getAllFilesToUpdate();
 
       if (!allFilesToUpdate.isEmpty()) {
-        boolean includeFilesFromOtherProjects = (myForceUpdateRequests.incrementAndGet() & 0x3F) == 0;
+        boolean includeFilesFromOtherProjects = restrictedTo == null && (myForceUpdateRequests.incrementAndGet() & 0x3F) == 0;
         List<VirtualFile> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(
           allFilesToUpdate,
           new ProjectFilesCondition(projectIndexableFiles(project), filter, restrictedTo,
