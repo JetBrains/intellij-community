@@ -150,7 +150,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       String currentClassName = getShortName(fqName);
       myPrintStream.print("\n##teamcity[testSuiteStarted name =\'" + escapeName(currentClassName));
       if (provideLocation) {
-        myPrintStream.print("\' locationHint = \'java:suite://" + fqName);
+        myPrintStream.print("\' locationHint = \'java:suite://" + escapeName(fqName));
       }
       myPrintStream.println("\']");
       myCurrentSuites.add(currentClassName);
@@ -207,7 +207,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   private void fireTestStarted(String methodName, String className, String paramString, Integer invocationCount) {
-    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName) + (paramString != null ? paramString : "") +
+    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName + (paramString != null ? paramString : "")) +
                           "\' locationHint=\'java:test://" + escapeName(className + "." + methodName +  ( invocationCount >= 0 ? "[" + invocationCount + "]" : "")) + "\']");
   }
 
