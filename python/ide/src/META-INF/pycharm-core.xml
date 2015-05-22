@@ -133,13 +133,6 @@
       <add-to-group group-id="MarkRootGroup"/>
     </action>
 
-    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode"
-            text="Step Into My Code" description="Step to the next line executed ignoring libraries"
-            use-shortcut-of="ForceStepInto">
-      <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
-    </action>
-
     <action overrides="true" id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 
     <group id="TypeHierarchyPopupMenu">
