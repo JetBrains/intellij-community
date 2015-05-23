@@ -21,6 +21,7 @@ import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsActiveEnvironmentsProxy;
@@ -78,6 +79,9 @@ public class VcsEP extends AbstractExtensionPointBean {
         }
       }
       return instantiate(vcsClass, project.getPicoContainer());
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
     }
     catch(Exception e) {
       LOG.error(e);
