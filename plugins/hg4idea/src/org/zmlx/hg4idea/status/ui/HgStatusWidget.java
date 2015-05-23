@@ -136,6 +136,10 @@ public class HgStatusWidget extends EditorBasedWidget
 
   @Override
   public void update(final Project project, @Nullable VirtualFile root) {
+    updateLater();
+  }
+
+  private void updateLater() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -173,6 +177,7 @@ public class HgStatusWidget extends EditorBasedWidget
     busConnection.subscribe(HgVcs.STATUS_TOPIC, this);
 
     DvcsUtil.installStatusBarWidget(myProject, this);
+    updateLater();
   }
 
   public void deactivate() {
