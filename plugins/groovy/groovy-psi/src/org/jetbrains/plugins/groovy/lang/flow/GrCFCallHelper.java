@@ -262,7 +262,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
    * Assuming that qualifier is not processed yet.
    * Processes regular calls.
    */
-  void processMethodCall(@NotNull GrExpression highlight,
+  void processMethodCall(@NotNull PsiElement highlight,
                          @Nullable GrExpression qualifier,
                          @NotNull GroovyResolveResult result,
                          @NotNull final GrExpression... expressionArguments) {
@@ -284,7 +284,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
    * Assuming that qualifier is not processed yet.
    * Processes regular calls.
    */
-  void processMethodCall(@NotNull GrExpression highlight,
+  void processMethodCall(@NotNull PsiElement highlight,
                          @Nullable GrExpression qualifier,
                          @NotNull GroovyResolveResult result,
                          @NotNull Arguments arguments) {
@@ -314,7 +314,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
    * Assuming that qualifier is already processed.
    * This is where actual instructions are being added.
    */
-  void processMethodCallStraight(@NotNull GrExpression highlight,
+  void processMethodCallStraight(@NotNull PsiElement highlight,
                                  @NotNull GroovyResolveResult result,
                                  @NotNull Arguments arguments) {
     // evaluate arguments

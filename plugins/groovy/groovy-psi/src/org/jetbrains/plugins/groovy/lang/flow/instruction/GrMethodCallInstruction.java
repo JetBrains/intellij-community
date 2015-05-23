@@ -4,6 +4,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
@@ -25,7 +26,7 @@ import java.util.Map;
 
 public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
 
-  private final @NotNull GrExpression myCall;
+  private final @NotNull PsiElement myCall;
 
   private final @NotNull GrNamedArgument[] myNamedArguments;
   private final @NotNull GrExpression[] myExpressionArguments;
@@ -56,7 +57,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     myPrecalculatedReturnValue = null;
   }
 
-  public GrMethodCallInstruction(@NotNull GrExpression call,
+  public GrMethodCallInstruction(@NotNull PsiElement call,
                                  @NotNull GrNamedArgument[] namedArguments,
                                  @NotNull GrExpression[] expressionArguments,
                                  @NotNull GrClosableBlock[] closureArguments,
@@ -89,7 +90,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     myExpressionArguments = call.getExpressionArguments();
     myClosureArguments = call.getClosureArguments();
 
-    myReturnType = myCall.getType();
+    myReturnType = call.getType();
     myTargetMethod = (PsiMethod)result.getElement();
 
     myShouldFlushFields = !(call instanceof GrNewExpression && myReturnType != null && myReturnType.getArrayDimensions() > 0)
@@ -111,7 +112,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
   }
 
   @NotNull
-  public GrExpression getCall() {
+  public PsiElement getCall() {
     return myCall;
   }
 

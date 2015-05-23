@@ -52,6 +52,7 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
     return visitor.visitConditionalGoto(this, stateBefore);
   }
 
+  @Override
   public String toString() {
     return (isNegated() ? "!":"") + "cond?_goto " + getOffset();
   }

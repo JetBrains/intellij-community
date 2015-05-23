@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Producer;
@@ -53,7 +54,7 @@ public class GrMethodCallHelper<V extends GrStandardInstructionVisitor<V>> exten
     new FactoryMap<GrMethodCallInstruction, Nullness>() {
       @Override
       protected Nullness create(GrMethodCallInstruction key) {
-        final GrExpression callExpression = key.getCall();
+        final PsiElement callExpression = key.getCall();
         if (callExpression instanceof GrNewExpression) {
           return Nullness.NOT_NULL;
         }

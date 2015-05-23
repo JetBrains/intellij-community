@@ -360,21 +360,8 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       final GrCaseLabel caseLabel = labels[i];
       startElement(caseLabel);
 
-      // put case expression on top of the stack
-      final GrExpression labelValue = caseLabel.getValue();
-      if (labelValue == null) {
-        pushUnknown();
-      }
-      else {
-        // duplicate evaluated condition on top of the stack
-        addInstruction(new DupInstruction<V>());
-        labelValue.accept(this);
-        if (processCaseCall(condition, labelValue)) {
-          pop(); // pop label value
-          pop(); // pop duplicated condition
-          pushUnknown();
-        }
-      }
+      // caseValue.isCase(switchValue)
+      processCaseCall(condition, caseLabel);
 
       if (i == labels.length - 1) {
         // if not matched then go to next case section
@@ -382,7 +369,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         addInstruction(new ConditionalGotoInstruction<V>(
           flow.getEndOffset(section),
           true,
-          labelValue
+          caseLabel.getValue()
         ));
       }
       else {
@@ -391,7 +378,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         result.add(addInstruction(new ConditionalGotoInstruction<V>(
           null,
           false,
-          labelValue
+          caseLabel.getValue()
         )));
       }
 
@@ -400,24 +387,30 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     return result;
   }
 
-  private boolean processCaseCall(@NotNull GrExpression condition, @NotNull GrExpression caseValue) {
-    if (caseValue instanceof GrLiteral) {
-      addInstruction(new BinopInstruction<V>(DfaRelation.EQ, caseValue));
-      return false;
+  private void processCaseCall(@NotNull GrExpression condition, @NotNull GrCaseLabel caseLabel) {
+    final GrExpression caseValue = caseLabel.getValue();
+    if (caseValue == null) {
+      pushUnknown();
     }
-    if (caseValue instanceof GrReferenceExpression && ((GrReferenceExpression)caseValue).resolve() instanceof PsiClass) {
+    else if (caseValue instanceof GrReferenceExpression && ((GrReferenceExpression)caseValue).resolve() instanceof PsiClass) {
+      addInstruction(new DupInstruction<V>());    // switch value
+      caseValue.accept(this);                     // case value
       addInstruction(new BinopInstruction<V>(DfaRelation.INSTANCEOF, caseValue));
-      return false;
     }
-    final PsiType caseType = caseValue.getType();
-    if (caseType != null) {
-      final GroovyResolveResult[] cases = ResolveUtil.getMethodCandidates(caseType, "isCase", caseValue, condition.getType());
-      if (cases.length == 1 && cases[0] != GroovyResolveResult.EMPTY_RESULT) {
-        addInstruction(new GrMethodCallInstruction<V>(caseValue, new GrExpression[]{condition}, cases[0]));
-        return false;
+    else if (caseValue instanceof GrLiteral) {
+      addInstruction(new DupInstruction<V>());    // switch value
+      caseValue.accept(this);                     // case value 
+      addInstruction(new BinopInstruction<V>(DfaRelation.EQ, caseValue));
+    }
+    else {
+      final GroovyResolveResult[] cases = caseLabel.multiResolve(false);
+      if (cases.length == 1) {
+        callHelper.processMethodCall(caseLabel, caseValue, cases[0], condition);
+      }
+      else {
+        pushUnknown();
       }
     }
-    return true;
   }
 
   @Override
