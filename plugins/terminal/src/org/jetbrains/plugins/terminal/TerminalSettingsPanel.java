@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -37,6 +38,7 @@ public class TerminalSettingsPanel {
   private JBCheckBox myPasteOnMiddleButtonCheckBox;
   private JBCheckBox myCopyOnSelectionCheckBox;
   private JBCheckBox myOverrideIdeShortcuts;
+  private EnvironmentVariablesTextFieldWithBrowseButton myEnvVarField;
   private TerminalOptionsProvider myOptionsProvider;
 
   public JComponent createPanel(@NotNull TerminalOptionsProvider provider) {
@@ -65,6 +67,8 @@ public class TerminalSettingsPanel {
            || (myCopyOnSelectionCheckBox.isSelected() != myOptionsProvider.copyOnSelection())
            || (myPasteOnMiddleButtonCheckBox.isSelected() != myOptionsProvider.pasteOnMiddleMouseButton())
            || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.overrideIdeShortcuts())
+           || !Comparing.equal(myEnvVarField.getEnvs(), myOptionsProvider.getUserSpecifiedEnvs())
+           || (myEnvVarField.isPassParentEnvs() != myOptionsProvider.passParentEnvs())
       ;
   }
 
@@ -77,6 +81,8 @@ public class TerminalSettingsPanel {
     myOptionsProvider.setCopyOnSelection(myCopyOnSelectionCheckBox.isSelected());
     myOptionsProvider.setPasteOnMiddleMouseButton(myPasteOnMiddleButtonCheckBox.isSelected());
     myOptionsProvider.setOverrideIdeShortcuts(myOverrideIdeShortcuts.isSelected());
+    myOptionsProvider.setUserSpecifiedEnvs(myEnvVarField.getEnvs());
+    myOptionsProvider.setPassParentEnvs(myEnvVarField.isPassParentEnvs());
   }
 
   public void reset() {
@@ -88,5 +94,7 @@ public class TerminalSettingsPanel {
     myCopyOnSelectionCheckBox.setSelected(myOptionsProvider.copyOnSelection());
     myPasteOnMiddleButtonCheckBox.setSelected(myOptionsProvider.pasteOnMiddleMouseButton());
     myOverrideIdeShortcuts.setSelected(myOptionsProvider.overrideIdeShortcuts());
+    myEnvVarField.setEnvs(myOptionsProvider.getUserSpecifiedEnvs());
+    myEnvVarField.setPassParentEnvs(myOptionsProvider.passParentEnvs());
   }
 }

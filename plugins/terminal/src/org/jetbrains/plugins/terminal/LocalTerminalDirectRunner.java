@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -87,15 +88,30 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    Map<String, String> envs = new HashMap<String, String>(System.getenv());
-    envs.put("TERM", "xterm-256color");
-    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
+    Map<String, String> envs = getTerminalEnvironment();
     try {
       return PtyProcess.exec(getCommand(), envs, directory != null ? directory : currentProjectFolder());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
     }
+  }
+
+  private Map<String, String> getTerminalEnvironment() {
+    Map<String, String> envs = new HashMap<String, String>();
+
+    if (TerminalOptionsProvider.getInstance().passParentEnvs()) {
+      envs.putAll(System.getenv());
+    }
+
+    envs.put("TERM", "xterm-256color");
+    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
+
+    PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
+    for (Map.Entry<String, String> env : TerminalOptionsProvider.getInstance().getUserSpecifiedEnvs().entrySet()) {
+      envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
+    }
+    return envs;
   }
 
   private String currentProjectFolder() {

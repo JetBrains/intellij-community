@@ -10,6 +10,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="projectModel-impl" />
+    <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module-library">
       <library name="jediterm-pty">
         <CLASSES>
@@ -25,4 +27,3 @@
     <orderEntry type="library" name="purejavacomm" level="project" />
   </component>
 </module>
-

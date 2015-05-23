@@ -22,6 +22,8 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author traff
@@ -55,6 +57,8 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     myState.myCopyOnSelection = state.myCopyOnSelection;
     myState.myPasteOnMiddleMouseButton = state.myPasteOnMiddleMouseButton;
     myState.myOverrideIdeShortcuts = state.myOverrideIdeShortcuts;
+    myState.myPassParentEnvs = state.myPassParentEnvs;
+    myState.myUserSpecifiedEnvs = state.myUserSpecifiedEnvs == null ? new HashMap<String, String>() : state.myUserSpecifiedEnvs;
   }
 
   public boolean closeSessionOnLogout() {
@@ -90,6 +94,8 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     public boolean myCopyOnSelection = true;
     public boolean myPasteOnMiddleMouseButton = true;
     public boolean myOverrideIdeShortcuts = true;
+    public Map<String, String> myUserSpecifiedEnvs = getDefaultExtraEnvironmentVars();
+    public boolean myPassParentEnvs = true;
   }
 
   public String getShellPath() {
@@ -109,6 +115,12 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
     else {
       return "cmd.exe";
     }
+  }
+
+  private static Map<String, String> getDefaultExtraEnvironmentVars() {
+    Map<String, String> defaultEnvs = new HashMap<String, String>();
+    defaultEnvs.put("PROJECT_DIR", "$PROJECT_DIR$");
+    return defaultEnvs;
   }
 
   public void setShellPath(String shellPath) {
@@ -145,6 +157,22 @@ public class TerminalOptionsProvider implements PersistentStateComponent<Termina
 
   public void setPasteOnMiddleMouseButton(boolean pasteOnMiddleMouseButton) {
     myState.myPasteOnMiddleMouseButton = pasteOnMiddleMouseButton;
+  }
+
+  public Map<String, String> getUserSpecifiedEnvs() {
+    return myState.myUserSpecifiedEnvs;
+  }
+
+  public void setUserSpecifiedEnvs(Map<String, String> userSpecifiedEnvs) {
+    myState.myUserSpecifiedEnvs = userSpecifiedEnvs;
+  }
+
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    myState.myPassParentEnvs = passParentEnvs;
+  }
+
+  public boolean passParentEnvs() {
+    return myState.myPassParentEnvs;
   }
 
   @Override
