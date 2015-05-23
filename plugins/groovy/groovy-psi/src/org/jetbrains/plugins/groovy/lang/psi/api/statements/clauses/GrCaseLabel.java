@@ -16,16 +16,28 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
  */
-public interface GrCaseLabel extends GroovyPsiElement {
+public interface GrCaseLabel extends GroovyPsiElement, PsiPolyVariantReference {
+  
+  @NotNull
+  PsiElement getKeywordToken();
+  
   @Nullable
   GrExpression getValue();
 
   boolean isDefault();
+
+  @NotNull
+  @Override
+  GroovyResolveResult[] multiResolve(final boolean incompleteCode);
 }
