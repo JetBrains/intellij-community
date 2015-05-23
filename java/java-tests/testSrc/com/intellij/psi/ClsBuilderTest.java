@@ -47,7 +47,7 @@ public class ClsBuilderTest extends LightIdeaTestCase {
   public void testAnnotatedEnumConstructor() { doTest(); }
 
   public void testModifiers() {
-    String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/cls/pack/" + getTestName(false) + ".class";
+    String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/repo/pack/" + getTestName(false) + ".class";
     VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
     assertNotNull(clsFile);
     doTest(clsFile, getTestName(false) + ".txt");
