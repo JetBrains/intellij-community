@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 
 import java.util.Arrays;
@@ -68,7 +69,7 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     myReturnType = myTargetMethod == null ? null : myTargetMethod.getReturnType();
     myShouldFlushFields = !(call instanceof GrNewExpression && myReturnType != null && myReturnType.getArrayDimensions() > 0)
                           && !isPureCall(myTargetMethod);
-    argumentsToParameters = GrClosureSignatureUtil.mapArgumentsToParameters(
+    argumentsToParameters = myTargetMethod instanceof GrAccessorMethod ? null : GrClosureSignatureUtil.mapArgumentsToParameters(
       result, call, false, false, myNamedArguments, myExpressionArguments, myClosureArguments
     );
     myPrecalculatedReturnValue = null;
@@ -93,17 +94,19 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
 
     myShouldFlushFields = !(call instanceof GrNewExpression && myReturnType != null && myReturnType.getArrayDimensions() > 0)
                           && !isPureCall(myTargetMethod);
-    argumentsToParameters = GrClosureSignatureUtil.mapArgumentsToParameters(
+    argumentsToParameters = myTargetMethod instanceof GrAccessorMethod ? null : GrClosureSignatureUtil.mapArgumentsToParameters(
       result, call, false, false, call.getNamedArguments(), myExpressionArguments, myClosureArguments
     );
     myPrecalculatedReturnValue = precalculatedReturnValue;
   }
 
   public Nullness getParameterNullability(GrExpression e) {
-    Pair<PsiParameter, PsiType> p = argumentsToParameters == null ? null : argumentsToParameters.get(e);
-    PsiParameter parameter = p == null ? null : p.first;
-    PsiType type = p == null ? null : p.second;
-    if (parameter == null || type == null) return Nullness.UNKNOWN;
+    if (myTargetMethod instanceof GrAccessorMethod) {
+      return DfaPsiUtil.getElementNullability(null, ((GrAccessorMethod)myTargetMethod).getProperty());
+    }
+    final Pair<PsiParameter, PsiType> p = argumentsToParameters == null ? null : argumentsToParameters.get(e);
+    final PsiParameter parameter = p == null ? null : p.first;
+    final PsiType type = p == null ? null : p.second;
     return DfaPsiUtil.getElementNullability(type, parameter);
   }
 

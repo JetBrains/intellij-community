@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.flow.instruction.GrMethodCallInstructio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 
 import java.util.List;
 
@@ -55,7 +57,12 @@ public class GrMethodCallHelper<V extends GrStandardInstructionVisitor<V>> exten
         if (callExpression instanceof GrNewExpression) {
           return Nullness.NOT_NULL;
         }
-        return DfaPsiUtil.getElementNullability(key.getReturnType(), key.getTargetMethod());
+        final PsiMethod method = key.getTargetMethod();
+        return DfaPsiUtil.getElementNullability(
+          key.getReturnType(), method instanceof GrAccessorMethod
+                               ? ((GrAccessorMethod)method).getProperty()
+                               : method
+        );
       }
     };
 
