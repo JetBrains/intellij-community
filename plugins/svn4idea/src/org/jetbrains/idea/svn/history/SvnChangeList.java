@@ -355,9 +355,10 @@ public class SvnChangeList implements CommittedChangeList {
           return Boolean.FALSE;
         }
       });
-      final SvnRepositoryContentRevision contentRevision =
-        SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localPath, getRevision(isBeforeRevision));
-      return contentRevision;
+      long revision = getRevision(isBeforeRevision);
+      return localPath == null
+             ? SvnRepositoryContentRevision.createForRemotePath(myVcs, myRepositoryRoot, path, knownAsDirectory, revision)
+             : SvnRepositoryContentRevision.create(myVcs, myRepositoryRoot, path, localPath, revision);
     }
 
     public List<Change> getList() {

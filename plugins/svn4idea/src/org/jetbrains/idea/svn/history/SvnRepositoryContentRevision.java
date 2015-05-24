@@ -120,6 +120,15 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     return create(vcs, SvnUtil.appendMultiParts(repositoryRoot, path), localPath, revision);
   }
 
+  public static SvnRepositoryContentRevision createForRemotePath(@NotNull SvnVcs vcs,
+                                                                 @NotNull String repositoryRoot,
+                                                                 @NotNull String path,
+                                                                 boolean isDirectory,
+                                                                 long revision) {
+    FilePath remotePath = VcsUtil.getFilePathOnNonLocal(SvnUtil.appendMultiParts(repositoryRoot, path), isDirectory);
+    return create(vcs, remotePath, remotePath, revision);
+  }
+
   public static SvnRepositoryContentRevision create(@NotNull SvnVcs vcs,
                                                     @NotNull String fullPath,
                                                     @Nullable FilePath localPath,
@@ -127,7 +136,7 @@ public class SvnRepositoryContentRevision implements ContentRevision, MarkerVcsC
     // TODO: Check if isDirectory = false always true for this method calls
     FilePath remotePath = VcsUtil.getFilePathOnNonLocal(fullPath, false);
 
-    return create(vcs, remotePath, localPath, revision);
+    return create(vcs, remotePath, localPath == null ? remotePath : localPath, revision);
   }
 
   public static SvnRepositoryContentRevision create(@NotNull SvnVcs vcs,
