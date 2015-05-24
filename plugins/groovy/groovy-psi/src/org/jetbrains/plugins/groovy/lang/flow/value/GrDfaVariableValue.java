@@ -19,10 +19,12 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 public class GrDfaVariableValue extends DfaVariableValue {
 
@@ -108,6 +110,10 @@ public class GrDfaVariableValue extends DfaVariableValue {
 
   @Override
   public boolean isFlushableByCalls() {
-    return false;
+    if (myVariable instanceof GrVariable && !(myVariable instanceof GrField) || myVariable instanceof GrParameter) return false;
+    if (myVariable instanceof GrVariable && myVariable.hasModifierProperty(PsiModifier.FINAL)) {
+      return myQualifier != null && myQualifier.isFlushableByCalls();
+    }
+    return true;
   }
 }

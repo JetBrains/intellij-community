@@ -20,9 +20,12 @@ import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.java.DfaExpressionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -31,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 
 
@@ -111,8 +115,7 @@ public class GrDfaValueFactory extends DfaValueFactory {
 
     final GroovyResolveResult resolveResult = refExpr.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
-    final PsiModifierListOwner var = resolved instanceof PsiModifierListOwner ? (PsiModifierListOwner)resolved : null;
-    //getAccessedVariableOrGetter(resolved);
+    final PsiModifierListOwner var = getModifierListOwner(resolved);
     if (var == null) {
       return null;
     }
@@ -146,6 +149,21 @@ public class GrDfaValueFactory extends DfaValueFactory {
 
     final PsiType type = refExpr.getType();
     return createTypeValue(type, DfaPsiUtil.getElementNullability(type, var));
+  }
+
+  private static PsiModifierListOwner getModifierListOwner(PsiElement resolved) {
+    if (resolved instanceof PsiVariable || resolved instanceof GrAccessorMethod) {
+      return (PsiModifierListOwner)resolved;
+    }
+    else if (resolved instanceof PsiMethod) {
+      if (PropertyUtil.isSimplePropertyGetter((PsiMethod)resolved) || ((PsiMethod)resolved).getParameterList().getParametersCount() == 0) {
+        String qName = PsiUtil.getMemberQualifiedName((PsiMethod)resolved);
+        if (qName == null || !DfaExpressionFactory.FALSE_GETTERS.value(qName)) {
+          return (PsiModifierListOwner)resolved;
+        }
+      }
+    }
+    return null;
   }
 
   public DfaValue createLiteralValue(GrLiteral literal) {

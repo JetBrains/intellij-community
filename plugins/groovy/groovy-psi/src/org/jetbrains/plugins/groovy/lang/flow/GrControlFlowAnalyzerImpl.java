@@ -405,7 +405,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
     else {
       final GroovyResolveResult[] cases = caseLabel.multiResolve(false);
       if (cases.length == 1) {
-        callHelper.processMethodCall(caseLabel, caseValue, cases[0], condition);
+        callHelper.processRegularCall(caseLabel, caseValue, cases[0], condition);
       }
       else {
         pushUnknown();
@@ -812,7 +812,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       }
       else {
         final GroovyResolveResult[] results = expression.multiResolve(false);
-        callHelper.processMethodCall(
+        callHelper.processRegularCall(
           expression, operand, results.length == 1 ? results[0] : GroovyResolveResult.EMPTY_RESULT
         );
       }

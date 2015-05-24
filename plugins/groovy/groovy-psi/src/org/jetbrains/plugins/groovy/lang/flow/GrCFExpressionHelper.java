@@ -146,21 +146,25 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     }
   }
 
+  /**
+   * Assuming that qualifier is on top of the stack.
+   */
   void dereference(@NotNull GrExpression qualifier, @NotNull GrReferenceExpression referenceExpression, boolean writing) {
     // qualifier is already on top of stack thank to duplication
     final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
     if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved) && !writing) {
       // groovy property getter
-      myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(referenceExpression, (PsiMethod)resolved, null));
-      processDelayed();
+      myAnalyzer.addInstruction(new GrMethodCallInstruction<V>(
+        referenceExpression, (PsiMethod)resolved, getFactory().createValue(referenceExpression)
+      ));
     }
     else {
       myAnalyzer.addInstruction(new GrDereferenceInstruction<V>(qualifier));
-      processDelayed();
       // push value
       myAnalyzer.push(getFactory().createValue(referenceExpression), referenceExpression, writing);
     }
+    processDelayed();
   }
 
   void binaryOperation(@NotNull GrExpression anchor,
@@ -170,7 +174,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
                        @NotNull GroovyResolveResult[] resolveResults) {
     if (resolveResults.length == 1 && resolveResults[0].isValidResult() && !(operatorToken == mEQUAL || operatorToken == mNOT_EQUAL)) {
       final GroovyResolveResult result = resolveResults[0];
-      myAnalyzer.callHelper.processMethodCall(anchor, left, result, right);
+      myAnalyzer.callHelper.processRegularCall(anchor, left, result, right);
     }
     else {
       left.accept(myAnalyzer);
@@ -194,7 +198,7 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     assert operand != null;
     operand.accept(myAnalyzer);
     final GroovyResolveResult[] results = expression.multiResolve(false);
-    myAnalyzer.callHelper.processMethodCall(
+    myAnalyzer.callHelper.processRegularCall(
       expression, operand, results.length == 1 ? results[0] : GroovyResolveResult.EMPTY_RESULT
     );
     myAnalyzer.addInstruction(new GrAssignInstruction<V>(null, expression, false));

@@ -41,12 +41,12 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
   private final @Nullable DfaValue myPrecalculatedReturnValue;
 
 
-  public GrMethodCallInstruction(@NotNull GrReferenceExpression propertyAccess,
+  public GrMethodCallInstruction(@NotNull GrReferenceExpression propertyGetter,
                                  @NotNull PsiMethod property,
-                                 @Nullable GrExpression rValue) {
-    myCall = propertyAccess;
+                                 @Nullable DfaValue precalculatedReturnValue) {
+    myCall = propertyGetter;
     myNamedArguments = GrNamedArgument.EMPTY_ARRAY;
-    myExpressionArguments = rValue == null ? GrExpression.EMPTY_ARRAY : new GrExpression[]{rValue};
+    myExpressionArguments = GrExpression.EMPTY_ARRAY;
     myClosureArguments = GrClosableBlock.EMPTY_ARRAY;
 
     myReturnType = property.getReturnType();
@@ -54,14 +54,15 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
 
     myShouldFlushFields = false;
     argumentsToParameters = null;
-    myPrecalculatedReturnValue = null;
+    myPrecalculatedReturnValue = precalculatedReturnValue;
   }
 
   public GrMethodCallInstruction(@NotNull PsiElement call,
                                  @NotNull GrNamedArgument[] namedArguments,
                                  @NotNull GrExpression[] expressionArguments,
                                  @NotNull GrClosableBlock[] closureArguments,
-                                 @NotNull GroovyResolveResult result) {
+                                 @NotNull GroovyResolveResult result,
+                                 @Nullable DfaValue precalculatedReturnValue) {
     myCall = call;
     myNamedArguments = namedArguments;
     myExpressionArguments = expressionArguments;
@@ -73,13 +74,13 @@ public class GrMethodCallInstruction<V extends GrInstructionVisitor<V>> extends 
     argumentsToParameters = myTargetMethod instanceof GrAccessorMethod ? null : GrClosureSignatureUtil.mapArgumentsToParameters(
       result, call, false, false, myNamedArguments, myExpressionArguments, myClosureArguments
     );
-    myPrecalculatedReturnValue = null;
+    myPrecalculatedReturnValue = precalculatedReturnValue;
   }
 
   public GrMethodCallInstruction(@NotNull GrExpression call,
                                  @NotNull GrExpression[] expressionArguments,
                                  @NotNull GroovyResolveResult result) {
-    this(call, GrNamedArgument.EMPTY_ARRAY, expressionArguments, GrClosableBlock.EMPTY_ARRAY, result);
+    this(call, GrNamedArgument.EMPTY_ARRAY, expressionArguments, GrClosableBlock.EMPTY_ARRAY, result, null);
   }
 
   public GrMethodCallInstruction(@NotNull GrCallExpression call, @Nullable DfaValue precalculatedReturnValue) {

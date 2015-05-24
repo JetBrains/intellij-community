@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  */
 public class DfaExpressionFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory");
-  private static final Condition<String> FALSE_GETTERS = parseFalseGetters();
+  public static final Condition<String> FALSE_GETTERS = parseFalseGetters();
 
   private static Condition<String> parseFalseGetters() {
     try {

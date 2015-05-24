@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelation;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -211,13 +212,13 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     final GroovyResolveResult[] resolveResults = ResolveUtil.getMethodCandidates(type, "call", call, argumentList.getExpressionTypes());
     if (resolveResults.length != 1 || !resolveResults[0].isValidResult()) return false;
 
-    processMethodCall(call, invoked, resolveResults[0], new CallBasedArguments(call));
+    processRegularCall(call, invoked, resolveResults[0], new CallBasedArguments(call), null);
     return true;
   }
 
   /**
    * Assuming that qualifier is not processed yet.
-   * Chooses how to process regular calls.
+   * Chooses how to process regular calls based on dot token.
    * Processes safe calls then redirects to regular processing
    * or
    * redirects as is.
@@ -239,7 +240,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       final ConditionalGotoInstruction gotoToNotNull = myAnalyzer.addInstruction(new ConditionalGotoInstruction(null, true, qualifier));
 
       // not null branch
-      processMethodCall(highlight, qualifier, result, arguments);
+      processRegularCall(highlight, qualifier, result, arguments, myAnalyzer.factory.createValue(invokedReference));
 
       final GotoInstruction<V> gotoEnd = myAnalyzer.addInstruction(new GotoInstruction<V>(null));
       gotoToNotNull.setOffset(myAnalyzer.flow.getNextOffset());
@@ -254,7 +255,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       gotoEnd.setOffset(myAnalyzer.flow.getNextOffset());
     }
     else {
-      processMethodCall(highlight, qualifier, result, arguments);
+      processRegularCall(highlight, qualifier, result, arguments, myAnalyzer.factory.createValue(invokedReference));
     }
   }
 
@@ -262,11 +263,11 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
    * Assuming that qualifier is not processed yet.
    * Processes regular calls.
    */
-  void processMethodCall(@NotNull PsiElement highlight,
-                         @Nullable GrExpression qualifier,
-                         @NotNull GroovyResolveResult result,
-                         @NotNull final GrExpression... expressionArguments) {
-    processMethodCall(
+  void processRegularCall(@NotNull PsiElement highlight,
+                          @Nullable GrExpression qualifier,
+                          @NotNull GroovyResolveResult result,
+                          @NotNull final GrExpression... expressionArguments) {
+    processRegularCall(
       highlight,
       qualifier,
       result,
@@ -276,7 +277,8 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
         public GrExpression[] getExpressionArguments() {
           return expressionArguments;
         }
-      }
+      },
+      null
     );
   }
 
@@ -284,10 +286,11 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
    * Assuming that qualifier is not processed yet.
    * Processes regular calls.
    */
-  void processMethodCall(@NotNull PsiElement highlight,
-                         @Nullable GrExpression qualifier,
-                         @NotNull GroovyResolveResult result,
-                         @NotNull Arguments arguments) {
+  private void processRegularCall(@NotNull PsiElement highlight,
+                                  @Nullable GrExpression qualifier,
+                                  @NotNull GroovyResolveResult result,
+                                  @NotNull Arguments arguments,
+                                  @Nullable DfaValue returnValue) {
     final PsiElement element = result.getElement();
     if (qualifier != null && element instanceof GrGdkMethod) {
       // simulate static method call
@@ -296,7 +299,8 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       processMethodCallStraight(
         highlight,
         new GroovyResolveResultImpl(((GrGdkMethod)element).getStaticMethod(), result.isAccessible()),
-        new MergedArguments(new GrExpression[]{qualifier}, arguments)
+        new MergedArguments(new GrExpression[]{qualifier}, arguments),
+        null
       );
     }
     else {
@@ -306,7 +310,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       else {
         qualifier.accept(myAnalyzer);
       }
-      processMethodCallStraight(highlight, result, arguments);
+      processMethodCallStraight(highlight, result, arguments, returnValue);
     }
   }
 
@@ -316,7 +320,8 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
    */
   void processMethodCallStraight(@NotNull PsiElement highlight,
                                  @NotNull GroovyResolveResult result,
-                                 @NotNull Arguments arguments) {
+                                 @NotNull Arguments arguments,
+                                 @Nullable DfaValue returnValue) {
     // evaluate arguments
     //visitArguments(namedArguments, expressionArguments, closureArguments);
     arguments.runArguments();
@@ -326,7 +331,8 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
       arguments.getNamedArguments(),
       arguments.getExpressionArguments(),
       arguments.getClosureArguments(),
-      result
+      result,
+      returnValue
     ));
     myAnalyzer.expressionHelper.processDelayed();
     final PsiElement resultElement = result.getElement();
@@ -383,7 +389,7 @@ public class GrCFCallHelper<V extends GrInstructionVisitor<V>> {
     final Arguments mergedArguments = new MergedArguments(indexProperty.getExpressionArguments(), arguments);
     if (results.length == 1 && results[0].isValidResult()) {
       invokedExpression.accept(myAnalyzer); // qualifier
-      processMethodCallStraight(indexProperty, results[0], mergedArguments);
+      processMethodCallStraight(indexProperty, results[0], mergedArguments, null);
     }
     else {
       fallback(invokedExpression, mergedArguments);
