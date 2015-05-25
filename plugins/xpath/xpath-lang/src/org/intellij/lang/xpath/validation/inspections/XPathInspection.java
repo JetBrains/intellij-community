@@ -33,83 +33,94 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class XPathInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
 
-    @NotNull
-    public String getGroupDisplayName() {
-        return "XPath";
-    }
+  @Override
+  @NotNull
+  public String getGroupDisplayName() {
+    return "XPath";
+  }
 
-    public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
-        final XPathElement e = PsiTreeUtil.getContextOfType(element, XPathElement.class, false);
-        return ContextProvider.getContextProvider(e != null ? e : element).getQuickFixFactory().getSuppressActions(this);
-    }
+  @Override
+  @NotNull
+  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
+    final XPathElement e = PsiTreeUtil.getContextOfType(element, XPathElement.class, false);
+    return ContextProvider.getContextProvider(e != null ? e : element).getQuickFixFactory().getSuppressActions(this);
+  }
 
-    public boolean isSuppressedFor(@NotNull PsiElement element) {
-        return ContextProvider.getContextProvider(element.getContainingFile()).getQuickFixFactory().isSuppressedFor(element, this);
-    }
+  @Override
+  public boolean isSuppressedFor(@NotNull PsiElement element) {
+    return ContextProvider.getContextProvider(element.getContainingFile()).getQuickFixFactory().isSuppressedFor(element, this);
+  }
 
-    protected abstract Visitor createVisitor(InspectionManager manager, boolean isOnTheFly);
+  protected abstract Visitor createVisitor(InspectionManager manager, boolean isOnTheFly);
 
-    @Nullable
-    public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-        final Language language = file.getLanguage();
-        if (!acceptsLanguage(language)) return null;
+  @Override
+  @Nullable
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    final Language language = file.getLanguage();
+    if (!acceptsLanguage(language)) return null;
 
-        final Visitor visitor = createVisitor(manager, isOnTheFly);
+    final Visitor visitor = createVisitor(manager, isOnTheFly);
 
-        file.accept(visitor);
+    file.accept(visitor);
 
-        return visitor.getProblems();
-    }
+    return visitor.getProblems();
+  }
 
   protected abstract boolean acceptsLanguage(Language language);
 
-  protected static abstract class Visitor extends PsiRecursiveElementVisitor {
-        protected final InspectionManager myManager;
-      protected boolean myOnTheFly;
-      private SmartList<ProblemDescriptor> myProblems;
+  abstract static class Visitor extends PsiRecursiveElementVisitor {
+    protected final InspectionManager myManager;
+    protected boolean myOnTheFly;
+    private SmartList<ProblemDescriptor> myProblems;
 
-      public Visitor(InspectionManager manager, boolean isOnTheFly) {
-            myManager = manager;
-          this.myOnTheFly = isOnTheFly;
-        }
-
-        public void visitElement(PsiElement psiElement) {
-            super.visitElement(psiElement);
-
-            if (myProblems != null) {
-                final TextRange textRange = psiElement.getTextRange();
-                for (ProblemDescriptor problem : myProblems) {
-                    if (textRange.contains(problem.getPsiElement().getTextRange())) {
-                        return;
-                    }
-                }
-            }
-
-            if (psiElement instanceof XPathExpression) {
-                checkExpression(((XPathExpression)psiElement));
-            } else if (psiElement instanceof XPathNodeTest) {
-                checkNodeTest(((XPathNodeTest)psiElement));
-            } else if (psiElement instanceof XPathPredicate) {
-                checkPredicate((XPathPredicate)psiElement);
-            }
-        }
-
-        protected void checkExpression(XPathExpression expression) { }
-
-        protected void checkPredicate(XPathPredicate predicate) { }
-
-        protected void checkNodeTest(XPathNodeTest nodeTest) { }
-
-        @Nullable
-        public ProblemDescriptor[] getProblems() {
-            return myProblems == null ? null : myProblems.toArray(new ProblemDescriptor[myProblems.size()]);
-        }
-
-        protected void addProblem(ProblemDescriptor problem) {
-            if (myProblems == null) {
-                myProblems = new SmartList<ProblemDescriptor>();
-            }
-            myProblems.add(problem);
-        }
+    Visitor(InspectionManager manager, boolean isOnTheFly) {
+      myManager = manager;
+      myOnTheFly = isOnTheFly;
     }
+
+    @Override
+    public void visitElement(PsiElement psiElement) {
+      super.visitElement(psiElement);
+
+      if (myProblems != null) {
+        final TextRange textRange = psiElement.getTextRange();
+        for (ProblemDescriptor problem : myProblems) {
+          if (textRange.contains(problem.getPsiElement().getTextRange())) {
+            return;
+          }
+        }
+      }
+
+      if (psiElement instanceof XPathExpression) {
+        checkExpression((XPathExpression)psiElement);
+      }
+      else if (psiElement instanceof XPathNodeTest) {
+        checkNodeTest((XPathNodeTest)psiElement);
+      }
+      else if (psiElement instanceof XPathPredicate) {
+        checkPredicate((XPathPredicate)psiElement);
+      }
+    }
+
+    protected void checkExpression(XPathExpression expression) {
+    }
+
+    protected void checkPredicate(XPathPredicate predicate) {
+    }
+
+    protected void checkNodeTest(XPathNodeTest nodeTest) {
+    }
+
+    @Nullable
+    private ProblemDescriptor[] getProblems() {
+      return myProblems == null ? null : myProblems.toArray(new ProblemDescriptor[myProblems.size()]);
+    }
+
+    void addProblem(ProblemDescriptor problem) {
+      if (myProblems == null) {
+        myProblems = new SmartList<ProblemDescriptor>();
+      }
+      myProblems.add(problem);
+    }
+  }
 }

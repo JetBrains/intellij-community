@@ -1386,9 +1386,10 @@ class Foo {{
     myFixture.addClass("package bar; public class Util { public static void bar() {} }")
     myFixture.configureByText 'a.java', 'class Foo {{ Util<caret> }}'
     type '.'
-    assert myFixture.lookupElementStrings == ['Util.bar', 'Util.CONSTANT', 'Util.foo']
+    assert myFixture.lookupElementStrings as Set == ['Util.bar', 'Util.CONSTANT', 'Util.foo'] as Set
 
-    def p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(myFixture.lookupElements[1]) } as Computable)
+    def constant = myFixture.lookupElements.find { it.lookupString == 'Util.CONSTANT' }
+    LookupElementPresentation p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(constant) } as Computable<LookupElementPresentation>)
     assert p.itemText == 'Util.CONSTANT'
     assert p.tailText == ' (foo)'
     assert p.typeText == 'int'

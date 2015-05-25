@@ -157,16 +157,17 @@ public class MethodCandidateInfo extends CandidateInfo{
       map = ContainerUtil.createConcurrentWeakMap();
       CURRENT_CANDIDATE.set(map);
     }
-    final CurrentCandidateProperties alreadyThere = map.put(getMarkerList(),
+    final PsiElement argumentList = getMarkerList();
+    final CurrentCandidateProperties alreadyThere = map.put(argumentList,
                                                             new CurrentCandidateProperties(this, substitutor, isVarargs(), true));
     try {
       return computable.compute();
     }
     finally {
       if (alreadyThere == null) {
-        map.remove(getMarkerList());
+        map.remove(argumentList);
       } else {
-        map.put(getMarkerList(), alreadyThere);
+        map.put(argumentList, alreadyThere);
       }
     }
   }
@@ -286,8 +287,9 @@ public class MethodCandidateInfo extends CandidateInfo{
       CURRENT_CANDIDATE.set(map);
     }
     final PsiMethod method = getElement();
-    final CurrentCandidateProperties alreadyThere = 
-      map.put(getMarkerList(), new CurrentCandidateProperties(this, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint));
+    final PsiElement argumentList = getMarkerList();
+    final CurrentCandidateProperties alreadyThere =
+      map.put(argumentList, new CurrentCandidateProperties(this, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint));
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
@@ -309,9 +311,9 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     finally {
       if (alreadyThere == null) {
-        map.remove(getMarkerList());
+        map.remove(argumentList);
       } else {
-        map.put(getMarkerList(), alreadyThere);
+        map.put(argumentList, alreadyThere);
       }
     }
   }

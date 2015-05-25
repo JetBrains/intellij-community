@@ -20,6 +20,16 @@ import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class LineNumberConvertorCorrectorTest extends UsefulTestCase {
+  public void testUnmodified() {
+    Test test = new Test();
+    test.equal(0, 0, 10, Side.LEFT);
+    test.equal(0, 0, 12, Side.RIGHT);
+    test.finish();
+
+    test.checkStrictSymmetrical();
+    test.ensureMatchedCount(10, 12);
+  }
+
   public void testEqual1() {
     Test test = new Test();
     test.equal(0, 0, 10, Side.LEFT);
@@ -63,11 +73,27 @@ public class LineNumberConvertorCorrectorTest extends UsefulTestCase {
     test.finish();
 
     test.change(4, 3, 5, Side.LEFT);
-    test.change(1, 2, 1, Side.RIGHT);
-    test.change(12, 3, 1, Side.LEFT);
-
     test.checkStrictSymmetrical();
+    test.change(1, 2, 1, Side.RIGHT);
+    test.checkStrictSymmetrical();
+    test.change(12, 3, 1, Side.LEFT);
+    test.checkStrictSymmetrical();
+
     test.ensureMatchedCount(13, 8);
+  }
+
+  public void testInsideModifiedRange() {
+    Test test = new Test();
+    test.equal(0, 0, 15, Side.LEFT);
+    test.equal(0, 0, 15, Side.RIGHT);
+    test.finish();
+
+    test.change(0, 10, 15, Side.LEFT);
+    test.checkStrictSymmetrical();
+    test.change(0, 8, 6, Side.LEFT);
+    test.checkStrictSymmetrical();
+    test.change(2, 4, 2, Side.LEFT);
+    test.checkStrictSymmetrical();
   }
 
   private static class Test {

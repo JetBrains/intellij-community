@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -346,13 +346,14 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
       request.enable();
     } catch (InternalException e) {
-      //noinspection StatementWithEmptyBody
-      if (e.errorCode() == 41) {
+      switch (e.errorCode()) {
+        case 40 /* DUPLICATE */ : LOG.info(e); break;
+
+        case 41 /* NOT_FOUND */ : break;
         //event request not found
         //there could be no requests after hotswap
-      }
-      else {
-        LOG.error(e);
+
+        default: LOG.error(e);
       }
     }
   }

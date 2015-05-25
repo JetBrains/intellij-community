@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.execution.filters.UrlFilter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -49,11 +49,12 @@ public class CopyUrlAction extends DumbAwareAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null) return null;
 
-    String url = findUrl(editor, editor.getCaretModel().getOffset());
+    int offset = editor.getCaretModel().getOffset();
+    String url = findUrl(editor, offset);
     if (url != null) return url;
 
-    Integer expectedCaretOffset = editor.getUserData(EditorActionUtil.EXPECTED_CARET_OFFSET);
-    return expectedCaretOffset == null ? null : findUrl(editor, expectedCaretOffset);
+    int expectedCaretOffset = ((EditorEx)editor).getExpectedCaretOffset();
+    return expectedCaretOffset == offset ? null : findUrl(editor, expectedCaretOffset);
   }
 
   private static String findUrl(Editor editor, int offset) {

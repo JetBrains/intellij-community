@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,10 +61,10 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionProfileEntry");
 
-  private static final SkipDefaultValuesSerializationFilters DEFAULT_FILTER = new SkipDefaultValuesSerializationFilters();
-  private static Set<String> ourBlackList = null;
+  private static final SerializationFilter DEFAULT_FILTER = new SkipDefaultValuesSerializationFilters();
+  private static Set<String> ourBlackList;
   private static final Object BLACK_LIST_LOCK = new Object();
-  private Boolean myUseNewSerializer = null;
+  private Boolean myUseNewSerializer;
 
   @NonNls
   @Nullable
@@ -130,11 +130,11 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return fixes.toArray(new SuppressQuickFix[fixes.size()]);
   }
 
-  private static void addAllSuppressActions(Set<SuppressQuickFix> fixes,
-                                            PsiElement element,
-                                            InspectionSuppressor suppressor,
-                                            ThreeState appliedToInjectionHost,
-                                            String toolId) {
+  private static void addAllSuppressActions(@NotNull Set<SuppressQuickFix> fixes,
+                                            @NotNull PsiElement element,
+                                            @NotNull InspectionSuppressor suppressor,
+                                            @NotNull ThreeState appliedToInjectionHost,
+                                            @NotNull String toolId) {
     final SuppressQuickFix[] actions = suppressor.getSuppressActions(element, toolId);
     for (SuppressQuickFix action : actions) {
       if (action instanceof InjectionAwareSuppressQuickFix) {
@@ -179,7 +179,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
            : Collections.<InspectionSuppressor>emptySet();
   }
 
-  public void cleanup(Project project) {
+  public void cleanup(@NotNull Project project) {
 
   }
 
@@ -189,7 +189,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     @Nullable String getDefaultGroupDisplayName();
   }
 
-  protected volatile DefaultNameProvider myNameProvider = null;
+  protected volatile DefaultNameProvider myNameProvider;
 
   /**
    * @see InspectionEP#groupDisplayName

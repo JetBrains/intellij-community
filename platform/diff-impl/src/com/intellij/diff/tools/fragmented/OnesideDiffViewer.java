@@ -772,7 +772,7 @@ public class OnesideDiffViewer extends TextDiffViewerBase {
   @Override
   public JComponent getPreferredFocusedComponent() {
     if (!myPanel.isGoodContent()) return null;
-    return myEditor.getComponent();
+    return myEditor.getContentComponent();
   }
 
   @NotNull

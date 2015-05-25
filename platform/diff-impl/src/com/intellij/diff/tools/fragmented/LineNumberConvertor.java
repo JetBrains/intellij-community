@@ -322,13 +322,13 @@ public class LineNumberConvertor {
         return append(converted, side == change.side ? shift : 0);
       }
 
-      if (side != change.side) { // Eo' -> Eu'
+      if (side != change.side) { // Mo' -> Mu'
         if (!approximate) return -1;
         // we can't convert Mo' into Mo. And thus get valid Mu/Mu'.
         // return: Au'
         return convertFromOneside(change.startOneside, side, approximate, index - 1);
       }
-      else { // Eo' -> Em'
+      else { // Mo' -> Mm'
         // Ao == Ao'; Am == Am'; Mo' - Ao' == Mm' - Am'
         // value = Mo'
         int convertedStart = convertFromOneside(change.startOneside, side, approximate, index - 1);

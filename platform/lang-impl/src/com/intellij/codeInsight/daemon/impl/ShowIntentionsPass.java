@@ -40,7 +40,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -79,8 +79,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   @NotNull
   public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull final Editor editor, @NotNull final PsiFile file, final int passId) {
-    final Integer expectedCaretOffset = editor.getUserData(EditorActionUtil.EXPECTED_CARET_OFFSET);
-    final int offset = expectedCaretOffset != null ? expectedCaretOffset : editor.getCaretModel().getOffset();
+    final int offset = ((EditorEx)editor).getExpectedCaretOffset();
     final Project project = file.getProject();
 
     final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();

@@ -40,7 +40,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
@@ -318,6 +317,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   static {
     ourCaretBlinkingCommand.start();
   }
+
+  private int myExpectedCaretOffset = -1;
 
   EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
     assertIsDispatchThread();
@@ -650,6 +651,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback) {
     myVerticalScrollBar.registerRepaintCallback(callback);
+  }
+
+  @Override
+  public int getExpectedCaretOffset() {
+    return myExpectedCaretOffset == -1 ? getCaretModel().getOffset() : myExpectedCaretOffset;
   }
 
   @Override
@@ -2400,6 +2406,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       g.setColor(defaultBackground);
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
     }
+    Color prevBackColor = null;
 
     int lineHeight = getLineHeight();
 
@@ -2408,9 +2415,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Point position = new Point(0, visibleLine * lineHeight);
     CharSequence prefixText = myPrefixText == null ? null : new CharArrayCharSequence(myPrefixText);
     if (clipStartVisualPos.line == 0 && prefixText != null) {
-      position.x = drawBackground(g, myPrefixAttributes.getBackgroundColor(), prefixText, 0, prefixText.length(), position,
+      position.x = drawBackground(g, prevBackColor = myPrefixAttributes.getBackgroundColor(), prefixText, 0, prefixText.length(), position,
                                   myPrefixAttributes.getFontType(),
                                   defaultBackground, clip);
+      
     }
 
     if (clipStartPosition.line >= myDocument.getLineCount() || clipStartPosition.line < 0) {
@@ -2461,7 +2469,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (color != null) {
-        drawBackground(g, color, softWrap.getIndentInPixels(), position, defaultBackground, clip);
+        drawBackground(g, prevBackColor = color, softWrap.getIndentInPixels(), position, defaultBackground, clip);
       }
       position.x = softWrap.getIndentInPixels();
     }
@@ -2480,8 +2488,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (hEnd >= lEnd) {
         FoldRegion collapsedFolderAt = myFoldingModel.getCollapsedRegionAtOffset(start);
         if (collapsedFolderAt == null) {
-          position.x = drawSoftWrapAwareBackground(g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
-                                                   defaultBackground, clip, softWrapsToSkip, caretRowPainted);
+          position.x = drawSoftWrapAwareBackground(g, backColor, prevBackColor, text, start, lEnd - lIterator.getSeparatorLength(), 
+                                                   position, fontType, defaultBackground, clip, softWrapsToSkip, caretRowPainted);
+          prevBackColor = backColor;
 
           paintAfterLineEndBackgroundSegments(g, iterationState, position, defaultBackground, lineHeight);
 
@@ -2511,12 +2520,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
           if (softWrap != null) {
             position.x = drawSoftWrapAwareBackground(
-              g, backColor, text, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, fontType,
+              g, backColor, prevBackColor, text, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, fontType,
               defaultBackground, clip, softWrapsToSkip, caretRowPainted
             );
           }
           CharSequence chars = collapsedFolderAt.getPlaceholderText();
-          position.x = drawBackground(g, backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          position.x = drawBackground(g, prevBackColor = backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
         }
 
         lIterator.advance();
@@ -2527,23 +2536,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           softWrap = mySoftWrapModel.getSoftWrap(collapsedFolderAt.getStartOffset());
           if (softWrap != null) {
             position.x = drawSoftWrapAwareBackground(
-              g, backColor, text, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, fontType,
+              g, backColor, prevBackColor, text, collapsedFolderAt.getStartOffset(), collapsedFolderAt.getStartOffset(), position, fontType,
               defaultBackground, clip, softWrapsToSkip, caretRowPainted
             );
           }
           CharSequence chars = collapsedFolderAt.getPlaceholderText();
-          position.x = drawBackground(g, backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          position.x = drawBackground(g, prevBackColor = backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
         }
         else if (hEnd > lEnd - lIterator.getSeparatorLength()) {
           position.x = drawSoftWrapAwareBackground(
-            g, backColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
+            g, backColor, prevBackColor, text, start, lEnd - lIterator.getSeparatorLength(), position, fontType,
             defaultBackground, clip, softWrapsToSkip, caretRowPainted
           );
+          prevBackColor = backColor;
         }
         else {
           position.x = drawSoftWrapAwareBackground(
-            g, backColor, text, start, hEnd, position, fontType, defaultBackground, clip, softWrapsToSkip, caretRowPainted
+            g, backColor, prevBackColor, text, start, hEnd, position, fontType, defaultBackground, clip, softWrapsToSkip, caretRowPainted
           );
+          prevBackColor = backColor;
         }
 
         iterationState.advance();
@@ -2613,6 +2624,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int drawSoftWrapAwareBackground(@NotNull Graphics g,
                                           Color backColor,
+                                          Color prevBackColor,
                                           @NotNull CharSequence text,
                                           int start,
                                           int end,
@@ -2640,7 +2652,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         position.x = drawBackground(g, backColor, text, startToUse, softWrapStart, position, fontType, defaultBackground, clip);
       }
       boolean drawCustomBackgroundAtSoftWrapVirtualSpace =
-        !Comparing.equal(backColor, defaultBackground) && (softWrapStart > start || Comparing.equal(myLastBackgroundColor, backColor));
+        !Comparing.equal(backColor, defaultBackground) && (softWrapStart > start || Comparing.equal(prevBackColor, backColor));
       drawSoftWrap(
         g, softWrap, position, fontType, backColor, drawCustomBackgroundAtSoftWrapVirtualSpace, defaultBackground, clip, caretRowPainted
       );
@@ -5633,7 +5645,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-
   private class MyMouseAdapter extends MouseAdapter {
     private boolean mySelectionTweaked;
 
@@ -5676,17 +5687,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myCurrentDragIsSubstantial = false;
       clearDraggedRange();
 
-      final int clickOffset = logicalPositionToOffset(myLastMousePressedLocation);
-      putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, clickOffset);
 
       mySelectionTweaked = false;
       myMousePressedEvent = e;
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
 
-      for (EditorMouseListener mouseListener : myMouseListeners) {
-        mouseListener.mousePressed(event);
+      myExpectedCaretOffset = logicalPositionToOffset(myLastMousePressedLocation);
+      try {
+        for (EditorMouseListener mouseListener : myMouseListeners) {
+          mouseListener.mousePressed(event);
+        }
       }
-      putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, null);
+      finally {
+        myExpectedCaretOffset = -1;
+      }
 
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
