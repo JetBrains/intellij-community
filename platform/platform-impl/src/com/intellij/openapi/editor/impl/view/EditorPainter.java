@@ -43,6 +43,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
+/**
+ * Renders editor contents.
+ */
 class EditorPainter {
   private static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
                                                                                    new float[]{0, 2, 0, 2}, 0);

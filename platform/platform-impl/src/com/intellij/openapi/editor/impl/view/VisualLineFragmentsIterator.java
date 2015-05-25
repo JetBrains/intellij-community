@@ -25,6 +25,10 @@ import java.awt.*;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Iterator over visual line's fragments. Fragment's text has the same font and directionality. Collapsed fold regions are also represented
+ * as fragments.
+ */
 class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterator.Fragment> {
 
   static Iterable<Fragment> create(final EditorView view, final int offset) {
