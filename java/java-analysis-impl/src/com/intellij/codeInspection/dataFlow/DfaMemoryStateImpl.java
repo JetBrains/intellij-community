@@ -295,7 +295,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @NotNull
-  List<DfaValue> getEquivalentValues(@NotNull DfaValue dfaValue) {
+  protected List<DfaValue> getEquivalentValues(@NotNull DfaValue dfaValue) {
     int index = getEqClassIndex(dfaValue);
     EqClass set = index == -1 ? null : myEqClasses.get(index);
     if (set == null) {

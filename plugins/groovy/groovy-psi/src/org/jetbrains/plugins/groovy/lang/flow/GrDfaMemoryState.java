@@ -20,9 +20,12 @@ import com.intellij.codeInspection.dataFlow.DfaVariableState;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
 
 public class GrDfaMemoryState extends DfaMemoryStateImpl {
 
@@ -50,48 +53,50 @@ public class GrDfaMemoryState extends DfaMemoryStateImpl {
       return to ^ !((DfaTypeValue)value).isNotNull();
     }
     else if (value instanceof DfaVariableValue) {
-      final DfaVariableValue variableValue = (DfaVariableValue)value;
-
-      final DfaConstValue constantValue = getConstantValue(variableValue);
+      final DfaConstValue constantValue = getConstantValue((DfaVariableValue)value);
       if (constantValue != null) {
         return coerceTo(to, constantValue);
       }
 
-      final DfaPsiType type = variableValue.getTypeValue() != null ? variableValue.getTypeValue().getDfaType() : null;
-      if (type != null && type.getPsiType().equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
-        final boolean notNull = isNotNull(variableValue);
-        final DfaConstValue.Factory constFactory = myFactory.getConstFactory();
-        final DfaRelationValue.Factory relationFactory = myFactory.getRelationFactory();
-        final DfaValue dfaTrue = myFactory.getBoxedFactory().createBoxed(
-          constFactory.getTrue()
-        );
-        applyRelationCondition(
-          relationFactory.createRelation(variableValue, dfaTrue, DfaRelation.EQ, !to)
-        );
-        if (notNull) {
-          final DfaValue dfaFalse = myFactory.getBoxedFactory().createBoxed(
-            constFactory.getFalse()
+      List<DfaValue> equivalentValues = getEquivalentValues(value);
+      if (equivalentValues.isEmpty()) equivalentValues = Collections.singletonList(value);
+      for (DfaValue equivalent : equivalentValues) {
+        if (equivalent instanceof DfaVariableValue) {
+          final DfaVariableValue variableValue = (DfaVariableValue)equivalent;
+          applyBooleanRelations(to, variableValue);
+          final GrDfaVariableState newState = getVariableState(variableValue).withTruth(
+            to ? GrDfaVariableState.Truth.TRUE
+               : GrDfaVariableState.Truth.FALSE
           );
-          applyRelationCondition(
-            relationFactory.createRelation(variableValue, dfaFalse, DfaRelation.EQ, to)
-          );
+          if (newState == null) return false;
+          setVariableState(variableValue, newState);
         }
       }
+    }
+    return true;
+  }
 
-      final GrDfaVariableState newState = getVariableState(variableValue).withTruth(
-        to
-        ? GrDfaVariableState.Truth.TRUE
-        : GrDfaVariableState.Truth.FALSE
+  private void applyBooleanRelations(boolean to, @NotNull DfaVariableValue variableValue) {
+    final DfaPsiType type = variableValue.getTypeValue() != null ? variableValue.getTypeValue().getDfaType() : null;
+    if (type != null && type.getPsiType().equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
+      final boolean notNull = isNotNull(variableValue);
+      final DfaConstValue.Factory constFactory = myFactory.getConstFactory();
+      final DfaRelationValue.Factory relationFactory = myFactory.getRelationFactory();
+      final DfaValue dfaTrue = myFactory.getBoxedFactory().createBoxed(
+        constFactory.getTrue()
       );
-      if (newState != null) {
-        setVariableState(variableValue, newState);
-        return true;
-      }
-      else {
-        return false;
+      applyRelationCondition(
+        relationFactory.createRelation(variableValue, dfaTrue, DfaRelation.EQ, !to)
+      );
+      if (notNull) {
+        final DfaValue dfaFalse = myFactory.getBoxedFactory().createBoxed(
+          constFactory.getFalse()
+        );
+        applyRelationCondition(
+          relationFactory.createRelation(variableValue, dfaFalse, DfaRelation.EQ, to)
+        );
       }
     }
-    return false;
   }
 
   @Override
