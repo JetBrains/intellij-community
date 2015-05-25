@@ -60,8 +60,7 @@ public class FocusTrackerSupport<T> {
     }
 
     private void addListener(@NotNull List<? extends EditorHolder> holders, @NotNull Side side) {
-      JComponent focusedComponent = side.select(holders).getFocusedComponent();
-      if (focusedComponent != null) focusedComponent.addFocusListener(new MyFocusListener(side));
+      side.select(holders).installFocusListener(new MyFocusListener(side));
     }
 
     private class MyFocusListener extends FocusAdapter {
@@ -107,8 +106,7 @@ public class FocusTrackerSupport<T> {
     }
 
     private void addListener(@NotNull List<? extends EditorHolder> holders, @NotNull ThreeSide side) {
-      JComponent focusedComponent = side.select(holders).getFocusedComponent();
-      if (focusedComponent != null) focusedComponent.addFocusListener(new MyFocusListener(side));
+      side.select(holders).installFocusListener(new MyFocusListener(side));
     }
 
     private class MyFocusListener extends FocusAdapter {
