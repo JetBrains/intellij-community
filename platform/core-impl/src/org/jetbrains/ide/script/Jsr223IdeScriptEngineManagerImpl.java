@@ -72,8 +72,9 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     return createIdeScriptEngine(engine);
   }
 
-  private static IdeScriptEngine createIdeScriptEngine(ScriptEngine engine) {
-    return redirectOutputToLog(new Jsr223IdeScriptEngine(engine));
+  @Nullable
+  private static IdeScriptEngine createIdeScriptEngine(@Nullable ScriptEngine engine) {
+    return engine == null ? null : redirectOutputToLog(new Jsr223IdeScriptEngine(engine));
   }
 
   private static IdeScriptEngine redirectOutputToLog(IdeScriptEngine engine) {
