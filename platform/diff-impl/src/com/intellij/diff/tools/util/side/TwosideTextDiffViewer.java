@@ -78,6 +78,8 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     new MyOpenInEditorWithMouseAction().register(getEditors());
 
     myEditableEditors = TextDiffViewerUtil.getEditableEditors(getEditors());
+
+    TextDiffViewerUtil.checkDifferentDocuments(myRequest);
   }
 
   @Override

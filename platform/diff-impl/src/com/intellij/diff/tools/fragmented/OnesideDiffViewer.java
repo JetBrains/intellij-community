@@ -127,6 +127,8 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
     myEditorSettingsAction.applyDefaults();
 
     new MyOpenInEditorWithMouseAction().register(getEditors());
+
+    TextDiffViewerUtil.checkDifferentDocuments(myRequest);
   }
 
   @Override
