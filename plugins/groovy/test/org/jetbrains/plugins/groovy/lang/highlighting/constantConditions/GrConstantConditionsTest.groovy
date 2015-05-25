@@ -298,4 +298,6 @@ def passingNotNullToNotAnnotated(@NotNull a) {
 }
 '''
   }
+
+  void "test qualified expressions"() { doTest() }
 }

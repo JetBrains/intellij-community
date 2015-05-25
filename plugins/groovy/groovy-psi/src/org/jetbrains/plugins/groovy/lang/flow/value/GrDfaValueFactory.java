@@ -27,6 +27,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -35,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 
 
@@ -151,9 +153,15 @@ public class GrDfaValueFactory extends DfaValueFactory {
     return createTypeValue(type, DfaPsiUtil.getElementNullability(type, var));
   }
 
-  private static PsiModifierListOwner getModifierListOwner(PsiElement resolved) {
-    if (resolved instanceof PsiVariable || resolved instanceof GrAccessorMethod) {
+  private static PsiModifierListOwner getModifierListOwner(@Nullable PsiElement resolved) {
+    if (resolved instanceof PsiVariable) {
       return (PsiModifierListOwner)resolved;
+    }
+    else if (resolved instanceof GrAccessorMethod) {
+      return ((GrAccessorMethod)resolved).getProperty();
+    }
+    else if (resolved instanceof GrReflectedMethod) {
+      return getModifierListOwner(((GrReflectedMethod)resolved).getBaseMethod());
     }
     else if (resolved instanceof PsiMethod) {
       if (PropertyUtil.isSimplePropertyGetter((PsiMethod)resolved) || ((PsiMethod)resolved).getParameterList().getParametersCount() == 0) {
@@ -162,6 +170,9 @@ public class GrDfaValueFactory extends DfaValueFactory {
           return (PsiModifierListOwner)resolved;
         }
       }
+    }
+    else if (resolved instanceof PsiModifierListOwner) {
+      return (PsiModifierListOwner)resolved;
     }
     return null;
   }
