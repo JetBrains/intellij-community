@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.formatter;
 
+import com.intellij.formatting.WrapType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.jetbrains.python.PyBundle;
@@ -72,6 +73,8 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean SPACE_BEFORE_NUMBER_SIGN = true;
 
   public int DICT_ALIGNMENT = DICT_ALIGNMENT_NONE;
+  public int DICT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
+
 
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);
