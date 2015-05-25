@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -756,7 +757,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
         string = sb.append("...").toString();
       }
 
-      UIUtil.applyRenderingHints(g2);
+      UISettings.setupAntialiasing(g2);
       g2.drawString(string, offset + ROUND_VALUE, height - fm.getDescent() - 4);
 
       g2.setFont(oldFont);

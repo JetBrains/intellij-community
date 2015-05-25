@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.intellij.psi;
 
 /**
- * Represents an element in a Java library used in a project. References
+ * Represents an element in a binary library used in a project. References
  * to library classes/methods are always resolved to compiled elements;
  * to get the corresponding source code, if it is available,
- * {@link com.intellij.psi.PsiElement#getNavigationElement()} should be called.
+ * {@link PsiElement#getNavigationElement()} should be called.
  */
 public interface PsiCompiledElement extends PsiElement {
   /**

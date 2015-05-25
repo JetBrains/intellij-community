@@ -153,17 +153,30 @@ public class JavaCompletionUtil {
     }
 
     T result = new PsiTypeMapper() {
+      private final Set<PsiClassType> myVisited = ContainerUtil.newIdentityTroveSet();
+      
       @Override
       public PsiType visitClassType(final PsiClassType classType) {
+        if (!myVisited.add(classType)) return classType;
+        
         final PsiClassType.ClassResolveResult classResolveResult = classType.resolveGenerics();
         final PsiClass psiClass = classResolveResult.getElement();
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
         if (psiClass == null) return classType;
 
-        LOG.assertTrue(psiClass.isValid());
-
-        return new PsiImmediateClassType(CompletionUtil.getOriginalOrSelf(psiClass), originalize(substitutor));
+        return new PsiImmediateClassType(CompletionUtil.getOriginalOrSelf(psiClass), originalizeSubstitutor(substitutor));
       }
+
+      private PsiSubstitutor originalizeSubstitutor(final PsiSubstitutor substitutor) {
+        PsiSubstitutor originalSubstitutor = PsiSubstitutor.EMPTY;
+        for (final Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
+          final PsiType value = entry.getValue();
+          originalSubstitutor = originalSubstitutor.put(CompletionUtil.getOriginalOrSelf(entry.getKey()), 
+                                                        value == null ? null : mapType(value));
+        }
+        return originalSubstitutor;
+      }
+
 
       @Override
       public PsiType visitType(PsiType type) {
@@ -174,17 +187,6 @@ public class JavaCompletionUtil {
       throw new AssertionError("Null result for type " + type + " of class " + type.getClass());
     }
     return result;
-  }
-
-  private static PsiSubstitutor originalize(@Nullable final PsiSubstitutor substitutor) {
-    if (substitutor == null) return null;
-
-    PsiSubstitutor originalSubstitutor = PsiSubstitutor.EMPTY;
-    for (final Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
-      final PsiType value = entry.getValue();
-      originalSubstitutor = originalSubstitutor.put(CompletionUtil.getOriginalOrSelf(entry.getKey()), value == null ? null : originalize(value));
-    }
-    return originalSubstitutor;
   }
 
   public static void initOffsets(final PsiFile file, final OffsetMap offsetMap) {

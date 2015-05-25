@@ -69,6 +69,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private JButton myDetailsButton;
   private static final String SHOW_ALL = "Show All";
   private NullableConsumer<Sdk> myDetailsCallback;
+  private boolean mySdkSettingsWereModified = false;
 
   public PyActiveSdkConfigurable(@NotNull Project project) {
     myModule = null;
@@ -123,6 +124,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
           updateSdkList(false);
           mySdkCombo.getModel().setSelectedItem(myProjectSdksModel.findSdk(sdk.getName()));
         }
+        mySdkSettingsWereModified = true;
       }
     };
     myDetailsButton.addActionListener(new ActionListener() {
@@ -253,7 +255,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final Sdk selectedItem = (Sdk)mySdkCombo.getSelectedItem();
     Sdk sdk = getSdk();
     sdk = sdk == null ? null : myProjectSdksModel.findSdk(sdk.getName());
-    return selectedItem instanceof PyDetectedSdk || sdk != selectedItem;
+    return selectedItem instanceof PyDetectedSdk || sdk != selectedItem || mySdkSettingsWereModified;
   }
 
   @Nullable
@@ -267,43 +269,48 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    final Sdk item = (Sdk)mySdkCombo.getSelectedItem();
-    Sdk newSdk = item;
-    if (item instanceof PyDetectedSdk) {
-      VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-        @Override
-        public VirtualFile compute() {
-          return LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getName());
+    try {
+      final Sdk item = (Sdk)mySdkCombo.getSelectedItem();
+      Sdk newSdk = item;
+      if (item instanceof PyDetectedSdk) {
+        VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+          @Override
+          public VirtualFile compute() {
+            return LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getName());
+          }
+        });
+        newSdk = SdkConfigurationUtil.setupSdk(myProjectSdksModel.getSdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
+        if (newSdk != null) {
+          myProjectSdksModel.addSdk(newSdk);
+          updateSdkList(false);
         }
-      });
-      newSdk = SdkConfigurationUtil.setupSdk(myProjectSdksModel.getSdks(), sdkHome, PythonSdkType.getInstance(), true, null, null);
-      if (newSdk != null) {
-        myProjectSdksModel.addSdk(newSdk);
-        updateSdkList(false);
+        PySdkService.getInstance().solidifySdk(item);
       }
-      PySdkService.getInstance().solidifySdk(item);
-    }
-    myProjectSdksModel.apply();
-    newSdk = newSdk == null ? null : myProjectSdksModel.findSdk(newSdk.getName());
-    mySdkCombo.getModel().setSelectedItem(newSdk);
+      myProjectSdksModel.apply();
+      newSdk = newSdk == null ? null : myProjectSdksModel.findSdk(newSdk.getName());
+      mySdkCombo.getModel().setSelectedItem(newSdk);
 
-    final Sdk prevSdk = getSdk();
-    setSdk(newSdk);
+      final Sdk prevSdk = getSdk();
+      setSdk(newSdk);
 
-    // update string literals if different LanguageLevel was selected
-    if (prevSdk != null && newSdk != null) {
-      final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(newSdk);
-      final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(prevSdk);
-      if (flavor1 != null && flavor2 != null) {
-        final LanguageLevel languageLevel1 = flavor1.getLanguageLevel(newSdk);
-        final LanguageLevel languageLevel2 = flavor2.getLanguageLevel(prevSdk);
-        if ((languageLevel1.isPy3K() && languageLevel2.isPy3K()) ||
-            (!languageLevel1.isPy3K()) && !languageLevel2.isPy3K()) {
-          return;
+      // update string literals if different LanguageLevel was selected
+      if (prevSdk != null && newSdk != null) {
+        final PythonSdkFlavor flavor1 = PythonSdkFlavor.getFlavor(newSdk);
+        final PythonSdkFlavor flavor2 = PythonSdkFlavor.getFlavor(prevSdk);
+        if (flavor1 != null && flavor2 != null) {
+          final LanguageLevel languageLevel1 = flavor1.getLanguageLevel(newSdk);
+          final LanguageLevel languageLevel2 = flavor2.getLanguageLevel(prevSdk);
+          if ((languageLevel1.isPy3K() && languageLevel2.isPy3K()) ||
+              (!languageLevel1.isPy3K()) && !languageLevel2.isPy3K()) {
+            return;
+          }
         }
       }
+      rehighlightStrings(myProject);
     }
-    rehighlightStrings(myProject);
+    finally {
+      mySdkSettingsWereModified = false;
+    }
   }
 
   private void setSdk(final Sdk item) {

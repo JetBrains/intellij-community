@@ -17,6 +17,7 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Condition;
@@ -257,7 +258,7 @@ public class PushLog extends JPanel implements DataProvider {
     myTree.setRowHeight(0);
   }
 
-  private class MyShowCommitInfoAction extends AnAction {
+  private class MyShowCommitInfoAction extends DumbAwareAction {
     @Override
     public void actionPerformed(AnActionEvent e) {
       myBalloon.showCommitDetails();

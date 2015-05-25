@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
@@ -78,7 +79,7 @@ public class EditorFragmentComponent extends JPanel {
 
     final BufferedImage textImage = UIUtil.createImage(textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
     Graphics textGraphics = textImage.getGraphics();
-    UISettings.setupAntialiasing(textGraphics);
+    EditorUIUtil.setupAntialiasing(textGraphics);
 
     final JComponent rowHeader;
     final BufferedImage markersImage;
@@ -90,7 +91,7 @@ public class EditorFragmentComponent extends JPanel {
 
       markersImage = UIUtil.createImage(markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
       Graphics markerGraphics = markersImage.getGraphics();
-      UISettings.setupAntialiasing(markerGraphics);
+      EditorUIUtil.setupAntialiasing(markerGraphics);
 
       markerGraphics.translate(0, -y1);
       markerGraphics.setClip(0, y1, rowHeader.getWidth(), textImageHeight);

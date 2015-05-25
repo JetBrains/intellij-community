@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -178,7 +180,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
     // mark file dirty just in case
     PsiFile psiFile = event.getFile();
     if (psiFile != null) {
-      myFileStatusMap.markFileScopeDirtyDefensively(psiFile);
+      myFileStatusMap.markFileScopeDirtyDefensively(psiFile, event);
     }
   }
 
@@ -186,15 +188,20 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
-      myFileStatusMap.markAllFilesDirty();
+      Object oldValue = event.getOldValue();
+      if (oldValue instanceof VirtualFile && ProjectCoreUtil.isProjectOrWorkspaceFile((VirtualFile)oldValue)) {
+        // ignore workspace.xml
+        return;
+      }
+      myFileStatusMap.markAllFilesDirty(event);
     }
   }
 
-  private void queueElement(PsiElement child, final boolean whitespaceOptimizationAllowed, PsiTreeChangeEvent event) {
+  private void queueElement(@NotNull PsiElement child, final boolean whitespaceOptimizationAllowed, @NotNull PsiTreeChangeEvent event) {
     PsiFile file = event.getFile();
     if (file == null) file = child.getContainingFile();
     if (file == null) {
-      myFileStatusMap.markAllFilesDirty();
+      myFileStatusMap.markAllFilesDirty(child);
       return;
     }
 
@@ -216,30 +223,35 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
       file = child.getContainingFile();
     }
     catch (PsiInvalidElementAccessException e) {
-      myFileStatusMap.markAllFilesDirty();
+      myFileStatusMap.markAllFilesDirty(e);
       return;
     }
     if (file == null || file instanceof PsiCompiledElement) {
-      myFileStatusMap.markAllFilesDirty();
+      myFileStatusMap.markAllFilesDirty(child);
+      return;
+    }
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null && ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) {
+      // ignore workspace.xml
       return;
     }
 
     int fileLength = file.getTextLength();
     if (!file.getViewProvider().isPhysical()) {
-      myFileStatusMap.markFileScopeDirty(document, new TextRange(0, fileLength), fileLength);
+      myFileStatusMap.markFileScopeDirty(document, new TextRange(0, fileLength), fileLength, "Non-physical file update: "+file);
       return;
     }
 
     PsiElement element = whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document) ? child : child.getParent();
     while (true) {
       if (element == null || element instanceof PsiFile || element instanceof PsiDirectory) {
-        myFileStatusMap.markAllFilesDirty();
+        myFileStatusMap.markAllFilesDirty("Top element: "+element);
         return;
       }
 
       final PsiElement scope = getChangeHighlightingScope(element);
       if (scope != null) {
-        myFileStatusMap.markFileScopeDirty(document, scope.getTextRange(), fileLength);
+        myFileStatusMap.markFileScopeDirty(document, scope.getTextRange(), fileLength, "Scope: "+scope);
         return;
       }
 
@@ -248,7 +260,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   }
 
   @Nullable
-  private static PsiElement getChangeHighlightingScope(PsiElement element) {
+  private static PsiElement getChangeHighlightingScope(@NotNull PsiElement element) {
     DefaultChangeLocalityDetector defaultDetector = null;
     for (ChangeLocalityDetector detector : Extensions.getExtensions(EP_NAME)) {
       if (detector instanceof DefaultChangeLocalityDetector) {

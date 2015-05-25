@@ -15,7 +15,6 @@
  */
 package com.intellij.util.text;
 
-import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ByteArrayCharSequence implements CharSequence {
@@ -49,16 +48,22 @@ public class ByteArrayCharSequence implements CharSequence {
 
   @NotNull
   public static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
+    return convertToBytesIfAsciiString((CharSequence)name);
+  }
+
+  @NotNull
+  public static CharSequence convertToBytesIfAsciiString(@NotNull CharSequence name) {
     int length = name.length();
     if (length == 0) return "";
 
-    if (!IOUtil.isAscii(name)) {
-      return new String(name); // So we don't hold whole char[] buffer of a lengthy path on JDK 6
-    }
-
     byte[] bytes = new byte[length];
     for (int i = 0; i < length; i++) {
-      bytes[i] = (byte)name.charAt(i);
+      char c = name.charAt(i);
+      if (c >= 128) {
+        //noinspection RedundantStringConstructorCall
+        return new String(name.toString()); // So we don't hold whole char[] buffer of a lengthy path on JDK 6
+      }
+      bytes[i] = (byte)c;
     }
     return new ByteArrayCharSequence(bytes);
   }

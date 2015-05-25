@@ -57,22 +57,22 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
 
     final VirtualFile[] contentRoots = rootManager.getContentRoots();
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>(contentRoots.length + 1);
-    final PsiManager psiManager = PsiManager.getInstance(getProject());
+    final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     for (final VirtualFile contentRoot : contentRoots) {
       if (!moduleFileIndex.isInContent(contentRoot)) continue;
 
-      AbstractTreeNode child;
       if (contentRoot.isDirectory()) {
         PsiDirectory directory = psiManager.findDirectory(contentRoot);
-        LOG.assertTrue(directory != null);
-        child = new PsiDirectoryNode(getProject(), directory, getSettings());
+        if (directory != null) {
+          children.add(new PsiDirectoryNode(getProject(), directory, getSettings()));
+        }
       }
       else {
         PsiFile file = psiManager.findFile(contentRoot);
-        LOG.assertTrue(file != null);
-        child = new PsiFileNode(getProject(), file, getSettings());
+        if (file != null) {
+          children.add(new PsiFileNode(getProject(), file, getSettings()));
+        }
       }
-      children.add(child);
     }
 
     /*

@@ -402,6 +402,14 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testSubstitutionForReturnTypeConstraintsForTargetGenericMethod() throws Exception {
+    doTest();
+  }
+
+  public void testIDEA140586() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
     doTest(false);
   }

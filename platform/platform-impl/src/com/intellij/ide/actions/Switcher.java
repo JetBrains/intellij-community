@@ -535,7 +535,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
       this.add(descriptions, BorderLayout.SOUTH);
 
-      final ShortcutSet shortcutSet = ActionManager.getInstance().getAction("Switcher").getShortcutSet();
+      final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
       final int modifiers = getModifiers(shortcutSet);
       final boolean isAlt = (modifiers & Event.ALT_MASK) != 0;
       ALT_KEY = isAlt ? VK_CONTROL : VK_ALT;

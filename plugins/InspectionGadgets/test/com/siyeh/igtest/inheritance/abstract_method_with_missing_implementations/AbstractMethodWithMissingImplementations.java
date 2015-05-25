@@ -39,3 +39,20 @@ enum EnumImplTest implements EnumInterface {
     }
   }
 }
+interface I {
+  void method();
+}
+enum E implements I {
+  A,B;
+
+  @Override
+  public void method() {
+
+  }
+}
+interface I2 {
+  void <warning descr="Abstract method 'method()' is not implemented in every subclass">method</warning>();
+}
+enum E2 implements I2 {
+  <error descr="Class 'E2' must implement abstract method 'method()' in 'I2'">A</error>
+}

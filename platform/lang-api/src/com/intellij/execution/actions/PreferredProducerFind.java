@@ -90,6 +90,7 @@ class PreferredProducerFind {
     return producers;
   }
 
+  @Nullable
   public static List<ConfigurationFromContext> getConfigurationsFromContext(final Location location,
                                                                             final ConfigurationContext context,
                                                                             final boolean strict) {

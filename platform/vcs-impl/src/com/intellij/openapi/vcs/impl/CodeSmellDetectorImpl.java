@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CodeSmellDetector;
@@ -53,7 +54,6 @@ import java.util.*;
 public class CodeSmellDetectorImpl extends CodeSmellDetector {
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl");
-  private Exception myException;
 
   public CodeSmellDetectorImpl(final Project project) {
     myProject = project;
@@ -111,6 +111,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
 
+    final Ref<Exception> exception = Ref.create();
     ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator progress) {
@@ -127,16 +128,16 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
           }
         }
         catch (ProcessCanceledException e) {
-          throw e;
+          exception.set(e);
         }
         catch (Exception e) {
           LOG.error(e);
-          myException = e;
+          exception.set(e);
         }
       }
     });
-    if (myException != null) {
-      Rethrow.reThrowRuntime(myException);
+    if (!exception.isNull()) {
+      Rethrow.reThrowRuntime(exception.get());
     }
 
     return result;

@@ -62,7 +62,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
       return null;
     } else {
       onClassChoosen(psiclass);
-      return JavaExecutionUtil.getRuntimeQualifiedName(psiclass);
+      return psiclass.getQualifiedName();
     }
   }
 
@@ -78,7 +78,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
     editor.applyEditorTo(config);
     GlobalSearchScope scope = getSearchScope(config.getModules());
     if (scope == null) {
-      throw new MessageInfoException(new MessagesEx.MessageInfo(getProject(), "No classes found in project", "Can't Browse Tests"));
+      scope = GlobalSearchScope.allScope(getProject());
     }
     return new TestClassFilter(scope, getProject(), false);
   }

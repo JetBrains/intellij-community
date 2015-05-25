@@ -82,14 +82,6 @@ public class ChangedBlock {
     return myLine2;
   }
 
-  public boolean hasInsertion() {
-    return myStartOffset2 != myEndOffset2;
-  }
-
-  public boolean hasDeletion() {
-    return myStartOffset1 != myEndOffset1;
-  }
-
   @NotNull
   public LineFragment getLineFragment() {
     return myLineFragment;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
 
   private PsiEventType myCode;
 
-  public PsiTreeChangeEventImpl(PsiManager manager) {
+  public PsiTreeChangeEventImpl(@NotNull PsiManager manager) {
     super(manager);
   }
 
@@ -124,8 +124,13 @@ public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
     isGenericChange = genericChange;
   }
 
+  @NotNull
   @Override
   public String toString() {
-    return "PsiTreeChangeEventImpl{myCode=" + myCode + (isGenericChange ? " (generic)" : "") + '}';
+    return "PsiTreeChangeEventImpl{" + myCode
+           + (isGenericChange ? " (generic)" : "")
+           + (myPropertyName == null ? "" : " ("+myPropertyName+")")
+           + (myFile == null ? "" : " in file "+myFile.getName())
+           +'}';
   }
 }

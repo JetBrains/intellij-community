@@ -38,4 +38,9 @@ public class AdvHighlighting8Test extends DaemonAnalyzerTestCase {
   public void testProtectedVariable() throws Exception {
     doTest(BASE_PATH + "/protectedVariable/p2/B.java", BASE_PATH + "/protectedVariable", false, false);
   }
+
+  public void testIDEA67842() throws Exception {
+    doTest(BASE_PATH + "/IDEA67842/pck/IDEA67842.java", BASE_PATH + "/IDEA67842", false, false);
+  }
+
 }

@@ -83,12 +83,15 @@ public class ColorOptionsTree extends Tree {
 
   @Nullable
   public ColorAndFontDescription getSelectedDescriptor() {
+    Object selectedValue = getSelectedValue();
+    return selectedValue instanceof ColorAndFontDescription ? (ColorAndFontDescription)selectedValue : null;
+  }
+
+  @Nullable
+  public Object getSelectedValue() {
     Object selectedNode = getLastSelectedPathComponent();
     if (selectedNode instanceof DefaultMutableTreeNode) {
-      Object selectedValue = ((DefaultMutableTreeNode)selectedNode).getUserObject();
-      if (selectedValue instanceof ColorAndFontDescription) {
-        return (ColorAndFontDescription)selectedValue;
-      }
+      return ((DefaultMutableTreeNode)selectedNode).getUserObject();
     }
     return null;
   }
@@ -109,7 +112,7 @@ public class ColorOptionsTree extends Tree {
     selectPath(findOption(myTreeModel.getRoot(), new DescriptorMatcher() {
       @Override
       public boolean matches(@NotNull Object data) {
-        return StringUtil.containsIgnoreCase(data.toString(), optionName);
+        return !optionName.isEmpty() &&  StringUtil.containsIgnoreCase(data.toString(), optionName);
       }
     }));
   }

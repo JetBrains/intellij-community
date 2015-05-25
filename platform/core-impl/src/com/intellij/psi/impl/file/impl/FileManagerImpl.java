@@ -134,7 +134,7 @@ public class FileManagerImpl implements FileManager {
     myVFileToViewProviderMap.clear();
     for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
       VirtualFile vFile = iterator.next();
-      Language language = getLanguage(vFile);
+      Language language = getLanguage(vFile, vFile.getFileType());
       if (language != null && language != fileToPsiFileMap.get(vFile).getBaseLanguage()) {
         iterator.remove();
       }
@@ -154,11 +154,19 @@ public class FileManagerImpl implements FileManager {
     if (parentDir != null) {
       event.setParent(parentDir);
       myManager.childrenChanged(event);
-    } else {
-      event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
-      myManager.beforePropertyChange(event);
-      myManager.propertyChanged(event);
     }
+    else {
+      firePropertyChangedForUnloadedPsi(event, vFile);
+    }
+  }
+
+  void firePropertyChangedForUnloadedPsi(@NotNull PsiTreeChangeEventImpl event, @NotNull VirtualFile vFile) {
+    event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
+    event.setOldValue(vFile);
+    event.setNewValue(vFile);
+
+    myManager.beforePropertyChange(event);
+    myManager.propertyChanged(event);
   }
 
   @Override
@@ -247,23 +255,18 @@ public class FileManagerImpl implements FileManager {
   @Override
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, boolean eventSystemEnabled) {
-    Language language = getLanguage(file);
-    return createFileViewProvider(file, eventSystemEnabled, language);
-  }
-
-  @NotNull
-  private FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled, Language language) {
-    final FileViewProviderFactory factory = language == null
-                                            ? FileTypeFileViewProviders.INSTANCE.forFileType(file.getFileType())
-                                            : LanguageFileViewProviders.INSTANCE.forLanguage(language);
+    FileType fileType = file.getFileType();
+    Language language = getLanguage(file, fileType);
+    FileViewProviderFactory factory = language == null
+                                      ? FileTypeFileViewProviders.INSTANCE.forFileType(fileType)
+                                      : LanguageFileViewProviders.INSTANCE.forLanguage(language);
     FileViewProvider viewProvider = factory == null ? null : factory.createFileViewProvider(file, language, myManager, eventSystemEnabled);
 
     return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled) : viewProvider;
   }
 
   @Nullable
-  private Language getLanguage(@NotNull VirtualFile file) {
-    FileType fileType = file.getFileType();
+  private Language getLanguage(@NotNull VirtualFile file, final FileType fileType) {
     if (fileType instanceof LanguageFileType) {
       Language language = ((LanguageFileType)fileType).getLanguage();
       return LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, myManager.getProject());
@@ -405,6 +408,7 @@ public class FileManagerImpl implements FileManager {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!vFile.isValid()) {
       LOG.error("File is not valid:" + vFile);
+      return null;
     }
 
     if (!vFile.isDirectory()) return null;

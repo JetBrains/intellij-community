@@ -814,7 +814,7 @@ public abstract class ChooseByNameBase {
   }
 
   @NotNull public String getTrimmedText() {
-    return StringUtil.notNullize(myTextField.getText()).trim();
+    return StringUtil.trimLeading(StringUtil.notNullize(myTextField.getText()));
   }
 
   public void setFixLostTyping(boolean fixLostTyping) {

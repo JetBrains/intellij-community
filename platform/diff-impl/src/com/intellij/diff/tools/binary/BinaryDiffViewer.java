@@ -211,44 +211,21 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
       List<DiffContent> contents = myRequest.getContents();
 
       if (contents.get(0) instanceof EmptyContent) {
-        return new Runnable() {
-          @Override
-          public void run() {
-            clearDiffPresentation();
-            myPanel.addNotification(DiffNotifications.INSERTED_CONTENT);
-          }
-        };
+        return applyNotification(DiffNotifications.INSERTED_CONTENT);
       }
 
       if (contents.get(1) instanceof EmptyContent) {
-        return new Runnable() {
-          @Override
-          public void run() {
-            clearDiffPresentation();
-            myPanel.addNotification(DiffNotifications.REMOVED_CONTENT);
-          }
-        };
+        return applyNotification(DiffNotifications.REMOVED_CONTENT);
       }
 
       if (!(contents.get(0) instanceof FileContent) || !(contents.get(1) instanceof FileContent)) {
-        return new Runnable() {
-          @Override
-          public void run() {
-            clearDiffPresentation();
-          }
-        };
+        return applyNotification(null);
       }
 
       final VirtualFile file1 = ((FileContent)contents.get(0)).getFile();
       final VirtualFile file2 = ((FileContent)contents.get(1)).getFile();
       if (!file1.isValid() || !file2.isValid()) {
-        return new Runnable() {
-          @Override
-          public void run() {
-            myPanel.addNotification(DiffNotifications.ERROR);
-            clearDiffPresentation();
-          }
-        };
+        return applyNotification(DiffNotifications.ERROR);
       }
 
       final boolean equal = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
@@ -269,33 +246,26 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
         }
       });
 
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          if (equal) myPanel.addNotification(DiffNotifications.EQUAL_CONTENTS);
-        }
-      };
+      return applyNotification(equal ? DiffNotifications.EQUAL_CONTENTS : null);
     }
     catch (ProcessCanceledException ignore) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.OPERATION_CANCELED);
-        }
-      };
+      return applyNotification(DiffNotifications.OPERATION_CANCELED);
     }
     catch (Throwable e) {
       LOG.error(e);
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.addNotification(DiffNotifications.ERROR);
-        }
-      };
+      return applyNotification(DiffNotifications.ERROR);
     }
+  }
+
+  @NotNull
+  private Runnable applyNotification(@Nullable final JComponent notification) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        clearDiffPresentation();
+        if (notification != null) myPanel.addNotification(notification);
+      }
+    };
   }
 
   private void clearDiffPresentation() {
@@ -408,7 +378,7 @@ public class BinaryDiffViewer extends ListenerDiffViewerBase {
     public void actionPerformed(@NotNull AnActionEvent e) {
       assert getEditor1() != null && getEditor2() != null;
       setCurrentSide(getCurrentSide().other());
-      myPanel.requestFocus();
+      myContext.requestFocus();
     }
 
     @Override

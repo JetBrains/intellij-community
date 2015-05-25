@@ -55,7 +55,7 @@ public class GraphicsObjectRenderer extends ToStringBasedRenderer implements Ful
       return new ImageObjectRenderer.IconPopupEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
         @Override
         protected Icon getData() {
-          return ImageObjectRenderer.getIcon(myEvaluationContext, bufImgValue, "imageToBytes");
+          return ImageObjectRenderer.getIcon(getEvaluationContext(), bufImgValue, "imageToBytes");
         }
       };
     } catch (Exception ignored) {}

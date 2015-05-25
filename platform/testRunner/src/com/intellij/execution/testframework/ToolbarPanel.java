@@ -109,7 +109,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     secondaryGroup.add(new ToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.name"),
                                                  ExecutionBundle.message("junit.runing.info.open.source.at.exception.action.description"),
                                                  null, properties, TestConsoleProperties.OPEN_FAILURE_LINE));
-    secondaryGroup.add(new ShowSettingsAction());
+    secondaryGroup.add(new ShowStatisticsAction(properties));
     secondaryGroup.add(new AdjustAutotestDelayActionGroup(parent));
     properties.appendAdditionalActions(secondaryGroup, environment, parent);
     actionGroup.add(secondaryGroup);

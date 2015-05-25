@@ -17,6 +17,7 @@
 package com.intellij.vcs.log.graph.impl.permanent;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
@@ -43,6 +44,9 @@ public class GraphLayoutBuilder {
     }
     try {
       heads = ContainerUtil.sorted(heads, headerNodeIndexComparator);
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
     }
     catch (Exception e) {
       // protection against possible comparator flaws

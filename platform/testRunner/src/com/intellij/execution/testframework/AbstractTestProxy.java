@@ -69,6 +69,11 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     return null;
   }
 
+  @Nullable
+  public String getDurationString() {
+    return null;
+  }
+
   public abstract boolean shouldSkipRootNodeForExport();
 
   public void fireOnNewPrintable(@NotNull final Printable printable) {

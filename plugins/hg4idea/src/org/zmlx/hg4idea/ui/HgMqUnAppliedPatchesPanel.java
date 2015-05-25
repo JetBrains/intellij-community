@@ -56,6 +56,7 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -67,6 +68,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   private static final String POPUP_ACTION_GROUP = "Mq.Patches.ContextMenu";
   private static final String TOOLBAR_ACTION_GROUP = "Mq.Patches.Toolbar";
   private static final Logger LOG = Logger.getInstance(HgMqUnAppliedPatchesPanel.class);
+  private static final String START_EDITING = "startEditing";
 
   @NotNull private final Project myProject;
   @NotNull private final HgRepository myRepository;
@@ -93,6 +95,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     myPatchTable.setShowColumns(true);
     myPatchTable.setFillsViewportHeight(true);
     myPatchTable.getEmptyText().setText("Nothing to show");
+    myPatchTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     RowsDnDSupport.install(myPatchTable, myPatchTable.getModel());
     new TableSpeedSearch(myPatchTable);
 

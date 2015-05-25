@@ -164,8 +164,7 @@ public class FSRecords implements Forceable {
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
     private static PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
-    private static VfsDependentEnum<String>
-      myAttributesList = new VfsDependentEnum<String>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
+    private static final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<String>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
     private static boolean myDirty = false;
@@ -1103,11 +1102,15 @@ public class FSRecords implements Forceable {
   }
 
   public static String getName(int id) {
+    return getNameSequence(id).toString();
+  }
+
+  public static CharSequence getNameSequence(int id) {
     try {
       r.lock();
       try {
         final int nameId = getRecordInt(id, NAME_OFFSET);
-        return nameId != 0 ? FileNameCache.getVFileName(nameId).toString() : "";
+        return nameId != 0 ? FileNameCache.getVFileName(nameId) : "";
       }
       finally {
         r.unlock();

@@ -50,7 +50,10 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.roots.FileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -164,27 +167,26 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     cleanupTools();
     setCurrentScope(scope);
 
-    DefaultInspectionToolPresentation.setOutputPath(outputPath);
-    try {
-      final Runnable action = new Runnable() {
-        @Override
-        public void run() {
+    final Runnable action = new Runnable() {
+      @Override
+      public void run() {
+        DefaultInspectionToolPresentation.setOutputPath(outputPath);
+        try {
           performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
           exportResults(inspectionsResults, outputPath);
         }
-      };
-      if (isOfflineInspections) {
-        ApplicationManager.getApplication().runReadAction(action);
+        finally {
+          DefaultInspectionToolPresentation.setOutputPath(null);
+        }
       }
-      else {
-        action.run();
-      }
+    };
+    if (isOfflineInspections) {
+      ApplicationManager.getApplication().runReadAction(action);
     }
-    finally {
-      DefaultInspectionToolPresentation.setOutputPath(null);
+    else {
+      action.run();
     }
   }
-  
 
   private void exportResults(@NotNull List<File> inspectionsResults, @Nullable String outputPath) {
     @NonNls final String ext = ".xml";
@@ -507,10 +509,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       @Override
       public void run() {
         try {
+          final FileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
           scope.accept(new Processor<VirtualFile>() {
             @Override
             public boolean process(final VirtualFile file) {
               progressIndicator.checkCanceled();
+              if (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
               final PsiFile[] psiFile = new PsiFile[1];
 
               Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {

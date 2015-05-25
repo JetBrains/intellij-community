@@ -37,6 +37,7 @@
     <i18nInspectionTool implementation="com.intellij.uiDesigner.i18n.I18nFormInspection"/>
     <java15InspectionTool implementation="com.intellij.uiDesigner.inspections.Java15FormInspection"/>
 
+    <search.topHitProvider implementation="com.intellij.uiDesigner.GuiDesignerOptionsTopHitProvider"/>
     <projectConfigurable groupId="editor" instance="com.intellij.uiDesigner.GuiDesignerConfigurable" id="project.propGUI" key="title.gui.designer"
                          bundle="messages.UIDesignerBundle"/>
 

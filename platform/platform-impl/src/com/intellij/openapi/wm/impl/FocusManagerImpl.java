@@ -157,7 +157,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
           final Component c = fe.getComponent();
           if (c instanceof Window || c == null) return false;
 
-          Component parent = SwingUtilities.getWindowAncestor(c);
+          Component parent = UIUtil.findUltimateParent(c);
 
           if (parent instanceof IdeFrame) {
             myLastFocused.put((IdeFrame)parent, c);

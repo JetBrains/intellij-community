@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -100,6 +101,13 @@ public class ConfigurationContext {
       return;
     }
     myLocation = new PsiLocation<PsiElement>(project, myModule, element);
+  }
+
+  public ConfigurationContext(PsiElement element) {
+    myModule = ModuleUtilCore.findModuleForPsiElement(element);
+    myLocation = new PsiLocation<PsiElement>(element.getProject(), myModule, element);
+    myRuntimeConfiguration = null;
+    myContextComponent = null;
   }
 
   /**
@@ -276,6 +284,7 @@ public class ConfigurationContext {
     return myPreferredProducers;
   }
 
+  @Nullable
   public List<ConfigurationFromContext> getConfigurationsFromContext() {
     if (myConfigurationsFromContext == null) {
       myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true);

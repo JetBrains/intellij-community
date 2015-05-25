@@ -131,10 +131,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   static final String FILE_SPEC = StoragePathMacros.ROOT_CONFIG + "/filetypes";
 
   // these flags are stored in 'packedFlags' as chunks of four bits
-  private static final int AUTO_DETECTED_AS_TEXT_MASK = 1;
-  private static final int AUTO_DETECTED_AS_BINARY_MASK = 2;
-  private static final int AUTO_DETECT_WAS_RUN_MASK = 4;
-  private static final int ATTRIBUTES_WERE_LOADED_MASK = 8;
+  private static final int AUTO_DETECTED_AS_TEXT_MASK = 1;     // set if the file was auto-detected as text
+  private static final int AUTO_DETECTED_AS_BINARY_MASK = 2;   // set if the file was auto-detected as binary
+  private static final int AUTO_DETECT_WAS_RUN_MASK = 4;       // set if auto-detection was performed for this file
+  private static final int ATTRIBUTES_WERE_LOADED_MASK = 8;    // set if AUTO_* bits above were loaded from the file persistent attributes
   private final ConcurrentPackedBitsArray packedFlags = new ConcurrentPackedBitsArray(4);
 
   private final AtomicInteger counterAutoDetect = new AtomicInteger();
@@ -206,7 +206,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         Collection<VirtualFile> files = ContainerUtil.map2Set(events, new Function<VFileEvent, VirtualFile>() {
           @Override
           public VirtualFile fun(VFileEvent event) {
-            VirtualFile file = event instanceof VFileCreateEvent ? null : event.getFile();
+            VirtualFile file = event instanceof VFileCreateEvent ? /* avoid expensive find child here */ null : event.getFile();
             return file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
           }
         });
@@ -516,7 +516,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     byte status = 0;
     try {
       try {
-        status = stream != null ? stream.readByte() : 0;
+        status = stream == null ? 0 : stream.readByte();
         wasAutoDetectRun = stream != null;
       }
       finally {
@@ -527,7 +527,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     catch (IOException ignored) {
     }
-    status = (byte)BitUtil.set(status, ATTRIBUTES_WERE_LOADED_MASK, wasAutoDetectRun);
+    status = (byte)BitUtil.set(status, AUTO_DETECT_WAS_RUN_MASK, wasAutoDetectRun);
+    status = (byte)BitUtil.set(status, ATTRIBUTES_WERE_LOADED_MASK, true);
 
     return status;
   }

@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
@@ -129,8 +130,22 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   }
 
   @Override
-  protected void collectAllowedRoots(List<String> roots) throws IOException {
+  protected void collectAllowedRoots(final List<String> roots) throws IOException {
     roots.add(myJdkHome);
+    FileUtil.processFilesRecursively(new File(myJdkHome), new Processor<File>() {
+      @Override
+      public boolean process(File file) {
+        try {
+          String path = file.getCanonicalPath();
+          if (!FileUtil.isAncestor(myJdkHome, path, false)) {
+            roots.add(path);
+          }
+        }
+        catch (IOException ignore) { }
+        return true;
+      }
+    });
+
     roots.add(PathManager.getOptionsPath());
   }
 

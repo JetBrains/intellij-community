@@ -25,6 +25,16 @@ public class ControlFlowUtils {
 
   private ControlFlowUtils() {}
 
+  public static boolean isElseIf(PsiIfStatement ifStatement) {
+    final PsiElement parent = ifStatement.getParent();
+    if (!(parent instanceof PsiIfStatement)) {
+      return false;
+    }
+    final PsiIfStatement parentStatement = (PsiIfStatement)parent;
+    final PsiStatement elseBranch = parentStatement.getElseBranch();
+    return ifStatement.equals(elseBranch);
+  }
+
   public static boolean statementMayCompleteNormally(@Nullable PsiStatement statement) {
     if (statement == null) {
       return true;

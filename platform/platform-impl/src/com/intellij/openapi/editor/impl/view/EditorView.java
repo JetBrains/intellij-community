@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -288,7 +289,7 @@ public class EditorView implements Disposable {
   private static FontRenderContext createFontRenderContext() {
     Graphics2D g = (Graphics2D)UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
     try {
-      UISettings.setupAntialiasing(g);
+      EditorUIUtil.setupAntialiasing(g);
       return g.getFontRenderContext();
     }
     finally {

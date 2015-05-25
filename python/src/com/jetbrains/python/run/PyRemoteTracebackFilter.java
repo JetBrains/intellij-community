@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.RemoteProcessHandlerBase;
 import com.intellij.util.PathMappingSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,7 +37,7 @@ public class PyRemoteTracebackFilter extends PythonTracebackFilter {
 
   @Override
   @Nullable
-  protected VirtualFile findFileByName(String fileName) {
+  protected VirtualFile findFileByName(@NotNull String fileName) {
     VirtualFile vFile = super.findFileByName(fileName);
     if (vFile != null) {
       return vFile;

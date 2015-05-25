@@ -22,10 +22,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
@@ -277,7 +278,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                                  @NotNull FileAttributes attributes) {
     String name = file.getName();
     if (!name.isEmpty()) {
-      if (namesEqual(fs, name, FSRecords.getName(id))) return false; // TODO: Handle root attributes change.
+      if (namesEqual(fs, name, FSRecords.getNameSequence(id))) return false; // TODO: Handle root attributes change.
     }
     else {
       if (areChildrenLoaded(id)) return false; // TODO: hack
@@ -305,8 +306,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.getParent(id);
   }
 
-  private static boolean namesEqual(@NotNull VirtualFileSystem fs, @NotNull String n1, String n2) {
-    return fs.isCaseSensitive() ? n1.equals(n2) : n1.equalsIgnoreCase(n2);
+  private static boolean namesEqual(@NotNull VirtualFileSystem fs, @NotNull CharSequence n1, CharSequence n2) {
+    return Comparing.equal(n1, n2, fs.isCaseSensitive());
   }
 
   @Override
@@ -380,7 +381,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     for (final int childId : children) {
-      if (namesEqual(fs, childName, FSRecords.getName(childId))) return childId;
+      if (namesEqual(fs, childName, FSRecords.getNameSequence(childId))) return childId;
     }
 
     final VirtualFile fake = new FakeVirtualFile(parent, childName);
@@ -878,10 +879,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       if (parentFile == null) return null;
       FileType type = FileTypeRegistry.getInstance().getFileTypeByFileName(parentFile.getName());
       if (type != FileTypes.ARCHIVE) return null;
-      newRoot = new JarRoot(fs, rootId, segment, directoryData, parentFile);
+      newRoot = new FsRoot(rootId, segment, directoryData, fs, parentFile.getName(), parentFile.getPath() + "!");
     }
     else {
-      newRoot = new FsRoot(fs, rootId, segment, directoryData, basePath);
+      newRoot = new FsRoot(rootId, segment, directoryData, fs, basePath, StringUtil.trimEnd(basePath, "/"));
     }
 
     FileAttributes attributes = fs.getAttributes(new StubVirtualFile() {
@@ -1284,60 +1285,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
 
-  private abstract static class AbstractRoot extends VirtualDirectoryImpl {
-    private AbstractRoot(int id, VfsData.Segment segment, VfsData.DirectoryData data, NewVirtualFileSystem fs) {
-      super(id, segment, data, null, fs);
-    }
-
-    @NotNull
-    @Override
-    public abstract CharSequence getNameSequence();
-
-    @Override
-    protected abstract char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef);
-
-    @Override
-    public void setNewName(@NotNull String newName) {
-      throw new IncorrectOperationException();
-    }
-
-    @Override
-    public final void setParent(@NotNull VirtualFile newParent) {
-      throw new IncorrectOperationException();
-    }
-  }
-
-  private static class JarRoot extends AbstractRoot {
-    private final VirtualFile myParentLocalFile;
-    private final String myParentPath;
-
-    private JarRoot(@NotNull NewVirtualFileSystem fs, int id, VfsData.Segment segment, VfsData.DirectoryData data, VirtualFile parentLocalFile) {
-      super(id, segment, data, fs);
-      myParentLocalFile = parentLocalFile;
-      myParentPath = myParentLocalFile.getPath();
-    }
-
-    @NotNull
-    @Override
-    public CharSequence getNameSequence() {
-      return myParentLocalFile.getNameSequence();
-    }
-
-    @Override
-    protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
-      char[] chars = new char[myParentPath.length() + JarFileSystem.JAR_SEPARATOR.length() + accumulatedPathLength];
-      positionRef[0] = copyString(chars, positionRef[0], myParentPath);
-      positionRef[0] = copyString(chars, positionRef[0], JarFileSystem.JAR_SEPARATOR);
-      return chars;
-    }
-  }
-
-  private static class FsRoot extends AbstractRoot {
+  private static class FsRoot extends VirtualDirectoryImpl {
     private final String myName;
+    private final String myPathBeforeSlash;
 
-    private FsRoot(@NotNull NewVirtualFileSystem fs, int id, VfsData.Segment segment, VfsData.DirectoryData data, @NotNull String basePath) {
-      super(id, segment, data, fs);
-      myName = FileUtil.toSystemIndependentName(basePath);
+    private FsRoot(int id, VfsData.Segment segment, VfsData.DirectoryData data, NewVirtualFileSystem fs, String name, String pathBeforeSlash) {
+      super(id, segment, data, null, fs);
+      myName = name;
+      myPathBeforeSlash = pathBeforeSlash;
     }
 
     @NotNull
@@ -1348,23 +1303,32 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     @Override
     protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
-      String name = getName();
-      int nameLength = name.length();
-      int rootPathLength = pathLength + nameLength;
-
-      // otherwise we called this as a part of longer file path calculation and slash will be added anyway
-      boolean appendSlash = SystemInfo.isWindows && nameLength == 2 && name.charAt(1) == ':' && pathLength == 0;
-
-      if (appendSlash) ++rootPathLength;
-      char[] chars = new char[rootPathLength];
-
-      position[0] = copyString(chars, position[0], name);
-
-      if (appendSlash) {
-        chars[position[0]++] = '/';
-      }
-
+      char[] chars = new char[pathLength + myPathBeforeSlash.length()];
+      position[0] = copyString(chars, position[0], myPathBeforeSlash);
       return chars;
     }
+
+    @Override
+    public void setNewName(@NotNull String newName) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public final void setParent(@NotNull VirtualFile newParent) {
+      throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    @Override
+    public String getPath() {
+      return myPathBeforeSlash + "/";
+    }
+
+    @NotNull
+    @Override
+    public String getUrl() {
+      return getFileSystem().getProtocol() + "://" + getPath();
+    }
   }
+
 }

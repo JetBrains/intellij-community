@@ -360,6 +360,12 @@ public class SMTestProxy extends AbstractTestProxy {
     return myDuration;
   }
 
+  @Nullable
+  @Override
+  public String getDurationString() {
+    return TestsPresentationUtil.getDurationPresentation(this);
+  }
+
   @Override
   public boolean shouldSkipRootNodeForExport() {
     return true;

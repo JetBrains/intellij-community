@@ -941,6 +941,10 @@ public class HighlightUtil extends HighlightUtilBase {
         isAllowed &= modifierOwnerParent instanceof PsiClass && !((PsiClass)modifierOwnerParent).isInterface();
       }
 
+      if (containingClass != null && containingClass.isInterface()) {
+        isAllowed &= !PsiModifier.NATIVE.equals(modifier);
+      }
+
       if (containingClass != null && containingClass.isAnnotationType()) {
         isAllowed &= !PsiModifier.STATIC.equals(modifier);
         isAllowed &= !PsiModifier.DEFAULT.equals(modifier);
@@ -1517,6 +1521,12 @@ public class HighlightUtil extends HighlightUtilBase {
               .range(qualifier)
               .descriptionAndTooltip(JavaErrorMessages.message("bad.qualifier.in.super.method.reference", format(aClass), formatClass(superClass))).create();
           }
+        }
+
+        if (expr instanceof PsiSuperExpression && !classT.isInheritor(aClass, false)) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(qualifier)
+            .descriptionAndTooltip(JavaErrorMessages.message("no.enclosing.instance.in.scope", format(aClass))).create();
         }
       }
     }

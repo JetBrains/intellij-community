@@ -22,7 +22,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.ClassLoadingUtils;
-import com.intellij.debugger.settings.CustomPopupFullValueEvaluator;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +56,7 @@ class ImageObjectRenderer extends ToStringBasedRenderer implements FullValueEval
     return new IconPopupEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
       @Override
       protected Icon getData() {
-        return getIcon(myEvaluationContext, valueDescriptor.getValue(), "imageToBytes");
+        return getIcon(getEvaluationContext(), valueDescriptor.getValue(), "imageToBytes");
       }
     };
   }

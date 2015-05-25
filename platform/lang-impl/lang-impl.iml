@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="usageView" exported="" />
     <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
     <orderEntry type="library" exported="" name="cli-parser" level="project" />
-    <orderEntry type="library" name="http-client-3.1" level="project" />
     <orderEntry type="module" module-name="indexing-api" />
     <orderEntry type="module" module-name="indexing-impl" exported="" />
     <orderEntry type="library" name="Snappy-Java" level="project" />
@@ -33,5 +32,6 @@
     <orderEntry type="module" module-name="analysis-impl" exported="" />
     <orderEntry type="module" module-name="structure-view-impl" exported="" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="library" name="commons-logging" level="project" />
   </component>
 </module>

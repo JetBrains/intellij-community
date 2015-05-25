@@ -123,7 +123,7 @@ public class LookupOffsets extends DocumentAdapter {
 
   boolean performGuardedChange(Runnable change) {
     if (!myLookupStartMarker.isValid()) {
-      throw new AssertionError("Invalid start: " + myStartDisposeTrace);
+      throw new AssertionError("Invalid start: " + myEditor + ", trace=" + myStartDisposeTrace);
     }
     change.run();
     return myLookupStartMarker.isValid();

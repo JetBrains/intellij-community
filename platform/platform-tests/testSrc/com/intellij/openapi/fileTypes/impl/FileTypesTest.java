@@ -350,11 +350,11 @@ public class FileTypesTest extends PlatformTestCase {
 
   private void ensureRedetected(VirtualFile vFile, Set<VirtualFile> detectorCalled) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    log("T: ensureRedetected: commit");
+    log("T: ensureRedetected: commit. queue: "+myFileTypeManager.dumpReDetectQueue());
     UIUtil.dispatchAllInvocationEvents();
-    log("T: ensureRedetected: dispatch");
+    log("T: ensureRedetected: dispatch. queue: "+ myFileTypeManager.dumpReDetectQueue());
     myFileTypeManager.drainReDetectQueue();
-    log("T: ensureRedetected: drain");
+    log("T: ensureRedetected: drain. queue: "+myFileTypeManager.dumpReDetectQueue());
     UIUtil.dispatchAllInvocationEvents();
     log("T: ensureRedetected: dispatch");
     FileType type = vFile.getFileType();

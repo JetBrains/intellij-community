@@ -100,18 +100,21 @@ public class InspectionUtil {
         final List<SuppressIntentionAction> actions = new ArrayList<SuppressIntentionAction>(4);
 
         actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Instruction") {
+            @Override
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 return PsiTreeUtil.getContextOfType(element, XmlTag.class, isXPath);
             }
         });
 
         actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Template") {
+            @Override
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 return XsltCodeInsightUtil.getTemplateTag(element, isXPath);
             }
         });
 
         actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Stylesheet") {
+            @Override
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 final XmlDocument document = PsiTreeUtil.getContextOfType(element, XmlDocument.class, isXPath);
                 return document != null ? document.getRootTag() : null;
@@ -119,6 +122,7 @@ public class InspectionUtil {
         });
 
         actions.add(new SuppressInspectionAction(ALL_ID, "Suppress all for Stylesheet") {
+            @Override
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 final XmlDocument document = PsiTreeUtil.getContextOfType(element, XmlDocument.class, isXPath);
                 return document != null ? document.getRootTag() : null;

@@ -18,6 +18,7 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -97,12 +99,11 @@ public class TestNGTestPattern extends TestNGTestObject {
         catch (PatternSyntaxException e) {
           continue;
         }
-        if (compilePattern != null) {
-          compilePatterns.add(compilePattern);
-        }
+        compilePatterns.add(compilePattern);
       }
+      final SourceScope sourceScope = scope.getSourceScope(myConfig);
       TestClassFilter projectFilter =
-        new TestClassFilter(scope.getSourceScope(myConfig).getGlobalSearchScope(), myConfig.getProject(), true, true){
+        new TestClassFilter(sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(myConfig.getProject()), myConfig.getProject(), true, true){
           @Override
           public boolean isAccepted(PsiClass psiClass) {
             if (super.isAccepted(psiClass)) {

@@ -235,6 +235,7 @@ public class OnesideDiffChange {
 
     @Nullable
     public GutterIconRenderer createRenderer() {
+      if (myViewer.isStateIsOutOfDate()) return null;
       if (!myViewer.isEditable(mySide.other(), true)) return null;
       boolean bothEditable = myViewer.isEditable(mySide, true);
 
@@ -288,6 +289,9 @@ public class OnesideDiffChange {
                 myViewer.applyChange(OnesideDiffChange.this, sourceSide);
               }
             });
+            // applyChange() will schedule rediff, but we want to try to do it in sync
+            // and we can't do it inside write action
+            myViewer.rediff();
           }
         };
       }

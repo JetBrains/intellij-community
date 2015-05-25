@@ -296,8 +296,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (ok[0]) {
       // otherwise changes maybe not synced to the document yet, and injectors will crash
       if (!mySynchronizer.isDocumentAffectedByTransactions(document)) {
-        final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
-        if (injectedLanguageManager != null) injectedLanguageManager.startRunInjectors(document, synchronously);
+        InjectedLanguageManager.getInstance(myProject).startRunInjectors(document, synchronously);
       }
       // run after commit actions outside write action
       runAfterCommitActions(document);
@@ -321,14 +320,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         for (Processor<Document> finishRunnable : finishProcessors) {
           success = finishRunnable.process(document);
           if (synchronously) {
-            assert success;
+            assert success : finishRunnable + " in " + finishProcessors;
           }
           if (!success) {
             break;
           }
         }
-        myLastCommittedTexts.remove(document);
-        viewProvider.contentsSynchronized();
+        if (success) {
+          myLastCommittedTexts.remove(document);
+          viewProvider.contentsSynchronized();
+        }
       }
       else {
         handleCommitWithoutPsi(document);

@@ -392,7 +392,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           mySkipFocusGain = false;
           return;
         }
-        search.setText("");
+        String text = "";
+        if (myEditor != null) {
+          text = myEditor.getSelectionModel().getSelectedText();
+          text = text == null ? "" : text.trim();
+        }
+
+        search.setText(text);
         search.getTextEditor().setForeground(UIUtil.getLabelForeground());
         //titleIndex = new TitleIndexes();
         editor.setColumns(SEARCH_FIELD_COLUMNS);
@@ -410,7 +416,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         //  myPopup.cancel();
         //  myPopup = null;
         //}
-        rebuildList("");
+        rebuildList(text);
       }
 
       @Override
@@ -1903,14 +1909,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       };
 
-      if (pattern.equals("#")) {
+      if (pattern.startsWith("#") && !pattern.contains(" ")) {
+        String id = pattern.substring(1);
         final HashSet<String> ids = new HashSet<String>();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
           check();
           if (provider instanceof OptionsTopHitProvider) {
-            if (!ids.contains(((OptionsTopHitProvider)provider).getId())) {
+            final String providerId = ((OptionsTopHitProvider)provider).getId();
+            if (!ids.contains(providerId) && StringUtil.startsWithIgnoreCase(providerId, id)) {
               consumer.consume(provider);
-              ids.add(((OptionsTopHitProvider)provider).getId());
+              ids.add(providerId);
             }
           }
         }

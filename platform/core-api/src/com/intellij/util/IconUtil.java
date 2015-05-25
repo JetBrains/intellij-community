@@ -395,11 +395,12 @@ public class IconUtil {
       public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2d = (Graphics2D)g.create();
         try {
+          g2d.translate(x, y);
           AffineTransform transform = AffineTransform.getScaleInstance(scale, scale);
           transform.preConcatenate(g2d.getTransform());
           g2d.setTransform(transform);
           g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-          source.paintIcon(c, g2d, x, y);
+          source.paintIcon(c, g2d, 0, 0);
         } finally {
           g2d.dispose();
         }

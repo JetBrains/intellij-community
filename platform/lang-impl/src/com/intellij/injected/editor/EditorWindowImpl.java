@@ -867,4 +867,15 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   public int getPrefixTextWidthInPixels() {
     return myDelegate.getPrefixTextWidthInPixels();
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + "[disposed=" + myDisposed + "; valid=" + isValid() + "]";
+  }
+
+  @Override
+  public int getExpectedCaretOffset() {
+    int offset = myDelegate.getExpectedCaretOffset();
+    return offset == -1 || !myDocumentWindow.containsRange(offset,offset) ? -1 : myDocumentWindow.hostToInjected(offset);
+  }
 }

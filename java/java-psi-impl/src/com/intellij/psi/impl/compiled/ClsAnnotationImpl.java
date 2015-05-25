@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,23 +44,27 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
       @NotNull
       @Override
       protected ClsJavaCodeReferenceElementImpl compute() {
-        String text = PsiTreeUtil.getRequiredChildOfType(getStub().getPsiElement(), PsiJavaCodeReferenceElement.class).getText();
-        return new ClsJavaCodeReferenceElementImpl(ClsAnnotationImpl.this, text);
+        String annotationText = getStub().getText();
+        int index = annotationText.indexOf('(');
+        String refText = index > 0 ? annotationText.substring(1, index) : annotationText.substring(1);
+        return new ClsJavaCodeReferenceElementImpl(ClsAnnotationImpl.this, refText);
       }
     };
     myParameterList = new AtomicNotNullLazyValue<ClsAnnotationParameterListImpl>() {
       @NotNull
       @Override
       protected ClsAnnotationParameterListImpl compute() {
-        PsiAnnotationParameterList paramList = PsiTreeUtil.getRequiredChildOfType(getStub().getPsiElement(), PsiAnnotationParameterList.class);
-        return new ClsAnnotationParameterListImpl(ClsAnnotationImpl.this, paramList.getAttributes());
+        PsiNameValuePair[] attrs = getStub().getText().indexOf('(') > 0
+            ? PsiTreeUtil.getRequiredChildOfType(getStub().getPsiElement(), PsiAnnotationParameterList.class).getAttributes()
+            : PsiNameValuePair.EMPTY_ARRAY;
+        return new ClsAnnotationParameterListImpl(ClsAnnotationImpl.this, attrs);
       }
     };
   }
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
-    buffer.append("@").append(myReferenceElement.getValue().getCanonicalText());
+    buffer.append('@').append(myReferenceElement.getValue().getCanonicalText());
     appendText(getParameterList(), indentLevel, buffer);
   }
 

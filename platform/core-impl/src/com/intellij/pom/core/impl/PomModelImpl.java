@@ -138,8 +138,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (!isAllowPsiModification()) {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
-    List<Throwable> throwables = new ArrayList<Throwable>(0);
     synchronized(PsiLock.LOCK){
+      List<Throwable> throwables = new ArrayList<Throwable>(0);
       final PomModelAspect aspect = transaction.getTransactionAspect();
       startTransaction(transaction);
       try{
@@ -209,10 +209,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         finally {
           DebugUtil.finishPsiModification();
         }
+        if (!throwables.isEmpty()) CompoundRuntimeException.doThrow(throwables);
       }
     }
-
-    if (!throwables.isEmpty()) CompoundRuntimeException.doThrow(throwables);
   }
 
   @Nullable
@@ -240,10 +239,11 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
     Document document = containingFileByTree != null ? manager.getCachedDocument(containingFileByTree) : null;
+    boolean docSynced = false;
     if (document != null) {
       final int oldLength = containingFileByTree.getTextLength();
-      boolean success = synchronizer.commitTransaction(document);
-      if (success) {
+      docSynced = synchronizer.commitTransaction(document);
+      if (docSynced) {
         BlockSupportImpl.sendAfterChildrenChangedEvent((PsiManagerImpl)PsiManager.getInstance(myProject), containingFileByTree, oldLength, true);
       }
     }
@@ -252,6 +252,9 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
                              ApplicationManager.getApplication().hasWriteAction(CommitToPsiFileAction.class);
       if (!isFromCommit && !synchronizer.isIgnorePsiEvents()) {
         reparseParallelTrees(containingFileByTree);
+        if (docSynced) {
+          containingFileByTree.getViewProvider().contentsSynchronized();
+        }
       }
     }
 
