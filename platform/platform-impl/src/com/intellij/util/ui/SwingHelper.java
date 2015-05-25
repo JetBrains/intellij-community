@@ -404,7 +404,7 @@ public class SwingHelper {
     return hyperlink;
   }
 
-  public static void setPreferredWidth(@NotNull JComponent component, int width) {
+  public static void setPreferredWidth(@NotNull Component component, int width) {
     Dimension preferredSize = component.getPreferredSize();
     preferredSize.width = width;
     component.setPreferredSize(preferredSize);
