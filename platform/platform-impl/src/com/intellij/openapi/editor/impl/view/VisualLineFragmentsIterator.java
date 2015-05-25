@@ -270,8 +270,8 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       return myFoldRegion;
     }
 
-    // offsets are absolute
-    void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
+    // columns are visual (relative to fragment's start)
+    void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
       if (myDelegate == null) {
         LineLayout foldRegionLayout = myView.getFoldRegionLayout(myFoldRegion);
         TextAttributes attributes = myView.getEditor().getFoldingModel().getPlaceholderAttributes();
@@ -280,8 +280,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
                                                       attributes == null ? null : attributes.getEffectType());
       }
       else {
-        int lineStartOffset = myDocument.getLineStartOffset(myCurrentStartLogicalLine);
-        myDelegate.draw(g, x, y, startOffset - lineStartOffset, endOffset - lineStartOffset);
+        myDelegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
       }
     }
   }

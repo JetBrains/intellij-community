@@ -409,8 +409,9 @@ class LineLayout {
       delegate.draw(g, x, y, 0, getLength());
     }
 
-    void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
-      delegate.draw(g, x, y, getRelativeOffset(startOffset), getRelativeOffset(endOffset));
+    // columns are visual (relative to fragment's start)
+    void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
+      delegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
     }
 
     private int getRelativeOffset(int offset) {

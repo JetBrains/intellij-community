@@ -339,13 +339,14 @@ class EditorPainter {
                                VisualLineFragmentsIterator.Fragment fragment) {
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.WHITESPACES_COLOR));
     boolean isRtl = fragment.isRtl();
-    int step = isRtl ? -1 : 1;
-    for (int i = start; isRtl ? i > end : i < end; i+= step) {
-      int charOffset = i - (isRtl ? 1 : 0);
+    int baseStartOffset = fragment.getStartOffset();
+    int startOffset = isRtl ? baseStartOffset - start : baseStartOffset + start;
+    for (int i = start; i < end; i++) {
+      int charOffset = isRtl ? baseStartOffset - i - 1 : baseStartOffset + i;
       char c = text.charAt(charOffset);
       if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset)) {
-        int startX = (int)fragment.offsetToX(x, start, i);
-        int endX = (int)fragment.offsetToX(x, start, i + step);
+        int startX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i : baseStartOffset + i);
+        int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
 
         if (c == ' ') {
           g.fillRect((startX + endX) / 2, y, 1, 1);
@@ -676,7 +677,8 @@ class EditorPainter {
     IterationState it = null;
     int prevEndOffset = -1;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, offset)) {
-      int start = fragment.getStartOffset();
+      int fragmentStartOffset = fragment.getStartOffset();
+      int start = fragmentStartOffset;
       int end = fragment.getEndOffset();
       FoldRegion foldRegion = fragment.getCurrentFoldRegion();
       if (foldRegion == null) {
@@ -693,14 +695,17 @@ class EditorPainter {
           TextAttributes attributes = it.getMergedAttributes();
           int curEnd = fragment.isRtl() ? Math.max(it.getEndOffset(), end) : Math.min(it.getEndOffset(), end);
           float xNew = fragment.offsetToX(x, start, curEnd);
-          painter.paint(g, fragment, start, curEnd, attributes, x, xNew, y);
+          painter.paint(g, fragment, 
+                        fragment.isRtl() ? fragmentStartOffset - start : start - fragmentStartOffset,
+                        fragment.isRtl() ? fragmentStartOffset - curEnd : curEnd - fragmentStartOffset, 
+                        attributes, x, xNew, y);
           x = xNew;
           start = curEnd;
         }
       }
       else {
         float xNew = fragment.getEndX();
-        painter.paint(g, fragment, start, end, getFoldRegionAttributes(foldRegion), x, xNew, y);
+        painter.paint(g, fragment, 0, fragment.getEndOffset() - fragment.getStartOffset(), getFoldRegionAttributes(foldRegion), x, xNew, y);
         x = xNew;
         prevEndOffset = -1;
         it = null;
