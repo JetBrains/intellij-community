@@ -40,7 +40,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.*;
@@ -318,6 +317,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   static {
     ourCaretBlinkingCommand.start();
   }
+
+  private int myExpectedCaretOffset = -1;
 
   EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
     assertIsDispatchThread();
@@ -650,6 +651,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback) {
     myVerticalScrollBar.registerRepaintCallback(callback);
+  }
+
+  @Override
+  public int getExpectedCaretOffset() {
+    return myExpectedCaretOffset == -1 ? getCaretModel().getOffset() : myExpectedCaretOffset;
   }
 
   @Override
@@ -5639,7 +5645,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-
   private class MyMouseAdapter extends MouseAdapter {
     private boolean mySelectionTweaked;
 
@@ -5682,17 +5687,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myCurrentDragIsSubstantial = false;
       clearDraggedRange();
 
-      final int clickOffset = logicalPositionToOffset(myLastMousePressedLocation);
-      putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, clickOffset);
 
       mySelectionTweaked = false;
       myMousePressedEvent = e;
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
 
-      for (EditorMouseListener mouseListener : myMouseListeners) {
-        mouseListener.mousePressed(event);
+      myExpectedCaretOffset = logicalPositionToOffset(myLastMousePressedLocation);
+      try {
+        for (EditorMouseListener mouseListener : myMouseListeners) {
+          mouseListener.mousePressed(event);
+        }
       }
-      putUserData(EditorActionUtil.EXPECTED_CARET_OFFSET, null);
+      finally {
+        myExpectedCaretOffset = -1;
+      }
 
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
