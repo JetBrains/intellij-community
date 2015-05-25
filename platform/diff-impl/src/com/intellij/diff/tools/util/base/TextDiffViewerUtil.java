@@ -16,6 +16,8 @@
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
@@ -26,6 +28,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -46,6 +49,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TextDiffViewerUtil {
+  public static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
   public static final Key<Boolean> READ_ONLY_LOCK_KEY = Key.create("ReadOnlyLockAction");
 
   @NotNull
@@ -94,6 +98,33 @@ public class TextDiffViewerUtil {
     }
 
     return result;
+  }
+
+  public static void checkDifferentDocuments(@NotNull ContentDiffRequest request) {
+    // Actually, this should be a valid case. But it has little practical sense and will require explicit checks everywhere.
+    // Some listeners will be processed once instead of 2 times, some listeners will cause illegal document modifications.
+    List<DiffContent> contents = request.getContents();
+
+    boolean sameDocuments = false;
+    for (int i = 0; i < contents.size(); i++) {
+      for (int j = i + 1; j < contents.size(); j++) {
+        DiffContent content1 = contents.get(i);
+        DiffContent content2 = contents.get(j);
+        if (!(content1 instanceof DocumentContent)) continue;
+        if (!(content2 instanceof DocumentContent)) continue;
+        sameDocuments |= ((DocumentContent)content1).getDocument() == ((DocumentContent)content2).getDocument();
+      }
+    }
+
+    if (sameDocuments) {
+      StringBuilder message = new StringBuilder();
+      message.append("DiffRequest with same documents detected\n");
+      message.append(request.toString()).append("\n");
+      for (DiffContent content : contents) {
+        message.append(content.toString()).append("\n");
+      }
+      LOG.error(new Throwable(message.toString()));
+    }
   }
 
   //
