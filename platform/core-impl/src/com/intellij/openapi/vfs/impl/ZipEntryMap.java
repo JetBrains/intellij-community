@@ -63,7 +63,7 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
 
   @Override
   public ArchiveHandler.EntryInfo put(String relativePath, ArchiveHandler.EntryInfo value) {
-    if (size >= 0.65 * entries.length) {
+    if (size >= 5 * entries.length / 8) { // 0.625
       rehash();
     }
 
