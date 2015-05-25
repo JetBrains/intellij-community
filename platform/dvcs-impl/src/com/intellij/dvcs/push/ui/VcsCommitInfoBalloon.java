@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.UIUtil;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -53,7 +53,7 @@ public class VcsCommitInfoBalloon {
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
     myEditorPane.setFont(UIUtil.getToolTipFont());
     myEditorPane.setBorder(HintUtil.createHintBorder());
-    Border margin = new EmptyBorder(3, 3, 3, 3);
+    Border margin = IdeBorderFactory.createEmptyBorder(3, 3, 3, 3);
     myEditorPane.setBorder(new CompoundBorder(myEditorPane.getBorder(), margin));
     myEditorPane.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
