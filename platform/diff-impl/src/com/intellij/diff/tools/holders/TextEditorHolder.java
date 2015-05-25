@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.FocusListener;
 
 public class TextEditorHolder extends EditorHolder {
   @NotNull protected final EditorEx myEditor;
@@ -50,10 +51,9 @@ public class TextEditorHolder extends EditorHolder {
     return myEditor.getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getFocusedComponent() {
-    return myEditor.getContentComponent();
+  public void installFocusListener(@NotNull FocusListener listener) {
+    myEditor.getContentComponent().addFocusListener(listener);
   }
 
   @Nullable

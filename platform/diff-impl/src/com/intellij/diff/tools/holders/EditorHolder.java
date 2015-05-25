@@ -20,14 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.FocusListener;
 
 public abstract class EditorHolder implements Disposable {
   @NotNull
   public abstract JComponent getComponent();
 
   @Nullable
-  public abstract JComponent getFocusedComponent();
-
-  @Nullable
   public abstract JComponent getPreferredFocusedComponent();
+
+  public void installFocusListener(@NotNull FocusListener listener) {
+  }
 }

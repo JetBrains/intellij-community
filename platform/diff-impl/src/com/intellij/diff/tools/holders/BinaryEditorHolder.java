@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.FocusListener;
 
 public class BinaryEditorHolder extends EditorHolder {
   @NotNull protected final FileEditor myEditor;
@@ -65,10 +66,9 @@ public class BinaryEditorHolder extends EditorHolder {
     return myEditor.getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getFocusedComponent() {
-    return myEditor.getComponent();
+  public void installFocusListener(@NotNull FocusListener listener) {
+    myEditor.getComponent().addFocusListener(listener);
   }
 
   @Nullable
