@@ -84,6 +84,7 @@ public class BinaryEditorHolder extends EditorHolder {
   public static class BinaryEditorHolderFactory extends EditorHolderFactory<BinaryEditorHolder> {
     public static BinaryEditorHolderFactory INSTANCE = new BinaryEditorHolderFactory();
 
+    @Override
     @NotNull
     public BinaryEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
       Project project = context.getProject();
@@ -121,6 +122,7 @@ public class BinaryEditorHolder extends EditorHolder {
       throw new IllegalArgumentException(content.getClass() + " - " + content.toString());
     }
 
+    @Override
     public boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
       if (content instanceof DocumentContent) return true;
       if (content instanceof FileContent) {
@@ -133,6 +135,7 @@ public class BinaryEditorHolder extends EditorHolder {
       return false;
     }
 
+    @Override
     public boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
       if (content instanceof FileContent) {
         if (content.getContentType() == null) return false;

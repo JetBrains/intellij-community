@@ -69,6 +69,7 @@ public class TextEditorHolder extends EditorHolder {
   public static class TextEditorHolderFactory extends EditorHolderFactory<TextEditorHolder> {
     public static TextEditorHolderFactory INSTANCE = new TextEditorHolderFactory();
 
+    @Override
     @NotNull
     public TextEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
       if (!(content instanceof DocumentContent)) throw new IllegalArgumentException(content.toString());
@@ -80,11 +81,13 @@ public class TextEditorHolder extends EditorHolder {
       return new TextEditorHolder(editor);
     }
 
+    @Override
     public boolean canShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
       if (content instanceof DocumentContent) return true;
       return false;
     }
 
+    @Override
     public boolean wantShowContent(@NotNull DiffContent content, @NotNull DiffContext context) {
       if (content instanceof DocumentContent) return true;
       return false;
