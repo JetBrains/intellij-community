@@ -281,7 +281,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     if (virtualFile != null &&
         virtualFile.isValid() &&
         project.isInitialized() &&
-        myProjectFileIndex.isInContent(virtualFile) &&
+        myProjectFileIndex.isInSourceContent(virtualFile) &&
         isSupportedFileType(virtualFile)) {
       return true;
     }
