@@ -123,8 +123,12 @@ public abstract class FilteredTraverser<T, Self extends FilteredTraverser<T, Sel
   }
 
   protected abstract Iterable<? extends T> childrenImpl(T node);
-  
-  
+
+  @Override
+  public String toString() {
+    return rawIterable().toString();
+  }
+
   protected static <T> Meta<T> emptyMeta() {
     return new Meta<T>(EmptyIterable.<T>getInstance(), false,
                        Conditions.alwaysTrue(),
