@@ -84,11 +84,42 @@ public abstract class JBIterable<E> implements Iterable<E> {
   public static <E> JBIterable<E> from(@Nullable Iterable<? extends E> iterable) {
     if (iterable == null) return empty();
     if (iterable instanceof JBIterable) return (JBIterable<E>)iterable;
-
     return new JBIterable<E>((Iterable<E>)iterable) {
       @Override
       public Iterator<E> iterator() {
         return myIterable.iterator();
+      }
+    };
+  }
+
+  @NotNull
+  public static <T, E> JBIterable<E> from(@Nullable Iterable<T> iterable, final Function<? super T, Iterable<E>> fun) {
+    if (iterable == null) return empty();
+    final Iterable<T> thatIt = iterable;
+    return new JBIterable<E>() {
+      @Override
+      public Iterator<E> iterator() {
+        final Iterator<T> it = thatIt.iterator();
+        return new Iterator<E>() {
+          Iterator<E> cur;
+          @Override
+          public boolean hasNext() {
+            while ((cur == null || !cur.hasNext()) && it.hasNext()) {
+              cur = fun.fun(it.next()).iterator();
+            }
+            return cur != null && cur.hasNext();
+          }
+
+          @Override
+          public E next() {
+            return cur.next();
+          }
+
+          @Override
+          public void remove() {
+            cur.remove();
+          }
+        };
       }
     };
   }
@@ -156,6 +187,10 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   public final JBIterable<E> append(@Nullable Iterable<? extends E> other) {
     return other == null ? this : this == EMPTY ? from(other) : from(ContainerUtil.concat(myIterable, other));
+  }
+
+  public final <T> JBIterable<E> append(@Nullable Iterable<T> other, @NotNull Function<? super T, Iterable<E>> fun) {
+    return other == null ? this : this == EMPTY ? from(other, fun) : append(from(other, fun));
   }
 
   /**
