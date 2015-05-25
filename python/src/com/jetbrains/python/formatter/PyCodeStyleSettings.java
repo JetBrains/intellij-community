@@ -17,6 +17,7 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import com.jetbrains.python.PyBundle;
 
 /**
  * @author yole
@@ -24,9 +25,9 @@ import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public enum DictAlignment {
-    NONE("Do not align"),
-    ON_VALUE("Align on value"),
-    ON_COLON("Align on colon");
+    NONE(PyBundle.message("formatter.panel.dict.alignment.do.not.align")),
+    ON_VALUE(PyBundle.message("formatter.panel.dict.alignment.align.on.value")),
+    ON_COLON(PyBundle.message("formatter.panel.dict.alignment.align.on.colon"));
 
     String description;
 
