@@ -347,7 +347,7 @@ public abstract class ThreesideTextDiffViewer extends TextDiffViewerBase {
 
       DiffRequest request = new SimpleDiffRequest(myRequest.getTitle(),
                                                   mySide1.select(contents), mySide2.select(contents),
-                                                  mySide1.select(titles), mySide1.select(titles));
+                                                  mySide1.select(titles), mySide2.select(titles));
       DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
     }
   }
