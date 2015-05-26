@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ class FilePointerPartNode {
 
   private int pointersUnder = 1;   // number of alive pointers in this node plus all nodes beneath
   private static final VirtualFileManager ourFileManager = VirtualFileManager.getInstance();
+  private static final ManagingFS ourManagingFS = ManagingFS.getInstance();
 
   FilePointerPartNode(@NotNull String part, FilePointerPartNode parent, Pair<VirtualFile,String> fileAndUrl) {
     this.part = part;
@@ -242,7 +244,7 @@ class FilePointerPartNode {
   Pair<VirtualFile, String> update() {
     long lastUpdated = myLastUpdated;
     Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
-    long fsModCount = ourFileManager.getModificationCount();
+    long fsModCount = ourManagingFS.getCheapFileSystemStructureModificationCount();
     if (lastUpdated == fsModCount) return fileAndUrl;
     VirtualFile file = fileAndUrl.first;
     String url = fileAndUrl.second;

@@ -74,6 +74,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       clearIdCache();
     }
   });
+  private volatile int myStructureModificationCount;
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
     myEventBus = bus;
@@ -264,6 +265,15 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   public int getCheapFileSystemModificationCount() {
     return FSRecords.getLocalModCount();
+  }
+
+  @Override
+  public int getCheapFileSystemStructureModificationCount() {
+    return myStructureModificationCount;
+  }
+
+  public void incStructuralModificationCount() {
+    myStructureModificationCount++;
   }
 
   @Override
@@ -910,6 +920,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       if (root != null) return root;
 
       VfsData.initFile(rootId, segment, -1, directoryData);
+      incStructuralModificationCount();
       mark = writeAttributesToRecord(rootId, 0, newRoot, fs, attributes);
 
       myRoots.put(rootUrl, newRoot);
@@ -1172,6 +1183,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     FSRecords.deleteRecordRecursively(id);
 
     invalidateSubtree(file);
+    incStructuralModificationCount();
   }
 
   private static void invalidateSubtree(@NotNull VirtualFile file) {

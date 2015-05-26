@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.UriUtil;
@@ -434,6 +435,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     assert appended[i] > 0 : file;
     System.arraycopy(array, i, appended, i + 1, array.length - i);
     myData.myChildrenIds = appended;
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public void removeChild(@NotNull VirtualFile file) {
@@ -447,6 +449,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private void removeFromArray(int index) {
     myData.myChildrenIds = ArrayUtil.remove(myData.myChildrenIds, index);
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public boolean allChildrenLoaded() {
