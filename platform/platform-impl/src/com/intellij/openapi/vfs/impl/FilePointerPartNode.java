@@ -244,7 +244,7 @@ class FilePointerPartNode {
   Pair<VirtualFile, String> update() {
     long lastUpdated = myLastUpdated;
     Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
-    long fsModCount = ourManagingFS.getCheapFileSystemStructureModificationCount();
+    long fsModCount = ourManagingFS.getStructureModificationCount();
     if (lastUpdated == fsModCount) return fileAndUrl;
     VirtualFile file = fileAndUrl.first;
     String url = fileAndUrl.second;

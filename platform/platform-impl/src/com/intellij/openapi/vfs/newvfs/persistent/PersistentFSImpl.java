@@ -263,12 +263,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public int getCheapFileSystemModificationCount() {
+  public int getModificationCount() {
     return FSRecords.getLocalModCount();
   }
 
   @Override
-  public int getCheapFileSystemStructureModificationCount() {
+  public int getStructureModificationCount() {
     return myStructureModificationCount;
   }
 

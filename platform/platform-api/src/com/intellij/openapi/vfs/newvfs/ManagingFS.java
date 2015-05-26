@@ -44,21 +44,30 @@ public abstract class ManagingFS implements FileSystemInterface {
   public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
 
   /**
+   * @deprecated to be removed in IDEA 16
+   * @see #getModificationCount() 
+   */
+  public int getCheapFileSystemModificationCount() {
+    return getModificationCount();
+  }
+
+  /**
    * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents. 
    * This only counts modifications done in current IDE session.
-   * @see #getCheapFileSystemStructureModificationCount()
+   * @see #getStructureModificationCount()
    * @see #getFilesystemModificationCount() 
    */
-  public abstract int getCheapFileSystemModificationCount();
+  public abstract int getModificationCount();
 
   /**
    * @return a number that's incremented every time something changes in the VFS structure, i.e. file hierarchy or names. 
    * This only counts modifications done in current IDE session.
-   * @see #getCheapFileSystemModificationCount() 
+   * @see #getModificationCount() 
    */
-  public abstract int getCheapFileSystemStructureModificationCount();
+  public abstract int getStructureModificationCount();
 
   /**
+   * @deprecated to be removed in IDEA 16
    * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
    * This number is persisted between IDE sessions and so it'll always increase. This method invocation means disk access, so it's not terribly cheap. 
    */
