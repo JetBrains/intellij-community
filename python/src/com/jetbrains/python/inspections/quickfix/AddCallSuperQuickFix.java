@@ -65,41 +65,36 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
     final PyClass superClass = superClasses[0];
     final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, true);
     if (superInit == null) return;
-    final boolean addComma;
+
+    final ParametersInfo origInfo = new ParametersInfo(problemFunction.getParameterList());
+    final ParametersInfo superInfo = new ParametersInfo(superInit.getParameterList());
+    final boolean addSelfToCall;
+
     if (klass.isNewStyleClass()) {
-      addComma = false;
+      addSelfToCall = false;
       if (LanguageLevel.forElement(klass).isPy3K()) {
         superCall.append("super().__init__(");
       }
       else {
-        superCall.append("super(").append(klass.getName()).append(", self).__init__(");
+        superCall.append("super(").append(klass.getName()).append(", ").append(getSelfParameterName(origInfo)).append(").__init__(");
       }
     }
     else {
-      addComma = true;
-      superCall.append(superClass.getName());
-      superCall.append(".__init__(self");
+      addSelfToCall = true;
+      superCall.append(superClass.getName()).append(".__init__(");
     }
-    final StringBuilder newFunction = new StringBuilder("def __init__(self");
+    final StringBuilder newFunction = new StringBuilder("def __init__(");
 
-    final Couple<List<String>> couple = buildNewFunctionParamsAndSuperInitCallArgs(problemFunction, superInit);
-
-    final List<String> newParameters = couple.getFirst();
-    if (!newParameters.isEmpty()) {
-      newFunction.append(", ");
-    }
-    StringUtil.join(newParameters, ", ", newFunction);
+    final Couple<List<String>> couple = buildNewFunctionParamsAndSuperInitCallArgs(origInfo, superInfo, addSelfToCall);
+    StringUtil.join(couple.getFirst(), ", ", newFunction);
     newFunction.append(")");
+
     if (problemFunction.getAnnotation() != null) {
       newFunction.append(problemFunction.getAnnotation().getText());
     }
     newFunction.append(":\n\t");
 
-    final List<String> superCallArguments = couple.getSecond();
-    if (addComma && !superCallArguments.isEmpty()) {
-      superCall.append(", ");
-    }
-    StringUtil.join(superCallArguments, ", ", superCall);
+    StringUtil.join(couple.getSecond(), ", ", superCall);
     superCall.append(")");
 
     final PyStatementList statementList = problemFunction.getStatementList();
@@ -130,13 +125,32 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  private static Couple<List<String>> buildNewFunctionParamsAndSuperInitCallArgs(@NotNull PyFunction origInit,
-                                                                                 @NotNull PyFunction superInit) {
+  private static String getSelfParameterName(@NotNull ParametersInfo info) {
+    final PyParameter selfParameter = info.getSelfParameter();
+    if (selfParameter == null) {
+      return PyNames.CANONICAL_SELF;
+    }
+    return StringUtil.defaultIfEmpty(selfParameter.getName(), PyNames.CANONICAL_SELF);
+  }
+
+  @NotNull
+  private static Couple<List<String>> buildNewFunctionParamsAndSuperInitCallArgs(@NotNull ParametersInfo origInfo,
+                                                                                 @NotNull ParametersInfo superInfo,
+                                                                                 boolean addSelfToCall) {
     final List<String> newFunctionParams = new ArrayList<String>();
     final List<String> superCallArgs = new ArrayList<String>();
 
-    final ParametersInfo origInfo = new ParametersInfo(origInit.getParameterList());
-    final ParametersInfo superInfo = new ParametersInfo(superInit.getParameterList());
+    final PyParameter selfParameter = origInfo.getSelfParameter();
+    if (selfParameter != null && StringUtil.isNotEmpty(selfParameter.getName())) {
+      newFunctionParams.add(selfParameter.getText());
+    }
+    else {
+      newFunctionParams.add(PyNames.CANONICAL_SELF);
+    }
+
+    if (addSelfToCall) {
+      superCallArgs.add(getSelfParameterName(origInfo));
+    }
 
     // Required parameters (not-keyword)
     for (PyParameter param : origInfo.getRequiredParameters()) {
