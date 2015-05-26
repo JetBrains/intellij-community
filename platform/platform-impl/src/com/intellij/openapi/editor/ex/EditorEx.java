@@ -80,8 +80,14 @@ public interface EditorEx extends Editor {
 
   void setColumnMode(boolean val);
 
+  /**
+   * @deprecated To be removed in IDEA 16.
+   */
   void setLastColumnNumber(int val);
 
+  /**
+   * @deprecated To be removed in IDEA 16.
+   */
   int getLastColumnNumber();
 
   int VERTICAL_SCROLLBAR_LEFT = 0;
