@@ -32,25 +32,20 @@ public class MergeIfAndIntention extends Intention {
     return new MergeIfAndPredicate();
   }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
-    final PsiJavaToken token =
-      (PsiJavaToken)element;
-    final PsiIfStatement parentStatement =
-      (PsiIfStatement)token.getParent();
+  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiJavaToken token = (PsiJavaToken)element;
+    final PsiIfStatement parentStatement = (PsiIfStatement)token.getParent();
     if (parentStatement == null) {
       return;
     }
     final PsiStatement parentThenBranch = parentStatement.getThenBranch();
-    final PsiIfStatement childStatement =
-      (PsiIfStatement)ControlFlowUtils.stripBraces(parentThenBranch);
+    final PsiIfStatement childStatement = (PsiIfStatement)ControlFlowUtils.stripBraces(parentThenBranch);
     final PsiExpression childCondition = childStatement.getCondition();
     if (childCondition == null) {
       return;
     }
     final String childConditionText;
-    if (ParenthesesUtils.getPrecedence(childCondition)
-        > ParenthesesUtils.AND_PRECEDENCE) {
+    if (ParenthesesUtils.getPrecedence(childCondition) > ParenthesesUtils.AND_PRECEDENCE) {
       childConditionText = '(' + childCondition.getText() + ')';
     }
     else {
@@ -62,8 +57,7 @@ public class MergeIfAndIntention extends Intention {
       return;
     }
     final String parentConditionText;
-    if (ParenthesesUtils.getPrecedence(parentCondition)
-        > ParenthesesUtils.AND_PRECEDENCE) {
+    if (ParenthesesUtils.getPrecedence(parentCondition) > ParenthesesUtils.AND_PRECEDENCE) {
       parentConditionText = '(' + parentCondition.getText() + ')';
     }
     else {
@@ -73,8 +67,7 @@ public class MergeIfAndIntention extends Intention {
     if (childThenBranch == null) {
       return;
     }
-    @NonNls final String statement = "if(" + parentConditionText + "&&" +
-                                     childConditionText + ')' + childThenBranch.getText();
+    @NonNls final String statement = "if(" + parentConditionText + "&&" + childConditionText + ')' + childThenBranch.getText();
     PsiReplacementUtil.replaceStatement(parentStatement, statement);
   }
 }
