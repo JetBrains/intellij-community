@@ -24,7 +24,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
 import com.intellij.psi.tree.*;
-import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.DiffTree;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PsiBuilderQuickTest extends LightPlatformLangTestCase {
+public class PsiBuilderQuickTest extends LightPlatformTestCase {
   private static final IFileElementType ROOT = new IFileElementType("ROOT", Language.ANY);
 
   private static final IElementType LETTER = new IElementType("LETTER", Language.ANY);

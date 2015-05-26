@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,19 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
-import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 
 import javax.swing.event.DocumentEvent;
 import java.util.Set;
 
 /**
- * User: anna
+ * @author anna
  */
-public class SearchableOptionsTest extends LightPlatformLangTestCase {
-  public void testFindCodeTemplates() throws Exception {
-    final ConfigurableHit configurables =
-      SearchableOptionsRegistrar.getInstance().getConfigurables(new ConfigurableGroup[]{new ProjectConfigurablesGroup(getProject())}, DocumentEvent.EventType.INSERT, null, "method", getProject());
-    final Set<Configurable> configurableSet = configurables.getAll();
+public class SearchableOptionsTest extends LightPlatformTestCase {
+  public void testFindCodeTemplates() {
+    ConfigurableGroup[] groups = {new ProjectConfigurablesGroup(getProject())};
+    ConfigurableHit configurables = SearchableOptionsRegistrar.getInstance().getConfigurables(groups, DocumentEvent.EventType.INSERT, null, "method", getProject());
+    Set<Configurable> configurableSet = configurables.getAll();
     for (Configurable configurable : configurableSet) {
       if (configurable.getDisplayName().equals(new AllFileTemplatesConfigurable(getProject()).getDisplayName())) {
         return;

@@ -45,6 +45,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.FactoryMap;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
@@ -85,7 +86,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     super(project, true);
     myModule = null;
 
-    setTitle("Project Interpreters");
+    setTitle(PyBundle.message("sdk.details.dialog.title"));
     myShowMoreCallback = showMoreCallback;
     myProject = project;
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
@@ -104,7 +105,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     super(module.getProject());
     myModule = module;
 
-    setTitle("Project Interpreters");
+    setTitle(PyBundle.message("sdk.details.dialog.title"));
     myShowMoreCallback = showMoreCallback;
     myProject = module.getProject();
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
@@ -320,7 +321,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       @Override
       public String fun(String s) {
         if (isDuplicateSdkName(s, currentSdk)) {
-          return "Please specify a unique name for the interpreter";
+          return PyBundle.message("sdk.details.dialog.error.duplicate.name");
         }
         return null;
       }
@@ -410,7 +411,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
     public ToggleVirtualEnvFilterButton() {
-      super("Show virtual environments associated with other projects", AllIcons.General.Filter);
+      super(PyBundle.message("sdk.details.dialog.show.all.virtual.envs"), AllIcons.General.Filter);
     }
 
     @Override
@@ -428,7 +429,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ShowPathButton extends AnActionButton implements DumbAware {
     public ShowPathButton() {
-      super("Show paths for the selected interpreter", AllIcons.Actions.ShowAsTree);
+      super(PyBundle.message("sdk.details.dialog.show.interpreter.paths"), AllIcons.Actions.ShowAsTree);
     }
 
     @Override

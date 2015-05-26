@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -34,13 +35,13 @@ public class PyDemorganIntention extends BaseIntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "DeMorgan Law";
+    return PyBundle.message("INTN.demorgan.law");
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "DeMorgan Law";
+    return getText();
   }
 
   @Override
@@ -49,9 +50,10 @@ public class PyDemorganIntention extends BaseIntentionAction {
       return false;
     }
 
-    PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class);
+    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
+                                                                      PyBinaryExpression.class);
     if (expression != null) {
-      PyElementType op = expression.getOperator();
+      final PyElementType op = expression.getOperator();
       if (op == PyTokenTypes.AND_KEYWORD || op == PyTokenTypes.OR_KEYWORD) {
         return true;
       }
@@ -61,32 +63,33 @@ public class PyDemorganIntention extends BaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
-                                                                PyBinaryExpression.class);
-    PyElementType op = expression.getOperator();
-    String converted = convertConjunctionExpression(expression, op);
+    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
+                                                                      PyBinaryExpression.class);
+    assert expression != null;
+    final PyElementType op = expression.getOperator();
+    final String converted = convertConjunctionExpression(expression, op);
     replaceExpression(converted, expression);
   }
 
   private static void replaceExpression(String newExpression, PyBinaryExpression expression) {
     PsiElement expressionToReplace = expression;
     String expString = "not(" + newExpression + ')';
-    PsiElement parent = expression.getParent().getParent();
+    final PsiElement parent = expression.getParent().getParent();
     if (isNegation(parent)) {
       expressionToReplace = parent;
       expString = newExpression;
     }
-    PyElementGenerator generator = PyElementGenerator.getInstance(expression.getProject());
-    PyExpression newCall = generator.createExpressionFromText(expString);
-    PsiElement insertedElement = expressionToReplace.replace(newCall);
+    final PyElementGenerator generator = PyElementGenerator.getInstance(expression.getProject());
+    final PyExpression newCall = generator.createExpressionFromText(LanguageLevel.forElement(expression), expString);
+    expressionToReplace.replace(newCall);
     // codeStyleManager = expression.getManager().getCodeStyleManager()
     // TODO codeStyleManager.reformat(insertedElement)
   }
 
   private static String convertConjunctionExpression(PyBinaryExpression exp, PyElementType tokenType) {
-    PyExpression lhs = exp.getLeftExpression();
-    String lhsText;
-    String rhsText;
+    final PyExpression lhs = exp.getLeftExpression();
+    final String lhsText;
+    final String rhsText;
     if (isConjunctionExpression(lhs, tokenType)) {
       lhsText = convertConjunctionExpression((PyBinaryExpression)lhs, tokenType);
     }
@@ -94,7 +97,7 @@ public class PyDemorganIntention extends BaseIntentionAction {
       lhsText = convertLeafExpression(lhs);
     }
 
-    PyExpression rhs = exp.getRightExpression();
+    final PyExpression rhs = exp.getRightExpression();
     if (isConjunctionExpression(rhs, tokenType)) {
       rhsText = convertConjunctionExpression((PyBinaryExpression)rhs, tokenType);
     }
@@ -102,34 +105,34 @@ public class PyDemorganIntention extends BaseIntentionAction {
       rhsText = convertLeafExpression(rhs);
     }
 
-    String flippedConjunction = (tokenType == PyTokenTypes.AND_KEYWORD) ? " or " : " and ";
+    final String flippedConjunction = (tokenType == PyTokenTypes.AND_KEYWORD) ? " or " : " and ";
     return lhsText + flippedConjunction + rhsText;
   }
 
   private static String convertLeafExpression(PyExpression condition) {
     if (isNegation(condition)) {
-      PyExpression negated = getNegated(condition);
+      final PyExpression negated = getNegated(condition);
       if (negated == null) {
         return "";
       }
       return negated.getText();
     }
     else {
-      if (condition instanceof PyBinaryExpression)
+      if (condition instanceof PyBinaryExpression) {
         return "not(" + condition.getText() + ")";
+      }
       return "not " + condition.getText();
     }
   }
 
   @Nullable
   private static PyExpression getNegated(PyExpression expression) {
-    PyExpression operand = ((PyPrefixExpression)expression).getOperand();
-    return operand;  // TODO strip ()
+    return ((PyPrefixExpression)expression).getOperand();  // TODO strip ()
   }
 
   private static boolean isConjunctionExpression(PyExpression expression, PyElementType tokenType) {
     if (expression instanceof PyBinaryExpression) {
-      PyElementType operator = ((PyBinaryExpression) expression).getOperator();
+      final PyElementType operator = ((PyBinaryExpression)expression).getOperator();
       return operator == tokenType;
     }
     return false;
@@ -139,9 +142,7 @@ public class PyDemorganIntention extends BaseIntentionAction {
     if (!(expression instanceof PyPrefixExpression)) {
       return false;
     }
-    PyElementType op = ((PyPrefixExpression)expression).getOperator();
+    final PyElementType op = ((PyPrefixExpression)expression).getOperator();
     return op == PyTokenTypes.NOT_KEYWORD;
   }
-
-
 }

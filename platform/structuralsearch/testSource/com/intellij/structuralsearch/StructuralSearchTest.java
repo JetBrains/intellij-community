@@ -1577,9 +1577,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // class pattern without extends matches pattern with extends
     assertEquals(
       "match of class without extends to class with it, ep 3",
-      findMatchesCount(s41,s42_2),
-      2
+      4,
+      findMatchesCount(s41,s42_2)
     );
+
+    assertEquals("match class with fields without initializers", 2, findMatchesCount(s41, "class '_ { '_T '_T2 = '_T3{0,0}; } "));
 
     // typed reference element
     assertEquals(
@@ -3232,5 +3234,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern6 = "try { '_St1*; } catch ('_E1 | '_E2 '_e) { '_St2*; }";
     assertEquals("Find multi catch with variables", 1, findMatchesCount(source, pattern6));
+  }
+
+  public void testFindAsserts() {
+    String source = "class A {" +
+                    "  void f(int i) {" +
+                    "    assert i > 0;" +
+                    "    assert i < 10 : \"i: \" + i;" +
+                    "    assert i == 5;" +
+                    "  }" +
+                    "}";
+    assertEquals("find assert statements", 3, findMatchesCount(source, "assert '_a;"));
+    assertEquals("find assert statements 2", 3, findMatchesCount(source, "assert '_a : 'b*;"));
+    assertEquals("find assert statement with messages", 1, findMatchesCount(source, "assert '_a : '_b;"));
+    assertEquals("find assert statement without messages", 2, findMatchesCount(source, "assert 'a : '_b{0,0};"));
   }
 }

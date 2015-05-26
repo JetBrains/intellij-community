@@ -88,6 +88,7 @@ public class PyBlock implements ASTBlock {
   private List<PyBlock> mySubBlocks = null;
   private Alignment myChildAlignment;
   private final Alignment myDictAlignment;
+  private final Wrap myDictWrapping;
   private final boolean myEmptySequence;
 
   public PyBlock(final PyBlock parent,
@@ -104,7 +105,14 @@ public class PyBlock implements ASTBlock {
     myContext = context;
     myEmptySequence = isEmptySequence(node);
 
-    myDictAlignment = node.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION ? Alignment.createAlignment(true) : null;
+    if (node.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION) {
+      myDictAlignment = Alignment.createAlignment(true);
+      myDictWrapping = Wrap.createWrap(myContext.getPySettings().DICT_WRAPPING, true);
+    }
+    else {
+      myDictAlignment = null;
+      myDictWrapping = null;
+    }
   }
 
   @NotNull
@@ -267,11 +275,8 @@ public class PyBlock implements ASTBlock {
         }
       }
     }
-    else if (parentType == PyElementTypes.KEY_VALUE_EXPRESSION) {
-      final PyKeyValueExpression keyValue = (PyKeyValueExpression)myNode.getPsi();
-      if (keyValue != null && child.getPsi() == keyValue.getValue()) {
-        childIndent = Indent.getNormalIndent();
-      }
+    else if (isValueOfKeyValuePair(child)) {
+      childIndent = Indent.getNormalIndent();
     }
     //Align elements vertically if there is an argument in the first line of parenthesized expression
     else if (!hasHangingIndent(myNode.getPsi()) &&
@@ -341,23 +346,28 @@ public class PyBlock implements ASTBlock {
         }
       }
     }
+    if (childType == PyElementTypes.KEY_VALUE_EXPRESSION && isChildOfDictLiteral(child)) {
+      wrap = myDictWrapping;
+      childIndent = Indent.getNormalIndent();
+    }
+
     if (isAfterStatementList(child) && !hasLineBreaksBefore(child, 2) && child.getElementType() != PyTokenTypes.END_OF_LINE_COMMENT) {
       // maybe enter was pressed and cut us from a previous (nested) statement list
       childIndent = Indent.getNormalIndent();
     }
 
     if (settings.DICT_ALIGNMENT == DICT_ALIGNMENT_ON_VALUE) {
-      if (isDictLiteralPropertyValue(child) && !ourListElementTypes.contains(childType)) {
+      if (isValueOfKeyValuePairOfDictLiteral(child) && !ourListElementTypes.contains(childType)) {
         childAlignment = myParent.myDictAlignment;
       }
-      else if (isDictLiteralPropertyValue(myNode) &&
+      else if (isValueOfKeyValuePairOfDictLiteral(myNode) &&
                ourListElementTypes.contains(parentType) &&
                PyTokenTypes.OPEN_BRACES.contains(childType)) {
         childAlignment = myParent.myParent.myDictAlignment;
       }
     }
     else if (myContext.getPySettings().DICT_ALIGNMENT == DICT_ALIGNMENT_ON_COLON) {
-      if (isInsideDictLiteralKeyValue(child) && childType == PyTokenTypes.COLON) {
+      if (isChildOfKeyValuePairOfDictLiteral(child) && childType == PyTokenTypes.COLON) {
         childAlignment = myParent.myDictAlignment;
       }
     }
@@ -376,21 +386,26 @@ public class PyBlock implements ASTBlock {
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
   }
 
-  private static boolean isDictLiteralPropertyValue(@NotNull ASTNode node) {
-    return isInsideDictLiteralKeyValue(node) && node.getTreeParent().getPsi(PyKeyValueExpression.class).getValue() == node.getPsi();
+  private static boolean isValueOfKeyValuePairOfDictLiteral(@NotNull ASTNode node) {
+    return isValueOfKeyValuePair(node) && isChildOfDictLiteral(node.getTreeParent());
   }
 
-  private static boolean isInsideDictLiteralKeyValue(@NotNull ASTNode node) {
+  private static boolean isChildOfKeyValuePairOfDictLiteral(@NotNull ASTNode node) {
+    return isChildOfKeyValuePair(node) && isChildOfDictLiteral(node.getTreeParent());
+  }
+
+  private static boolean isChildOfDictLiteral(@NotNull ASTNode node) {
     final ASTNode nodeParent = node.getTreeParent();
-    if (nodeParent == null) {
-      return false;
-    }
-    final ASTNode nodeGrandParent = nodeParent.getTreeParent();
-    if (nodeGrandParent == null) {
-      return false;
-    }
-    return nodeParent.getElementType() == PyElementTypes.KEY_VALUE_EXPRESSION &&
-           nodeGrandParent.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION;
+    return nodeParent != null && nodeParent.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION;
+  }
+
+  private static boolean isChildOfKeyValuePair(@NotNull ASTNode node) {
+    final ASTNode nodeParent = node.getTreeParent();
+    return nodeParent != null && nodeParent.getElementType() == PyElementTypes.KEY_VALUE_EXPRESSION;
+  }
+
+  private static boolean isValueOfKeyValuePair(@NotNull ASTNode node) {
+    return isChildOfKeyValuePair(node) && node.getTreeParent().getPsi(PyKeyValueExpression.class).getValue() == node.getPsi();
   }
 
   private static boolean isEmptySequence(@NotNull ASTNode node) {

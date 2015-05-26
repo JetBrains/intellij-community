@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.impl.jrt.JrtFileSystem;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,7 +37,6 @@ public class JrtFileSystemTest {
     assumeTrue("skipped: java=" + SystemInfo.JAVA_VERSION, JrtFileSystem.isSupported());
     assumeTrue("skipped: JDK_19=" + ourJdkHome, ourJdkHome != null && JrtFileSystem.isModularJdk(ourJdkHome));
 
-    IdeaTestCase.initPlatformPrefix();
     LightPlatformTestCase.initApplication();
   }
 

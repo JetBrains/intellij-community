@@ -259,6 +259,21 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertLiteralToTupleIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertLiteralToListIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertLiteralToSetIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyTransformConditionalExpressionIntention</className>
       <category>Python</category>
     </intentionAction>
