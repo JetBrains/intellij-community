@@ -32,6 +32,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -189,7 +190,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
       Object oldValue = event.getOldValue();
-      if (oldValue instanceof VirtualFile && ProjectCoreUtil.isProjectOrWorkspaceFile((VirtualFile)oldValue)) {
+      if (oldValue instanceof VirtualFile && shouldBeIgnored((VirtualFile)oldValue)) {
         // ignore workspace.xml
         return;
       }
@@ -231,7 +232,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
       return;
     }
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null && ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) {
+    if (virtualFile != null && shouldBeIgnored(virtualFile)) {
       // ignore workspace.xml
       return;
     }
@@ -257,6 +258,11 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
 
       element = element.getParent();
     }
+  }
+
+  private boolean shouldBeIgnored(@NotNull VirtualFile virtualFile) {
+    return ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile) ||
+           ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(virtualFile);
   }
 
   @Nullable
