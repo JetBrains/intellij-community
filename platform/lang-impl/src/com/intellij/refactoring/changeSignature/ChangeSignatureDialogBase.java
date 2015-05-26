@@ -197,9 +197,17 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       }
       return table;
     }
-    else {
-      return myNameField == null ? super.getPreferredFocusedComponent() : myNameField;
+    if (isFocusable(myNameField)) {
+      return myNameField;
     }
+    if (isFocusable(myReturnTypeField)) {
+      return myReturnTypeField;
+    }
+    return super.getPreferredFocusedComponent();
+  }
+
+  private static boolean isFocusable(JComponent component) {
+    return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
   }
 
   protected int getSelectedIdx() {
