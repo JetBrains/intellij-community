@@ -1193,23 +1193,34 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
 
   public static class ClearAllAction extends DumbAwareAction {
+    private final ConsoleView myConsoleView;
+
+    @SuppressWarnings("unused")
     public ClearAllAction() {
+      this(null);
+    }
+
+    public ClearAllAction(final ConsoleView consoleView) {
       super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+      myConsoleView = consoleView;
     }
 
     @Override
     public void update(AnActionEvent e) {
-      boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != null && editor.getDocument().getTextLength() == 0) {
-        enabled = false;
+      boolean enabled = myConsoleView != null && myConsoleView.getContentSize() > 0;
+      if (!enabled) {
+        enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
+        Editor editor = e.getData(CommonDataKeys.EDITOR);
+        if (editor != null && editor.getDocument().getTextLength() == 0) {
+          enabled = false;
+        }
       }
       e.getPresentation().setEnabled(enabled);
     }
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);
+      final ConsoleView consoleView = myConsoleView != null ? myConsoleView : e.getData(LangDataKeys.CONSOLE_VIEW);
       if (consoleView != null) {
         consoleView.clear();
       }
@@ -1575,7 +1586,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     consoleActions[2] = switchSoftWrapsAction;
     consoleActions[3] = autoScrollToTheEndAction;
     consoleActions[4] = ActionManager.getInstance().getAction("Print");
-    consoleActions[5] = new ClearAllAction();
+    consoleActions[5] = new ClearAllAction(this);
     for (int i = 0; i < customActions.size(); ++i) {
       consoleActions[i + 6] = customActions.get(i);
     }
