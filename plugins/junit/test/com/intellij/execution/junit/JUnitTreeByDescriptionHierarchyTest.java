@@ -92,6 +92,38 @@ public class JUnitTreeByDescriptionHierarchyTest {
   }
 
   @Test
+  public void testSameShortNames() throws Exception {
+    final Description rootDescription = Description.createSuiteDescription("root");
+    final ArrayList<Description> tests = new ArrayList<Description>();
+    for (String className : new String[]{"a.MyTest", "b.MyTest"}) {
+      final Description aTestClass = Description.createSuiteDescription(className);
+      rootDescription.addChild(aTestClass);
+      final Description testDescription = Description.createTestDescription(className, "testMe");
+      tests.add(testDescription);
+      aTestClass.addChild(testDescription);
+    }
+    doTest(rootDescription, tests, "##teamcity[suiteTreeStarted name='MyTest' locationHint='java:suite://a.MyTest']\n" +
+                                   "##teamcity[suiteTreeNode name='testMe' locationHint='java:test://a.MyTest.testMe']\n" +
+                                   "##teamcity[suiteTreeEnded name='MyTest']\n" +
+                                   "##teamcity[suiteTreeStarted name='MyTest' locationHint='java:suite://b.MyTest']\n" +
+                                   "##teamcity[suiteTreeNode name='testMe' locationHint='java:test://b.MyTest.testMe']\n" +
+                                   "##teamcity[suiteTreeEnded name='MyTest']\n",
+           "##teamcity[enteredTheMatrix]\n" +
+           "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
+           "##teamcity[testSuiteStarted name='MyTest']\n" +
+   
+           "##teamcity[testStarted name='testMe' locationHint='java:test://a.MyTest.testMe']\n" +
+           "\n" +
+           "##teamcity[testFinished name='testMe']\n" +
+           "##teamcity[testSuiteFinished name='MyTest']\n" +
+           "##teamcity[testSuiteStarted name='MyTest']\n" +
+           "##teamcity[testStarted name='testMe' locationHint='java:test://b.MyTest.testMe']\n" +
+           "\n" +
+           "##teamcity[testFinished name='testMe']\n" +
+           "##teamcity[testSuiteFinished name='MyTest']\n");
+  }
+
+  @Test
   public void testSingleParameterizedClass() throws Exception {
     final String className = "a.TestA";
     final Description aTestClassDescription = Description.createSuiteDescription(className);
