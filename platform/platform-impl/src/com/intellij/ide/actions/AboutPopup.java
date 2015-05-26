@@ -57,7 +57,7 @@ public class AboutPopup {
   public void show(@Nullable Window window) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
 
-    JPanel panel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
     Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl());
     if (appInfo.showLicenseeInfo()) {
       final InfoSurface infoSurface = new InfoSurface(image);
@@ -128,7 +128,7 @@ public class AboutPopup {
 
       setOpaque(false);
       setBackground(myColor);
-
+      setFocusable(true);
       Calendar cal = appInfo.getBuildDate();
       myLines.add(new AboutBoxLine(appInfo.getFullApplicationName(), true, null));
       appendLast();
