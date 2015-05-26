@@ -78,7 +78,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private volatile boolean myHasToRecreate;
 
   @NotNull
-  public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull final Editor editor, @NotNull final PsiFile file, final int passId) {
+  public static List<HighlightInfo.IntentionActionDescriptor> getAvailableActions(@NotNull final Editor editor,
+                                                                                  @NotNull final PsiFile file,
+                                                                                  final int passId) {
     final int offset = ((EditorEx)editor).getExpectedCaretOffset();
     final Project project = file.getProject();
 
@@ -139,7 +141,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     public final List<HighlightInfo.IntentionActionDescriptor> inspectionFixesToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    public void filterActions(@NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
+    private void filterActions(@NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
       filter(intentionsToShow, actionsFilter);
       filter(errorFixesToShow, actionsFilter);
       filter(inspectionFixesToShow, actionsFilter);
@@ -161,7 +163,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     @NonNls
     @Override
     public String toString() {
-      return "Intentions: " + intentionsToShow + "; Errors: " + errorFixesToShow + "; Inspection fixes: " + inspectionFixesToShow + "; Gutters: " + guttersToShow;
+      return
+        "Errors: " + errorFixesToShow + "; " +
+        "Inspection fixes: " + inspectionFixesToShow + "; " +
+        "Intentions: " + intentionsToShow + "; " +
+        "Gutters: " + guttersToShow;
     }
   }
 
@@ -229,7 +235,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       });
   }
 
-  private static boolean appendCleanupCode(final List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, PsiFile file) {
+  private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {
     for (HighlightInfo.IntentionActionDescriptor descriptor : actionDescriptors) {
       if (descriptor.canCleanup(file)) {
         final ArrayList<IntentionAction> options = new ArrayList<IntentionAction>();
@@ -247,11 +253,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!myShowBulb || hintComponent == null) {
       return;
     }
-    Boolean result = hintComponent.updateActions(myIntentionsInfo);
-    if (result == null) {
+    IntentionHintComponent.PopupUpdateResult result = hintComponent.updateActions(myIntentionsInfo);
+    if (result == IntentionHintComponent.PopupUpdateResult.HIDE_AND_RECREATE) {
       // reshow all
     }
-    else if (result == Boolean.FALSE) {
+    else if (result == IntentionHintComponent.PopupUpdateResult.CHANGED_INVISIBLE) {
       myHasToRecreate = true;
     }
     else {
@@ -279,11 +285,11 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     else {
       final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
       for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
-        if (fix.notError() || !isError) {
-          intentions.inspectionFixesToShow.add(fix);
+        if (fix.isError() && isError) {
+          intentions.errorFixesToShow.add(fix);
         }
         else {
-          intentions.errorFixesToShow.add(fix);
+          intentions.inspectionFixesToShow.add(fix);
         }
       }
     }

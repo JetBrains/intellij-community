@@ -761,8 +761,8 @@ public class HighlightInfo implements Segment {
       return myAction;
     }
 
-    boolean notError() {
-      return mySeverity != null && mySeverity.compareTo(HighlightSeverity.ERROR) < 0; 
+    boolean isError() {
+      return mySeverity == null || mySeverity.compareTo(HighlightSeverity.ERROR) >= 0;
     }
     
     boolean canCleanup(@NotNull PsiElement element) {
