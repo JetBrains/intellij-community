@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2015 JetBrains s.r.o.
  *
@@ -29,12 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.testFramework.PlatformTestCase.initPlatformLangPrefix;
-
 public class CompositeFoldingBuilderTest extends AbstractEditorTest {
-  static {
-    initPlatformLangPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {

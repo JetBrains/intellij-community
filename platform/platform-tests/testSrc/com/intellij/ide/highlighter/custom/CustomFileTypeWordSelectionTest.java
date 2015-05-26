@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.highlighter.custom;
 
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -23,9 +22,6 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
  * @author yole
  */
 public class CustomFileTypeWordSelectionTest extends LightPlatformCodeInsightFixtureTestCase {
-  public CustomFileTypeWordSelectionTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   public void testCustomFileTypeBraces() {
     doTest();
