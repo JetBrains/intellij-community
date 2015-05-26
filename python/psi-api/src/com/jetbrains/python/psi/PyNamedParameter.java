@@ -31,6 +31,14 @@ public interface PyNamedParameter extends PyParameter, PsiNamedElement, PsiNameI
   boolean isKeywordContainer();
 
   /**
+   * Parameter is considered "keyword-only" if it appears after named or unnamed positional vararg parameter.
+   * See PEP-3102 for more details.
+   *
+   * @return whether this parameter is keyword-only
+   */
+  boolean isKeywordOnly();
+
+  /**
    * @param includeDefaultValue if true, include the default value after an " = ".
    * @return Canonical representation of parameter. Includes asterisks for *param and **param, and name.
    */
