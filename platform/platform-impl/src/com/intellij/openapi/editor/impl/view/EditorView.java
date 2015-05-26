@@ -198,6 +198,11 @@ public class EditorView implements Disposable {
     myPainter.paint(g);
   }
 
+  public void repaintCarets() {
+    assertIsDispatchThread();
+    myPainter.repaintCarets();
+  }
+
   public Dimension getPreferredSize() {
     assertIsDispatchThread();
     return mySizeManager.getPreferredSize();
@@ -253,6 +258,13 @@ public class EditorView implements Disposable {
     assertIsDispatchThread();
     mySizeManager.reset();
     myTextLayoutCache.resetToDocumentSize();
+  }
+  
+  public boolean isRtlLocation(int offset) {
+    if (myDocument.getTextLength() == 0) return false;
+    int line = myDocument.getLineNumber(offset);
+    LineLayout layout = getLineLayout(line);
+    return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line));
   }
 
   @NotNull

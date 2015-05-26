@@ -52,6 +52,7 @@ class EditorPainter {
   private static final Color CARET_DARK = Gray._0;
   private static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
                                                                                    new float[]{0, 2, 0, 2}, 0);
+  private static final int CARET_DIRECTION_MARK_SIZE = 5;
 
   private final EditorView myView;
   private final EditorImpl myEditor;
@@ -636,46 +637,69 @@ class EditorPainter {
     }
   }
 
-  private void paintCaret(Graphics2D g) {
+  private void paintCaret(Graphics2D g_) {
     EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations();
     if (locations == null) return;
-    for (EditorImpl.CaretRectangle location : locations) {
-      paintCaretAt(g, location.myPoint.x, location.myPoint.y, location.myWidth, location.myCaret);
-    }
-  }
-  
-  private void paintCaretAt(Graphics2D g_, int x, int y, int width, Caret caret) {
+
     Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(g_);
     int lineHeight = myView.getLineHeight();
     EditorSettings settings = myEditor.getSettings();
     Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
     if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
     g.setColor(caretColor);
-  
-    if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-      if (UIUtil.isRetina()) {
-        g.fillRect(x, y, settings.getLineCursorWidth(), lineHeight);
-      } else {
-        for (int i = 0; i < settings.getLineCursorWidth(); i++) {
-          UIUtil.drawLine(g, x + i, y, x + i, y + lineHeight - 1);
+    for (EditorImpl.CaretRectangle location : locations) {
+      int x = location.myPoint.x;
+      int y = location.myPoint.y;
+      Caret caret = location.myCaret;
+      boolean isRtl = location.myIsRtl;
+      if (myEditor.isInsertMode() != settings.isBlockCursor()) {
+        int lineWidth = settings.getLineCursorWidth();
+        g.fillRect(x, y, lineWidth, lineHeight);
+        if (myDocument.getTextLength() > 0 && caret != null && !myView.getLineLayout(caret.getLogicalPosition().line).isLtr()) {
+          g.fillPolygon(new int[]{
+                          isRtl ? x + lineWidth - 1 : x,
+                          isRtl ? x + lineWidth - 1 - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE,
+                          isRtl ? x + lineWidth - 1 : x
+                        },
+                        new int[]{y, y, y + CARET_DIRECTION_MARK_SIZE}, 3);
         }
       }
-    }
-    else {
-      g.fillRect(Math.min(x, x + width), y, Math.abs(width), lineHeight - 1);
-      int targetVisualColumn = caret.getVisualPosition().column;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, caret.getVisualLineStart())) {
-        int startVisualColumn = fragment.getStartVisualColumn();
-        int endVisualColumn = fragment.getEndVisualColumn();
-        if (startVisualColumn <= targetVisualColumn && endVisualColumn > targetVisualColumn) {
-          g.setColor(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK);
-          fragment.draw(g, x, y + myView.getAscent(), targetVisualColumn - startVisualColumn, targetVisualColumn - startVisualColumn + 1);
-          break;
+      else {
+        int width = location.myWidth;
+        int startX = Math.max(0, isRtl ? x - width : x);
+        g.fillRect(startX, y, width, lineHeight - 1);
+        if (myDocument.getTextLength() > 0 && caret != null) {
+          int targetVisualColumn = caret.getVisualPosition().column;
+          for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, caret.getVisualLineStart())) {
+            int startVisualColumn = fragment.getStartVisualColumn();
+            int endVisualColumn = fragment.getEndVisualColumn();
+            if (startVisualColumn < targetVisualColumn && endVisualColumn > targetVisualColumn ||
+                startVisualColumn == targetVisualColumn && !isRtl ||
+                endVisualColumn == targetVisualColumn && isRtl) {
+              g.setColor(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK);
+              fragment.draw(g, startX, y + myView.getAscent(),
+                            targetVisualColumn - startVisualColumn - (isRtl ? 1 : 0),
+                            targetVisualColumn - startVisualColumn + (isRtl ? 0 : 1));
+              break;
+            }
+          }
         }
       }
     }
   }
-
+  
+  void repaintCarets() {
+    EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations();
+    if (locations == null) return;
+    int lineHeight = myView.getLineHeight();
+    for (EditorImpl.CaretRectangle location : locations) {
+      int x = location.myPoint.x;
+      int y = location.myPoint.y;
+      int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
+      myEditor.getContentComponent().repaintEditorComponent(x - width, y, width * 2, lineHeight);
+    }
+  }
+  
   private void paintLineFragments(Graphics2D g, Rectangle clip, int visualLine, int y, LineFragmentPainter painter) {
     float x = visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0;
     LogicalPosition logicalPosition = myView.visualToLogicalPosition(new VisualPosition(visualLine, 0), false);

@@ -200,6 +200,17 @@ class LineLayout {
     };
   }
 
+  boolean isLtr() {
+    return myBidiRunsInLogicalOrder.length == 0 || myBidiRunsInLogicalOrder.length == 1 && !myBidiRunsInLogicalOrder[0].isRtl();
+  }
+  
+  boolean isRtlLocation(int offset) {
+    for (BidiRun run : myBidiRunsInLogicalOrder) {
+      if (offset < run.endOffset) return run.isRtl();
+    }
+    return false;
+  }
+
   private static class BidiRun {
     private final byte level;
     private final int startOffset;
