@@ -124,6 +124,26 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     }
   }
 
+  @Override
+  public boolean isKeywordOnly() {
+    final PyParameterList parameters = getStubOrPsiParentOfType(PyParameterList.class);
+    if (parameters == null) {
+      return false;
+    }
+    boolean varargSeen = false;
+    for (PyParameter param : parameters.getParameters()) {
+      if (param == this) {
+        break;
+      }
+      final PyNamedParameter named = param.getAsNamed();
+      if ((named != null && named.isPositionalContainer()) || param instanceof PySingleStarParameter) {
+        varargSeen = true;
+        break;
+      }
+    }
+    return varargSeen;
+  }
+
   @Nullable
   public PyExpression getDefaultValue() {
     final PyNamedParameterStub stub = getStub();

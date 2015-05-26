@@ -295,7 +295,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
         else if (param.getText().startsWith("*")) {
           positionalContainer = param;
         }
-        else if (positionalContainer == null && singleStarParam == null) {
+        else if (param.getAsNamed() == null || !param.getAsNamed().isKeywordOnly()) {
           if (param.hasDefaultValue()) {
             myOptionalParams.add(param);
           }
