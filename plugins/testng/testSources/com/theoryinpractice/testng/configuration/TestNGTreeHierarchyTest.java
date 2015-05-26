@@ -74,6 +74,27 @@ public class TestNGTreeHierarchyTest {
   }
 
   @Test
+  public void testSkipMethodAfterStartTest() throws Exception {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    listener.onStart((ITestContext)null);
+    final MockTestNGResult result = new MockTestNGResult("ATest", "testName");
+    listener.onTestStart(result);
+    listener.onTestSkipped(result);
+    listener.onFinish((ITestContext)null);
+
+    Assert.assertEquals("output: " + buf, "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testIgnored name='testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName']\n" +
+                                          "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
   public void testOneTestMethodWithMultipleInvocationCount() throws Exception {
     final XmlSuite suite = new XmlSuite();
     final XmlTest test = new XmlTest();
