@@ -32,6 +32,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Processor;
@@ -47,6 +48,8 @@ import java.util.Collection;
  * Renders editor contents.
  */
 class EditorPainter {
+  private static final Color CARET_LIGHT = Gray._255;
+  private static final Color CARET_DARK = Gray._0;
   private static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
                                                                                    new float[]{0, 2, 0, 2}, 0);
 
@@ -127,14 +130,12 @@ class EditorPainter {
     int lineCount = myEditor.getVisibleLineCount();
     for (int visualLine = startVisualLine; visualLine <= endVisualLine; visualLine++) {
       int y = myView.visualLineToY(visualLine);
-      float x = 0;
       LineLayout prefixLayout = myView.getPrefixLayout();
       if (visualLine == 0 && prefixLayout != null) {
-        x += prefixLayout.getWidth();
-        paintBackground(g, myView.getPrefixAttributes(), 0, y, x);
+        paintBackground(g, myView.getPrefixAttributes(), 0, y, prefixLayout.getWidth());
       }
       if (visualLine >= lineCount) break;
-      paintLineFragments(g, clip, visualLine, x, y, new LineFragmentPainter() {
+      paintLineFragments(g, clip, visualLine, y, new LineFragmentPainter() {
         @Override
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
@@ -248,18 +249,17 @@ class EditorPainter {
     int lineCount = myEditor.getVisibleLineCount();
     for (int visualLine = startVisualLine; visualLine <= endVisualLine; visualLine++) {
       int y = myView.visualLineToY(visualLine) + myView.getAscent();
-      float x = 0;
       LineLayout prefixLayout = myView.getPrefixLayout();
       if (visualLine == 0 && prefixLayout != null) {
         g.setColor(myView.getPrefixAttributes().getForegroundColor());
-        x = paintLineLayoutWithEffect(g, prefixLayout, x, y, 
-                                      myView.getPrefixAttributes().getEffectColor(), myView.getPrefixAttributes().getEffectType());
+        paintLineLayoutWithEffect(g, prefixLayout, 0, y, 
+                                  myView.getPrefixAttributes().getEffectColor(), myView.getPrefixAttributes().getEffectType());
       }
       if (visualLine >= lineCount) break;
       
       final int[] currentLogicalLine = new int[] {-1}; 
       
-      paintLineFragments(g, clip, visualLine, (int)x, y, new LineFragmentPainter() {
+      paintLineFragments(g, clip, visualLine, y, new LineFragmentPainter() {
         @Override
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
@@ -289,7 +289,7 @@ class EditorPainter {
     }
   }
 
-  float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
+  private float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
                                   @Nullable Color effectColor, @Nullable EffectType effectType) {
     float initialX = x;
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
@@ -640,16 +640,16 @@ class EditorPainter {
     EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations();
     if (locations == null) return;
     for (EditorImpl.CaretRectangle location : locations) {
-      paintCaretAt(g, location.myPoint.x, location.myPoint.y, location.myWidth);
+      paintCaretAt(g, location.myPoint.x, location.myPoint.y, location.myWidth, location.myCaret);
     }
   }
   
-  private void paintCaretAt(Graphics2D g_, int x, int y, int width) {
+  private void paintCaretAt(Graphics2D g_, int x, int y, int width, Caret caret) {
     Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(g_);
     int lineHeight = myView.getLineHeight();
     EditorSettings settings = myEditor.getSettings();
     Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-    if (caretColor == null) caretColor = new JBColor(Gray._0, Gray._255);
+    if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
     g.setColor(caretColor);
   
     if (myEditor.isInsertMode() != settings.isBlockCursor()) {
@@ -662,15 +662,22 @@ class EditorPainter {
       }
     }
     else {
-      Color background = myEditor.getCaretModel().getTextAttributes().getBackgroundColor();
-      if (background == null) background = myEditor.getBackgroundColor();
-      g.setXORMode(background);
       g.fillRect(Math.min(x, x + width), y, Math.abs(width), lineHeight - 1);
-      g.setPaintMode();
+      int targetVisualColumn = caret.getVisualPosition().column;
+      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, caret.getVisualLineStart())) {
+        int startVisualColumn = fragment.getStartVisualColumn();
+        int endVisualColumn = fragment.getEndVisualColumn();
+        if (startVisualColumn <= targetVisualColumn && endVisualColumn > targetVisualColumn) {
+          g.setColor(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK);
+          fragment.draw(g, x, y + myView.getAscent(), targetVisualColumn - startVisualColumn, targetVisualColumn - startVisualColumn + 1);
+          break;
+        }
+      }
     }
   }
 
-  private void paintLineFragments(Graphics2D g, Rectangle clip, int visualLine, float x, int y, LineFragmentPainter painter) {
+  private void paintLineFragments(Graphics2D g, Rectangle clip, int visualLine, int y, LineFragmentPainter painter) {
+    float x = visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0;
     LogicalPosition logicalPosition = myView.visualToLogicalPosition(new VisualPosition(visualLine, 0), false);
     int offset = myDocument.getLineStartOffset(logicalPosition.line);
     int visualLineEndOffset = EditorUtil.getNotFoldedLineEndOffset(myEditor, offset);

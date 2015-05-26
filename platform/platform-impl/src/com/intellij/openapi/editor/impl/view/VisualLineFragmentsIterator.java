@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.markup.TextAttributes;
 
 import java.awt.*;
 import java.util.Iterator;
@@ -273,11 +272,14 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     // columns are visual (relative to fragment's start)
     void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
       if (myDelegate == null) {
-        LineLayout foldRegionLayout = myView.getFoldRegionLayout(myFoldRegion);
-        TextAttributes attributes = myView.getEditor().getFoldingModel().getPlaceholderAttributes();
-        myView.getPainter().paintLineLayoutWithEffect(g, foldRegionLayout, x, y, 
-                                                      attributes == null ? null : attributes.getEffectColor(),
-                                                      attributes == null ? null : attributes.getEffectType());
+        for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(x)) {
+          int fragmentStart = fragment.getStartVisualColumn();
+          int fragmentEnd = fragment.getEndVisualColumn();
+          if (fragmentStart < endRelativeColumn && fragmentEnd > startRelativeColumn) {
+            fragment.draw(g, fragment.getStartX(), y, 
+                          Math.max(0, startRelativeColumn - fragmentStart), Math.min(fragmentEnd, endRelativeColumn) - fragmentStart);
+          }
+        }
       }
       else {
         myDelegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
