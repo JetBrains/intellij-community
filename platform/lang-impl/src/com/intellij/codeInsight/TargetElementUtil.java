@@ -100,7 +100,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     int offset = editor.getCaretModel().getOffset();
     PsiReference result = findReference(editor, offset);
     if (result == null) {
-      int expectedCaretOffset = ((EditorEx)editor).getExpectedCaretOffset();
+      int expectedCaretOffset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : offset;
       if (expectedCaretOffset != offset) {
         result = findReference(editor, expectedCaretOffset);
       }
@@ -171,7 +171,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     final PsiElement result = getInstance().findTargetElement(editor, flags, offset);
     if (result != null) return result;
 
-    int expectedCaretOffset = ((EditorEx)editor).getExpectedCaretOffset();
+    int expectedCaretOffset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : offset;
     if (expectedCaretOffset != offset) {
       return getInstance().findTargetElement(editor, flags, expectedCaretOffset);
     }
