@@ -160,7 +160,7 @@ public class GithubConnection {
       .setSocketTimeout(timeout);
 
     if (auth.isUseProxy()) {
-      HttpConfigurable.getInstance().setProxy(builder);
+      HttpConfigurable.getInstance().setProxyIfEnabled(builder, auth.getHost());
     }
 
     return builder.build();
@@ -184,7 +184,7 @@ public class GithubConnection {
     }
 
     if (auth.isUseProxy()) {
-      HttpConfigurable.getInstance().setProxyCredentials(provider);
+      HttpConfigurable.getInstance().setProxyCredentialsIfEnabled(provider, auth.getHost());
     }
 
     return provider;
