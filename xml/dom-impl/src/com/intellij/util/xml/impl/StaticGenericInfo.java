@@ -52,8 +52,8 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   private boolean myInitialized;
   private CustomDomChildrenDescriptionImpl myCustomDescription;
 
-  public StaticGenericInfo(final Type type) {
-    myClass = ReflectionUtil.getRawType(type);
+  public StaticGenericInfo(Class clazz) {
+    myClass = clazz;
   }
 
   public final synchronized boolean buildMethodMaps() {
