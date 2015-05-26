@@ -15,6 +15,7 @@
  */
 package com.intellij.concurrency;
 
+import com.intellij.Patches;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -41,6 +42,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class JobLauncherImpl extends JobLauncher {
   private static final AtomicLong bits = new AtomicLong();
+  static {
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK8 : "Please port to java.util.concurrent.ForkJoinPool";
+  }
   private static final ForkJoinPool.ForkJoinWorkerThreadFactory FACTORY = new ForkJoinPool.ForkJoinWorkerThreadFactory() {
     @Override
     public ForkJoinWorkerThread newThread(ForkJoinPool pool) {

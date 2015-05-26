@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jrt;
 
+import com.intellij.Patches;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
@@ -34,6 +35,9 @@ import java.util.List;
 import java.util.Map;
 
 class JrtHandler extends ArchiveHandler {
+  static {
+    assert Patches.USE_REFLECTION_TO_ACCESS_JDK8;
+  }
   private static final URI ROOT_URI = URI.create("jrt:/");
   private static final Map<String, Object> EMPTY_ENV = Collections.emptyMap();
 
