@@ -25,6 +25,9 @@ import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -43,7 +46,17 @@ public abstract class XmlExtension {
 
   public static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
 
-  public static XmlExtension getExtension(PsiFile file) {
+  public static XmlExtension getExtension(@NotNull final PsiFile file) {
+    return CachedValuesManager.getCachedValue(file, new CachedValueProvider<XmlExtension>() {
+      @Nullable
+      @Override
+      public Result<XmlExtension> compute() {
+        return Result.create(calcExtension(file), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
+  }
+
+  private static XmlExtension calcExtension(PsiFile file) {
     for (XmlExtension extension : Extensions.getExtensions(EP_NAME)) {
       if (extension.isAvailable(file)) {
         return extension;

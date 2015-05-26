@@ -133,9 +133,6 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     LOG.assertTrue(myDebugProcess != null);
-    if (location == null) {
-      return SourcePosition.createFromLine(psiFile, -1);
-    }
 
     int lineNumber;
     try {

@@ -743,10 +743,21 @@ public class TemplateState implements Disposable {
 
     ExpressionContext context = createExpressionContext(start);
     Result result = isQuick ? expressionNode.calculateQuickResult(context) : expressionNode.calculateResult(context);
-    if (isQuick && result == null && !oldValue.isEmpty()) {
+    if (isQuick && result == null) {
+      if (!oldValue.isEmpty()) {
+        return;
+      }
+    }
+    
+    final boolean resultIsNullOrEmpty = result == null || result.equalsToText("", element);
+    
+    // do not update default value of neighbour segment
+    if (resultIsNullOrEmpty && myCurrentSegmentNumber >= 0 && 
+        (mySegments.getSegmentStart(segmentNumber) == mySegments.getSegmentEnd(myCurrentSegmentNumber) ||
+        mySegments.getSegmentEnd(segmentNumber) == mySegments.getSegmentStart(myCurrentSegmentNumber))) {
       return;
     }
-    if (defaultValue != null && (result == null || result.equalsToText("", element))) {
+    if (defaultValue != null && resultIsNullOrEmpty) {
       result = defaultValue.calculateResult(context);
     }
     if (element != null) {

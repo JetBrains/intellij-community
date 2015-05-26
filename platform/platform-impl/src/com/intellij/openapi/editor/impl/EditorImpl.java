@@ -2415,10 +2415,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Point position = new Point(0, visibleLine * lineHeight);
     CharSequence prefixText = myPrefixText == null ? null : new CharArrayCharSequence(myPrefixText);
     if (clipStartVisualPos.line == 0 && prefixText != null) {
-      position.x = drawBackground(g, prevBackColor = myPrefixAttributes.getBackgroundColor(), prefixText, 0, prefixText.length(), position,
+      Color backColor = myPrefixAttributes.getBackgroundColor();
+      position.x = drawBackground(g, backColor, prefixText, 0, prefixText.length(), position,
                                   myPrefixAttributes.getFontType(),
                                   defaultBackground, clip);
-      
+      prevBackColor = backColor;
     }
 
     if (clipStartPosition.line >= myDocument.getLineCount() || clipStartPosition.line < 0) {
@@ -2469,7 +2470,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (color != null) {
-        drawBackground(g, prevBackColor = color, softWrap.getIndentInPixels(), position, defaultBackground, clip);
+        drawBackground(g, color, softWrap.getIndentInPixels(), position, defaultBackground, clip);
+        prevBackColor = color;
       }
       position.x = softWrap.getIndentInPixels();
     }
@@ -2525,7 +2527,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             );
           }
           CharSequence chars = collapsedFolderAt.getPlaceholderText();
-          position.x = drawBackground(g, prevBackColor = backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          position.x = drawBackground(g, backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          prevBackColor = backColor;
         }
 
         lIterator.advance();
@@ -2541,7 +2544,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             );
           }
           CharSequence chars = collapsedFolderAt.getPlaceholderText();
-          position.x = drawBackground(g, prevBackColor = backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          position.x = drawBackground(g, backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          prevBackColor = backColor;
         }
         else if (hEnd > lEnd - lIterator.getSeparatorLength()) {
           position.x = drawSoftWrapAwareBackground(
@@ -2623,8 +2627,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int drawSoftWrapAwareBackground(@NotNull Graphics g,
-                                          Color backColor,
-                                          Color prevBackColor,
+                                          @Nullable Color backColor,
+                                          @Nullable Color prevBackColor,
                                           @NotNull CharSequence text,
                                           int start,
                                           int end,
@@ -3198,8 +3202,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
   
   @Nullable
-  public CaretRectangle[] getCaretLocations() {
-    return myCaretCursor.getCaretLocations();
+  public CaretRectangle[] getCaretLocations(boolean onlyIfShown) {
+    return myCaretCursor.getCaretLocations(onlyIfShown);
   }
 
   private void paintLineMarkersSeparators(@NotNull final Graphics g,
@@ -4607,10 +4611,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void setCursorPosition() {
     final List<CaretRectangle> caretPoints = new ArrayList<CaretRectangle>();
     for (Caret caret : getCaretModel().getAllCarets()) {
+      boolean isRtl = myUseNewRendering && myView.isRtlLocation(caret.getOffset());
       VisualPosition caretPosition = caret.getVisualPosition();
       Point pos1 = visualPositionToXY(caretPosition);
-      Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, caretPosition.column + 1));
-      caretPoints.add(new CaretRectangle(pos1, pos2.x - pos1.x, caret));
+      Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, Math.max(0, caretPosition.column + (isRtl ? -1 : 1))));
+      caretPoints.add(new CaretRectangle(pos1, Math.abs(pos2.x - pos1.x), caret, isRtl));
     }
     myCaretCursor.setPositions(caretPoints.toArray(new CaretRectangle[caretPoints.size()]));
   }
@@ -4681,11 +4686,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public final Point myPoint;
     public final int myWidth;
     public final Caret myCaret;
+    public final boolean myIsRtl;
 
-    private CaretRectangle(Point point, int width, Caret caret) {
+    private CaretRectangle(Point point, int width, Caret caret, boolean isRtl) {
       myPoint = point;
       myWidth = Math.max(width, 2);
       myCaret = caret;
+      myIsRtl = isRtl;
     }
   }
 
@@ -4698,7 +4705,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private long myStartTime = 0;
 
     private CaretCursor() {
-      myLocations = new CaretRectangle[] {new CaretRectangle(new Point(0, 0), 0, null)};
+      myLocations = new CaretRectangle[] {new CaretRectangle(new Point(0, 0), 0, null, false)};
       setEnabled(true);
     }
 
@@ -4737,23 +4744,30 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myStartTime = System.currentTimeMillis();
       myLocations = locations;
       myIsShown = true;
-      repaint();
+      if (!myUseNewRendering) {
+        repaint();
+      }
     }
 
     private void repaint() {
-      for (CaretRectangle location : myLocations) {
-        myEditorComponent.repaintEditorComponent(location.myPoint.x, location.myPoint.y, location.myWidth, getLineHeight());
+      if (myUseNewRendering) {
+        myView.repaintCarets();
+      }
+      else {
+        for (CaretRectangle location : myLocations) {
+          myEditorComponent.repaintEditorComponent(location.myPoint.x, location.myPoint.y, location.myWidth, getLineHeight());
+        }
       }
     }
 
     @Nullable
-    private CaretRectangle[] getCaretLocations() {
-      if (!isEnabled() || !myIsShown || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent())) return null;
+    private CaretRectangle[] getCaretLocations(boolean onlyIfShown) {
+      if (onlyIfShown && (!isEnabled() || !myIsShown || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent()))) return null;
       return myLocations;
     }    
 
     private void paint(@NotNull Graphics g) {
-      CaretRectangle[] locations = getCaretLocations();
+      CaretRectangle[] locations = getCaretLocations(true);
       if (locations == null) return;
 
       for (CaretRectangle location : myLocations) {

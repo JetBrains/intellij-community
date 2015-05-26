@@ -42,6 +42,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Iterator over editor's text contents. Each iteration step corresponds to a text fragment having common graphical attributes 
+ * (font style, foreground and background color, effect type and color).  
+ */
 // This class should replace com.intellij.openapi.editor.impl.IterationState when new editor rendering engine will become default
 public class IterationState {
   private static final Logger LOG = Logger.getInstance(IterationState.class);

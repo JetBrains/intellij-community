@@ -22,6 +22,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
@@ -108,13 +111,20 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
   public static Collection<IdeaPlugin> getAllPlugins(final Project project) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
-
-    GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
-      union(ProjectScope.getLibrariesScope(project));
-    List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
-    return ContainerUtil.map(files, new Function<DomFileElement<IdeaPlugin>, IdeaPlugin>() {
-      public IdeaPlugin fun(DomFileElement<IdeaPlugin> ideaPluginDomFileElement) {
-        return ideaPluginDomFileElement.getRootElement();
+    
+    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Collection<IdeaPlugin>>() {
+      @Nullable
+      @Override
+      public Result<Collection<IdeaPlugin>> compute() {
+        GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project).
+          union(ProjectScope.getLibrariesScope(project));
+        List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
+        final Collection<IdeaPlugin> pluginList = ContainerUtil.map(files, new Function<DomFileElement<IdeaPlugin>, IdeaPlugin>() {
+          public IdeaPlugin fun(DomFileElement<IdeaPlugin> ideaPluginDomFileElement) {
+            return ideaPluginDomFileElement.getRootElement();
+          }
+        });
+        return Result.create(pluginList, PsiModificationTracker.MODIFICATION_COUNT);
       }
     });
   }

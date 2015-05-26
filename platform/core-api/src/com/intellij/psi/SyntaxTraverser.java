@@ -28,6 +28,11 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
   }
 
   @NotNull
+  public static SyntaxTraverser<PsiElement> revPsiTraverser() {
+    return new RevPsiTraverser(null);
+  }
+
+  @NotNull
   public static SyntaxTraverser<ASTNode> astTraverser() {
     return new ASTTraverser(null);
   }
@@ -75,7 +80,46 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
     return null;
   }
 
-  private static class PsiTraverser extends SyntaxTraverser<PsiElement> {
+  private abstract static class FirstNextTraverser<T> extends SyntaxTraverser<T> {
+
+    public FirstNextTraverser(Meta<T> meta) {
+      super(meta);
+    }
+
+    @Nullable
+    protected abstract T first(@NotNull T node);
+
+    @Nullable
+    protected abstract T next(@NotNull T node);
+
+    @Override
+    protected final Iterable<T> childrenImpl(@NotNull final T node) {
+      final T first = first(node);
+      if (first == null) return JBIterable.empty();
+      return new JBIterable<T>() {
+        @Override
+        public Iterator<T> iterator() {
+          return new UnmodifiableIterator<T>(null) {
+            T cur = first;
+
+            @Override
+            public boolean hasNext() {
+              return cur != null;
+            }
+
+            @Override
+            public T next() {
+              T result = cur;
+              cur = FirstNextTraverser.this.next(cur);
+              return result;
+            }
+          };
+        }
+      };
+    }
+  }
+
+  private static class PsiTraverser extends FirstNextTraverser<PsiElement> {
 
     public PsiTraverser(Meta<PsiElement> meta) {
       super(meta);
@@ -86,29 +130,14 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
       return new PsiTraverser(meta);
     }
 
-    @Override
-    protected Iterable<PsiElement> childrenImpl(@NotNull final PsiElement node) {
-      final Ref<PsiElement> ref = Ref.create(node.getFirstChild());
-      if (ref.isNull()) return Collections.emptyList();
-      return new JBIterable<PsiElement>() {
-        @Override
-        public Iterator<PsiElement> iterator() {
-          if (ref.isNull()) return ContainerUtil.emptyIterator();
-          return new UnmodifiableIterator<PsiElement>(null) {
-            @Override
-            public boolean hasNext() {
-              return !ref.isNull();
-            }
+    @Nullable
+    protected PsiElement first(@NotNull PsiElement node) {
+      return node.getFirstChild();
+    }
 
-            @Override
-            public PsiElement next() {
-              PsiElement cur = ref.get();
-              ref.set(cur.getNextSibling());
-              return cur;
-            }
-          };
-        }
-      };
+    @Nullable
+    protected PsiElement next(@NotNull PsiElement node) {
+      return node.getNextSibling();
     }
 
     @NotNull
@@ -136,7 +165,31 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
     }
   }
 
-  private static class ASTTraverser extends SyntaxTraverser<ASTNode> {
+  private static class RevPsiTraverser extends PsiTraverser {
+
+    public RevPsiTraverser(Meta<PsiElement> meta) {
+      super(meta);
+    }
+
+    @Override
+    protected SyntaxTraverser<PsiElement> newInstance(Meta<PsiElement> meta) {
+      return new RevPsiTraverser(meta);
+    }
+
+    @Nullable
+    @Override
+    protected PsiElement first(@NotNull PsiElement node) {
+      return node.getLastChild();
+    }
+
+    @Nullable
+    @Override
+    protected PsiElement next(@NotNull PsiElement node) {
+      return node.getPrevSibling();
+    }
+  }
+
+  private static class ASTTraverser extends FirstNextTraverser<ASTNode> {
 
     public ASTTraverser(Meta<ASTNode> meta) {
       super(meta);
@@ -147,29 +200,16 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
       return new ASTTraverser(meta);
     }
 
+    @Nullable
     @Override
-    protected Iterable<ASTNode> childrenImpl(@NotNull final ASTNode node) {
-      final Ref<ASTNode> ref = Ref.create(node.getFirstChildNode());
-      if (ref.isNull()) return Collections.emptyList();
-      return new JBIterable<ASTNode>() {
-        @Override
-        public Iterator<ASTNode> iterator() {
-          if (ref.isNull()) return ContainerUtil.emptyIterator();
-          return new UnmodifiableIterator<ASTNode>(null) {
-            @Override
-            public boolean hasNext() {
-              return !ref.isNull();
-            }
+    protected ASTNode first(@NotNull ASTNode node) {
+      return node.getFirstChildNode();
+    }
 
-            @Override
-            public ASTNode next() {
-              ASTNode cur = ref.get();
-              ref.set(cur.getTreeNext());
-              return cur;
-            }
-          };
-        }
-      };
+    @Nullable
+    @Override
+    protected ASTNode next(@NotNull ASTNode node) {
+      return node.getTreeNext();
     }
 
     @NotNull
@@ -198,7 +238,7 @@ public abstract class SyntaxTraverser<T> extends FilteredTraverser<T, SyntaxTrav
   }
 
   private abstract static class FlyweightTraverser<T> extends SyntaxTraverser<T> {
-    protected final FlyweightCapableTreeStructure<T> myTree;
+    final FlyweightCapableTreeStructure<T> myTree;
 
     FlyweightTraverser(@NotNull Meta<T> meta,
                        @NotNull FlyweightCapableTreeStructure<T> structure) {

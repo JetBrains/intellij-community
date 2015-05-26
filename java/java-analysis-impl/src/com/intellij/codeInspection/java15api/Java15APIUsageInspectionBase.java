@@ -269,7 +269,8 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
             final PsiReferenceParameterList parameterList = reference.getParameterList();
             if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
               for (String generifiedClass : ourGenerifiedClasses) {
-                if (InheritanceUtil.isInheritor((PsiClass)resolved, generifiedClass)) {
+                if (InheritanceUtil.isInheritor((PsiClass)resolved, generifiedClass) && 
+                    !isRawInheritance(generifiedClass, (PsiClass)resolved, new HashSet<PsiClass>())) {
                   String message = InspectionsBundle.message("inspection.1.7.problem.descriptor", getJdkName(languageLevel));
                   myHolder.registerProblem(reference, message);
                   break;
@@ -279,6 +280,22 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
           }
         }
       }
+    }
+
+    private boolean isRawInheritance(String generifiedClassQName, PsiClass currentClass, Set<PsiClass> visited) {
+      for (PsiClassType classType : currentClass.getSuperTypes()) {
+        if (classType.isRaw()) {
+          return true;
+        }
+        final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+        final PsiClass superClass = resolveResult.getElement();
+        if (visited.add(superClass) && InheritanceUtil.isInheritor(superClass, generifiedClassQName)) {
+          if (isRawInheritance(generifiedClassQName, superClass, visited)) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     private boolean isIgnored(PsiClass psiClass) {

@@ -234,12 +234,12 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   public static void generateTypeParameters(PsiTypeParameterListOwner typeParameterOwner, StringBuilder buffer) {
     if (typeParameterOwner.hasTypeParameters()) {
-      PsiTypeParameter[] parms = typeParameterOwner.getTypeParameters();
+      PsiTypeParameter[] params = typeParameterOwner.getTypeParameters();
 
       buffer.append("&lt;");
 
-      for (int i = 0; i < parms.length; i++) {
-        PsiTypeParameter p = parms[i];
+      for (int i = 0; i < params.length; i++) {
+        PsiTypeParameter p = params[i];
 
         buffer.append(p.getName());
         PsiClassType[] refs = p.getExtendsList().getReferencedTypes();
@@ -256,7 +256,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
           }
         }
 
-        if (i < parms.length - 1) {
+        if (i < params.length - 1) {
           buffer.append(", ");
         }
       }
@@ -292,15 +292,15 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     buffer.append(method.getName());
 
     buffer.append(" (");
-    PsiParameter[] parms = method.getParameterList().getParameters();
-    for (int i = 0; i < parms.length; i++) {
-      PsiParameter parm = parms[i];
-      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(parm.getType()), method, false);
+    PsiParameter[] params = method.getParameterList().getParameters();
+    for (int i = 0; i < params.length; i++) {
+      PsiParameter param = params[i];
+      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(param.getType()), method, false);
       buffer.append(" ");
-      if (parm.getName() != null) {
-        buffer.append(parm.getName());
+      if (param.getName() != null) {
+        buffer.append(param.getName());
       }
-      if (i < parms.length - 1) {
+      if (i < params.length - 1) {
         buffer.append(", ");
       }
     }
@@ -390,7 +390,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   @Override
   public String generateDocumentationContentStub(PsiComment _comment) {
-    final PsiDocCommentOwner commentOwner = ((PsiDocComment)_comment).getOwner();
+    PsiDocCommentOwner commentOwner = ((PsiDocComment)_comment).getOwner();
+    assert commentOwner != null;
     final Project project = commentOwner.getProject();
     final StringBuilder builder = new StringBuilder();
     final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
@@ -441,6 +442,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
             String paramName = null;
             for (PsiElement dataElement : dataElements) {
               if (dataElement instanceof PsiDocParamRef) {
+                //noinspection ConstantConditions
                 paramName = dataElement.getReference().getCanonicalText();
                 break;
               }

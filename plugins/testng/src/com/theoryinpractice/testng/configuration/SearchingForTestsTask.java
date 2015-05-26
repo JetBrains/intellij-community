@@ -99,7 +99,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
 
   @Override
   protected void startListening() {
-    if (!Registry.is("testng_sm_runner")) myClient.startListening(myConfig);
+    if (!Registry.is("testng_sm")) myClient.startListening(myConfig);
   }
 
   protected void logCantRunException(ExecutionException e) {

@@ -191,7 +191,9 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
       JspFile jspFile = JspPsiUtil.getJspFile(parent.getPsi());
       if (jspFile != null) {
         JspClass jspClass = (JspClass)jspFile.getJavaClass();
-        addReferencesInRange(array, jspClass.getNode(), startOffset, endOffset);
+        if (jspClass != null) {
+          addReferencesInRange(array, jspClass.getNode(), startOffset, endOffset);
+        }
         return;
       }
     }

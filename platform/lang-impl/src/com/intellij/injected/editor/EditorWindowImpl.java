@@ -875,7 +875,6 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
 
   @Override
   public int getExpectedCaretOffset() {
-    int offset = myDelegate.getExpectedCaretOffset();
-    return offset == -1 || !myDocumentWindow.containsRange(offset,offset) ? -1 : myDocumentWindow.hostToInjected(offset);
+    return myDocumentWindow.hostToInjected(myDelegate.getExpectedCaretOffset());
   }
 }

@@ -48,9 +48,9 @@ public class TestNGTreeHierarchyTest {
     doTest(suite, "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                   "\n" +
-                  "##teamcity[testStarted name='test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
+                  "##teamcity[testStarted name='test1|[0|]' locationHint='java:test://a.ATest.test1|[0|]']\n" +
                   "\n" +
-                  "##teamcity[testFinished name='test1']\n");
+                  "##teamcity[testFinished name='test1|[0|]']\n");
   }
 
   @Test
@@ -60,6 +60,27 @@ public class TestNGTreeHierarchyTest {
     final IDEATestNGRemoteListener listener = createListener(buf);
     listener.onStart((ITestContext)null);
     listener.onTestSkipped(new MockTestNGResult("ATest", "testName"));
+    listener.onFinish((ITestContext)null);
+
+    Assert.assertEquals("output: " + buf, "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testIgnored name='testName']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testName']\n" +
+                                          "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
+  public void testSkipMethodAfterStartTest() throws Exception {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    listener.onStart((ITestContext)null);
+    final MockTestNGResult result = new MockTestNGResult("ATest", "testName");
+    listener.onTestStart(result);
+    listener.onTestSkipped(result);
     listener.onFinish((ITestContext)null);
 
     Assert.assertEquals("output: " + buf, "\n" +
@@ -85,17 +106,17 @@ public class TestNGTreeHierarchyTest {
     doTest(suite, "\n" +
                   "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://a.ATest']\n" +
                   "\n" +
-                  "##teamcity[testStarted name='test1' locationHint='java:test://a.ATest.test1|[0|]']\n" +
+                  "##teamcity[testStarted name='test1|[0|]' locationHint='java:test://a.ATest.test1|[0|]']\n" +
                   "\n" +
-                  "##teamcity[testFinished name='test1']\n" +
+                  "##teamcity[testFinished name='test1|[0|]']\n" +
                   "\n" +
-                  "##teamcity[testStarted name='test1 (1)' locationHint='java:test://a.ATest.test1|[1|]']\n" +
+                  "##teamcity[testStarted name='test1|[1|] (1)' locationHint='java:test://a.ATest.test1|[1|]']\n" +
                   "\n" +
-                  "##teamcity[testFinished name='test1 (1)']\n" +
+                  "##teamcity[testFinished name='test1|[1|] (1)']\n" +
                   "\n" +
-                  "##teamcity[testStarted name='test1 (2)' locationHint='java:test://a.ATest.test1|[2|]']\n" +
+                  "##teamcity[testStarted name='test1|[2|] (2)' locationHint='java:test://a.ATest.test1|[2|]']\n" +
                   "\n" +
-                  "##teamcity[testFinished name='test1 (2)']\n");
+                  "##teamcity[testFinished name='test1|[2|] (2)']\n");
   }
 
   @Test
@@ -140,6 +161,21 @@ public class TestNGTreeHierarchyTest {
                                           "\n" +
                                           "##teamcity[testFinished name='tearDown']\n" +
                                           "##teamcity[testSuiteFinished name='a.ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
+  public void testNullParameters() throws Exception {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final MockTestNGResult result = new MockTestNGResult("ATest", "testMe", null, new Object[]{null, null});
+    listener.onTestStart(result);
+    listener.onTestFinished(result);
+    Assert.assertEquals("output: " + buf, "\n" +
+                                          "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
+                                          "\n" +
+                                          "##teamcity[testStarted name='testMe|[null, null|]' locationHint='java:test://ATest.testMe|[0|]']\n" +
+                                          "\n" +
+                                          "##teamcity[testFinished name='testMe|[null, null|]']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   private static void doTest(XmlSuite suite, String expected) {
@@ -191,12 +227,12 @@ public class TestNGTreeHierarchyTest {
     }
 
     private MockTestNGResult(String className, String methodName) {
-     this(className, methodName, null, null);
+     this(className, methodName, null, ArrayUtil.EMPTY_OBJECT_ARRAY);
     }
 
     @Override
     public Object[] getParameters() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      return myParams;
     }
 
     @Override

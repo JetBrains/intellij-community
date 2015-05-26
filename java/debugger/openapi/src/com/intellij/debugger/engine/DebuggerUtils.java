@@ -362,21 +362,20 @@ public abstract class DebuggerUtils {
   public static PsiClass findClass(@NotNull final String className, @NotNull Project project, final GlobalSearchScope scope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
-      final PsiManager psiManager = PsiManager.getInstance(project);
-      final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
       if (getArrayClass(className) != null) {
-        return javaPsiFacade.getElementFactory()
-          .getArrayClass(LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel());
+        return JavaPsiFacade.getInstance(project).getElementFactory()
+          .getArrayClass(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       }
       if (project.isDefault()) {
         return null;
       }
 
-      PsiClass psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
+      PsiManager psiManager = PsiManager.getInstance(project);
+      PsiClass psiClass = ClassUtil.findPsiClass(psiManager, className, null, true, scope);
       if (psiClass == null) {
         GlobalSearchScope globalScope = GlobalSearchScope.allScope(project);
         if (!globalScope.equals(scope)) {
-          psiClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, globalScope);
+          psiClass = ClassUtil.findPsiClass(psiManager, className, null, true, globalScope);
         }
       }
 

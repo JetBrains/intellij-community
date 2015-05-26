@@ -26,7 +26,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.xml.util.XmlEnumeratedValueReferenceProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -46,18 +45,18 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
   @Override
   @NotNull
   public final PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
-    final DomManager domManager = DomManager.getDomManager(psiElement.getProject());
+    final DomManagerImpl domManager = DomManagerImpl.getDomManager(psiElement.getProject());
 
-    final DomElement domElement;
+    final DomInvocationHandler<?, ?> handler;
     if (psiElement instanceof XmlTag) {
-      domElement = domManager.getDomElement((XmlTag)psiElement);
+      handler = domManager.getDomHandler((XmlTag)psiElement);
     } else if (psiElement instanceof XmlAttributeValue && psiElement.getParent() instanceof XmlAttribute) {
-      domElement = domManager.getDomElement((XmlAttribute)psiElement.getParent());
+      handler = domManager.getDomHandler((XmlAttribute)psiElement.getParent());
     } else {
       return PsiReference.EMPTY_ARRAY;
     }
 
-    if (!(domElement instanceof GenericDomValue)) {
+    if (handler == null || !GenericDomValue.class.isAssignableFrom(handler.getRawType())) {
       return PsiReference.EMPTY_ARRAY;
     }
 
@@ -69,9 +68,9 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)psiElement)) return PsiReference.EMPTY_ARRAY;
     }
 
-    final GenericDomValue domValue = (GenericDomValue)domElement;
+    final GenericDomValue domValue = (GenericDomValue)handler.getProxy();
 
-    final Referencing referencing = domValue.getAnnotation(Referencing.class);
+    final Referencing referencing = handler.getAnnotation(Referencing.class);
     final Object converter;
     if (referencing == null) {
       converter = WrappingConverter.getDeepestConverter(domValue.getConverter(), domValue);
@@ -80,7 +79,7 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       Class<? extends CustomReferenceConverter> clazz = referencing.value();
       converter = ((ConverterManagerImpl)domManager.getConverterManager()).getInstance(clazz);
     }
-    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter);
+    PsiReference[] references = createReferences(domValue, (XmlElement)psiElement, converter, handler, domManager);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (PsiReference reference : references) {
         if (!reference.isSoft()) {
@@ -98,32 +97,31 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     return references;
   }
 
-  private static ConvertContext createConvertContext(final PsiElement psiElement, final GenericDomValue domValue) {
-    return ConvertContextFactory.createConvertContext(domValue);
-  }
-
-  @Nullable
-  private static DomInvocationHandler getInvocationHandler(final GenericDomValue domValue) {
-    return DomManagerImpl.getDomInvocationHandler(domValue);
-  }
-
-  private PsiReference[] createReferences(final GenericDomValue domValue, final XmlElement psiElement, final Object converter) {
-    ConvertContext context = createConvertContext(psiElement, domValue);
-
-    List<PsiReference> result = new ArrayList<PsiReference>();
-    String unresolvedText = ElementManipulators.getValueText(psiElement);
-
-    for (DomReferenceInjector each : DomUtil.getFileElement(domValue).getFileDescription().getReferenceInjectors()) {
-      Collections.addAll(result, each.inject(unresolvedText, psiElement, context));
+  private PsiReference[] createReferences(final GenericDomValue domValue, final XmlElement psiElement, final Object converter, DomInvocationHandler handler, DomManager domManager) {
+    final XmlFile file = handler.getFile();
+    final DomFileDescription<?> description = domManager.getDomFileDescription(file);
+    if (description == null) {
+      return PsiReference.EMPTY_ARRAY; // should not happen
     }
 
-    Collections.addAll(result, doCreateReferences(domValue, psiElement, converter, context));
+    List<PsiReference> result = new ArrayList<PsiReference>();
+
+    ConvertContext context = ConvertContextFactory.createConvertContext(domValue);
+    final List<DomReferenceInjector> injectors = description.getReferenceInjectors();
+    if (!injectors.isEmpty()) {
+      String unresolvedText = ElementManipulators.getValueText(psiElement);
+      for (DomReferenceInjector each : injectors) {
+        Collections.addAll(result, each.inject(unresolvedText, psiElement, context));
+      }
+    }
+
+    Collections.addAll(result, doCreateReferences(domValue, psiElement, converter, context, handler));
 
     return result.toArray(new PsiReference[result.size()]);
   }
 
   @NotNull
-  private PsiReference[] doCreateReferences(GenericDomValue domValue, XmlElement psiElement, Object converter, ConvertContext context) {
+  private PsiReference[] doCreateReferences(GenericDomValue domValue, XmlElement psiElement, Object converter, ConvertContext context, DomInvocationHandler invocationHandler) {
     if (converter instanceof CustomReferenceConverter) {
       final PsiReference[] references =
         ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, context);
@@ -141,8 +139,6 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       return new PsiReference[]{new GenericDomValueReference(domValue)};
     }
 
-    final DomInvocationHandler invocationHandler = getInvocationHandler(domValue);
-    assert invocationHandler != null;
     final Class clazz = DomUtil.getGenericValueParameter(invocationHandler.getDomElementType());
     if (clazz == null) return PsiReference.EMPTY_ARRAY;
 

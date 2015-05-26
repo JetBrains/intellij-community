@@ -36,6 +36,7 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -126,7 +127,7 @@ public class PythonPathEditor extends SdkPathEditor {
 
   @Override
   protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-    AnActionButton reloadButton = new AnActionButton("Reload list of paths", AllIcons.Actions.Refresh) {
+    AnActionButton reloadButton = new AnActionButton(PyBundle.message("sdk.paths.dialog.reload.paths"), AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         onReloadButtonClicked();
@@ -227,10 +228,10 @@ public class PythonPathEditor extends SdkPathEditor {
 
     public String getPresentationSuffix(VirtualFile file) {
       if (myAdded.contains(file)) {
-        return "(added by user)";
+        return PyBundle.message("sdk.paths.dialog.added.by.user.suffix");
       }
       if (myExcluded.contains(file)) {
-        return "(removed by user)";
+        return PyBundle.message("sdk.paths.dialog.removed.by.user.suffix");
       }
       return "";
     }

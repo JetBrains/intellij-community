@@ -83,7 +83,7 @@ public class JUnit4TestListener extends RunListener {
   public void testRunFinished(Result result) throws Exception {
     for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
       Object parent = myStartedSuites.get(i);
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName((String)parent) + "\']");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
     }
     myStartedSuites.clear();
   }
@@ -100,14 +100,14 @@ public class JUnit4TestListener extends RunListener {
     String currentParent;
     while (idx < myStartedSuites.size() && idx < parentsHierarchy.size()) {
       currentClass = (String)myStartedSuites.get(idx);
-      currentParent = getShortName((String)parentsHierarchy.get(parentsHierarchy.size() - 1 - idx));
+      currentParent = (String)parentsHierarchy.get(parentsHierarchy.size() - 1 - idx);
       if (!currentClass.equals(currentParent)) break;
       idx++;
     }
 
     for (int i = myStartedSuites.size() - 1; i >= idx; i--) {
       currentClass = (String)myStartedSuites.remove(i);
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(currentClass) + "\']");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(currentClass)) + "\']");
     }
 
     for (int i = idx; i < parentsHierarchy.size(); i++) {
@@ -115,7 +115,7 @@ public class JUnit4TestListener extends RunListener {
       final String className = getShortName(fqName);
       if (!className.equals(myRootName)) {
         myPrintStream.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + (parents == null ? " locationHint=\'java:suite://" + escapeName(fqName) + "\'" : "") + "]");
-        myStartedSuites.add(className);
+        myStartedSuites.add(fqName);
       }
     }
 

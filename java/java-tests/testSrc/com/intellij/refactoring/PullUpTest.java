@@ -40,6 +40,8 @@ import java.util.Arrays;
 public class PullUpTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/pullUp/";
 
+  private static final String IGNORE_CONFLICTS = "IGNORE"; 
+
   public void testQualifiedThis() {
     doTest(new RefactoringTestUtil.MemberDescriptor("Inner", PsiClass.class));
   }
@@ -163,6 +165,11 @@ public class PullUpTest extends LightRefactoringTestCase {
   public void testPreserveOverride() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
+
+  public void testSubstituteOverrideToMerge() {
+    doTest(false, IGNORE_CONFLICTS, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
+
   public void testAsDefaultMethodOverAbstract() {
     doTest(false, "Class <b><code>Test.Printer</code></b> already contains a method <b><code>foo()</code></b>", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
@@ -231,7 +238,7 @@ public class PullUpTest extends LightRefactoringTestCase {
       fail(conflictsMap.values().iterator().next());
     }
 
-    if (conflictMessage != null) {
+    if (conflictMessage != null && !IGNORE_CONFLICTS.equals(conflictMessage)) {
       assertEquals(conflictMessage, conflictsMap.values().iterator().next());
       return;
     }

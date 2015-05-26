@@ -91,10 +91,8 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
       myInvocationCount = 0;
       myMethodName = testMethodName;
     }
-    String paramString = getParamsString(parameters, myInvocationCount);
-    if (paramString != null) {
-      myParamsMap.put(result, paramString);
-    }
+    final String paramString = getParamsString(parameters, myInvocationCount);
+    myParamsMap.put(result, paramString);
     onTestStart(result, paramString, myInvocationCount);
     myInvocationCount++;
   }
@@ -175,7 +173,9 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public void onTestSkipped(ExposedTestResult result) {
-    onTestStart(result);
+    if (!myParamsMap.containsKey(result)) {
+      onTestStart(result);
+    }
     myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getTestMethodNameWithParams(result)) + "\']");
     onTestFinished(result);
   }
@@ -205,7 +205,8 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
         if (i > 0) {
           buf.append(", ");
         }
-        buf.append(parameters[i].toString());
+        final Object parameter = parameters[i];
+        buf.append(parameter != null ? parameter.toString() : null);
       }
       paramString = "[" + buf.toString() + "]";
     }

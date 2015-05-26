@@ -50,6 +50,6 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
 
   @Override
   public long getModificationCount() {
-    return myManagingFS.getCheapFileSystemModificationCount();
+    return myManagingFS.getModificationCount();
   }
 }
