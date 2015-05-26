@@ -27,9 +27,9 @@ public class FormPreviewFrame {
   // Note: this class should not be obfuscated
 
   public static void main(String[] args) {
-    FormPreviewFrame f = new FormPreviewFrame();
+    final FormPreviewFrame f = new FormPreviewFrame();
 
-    JFrame frame = new JFrame(ourBundle.getString("form.preview.title"));
+    final JFrame frame = new JFrame(ourBundle.getString("form.preview.title"));
     frame.setContentPane(f.myComponent);
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
