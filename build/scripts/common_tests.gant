@@ -45,8 +45,15 @@ target('run_tests': 'Run java tests') {
   depends([compile])
 
   def classpathFile = "$home/junit.classpath"
-  List<String> testRuntimeClasspath = projectBuilder.moduleRuntimeClasspath(findModule("community-main"), true)
+  //todo[nik] currently runtime classpath includes path to JDKs from all modules in it so we need to manually exclude paths from JDK 1.6
+  List<String> testRuntimeClasspath = removeJdkJarFiles(projectBuilder.moduleRuntimeClasspath(findModule("community-main"), true))
+  testRuntimeClasspath << "${jdk8Home}/lib/tools.jar"
+  projectBuilder.info("Test runtime classpath=" + testRuntimeClasspath)
   new File(classpathFile).text = testRuntimeClasspath.findAll({ new File((String)it).exists() }).join('\n')
+
+  List<String> bootstrapClasspath = removeJdkJarFiles(projectBuilder.moduleRuntimeClasspath(findModule("tests_bootstrap"), false))
+  bootstrapClasspath << "${jdk8Home}/lib/tools.jar"
+  projectBuilder.info("Bootstrap classpath=" + bootstrapClasspath)
 
   testcases.each { testCase ->
     List<String> jvmArgs = [
@@ -82,10 +89,9 @@ target('run_tests': 'Run java tests') {
       }
 
       classpath {
-        projectBuilder.moduleRuntimeClasspath(findModule("tests_bootstrap"), false).each {
+        bootstrapClasspath.each {
           pathelement(location: it)
         }
-        pathelement(location: "${jdkHome}/lib/tools.jar")
       }
 
       test(name: 'com.intellij.tests.BootstrapTests')

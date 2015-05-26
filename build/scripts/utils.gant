@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.gant.JpsGantTool
 import org.jetbrains.jps.gant.TeamCityBuildInfoPrinter
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 
 includeTool << JpsGantTool
@@ -129,13 +132,8 @@ binding.setVariable("guessHome", {
 })
 
 binding.setVariable("loadProject", {
-  requireProperty("jdkHome", guessJdk())
-  def mac = isMac()
-  jdk("IDEA jdk", jdkHome) {
-    if (!mac) {
-      classpath "$jdkHome/lib/tools.jar"
-    }
-  }
+  defineJdk("IDEA jdk", setupJdkPath("jdkHome", "$home/build/jdk/1.6", "JDK_16_x64"))
+  defineJdk("1.8", setupJdkPath("jdk8Home", "$home/build/jdk/1.8", "JDK_18_x64"))
   projectBuilder.buildIncrementally = Boolean.parseBoolean(p("jps.build.incrementally", "false"))
   def dataDirName = projectBuilder.buildIncrementally ? ".jps-incremental-build" : ".jps-build-data"
   projectBuilder.dataStorageRoot = new File("$home/$dataDirName")
@@ -148,6 +146,68 @@ binding.setVariable("loadProject", {
   compilerOptions.DEPRECATION = false
   compilerOptions.ADDITIONAL_OPTIONS_STRING = compilerOptions.ADDITIONAL_OPTIONS_STRING.replace("-Xlint:unchecked", "")
 })
+
+binding.setVariable("removeJdkJarFiles", { Collection<String> classpath ->
+  def jdkHomePaths = project.model.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE).collect {
+    def homeDir = new File(it.properties.homePath)
+    return SystemInfo.isMac && homeDir.name == "Home" ? homeDir.parent : homeDir.absolutePath
+  }
+  return classpath.findAll { jarPath -> jdkHomePaths.every { !FileUtil.isAncestor(it, jarPath, false) } }
+})
+
+private String setupJdkPath(String propertyName, String defaultDir, String envVarName) {
+  try {
+    this[propertyName]
+  }
+  catch (MissingPropertyException ignored) {
+    def jdk = SystemInfo.isMac ? "$defaultDir/Home" : defaultDir
+    if (new File(jdk).exists()) {
+      projectBuilder.info("$propertyName set to $jdk")
+    }
+    else {
+      jdk = System.getenv(envVarName)
+      if (jdk != null) {
+        projectBuilder.info("'$defaultDir' doesn't exist, $propertyName set to '$envVarName' environment variable: $jdk")
+      }
+      else {
+        jdk = guessJdk()
+        def version = JdkVersionDetector.instance.detectJdkVersion(jdk)
+        if (propertyName.contains("8") && !version.contains("1.8.")) {
+          projectBuilder.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable aren't defined and default JDK $jdk ($version) cannot be used as JDK 1.8")
+          return null
+        }
+        projectBuilder.info("'$envVarName' isn't defined and '$defaultDir' doesn't exist, $propertyName set to $jdk")
+      }
+    }
+    this[propertyName] = jdk
+    return jdk
+  }
+}
+
+private void defineJdk(String jdkName, jdkHomePath) {
+  jdk(jdkName, jdkHomePath) {
+    def toolsJar = "$jdkHomePath/lib/tools.jar"
+    if (new File(toolsJar).exists()) {
+      classpath toolsJar
+    }
+  }
+
+  if (SystemInfo.isMac) {
+    //temporary workaround for Mac: resolve symlinks manually. Previously ZipFileCache used FileUtil.toCanonicalPath method which doesn't resolve symlinks.
+    def jdk = global.libraryCollection.findLibrary(jdkName, JpsJavaSdkType.INSTANCE)
+    def jdkClasspath = jdk.getFiles(JpsOrderRootType.COMPILED)
+    def urls = jdk.getRootUrls(JpsOrderRootType.COMPILED)
+    urls.each { jdk.removeUrl(it, JpsOrderRootType.COMPILED) }
+    jdkClasspath.each {
+      try {
+        jdk.addRoot(it.getCanonicalFile(), JpsOrderRootType.COMPILED)
+      }
+      catch (IOException ignored) {
+      }
+    }
+    projectBuilder.info("JDK '$jdkName' classpath: ${jdk.getFiles(JpsOrderRootType.COMPILED)}")
+  }
+}
 
 binding.setVariable("prepareOutputFolder", {
   def targetFolder = projectBuilder.buildIncrementally ? "$home/out/incremental-build" : out
@@ -210,7 +270,7 @@ binding.setVariable("notifyArtifactBuilt", { String artifactPath ->
 })
 
 def debugPort = System.getProperty("debug.port")
-def debugSuspend = System.getProperty("debug.suspend") ?: "n"
+def debugSuspend = System.getProperty("rи") ?: "n"
 if (debugSuspend == 'y') {
   println """
 
