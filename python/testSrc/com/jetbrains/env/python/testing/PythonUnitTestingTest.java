@@ -1,5 +1,6 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyTestTestTask;
 import com.jetbrains.env.ut.PyUnitTestTask;
@@ -94,7 +95,8 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
       @Override
       public void after() {
         final List<String> fileNames = getHighlightedStrings().second;
-        Assert.assertThat("Wrong number of highlighted entries", fileNames, Matchers.hasSize(3));
+        Assert.assertThat(String.format("Wrong number of highlighted entries(%s)", StringUtil.join(fileNames, ",")),
+                          fileNames, Matchers.hasSize(3));
         // UnitTest highlights file name
         Assert.assertThat("Bad line highlighted", fileNames, Matchers.everyItem(Matchers.endsWith(fileName)));
       }
