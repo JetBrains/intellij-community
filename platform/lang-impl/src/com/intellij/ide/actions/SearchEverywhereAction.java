@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
@@ -674,6 +675,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (e == null) return;
     final Project project = e.getProject();
     if (project == null) return;
+
+    //noinspection SSBasedInspection
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        LookupManager.getInstance(project).hideActiveLookup();
+      }
+    });
 
     updateComponents();
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
