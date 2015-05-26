@@ -638,7 +638,7 @@ class EditorPainter {
   }
 
   private void paintCaret(Graphics2D g_) {
-    EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations();
+    EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations(true);
     if (locations == null) return;
 
     Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(g_);
@@ -689,7 +689,7 @@ class EditorPainter {
   }
   
   void repaintCarets() {
-    EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations();
+    EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations(false);
     if (locations == null) return;
     int lineHeight = myView.getLineHeight();
     for (EditorImpl.CaretRectangle location : locations) {

@@ -3202,8 +3202,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
   
   @Nullable
-  public CaretRectangle[] getCaretLocations() {
-    return myCaretCursor.getCaretLocations();
+  public CaretRectangle[] getCaretLocations(boolean onlyIfShown) {
+    return myCaretCursor.getCaretLocations(onlyIfShown);
   }
 
   private void paintLineMarkersSeparators(@NotNull final Graphics g,
@@ -4761,13 +4761,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Nullable
-    private CaretRectangle[] getCaretLocations() {
-      if (!isEnabled() || !myIsShown || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent())) return null;
+    private CaretRectangle[] getCaretLocations(boolean onlyIfShown) {
+      if (onlyIfShown && (!isEnabled() || !myIsShown || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent()))) return null;
       return myLocations;
     }    
 
     private void paint(@NotNull Graphics g) {
-      CaretRectangle[] locations = getCaretLocations();
+      CaretRectangle[] locations = getCaretLocations(true);
       if (locations == null) return;
 
       for (CaretRectangle location : myLocations) {
