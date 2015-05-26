@@ -94,7 +94,7 @@ public class PythonUnitTestingTest extends PyEnvTestCase {
       @Override
       public void after() {
         final List<String> fileNames = getHighlightedStrings().second;
-        Assert.assertThat("Wrong number of highlighted entries", fileNames, Matchers.hasSize(2));
+        Assert.assertThat("Wrong number of highlighted entries", fileNames, Matchers.hasSize(3));
         // UnitTest highlights file name
         Assert.assertThat("Bad line highlighted", fileNames, Matchers.everyItem(Matchers.endsWith(fileName)));
       }
