@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.net.NetUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -85,13 +86,13 @@ public class SocketLock {
     return acquiredPort;
   }
 
-  public synchronized ActivateStatus lock(String path, boolean markPort, String... args) {
+  public synchronized ActivateStatus lock(@NotNull String configPath, @NotNull String systemPath, String... args) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: lock(path='" + path + "')");
+      LOG.debug("enter: lock(path='" + configPath + "')");
     }
 
     ActivateStatus status = ActivateStatus.NO_INSTANCE;
-    int port = acquireSocket();
+    acquireSocket();
     if (mySocket == null) {
       if (!myIsDialogShown) {
         final String productName = ApplicationNamesInfo.getInstance().getProductName();
@@ -110,25 +111,27 @@ public class SocketLock {
       return status;
     }
 
-    if (markPort && port != -1) {
-      File portMarker = new File(path, "port");
-      try {
-        FileUtil.writeToFile(portMarker, Integer.toString(port).getBytes());
-      }
-      catch (IOException ignored) {
-        FileUtil.asyncDelete(portMarker);
-      }
+    File portMarker = new File(configPath, "port");
+    try {
+      FileUtil.writeToFile(portMarker, Integer.toString(acquiredPort).getBytes());
+    }
+    catch (IOException ignored) {
+      FileUtil.asyncDelete(portMarker);
     }
 
     for (int i = SOCKET_NUMBER_START; i < SOCKET_NUMBER_END; i++) {
-      if (isPortForbidden(i) || i == mySocket.getLocalPort()) continue;
-      status = tryActivate(i, path, args);
+      if (isPortForbidden(i) || i == mySocket.getLocalPort()) {
+        continue;
+      }
+
+      status = tryActivate(i, configPath, systemPath, args);
       if (status != ActivateStatus.NO_INSTANCE) {
         return status;
       }
     }
 
-    myLockedPaths.add(path);
+    myLockedPaths.add(configPath);
+    myLockedPaths.add(systemPath);
 
     return status;
   }
@@ -140,9 +143,8 @@ public class SocketLock {
     return false;
   }
 
-  private static ActivateStatus tryActivate(int portNumber, String path, String[] args) {
-    List<String> result = new ArrayList<String>();
-
+  @NotNull
+  private static ActivateStatus tryActivate(int portNumber, @NotNull String configPath, @NotNull String systemPath, String[] args) {
     try {
       try {
         ServerSocket serverSocket = new ServerSocket(portNumber, 50, NetUtils.getLoopbackAddress());
@@ -155,17 +157,20 @@ public class SocketLock {
       Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
       socket.setSoTimeout(300);
 
+      boolean result = false;
       DataInputStream in = new DataInputStream(socket.getInputStream());
-
       while (true) {
         try {
-          result.add(in.readUTF());
+          String path = in.readUTF();
+          if (path.equals(configPath) || path.equals(systemPath)) {
+            result = true;
+          }
         }
         catch (IOException ignored) {
           break;
         }
       }
-      if (result.contains(path)) {
+      if (result) {
         try {
           DataOutputStream out = new DataOutputStream(socket.getOutputStream());
           out.writeUTF(ACTIVATE_COMMAND + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));

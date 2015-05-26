@@ -245,11 +245,7 @@ public class StartupUtil {
       ourLock = new SocketLock();
     }
 
-    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(), true, args);
-    if (activateStatus == SocketLock.ActivateStatus.NO_INSTANCE) {
-      activateStatus = ourLock.lock(PathManager.getSystemPath(), false);
-    }
-
+    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(), PathManager.getSystemPath(), args);
     if (activateStatus != SocketLock.ActivateStatus.NO_INSTANCE) {
       if (Main.isHeadless() || activateStatus == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
         String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
