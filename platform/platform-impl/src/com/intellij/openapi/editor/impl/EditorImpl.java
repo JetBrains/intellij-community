@@ -2415,10 +2415,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Point position = new Point(0, visibleLine * lineHeight);
     CharSequence prefixText = myPrefixText == null ? null : new CharArrayCharSequence(myPrefixText);
     if (clipStartVisualPos.line == 0 && prefixText != null) {
-      position.x = drawBackground(g, prevBackColor = myPrefixAttributes.getBackgroundColor(), prefixText, 0, prefixText.length(), position,
+      Color backColor = myPrefixAttributes.getBackgroundColor();
+      position.x = drawBackground(g, backColor, prefixText, 0, prefixText.length(), position,
                                   myPrefixAttributes.getFontType(),
                                   defaultBackground, clip);
-      
+      prevBackColor = backColor;
     }
 
     if (clipStartPosition.line >= myDocument.getLineCount() || clipStartPosition.line < 0) {
@@ -2469,7 +2470,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       if (color != null) {
-        drawBackground(g, prevBackColor = color, softWrap.getIndentInPixels(), position, defaultBackground, clip);
+        drawBackground(g, color, softWrap.getIndentInPixels(), position, defaultBackground, clip);
+        prevBackColor = color;
       }
       position.x = softWrap.getIndentInPixels();
     }
@@ -2525,7 +2527,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             );
           }
           CharSequence chars = collapsedFolderAt.getPlaceholderText();
-          position.x = drawBackground(g, prevBackColor = backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          position.x = drawBackground(g, backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          prevBackColor = backColor;
         }
 
         lIterator.advance();
@@ -2541,7 +2544,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             );
           }
           CharSequence chars = collapsedFolderAt.getPlaceholderText();
-          position.x = drawBackground(g, prevBackColor = backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          position.x = drawBackground(g, backColor, chars, 0, chars.length(), position, fontType, defaultBackground, clip);
+          prevBackColor = backColor;
         }
         else if (hEnd > lEnd - lIterator.getSeparatorLength()) {
           position.x = drawSoftWrapAwareBackground(
@@ -2623,8 +2627,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private int drawSoftWrapAwareBackground(@NotNull Graphics g,
-                                          Color backColor,
-                                          Color prevBackColor,
+                                          @Nullable Color backColor,
+                                          @Nullable Color prevBackColor,
                                           @NotNull CharSequence text,
                                           int start,
                                           int end,
