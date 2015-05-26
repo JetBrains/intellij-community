@@ -21,17 +21,11 @@ import com.intellij.lang.properties.projectView.ResourceBundleGrouper;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.projectView.TestProjectTreeStructure;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 public class PropertiesProjectViewTest extends LightPlatformCodeInsightFixtureTestCase {
   private TestProjectTreeStructure myStructure;
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public PropertiesProjectViewTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   @Override
   protected void setUp() throws Exception {
