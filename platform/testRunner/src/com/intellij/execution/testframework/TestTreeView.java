@@ -213,7 +213,8 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     int totalWidth = metrics.stringWidth(duration);
     int x = bounds.x + bounds.width - totalWidth;
     g.setColor(isSelected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeBackground());
-    g.fillRect(x, bounds.y, totalWidth, bounds.height);
+    final int leftOffset = 5;
+    g.fillRect(x - leftOffset, bounds.y, totalWidth + leftOffset, bounds.height);
     int fontHeight = (int)metrics.getMaxCharBounds(g).getHeight();
     g.translate(0, bounds.y - 1);
     g.setColor(isSelected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
