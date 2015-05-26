@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,10 +30,6 @@ public class PropertiesCommenterTest extends LightPlatformCodeInsightTestCase {
   public void testProp1() throws Exception { doTest(); }
   public void testUncomment() throws Exception { doTest(); }
 
-  public PropertiesCommenterTest() {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
-
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -42,9 +37,9 @@ public class PropertiesCommenterTest extends LightPlatformCodeInsightTestCase {
   }
 
   private void doTest() throws Exception {
-    configureByFile("/propertiesFile/comment/before" + getTestName(false)+".properties");
+    configureByFile("/propertiesFile/comment/before" + getTestName(false) + ".properties");
     performAction();
-    checkResultByFile("/propertiesFile/comment/after" + getTestName(false)+".properties");
+    checkResultByFile("/propertiesFile/comment/after" + getTestName(false) + ".properties");
   }
 
   private static void performAction() {

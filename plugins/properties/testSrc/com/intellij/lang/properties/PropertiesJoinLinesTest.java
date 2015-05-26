@@ -21,16 +21,14 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.PlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class PropertiesJoinLinesTest extends LightPlatformCodeInsightTestCase {
-  public PropertiesJoinLinesTest() {
-    PlatformTestCase.autodetectPlatformPrefix();
-  }
 
+  @NotNull
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("properties") + "/testData/propertiesFile/joinLines/";
