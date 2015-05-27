@@ -47,12 +47,19 @@ import static com.intellij.codeInspection.dataFlow.value.DfaRelation.UNDEFINED;
 import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_RANGE;
 
-public class GrStandardInstructionVisitor<V extends GrStandardInstructionVisitor<V>> extends GrInstructionVisitor<V> {
+public class GrStandardInstructionVisitor extends GrGenericStandardInstructionVisitor<GrStandardInstructionVisitor> {
+
+  public GrStandardInstructionVisitor(GrDataFlowRunner<GrStandardInstructionVisitor> runner) {
+    super(runner);
+  }
+}
+
+class GrGenericStandardInstructionVisitor<V extends GrGenericStandardInstructionVisitor<V>> extends GrInstructionVisitor<V> {
 
   private final GrDfaValueFactory myFactory;
   private final GrMethodCallHelper<V> myHelper;
 
-  public GrStandardInstructionVisitor(GrDataFlowRunner<V> runner) {
+  public GrGenericStandardInstructionVisitor(GrDataFlowRunner<V> runner) {
     super(runner);
     myFactory = runner.getFactory();
     myHelper = new GrMethodCallHelper<V>(this);
@@ -265,16 +272,19 @@ public class GrStandardInstructionVisitor<V extends GrStandardInstructionVisitor
         forceNotNull(getFactory(), state, value);
       }
       state.push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
-    } else {
-      if (state.isNotNull(value))
+    }
+    else {
+      if (state.isNotNull(value)) {
         state.push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
+      }
       else if (state.isNull(value)) {
         state.push(getFactory().createTypeValue(type, Nullness.NULLABLE));
-      } else {
+      }
+      else {
         state.push(getFactory().createTypeValue(type, Nullness.UNKNOWN));
       }
     }
-    return nextInstruction(instruction, state); 
+    return nextInstruction(instruction, state);
   }
 
   @Override

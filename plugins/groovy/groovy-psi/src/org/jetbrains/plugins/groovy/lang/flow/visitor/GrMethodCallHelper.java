@@ -44,10 +44,10 @@ import static com.intellij.codeInspection.dataFlow.StandardInstructionVisitor.fo
 import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.passingNullableArgumentToNonAnnotatedParameter;
 import static org.jetbrains.plugins.groovy.lang.flow.visitor.GrNullabilityProblem.passingNullableToNotNullParameter;
 
-public class GrMethodCallHelper<V extends GrStandardInstructionVisitor<V>> extends MethodCallHelper<GrMethodCallInstruction<V>> {
+public class GrMethodCallHelper<V extends GrGenericStandardInstructionVisitor<V>> extends MethodCallHelper<GrMethodCallInstruction<V>> {
 
   private final DfaValueFactory myFactory;
-  private final GrStandardInstructionVisitor<V> myVisitor;
+  private final GrGenericStandardInstructionVisitor<V> myVisitor;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<GrMethodCallInstruction, Nullness> myReturnTypeNullability =
@@ -67,7 +67,7 @@ public class GrMethodCallHelper<V extends GrStandardInstructionVisitor<V>> exten
       }
     };
 
-  public GrMethodCallHelper(GrStandardInstructionVisitor<V> visitor) {
+  public GrMethodCallHelper(GrGenericStandardInstructionVisitor<V> visitor) {
     myVisitor = visitor;
     myFactory = visitor.getFactory();
   }

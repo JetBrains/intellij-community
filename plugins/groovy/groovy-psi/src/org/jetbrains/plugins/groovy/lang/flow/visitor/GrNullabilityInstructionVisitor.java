@@ -27,9 +27,9 @@ import org.jetbrains.plugins.groovy.lang.flow.GrDataFlowRunner;
 import java.util.Collection;
 import java.util.Map;
 
-public class GrNullabilityInstructionVisitor extends GrStandardInstructionVisitor<GrNullabilityInstructionVisitor> {
+public class GrNullabilityInstructionVisitor extends GrStandardInstructionVisitor {
 
-  public GrNullabilityInstructionVisitor(GrDataFlowRunner<GrNullabilityInstructionVisitor> runner) {
+  public GrNullabilityInstructionVisitor(GrDataFlowRunner<GrStandardInstructionVisitor> runner) {
     super(runner);
   }
 
