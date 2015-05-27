@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Git "fetch" action
- */
 public class GitFetch extends GitRepositoryAction {
   @Override
   @NotNull
