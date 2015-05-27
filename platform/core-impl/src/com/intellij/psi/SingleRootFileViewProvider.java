@@ -87,7 +87,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   public SingleRootFileViewProvider(@NotNull PsiManager manager,
                                     @NotNull VirtualFile virtualFile,
                                     final boolean eventSystemEnabled,
-                                    final FileType fileType) {
+                                    @NotNull final FileType fileType) {
     this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType));
   }
 
