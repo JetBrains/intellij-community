@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui;
 
+import sun.swing.SwingUtilities2;
 import java.awt.*;
 
 public enum LCDRenderingScope {
@@ -25,6 +26,26 @@ public enum LCDRenderingScope {
   public static LCDRenderingScope getWithLongestName() {
     return IDE;
   }
+
+  private static final SwingUtilities2.AATextInfo aaEnabled =
+    new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON, 140);
+
+  private static final SwingUtilities2.AATextInfo lcdEnabled =
+    new SwingUtilities2.AATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, 140);
+
+  private static final SwingUtilities2.AATextInfo aaDisabled = null;
+
+  public static Object getAAHintForSwingComponent() {
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.ANTIALIASING_IN_IDE) {
+      if (uiSettings.LCD_RENDERING_SCOPE == OFF) {
+        return aaEnabled;
+      }
+      return lcdEnabled;
+    }
+    return aaDisabled;
+  }
+
 
   public static Object getKeyForCurrentScope(boolean inEditor) {
     Object renderingHint = RenderingHints.VALUE_TEXT_ANTIALIAS_OFF;
