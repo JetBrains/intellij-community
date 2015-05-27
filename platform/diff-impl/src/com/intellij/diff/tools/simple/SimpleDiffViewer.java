@@ -206,11 +206,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
       return apply(new CompareData(lineFragments, isEqualContents));
     }
-    catch (DiffTooBigException ignore) {
+    catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.DIFF_TOO_BIG);
     }
-    catch (ProcessCanceledException ignore) {
-      return applyNotification(DiffNotifications.OPERATION_CANCELED);
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
