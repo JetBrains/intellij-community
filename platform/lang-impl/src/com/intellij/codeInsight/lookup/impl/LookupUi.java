@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +104,7 @@ class LookupUi {
     myScrollBarIncreaseButton.setRequestFocusEnabled(false);
 
     myScrollPane = new JBScrollPane(lookup.getList());
-    myScrollPane.setViewportBorder(new EmptyBorder(0, 0, 0, 0));
+    myScrollPane.setViewportBorder(JBUI.Borders.empty());
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myScrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(13, -1));
     myScrollPane.getVerticalScrollBar().setUI(new ButtonlessScrollBarUI() {
