@@ -735,7 +735,8 @@ class EditorPainter {
       }
       else {
         float xNew = fragment.getEndX();
-        painter.paint(g, fragment, 0, fragment.getEndOffset() - fragment.getStartOffset(), getFoldRegionAttributes(foldRegion), x, xNew, y);
+        painter.paint(g, fragment, 0, fragment.getEndVisualColumn() - fragment.getStartVisualColumn(), getFoldRegionAttributes(foldRegion), 
+                      x, xNew, y);
         x = xNew;
         prevEndOffset = -1;
         it = null;
