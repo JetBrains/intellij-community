@@ -104,6 +104,8 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_MULTILINE_IMPORTS", "Align when multiline",
                                 "Import Statements");
       consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING", "Dictionary literals", null, WRAP_OPTIONS, WRAP_VALUES);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_NEW_LINE_AFTER_LEFT_BRACE", "New line after '{'", "Dictionary literals");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_NEW_LINE_BEFORE_RIGHT_BRACE", "Place '}' on new line", "Dictionary literals");
     }
   }
 

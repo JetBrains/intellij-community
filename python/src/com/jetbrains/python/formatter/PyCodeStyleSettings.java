@@ -74,7 +74,8 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
 
   public int DICT_ALIGNMENT = DICT_ALIGNMENT_NONE;
   public int DICT_WRAPPING = WrapType.NORMAL.getLegacyRepresentation();
-
+  public boolean DICT_NEW_LINE_AFTER_LEFT_BRACE = false;
+  public boolean DICT_NEW_LINE_BEFORE_RIGHT_BRACE = false;
 
   public PyCodeStyleSettings(CodeStyleSettings container) {
     super("Python", container);

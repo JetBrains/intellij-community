@@ -587,6 +587,18 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-14962
+  public void testForceNewLineAfterLeftBraceInDict() {
+    getCustomSettings().DICT_NEW_LINE_AFTER_LEFT_BRACE = true;
+    doTest();
+  }
+
+  // PY-14962
+  public void testForceNewLineBeforeRightBraceInDict() {
+    getCustomSettings().DICT_NEW_LINE_BEFORE_RIGHT_BRACE = true;
+    doTest();
+  }
+
   // PY-15530
   public void testAlignmentInArgumentListWhereFirstArgumentIsEmptyCall() {
     doTest();

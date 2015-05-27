@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -683,20 +684,25 @@ public class PyBlock implements ASTBlock {
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof ASTBlock && child2 instanceof ASTBlock) {
       final ASTNode node1 = ((ASTBlock)child1).getNode();
+      final ASTNode node2 = ((ASTBlock)child2).getNode();
       final PsiElement psi1 = node1.getPsi();
       final PsiElement psi2 = ((ASTBlock)child2).getNode().getPsi();
+
+      final IElementType childType1 = node1.getElementType();
+      final IElementType childType2 = node2.getElementType();
       if (psi1 instanceof PyImportStatementBase && psi2 instanceof PyImportStatementBase &&
           psi2.getCopyableUserData(IMPORT_GROUP_BEGIN) != null) {
         return Spacing.createSpacing(0, 0, 2, true, 1);
       }
 
-      if (node1.getElementType() == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
+      final CommonCodeStyleSettings settings = myContext.getSettings();
+      if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
         if (needLineBreakInStatement()) {
-          return Spacing.createSpacing(0, 0, 1, true, myContext.getSettings().KEEP_BLANK_LINES_IN_CODE);
+          return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
         }
       }
 
-      if ((node1.getElementType() == PyElementTypes.FUNCTION_DECLARATION || node1.getElementType() == PyElementTypes.CLASS_DECLARATION)
+      if ((childType1 == PyElementTypes.FUNCTION_DECLARATION || childType1 == PyElementTypes.CLASS_DECLARATION)
           && myNode.getElementType() instanceof PyFileElementType) {
 
         if (psi2 instanceof PsiComment) {
@@ -712,11 +718,24 @@ public class PyBlock implements ASTBlock {
         }
       }
 
+      if (myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION) {
+        if (shouldInsertNewLineForBrace(childType1) || shouldInsertNewLineForBrace(childType2)) {
+          final int spaces = settings.SPACE_WITHIN_BRACES ? 1 : 0;
+          return Spacing.createDependentLFSpacing(spaces, spaces, myNode.getTextRange(),
+                                                  settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE);
+        }
+      }
+
       if (psi2 instanceof PsiComment && !hasLineBreaksBefore(psi2.getNode(), 1) && myContext.getPySettings().SPACE_BEFORE_NUMBER_SIGN) {
         return Spacing.createSpacing(2, 0, 0, false, 0);
       }
     }
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
+  }
+
+  private boolean shouldInsertNewLineForBrace(IElementType type) {
+    return (type == PyTokenTypes.LBRACE && myContext.getPySettings().DICT_NEW_LINE_AFTER_LEFT_BRACE) ||
+           (type == PyTokenTypes.RBRACE && myContext.getPySettings().DICT_NEW_LINE_BEFORE_RIGHT_BRACE);
   }
 
   private Spacing getBlankLinesForOption(final int option) {
