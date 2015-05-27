@@ -78,8 +78,17 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     this(manager, file, true);
   }
 
-  public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean eventSystemEnabled) {
-    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject()));
+  public SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                    @NotNull VirtualFile virtualFile,
+                                    final boolean eventSystemEnabled) {
+    this(manager, virtualFile, eventSystemEnabled, virtualFile.getFileType());
+  }
+
+  public SingleRootFileViewProvider(@NotNull PsiManager manager,
+                                    @NotNull VirtualFile virtualFile,
+                                    final boolean eventSystemEnabled,
+                                    final FileType fileType) {
+    this(manager, virtualFile, eventSystemEnabled, calcBaseLanguage(virtualFile, manager.getProject(), fileType));
   }
 
   protected SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, final boolean eventSystemEnabled, @NotNull Language language) {
@@ -99,7 +108,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return myBaseLanguage;
   }
 
-  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project) {
+  private static Language calcBaseLanguage(@NotNull VirtualFile file, @NotNull Project project, @NotNull final FileType fileType) {
     if (file instanceof LightVirtualFile) {
       final Language language = ((LightVirtualFile)file).getLanguage();
       if (language != null) {
@@ -107,7 +116,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       }
     }
 
-    FileType fileType = file.getFileType();
     if (fileType.isBinary()) return Language.ANY;
     if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
