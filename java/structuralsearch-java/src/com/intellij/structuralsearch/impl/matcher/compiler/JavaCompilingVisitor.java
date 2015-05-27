@@ -216,7 +216,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
           createAndSetSubstitutionHandlerFromReference(
             reference,
             resolve != null ? ((PsiClass)resolve).getQualifiedName() : reference.getText(),
-            referenceParent instanceof PsiExpression
+            referenceParent instanceof PsiReferenceExpression
           );
         }
       }

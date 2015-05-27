@@ -3249,4 +3249,17 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("find assert statement with messages", 1, findMatchesCount(source, "assert '_a : '_b;"));
     assertEquals("find assert statement without messages", 2, findMatchesCount(source, "assert 'a : '_b{0,0};"));
   }
+
+  public void testPolyadicExpression() {
+    String source = "class A {" +
+                    "  void f() {" +
+                    "    int i = 1 + 2;" +
+                    "    int j = 1 + 2 + 3;" +
+                    "    int k = 1 + 2 + 3 + 4;" +
+                    "  }" +
+                    "}";
+    assertEquals("find polyadic expression", 3, findMatchesCount(source, "'_a + '_b+"));
+    assertEquals("find polyadic expression of 3 operands", 1, findMatchesCount(source, "'_a + '_b{2,2}"));
+    assertEquals("find polyadic expression of >3 operands", 2, findMatchesCount(source, "'_a + '_b{2,100}"));
+  }
 }
