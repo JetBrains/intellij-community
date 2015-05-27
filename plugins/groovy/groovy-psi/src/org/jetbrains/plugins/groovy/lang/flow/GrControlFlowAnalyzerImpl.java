@@ -900,16 +900,32 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
         pushNull();
         addInstruction(new BinopInstruction<V>(DfaRelation.EQ, null, typeCastExpression.getProject()));
         final ConditionalGotoInstruction<V> ifNotNull = addInstruction(new ConditionalGotoInstruction<V>(null, true, null));
-        
+
         // if operand is null
         pushNull();
         addInstruction(new GotoInstruction<V>(flow.getEndOffset(typeCastExpression)));
-        
+
         // if operand is not null
         ifNotNull.setOffset(flow.getNextOffset());
         push(factory.createTypeValue(type, Nullness.NOT_NULL));
       }
     }
+    finishElement(typeCastExpression);
+  }
+
+  @Override
+  public void visitCastExpression(GrTypeCastExpression typeCastExpression) {
+    startElement(typeCastExpression);
+
+    final GrExpression operand = typeCastExpression.getOperand();
+    if (operand == null) {
+      push(factory.createTypeValue(typeCastExpression.getType(), Nullness.NOT_NULL));
+    }
+    else {
+      operand.accept(this);
+      addInstruction(new GrTypeCastInstruction<V>(typeCastExpression.getCastTypeElement().getType(), typeCastExpression));
+    }
+
     finishElement(typeCastExpression);
   }
 

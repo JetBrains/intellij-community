@@ -254,6 +254,30 @@ public class GrStandardInstructionVisitor<V extends GrStandardInstructionVisitor
   }
 
   @Override
+  public DfaInstructionState<V>[] visitTypeCastGroovy(GrTypeCastInstruction<V> instruction, DfaMemoryState state) {
+    final DfaValue value = state.pop();
+    final PsiType type = instruction.getCastTo();
+    if (type == PsiType.BOOLEAN) {
+      state.push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
+    }
+    else if (type instanceof PsiPrimitiveType) {
+      if (!checkNotNullable(state, value, unboxingNullable, instruction.getCastExpression())) {
+        forceNotNull(getFactory(), state, value);
+      }
+      state.push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
+    } else {
+      if (state.isNotNull(value))
+        state.push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
+      else if (state.isNull(value)) {
+        state.push(getFactory().createTypeValue(type, Nullness.NULLABLE));
+      } else {
+        state.push(getFactory().createTypeValue(type, Nullness.UNKNOWN));
+      }
+    }
+    return nextInstruction(instruction, state); 
+  }
+
+  @Override
   public DfaInstructionState<V>[] visitRange(GrRangeInstruction<V> instruction, DfaMemoryState state) {
     final DfaValue to = state.pop();
     final DfaValue from = state.pop();

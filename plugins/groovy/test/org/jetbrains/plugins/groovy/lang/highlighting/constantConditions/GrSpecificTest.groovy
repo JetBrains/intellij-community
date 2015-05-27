@@ -104,4 +104,6 @@ def range4(@Nullable a) {
   void "test switch"() { doTest() }
 
   void "test safe cast"() { doTest() }
+
+  void "test regular casts"() { doTest() }
 }

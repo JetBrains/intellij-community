@@ -19,7 +19,6 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.TypeCastInstruction;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -27,24 +26,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCa
 
 public class GrTypeCastInstruction<V extends GrInstructionVisitor<V>> extends TypeCastInstruction<V> {
 
-  //private final GrTypeCastExpression castExpression;
-  //private final GrExpression castedExpression;
+  private final @NotNull GrTypeCastExpression castExpression;
 
-  public GrTypeCastInstruction(PsiType castTo) {
+  public GrTypeCastInstruction(@NotNull PsiType castTo, @NotNull GrTypeCastExpression expression) {
     super(castTo);
+    castExpression = expression;
   }
 
+  @NotNull
   @Override
   public GrTypeCastExpression getCastExpression() {
-    //return castExpression;
-    return null;
+    return castExpression;
   }
-
-  @Override
-  public PsiElement getCasted() {
-    return null;
-  }
-
 
   @Override
   public DfaInstructionState<V>[] accept(@NotNull DfaMemoryState stateBefore, @NotNull V visitor) {

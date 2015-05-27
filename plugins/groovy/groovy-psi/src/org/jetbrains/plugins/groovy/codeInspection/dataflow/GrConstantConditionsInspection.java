@@ -150,6 +150,11 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
         holder.registerProblem(element, text);
       }
 
+      for (PsiElement element : visitor.getProblems(unboxingNullable)) {
+        if (!alreadyReported.add(element)) continue;
+        holder.registerProblem(element, InspectionsBundle.message("dataflow.message.unboxing"));
+      }
+
       final Pair<Set<Instruction>, Set<Instruction>> constConditionalExpressions = dfaRunner.getConstConditionalExpressions();
       for (Instruction instruction : constConditionalExpressions.first) {
         if (instruction instanceof ConditionalGotoInstruction) {
