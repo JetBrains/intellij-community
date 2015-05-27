@@ -20,6 +20,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -61,6 +62,17 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
   protected boolean isVisible(AnActionEvent e) {
     if (!super.isVisible(e)) return false;
     return GradleConstants.SYSTEM_ID.equals(getSystemId(e));
+  }
+
+  protected boolean isEnabled(AnActionEvent e) {
+    return true;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Presentation p = e.getPresentation();
+    p.setVisible(isVisible(e));
+    p.setEnabled(isEnabled(e));
   }
 
   @Override
