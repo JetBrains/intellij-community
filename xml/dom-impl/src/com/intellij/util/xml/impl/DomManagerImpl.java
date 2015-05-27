@@ -77,7 +77,6 @@ public final class DomManagerImpl extends DomManager {
   static final SemKey<AttributeChildInvocationHandler> DOM_ATTRIBUTE_HANDLER_KEY = DOM_HANDLER_KEY.subKey("DOM_ATTRIBUTE_HANDLER_KEY");
 
   private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
-  private final GenericValueReferenceProvider myGenericValueReferenceProvider = new GenericValueReferenceProvider();
 
   private final Project myProject;
   private final SemService mySemService;
