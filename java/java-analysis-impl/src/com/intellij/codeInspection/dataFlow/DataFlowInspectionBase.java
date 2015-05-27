@@ -142,8 +142,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) return;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, !isInsideConstructorOrInitializer(
-      scope)) {
+    boolean honorFieldInitializers = !isInsideConstructorOrInitializer(
+      scope);
+    final DataFlowRunner dfaRunner = new DataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, honorFieldInitializers) {
       @Override
       protected boolean shouldCheckTimeLimit() {
         if (!onTheFly) return false;
@@ -164,9 +165,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   private void analyzeDfaWithNestedClosures(PsiElement scope,
                                             ProblemsHolder holder,
-                                            StandardDataFlowRunner dfaRunner,
+                                            DataFlowRunner dfaRunner,
                                             Collection<DfaMemoryState> initialStates, final boolean onTheFly) {
-    final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor(dfaRunner);
+    final DataFlowInstructionVisitor visitor = new DataFlowInstructionVisitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(scope, visitor, IGNORE_ASSERT_STATEMENTS, initialStates);
     if (rc == RunnerResult.OK) {
       createDescription(dfaRunner, holder, visitor, onTheFly, scope);
@@ -227,7 +228,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {
   }
 
-  private void createDescription(StandardDataFlowRunner runner, ProblemsHolder holder, DataFlowInstructionVisitor visitor, final boolean onTheFly, PsiElement scope) {
+  private void createDescription(DataFlowRunner runner, ProblemsHolder holder, DataFlowInstructionVisitor visitor, final boolean onTheFly, PsiElement scope) {
     Pair<Set<Instruction>, Set<Instruction>> constConditions = runner.getConstConditionalExpressions();
     Set<Instruction> trueSet = constConditions.getFirst();
     Set<Instruction> falseSet = constConditions.getSecond();
@@ -235,8 +236,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     ArrayList<Instruction> allProblems = new ArrayList<Instruction>();
     allProblems.addAll(trueSet);
     allProblems.addAll(falseSet);
-    allProblems.addAll(runner.getCCEInstructions());
-    allProblems.addAll(StandardDataFlowRunner.getRedundantInstanceofs(runner, visitor));
+    allProblems.addAll(visitor.getCCEInstructions());
+    allProblems.addAll(getRedundantInstanceofs(visitor, runner.getInstructions()));
 
     HashSet<PsiElement> reportedAnchors = new HashSet<PsiElement>();
     for (PsiElement element : visitor.getProblems(NullabilityProblem.callNPE)) {
@@ -276,6 +277,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
     }
+  }
+
+  private static List<Instruction> getRedundantInstanceofs(final StandardInstructionVisitor visitor, Instruction[] instructions) {
+    return ContainerUtil.filter(instructions, new Condition<Instruction>() {
+      @Override
+      public boolean value(Instruction instruction) {
+        return visitor.isRedundantInstanceof(instruction);
+      }
+    });
   }
 
   private static void reportOptionalOfNullableImprovements(ProblemsHolder holder,
@@ -417,7 +427,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                                           Set<Instruction> falseSet, HashSet<PsiElement> reportedAnchors, BranchingInstruction instruction, final boolean onTheFly) {
     PsiElement psiAnchor = instruction.getPsiAnchor();
     boolean underBinary = isAtRHSOfBooleanAnd(psiAnchor);
-    if (instruction instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction)) {
+    if (visitor.isRedundantInstanceof(instruction)) {
       if (visitor.canBeNull((BinopInstruction)instruction)) {
         holder.registerProblem(psiAnchor,
                                InspectionsBundle.message("dataflow.message.redundant.instanceof"),
@@ -748,19 +758,19 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private static class DataFlowInstructionVisitor extends StandardInstructionVisitor {
-    private final StandardDataFlowRunner myRunner;
     private final MultiMap<NullabilityProblem, PsiElement> myProblems = new MultiMap<NullabilityProblem, PsiElement>();
     private final Map<Pair<NullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
-
-    private DataFlowInstructionVisitor(StandardDataFlowRunner runner) {
-      myRunner = runner;
-    }
+    private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
 
     @Override
     protected void onInstructionProducesCCE(TypeCastInstruction instruction) {
-      myRunner.onInstructionProducesCCE(instruction);
+      myCCEInstructions.add(instruction);
     }
-    
+
+    public Set<Instruction> getCCEInstructions() {
+      return myCCEInstructions;
+    }
+
     Collection<PsiElement> getProblems(final NullabilityProblem kind) {
       return ContainerUtil.filter(myProblems.get(kind), new Condition<PsiElement>() {
         @Override

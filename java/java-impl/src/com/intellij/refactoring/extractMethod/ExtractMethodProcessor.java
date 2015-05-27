@@ -407,7 +407,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + exprText + " == null);", null);
     block.add(statementFromText);
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
+    final DataFlowRunner dfaRunner = new DataFlowRunner();
     final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
     if (rc == RunnerResult.OK) {

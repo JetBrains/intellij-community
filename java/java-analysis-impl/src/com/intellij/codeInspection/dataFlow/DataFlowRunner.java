@@ -55,7 +55,7 @@ public class DataFlowRunner {
   // is executed more than this limit times.
   public static final int MAX_STATES_PER_BRANCH = 300;
 
-  protected DataFlowRunner() {
+  public DataFlowRunner() {
     this(false, true);
   }
 

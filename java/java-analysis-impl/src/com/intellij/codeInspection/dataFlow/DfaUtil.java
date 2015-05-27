@@ -144,8 +144,7 @@ public class DfaUtil {
     final AtomicBoolean hasNotNulls = new AtomicBoolean();
     final AtomicBoolean hasUnknowns = new AtomicBoolean();
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor() {
+    final RunnerResult rc = new DataFlowRunner().analyzeMethod(body, new StandardInstructionVisitor() {
       @Override
       public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
                                                          DataFlowRunner runner,
