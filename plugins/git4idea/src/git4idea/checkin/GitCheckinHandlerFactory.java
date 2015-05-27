@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -38,6 +39,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitPlatformFacade;
@@ -176,33 +178,16 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     private ReturnResult checkUserName() {
-      Project project = myPanel.getProject();
+      final Project project = myPanel.getProject();
       GitVcs vcs = GitVcs.getInstance(project);
       assert vcs != null;
 
-      Collection<VirtualFile> notDefined = new ArrayList<VirtualFile>();
-      Map<VirtualFile, Couple<String>> defined = new HashMap<VirtualFile, Couple<String>>();
-      Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(
-        ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
-
       Collection<VirtualFile> affectedRoots = getSelectedRoots();
-      for (VirtualFile root : affectedRoots) {
-        try {
-          Couple<String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
-          String name = nameAndEmail.getFirst();
-          String email = nameAndEmail.getSecond();
-          if (name == null || email == null) {
-            notDefined.add(root);
-          }
-          else {
-            defined.put(root, nameAndEmail);
-          }
-        }
-        catch (VcsException e) {
-          LOG.error("Couldn't get user.name and user.email for root " + root, e);
-          // doing nothing - let commit with possibly empty user.name/email
-        }
-      }
+      Map<VirtualFile, Couple<String>> defined = getDefinedUserNames(project, affectedRoots, false);
+
+      Collection<VirtualFile> allRoots = new ArrayList<VirtualFile>(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)));
+      Collection<VirtualFile> notDefined = new ArrayList<VirtualFile>(affectedRoots);
+      notDefined.removeAll(defined.keySet());
 
       if (notDefined.isEmpty()) {
         return ReturnResult.COMMIT;
@@ -219,48 +204,82 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.CANCEL;
       }
 
+      // try to find a root with defined user name among other roots - to propose this user name in the dialog
       if (defined.isEmpty() && allRoots.size() > affectedRoots.size()) {
         allRoots.removeAll(affectedRoots);
-        for (VirtualFile root : allRoots) {
+        defined.putAll(getDefinedUserNames(project, allRoots, true));
+      }
+
+      final GitUserNameNotDefinedDialog dialog = new GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined);
+      if (dialog.showAndGet()) {
+        return setUserNameUnderProgress(project, notDefined, dialog) ? ReturnResult.COMMIT : ReturnResult.CANCEL;
+      }
+      return ReturnResult.CLOSE_WINDOW;
+    }
+
+    @NotNull
+    private Map<VirtualFile, Couple<String>> getDefinedUserNames(@NotNull final Project project,
+                                                                 @NotNull final Collection<VirtualFile> roots,
+                                                                 final boolean stopWhenFoundFirst) {
+      final Map<VirtualFile, Couple<String>> defined = ContainerUtil.newHashMap();
+      ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git user name...", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator pi) {
+          for (VirtualFile root : roots) {
+            try {
+              Couple<String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
+              String name = nameAndEmail.getFirst();
+              String email = nameAndEmail.getSecond();
+              if (name != null && email != null) {
+                defined.put(root, nameAndEmail);
+                if (stopWhenFoundFirst) {
+                  return;
+                }
+              }
+            }
+            catch (VcsException e) {
+              LOG.error("Couldn't get user.name and user.email for root " + root, e);
+              // doing nothing - let commit with possibly empty user.name/email
+            }
+          }
+        }
+      });
+      return defined;
+    }
+
+    private boolean setUserNameUnderProgress(@NotNull final Project project,
+                                             @NotNull final Collection<VirtualFile> notDefined,
+                                             @NotNull final GitUserNameNotDefinedDialog dialog) {
+      final Ref<String> error = Ref.create();
+      ProgressManager.getInstance().run(new Task.Modal(project, "Setting Git User Name...", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator pi) {
           try {
-            Couple<String> nameAndEmail = getUserNameAndEmailFromGitConfig(project, root);
-            String name = nameAndEmail.getFirst();
-            String email = nameAndEmail.getSecond();
-            if (name != null && email != null) {
-              defined.put(root, nameAndEmail);
-              break;
+            if (dialog.isGlobal()) {
+              GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_NAME, dialog.getUserName(), "--global");
+              GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_EMAIL, dialog.getUserEmail(), "--global");
+            }
+            else {
+              for (VirtualFile root : notDefined) {
+                GitConfigUtil.setValue(project, root, GitConfigUtil.USER_NAME, dialog.getUserName());
+                GitConfigUtil.setValue(project, root, GitConfigUtil.USER_EMAIL, dialog.getUserEmail());
+              }
             }
           }
           catch (VcsException e) {
-            LOG.error("Couldn't get user.name and user.email for root " + root, e);
-            // doing nothing - not critical not to find the values for other roots not affected by commit
+            String message = "Couldn't set user.name and user.email";
+            LOG.error(message, e);
+            error.set(message);
           }
         }
+      });
+      if (error.isNull()) {
+        return true;
       }
-
-      GitUserNameNotDefinedDialog dialog = new GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined);
-      if (dialog.showAndGet()) {
-        try {
-          if (dialog.isGlobal()) {
-            GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_NAME, dialog.getUserName(), "--global");
-            GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_EMAIL, dialog.getUserEmail(), "--global");
-          }
-          else {
-            for (VirtualFile root : notDefined) {
-              GitConfigUtil.setValue(project, root, GitConfigUtil.USER_NAME, dialog.getUserName());
-              GitConfigUtil.setValue(project, root, GitConfigUtil.USER_EMAIL, dialog.getUserEmail());
-            }
-          }
-        }
-        catch (VcsException e) {
-          String message = "Couldn't set user.name and user.email";
-          LOG.error(message, e);
-          Messages.showErrorDialog(myPanel.getComponent(), message);
-          return ReturnResult.CANCEL;
-        }
-        return ReturnResult.COMMIT;
+      else {
+        Messages.showErrorDialog(myPanel.getComponent(), error.get());
+        return false;
       }
-      return ReturnResult.CLOSE_WINDOW;
     }
 
     @NotNull
