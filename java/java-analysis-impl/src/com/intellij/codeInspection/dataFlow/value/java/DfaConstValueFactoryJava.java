@@ -17,50 +17,17 @@ package com.intellij.codeInspection.dataFlow.value.java;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.psi.*;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.Nullable;
 
 public class DfaConstValueFactoryJava extends DfaConstValue.Factory {
 
-  private final DfaValueFactoryJava myFactory;
-
   public DfaConstValueFactoryJava(DfaValueFactoryJava factory) {
     super(factory);
-    myFactory = factory;
   }
 
   @Nullable
   public DfaValue create(PsiLiteralExpression expression) {
     return create(expression.getType(), expression.getValue());
-  }
-
-  @Nullable
-  @Override
-  public DfaValue create(PsiVariable variable) {
-    Object value = variable.computeConstantValue();
-    PsiType type = variable.getType();
-    if (value == null) {
-      Boolean boo = computeJavaLangBooleanFieldReference(variable);
-      if (boo != null) {
-        DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
-        return myFactory.getBoxedFactory().createBoxed(unboxed);
-      }
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
-        return dfaNull;
-      }
-      return null;
-    }
-    return createFromValue(value, type, variable);
-  }
-
-  @Nullable
-  public static Boolean computeJavaLangBooleanFieldReference(final PsiVariable variable) {
-    if (!(variable instanceof PsiField)) return null;
-    PsiClass psiClass = ((PsiField)variable).getContainingClass();
-    if (psiClass == null || !CommonClassNames.JAVA_LANG_BOOLEAN.equals(psiClass.getQualifiedName())) return null;
-    @NonNls String name = variable.getName();
-    return "TRUE".equals(name) ? Boolean.TRUE : "FALSE".equals(name) ? Boolean.FALSE : null;
   }
 }

@@ -17,44 +17,18 @@ package org.jetbrains.plugins.groovy.lang.flow.value;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
-import static com.intellij.codeInspection.dataFlow.value.java.DfaConstValueFactoryJava.computeJavaLangBooleanFieldReference;
-
 public class GrDfaConstValueFactory extends DfaConstValue.Factory {
-
-  private final @NotNull GrDfaValueFactory myFactory;
 
   GrDfaConstValueFactory(@NotNull GrDfaValueFactory factory) {
     super(factory);
-    myFactory = factory;
   }
 
   @Nullable
   public DfaValue create(@NotNull GrLiteral literal) {
     return create(literal.getType(), literal.getValue());
-  }
-
-  @Override
-  @Nullable
-  public DfaValue create(PsiVariable variable) {
-    Object value = variable.computeConstantValue();
-    PsiType type = variable.getType();
-    if (value == null) {
-      Boolean boo = computeJavaLangBooleanFieldReference(variable);
-      if (boo != null) {
-        DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
-        return myFactory.getBoxedFactory().createBoxed(unboxed);
-      }
-      PsiExpression initializer = variable.getInitializer();
-      if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {
-        return dfaNull;
-      }
-      return null;
-    }
-    return createFromValue(value, type, variable);
   }
 }
