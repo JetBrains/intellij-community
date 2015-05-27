@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.autodetect.LineIndentInfo;
 import com.intellij.psi.codeStyle.autodetect.LineIndentInfoBuilder;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -28,10 +27,6 @@ import java.io.File;
 import java.util.List;
 
 public class IndentAutoDetectionTest extends AbstractIndentAutoDetectionTest {
-
-  static {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   @NotNull
   @Override

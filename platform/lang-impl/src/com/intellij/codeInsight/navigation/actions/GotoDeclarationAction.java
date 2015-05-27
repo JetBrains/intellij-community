@@ -219,9 +219,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    if (file instanceof PsiCompiledElement) {
-      PsiElement mirror = ((PsiCompiledElement)file).getMirror();
-      if (mirror instanceof PsiFile) file = (PsiFile)mirror;
+    if (file instanceof PsiCompiledFile) {
+      PsiFile decompiled = ((PsiCompiledFile)file).getDecompiledPsiFile();
+      if (decompiled != null) file = decompiled;
     }
 
     PsiElement elementAt = file.findElementAt(TargetElementUtil.adjustOffset(file, document, offset));

@@ -422,7 +422,7 @@ public class ExpectedHighlightingData {
         String desc = info.getDescription();
 
         if (!failMessage.isEmpty()) failMessage += '\n';
-        failMessage += fileName + "Extra text fragment highlighted " +
+        failMessage += fileName + "Extra " +
                           rangeString(text, startOffset, endOffset) +
                           " :'" +
                           s +
@@ -442,7 +442,7 @@ public class ExpectedHighlightingData {
           String desc = expectedInfo.getDescription();
 
           if (!failMessage.isEmpty()) failMessage += '\n';
-          failMessage += fileName + "Text fragment was not highlighted " +
+          failMessage += fileName + "Missing " +
                             rangeString(text, startOffset, endOffset) +
                             " :'" +
                             s +
@@ -613,7 +613,9 @@ public class ExpectedHighlightingData {
     int startCol = startOffset - StringUtil.lineColToOffset(text, startLine, 0);
     int endCol = endOffset - StringUtil.lineColToOffset(text, endLine, 0);
 
-    return "(line: " + (startLine + 1) + "; col: " + (startCol + 1) + ")" + " - " +
-           "(line: " + (endLine   + 1) + "; col: " + (endCol   + 1) + ")";
+    if (startLine == endLine) {
+      return String.format("(%d:%d/%d)", startLine + 1, startCol + 1, endCol - startCol);
+    }
+    return String.format("(%d:%d..%d:%d)", startLine + 1, endLine + 1, startCol + 1, endCol + 1);
   }
 }

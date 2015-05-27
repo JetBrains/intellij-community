@@ -872,4 +872,9 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   public String toString() {
     return super.toString() + "[disposed=" + myDisposed + "; valid=" + isValid() + "]";
   }
+
+  @Override
+  public int getExpectedCaretOffset() {
+    return myDocumentWindow.hostToInjected(myDelegate.getExpectedCaretOffset());
+  }
 }

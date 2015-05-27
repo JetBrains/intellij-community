@@ -404,11 +404,6 @@ public class JavaDebugProcess extends XDebugProcess {
     return null;
   }
 
-  private static void addActionToGroup(final DefaultActionGroup group, final String actionId) {
-    AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action != null) group.addAction(action, Constraints.FIRST);
-  }
-
   public NodeManagerImpl getNodeManager() {
     return myNodeManager;
   }

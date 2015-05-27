@@ -43,11 +43,17 @@ class ProjectFilesCondition implements Condition<VirtualFile> {
   @Override
   public boolean value(VirtualFile file) {
     if (myIndexableFilesFilter != null && !myIndexableFilesFilter.containsFileId(((VirtualFileWithId)file).getId())) {
-      if (myFilesFromOtherProjects >= MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT || myRestrictedTo != null) return false;
+      if (myFilesFromOtherProjects >= MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) return false;
       ++myFilesFromOtherProjects;
       return true;
     }
 
-    return FileBasedIndexImpl.belongsToScope(file, myRestrictedTo, myFilter);
+    if (FileBasedIndexImpl.belongsToScope(file, myRestrictedTo, myFilter)) return true;
+
+    if (myFilesFromOtherProjects < MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) {
+      ++myFilesFromOtherProjects;
+      return true;
+    }
+    return false;
   }
 }

@@ -401,7 +401,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     stopProcess(value, "Update by timer change");
   }
 
-  private int myDisableCount = 0;
+  private int myDisableCount;
 
   @Override
   public void disableUpdateByTimer(@NotNull Disposable parentDisposable) {
@@ -675,7 +675,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @Nullable
-  IntentionHintComponent getLastIntentionHint() {
+  public IntentionHintComponent getLastIntentionHint() {
     return myLastIntentionHint;
   }
 

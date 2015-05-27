@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,15 +37,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class PropertySuppressableInspectionBase extends LocalInspectionTool implements CustomSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.PropertySuppressableInspectionBase");
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return PropertiesBundle.message("properties.files.inspection.group.display.name");
   }
 
+  @Override
+  @NotNull
   public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
     return new SuppressIntentionAction[] {new SuppressSinglePropertyFix(getShortName()), new SuppressForFile(getShortName())};
   }
 
+  @Override
   public boolean isSuppressedFor(@NotNull PsiElement element) {
     Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
     PropertiesFile file;
@@ -91,25 +95,29 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
   private static class SuppressSinglePropertyFix extends SuppressIntentionAction {
     private final String shortName;
 
-    public SuppressSinglePropertyFix(String shortName) {
+    private SuppressSinglePropertyFix(String shortName) {
       this.shortName = shortName;
     }
 
+    @Override
     @NotNull
     public String getText() {
       return PropertiesBundle.message("unused.property.suppress.for.property");
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return PropertiesBundle.message("unused.property.suppress.for.property");
     }
 
+    @Override
     public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
       final Property property = PsiTreeUtil.getParentOfType(element, Property.class);
       return property != null && property.isValid();
     }
 
+    @Override
     public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
       final PsiFile file = element.getContainingFile();
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
@@ -131,24 +139,28 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
   private static class SuppressForFile extends SuppressIntentionAction {
     private final String shortName;
 
-    public SuppressForFile(String shortName) {
+    private SuppressForFile(String shortName) {
       this.shortName = shortName;
     }
 
+    @Override
     @NotNull
     public String getText() {
       return PropertiesBundle.message("unused.property.suppress.for.file");
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return PropertiesBundle.message("unused.property.suppress.for.file");
     }
 
+    @Override
     public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
       return element.isValid() && element.getContainingFile() instanceof PropertiesFile;
     }
 
+    @Override
     public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
       final PsiFile file = element.getContainingFile();
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;

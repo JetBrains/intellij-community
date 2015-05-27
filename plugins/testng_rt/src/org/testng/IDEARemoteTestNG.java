@@ -80,6 +80,7 @@ public class IDEARemoteTestNG extends TestNG {
         System.exit(0);
       }
       else {
+        System.out.println("##teamcity[enteredTheMatrix]");
         System.err.println("Nothing found to run");
       }
     }

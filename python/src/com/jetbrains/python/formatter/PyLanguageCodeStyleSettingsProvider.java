@@ -103,6 +103,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                 "Collections and Comprehensions");
       consumer.showCustomOption(PyCodeStyleSettings.class, "ALIGN_MULTILINE_IMPORTS", "Align when multiline",
                                 "Import Statements");
+      consumer.showCustomOption(PyCodeStyleSettings.class, "DICT_WRAPPING", "Dictionary literals", null, WRAP_OPTIONS, WRAP_VALUES);
     }
   }
 

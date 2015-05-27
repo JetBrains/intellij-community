@@ -80,7 +80,8 @@ public class TestNGTestClass extends TestNGTestObject {
     if (scope == null) {
       throw new RuntimeConfigurationException("Invalid scope specified");
     }
-    PsiClass psiClass = JavaPsiFacade.getInstance(myConfig.getProject()).findClass(data.getMainClassName(), scope.getGlobalSearchScope());
+    final PsiManager manager = PsiManager.getInstance(myConfig.getProject());
+    final PsiClass psiClass = ClassUtil.findPsiClass(manager, data.getMainClassName(), null, true, scope.getGlobalSearchScope());
     if (psiClass == null) throw new RuntimeConfigurationException("Class '" + data.getMainClassName() + "' not found");
   }
 

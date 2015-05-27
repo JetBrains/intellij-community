@@ -15,31 +15,63 @@
  */
 package org.jetbrains.io;
 
+import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.CustomPortServerManager;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Map;
 
-final class SubServer implements CustomPortServerManager.CustomPortService, Disposable {
-  private final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
+public final class SubServer implements CustomPortServerManager.CustomPortService, Disposable {
+  private ChannelRegistrar channelRegistrar;
 
   private final CustomPortServerManager user;
-  private final ServerBootstrap bootstrap;
+  private final BuiltInServer server;
 
-  public SubServer(@NotNull CustomPortServerManager user, @NotNull EventLoopGroup eventLoopGroup) {
+  public SubServer(@NotNull CustomPortServerManager user, @NotNull BuiltInServer server) {
     this.user = user;
+    this.server = server;
+
     user.setManager(this);
-    bootstrap = BuiltInServer.createServerBootstrap(eventLoopGroup, channelRegistrar, user.createXmlRpcHandlers());
   }
 
   public boolean bind(int port) {
-    if (!user.isAvailableExternally() && port == BuiltInServerManager.getInstance().getPort()) {
+    if (port == server.getPort() || port == -1) {
       return true;
+    }
+
+    if (channelRegistrar == null) {
+      Disposer.register(server, this);
+      channelRegistrar = new ChannelRegistrar();
+    }
+
+    ServerBootstrap bootstrap = NettyUtil.nioServerBootstrap(server.eventLoopGroup);
+    Map<String, Object> xmlRpcHandlers = user.createXmlRpcHandlers();
+    if (xmlRpcHandlers == null) {
+      BuiltInServer.configureChildHandler(bootstrap, channelRegistrar);
+    }
+    else {
+      final XmlRpcDelegatingHttpRequestHandler handler = new XmlRpcDelegatingHttpRequestHandler(xmlRpcHandlers);
+      bootstrap.childHandler(new ChannelInitializer() {
+        @Override
+        protected void initChannel(Channel channel) throws Exception {
+          channel.pipeline().addLast(channelRegistrar);
+          NettyUtil.addHttpServerCodec(channel.pipeline());
+          channel.pipeline().addLast(handler);
+        }
+      });
     }
 
     try {
@@ -60,11 +92,13 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
 
   @Override
   public boolean isBound() {
-    return !channelRegistrar.isEmpty();
+    return channelRegistrar != null && !channelRegistrar.isEmpty();
   }
 
   private void stop() {
-    channelRegistrar.close(false);
+    if (channelRegistrar != null) {
+      channelRegistrar.close(false);
+    }
   }
 
   @Override
@@ -77,5 +111,24 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
   public void dispose() {
     stop();
     user.setManager(null);
+  }
+
+  @ChannelHandler.Sharable
+  private static final class XmlRpcDelegatingHttpRequestHandler extends DelegatingHttpRequestHandlerBase {
+    private final Map<String, Object> handlers;
+
+    public XmlRpcDelegatingHttpRequestHandler(Map<String, Object> handlers) {
+      this.handlers = handlers;
+    }
+
+    @Override
+    protected boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws IOException {
+      if (handlers.isEmpty()) {
+        // not yet initialized, for example, P2PTransport could add handlers after we bound.
+        return false;
+      }
+
+      return request.method() == HttpMethod.POST && XmlRpcServer.SERVICE.getInstance().process(urlDecoder.path(), request, context, handlers);
+    }
   }
 }

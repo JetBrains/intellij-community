@@ -143,12 +143,12 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /**
-   * @return Environment, that will be passed to the process if isPassParentEnvironment() == true
+   * @return unmodifiable map of the parent environment, that will be passed to the process if isPassParentEnvironment() == true
    */
   @NotNull
   public Map<String, String> getParentEnvironment() {
-    return Collections.unmodifiableMap(PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
-                                                                 : EnvironmentUtil.getEnvironmentMap());
+    return PlatformUtils.isAppCode() ? System.getenv() // Temporarily fix for OC-8606
+                                     : EnvironmentUtil.getEnvironmentMap();
   }
 
   public void addParameters(String... parameters) {

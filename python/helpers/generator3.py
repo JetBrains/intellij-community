@@ -1,6 +1,12 @@
 # encoding: utf-8
 import atexit
 import zipfile
+import sys
+
+
+if hasattr(sys, 'dont_write_bytecode'):
+    sys.dont_write_bytecode = True
+
 
 # TODO: Move all CLR-specific functions to clr_tools
 

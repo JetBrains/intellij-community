@@ -18,6 +18,7 @@ package com.jetbrains.python.configuration;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.ui.IdeaDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public class PythonPathDialog extends IdeaDialog {
     super(project);
     myEditor = editor;
     init();
-    setTitle("Interpreter Paths");
+    setTitle(PyBundle.message("sdk.paths.dialog.title"));
   }
 
   @Override

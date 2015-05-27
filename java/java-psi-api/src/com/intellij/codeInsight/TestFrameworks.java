@@ -57,6 +57,13 @@ public abstract class TestFrameworks {
         return framework;
       }
     }
+
+    for (TestFramework framework : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
+      if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) {
+        return framework;
+      }
+    }
+
     return null;
   }
 }

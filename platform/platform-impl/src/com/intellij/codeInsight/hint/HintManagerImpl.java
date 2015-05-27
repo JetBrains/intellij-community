@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -741,7 +741,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   @Override
   public void showQuestionHint(@NotNull Editor editor, @NotNull String hintText, int offset1, int offset2, @NotNull QuestionAction action) {
-
     JComponent label = HintUtil.createQuestionLabel(hintText);
     LightweightHint hint = new LightweightHint(label);
     showQuestionHint(editor, offset1, offset2, hint, action, ABOVE);
@@ -768,16 +767,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                @NotNull final QuestionAction action,
                                @PositionFlags short constraint) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    hideQuestionHint();
     TextAttributes attributes = new TextAttributes();
     attributes.setEffectColor(HintUtil.QUESTION_UNDERSCORE_COLOR);
     attributes.setEffectType(EffectType.LINE_UNDERSCORE);
     final RangeHighlighter highlighter = editor.getMarkupModel()
       .addRangeHighlighter(offset1, offset2, HighlighterLayer.ERROR + 1, attributes, HighlighterTargetArea.EXACT_RANGE);
-    if (myQuestionHint != null) {
-      myQuestionHint.hide();
-      myQuestionHint = null;
-      myQuestionAction = null;
-    }
 
     hint.addHintListener(new HintListener() {
       @Override
@@ -796,6 +791,15 @@ public class HintManagerImpl extends HintManager implements Disposable {
                    createHintHint(editor, p, hint, constraint));
     myQuestionAction = action;
     myQuestionHint = hint;
+  }
+
+  public void hideQuestionHint() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myQuestionHint != null) {
+      myQuestionHint.hide();
+      myQuestionHint = null;
+      myQuestionAction = null;
+    }
   }
 
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint) {

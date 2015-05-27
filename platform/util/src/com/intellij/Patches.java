@@ -104,6 +104,12 @@ public class Patches {
   public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = true;
 
   /**
+   * Marker field to find all usages of the reflective access to JDK 7-specific methods
+   * which need to be changed when migrated to JDK 8
+   */
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = true;
+
+  /**
    * AtomicIntegerFieldUpdater does not work when SecurityManager is installed
    * fixed in JDK8
    */

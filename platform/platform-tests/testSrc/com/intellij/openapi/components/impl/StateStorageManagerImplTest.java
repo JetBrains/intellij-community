@@ -20,7 +20,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.StateStorageManagerImpl;
 import com.intellij.openapi.components.impl.stores.StorageData;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +31,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author mike
  */
-public class StateStorageManagerImplTest extends LightPlatformLangTestCase {
+public class StateStorageManagerImplTest extends LightPlatformTestCase {
   private StateStorageManagerImpl myStateStorageManager;
 
   @Override

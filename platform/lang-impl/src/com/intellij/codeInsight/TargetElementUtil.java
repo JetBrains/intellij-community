@@ -34,7 +34,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -68,6 +68,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return ServiceManager.getService(TargetElementUtil.class);
   }
 
+  @Override
   public int getAllAccepted() {
     int result = REFERENCED_ELEMENT_ACCEPTED | ELEMENT_NAME_ACCEPTED | LOOKUP_ITEM_ACCEPTED;
     for (TargetElementUtilExtender each : Extensions.getExtensions(TargetElementUtilExtender.EP_NAME)) {
@@ -76,6 +77,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return result;
   }
 
+  @Override
   public int getDefinitionSearchFlags() {
     int result = getAllAccepted();
     for (TargetElementUtilExtender each : Extensions.getExtensions(TargetElementUtilExtender.EP_NAME)) {
@@ -84,6 +86,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return result;
   }
 
+  @Override
   public int getReferenceSearchFlags() {
     int result = getAllAccepted();
     for (TargetElementUtilExtender each : Extensions.getExtensions(TargetElementUtilExtender.EP_NAME)) {
@@ -93,12 +96,13 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   @Nullable
-  public static PsiReference findReference(Editor editor) {
-    PsiReference result = findReference(editor, editor.getCaretModel().getOffset());
+  public static PsiReference findReference(@NotNull Editor editor) {
+    int offset = editor.getCaretModel().getOffset();
+    PsiReference result = findReference(editor, offset);
     if (result == null) {
-      final Integer offset = editor.getUserData(EditorActionUtil.EXPECTED_CARET_OFFSET);
-      if (offset != null) {
-        result = findReference(editor, offset);
+      int expectedCaretOffset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : offset;
+      if (expectedCaretOffset != offset) {
+        result = findReference(editor, expectedCaretOffset);
       }
     }
     return result;
@@ -155,27 +159,26 @@ public class TargetElementUtil extends TargetElementUtilBase {
   }
 
   public static boolean inVirtualSpace(@NotNull Editor editor, int offset) {
-    if (offset == editor.getCaretModel().getOffset()) {
-      return EditorUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
-    }
-
-    return false;
+    return offset == editor.getCaretModel().getOffset()
+           && EditorUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
   }
 
   @Nullable
   public static PsiElement findTargetElement(Editor editor, int flags) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final PsiElement result = getInstance().findTargetElement(editor, flags, editor.getCaretModel().getOffset());
+    int offset = editor.getCaretModel().getOffset();
+    final PsiElement result = getInstance().findTargetElement(editor, flags, offset);
     if (result != null) return result;
 
-    final Integer offset = editor.getUserData(EditorActionUtil.EXPECTED_CARET_OFFSET);
-    if (offset != null) {
-      return getInstance().findTargetElement(editor, flags, offset);
+    int expectedCaretOffset = editor instanceof EditorEx ? ((EditorEx)editor).getExpectedCaretOffset() : offset;
+    if (expectedCaretOffset != offset) {
+      return getInstance().findTargetElement(editor, flags, expectedCaretOffset);
     }
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement findTargetElement(@NotNull Editor editor, int flags, int offset) {
     PsiElement result = doFindTargetElement(editor, flags, offset);
@@ -255,6 +258,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return true;
   }
 
+  @Override
   @Nullable
   public PsiElement adjustElement(final Editor editor, final int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     PsiElement langElement = element == null ? contextElement : element;
@@ -265,6 +269,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return element;
   }
 
+  @Override
   @Nullable
   public PsiElement adjustReference(@NotNull PsiReference ref) {
     PsiElement element = ref.getElement();
@@ -272,6 +277,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return evaluator != null ? evaluator.adjustReference(ref) : null;
   }
 
+  @Override
   @Nullable
   public PsiElement getNamedElement(@Nullable final PsiElement element, final int offsetInElement) {
     if (element == null) return null;
@@ -374,6 +380,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     }
   }
 
+  @Override
   @NotNull
   public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     PsiElement refElement = reference.getElement();
@@ -403,6 +410,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return Collections.emptyList();
   }
 
+  @Override
   public PsiElement getGotoDeclarationTarget(final PsiElement element, final PsiElement navElement) {
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
     if (evaluator != null) {
@@ -412,16 +420,19 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return navElement;
   }
 
+  @Override
   public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
     TargetElementEvaluator evaluator = targetElementEvaluator.forLanguage(element.getLanguage());
     return evaluator == null || evaluator.includeSelfInGotoImplementation(element);
   }
 
+  @Override
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);
   }
 
+  @Override
   @NotNull
   public SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(element.getLanguage());

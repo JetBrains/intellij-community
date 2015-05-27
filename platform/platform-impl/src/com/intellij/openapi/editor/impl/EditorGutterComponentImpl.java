@@ -222,7 +222,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
         paintAnnotations(g, clip);
         paintLineMarkers(g, firstVisibleOffset, lastVisibleOffset);
-        paintFoldingLines((Graphics2D)g, clip);
+        paintFoldingLines(g, clip);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintLineNumbers(g, clip);
       }
@@ -811,7 +811,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private Icon scaleIcon(Icon icon) {
     if (Registry.is("editor.scale.gutter.icons")) {
-      return IconUtil.scale(icon, (double)myEditor.getLineHeight() / 17);
+      return IconUtil.scale(icon, (double)myEditor.getLineHeight() / JBUI.scale(17));
     }
     return icon;
   }

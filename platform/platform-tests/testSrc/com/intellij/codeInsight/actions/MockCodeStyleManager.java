@@ -73,7 +73,7 @@ public class MockCodeStyleManager extends CodeStyleManager {
 
   @Override
   public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
-    throw new UnsupportedOperationException("com.intellij.codeInsight.actions.MockCodeStyleManager.reformatTextWithContext(...)");
+    reformatText(file, ranges);
   }
 
   @NotNull

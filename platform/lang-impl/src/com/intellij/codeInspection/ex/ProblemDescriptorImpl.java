@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.HintAction;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptorBase;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
+ * Extends {@link ProblemDescriptorBase} with {@link HintAction}
  */
-public class ProblemDescriptorImpl extends ProblemDescriptorBase implements ProblemDescriptor {
+public class ProblemDescriptorImpl extends ProblemDescriptorBase {
   private final HintAction myHintAction;
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement,

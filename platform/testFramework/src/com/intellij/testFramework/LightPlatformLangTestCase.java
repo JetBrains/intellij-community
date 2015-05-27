@@ -15,8 +15,9 @@
  */
 package com.intellij.testFramework;
 
+/** @deprecated platform autodetection should work well enough, just use base class instead (to be removed in IDEA 16) */
+@SuppressWarnings("ALL")
 public abstract class LightPlatformLangTestCase extends LightPlatformTestCase {
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected LightPlatformLangTestCase() {
     PlatformTestCase.autodetectPlatformPrefix();
   }

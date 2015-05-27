@@ -22,7 +22,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   private final List<String> myCurrentSuites = new ArrayList<String>();
   private String myMethodName;
   private int myInvocationCount = 0;
-  private final Map<ITestResult, String> myParamsMap = Collections.synchronizedMap(new HashMap<ITestResult, String>());
+  private final Map<ExposedTestResult, String> myParamsMap = Collections.synchronizedMap(new HashMap<ExposedTestResult, String>());
 
   public IDEATestNGRemoteListener() {
     myPrintStream = System.out;
@@ -42,62 +42,29 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
   }
 
   public synchronized void onConfigurationSuccess(ITestResult result) {
-    onConfigurationSuccess(getTestHierarchy(result), getTestMethodName(result), result.getEndMillis() - result.getStartMillis());
+    onConfigurationSuccess(new DelegatedResult(result));
   }
 
   public synchronized void onConfigurationFailure(ITestResult result) {
-    onConfigurationFailure(getTestHierarchy(result), getTestMethodName(result), result.getThrowable(), result.getEndMillis() - result.getStartMillis());
+    onConfigurationFailure(new DelegatedResult(result));
   }
 
   public synchronized void onConfigurationSkip(ITestResult itr) {}
 
   public synchronized void onTestStart(ITestResult result) {
-    final String testMethodName = getTestMethodName(result);
-    final Object[] parameters = result.getParameters();
-    if (!testMethodName.equals(myMethodName)) {
-      myInvocationCount = 0;
-      myMethodName = testMethodName;
-    }
-    String paramString = getParamsString(parameters, myInvocationCount);
-    if (paramString != null) {
-      myParamsMap.put(result, paramString);
-    }
-    onTestStart(getTestHierarchy(result), testMethodName, paramString, myInvocationCount);
-    myInvocationCount++;
-  }
-
-  public static String getParamsString(Object[] parameters, int invocationCount) {
-    String paramString = "";
-    if (parameters.length > 0) {
-      StringBuilder buf = new StringBuilder();
-      for (int i = 0; i < parameters.length; i++) {
-        if (i > 0) {
-          buf.append(", ");
-        }
-        buf.append(parameters[i].toString());
-      }
-      paramString = "[" + buf.toString() + "]";
-    }
-    if (invocationCount > 0) {
-      paramString += getParamsSpace(invocationCount);
-    }
-    return paramString.length() > 0 ? paramString : null;
-  }
-
-  public static String getParamsSpace(Integer invocationCount) {
-    return " (" + invocationCount + ")";
+    onTestStart(new DelegatedResult(result));
   }
 
   public synchronized void onTestSuccess(ITestResult result) {
-    onTestFinished(getTestMethodNameWithParams(result), result.getEndMillis() - result.getStartMillis());
+    onTestFinished(new DelegatedResult(result));
   }
 
   public synchronized void onTestFailure(ITestResult result) {
-    onTestFailure(result.getThrowable(), getTestMethodNameWithParams(result), result.getEndMillis() - result.getStartMillis());
+    onTestFailure(new DelegatedResult(result));
   }
 
   public synchronized void onTestSkipped(ITestResult result) {
-    myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getTestMethodNameWithParams(result)) + "\']");
+    onTestSkipped(new DelegatedResult(result));
   }
 
   public synchronized void onTestFailedButWithinSuccessPercentage(ITestResult result) {
@@ -117,33 +84,33 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     myCurrentSuites.clear();
   }
 
-  private static List<String> getTestHierarchy(ITestResult result) {
-    final List<String> hierarchy;
-    final XmlTest xmlTest = result.getTestClass().getXmlTest();
-    if (xmlTest != null) {
-      hierarchy = Arrays.asList(getClassName(result), xmlTest.getName());
-    } else {
-      hierarchy = Collections.singletonList(getClassName(result));
+  public void onTestStart(ExposedTestResult result) {
+    final String testMethodName = result.getMethodName();
+    final Object[] parameters = result.getParameters();
+    if (!testMethodName.equals(myMethodName)) {
+      myInvocationCount = 0;
+      myMethodName = testMethodName;
     }
-    return hierarchy;
+    final String paramString = getParamsString(parameters, myInvocationCount);
+    myParamsMap.put(result, paramString);
+    onTestStart(result, paramString, myInvocationCount);
+    myInvocationCount++;
   }
 
-  public void onConfigurationSuccess(List<String> classFQName, String testMethodName, long duration) {
-    onSuiteStart(classFQName, true);
-    fireTestStarted(testMethodName, classFQName.get(0));
-    onTestFinished(testMethodName, duration);
+  public void onConfigurationSuccess(ExposedTestResult result) {
+    onTestStart(result, null, -1);
+    onTestFinished(result);
   }
 
-  public void onConfigurationFailure(List<String> classFQName, String testMethodName, Throwable throwable, long duration) {
-    onSuiteStart(classFQName, true);
-    fireTestStarted(testMethodName, classFQName.get(0));
-    onTestFailure(throwable, testMethodName, duration);
+  public void onConfigurationFailure(ExposedTestResult result) {
+    onTestStart(result, null, -1);
+    onTestFailure(result);
   }
   
   public boolean onSuiteStart(String classFQName, boolean provideLocation) {
     return onSuiteStart(Collections.singletonList(classFQName), provideLocation);
   }
-  
+
   public boolean onSuiteStart(List<String> parentsHierarchy, boolean provideLocation) {
     int idx = 0;
     String currentClass;
@@ -177,16 +144,19 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(suiteName) + "\']");
   }
 
-  public void onTestStart(List<String> classFQName, String methodName, String paramString, Integer invocationCount) {
-    onSuiteStart(classFQName, true);
-    fireTestStarted(methodName, classFQName.get(0), paramString, invocationCount);
-  }
-  
-  public void onTestFinished(String methodName, long duration) {
-    myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(methodName) + (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") + "\']");
+  private void onTestStart(ExposedTestResult result, String paramString, Integer invocationCount) {
+    final List<String> fqns = result.getTestHierarchy();
+    onSuiteStart(fqns, true);
+    final String methodName = result.getMethodName();
+    final String className = result.getClassName();
+    final String location = className + "." + methodName + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
+    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName + (paramString != null ? paramString : "")) +
+                          "\' locationHint=\'java:test://" + escapeName(location) + "\']");
   }
 
-  public void onTestFailure(Throwable ex, String methodName, long duration) {
+  public void onTestFailure(ExposedTestResult result) {
+    Throwable ex = result.getThrowable();
+    String methodName = getTestMethodNameWithParams(result);
     final Map<String, String> attrs = new HashMap<String, String>();
     attrs.put("name", methodName);
     final String failureMessage = ex.getMessage();
@@ -199,33 +169,51 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
     }
     ComparisonFailureData.registerSMAttributes(notification, getTrace(ex), failureMessage, attrs, ex);
     myPrintStream.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
-    onTestFinished(methodName, duration);
+    onTestFinished(result);
   }
 
-  private static String getClassName(ITestResult result) {
-    return result.getMethod().getTestClass().getName();
+  public void onTestSkipped(ExposedTestResult result) {
+    if (!myParamsMap.containsKey(result)) {
+      onTestStart(result);
+    }
+    myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getTestMethodNameWithParams(result)) + "\']");
+    onTestFinished(result);
   }
 
-  private static String getTestMethodName(ITestResult result) {
-    return result.getMethod().getMethodName();
+  public void onTestFinished(ExposedTestResult result) {
+    final long duration = result.getDuration();
+    myPrintStream.println("\n##teamcity[testFinished name=\'" +
+                          escapeName(getTestMethodNameWithParams(result)) +
+                          (duration > 0 ? "\' duration=\'" + Long.toString(duration) : "") +
+                          "\']");
   }
 
-  private void fireTestStarted(String methodName, String className) {
-    fireTestStarted(methodName, className, null, -1);
-  }
-
-  private void fireTestStarted(String methodName, String className, String paramString, Integer invocationCount) {
-    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName + (paramString != null ? paramString : "")) +
-                          "\' locationHint=\'java:test://" + escapeName(className + "." + methodName +  ( invocationCount >= 0 ? "[" + invocationCount + "]" : "")) + "\']");
-  }
-
-  private synchronized String getTestMethodNameWithParams(ITestResult result) {
-    String methodName = getTestMethodName(result);
+  private synchronized String getTestMethodNameWithParams(ExposedTestResult result) {
+    String methodName = result.getMethodName();
     String paramString = myParamsMap.get(result);
     if (paramString != null) {
       methodName += paramString;
     }
     return methodName;
+  }
+
+  private static String getParamsString(Object[] parameters, int invocationCount) {
+    String paramString = "";
+    if (parameters.length > 0) {
+      StringBuilder buf = new StringBuilder();
+      for (int i = 0; i < parameters.length; i++) {
+        if (i > 0) {
+          buf.append(", ");
+        }
+        final Object parameter = parameters[i];
+        buf.append(parameter != null ? parameter.toString() : null);
+      }
+      paramString = "[" + buf.toString() + "]";
+    }
+    if (invocationCount > 0) {
+      paramString += " (" + invocationCount + ")";
+    }
+    return paramString.length() > 0 ? paramString : null;
   }
 
   private static String getTrace(Throwable tr) {
@@ -246,5 +234,66 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   private static String escapeName(String str) {
     return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER);
+  }
+
+  public interface ExposedTestResult {
+    Object[] getParameters();
+    String getMethodName();
+    String getClassName();
+    long getDuration();
+    List<String> getTestHierarchy();
+    Throwable getThrowable();
+  }
+
+  private static class DelegatedResult implements ExposedTestResult {
+    private final ITestResult myResult;
+
+    public DelegatedResult(ITestResult result) {
+      myResult = result;
+    }
+
+    public Object[] getParameters() {
+      return myResult.getParameters();
+    }
+
+    public String getMethodName() {
+      return myResult.getMethod().getMethodName();
+    }
+
+    public String getClassName() {
+      return myResult.getMethod().getTestClass().getName();
+    }
+
+    public long getDuration() {
+      return myResult.getEndMillis() - myResult.getStartMillis();
+    }
+
+    public List<String> getTestHierarchy() {
+      final List<String> hierarchy;
+      final XmlTest xmlTest = myResult.getTestClass().getXmlTest();
+      if (xmlTest != null) {
+        hierarchy = Arrays.asList(getClassName(), xmlTest.getName());
+      } else {
+        hierarchy = Collections.singletonList(getClassName());
+      }
+      return hierarchy;
+    }
+
+    public Throwable getThrowable() {
+      return myResult.getThrowable();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      return myResult.equals(((DelegatedResult)o).myResult);
+    }
+
+    @Override
+    public int hashCode() {
+      return myResult.hashCode();
+    }
   }
 }

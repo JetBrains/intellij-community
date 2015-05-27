@@ -65,7 +65,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     IElementType type1 = node1.getElementType();
     IElementType type2 = node2.getElementType();
 
-    if (type2 == XmlElementType.XML_COMMENT) return Spacing.getReadOnlySpacing();
+    if (type2 == XmlElementType.XML_COMMENT) {
+      // Do not remove any spaces except extra blank lines
+      return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
+    }
     if (type1 == XmlElementType.XML_COMMENT) {
       ASTNode prev = node1.getTreePrev();
       if (prev != null) {

@@ -2048,7 +2048,7 @@ public class UIUtil {
     @NonNls @Language("HTML")
     String body = "body, div, td, p {" + fontFamilyAndSize + " " + (fgColor != null ? "color:#" + ColorUtil.toHex(fgColor)+";" : "") + "}\n";
     if (resource != null) {
-      body += "ul {list-style-image:url('" + resource.toExternalForm() + "');}\n";
+      body += "ul {list-style-image:url('" + StringUtil.escapeCharCharacters(resource.toExternalForm()) + "');}\n";
     }
     @NonNls String link = linkColor != null ? "a {" + fontFamilyAndSize + " color:#"+ColorUtil.toHex(linkColor) + ";}\n" : "";
     return "<style>\n" + body + link + "</style>";

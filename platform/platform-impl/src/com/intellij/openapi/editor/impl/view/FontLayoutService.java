@@ -23,6 +23,10 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 
+/**
+ * Encapsulates logic related to font metrics. Mock instance can be used in tests to make them independent on font properties on particular
+ * platform.
+ */
 public abstract class FontLayoutService {
   private static final FontLayoutService DEFAULT_INSTANCE = new DefaultFontLayoutService();
   private static FontLayoutService INSTANCE = DEFAULT_INSTANCE;

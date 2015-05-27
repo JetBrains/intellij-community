@@ -326,8 +326,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
             break;
           }
         }
-        myLastCommittedTexts.remove(document);
-        viewProvider.contentsSynchronized();
+        if (success) {
+          myLastCommittedTexts.remove(document);
+          viewProvider.contentsSynchronized();
+        }
       }
       else {
         handleCommitWithoutPsi(document);

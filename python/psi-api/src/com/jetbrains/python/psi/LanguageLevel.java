@@ -56,6 +56,7 @@ public enum LanguageLevel {
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
+  @NotNull
   public static LanguageLevel getDefault() {
     return DEFAULT2;
   }

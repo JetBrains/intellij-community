@@ -182,8 +182,6 @@ public interface EditorEx extends Editor {
 
   /**
    * Creates color scheme delegate which is bound to current editor. E.g. all schema changes will update editor state.
-   * @param customGlobalScheme
-   * @return
    */
   @NotNull
   EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme);
@@ -272,8 +270,16 @@ public interface EditorEx extends Editor {
    * This is needed to allow a parent component draw above the scrollbar components (e.g. in the merge tool),
    * otherwise the drawings are cleared once the scrollbar gets repainted (which may happen suddenly, because the scrollbar UI uses the
    * {@link com.intellij.util.ui.Animator} to draw itself.
-   * @param callback  callback which will be called from the {@link javax.swing.JComponent#paint(java.awt.Graphics)} method of
+   * @param callback  callback which will be called from the {@link JComponent#paint(Graphics)} method of
    *                  the editor vertical scrollbar.
    */
   void registerScrollBarRepaintCallback(@Nullable ButtonlessScrollBarUI.ScrollbarRepaintCallback callback);
+
+  /**
+   * @return the offset that the caret is expected to be but maybe not yet.
+   * E.g. when user right-clicks the mouse the caret is not immediately jumps there but the click-handler wants to know that location already.
+   *
+   * When no mouse-clicks happened return the regular caret offset.
+   */
+  int getExpectedCaretOffset();
 }

@@ -19,15 +19,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class DetectedIndentNotificationTest extends LightPlatformCodeInsightFixtureTestCase {
-
-  static {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   private CodeStyleSettings mySettings;
 

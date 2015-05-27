@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,23 +33,21 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   private boolean myIsRefresh;
 
   public FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
-                              final AnnotationProvider annotationProvider,
                               final FilePath path,
                               final AbstractVcs vcs) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
     myVcs = vcs;
-    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, annotationProvider, path, vcs, this);
+    mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, path, vcs, this);
     myCanUseCache = true;
   }
 
   @NotNull
   public static FileHistoryRefresherI findOrCreate(@NotNull VcsHistoryProvider vcsHistoryProvider,
-                                                   @NotNull AnnotationProvider annotationProvider,
                                                    @NotNull FilePath path,
                                                    @NotNull AbstractVcs vcs) {
     FileHistoryRefresherI refresher = FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path);
-    return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, annotationProvider, path, vcs) : refresher;
+    return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, path, vcs) : refresher;
   }
 
   /**

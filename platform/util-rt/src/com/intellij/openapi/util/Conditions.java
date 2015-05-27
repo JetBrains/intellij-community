@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -44,6 +45,15 @@ public class Conditions {
       @Override
       public boolean value(T t) {
         return clazz.isInstance(t);
+      }
+    };
+  }
+
+  public static Condition<Class> assignableTo(final Class clazz) {
+    return new Condition<Class>() {
+      @Override
+      public boolean value(Class t) {
+        return clazz.isAssignableFrom(t);
       }
     };
   }
@@ -112,6 +122,25 @@ public class Conditions {
     if (c1 == alwaysFalse() || c2 == alwaysTrue()) return (Condition<T>)c2;
     if (c2 == alwaysFalse() || c1 == alwaysFalse()) return (Condition<T>)c1;
     return new Or<T>(c1, c2);
+  }
+
+  public static <A, B> Condition<A> compose(final Function<? super A, B> fun, final Condition<? super B> condition) {
+    return new Condition<A>() {
+      @Override
+      public boolean value(A o) {
+        return condition.value(fun.fun(o));
+      }
+    };
+  }
+
+  public static <A> Condition<A> countDown(final int n) {
+    return new Condition<A>() {
+      int cur = n;
+      @Override
+      public boolean value(A a) {
+        return cur > 0 && cur -- != 0;
+      }
+    };
   }
 
   public static <T> Condition<T> cached(Condition<T> c) {

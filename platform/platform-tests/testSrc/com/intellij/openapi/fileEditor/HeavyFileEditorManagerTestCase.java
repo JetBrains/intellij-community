@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.ui.docking.DockManager;
@@ -34,11 +33,6 @@ import java.io.File;
  *         Date: 4/30/13
  */
 public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureTestCase {
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected HeavyFileEditorManagerTestCase() {
-    PlatformTestCase.autodetectPlatformPrefix();
-  }
 
   protected FileEditorManagerImpl myManager;
 

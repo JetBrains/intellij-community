@@ -83,7 +83,7 @@ public class JUnit4TestListener extends RunListener {
   public void testRunFinished(Result result) throws Exception {
     for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
       Object parent = myStartedSuites.get(i);
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName((String)parent) + "\']");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
     }
     myStartedSuites.clear();
   }
@@ -100,14 +100,14 @@ public class JUnit4TestListener extends RunListener {
     String currentParent;
     while (idx < myStartedSuites.size() && idx < parentsHierarchy.size()) {
       currentClass = (String)myStartedSuites.get(idx);
-      currentParent = getShortName((String)parentsHierarchy.get(parentsHierarchy.size() - 1 - idx));
+      currentParent = (String)parentsHierarchy.get(parentsHierarchy.size() - 1 - idx);
       if (!currentClass.equals(currentParent)) break;
       idx++;
     }
 
     for (int i = myStartedSuites.size() - 1; i >= idx; i--) {
       currentClass = (String)myStartedSuites.remove(i);
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(currentClass) + "\']");
+      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(currentClass)) + "\']");
     }
 
     for (int i = idx; i < parentsHierarchy.size(); i++) {
@@ -115,17 +115,21 @@ public class JUnit4TestListener extends RunListener {
       final String className = getShortName(fqName);
       if (!className.equals(myRootName)) {
         myPrintStream.println("##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + (parents == null ? " locationHint=\'java:suite://" + escapeName(fqName) + "\'" : "") + "]");
-        myStartedSuites.add(className);
+        myStartedSuites.add(fqName);
       }
     }
 
     myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + 
                           getTestMethodLocation(methodName, classFQN) + "]");
-    myCurrentTestStart = System.currentTimeMillis();
+    myCurrentTestStart = currentTime();
+  }
+
+  protected long currentTime() {
+    return System.currentTimeMillis();
   }
 
   public void testFinished(Description description) throws Exception {
-    final long duration = System.currentTimeMillis() - myCurrentTestStart;
+    final long duration = currentTime() - myCurrentTestStart;
     myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(JUnit4ReflectionUtil.getMethodName(description)) +
                           (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
   }
@@ -133,7 +137,7 @@ public class JUnit4TestListener extends RunListener {
   public void testFailure(Failure failure) throws Exception {
     final Map attrs = new HashMap();
     attrs.put("name", JUnit4ReflectionUtil.getMethodName(failure.getDescription()));
-    final long duration = System.currentTimeMillis() - myCurrentTestStart;
+    final long duration = currentTime() - myCurrentTestStart;
     if (duration > 0) {
       attrs.put("duration", Long.toString(duration));
     }

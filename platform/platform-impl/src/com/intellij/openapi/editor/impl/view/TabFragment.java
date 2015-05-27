@@ -51,7 +51,7 @@ class TabFragment implements LineFragment {
   }
 
   @Override
-  public void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
+  public void draw(Graphics2D g, float x, float y, int startColumn, int endColumn) {
   }
 
   @NotNull

@@ -19,12 +19,15 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.markup.TextAttributes;
 
 import java.awt.*;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Iterator over visual line's fragments. Fragment's text has the same font and directionality. Collapsed fold regions are also represented
+ * as fragments.
+ */
 class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterator.Fragment> {
 
   static Iterable<Fragment> create(final EditorView view, final int offset) {
@@ -266,18 +269,20 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       return myFoldRegion;
     }
 
-    // offsets are absolute
-    void draw(Graphics2D g, float x, float y, int startOffset, int endOffset) {
+    // columns are visual (relative to fragment's start)
+    void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
       if (myDelegate == null) {
-        LineLayout foldRegionLayout = myView.getFoldRegionLayout(myFoldRegion);
-        TextAttributes attributes = myView.getEditor().getFoldingModel().getPlaceholderAttributes();
-        myView.getPainter().paintLineLayoutWithEffect(g, foldRegionLayout, x, y, 
-                                                      attributes == null ? null : attributes.getEffectColor(),
-                                                      attributes == null ? null : attributes.getEffectType());
+        for (LineLayout.VisualFragment fragment : myView.getFoldRegionLayout(myFoldRegion).getFragmentsInVisualOrder(x)) {
+          int fragmentStart = fragment.getStartVisualColumn();
+          int fragmentEnd = fragment.getEndVisualColumn();
+          if (fragmentStart < endRelativeColumn && fragmentEnd > startRelativeColumn) {
+            fragment.draw(g, fragment.getStartX(), y, 
+                          Math.max(0, startRelativeColumn - fragmentStart), Math.min(fragmentEnd, endRelativeColumn) - fragmentStart);
+          }
+        }
       }
       else {
-        int lineStartOffset = myDocument.getLineStartOffset(myCurrentStartLogicalLine);
-        myDelegate.draw(g, x, y, startOffset - lineStartOffset, endOffset - lineStartOffset);
+        myDelegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
       }
     }
   }

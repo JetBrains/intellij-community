@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -264,7 +264,8 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     };
   }
 
-  IntentionListStep getSubStep(final IntentionActionWithTextCaching action, final String title) {
+  @NotNull
+  IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, final String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     for (final IntentionAction optionIntention : action.getOptionIntentions()) {
       intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(optionIntention, getIcon(optionIntention)));

@@ -124,10 +124,12 @@ public class SyncScrollSupport {
           myHelper1.removeAnchor();
           myHelper2.removeAnchor();
 
-          if (masterOffset == masterStartOffset) { // master editor didn't scrolled
+          int masterFinalOffset = masterEditor.getScrollingModel().getVisibleArea().y;
+          int slaveFinalOffset = slaveEditor.getScrollingModel().getVisibleArea().y;
+          if (slaveFinalOffset != slaveOffset) {
             myDuringSyncScroll = true;
 
-            doScrollVertically(slaveEditor, slaveOffset, animate);
+            doScrollVertically(slaveEditor, slaveOffset, animate && masterFinalOffset == masterStartOffset);
 
             slaveEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
               @Override
@@ -318,7 +320,7 @@ public class SyncScrollSupport {
     int editorHeight2 = editor2.getScrollingModel().getVisibleArea().height;
 
     int maximumOffset1 = ((EditorEx)editor1).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeight1;
-    int maximumOffset2 = ((EditorEx)editor1).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeight2;
+    int maximumOffset2 = ((EditorEx)editor2).getScrollPane().getVerticalScrollBar().getMaximum() - editorHeight2;
 
     // 'shift' here - distance between editor's top and first line of range
 
@@ -340,7 +342,7 @@ public class SyncScrollSupport {
     if (maximumOffset1 > offset1 && maximumOffset2 > offset2) return new IntPair(offset1, offset2);
 
     // One of the ranges is at end of file - we can't scroll where we want to.
-    topShift = Math.min(topOffset1 - maximumOffset1, topOffset2 - maximumOffset2);
+    topShift = Math.max(topOffset1 - maximumOffset1, topOffset2 - maximumOffset2);
 
     // Try to show as much of range as we can (even if it breaks alignment)
     offset1 = topOffset1 - topShift + Math.max(topShift + rangeHeight1 + gapLines1 - editorHeight1, 0);

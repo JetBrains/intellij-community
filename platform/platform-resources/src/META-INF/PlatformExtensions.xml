@@ -184,6 +184,9 @@
     <applicationService serviceInterface="com.intellij.execution.RunnerRegistry"
                         serviceImplementation="com.intellij.execution.impl.RunnerRegistryImpl"/>
 
+    <applicationService serviceInterface="org.jetbrains.ide.script.IdeScriptEngineManager"
+                        serviceImplementation="org.jetbrains.ide.script.Jsr223IdeScriptEngineManagerImpl"/>
+
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
 
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"

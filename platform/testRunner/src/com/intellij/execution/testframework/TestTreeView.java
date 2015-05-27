@@ -196,9 +196,8 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
               final AbstractTestProxy testProxy = ((BaseTestProxyNodeDescriptor)data).getElement();
               final String durationString = testProxy.getDurationString();
               if (durationString != null) {
-                g.setColor(isRowSelected(row) ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
-                Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
-                paintRowData(this, durationString, fullRowRect, (Graphics2D)g);
+                final Rectangle fullRowRect = new Rectangle(visibleRect.x, rowBounds.y, visibleRect.width, rowBounds.height);
+                paintRowData(this, durationString, fullRowRect, (Graphics2D)g, isRowSelected(row), hasFocus());
               }
             }
           }
@@ -207,14 +206,18 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     }
   }
 
-  private static void paintRowData(Tree tree, String duration, Rectangle bounds, Graphics2D g) {
+  private static void paintRowData(Tree tree, String duration, Rectangle bounds, Graphics2D g, boolean isSelected, boolean hasFocus) {
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     final FontMetrics metrics = tree.getFontMetrics(tree.getFont());
     g.setFont(metrics.getFont().deriveFont(Font.ITALIC, UIUtil.getFontSize(UIUtil.FontSize.MINI)));
     int totalWidth = metrics.stringWidth(duration);
     int x = bounds.x + bounds.width - totalWidth;
+    g.setColor(isSelected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeBackground());
+    final int leftOffset = 5;
+    g.fillRect(x - leftOffset, bounds.y, totalWidth + leftOffset, bounds.height);
     int fontHeight = (int)metrics.getMaxCharBounds(g).getHeight();
     g.translate(0, bounds.y - 1);
+    g.setColor(isSelected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
     g.drawString(duration, x, fontHeight);
     g.translate(0, -bounds.y + 1);
     config.restore();

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.formatting.WrapType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -576,6 +577,13 @@ public class PyFormatterTest extends PyTestCase {
   // PY-14962
   public void testAlignDictLiteralOnColon() {
     getCustomSettings().DICT_ALIGNMENT = PyCodeStyleSettings.DICT_ALIGNMENT_ON_COLON;
+    doTest();
+  }
+
+  // PY-14962
+  public void testDictWrappingChopDownIfLong() {
+    settings().setRightMargin(PythonLanguage.getInstance(), 80);
+    getCustomSettings().DICT_WRAPPING = WrapType.CHOP_DOWN_IF_LONG.getLegacyRepresentation();
     doTest();
   }
 

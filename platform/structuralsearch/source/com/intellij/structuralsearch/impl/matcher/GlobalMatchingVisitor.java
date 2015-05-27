@@ -84,6 +84,11 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     return ((SubstitutionHandler)handler).handle(match, matchContext);
   }
 
+  public boolean allowsAbsenceOfMatch(final PsiElement element) {
+    final MatchingHandler handler = getMatchContext().getPattern().getHandler(element);
+    return handler instanceof SubstitutionHandler && ((SubstitutionHandler)handler).getMinOccurs() == 0;
+  }
+
   /**
    * Identifies the match between given element of program tree and pattern element
    *
@@ -92,11 +97,14 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    * @return true if equal and false otherwise
    */
   public boolean match(final PsiElement el1, final PsiElement el2) {
-    // null
     if (el1 == el2) return true;
-    if (el2 == null || el1 == null) {
-      // this a bug!
-      return false;
+    if (el1 == null) {
+      // absence of pattern element is match
+      return true;
+    }
+    if (el2 == null) {
+      // absence of match element needs check if allowed.
+      return allowsAbsenceOfMatch(el1);
     }
 
     // copy changed data to local stack
@@ -104,12 +112,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     myElement = el2;
 
     try {
-      /*if (el1 instanceof XmlElement) {
-        el1.accept(myXmlVisitor);
-      }
-      else {
-        el1.accept(myJavaVisitor);
-      }*/
       PsiElementVisitor visitor = getVisitorForElement(el1);
       if (visitor != null) {
         el1.accept(visitor);
@@ -297,11 +299,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   public void setMatchContext(MatchContext matchContext) {
     this.matchContext = matchContext;
   }
-
-  // Matches the sons of given elements to find equality
-  // @param el1 the pattern element for matching
-  // @param el2 the tree element for matching
-  // @return if they are equal and false otherwise
 
   @Override
   protected boolean isLeftLooseMatching() {

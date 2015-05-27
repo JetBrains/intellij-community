@@ -68,6 +68,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   private RefManager myRefManager;
 
   private AnalysisScope myCurrentScope;
+  @NotNull
   private final Project myProject;
   private final List<JobDescriptor> myJobDescriptors = new ArrayList<JobDescriptor>();
 

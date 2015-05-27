@@ -270,6 +270,14 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public static void setupAntialiasing(final Graphics g) {
 
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      // We cannot use services while Aplication has not been loaded yet
+      // So let's apply the default hints.
+      UIUtil.applyRenderingHints(g);
+      return;
+    }
+
     Graphics2D g2d = (Graphics2D)g;
     UISettings uiSettings = getInstance();
 

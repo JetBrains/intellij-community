@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1274,12 +1274,7 @@ class FormatProcessor {
                                @NotNull final CommonCodeStyleSettings.IndentOptions options)
   {
     if (oldIndent.equals(newIndent)) return 0;
-    if (options.USE_TAB_CHARACTER) {
-      return (newIndent.tabs - oldIndent.getTabsCount(options)) * options.TAB_SIZE;
-    }
-    else {
-      return newIndent.whiteSpaces - oldIndent.getSpacesCount(options);
-    }
+    return newIndent.getSpacesCount(options) - oldIndent.getSpacesCount(options);
   }
 
   /**

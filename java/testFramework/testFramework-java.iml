@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="idea-ui" exported="" />
     <orderEntry type="module" module-name="debugger-impl" exported="" />
     <orderEntry type="module" module-name="execution-openapi" exported="" />
+    <orderEntry type="module" module-name="external-system-impl" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>

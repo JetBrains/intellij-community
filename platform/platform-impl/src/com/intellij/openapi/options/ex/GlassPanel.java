@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class GlassPanel extends JComponent {
   }
 
   @Nullable
-  private static Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
+  private Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
     if (!lightComponent.isShowing()) return null;
 
     final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);
@@ -118,8 +118,8 @@ public class GlassPanel extends JComponent {
       insetsToIgnore = EMPTY_INSETS;
     }
 
-    int hInset = isWithBorder ? 7 : isLabelFromTabbedPane ? 20 : 7;
-    int vInset = isWithBorder ? 1 : isLabelFromTabbedPane ? 10 : 5;
+    int hInset = getComponentHInset(isWithBorder, isLabelFromTabbedPane);
+    int vInset = getComponentVInset(isWithBorder, isLabelFromTabbedPane);
     hInset += offset;
     vInset += offset;
     int xCoord = x - hInset + insetsToIgnore.left;
@@ -131,6 +131,14 @@ public class GlassPanel extends JComponent {
                                                 width,
                                                 height,
                                                 Math.min(height, 30), Math.min(height, 30)));
+  }
+
+  protected int getComponentHInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+    return isWithBorder ? 7 : isLabelFromTabbedPane ? 20 : 7;
+  }
+
+  protected int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+    return isWithBorder ? 1 : isLabelFromTabbedPane ? 10 : 5;
   }
 
   protected static Kernel getBlurKernel(int blurSize) {

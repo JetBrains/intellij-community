@@ -89,7 +89,7 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
   }
 
   ant.unzip(src: "$home/build/tools/NSIS.zip", dest: box)
-  ant.exec(command: "$box/NSIS/makensis.exe" +
+  ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
                     " /DBASE_DIR=\"$home\"" +
                     " /DCOMMUNITY_DIR=\"$home/community\"" +
                     " /DIPR=\"${associateIpr}\"" +

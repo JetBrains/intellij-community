@@ -24,9 +24,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -178,6 +176,19 @@ public class FindDialog extends DialogWrapper {
   }
 
   @Override
+  public void doCancelAction() { // doCancel disposes fields and then calls dispose
+    rememberResultsPreviewWasOpen();
+    super.doCancelAction();
+  }
+
+  private void rememberResultsPreviewWasOpen() {
+    if (myResultsPreviewTable != null) {
+      int selectedIndex = myContent.getSelectedIndex();
+      if (selectedIndex != -1) myPreviewResultsTabWasSelected = selectedIndex == RESULTS_PREVIEW_TAB_INDEX;
+    }
+  }
+
+  @Override
   protected void dispose() {
     finishPreviousPreviewSearch();
     if (mySearchRescheduleOnCancellationsAlarm != null) Disposer.dispose(mySearchRescheduleOnCancellationsAlarm);
@@ -187,7 +198,7 @@ public class FindDialog extends DialogWrapper {
     }
     myComboBoxListeners.clear();
     if (myScopePanel != null) myPreviousResultsExpandedState = myScopePanel.isExpanded();
-    if (myResultsPreviewTable != null) myPreviewResultsTabWasSelected = myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX;
+    rememberResultsPreviewWasOpen();
     super.dispose();
   }
 
@@ -574,6 +585,16 @@ public class FindDialog extends DialogWrapper {
       pane.insertTab("Options", null, optionsPanel, null, 0);
       pane.insertTab(PREVIEW_TITLE, null, myPreviewSplitter, null, RESULTS_PREVIEW_TAB_INDEX);
       myContent = pane;
+      AnAction anAction = new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          int selectedIndex = myContent.getSelectedIndex();
+          myContent.setSelectedIndex(1 - selectedIndex);
+        }
+      };
+
+      final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
+      anAction.registerCustomShortcutSet(shortcutSet, getRootPane());
       if (myPreviewResultsTabWasSelected) myContent.setSelectedIndex(RESULTS_PREVIEW_TAB_INDEX);
 
       return pane.getComponent();
@@ -654,6 +675,14 @@ public class FindDialog extends DialogWrapper {
       return;
     }
 
+    if (myResultsPreviewTable != null &&
+        myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX &&
+        myResultsPreviewTable.getSelectedRowCount() != 0
+       ) {
+      navigateToSelectedUsage(myResultsPreviewTable);
+      return;
+    }
+
     FindModel validateModel = myModel.clone();
     applyTo(validateModel, findAll);
 
@@ -685,11 +714,12 @@ public class FindDialog extends DialogWrapper {
     }
 
     findSettings.setWholeWordsOnly(myModel.isWholeWordsOnly());
-    findSettings.setInStringLiteralsOnly(myModel.isInStringLiteralsOnly());
-    findSettings.setInCommentsOnly(myModel.isInCommentsOnly());
-    findSettings.setExceptComments(myModel.isExceptComments());
-    findSettings.setExceptStringLiterals(myModel.isExceptStringLiterals());
-    findSettings.setExceptCommentsAndLiterals(myModel.isExceptCommentsAndStringLiterals());
+    boolean saveContextBetweenRestarts = false;
+    findSettings.setInStringLiteralsOnly(saveContextBetweenRestarts && myModel.isInStringLiteralsOnly());
+    findSettings.setInCommentsOnly(saveContextBetweenRestarts && myModel.isInCommentsOnly());
+    findSettings.setExceptComments(saveContextBetweenRestarts && myModel.isExceptComments());
+    findSettings.setExceptStringLiterals(saveContextBetweenRestarts && myModel.isExceptStringLiterals());
+    findSettings.setExceptCommentsAndLiterals(saveContextBetweenRestarts && myModel.isExceptCommentsAndStringLiterals());
 
     findSettings.setRegularExpressions(myModel.isRegularExpressions());
     if (!myModel.isMultipleFiles()){
@@ -1472,6 +1502,26 @@ public class FindDialog extends DialogWrapper {
     updateControls();
   }
 
+  private void navigateToSelectedUsage(JBTable source) {
+    int[] rows = source.getSelectedRows();
+    List<Usage> navigations = null;
+    for(int row:rows) {
+      Object valueAt = source.getModel().getValueAt(row, 0);
+      if (valueAt instanceof Usage) {
+        if (navigations == null) navigations = new SmartList<Usage>();
+        Usage at = (Usage)valueAt;
+        navigations.add(at);
+      }
+    }
+
+    if (navigations != null) {
+      applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
+      doCancelAction();
+      navigations.get(0).navigate(true);
+      for(int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();
+    }
+  }
+
   private static class UsageTableCellRenderer extends JPanel implements TableCellRenderer {
     private ColoredTableCellRenderer myUsageRenderer = new ColoredTableCellRenderer() {
       @Override
@@ -1525,26 +1575,6 @@ public class FindDialog extends DialogWrapper {
       if (!(source instanceof JBTable)) return false;
       navigateToSelectedUsage((JBTable)source);
       return true;
-    }
-
-    private void navigateToSelectedUsage(JBTable source) {
-      int[] rows = source.getSelectedRows();
-      List<Usage> navigations = null;
-      for(int row:rows) {
-        Object valueAt = source.getModel().getValueAt(row, 0);
-        if (valueAt instanceof Usage) {
-          if (navigations == null) navigations = new SmartList<Usage>();
-          Usage at = (Usage)valueAt;
-          navigations.add(at);
-        }
-      }
-
-      if (navigations != null) {
-        applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
-        doCancelAction();
-        navigations.get(0).navigate(true);
-        for(int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();
-      }
     }
 
     @Override

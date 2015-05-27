@@ -17,7 +17,6 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.junit.Assert;
@@ -25,10 +24,6 @@ import org.junit.Assert;
 import java.io.File;
 
 public class ChangedLinesCounterTest extends LightPlatformCodeInsightFixtureTestCase {
-
-  static {
-    PlatformTestCase.initPlatformLangPrefix();
-  }
 
   @Override
   protected String getTestDataPath() {

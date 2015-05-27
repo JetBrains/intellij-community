@@ -21,21 +21,26 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 
 public class VcsCommitInfoBalloon {
-  private static final String EMPTY_COMMIT_INFO = "<p style='font-style:italic;color:gray;'>No commit information found...</p>";
+  private static final String EMPTY_COMMIT_INFO = "<i style='color:gray;'>No commit information found</i>";
 
   @NotNull private final JTree myTree;
+  @NotNull private final Wrapper myWrapper;
   @Nullable private JBPopup myBalloon;
   @NotNull private final JEditorPane myEditorPane;
   @NotNull private final ComponentPopupBuilder myPopupBuilder;
@@ -43,19 +48,23 @@ public class VcsCommitInfoBalloon {
   public VcsCommitInfoBalloon(@NotNull JTree tree) {
     myTree = tree;
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "");
+    myEditorPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
     myEditorPane.setFont(UIUtil.getToolTipFont());
     myEditorPane.setBorder(HintUtil.createHintBorder());
+    Border margin = IdeBorderFactory.createEmptyBorder(3, 3, 3, 3);
+    myEditorPane.setBorder(new CompoundBorder(myEditorPane.getBorder(), margin));
     myEditorPane.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
         BrowserUtil.browse(e.getURL());
       }
     });
-    myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myEditorPane, null);
+    myWrapper = new Wrapper(myEditorPane);
+    myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myWrapper, null);
     myPopupBuilder.setCancelOnClickOutside(true).setResizable(true).setMovable(true).setRequestFocus(false)
-      .setMinSize(new Dimension(200, 80));
+      .setMinSize(new Dimension(80, 30));
   }
 
   public void updateCommitDetails() {
@@ -69,7 +78,13 @@ public class VcsCommitInfoBalloon {
         myEditorPane.setText(
           XmlStringUtil.wrapInHtml(node instanceof TooltipNode ? ((TooltipNode)node).getTooltip().replaceAll("\n", "<br>") :
                                    EMPTY_COMMIT_INFO));
-        myBalloon.setSize(myEditorPane.getPreferredSize());
+        //workaround: fix initial size for JEditorPane
+        RepaintManager rp = RepaintManager.currentManager(myEditorPane);
+        rp.markCompletelyDirty(myEditorPane);
+        rp.validateInvalidComponents();
+        rp.paintDirtyRegions();
+        //
+        myBalloon.setSize(myWrapper.getPreferredSize());
         myBalloon.setLocation(calculateBestPopupLocation());
       }
     }

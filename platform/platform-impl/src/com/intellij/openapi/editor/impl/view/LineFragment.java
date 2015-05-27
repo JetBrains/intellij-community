@@ -48,8 +48,8 @@ interface LineFragment {
   // offsets are visual
   float offsetToX(float startX, int startOffset, int offset);
 
-  // offsets are visual
-  void draw(Graphics2D g, float x, float y, int startOffset, int endOffset);
+  // columns are visual
+  void draw(Graphics2D g, float x, float y, int startColumn, int endColumn);
 
   // offsets are logical
   @NotNull

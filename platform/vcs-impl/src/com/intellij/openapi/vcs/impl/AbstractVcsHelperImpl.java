@@ -123,14 +123,19 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }, VcsBundle.message("command.name.open.error.message.view"), null);
   }
 
-  public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final FilePath path, final AbstractVcs vcs,
-                              final String repositoryPath) {
-    showFileHistory(vcsHistoryProvider, vcs.getAnnotationProvider(), path, repositoryPath, vcs);
+  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
+                              @NotNull FilePath path,
+                              @NotNull AbstractVcs vcs,
+                              @Nullable String repositoryPath) {
+    showFileHistory(historyProvider, vcs.getAnnotationProvider(), path, repositoryPath, vcs);
   }
 
-  public void showFileHistory(final VcsHistoryProvider vcsHistoryProvider, final AnnotationProvider annotationProvider, final FilePath path,
-                              final String repositoryPath, final AbstractVcs vcs) {
-    FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(vcsHistoryProvider, annotationProvider, path, vcs);
+  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
+                              @Nullable AnnotationProvider annotationProvider,
+                              @NotNull FilePath path,
+                              @Nullable String repositoryPath,
+                              @NotNull AbstractVcs vcs) {
+    FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs);
     refresher.run(false, true);
   }
 

@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.NullableConsumer;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -67,7 +68,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private ComboBox mySdkCombo;
   private PyInstalledPackagesPanel myPackagesPanel;
   private JButton myDetailsButton;
-  private static final String SHOW_ALL = "Show All";
+  private static final String SHOW_ALL = PyBundle.message("active.sdk.dialog.show.all.item");
   private NullableConsumer<Sdk> myDetailsCallback;
   private boolean mySdkSettingsWereModified = false;
 
@@ -159,7 +160,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private void layoutPanel() {
     final GridBagLayout layout = new GridBagLayout();
     myMainPanel = new JPanel(layout);
-    final JLabel interpreterLabel = new JLabel("Project Interpreter:");
+    final JLabel interpreterLabel = new JLabel(PyBundle.message("active.sdk.dialog.project.interpreter"));
     final JLabel emptyLabel = new JLabel("  ");
     mySdkCombo = new ComboBox() {
       @Override

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl;
 
+import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -30,10 +31,14 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.Timings;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +46,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *  @author dsl
@@ -631,7 +640,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     });
   }
 
-  public void testThreadsPerformance() throws IOException, InterruptedException {
+  public void testThreadsPerformance() throws IOException, InterruptedException, TimeoutException, ExecutionException {
     final File ioTempDir = createTempDirectory();
     final File ioPtrBase = new File(ioTempDir, "parent");
     final File ioPtr = new File(ioPtrBase, "f1");
@@ -648,16 +657,16 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     final VirtualFile virtualFile = pointer.getFile();
     assertNotNull(virtualFile);
     assertTrue(virtualFile.isValid());
-
+    final Collection<Job<Void>> reads = ContainerUtil.newConcurrentSet();
     VirtualFileAdapter listener = new VirtualFileAdapter() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
-        stressRead(pointer);
+        stressRead(pointer, reads);
       }
 
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
-        stressRead(pointer);
+        stressRead(pointer, reads);
       }
     };
     Disposable disposable = Disposer.newDisposable();
@@ -686,41 +695,51 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         assertTrue(ioPtrBase.mkdirs());
         assertTrue(ioPtr.createNewFile());
 
-        stressRead(pointer);
+        stressRead(pointer, reads);
         doVfsRefresh();
       }
     }
     finally {
       Disposer.dispose(disposable); // unregister listener early
+      for (Job<Void> read : reads) {
+        while (!read.isDone()) {
+          read.waitForCompletion(1000);
+        }
+      }
     }
   }
 
-  private static void stressRead(@NotNull final VirtualFilePointer pointer) {
+  private static void stressRead(@NotNull final VirtualFilePointer pointer, @NotNull final Collection<Job<Void>> reads) {
     for (int i = 0; i < 10; i++) {
-    JobLauncher.getInstance().submitToJobThread(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            VirtualFile file = pointer.getFile();
-            if (file != null && !file.isValid()) {
-              throw new IncorrectOperationException("I've caught it. I am that good");
+      final AtomicReference<Job<Void>> reference = new AtomicReference<Job<Void>>();
+      reference.set(JobLauncher.getInstance().submitToJobThread(new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
+            public void run() {
+              VirtualFile file = pointer.getFile();
+              if (file != null && !file.isValid()) {
+                throw new IncorrectOperationException("I've caught it. I am that good");
+              }
             }
+          });
+        }
+      }, new Consumer<Future>() {
+        @Override
+        public void consume(Future future) {
+          try {
+            future.get();
           }
-        });
-      }
-    }, new Consumer<Future>() {
-      @Override
-      public void consume(Future future) {
-        try {
-          future.get();
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+          finally {
+            reads.remove(reference.get());
+          }
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+      }));
+      reads.add(reference.get());
     }
   }
 

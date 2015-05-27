@@ -281,7 +281,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     if (virtualFile != null &&
         virtualFile.isValid() &&
         project.isInitialized() &&
-        myProjectFileIndex.isInContent(virtualFile) &&
+        myProjectFileIndex.isInSourceContent(virtualFile) &&
         isSupportedFileType(virtualFile)) {
       return true;
     }
@@ -726,13 +726,15 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     myApplication.runReadAction(new Runnable() {
       @Override
       public void run() {
-        fileToBackwardIds.forEachEntry(new TIntObjectProcedure<TIntArrayList>() {
-          @Override
-          public boolean execute(int fileId, TIntArrayList backIds) {
-            storage.addAll(fileId, backIds.toNativeArray());
-            return true;
-          }
-        });
+        if (!myApplication.isDisposed()) {
+          fileToBackwardIds.forEachEntry(new TIntObjectProcedure<TIntArrayList>() {
+            @Override
+            public boolean execute(int fileId, TIntArrayList backIds) {
+              storage.addAll(fileId, backIds.toNativeArray());
+              return true;
+            }
+          });
+        }
       }
     });
   }
@@ -741,23 +743,24 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   @NotNull
   private TIntHashSet calcForwardRefs(@NotNull final VirtualFile virtualFile, @NotNull final ProgressIndicator indicator)
     throws IndexNotReadyException, ApplicationUtil.CannotRunReadActionException {
-    if (myProject.isDisposed()) throw new ProcessCanceledException();
-    if (fileCount.incrementAndGet() % 100 == 0) {
-      PsiManager.getInstance(myProject).dropResolveCaches();
-      try {
-        storage.flush();
-        log.flush();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
 
     final TIntHashSet forward = new TIntHashSet();
 
     final PsiFile psiFile = ApplicationUtil.tryRunReadAction(new Computable<PsiFile>() {
       @Override
       public PsiFile compute() {
+        if (myProject.isDisposed()) throw new ProcessCanceledException();
+        if (fileCount.incrementAndGet() % 100 == 0) {
+          PsiManager.getInstance(myProject).dropResolveCaches();
+          try {
+            storage.flush();
+            log.flush();
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+
         return PsiManager.getInstance(myProject).findFile(virtualFile);
       }
     });

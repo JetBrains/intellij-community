@@ -18,12 +18,12 @@ package com.intellij.openapi.vfs.impl.http;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiManager;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 
-public class HttpVirtualFileTest extends PlatformTestCase {
-  public void testPsiFileForRoot() throws Exception {
+public class HttpVirtualFileTest extends LightPlatformTestCase {
+  public void testPsiFileForRoot() {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl("http://www.jetbrains.com/");
     assertNotNull(file);
-    assertNotNull(PsiManager.getInstance(myProject).findFile(file));
+    assertNotNull(PsiManager.getInstance(getProject()).findFile(file));
   }
 }

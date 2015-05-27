@@ -45,7 +45,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -547,7 +546,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public void moduleRenamed(Module module, final String oldName, final String name) {
     ModuleEditor moduleEditor = myModuleEditors.get(module);
-    if (moduleEditor != null && Comparing.strEqual(moduleEditor.getName(), oldName)) {
+    if (moduleEditor != null) {
       moduleEditor.setModuleName(name);
       moduleEditor.updateCompilerOutputPathChanged(
         ProjectStructureConfigurable.getInstance(myProject).getProjectConfig().getCompilerOutputUrl(), name);

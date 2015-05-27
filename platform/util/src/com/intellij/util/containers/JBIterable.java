@@ -19,7 +19,9 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,14 +81,47 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * is already a {@code FluentIterable}.
    */
   @NotNull
-  public static <E> JBIterable<E> from(Iterable<? extends E> iterable) {
-    return iterable instanceof JBIterable ? (JBIterable<E>)iterable :
-           new JBIterable<E>((Iterable<E>)iterable) {
-             @Override
-             public Iterator<E> iterator() {
-               return myIterable.iterator();
-             }
-           };
+  public static <E> JBIterable<E> from(@Nullable Iterable<? extends E> iterable) {
+    if (iterable == null) return empty();
+    if (iterable instanceof JBIterable) return (JBIterable<E>)iterable;
+    return new JBIterable<E>((Iterable<E>)iterable) {
+      @Override
+      public Iterator<E> iterator() {
+        return myIterable.iterator();
+      }
+    };
+  }
+
+  @NotNull
+  public static <T, E> JBIterable<E> from(@Nullable Iterable<T> iterable, final Function<? super T, Iterable<E>> fun) {
+    if (iterable == null) return empty();
+    final Iterable<T> thatIt = iterable;
+    return new JBIterable<E>() {
+      @Override
+      public Iterator<E> iterator() {
+        final Iterator<T> it = thatIt.iterator();
+        return new Iterator<E>() {
+          Iterator<E> cur;
+          @Override
+          public boolean hasNext() {
+            while ((cur == null || !cur.hasNext()) && it.hasNext()) {
+              cur = fun.fun(it.next()).iterator();
+            }
+            return cur != null && cur.hasNext();
+          }
+
+          @Override
+          public E next() {
+            return cur.next();
+          }
+
+          @Override
+          public void remove() {
+            cur.remove();
+          }
+        };
+      }
+    };
   }
 
   /**
@@ -115,7 +150,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @Override
   public String toString() {
-    return ContainerUtil.toCollection(myIterable).toString();
+    return "(" + StringUtil.join(takeWhile(Conditions.countDown(50)), ", ") + ")";
   }
 
   /**
@@ -150,39 +185,88 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * <p>The returned iterable's {@code Iterator} supports {@code remove()} when the corresponding
    * {@code Iterator} supports it.
    */
-  public final JBIterable<E> append(Iterable<? extends E> other) {
-    return this == EMPTY ? from(other) : from(ContainerUtil.concat(myIterable, other));
+  public final JBIterable<E> append(@Nullable Iterable<? extends E> other) {
+    return other == null ? this : this == EMPTY ? from(other) : from(ContainerUtil.concat(myIterable, other));
+  }
+
+  public final <T> JBIterable<E> append(@Nullable Iterable<T> other, @NotNull Function<? super T, Iterable<E>> fun) {
+    return other == null ? this : this == EMPTY ? from(other, fun) : append(from(other, fun));
   }
 
   /**
    * Returns a fluent iterable whose iterators traverse first the elements of this fluent iterable,
    * followed by {@code elements}.
    */
-  public final JBIterable<E> append(E[] elements) {
+  public final JBIterable<E> append(@NotNull E[] elements) {
     return this == EMPTY ? of(elements) : append(Arrays.asList(elements));
+  }
+
+  public final JBIterable<E> append(@Nullable E e) {
+    return e == null ? this : this == EMPTY ? of(e) : append(Collections.singleton(e));
   }
 
   /**
    * Returns the elements from this fluent iterable that satisfy a condition. The
    * resulting fluent iterable's iterator does not support {@code remove()}.
    */
-  public final JBIterable<E> filter(final Condition<? super E> condition) {
-    return from(new Iterable<E>() {
+  public final JBIterable<E> filter(@NotNull final Condition<? super E> condition) {
+    final JBIterable<E> it = this;
+    return new JBIterable<E>() {
       @Override
       public Iterator<E> iterator() {
-        return FilteringIterator.create(JBIterable.this.iterator(), condition);
+        return FilteringIterator.create(it.iterator(), condition);
       }
-    });
+    };
   }
 
   /**
    * Returns the elements from this fluent iterable that are instances of class {@code type}.
    * @param type the type of elements desired
    */
-  public final <T> JBIterable<T> filter(Class<T> type) {
+  public final <T> JBIterable<T> filter(@NotNull Class<T> type) {
     //noinspection unchecked
     return (JBIterable<T>)filter(Conditions.instanceOf(type));
   }
+
+  public final JBIterable<E> takeWhile(@NotNull final Condition<? super E> condition) {
+    final JBIterable<E> it = this;
+    return new JBIterable<E>() {
+      @Override
+      public Iterator<E> iterator() {
+        final Iterator<E> iterator = it.iterator();
+        //noinspection unchecked
+        return new Iterator<E>() {
+          E cur = (E)ObjectUtils.NULL;
+          boolean acquired;
+
+          @Override
+          public boolean hasNext() {
+            if (acquired) return cur != ObjectUtils.NULL;
+            boolean b = iterator.hasNext();
+            cur = b ? iterator.next() : null;
+            acquired = true;
+            b &= condition.value(cur);
+            //noinspection unchecked
+            cur = b ? cur : (E)ObjectUtils.NULL;
+            return b;
+          }
+
+          @Override
+          public E next() {
+            if (cur == ObjectUtils.NULL) throw new NoSuchElementException();
+            acquired = false;
+            return cur;
+          }
+
+          @Override
+          public void remove() {
+            iterator.remove();
+          }
+        };
+      }
+    };
+  }
+
 
   /**
    * Returns a fluent iterable that applies {@code function} to each element of this

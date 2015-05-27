@@ -219,6 +219,8 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
     }
     PsiMethod methodCopy = (PsiMethod)method.copy();
+    RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
+
     Language language = myTargetSuperClass.getLanguage();
     final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(methodCopy, false);
     if (superClassMethod != null && superClassMethod.findDeepestSuperMethods().length == 0 ||
@@ -236,8 +238,6 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       } else {
         RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
       }
-
-      RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
       myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
 

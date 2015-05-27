@@ -1743,9 +1743,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       currentFC.putUserData(ourPhysicalContentKey, Boolean.TRUE);
     }
 
+    // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
+    // important: update is called out of try since possible indexer extension is HANDLED as single file fail / restart indexing policy
+    final Computable<Boolean> update = index.update(inputId, currentFC);
+
     try {
-      // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
-      final Computable<Boolean> update = index.update(inputId, currentFC);
       scheduleUpdate(indexId,
                      createUpdateComputableWithBufferingDisabled(update),
                      createIndexedStampUpdateRunnable(indexId, file, currentFC != null)
@@ -2216,7 +2218,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       Collection<VirtualFile> allFilesToUpdate = getAllFilesToUpdate();
 
       if (!allFilesToUpdate.isEmpty()) {
-        boolean includeFilesFromOtherProjects = (myForceUpdateRequests.incrementAndGet() & 0x3F) == 0;
+        boolean includeFilesFromOtherProjects = restrictedTo == null && (myForceUpdateRequests.incrementAndGet() & 0x3F) == 0;
         List<VirtualFile> virtualFilesToBeUpdatedForProject = ContainerUtil.filter(
           allFilesToUpdate,
           new ProjectFilesCondition(projectIndexableFiles(project), filter, restrictedTo,

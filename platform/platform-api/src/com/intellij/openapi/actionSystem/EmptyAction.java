@@ -85,94 +85,104 @@ public final class EmptyAction extends AnAction {
   }
 
   public static AnAction wrap(final AnAction action) {
-    final boolean isDumbAware = action.isDumbAware();
-    final boolean isEnabledInModalContext = action.isEnabledInModalContext();
-    final boolean inInjectedContext = action.isInInjectedContext();
-    final boolean isTransparentUpdate = action.isTransparentUpdate();
-    if (action instanceof ActionGroup) {
-      final ActionGroup group = ((ActionGroup)action);
-      final boolean isHideIfNoVisibleChildren = group.hideIfNoVisibleChildren();
-      final boolean isDisableIfNoVisibleChildren = group.disableIfNoVisibleChildren();
-      return new ActionGroup() {
-        {
-          setPopup(group.isPopup());
-          copyFrom(group);
-          setShortcutSet(new CustomShortcutSet());
-          setEnabledInModalContext(isEnabledInModalContext);
-          setInjectedContext(inInjectedContext);
-        }
+    return action instanceof ActionGroup ?
+           new MyDelegatingActionGroup(((ActionGroup)action)) :
+           new MyDelegatingAction(action);
+  }
 
-        @Override
-        public void update(final AnActionEvent e) {
-          group.update(e);
-        }
+  private static class MyDelegatingAction extends AnAction {
+    @NotNull private final AnAction myDelegate;
 
-        @NotNull
-        @Override
-        public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-          return group.getChildren(e);
-        }
-
-        @Override
-        public boolean canBePerformed(DataContext context) {
-          return group.canBePerformed(context);
-        }
-
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          group.actionPerformed(e);
-        }
-
-        @Override
-        public boolean isDumbAware() {
-          return isDumbAware;
-        }
-
-        @Override
-        public boolean isTransparentUpdate() {
-          return isTransparentUpdate;
-        }
-
-        @Override
-        public boolean hideIfNoVisibleChildren() {
-          return isHideIfNoVisibleChildren;
-        }
-
-        @Override
-        public boolean disableIfNoVisibleChildren() {
-          return isDisableIfNoVisibleChildren;
-        }
-      };
+    public MyDelegatingAction(@NotNull AnAction action) {
+      myDelegate = action;
+      copyFrom(action);
+      setEnabledInModalContext(action.isEnabledInModalContext());
     }
-    else {
-      return new AnAction() {
-        {
-          copyFrom(action);
-          setShortcutSet(new CustomShortcutSet());
-          setEnabledInModalContext(isEnabledInModalContext);
-          setInjectedContext(inInjectedContext);
-        }
 
-        @Override
-        public void actionPerformed(final AnActionEvent e) {
-          action.actionPerformed(e);
-        }
+    @Override
+    public void update(final AnActionEvent e) {
+      myDelegate.update(e);
+    }
 
-        @Override
-        public void update(final AnActionEvent e) {
-          action.update(e);
-        }
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      myDelegate.actionPerformed(e);
+    }
 
-        @Override
-        public boolean isDumbAware() {
-          return isDumbAware;
-        }
+    @Override
+    public boolean isDumbAware() {
+      return myDelegate.isDumbAware();
+    }
 
-        @Override
-        public boolean isTransparentUpdate() {
-          return isTransparentUpdate;
-        }
-      };
+    @Override
+    public boolean isTransparentUpdate() {
+      return myDelegate.isTransparentUpdate();
+    }
+
+    @Override
+    public boolean isInInjectedContext() {
+      return myDelegate.isInInjectedContext();
+    }
+  }
+
+  private static class MyDelegatingActionGroup extends ActionGroup {
+    @NotNull private final ActionGroup myDelegate;
+
+    public MyDelegatingActionGroup(@NotNull ActionGroup action) {
+      myDelegate = action;
+      copyFrom(action);
+      setEnabledInModalContext(action.isEnabledInModalContext());
+    }
+
+    @Override
+    public boolean isPopup() {
+      return myDelegate.isPopup();
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+      return myDelegate.getChildren(e);
+    }
+
+    @Override
+    public void update(final AnActionEvent e) {
+      myDelegate.update(e);
+    }
+
+    @Override
+    public boolean canBePerformed(DataContext context) {
+      return myDelegate.canBePerformed(context);
+    }
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      myDelegate.actionPerformed(e);
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return myDelegate.isDumbAware();
+    }
+
+    @Override
+    public boolean isTransparentUpdate() {
+      return myDelegate.isTransparentUpdate();
+    }
+
+    @Override
+    public boolean isInInjectedContext() {
+      return myDelegate.isInInjectedContext();
+    }
+
+    @Override
+    public boolean hideIfNoVisibleChildren() {
+      return myDelegate.hideIfNoVisibleChildren();
+    }
+
+    @Override
+    public boolean disableIfNoVisibleChildren() {
+      return myDelegate.disableIfNoVisibleChildren();
     }
   }
 }

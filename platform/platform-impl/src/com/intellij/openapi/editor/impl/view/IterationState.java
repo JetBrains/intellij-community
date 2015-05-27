@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Iterator over editor's text contents. Each iteration step corresponds to a text fragment having common graphical attributes 
+ * (font style, foreground and background color, effect type and color).  
+ */
 // This class should replace com.intellij.openapi.editor.impl.IterationState when new editor rendering engine will become default
 public class IterationState {
   private static final Logger LOG = Logger.getInstance(IterationState.class);
@@ -211,12 +215,14 @@ public class IterationState {
       // we have to get all highlighters in advance and sort them by affected offsets
       // since these can be different from the real offsets the highlighters are sorted by in the tree.  (See LINES_IN_RANGE perverts)
       final List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
-      markupModel.processRangeHighlightersOverlappingWith(start, end, new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
-        @Override
-        protected boolean accept(RangeHighlighterEx ex) {
-          return !onlyFullLine || ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
-        }
-      });
+      markupModel.processRangeHighlightersOverlappingWith(myReverseIteration ? end : start, 
+                                                          myReverseIteration ? start : end,
+                                                          new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list) {
+                                                            @Override
+                                                            protected boolean accept(RangeHighlighterEx ex) {
+                                                              return !onlyFullLine || ex.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
+                                                            }
+                                                          });
       highlighters = list.isEmpty() ? RangeHighlighterEx.EMPTY_ARRAY : list.toArray(new RangeHighlighterEx[list.size()]);
       Arrays.sort(highlighters, myReverseIteration ? BY_AFFECTED_END_OFFSET_REVERSED : RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
 

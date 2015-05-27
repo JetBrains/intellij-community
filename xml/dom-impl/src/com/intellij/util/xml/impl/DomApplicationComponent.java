@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.ReflectionAssignabilityCache;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.DomElement;
@@ -61,14 +62,14 @@ public class DomApplicationComponent {
     }
   };
 
-  private final FactoryMap<Type, StaticGenericInfo> myGenericInfos = new FactoryMap<Type, StaticGenericInfo>() {
+  private final FactoryMap<Class, StaticGenericInfo> myGenericInfos = new FactoryMap<Class, StaticGenericInfo>() {
     @Override
-    protected Map<Type, StaticGenericInfo> createMap() {
+    protected Map<Class, StaticGenericInfo> createMap() {
       return createConcurrentSoftValueMap();
     }
     @Nullable
     @Override
-    protected StaticGenericInfo create(Type type) {
+    protected StaticGenericInfo create(Class type) {
       return new StaticGenericInfo(type);
     }
   };
@@ -185,7 +186,7 @@ public class DomApplicationComponent {
   }
 
   public final StaticGenericInfo getStaticGenericInfo(final Type type) {
-    return myGenericInfos.get(type);
+    return myGenericInfos.get(ReflectionUtil.getRawType(type));
   }
 
   final InvocationCache getInvocationCache(final Class type) {

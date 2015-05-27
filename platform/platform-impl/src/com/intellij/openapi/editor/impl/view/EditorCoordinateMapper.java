@@ -24,6 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+/**
+ * Performs transformations between various location representations in editor 
+ * (offset, logical position, visual position, pixel coordinates).
+ * 
+ * @see LogicalPosition
+ * @see VisualPosition
+ */
 class EditorCoordinateMapper {
   private final EditorView myView;
   private final Document myDocument;
