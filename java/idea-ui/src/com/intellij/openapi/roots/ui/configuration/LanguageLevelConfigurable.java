@@ -89,5 +89,6 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
     myLanguageLevelCombo = null;
   }
 
+  @NotNull
   public abstract LanguageLevelModuleExtensionImpl getLanguageLevelExtension();
 }
