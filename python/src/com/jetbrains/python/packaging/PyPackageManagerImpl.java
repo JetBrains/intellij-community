@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
@@ -49,6 +48,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -469,7 +469,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
     try {
       final Process process;
-      final Map<String, String> environment = PySdkUtil.mergeEnvVariables(System.getenv(), ImmutableMap.of("PYTHONUNBUFFERED", "1"));
+      final Map<String, String> environment = new HashMap<String, String>(System.getenv());
+      PythonEnvUtil.setPythonUnbuffered(environment);
+      PythonEnvUtil.setPythonDontWriteBytecode(environment);
       final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir).withEnvironment(environment);
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
