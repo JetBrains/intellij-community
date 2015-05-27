@@ -20,25 +20,15 @@ import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import org.jetbrains.annotations.NotNull;
 
-public class GrDummyInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
+public class GrUnboxInstruction<V extends GrInstructionVisitor<V>> extends Instruction<V> {
 
-  private final String myDebugText;
-
-  public GrDummyInstruction() {
-    myDebugText = "DUMMY";
-  }
-
-  public GrDummyInstruction(String text) {
-    myDebugText = text;
-  }
-  
   @Override
   public DfaInstructionState<V>[] accept(@NotNull DfaMemoryState stateBefore, @NotNull V visitor) {
-    return visitor.visitDummyInstruction(this, stateBefore);
+    return visitor.visitUnboxInstruction(this, stateBefore);
   }
 
   @Override
   public String toString() {
-    return myDebugText;
+    return "UNBOX";
   }
 }

@@ -83,12 +83,19 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
     return myAnalyzer.factory;
   }
 
-  void assign(@NotNull GrExpression left, @NotNull final GrExpression right) {
+  void assign(@NotNull final GrExpression left, @NotNull final GrExpression right) {
     assign(left, right, myAnalyzer.callHelper.new Arguments() {
       @NotNull
       @Override
       public GrExpression[] getExpressionArguments() {
         return new GrExpression[]{right};
+      }
+
+      @Override
+      public int runArguments() {
+        final int result = super.runArguments();
+        boxUnbox(left.getNominalType(), right.getNominalType());
+        return result;
       }
     });
   }
@@ -186,10 +193,10 @@ public class GrCFExpressionHelper<V extends GrInstructionVisitor<V>> {
 
   void boxUnbox(PsiType expectedType, PsiType actualType) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) && TypeConversionUtil.isPrimitiveWrapper(actualType)) {
-      myAnalyzer.addInstruction(new GrDummyInstruction<V>("UNBOXING"));
+      myAnalyzer.addInstruction(new GrUnboxInstruction<V>());
     }
     else if (TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(actualType)) {
-      myAnalyzer.addInstruction(new GrDummyInstruction<V>("BOXING"));
+      myAnalyzer.addInstruction(new GrBoxInstruction<V>());
     }
   }
 

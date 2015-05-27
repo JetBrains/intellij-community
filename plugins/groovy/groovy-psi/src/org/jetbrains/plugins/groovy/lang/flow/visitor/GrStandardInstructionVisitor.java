@@ -63,6 +63,21 @@ public class GrStandardInstructionVisitor<V extends GrStandardInstructionVisitor
   }
 
   @Override
+  public DfaInstructionState<V>[] visitBoxInstruction(GrBoxInstruction<V> instruction, DfaMemoryState state) {
+    final DfaValue value = state.pop();
+    final DfaValue boxed = myFactory.getBoxedFactory().createBoxed(value);
+    state.push(boxed == null ? value : boxed);
+    return nextInstruction(instruction, state);
+  }
+
+  @Override
+  public DfaInstructionState<V>[] visitUnboxInstruction(GrUnboxInstruction<V> instruction, DfaMemoryState state) {
+    final DfaValue value = state.pop();
+    state.push(myFactory.getBoxedFactory().createUnboxed(value));
+    return nextInstruction(instruction, state);
+  }
+
+  @Override
   public DfaInstructionState<V>[] visitAssignGroovy(GrAssignInstruction<V> instruction, DfaMemoryState memState) {
     DfaValue dfaSource = memState.pop();
     DfaValue dfaDest = memState.pop();
