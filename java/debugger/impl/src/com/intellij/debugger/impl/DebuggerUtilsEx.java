@@ -47,6 +47,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -739,6 +740,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public Navigatable createNavigatable(@NotNull Project project) {
+      if (ALTERNATIVE_SOURCE_KEY.get(myFile) != null) {
+        return new OpenFileDescriptor(project, getFile(), getLine(), 0);
+      }
       return XSourcePositionImpl.doCreateOpenFileDescriptor(project, this);
     }
 
