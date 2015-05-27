@@ -351,7 +351,8 @@ public class PyFormatterTest extends PyTestCase {
     }
   }
 
-  public void testSpaceInAnnotations() {  // PY-8961
+  // PY-8961, PY-16050
+  public void testSpaceInAnnotations() {
     doTestPy3();
   }
 

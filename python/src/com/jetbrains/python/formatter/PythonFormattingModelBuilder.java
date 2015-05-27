@@ -99,6 +99,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .betweenInside(MINUS, GT, ANNOTATION).none()
       .beforeInside(ANNOTATION, FUNCTION_DECLARATION).spaces(1)
       .beforeInside(ANNOTATION, NAMED_PARAMETER).none()
+      .afterInside(COLON, ANNOTATION).spaces(1)
+      .afterInside(RARROW, ANNOTATION).spaces(1)
 
       .between(allButLambda(), PARAMETER_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_PARENTHESES)
 

@@ -4,6 +4,6 @@ class A:
 
 
 class B(A):
-    def __init__(this:'B', y, x):
+    def __init__(this: 'B', y, x):
         super().__init__(x)
         this.y = y
