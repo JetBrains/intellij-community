@@ -27,6 +27,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -118,6 +119,13 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       statement.accept(this);
     }
     finishElement(file);
+  }
+
+  @Override
+  public void visitMethod(GrMethod method) {
+    startElement(method);
+    super.visitMethod(method);
+    finishElement(method);
   }
 
   @Override
@@ -259,7 +267,9 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       if (methodBlock == null) continue;
       pushUnknown();
       addInstruction(new ConditionalGotoInstruction<V>(flow.getEndOffset(methodBlock), false, null));
+      startElement(method);
       methodBlock.accept(this);
+      finishElement(method);
       addInstruction(new GotoInstruction<V>(flow.getEndOffset(definition)));
     }
 
@@ -1064,6 +1074,10 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       throw new AssertionError("Expected " + element + ", popped " + popped);
     }
     if (shouldCheckReturn(element)) {
+      final PsiElement containingMethod = PsiTreeUtil.getParentOfType(element, GrMethod.class, GrClosableBlock.class);
+      if (containingMethod instanceof GrMethod) {
+        expressionHelper.boxUnbox(((GrMethod)containingMethod).getReturnType(), ((GrExpression)element).getType());
+      }
       addInstruction(new CheckReturnValueInstruction<V>(element));
       expressionHelper.processDelayed();
       exceptionHelper.returnCheckingFinally(false, element);
@@ -1072,6 +1086,7 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
       if (element instanceof GrExpression && !(element instanceof GrConditionalExpression)) {
         pop();
       }
+      expressionHelper.processDelayed();
       addInstruction(new FinishElementInstruction(element));
     }
   }

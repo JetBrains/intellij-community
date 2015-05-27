@@ -31,7 +31,10 @@ import org.jetbrains.plugins.groovy.lang.flow.instruction.GrInstructionVisitor;
 import org.jetbrains.plugins.groovy.lang.flow.value.GrDfaValueFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -223,9 +226,15 @@ public class GrCFExceptionHelper<V extends GrInstructionVisitor<V>> {
       myAnalyzer.addInstruction(new PopInstruction());
       myAnalyzer.addInstruction(new GotoInstruction(finallyDescriptor.getJumpOffset(myAnalyzer.flow)));
     }
-    //else {
-    //  myAnalyzer.addInstruction(new ReturnInstruction(viaException, anchor));
-    //}
+    else {
+      final GrTopStatement containingBlock = PsiTreeUtil.getParentOfType(anchor, GrMethod.class, GrClosableBlock.class);
+      if (containingBlock != null) {
+        myAnalyzer.addInstruction(new GotoInstruction<V>(myAnalyzer.flow.getEndOffset(containingBlock)));
+      }
+      else {
+        myAnalyzer.addInstruction(new ReturnInstruction(viaException, anchor));
+      }
+    }
   }
 
   void addConditionalRuntimeThrow() {
