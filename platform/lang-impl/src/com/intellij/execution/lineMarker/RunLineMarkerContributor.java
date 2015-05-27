@@ -15,29 +15,18 @@
  */
 package com.intellij.execution.lineMarker;
 
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public abstract class RunLineMarkerContributor {
 
-  private final static ExtensionPointName<RunLineMarkerContributor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.runLineMarkerContributor");
-
-  public static List<AnAction> getActions(final PsiElement element) {
-    return ContainerUtil.mapNotNull(EXTENSION_POINT_NAME.getExtensions(), new NullableFunction<RunLineMarkerContributor, AnAction>() {
-      @Nullable
-      @Override
-      public AnAction fun(RunLineMarkerContributor contributor) {
-        return contributor.getAction(element);
-      }
-    });
-  }
+  final static LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<RunLineMarkerContributor>("com.intellij.runLineMarkerContributor");
 
   @Nullable
-  public abstract AnAction getAction(PsiElement element);
+  public abstract RunLineMarkerInfo getLineMarkerInfo(PsiElement element);
+
+  @Nullable
+  public abstract AnAction getAdditionalAction(PsiElement element);
 }

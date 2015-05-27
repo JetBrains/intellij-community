@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
+import com.intellij.execution.lineMarker.RunLineMarkerInfo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -39,7 +40,13 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
   public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
   public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
 
-  public AnAction getAction(@NotNull PsiElement element) {
+  @Nullable
+  @Override
+  public RunLineMarkerInfo getLineMarkerInfo(PsiElement element) {
+    return null;
+  }
+
+  public AnAction getAdditionalAction(@NotNull PsiElement element) {
 
     if (!(element instanceof PsiMethod) &&
         !(element instanceof PsiClass)) {

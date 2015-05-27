@@ -60,6 +60,7 @@
     <stacktrace.fold substring="at junit.framework.TestResult"/>
 
     <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.execution.junit.JUnitRunLineMarkerProvider"/>
   </extensions>
 
   <extensionPoints>
