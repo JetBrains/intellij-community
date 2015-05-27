@@ -548,7 +548,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   private synchronized void cancelUpdateProgress(final boolean start, @NonNls String reason) {
-    PassExecutorService.log(myUpdateProgress, null, "CancelX", reason, start);
+    PassExecutorService.log(myUpdateProgress, null, "Cancel", reason, start);
 
     if (myUpdateProgress != null) {
       myUpdateProgress.cancel();

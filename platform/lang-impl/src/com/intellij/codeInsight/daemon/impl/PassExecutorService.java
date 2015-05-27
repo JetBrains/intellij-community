@@ -117,6 +117,8 @@ class PassExecutorService implements Disposable {
     MultiMap<Document, FileEditor> documentToEditors = MultiMap.createSet();
     MultiMap<FileEditor, TextEditorHighlightingPass> documentBoundPasses = MultiMap.createSmart();
     MultiMap<FileEditor, EditorBoundHighlightingPass> editorBoundPasses = MultiMap.createSmart();
+    Set<VirtualFile> vFiles = new HashSet<VirtualFile>();
+
     for (Map.Entry<FileEditor, HighlightingPass[]> entry : passesMap.entrySet()) {
       FileEditor fileEditor = entry.getKey();
       HighlightingPass[] passes = entry.getValue();
@@ -130,6 +132,7 @@ class PassExecutorService implements Disposable {
         VirtualFile virtualFile = ((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor);
         document = virtualFile == null ? null : FileDocumentManager.getInstance().getDocument(virtualFile);
       }
+      vFiles.add(((FileEditorManagerEx)FileEditorManager.getInstance(myProject)).getFile(fileEditor));
 
       int prevId = 0;
       for (final HighlightingPass pass : passes) {
@@ -186,7 +189,7 @@ class PassExecutorService implements Disposable {
       assertConsistency(freePasses, toBeSubmitted, threadsToStartCountdown);
     }
 
-    log(updateProgress, null, "---------------------starting------------------------ " + threadsToStartCountdown.get(), freePasses);
+    log(updateProgress, null, vFiles + " ----- starting " + threadsToStartCountdown.get(), freePasses);
 
     for (ScheduledPass dependentPass : dependentPasses) {
       mySubmittedPasses.put(dependentPass, Job.NULL_JOB);
