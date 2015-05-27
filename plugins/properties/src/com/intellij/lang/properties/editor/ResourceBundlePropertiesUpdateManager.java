@@ -16,26 +16,27 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author Dmitry Batkovich
  */
-public interface ResourceBundlePropertiesInsertManager {
+public interface ResourceBundlePropertiesUpdateManager {
   void insertNewProperty(String key, String value);
 
-  void insertTranslation(String key, String value, PropertiesFile propertiesFile);
+  void insertOrUpdateTranslation(String key, String value, PropertiesFile propertiesFile) throws IncorrectOperationException;
 
   void reload();
 
-  class Stub implements ResourceBundlePropertiesInsertManager {
-    public static final ResourceBundlePropertiesInsertManager INSTANCE = new Stub();
+  class Stub implements ResourceBundlePropertiesUpdateManager {
+    public static final ResourceBundlePropertiesUpdateManager INSTANCE = new Stub();
 
     @Override
     public void insertNewProperty(String key, String value) {
     }
 
     @Override
-    public void insertTranslation(String key, String value, PropertiesFile propertiesFile) {
+    public void insertOrUpdateTranslation(String key, String value, PropertiesFile propertiesFile) {
     }
 
     @Override

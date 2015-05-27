@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -37,26 +38,26 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundlePropertiesInsertManager {
-  private final static Logger LOG = Logger.getInstance(ResourceBundlePropertiesInsertManagerImpl.class);
+public class ResourceBundlePropertiesUpdateManagerImpl implements ResourceBundlePropertiesUpdateManager {
+  private final static Logger LOG = Logger.getInstance(ResourceBundlePropertiesUpdateManagerImpl.class);
 
   private final ResourceBundle myResourceBundle;
   private boolean myOrdered;
   private boolean myAlphaSorted;
   private List<String> myKeysOrder;
 
-  private ResourceBundlePropertiesInsertManagerImpl(ResourceBundle bundle) {
+  private ResourceBundlePropertiesUpdateManagerImpl(ResourceBundle bundle) {
     myResourceBundle = bundle;
     reload();
   }
 
-  public static ResourceBundlePropertiesInsertManager create(ResourceBundle bundle) {
+  public static ResourceBundlePropertiesUpdateManager create(ResourceBundle bundle) {
     for (PropertiesFile file : bundle.getPropertiesFiles()) {
       if (!(file instanceof PropertiesFileImpl)) {
-        return ResourceBundlePropertiesInsertManager.Stub.INSTANCE;
+        return ResourceBundlePropertiesUpdateManager.Stub.INSTANCE;
       }
     }
-    return new ResourceBundlePropertiesInsertManagerImpl(bundle);
+    return new ResourceBundlePropertiesUpdateManagerImpl(bundle);
   }
 
   @Override
@@ -76,15 +77,21 @@ public class ResourceBundlePropertiesInsertManagerImpl implements ResourceBundle
   }
 
   @Override
-  public void insertTranslation(String key, String value, final PropertiesFile propertiesFile) {
+  public void insertOrUpdateTranslation(String key, String value, final PropertiesFile propertiesFile) throws IncorrectOperationException {
+    final IProperty property = propertiesFile.findPropertyByKey(key);
+    if (property != null) {
+      property.setValue(value);
+    }
+
     if (myOrdered) {
       if (myAlphaSorted) {
         propertiesFile.addProperty(key, value);
         return;
       }
       final Pair<IProperty, Integer> propertyAndPosition = findExistedPrevSiblingProperty(key, propertiesFile);
-      propertiesFile.addPropertyAfter(key, value, propertyAndPosition == null ? null :(Property)propertyAndPosition.getFirst());
-    } else {
+      propertiesFile.addPropertyAfter(key, value, propertyAndPosition == null ? null : (Property)propertyAndPosition.getFirst());
+    }
+    else {
       insertPropertyLast(key, value, propertiesFile);
     }
   }
