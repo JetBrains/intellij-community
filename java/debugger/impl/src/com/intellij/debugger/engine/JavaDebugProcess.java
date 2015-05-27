@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.ThreadsPanel;
@@ -43,6 +44,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
@@ -154,15 +157,27 @@ public class JavaDebugProcess extends XDebugProcess {
       @Override
       public void sessionPaused() {
         saveNodeHistory();
+        showAlternativeNotification(session.getCurrentStackFrame());
       }
 
       @Override
       public void stackFrameChanged() {
         XStackFrame frame = session.getCurrentStackFrame();
         if (frame instanceof JavaStackFrame) {
+          showAlternativeNotification(frame);
           StackFrameProxyImpl frameProxy = ((JavaStackFrame)frame).getStackFrameProxy();
           DebuggerContextUtil.setStackFrame(javaSession.getContextManager(), frameProxy);
           saveNodeHistory(frameProxy);
+        }
+      }
+
+      private void showAlternativeNotification(XStackFrame frame) {
+        XSourcePosition position = frame.getSourcePosition();
+        if (position != null) {
+          VirtualFile file = position.getFile();
+          if (!AlternativeSourceNotificationProvider.fileProcessed(file)) {
+            EditorNotifications.getInstance(session.getProject()).updateNotifications(file);
+          }
         }
       }
     });

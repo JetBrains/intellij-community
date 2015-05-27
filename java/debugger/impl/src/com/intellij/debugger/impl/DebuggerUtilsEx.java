@@ -700,6 +700,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new JavaXSourcePosition(position, file);
   }
 
+  private static final Key<VirtualFile> ALTERNATIVE_SOURCE_KEY = new Key<VirtualFile>("DEBUGGER_ALTERNATIVE_SOURCE");
+
+  public static void setAlternativeSource(VirtualFile source, VirtualFile dest) {
+    ALTERNATIVE_SOURCE_KEY.set(source, dest);
+    ALTERNATIVE_SOURCE_KEY.set(dest, null);
+  }
+
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
     private final SourcePosition mySourcePosition;
     @NotNull private final VirtualFile myFile;
@@ -722,6 +729,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @NotNull
     @Override
     public VirtualFile getFile() {
+      VirtualFile file = ALTERNATIVE_SOURCE_KEY.get(myFile);
+      if (file != null) {
+        return file;
+      }
       return myFile;
     }
 

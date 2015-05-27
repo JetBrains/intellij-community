@@ -267,6 +267,7 @@
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider"/>
+    <editorNotificationProvider implementation="com.intellij.debugger.ui.AlternativeSourceNotificationProvider"/>
 
     <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>
 
