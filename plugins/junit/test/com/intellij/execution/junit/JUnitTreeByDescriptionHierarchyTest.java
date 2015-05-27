@@ -202,12 +202,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
   private static void doTest(Description root, List<Description> tests, String expectedTree, String expectedStart) throws Exception {
     final StringBuffer buf = new StringBuffer();
-    final JUnit4TestListener sender = new JUnit4TestListener(new PrintStream(new OutputStream() {
-      @Override
-      public void write(int b) throws IOException {
-        buf.append(new String(new byte[]{(byte)b}));
-      }
-    }));
+    final JUnit4TestListener sender = createListener(buf);
     sender.sendTree(root);
 
     Assert.assertEquals("output: " + buf, expectedTree, StringUtil.convertLineSeparators(buf.toString()));
@@ -249,12 +244,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
     }
 
     final StringBuffer buf = new StringBuffer();
-    final JUnit4TestListener sender = new JUnit4TestListener(new PrintStream(new OutputStream() {
-      @Override
-      public void write(int b) throws IOException {
-        buf.append(new String(new byte[]{(byte)b}));
-      }
-    }));
+    final JUnit4TestListener sender = createListener(buf);
   
     sender.testRunStarted(root);
     for (Description test : tests) {
@@ -274,6 +264,20 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testFinished name='testName']\n" +
                                           "##teamcity[testSuiteFinished name='TestB']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  private static JUnit4TestListener createListener(final StringBuffer buf) {
+    return new JUnit4TestListener(new PrintStream(new OutputStream() {
+      @Override
+      public void write(int b) throws IOException {
+        buf.append(new String(new byte[]{(byte)b}));
+      }
+    })) {
+      @Override
+      protected long currentTime() {
+        return 0;
+      }
+    };
   }
 
   @Test
@@ -372,12 +376,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
   
   private static void doTest(Description description, String expected) {
     final StringBuffer buf = new StringBuffer();
-    new JUnit4TestListener(new PrintStream(new OutputStream() {
-      @Override
-      public void write(int b) throws IOException {
-        buf.append(new String(new byte[]{(byte)b}));
-      }
-    })).sendTree(description);
+    createListener(buf).sendTree(description);
 
     Assert.assertEquals("output: " + buf, expected, StringUtil.convertLineSeparators(buf.toString()));
   }

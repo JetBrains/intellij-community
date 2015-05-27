@@ -121,11 +121,15 @@ public class JUnit4TestListener extends RunListener {
 
     myPrintStream.println("##teamcity[testStarted name=\'" + escapeName(methodName) + "\' " + 
                           getTestMethodLocation(methodName, classFQN) + "]");
-    myCurrentTestStart = System.currentTimeMillis();
+    myCurrentTestStart = currentTime();
+  }
+
+  protected long currentTime() {
+    return System.currentTimeMillis();
   }
 
   public void testFinished(Description description) throws Exception {
-    final long duration = System.currentTimeMillis() - myCurrentTestStart;
+    final long duration = currentTime() - myCurrentTestStart;
     myPrintStream.println("\n##teamcity[testFinished name=\'" + escapeName(JUnit4ReflectionUtil.getMethodName(description)) +
                           (duration > 0 ? "\' duration=\'"  + Long.toString(duration) : "") + "\']");
   }
@@ -133,7 +137,7 @@ public class JUnit4TestListener extends RunListener {
   public void testFailure(Failure failure) throws Exception {
     final Map attrs = new HashMap();
     attrs.put("name", JUnit4ReflectionUtil.getMethodName(failure.getDescription()));
-    final long duration = System.currentTimeMillis() - myCurrentTestStart;
+    final long duration = currentTime() - myCurrentTestStart;
     if (duration > 0) {
       attrs.put("duration", Long.toString(duration));
     }
