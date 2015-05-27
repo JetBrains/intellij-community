@@ -288,7 +288,7 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
 
       return apply(editorData, builder.getBlocks(), convertor, changedLines, isEqual, innerFragments);
     }
-    catch (DiffTooBigException ignore) {
+    catch (DiffTooBigException e) {
       return new Runnable() {
         @Override
         public void run() {
@@ -297,14 +297,8 @@ public class OnesideDiffViewer extends ListenerDiffViewerBase {
         }
       };
     }
-    catch (ProcessCanceledException ignore) {
-      return new Runnable() {
-        @Override
-        public void run() {
-          clearDiffPresentation();
-          myPanel.setOperationCanceledContent();
-        }
-      };
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);

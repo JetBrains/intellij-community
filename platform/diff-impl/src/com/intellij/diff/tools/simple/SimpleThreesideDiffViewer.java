@@ -199,11 +199,11 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewer {
 
       return apply(mergeFragments, comparisonPolicy);
     }
-    catch (DiffTooBigException ignore) {
+    catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.DIFF_TOO_BIG);
     }
-    catch (ProcessCanceledException ignore) {
-      return applyNotification(DiffNotifications.OPERATION_CANCELED);
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);

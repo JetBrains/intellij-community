@@ -100,8 +100,8 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
 
       return applyNotification(equal ? DiffNotifications.EQUAL_CONTENTS : null);
     }
-    catch (ProcessCanceledException ignore) {
-      return applyNotification(DiffNotifications.OPERATION_CANCELED);
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);
