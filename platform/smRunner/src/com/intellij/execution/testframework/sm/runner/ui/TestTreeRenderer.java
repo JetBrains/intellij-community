@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
+import java.util.Collection;
 
 /**
  * @author: Roman Chernyatchik
@@ -81,7 +83,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
 
       String durationString = testProxy.getDurationString();
       if (durationString != null) {
-        durationString = " [" + durationString + "]";
+        durationString = "  [" + durationString + "]";
         myDurationWidth = tree.getFontMetrics(tree.getFont()).stringWidth(durationString);
         myProperty = tree.getClientProperty(ExpandableItemsHandler.EXPANDED_RENDERER);
         if (myProperty != null) {
@@ -122,7 +124,9 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   protected void doPaint(Graphics2D g) {
     
     super.doPaint(g);
-    if (Registry.is("tests_view_inline_statistics") && myRow >= 0) {
+    final ExpandableItemsHandler<Integer> handler = ((Tree)myTree).getExpandableItemsHandler();
+    final Collection<Integer> items = handler.getExpandedItems();
+    if (Registry.is("tests_view_inline_statistics") && myRow >= 0 && !(items.size() == 1 && myRow == items.iterator().next())) {
       Rectangle visibleRect = myTree.getVisibleRect();
       final Rectangle bounds = getBounds();
       Object node = myTree.getPathForRow(myRow).getLastPathComponent();
@@ -130,11 +134,12 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
         Object data = ((DefaultMutableTreeNode)node).getUserObject();
         if (data instanceof BaseTestProxyNodeDescriptor) {
           final AbstractTestProxy testProxy = ((BaseTestProxyNodeDescriptor)data).getElement();
-          final String durationString = testProxy.getDurationString();
+          String durationString = testProxy.getDurationString();
           if (durationString != null) {
+            durationString = "  [" + durationString+ "]";
             final Rectangle fullRowRect =
               new Rectangle(visibleRect.x, visibleRect.y + bounds.y, visibleRect.width - bounds.x, bounds.height);
-            paintRowData(durationString, fullRowRect, (Graphics2D)g, myTree.isRowSelected(myRow));
+            paintRowData(durationString, fullRowRect, g, myTree.isRowSelected(myRow));
           }
         }
       }
