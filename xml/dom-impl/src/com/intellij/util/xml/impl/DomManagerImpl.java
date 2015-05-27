@@ -210,11 +210,6 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final void addPsiReferenceFactoryForClass(Class clazz, PsiReferenceFactory psiReferenceFactory) {
-    myGenericValueReferenceProvider.addReferenceProviderForClass(clazz, psiReferenceFactory);
-  }
-
-  @Override
   public final ModelMerger createModelMerger() {
     return new ModelMergerImpl();
   }

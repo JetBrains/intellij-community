@@ -15,14 +15,12 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.xml.util.XmlEnumeratedValueReferenceProvider;
 import org.jetbrains.annotations.NotNull;
@@ -33,14 +31,7 @@ import java.util.*;
  * @author peter
  */
 public class GenericValueReferenceProvider extends PsiReferenceProvider {
-
   private final static Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.GenericValueReferenceProvider");
-
-  private final Map<Class, PsiReferenceFactory> myProviders = new HashMap<Class, PsiReferenceFactory>();
-
-  public void addReferenceProviderForClass(Class clazz, PsiReferenceFactory provider) {
-    myProviders.put(clazz, provider);
-  }
 
   @Override
   @NotNull
@@ -97,7 +88,11 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
     return references;
   }
 
-  private PsiReference[] createReferences(final GenericDomValue domValue, final XmlElement psiElement, final Object converter, DomInvocationHandler handler, DomManager domManager) {
+  private static PsiReference[] createReferences(final GenericDomValue domValue,
+                                                 final XmlElement psiElement,
+                                                 final Object converter,
+                                                 DomInvocationHandler handler,
+                                                 DomManager domManager) {
     final XmlFile file = handler.getFile();
     final DomFileDescription<?> description = domManager.getDomFileDescription(file);
     if (description == null) {
@@ -115,48 +110,24 @@ public class GenericValueReferenceProvider extends PsiReferenceProvider {
       }
     }
 
-    Collections.addAll(result, doCreateReferences(domValue, psiElement, converter, context, handler));
+    Collections.addAll(result, doCreateReferences(domValue, psiElement, converter, context));
 
     return result.toArray(new PsiReference[result.size()]);
   }
 
   @NotNull
-  private PsiReference[] doCreateReferences(GenericDomValue domValue, XmlElement psiElement, Object converter, ConvertContext context, DomInvocationHandler invocationHandler) {
+  private static PsiReference[] doCreateReferences(GenericDomValue domValue, XmlElement psiElement, Object converter, ConvertContext context) {
     if (converter instanceof CustomReferenceConverter) {
-      final PsiReference[] references =
-        ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, context);
-
-      if (references.length == 0 && converter instanceof ResolvingConverter) {
-        return new PsiReference[]{new GenericDomValueReference(domValue)};
-      } else {
+      //noinspection unchecked
+      final PsiReference[] references = ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, context);
+      if (references.length != 0 || !(converter instanceof ResolvingConverter)) {
         return references;
       }
     }
-    if (converter instanceof PsiReferenceConverter) {
-      return ((PsiReferenceConverter)converter).createReferences(psiElement, true);
-    }
+
     if (converter instanceof ResolvingConverter) {
+      //noinspection unchecked
       return new PsiReference[]{new GenericDomValueReference(domValue)};
-    }
-
-    final Class clazz = DomUtil.getGenericValueParameter(invocationHandler.getDomElementType());
-    if (clazz == null) return PsiReference.EMPTY_ARRAY;
-
-    if (ReflectionUtil.isAssignable(Integer.class, clazz)) {
-      return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue) {
-        @Override
-        @NotNull
-        public Object[] getVariants() {
-          return new Object[]{"0"};
-        }
-      }};
-    }
-    if (ReflectionUtil.isAssignable(String.class, clazz)) {
-      return PsiReference.EMPTY_ARRAY;
-    }
-    PsiReferenceFactory provider = myProviders.get(clazz);
-    if (provider != null) {
-      return provider.getReferencesByElement(psiElement);
     }
 
     return PsiReference.EMPTY_ARRAY;
