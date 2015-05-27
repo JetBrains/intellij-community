@@ -260,11 +260,12 @@ public class EditorView implements Disposable {
     myTextLayoutCache.resetToDocumentSize();
   }
   
-  public boolean isRtlLocation(int offset) {
+  public boolean isRtlLocation(int offset, boolean leanForward) {
+    assertIsDispatchThread();
     if (myDocument.getTextLength() == 0) return false;
     int line = myDocument.getLineNumber(offset);
     LineLayout layout = getLineLayout(line);
-    return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line));
+    return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line), leanForward);
   }
 
   @NotNull

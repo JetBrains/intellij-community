@@ -204,9 +204,10 @@ class LineLayout {
     return myBidiRunsInLogicalOrder.length == 0 || myBidiRunsInLogicalOrder.length == 1 && !myBidiRunsInLogicalOrder[0].isRtl();
   }
   
-  boolean isRtlLocation(int offset) {
+  boolean isRtlLocation(int offset, boolean leanForward) {
+    if (offset == 0 && !leanForward) return false;
     for (BidiRun run : myBidiRunsInLogicalOrder) {
-      if (offset < run.endOffset) return run.isRtl();
+      if (offset < run.endOffset || offset == run.endOffset && !leanForward) return run.isRtl();
     }
     return false;
   }

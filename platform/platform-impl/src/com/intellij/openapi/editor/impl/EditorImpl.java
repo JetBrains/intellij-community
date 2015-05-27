@@ -4591,7 +4591,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void setCursorPosition() {
     final List<CaretRectangle> caretPoints = new ArrayList<CaretRectangle>();
     for (Caret caret : getCaretModel().getAllCarets()) {
-      boolean isRtl = myUseNewRendering && myView.isRtlLocation(caret.getOffset());
+      boolean isRtl = myUseNewRendering && myView.isRtlLocation(caret.getOffset(), caret.getLogicalPosition().leansForward);
       VisualPosition caretPosition = caret.getVisualPosition();
       Point pos1 = visualPositionToXY(caretPosition);
       Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, Math.max(0, caretPosition.column + (isRtl ? -1 : 1))));
