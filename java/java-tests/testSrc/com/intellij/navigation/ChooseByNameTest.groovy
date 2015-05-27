@@ -102,7 +102,14 @@ class Intf {
 }""")
 
     def elements = getPopupElements(new GotoSymbolModel2(project), "xxx")
-    assert elements == [intf.findMethodsByName('xxx2', false), ChooseByNameBase.NON_PREFIX_SEPARATOR, intf.findMethodsByName('_xxx1', false)]
+
+    def xxx1
+    def xxx2
+    edt {
+      xxx1 = intf.findMethodsByName('_xxx1', false)
+      xxx2 = intf.findMethodsByName('xxx2', false)
+    }
+    assert elements == [xxx2, ChooseByNameBase.NON_PREFIX_SEPARATOR, xxx1]
   }
 
   public void "test prefer exact extension matches"() {
@@ -181,7 +188,8 @@ class Intf {
   }
 
   public void "test find method by qualified name"() {
-    def method = myFixture.addClass("package foo.bar; class Goo { void zzzZzz() {} }").methods[0]
+    def clazz = myFixture.addClass("package foo.bar; class Goo { void zzzZzz() {} }")
+    def method = ApplicationManager.application.runReadAction( { clazz.methods[0] } as Computable)
     assert getPopupElements(new GotoSymbolModel2(project), 'zzzZzz') == [method]
     assert getPopupElements(new GotoSymbolModel2(project), 'goo.zzzZzz') == [method]
     assert getPopupElements(new GotoSymbolModel2(project), 'foo.bar.goo.zzzZzz') == [method]
@@ -201,7 +209,7 @@ class Intf {
 
   public void "test dollar"() {
     def bar = myFixture.addClass("package foo; class Bar { class Foo {} }")
-    def foo = bar.innerClasses[0]
+    def foo = ApplicationManager.application.runReadAction( { bar.innerClasses[0] } as Computable)
     myFixture.addClass("package goo; class Goo { }")
     assert getPopupElements(new GotoClassModel2(project), 'Bar$Foo') == [foo]
     assert getPopupElements(new GotoClassModel2(project), 'foo.Bar$Foo') == [foo]
@@ -233,9 +241,11 @@ class Intf {
   }
 
   public void "test super method in jdk"() {
-    def ourRun = myFixture.addClass("package foo.bar; class Goo implements Runnable { public void run() {} }").methods[0]
+    def clazz = myFixture.addClass("package foo.bar; class Goo implements Runnable { public void run() {} }")
+    def ourRun
     def sdkRun
     edt {
+      ourRun = clazz.methods[0]
       sdkRun = ourRun.containingClass.interfaces[0].methods[0]
     }
 
@@ -249,8 +259,15 @@ class Intf {
   }
 
   public void "test super method not matching query qualifier"() {
-    def base = myFixture.addClass("class Base { void xpaint() {} }").methods[0]
-    def sub = myFixture.addClass("class Sub extends Base { void xpaint() {} }").methods[0]
+    def baseClass = myFixture.addClass("class Base { void xpaint() {} }")
+    def subClass = myFixture.addClass("class Sub extends Base { void xpaint() {} }")
+    
+    def base
+    def sub
+    edt {
+      base = baseClass.methods[0]
+      sub = subClass.methods[0]
+    }
 
     assert getPopupElements(new GotoSymbolModel2(project), 'Ba.xpai', false) == [base]
     assert getPopupElements(new GotoSymbolModel2(project), 'Su.xpai', false) == [sub]
