@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,9 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -105,9 +108,11 @@ public class PyStructuredDocstringFormatter {
     final byte[] data = new byte[encoded.limit()];
     encoded.get(data);
 
+    final Map<String, String> env = new HashMap<String, String>();
+    PythonEnvUtil.setPythonDontWriteBytecode(env);
 
     final ProcessOutput output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(), new String[]{sdkHome, formatter},
-                                                            null, 5000, data, true);
+                                                            env, 5000, data, true);
     if (output.isTimeout()) {
       LOG.info("timeout when calculating docstring");
       return null;
