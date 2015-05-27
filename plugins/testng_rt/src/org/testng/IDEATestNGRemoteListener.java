@@ -205,8 +205,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
         if (i > 0) {
           buf.append(", ");
         }
-        final Object parameter = parameters[i];
-        buf.append(parameter != null ? parameter.toString() : null);
+        buf.append(parameters[i]);
       }
       paramString = "[" + buf.toString() + "]";
     }
