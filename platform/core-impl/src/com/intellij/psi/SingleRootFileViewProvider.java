@@ -165,10 +165,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Override
   public void contentsSynchronized() {
-    unsetPsiContent();
-  }
-
-  private void unsetPsiContent() {
     if (!(myContent instanceof PsiFileContent)) return;
     setContent(new VirtualFileContent());
   }
@@ -452,14 +448,18 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   private void setContent(@NotNull Content content) {
-    // temporarily commented
-    //if (myPhysical) {
-    //  final Content oldContent = myContent;
-    //  if (oldContent != null && content.getModificationStamp() != oldContent.getModificationStamp()) {
-    //    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    //  }
-    //}
+    Content prevContent = myContent;
     myContent = content;
+    if (prevContent instanceof PsiFileContent && content instanceof VirtualFileContent) {
+      int fileLength = content.getText().length();
+      for (FileElement fileElement : getKnownTreeRoots()) {
+        int nodeLength = fileElement.getTextLength();
+        if (nodeLength != fileLength) {
+          LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength);
+        }
+      }
+    }
+    
   }
 
   @NonNls
