@@ -149,14 +149,22 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   private  void paintRowData(String duration, Rectangle bounds, Graphics2D g, boolean isSelected) {
     final Rectangle clipBounds = g.getClipBounds();
     final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-    final FontMetrics metrics = myTree.getFontMetrics(myTree.getFont());
+    applyAdditionalHints(g);
+    final Font ownFont = getFont();
+    if (ownFont != null) {
+      g.setFont(ownFont);
+    }
+
+    FontMetrics metrics = g.getFontMetrics(ownFont != null ? ownFont : g.getFont());
+    final int textBaseline = getTextBaseLine(metrics, getHeight());
+
     int totalWidth = metrics.stringWidth(duration);
-    int x = bounds.x + bounds.width - totalWidth;
+    int x = bounds.width - totalWidth - JBUI.scale(3);
     g.setClip(x, clipBounds.y, bounds.width, clipBounds.height);
     g.setColor(isSelected ? UIUtil.getTreeSelectionBackground(myTree.hasFocus()) : UIUtil.getTreeBackground());
     g.fillRect(0, 0, bounds.width, clipBounds.height);
     g.setColor(isSelected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
-    g.drawString(duration, x, (int)metrics.getMaxCharBounds(g).getHeight());
+    g.drawString(duration, x, textBaseline);
     config.restore();
     g.setClip(clipBounds);
   }
