@@ -249,6 +249,8 @@ class A {
 '''
   }
 
+  void "test class initializers"() { doTest() }
+
   void "test not null parameter"() {
     testHighlighting '''
 import org.jetbrains.annotations.NotNull

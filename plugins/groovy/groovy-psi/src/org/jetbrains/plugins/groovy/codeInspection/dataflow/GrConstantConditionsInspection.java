@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -74,7 +75,7 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
         check(file, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
       }
     }
-
+    
     @Override
     public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
       for (GrMembersDeclaration declaration : typeDefinitionBody.getMemberDeclarations()) {
@@ -82,6 +83,11 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
           check(declaration, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
         }
       }
+    }
+
+    @Override
+    public void visitClassInitializer(GrClassInitializer initializer) {
+      check(initializer, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
     }
   }
 
