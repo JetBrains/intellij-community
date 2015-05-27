@@ -1108,10 +1108,19 @@
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      groupPath="Groovy"
                      groupKey="groovy.dfa.issues"
-                     key="groovy.nullness"
+                     key="groovy.constant.conditions"
                      enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GrConstantConditionsInspection"/>
+
+    <localInspection language="Groovy"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     groupPath="Groovy"
+                     groupKey="groovy.dfa.issues"
+                     key="groovy.contract.issues"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GrContractInspection"/>
 
 
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.lang.flow.GrNullness"/>
