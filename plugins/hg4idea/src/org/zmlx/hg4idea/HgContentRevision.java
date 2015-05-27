@@ -53,6 +53,7 @@ public class HgContentRevision implements ContentRevision {
   }
 
   public byte[] getContentAsBytes() {
+    if (myRevisionNumber.isWorkingVersion()) return VcsUtil.getFileByteContent(myHgFile.getFile());
     final HgFile fileToCat = HgUtil.getFileNameInTargetRevision(myProject, myRevisionNumber, myHgFile);
     return HgUtil.loadContent(myProject, myRevisionNumber, fileToCat);
   }

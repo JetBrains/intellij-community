@@ -40,6 +40,7 @@ public class HgCatCommand {
     executor.setSilent(true);
     executor.setOutputAlwaysSuppressed(true);
     executor.setCharset(charset);
+    executor.setBinary(true);
     return executor.executeInCurrentThread(hgFile.getRepo(), "cat", arguments);
   }
 

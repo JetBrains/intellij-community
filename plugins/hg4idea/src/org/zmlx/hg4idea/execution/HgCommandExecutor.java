@@ -59,6 +59,7 @@ public class HgCommandExecutor {
   @NotNull private Charset myCharset;
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
+  private boolean myIsBinary = false;
 
   private boolean myOutputAlwaysSuppressed = false;    //for command with enormous output, like log or cat
 
@@ -85,6 +86,10 @@ public class HgCommandExecutor {
 
   public void setShowOutput(boolean showOutput) {
     myShowOutput = showOutput;
+  }
+
+  public void setBinary(boolean isBinary) {
+    myIsBinary = isBinary;
   }
 
   public void setOutputAlwaysSuppressed(boolean outputAlwaysSuppressed) {
@@ -125,7 +130,7 @@ public class HgCommandExecutor {
     try {
       long startTime = System.currentTimeMillis();
       LOG.debug(String.format("hg %s started", operation));
-      HgCommandResult result = shellCommand.execute(myShowOutput, shouldProcessAsBinary(operation));
+      HgCommandResult result = shellCommand.execute(myShowOutput, myIsBinary);
       LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
       logResult(result);
       return result;
@@ -138,10 +143,6 @@ public class HgCommandExecutor {
       LOG.info(e.getMessage(), e);
       return null;
     }
-  }
-
-  public static boolean shouldProcessAsBinary(@NotNull String command) {
-    return StringUtil.equalsIgnoreCase("cat", command);
   }
 
   private void processError(@NotNull ShellCommandException e) {
