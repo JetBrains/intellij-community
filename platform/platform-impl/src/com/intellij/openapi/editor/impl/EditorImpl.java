@@ -4097,14 +4097,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int softWrapLinesOnTargetLogicalLine = pos.softWrapLinesOnCurrentLogicalLine;
     int softWrapColumns = pos.softWrapColumnDiff;
 
-    if (line < 0) {
-      line = 0;
-      column = 0;
-      softWrapLinesBeforeTargetLogicalLine = 0;
-      softWrapLinesOnTargetLogicalLine = 0;
-      softWrapColumns = 0;
-    }
-
     final int totalLines = myDocument.getLineCount();
     if (totalLines <= 0) {
       return new LogicalPosition(0, 0);

@@ -431,22 +431,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
 
     Document doc = myEditor.getDocument();
 
-    if (column < 0) {
-      if (debugBuffer != null) {
-        debugBuffer.append("Resetting target logical column to zero as it is negative (").append(column).append(")\n");
-      }
-      column = 0;
-      softWrapColumns = 0;
-    }
-    if (line < 0) {
-      if (debugBuffer != null) {
-        debugBuffer.append("Resetting target logical line to zero as it is negative (").append(line).append(")\n");
-      }
-      line = 0;
-      softWrapLinesBefore = 0;
-      softWrapLinesCurrent = 0;
-    }
-
     int lineCount = doc.getLineCount();
     if (lineCount == 0) {
       if (debugBuffer != null) {
@@ -644,10 +628,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret {
     myDesiredX = -1;
     int column = pos.column;
     int line = pos.line;
-
-    if (column < 0) column = 0;
-
-    if (line < 0) line = 0;
 
     int lastLine = myEditor.getVisibleLineCount() - 1;
     if (lastLine <= 0) {
