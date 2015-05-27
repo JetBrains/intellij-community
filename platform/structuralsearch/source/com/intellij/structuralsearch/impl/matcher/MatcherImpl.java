@@ -313,13 +313,7 @@ public class MatcherImpl {
         final PsiElement psiElement = elementsToScan[i];
 
         if (psiElement == null) continue;
-        final Language language = psiElement.getLanguage();
-
-        PsiFile file = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
-
-        //if (profile.isMyFile(file, language, patternLanguage, patternLanguage2)) {
-          scheduler.addOneTask(new MatchOnePsiFile(psiElement));
-        //}
+        scheduler.addOneTask(new MatchOnePsiFile(psiElement));
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
       }
     }
@@ -546,30 +540,28 @@ public class MatcherImpl {
       ++scannedFilesCount;
 
       if (files.size() == 0) return;
-      final PsiFile psiFile = files.get(0).getContainingFile();
 
-      if (psiFile!=null) {
-        final Runnable action = new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                if (project.isDisposed()) return;
-                final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-                final Document document = manager.getDocument(psiFile);
-                if (document != null) manager.commitDocument(document);
-              }
-            });
-          }
-        };
-
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          action.run();
-        } else {
-          ApplicationManager.getApplication().invokeAndWait(
-            action,
-            ModalityState.defaultModalityState()
-          );
+      final Runnable action = new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              if (project.isDisposed()) return;
+              final PsiFile psiFile = files.get(0).getContainingFile();
+              final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+              final Document document = manager.getDocument(psiFile);
+              if (document != null) manager.commitDocument(document);
+            }
+          });
         }
+      };
+
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        action.run();
+      } else {
+        ApplicationManager.getApplication().invokeAndWait(
+          action,
+          ModalityState.defaultModalityState()
+        );
       }
 
       if (project.isDisposed()) return;
