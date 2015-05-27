@@ -12,4 +12,4 @@ To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or 
 * Use Build | Make Project to build the code.
 * To run the code, use the provided shared run configuration "**IDEA**".
 
-You can find other useful information at [http://www.jetbrains.org](http://www.jetbrains.org)
+You can find other useful information at [http://www.jetbrains.org](http://www.jetbrains.org). [Contribute section](http://www.jetbrains.org/display/IJOS/Contribute) of that site describes how you can contribute to IntelliJ IDEA.
