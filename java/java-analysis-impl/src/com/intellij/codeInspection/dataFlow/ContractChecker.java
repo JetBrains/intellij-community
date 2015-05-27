@@ -42,20 +42,14 @@ class ContractChecker extends DataFlowRunner {
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
   ContractChecker(PsiMethod method, MethodContract contract, final boolean onTheFly) {
+    super(false, true, false);
     myMethod = method;
     myContract = contract;
     myOnTheFly = onTheFly;
   }
 
-  static Map<PsiElement, String> checkContractClause(PsiMethod method,
-                                                     MethodContract contract, 
-                                                     final boolean onTheFly) {
-
-    PsiCodeBlock body = method.getBody();
-    if (body == null) return Collections.emptyMap();
-
-    ContractChecker checker = new ContractChecker(method, contract, onTheFly);
-
+  @NotNull
+  static DfaMemoryState createInitialState(PsiMethod method, MethodContract contract, ContractChecker checker) {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = checker.createMemoryState();
     final DfaValueFactoryJava factory = checker.getFactory();
@@ -68,9 +62,7 @@ class ContractChecker extends DataFlowRunner {
         initialState.applyCondition(factory.getRelationFactory().createRelation(dfaParam, comparisonValue, DfaRelation.EQ, negated));
       }
     }
-
-    checker.analyzeMethod(body, new StandardInstructionVisitor(checker), Arrays.asList(initialState));
-    return checker.getErrors();
+    return initialState;
   }
 
   @Override
@@ -116,7 +108,7 @@ class ContractChecker extends DataFlowRunner {
   }
 
 
-  private Map<PsiElement, String> getErrors() {
+  Map<PsiElement, String> getErrors() {
     HashMap<PsiElement, String> errors = ContainerUtil.newHashMap();
     for (PsiElement element : myViolations) {
       if (!myNonViolations.contains(element)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -40,8 +41,16 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitMethod(PsiMethod method) {
         for (MethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
-          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, isOnTheFly);
-          for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
+          final PsiCodeBlock body = method.getBody();
+          if (body == null) continue;
+
+          final ContractChecker checker = new ContractChecker(
+            method, contract, isOnTheFly
+          );
+          final DfaMemoryState initialState = ContractChecker.createInitialState(method, contract, checker);
+          checker.analyzeMethod(body, new StandardInstructionVisitor(checker), Collections.singletonList(initialState));
+
+          for (Map.Entry<PsiElement, String> entry : checker.getErrors().entrySet()) {
             PsiElement element = entry.getKey();
             holder.registerProblem(element, entry.getValue());
           }
@@ -51,29 +60,32 @@ public class ContractInspection extends BaseJavaBatchLocalInspectionTool {
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {
         if (!ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName())) return;
-
-        PsiMethod method = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
-        if (method == null) return;
-
-        String text = AnnotationUtil.getStringAttributeValue(annotation, null);
-        if (StringUtil.isNotEmpty(text)) {
-          String error = checkContract(method, text);
-          if (error != null) {
-            PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
-            assert value != null;
-            holder.registerProblem(value, error);
-            return;
-          }
-        }
-
-        if (Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure")) &&
-            PsiType.VOID.equals(method.getReturnType())) {
-          PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("pure");
-          assert value != null;
-          holder.registerProblem(value, "Pure methods must return something, void is not allowed as a return type");
-        }
+        checkContractAnnotation(annotation, holder);
       }
     };
+  }
+
+  public static void checkContractAnnotation(PsiAnnotation annotation, @NotNull ProblemsHolder holder) {
+    PsiMethod method = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
+    if (method == null) return;
+
+    String text = AnnotationUtil.getStringAttributeValue(annotation, null);
+    if (StringUtil.isNotEmpty(text)) {
+      String error = checkContract(method, text);
+      if (error != null) {
+        PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
+        assert value != null;
+        holder.registerProblem(value, error);
+        return;
+      }
+    }
+
+    if (Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure")) &&
+        PsiType.VOID.equals(method.getReturnType())) {
+      PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("pure");
+      assert value != null;
+      holder.registerProblem(value, "Pure methods must return something, void is not allowed as a return type");
+    }
   }
 
   @Nullable
