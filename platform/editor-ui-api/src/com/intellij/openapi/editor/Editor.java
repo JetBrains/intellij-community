@@ -237,6 +237,21 @@ public interface Editor extends UserDataHolder {
   VisualPosition offsetToVisualPosition(int offset);
 
   /**
+   * Maps an offset in the document to a visual position.
+   * <p>
+   * It's assumed that original position is associated with character immediately preceding given offset, 
+   * {@link VisualPosition#leansRight leansRight} value for visual position will be determined correspondingly.
+   *
+   * @param offset the offset in the document.
+   * @param leanForward if <code>true</code>, original position is associated with character after given offset, if <code>false</code> - 
+   *                    with character before given offset. This can make a difference in bidirectional text (see {@link LogicalPosition},
+   *                    {@link VisualPosition})
+   * @return the corresponding visual position.
+   */
+  @NotNull
+  VisualPosition offsetToVisualPosition(int offset, boolean leanForward);
+
+  /**
    * Maps the pixel coordinates in the editor to a logical position.
    *
    * @param p the coordinates relative to the top left corner of the {@link #getContentComponent() content component}.

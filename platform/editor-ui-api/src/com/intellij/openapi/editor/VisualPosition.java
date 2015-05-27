@@ -79,7 +79,7 @@ public class VisualPosition {
 
   @NonNls
   public String toString() {
-    return "VisualPosition: (" + line + ", " + column+")";
+    return "VisualPosition: (" + line + ", " + column+")" + (leansRight ? " leans right" : "");
   }
 
   @Override

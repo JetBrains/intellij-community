@@ -264,7 +264,7 @@ class EditorCoordinateMapper {
     int remainingShift = (int)(p.x - x);
     int additionalColumns = remainingShift <= 0 ? 0 : (remainingShift + plainSpaceWidth / 2) / plainSpaceWidth;
     return new VisualPosition(visualLine, lastColumn + additionalColumns, 
-                              remainingShift >= 0 && additionalColumns == remainingShift / plainSpaceWidth);
+                              remainingShift > 0 && additionalColumns == (remainingShift - 1) / plainSpaceWidth);
   }
 
   @NotNull

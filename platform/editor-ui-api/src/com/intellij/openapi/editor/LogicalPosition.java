@@ -207,7 +207,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
                 + " (before=" + softWrapLinesBeforeCurrentLogicalLine + "; current=" + softWrapLinesOnCurrentLogicalLine + ")")
            + (softWrapColumnDiff == 0 ? "" : "; columns diff=" + softWrapColumnDiff + ";" )
            + (foldedLines == 0? "" : "; folding: lines = " + foldedLines + ";")
-           + (foldingColumnDiff == 0 ? "" : "; columns diff=" + foldingColumnDiff);
+           + (foldingColumnDiff == 0 ? "" : "; columns diff=" + foldingColumnDiff)
+           + (leansForward ? "; leans forward" : "");
   }
 
   public int compareTo(LogicalPosition position) {

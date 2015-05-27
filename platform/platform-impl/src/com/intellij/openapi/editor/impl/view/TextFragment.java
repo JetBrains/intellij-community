@@ -155,11 +155,11 @@ class TextFragment implements LineFragment {
     for (int i = 0; i < myCharPositions.length; i++) {
       float newPos = myCharPositions[i];
       if (relX < (newPos + prevPos) / 2) {
-        return new int[] {i, relX < prevPos ? 0 : 1};
+        return new int[] {i, relX <= prevPos ? 0 : 1};
       }
       prevPos = newPos;
     }
-    return new int[] {myCharPositions.length, relX < myCharPositions[myCharPositions.length - 1] ? 0 : 1};
+    return new int[] {myCharPositions.length, relX <= myCharPositions[myCharPositions.length - 1] ? 0 : 1};
   }
 
   @Override

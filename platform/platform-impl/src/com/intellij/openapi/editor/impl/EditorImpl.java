@@ -1420,9 +1420,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return offsetToVisualPosition(offset, false);
   }
 
+  @Override
   @NotNull
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets) {
-    if (myUseNewRendering) return myView.offsetToVisualPosition(offset, leanTowardsLargerOffsets);
+  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward) {
+    if (myUseNewRendering) return myView.offsetToVisualPosition(offset, leanForward);
     return logicalToVisualPosition(offsetToLogicalPosition(offset));
   }
 
@@ -4096,6 +4097,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int softWrapLinesBeforeTargetLogicalLine = pos.softWrapLinesBeforeCurrentLogicalLine;
     int softWrapLinesOnTargetLogicalLine = pos.softWrapLinesOnCurrentLogicalLine;
     int softWrapColumns = pos.softWrapColumnDiff;
+    boolean leansForward = pos.leansForward;
+    boolean leansRight = pos.visualPositionLeansRight;
 
     final int totalLines = myDocument.getLineCount();
     if (totalLines <= 0) {
@@ -4120,6 +4123,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int lineEndColumn = calcColumnNumber(lineEndOffset, line);
       if (column > lineEndColumn) {
         column = lineEndColumn;
+        leansForward = true;
+        leansRight = true;
         if (softWrapColumns != 0) {
           softWrapColumns -= column - lineEndColumn;
         }
@@ -4135,10 +4140,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       }
     }
-    return new LogicalPosition(
-      line, column, softWrapLinesBeforeTargetLogicalLine, softWrapLinesOnTargetLogicalLine, softWrapColumns,
-      pos.foldedLines, pos.foldingColumnDiff, pos.leansForward, pos.visualPositionLeansRight
-    );
+    return pos.visualPositionAware ? 
+           new LogicalPosition(
+             line, column, softWrapLinesBeforeTargetLogicalLine, softWrapLinesOnTargetLogicalLine, softWrapColumns,
+             pos.foldedLines, pos.foldingColumnDiff, leansForward, leansRight
+           ) : 
+           new LogicalPosition(line, column, leansForward);
   }
 
   private boolean checkIgnore(@NotNull MouseEvent e, boolean isFinalCheck) {

@@ -81,14 +81,14 @@ class TabFragment implements LineFragment {
 
   @Override
   public int[] xToVisualColumn(float startX, float x) {
-    if (x < startX) return new int[] {0, 0};
+    if (x <= startX) return new int[] {0, 0};
     float nextTabStop = getNextTabStop(startX);
-    if (x >= nextTabStop) return new int[] {getVisualColumnCount(startX), 1};
+    if (x > nextTabStop) return new int[] {getVisualColumnCount(startX), 1};
     int column, columnWithoutRounding;
     if (myEditor.getSettings().isCaretInsideTabs()) {
       int plainSpaceWidth = myView.getPlainSpaceWidth();
       column = ((int)(x - startX) + plainSpaceWidth / 2) / plainSpaceWidth;
-      columnWithoutRounding = ((int)(x - startX)) / plainSpaceWidth;
+      columnWithoutRounding = ((int)(x - startX - 1)) / plainSpaceWidth;
     }
     else {
       column = x > (startX + nextTabStop) / 2 ? getVisualColumnCount(startX) : 0;
