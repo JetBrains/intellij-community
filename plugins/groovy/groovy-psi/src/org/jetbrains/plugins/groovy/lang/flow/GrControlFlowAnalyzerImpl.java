@@ -879,6 +879,41 @@ public class GrControlFlowAnalyzerImpl<V extends GrInstructionVisitor<V>>
   }
 
   @Override
+  public void visitSafeCastExpression(final GrSafeCastExpression typeCastExpression) {
+    startElement(typeCastExpression);
+
+    typeCastExpression.getOperand().accept(this);
+    final GrTypeElement typeElement = typeCastExpression.getCastTypeElement();
+    if (typeElement == null) {
+      pop();
+      pushUnknown();
+    }
+    else {
+      final PsiType type = typeElement.getType();
+      if (type == PsiType.BOOLEAN ||
+          type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN) ||
+          type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        pop();
+        push(factory.createTypeValue(type, Nullness.NOT_NULL));
+      }
+      else {
+        pushNull();
+        addInstruction(new BinopInstruction<V>(DfaRelation.EQ, null, typeCastExpression.getProject()));
+        final ConditionalGotoInstruction<V> ifNotNull = addInstruction(new ConditionalGotoInstruction<V>(null, true, null));
+        
+        // if operand is null
+        pushNull();
+        addInstruction(new GotoInstruction<V>(flow.getEndOffset(typeCastExpression)));
+        
+        // if operand is not null
+        ifNotNull.setOffset(flow.getNextOffset());
+        push(factory.createTypeValue(type, Nullness.NOT_NULL));
+      }
+    }
+    finishElement(typeCastExpression);
+  }
+
+  @Override
   public void visitClosure(GrClosableBlock closure) {
     startElement(closure);
     processClosure(false, closure);

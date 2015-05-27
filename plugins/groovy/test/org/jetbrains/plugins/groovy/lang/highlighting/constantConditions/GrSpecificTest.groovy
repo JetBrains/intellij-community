@@ -102,4 +102,6 @@ def range4(@Nullable a) {
   void "test subscript operator"() { doTest() }
 
   void "test switch"() { doTest() }
+
+  void "test safe cast"() { doTest() }
 }
