@@ -16,8 +16,10 @@
 package com.intellij.semantic;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -32,16 +34,30 @@ public class SemKey<T extends SemElement> {
   private static final AtomicInteger counter = new AtomicInteger(0);
   private final String myDebugName;
   private final SemKey<? super T>[] mySupers;
+  private final List<SemKey> myInheritors = ContainerUtil.createEmptyCOWList();
   private final int myUniqueId;
 
   private SemKey(String debugName, SemKey<? super T>... supers) {
     myDebugName = debugName;
     mySupers = supers;
     myUniqueId = counter.getAndIncrement();
+    myInheritors.add(this);
+    registerInheritor(this);
+  }
+
+  private void registerInheritor(SemKey eachParent) {
+    for (SemKey<?> superKey : eachParent.mySupers) {
+      superKey.myInheritors.add(this);
+      registerInheritor(superKey);
+    }
   }
 
   public SemKey<? super T>[] getSupers() {
     return mySupers;
+  }
+
+  public List<SemKey> getInheritors() {
+    return myInheritors;
   }
 
   public boolean isKindOf(SemKey<?> another) {
@@ -61,6 +77,11 @@ public class SemKey<T extends SemElement> {
 
   public static <T extends SemElement> SemKey<T> createKey(String debugName, SemKey<? super T>... supers) {
     return new SemKey<T>(debugName, supers);
+  }
+
+  @Override
+  public int hashCode() {
+    return myUniqueId;
   }
 
   public int getUniqueId() {
