@@ -97,9 +97,10 @@ public interface Editor extends UserDataHolder {
    * Returns the markup model for the editor. This model contains editor-specific highlighters
    * (for example, highlighters added by "Highlight usages in file"), which are painted in addition
    * to the highlighters contained in the markup model for the document.
+   * <p>
+   * See also com.intellij.openapi.editor.impl.DocumentMarkupModel.forDocument(Document, Project, boolean).
    *
    * @return the markup model instance.
-   * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(com.intellij.openapi.editor.Document, com.intellij.openapi.project.Project, boolean)
    */
   @NotNull
   MarkupModel getMarkupModel();
