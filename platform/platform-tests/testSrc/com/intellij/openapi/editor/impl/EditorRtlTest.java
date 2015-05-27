@@ -50,18 +50,12 @@ public class EditorRtlTest extends AbstractEditorTest {
     checkOffsetConversions(3, lP(3), vR(3), vL(3), xy(30));
     checkOffsetConversions(4, lP(4), vR(2), vR(4), xy(20), xy(40));
     
-    checkLPConversions(lP(0), 0, vL(0)); 
-    checkLPConversions(lS(0), 0, vR(0)); 
-    checkLPConversions(lP(1), 1, vL(1)); 
-    checkLPConversions(lS(1), 1, vR(1)); 
-    checkLPConversions(lP(2), 2, vL(2)); 
-    checkLPConversions(lS(2), 2, vL(4)); 
-    checkLPConversions(lP(3), 3, vR(3)); 
-    checkLPConversions(lS(3), 3, vL(3)); 
-    checkLPConversions(lP(4), 4, vR(2)); 
-    checkLPConversions(lS(4), 4, vR(4)); 
-    checkLPConversions(lP(5), 4, vL(5)); 
-    checkLPConversions(lS(5), 4, vR(5)); 
+    checkLPConversions(0, 0, vL(0), vR(0)); 
+    checkLPConversions(1, 1, vL(1), vR(1)); 
+    checkLPConversions(2, 2, vL(2), vL(4)); 
+    checkLPConversions(3, 3, vR(3), vL(3)); 
+    checkLPConversions(4, 4, vR(2), vR(4)); 
+    checkLPConversions(5, 4, vL(5), vR(5)); 
     checkLPConversions(l(1, 0, false), 4, v(1, 0, false)); 
     checkLPConversions(l(1, 0, true), 4, v(1, 0, true)); 
     
@@ -101,20 +95,13 @@ public class EditorRtlTest extends AbstractEditorTest {
     checkOffsetConversions(5, lP(5), vR(1), vL(1), xy(10));
     checkOffsetConversions(6, lP(6), vR(0), vR(6), xy(0), xy(60));
     
-    checkLPConversions(lP(0), 0, vL(0));
-    checkLPConversions(lS(0), 0, vL(6));
-    checkLPConversions(lP(1), 1, vR(5));
-    checkLPConversions(lS(1), 1, vL(5));
-    checkLPConversions(lP(2), 2, vR(4));
-    checkLPConversions(lS(2), 2, vR(2));
-    checkLPConversions(lP(3), 3, vL(3));
-    checkLPConversions(lS(3), 3, vR(3));
-    checkLPConversions(lP(4), 4, vL(4));
-    checkLPConversions(lS(4), 4, vL(2));
-    checkLPConversions(lP(5), 5, vR(1));
-    checkLPConversions(lS(5), 5, vL(1));
-    checkLPConversions(lP(6), 6, vR(0));
-    checkLPConversions(lS(6), 6, vR(6));
+    checkLPConversions(0, 0, vL(0), vL(6));
+    checkLPConversions(1, 1, vR(5), vL(5));
+    checkLPConversions(2, 2, vR(4), vR(2));
+    checkLPConversions(3, 3, vL(3), vR(3));
+    checkLPConversions(4, 4, vL(4), vL(2));
+    checkLPConversions(5, 5, vR(1), vL(1));
+    checkLPConversions(6, 6, vR(0), vR(6));
 
     checkVPConversions(vL(0), lP(0), xy(0));
     checkVPConversions(vR(0), lP(6), xy(0));
@@ -155,22 +142,14 @@ public class EditorRtlTest extends AbstractEditorTest {
     checkOffsetConversions(5, lP(5), vR(6), vL(6), xy(60));
     checkOffsetConversions(6, lP(6), vR(5), vR(7), xy(50), xy(70));
     
-    checkLPConversions(lP(0), 0, vL(0));
-    checkLPConversions(lS(0), 0, vL(2));
-    checkLPConversions(lP(1), 1, vR(1));
-    checkLPConversions(lS(1), 1, vL(1));
-    checkLPConversions(lP(2), 2, vR(0));
-    checkLPConversions(lS(2), 2, vR(2));
-    checkLPConversions(lP(3), 3, vR(2));
-    checkLPConversions(lS(3), 3, vR(2));
-    checkLPConversions(lP(4), 4, vL(5));
-    checkLPConversions(lS(4), 4, vL(7));
-    checkLPConversions(lP(5), 5, vR(6));
-    checkLPConversions(lS(5), 5, vL(6));
-    checkLPConversions(lP(6), 6, vR(5));
-    checkLPConversions(lS(6), 6, vR(7));
-    checkLPConversions(lP(7), 6, vL(8));
-    checkLPConversions(lS(7), 6, vR(8));
+    checkLPConversions(0, 0, vL(0), vL(2));
+    checkLPConversions(1, 1, vR(1), vL(1));
+    checkLPConversions(2, 2, vR(0), vR(2));
+    checkLPConversions(3, 3, vR(2), vR(2));
+    checkLPConversions(4, 4, vL(5), vL(7));
+    checkLPConversions(5, 5, vR(6), vL(6));
+    checkLPConversions(6, 6, vR(5), vR(7));
+    checkLPConversions(7, 6, vL(8), vR(8));
     
     checkVPConversions(vL(0), lP(0), xy(0));
     checkVPConversions(vR(0), lP(2), xy(0));
@@ -214,6 +193,17 @@ public class EditorRtlTest extends AbstractEditorTest {
     checkOffsetConversions(2, lP(2), vL(4), vL(5), xy(40), xy(50));
     checkOffsetConversions(3, lP(3), vR(4), vR(5), xy(40), xy(50));
   }
+  
+  public void testFoldingInInnerBidiRun() throws IOException {
+    init("lrrl");
+    addCollapsedFoldRegion(1, 2, "...");
+    
+    checkLPConversions(0, 0, vL(0), vR(0));
+    checkLPConversions(1, 1, vL(1), vR(1));
+    checkLPConversions(2, 2, vL(4), vL(5));
+    checkLPConversions(3, 3, vR(4), vR(5));
+    checkLPConversions(4, 4, vL(6), vR(6));
+  }
 
   private void init(String text) throws IOException {
     initText(text.replace(RTL_CHAR_REPRESENTATION, RTL_CHAR));
@@ -246,6 +236,13 @@ public class EditorRtlTest extends AbstractEditorTest {
     assertEquals("Wrong afterOffset->xy calculation", xyTowardsLargerOffsets, ((EditorImpl)myEditor).offsetToXY(offset, true));
   }
 
+  private static void checkLPConversions(int logicalColumn, int offset, 
+                                         VisualPosition visualPositionForPrecedingLp, VisualPosition visualPositionForSucceedingLp) {
+    checkLPConversions(lP(logicalColumn), offset, visualPositionForPrecedingLp);
+    checkLPConversions(lS(logicalColumn), offset, visualPositionForSucceedingLp);
+    
+  }
+  
   private static void checkLPConversions(LogicalPosition logicalPosition, int offset, VisualPosition visualPosition) {
     assertEquals("Wrong logicalPosition->offset calculation", offset, myEditor.logicalPositionToOffset(logicalPosition));
     assertVisualPositionsEqual("Wrong beforeLogicalPosition->visualPosition calculation",

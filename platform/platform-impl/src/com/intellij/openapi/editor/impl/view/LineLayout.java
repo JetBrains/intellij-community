@@ -236,7 +236,7 @@ class LineLayout {
       int start = Math.max(startOffset, targetStartOffset);
       int end = Math.min(endOffset, targetEndOffset);
       BidiRun run = new BidiRun(level, start, end);
-      int offset = 0;
+      int offset = startOffset;
       for (LineFragment fragment : fragments) {
         if (end <= offset) break;
         int endOffset = offset + fragment.getLength();
