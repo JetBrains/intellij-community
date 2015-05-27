@@ -19,7 +19,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.border.IdeaTitledBorder;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,6 +39,7 @@ public class DataViewsConfigurableUi {
   private JCheckBox myShowValuesInlineCheckBox;
   private JCheckBox myShowValueTooltipCheckBox;
   private JCheckBox myShowValueTooltipOnCheckBox;
+  private JBLabel myTooltipLabel;
 
   public DataViewsConfigurableUi() {
     UIUtil.configureNumericFormattedTextField(valueTooltipDelayTextField);
@@ -69,6 +72,7 @@ public class DataViewsConfigurableUi {
     myShowValuesInlineCheckBox.setSelected(Registry.is(IDE_DEBUGGER_INLINE_KEY));
     myShowValueTooltipCheckBox.setSelected(Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY));
     myShowValueTooltipOnCheckBox.setSelected(Registry.is(DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_ON_SELECTION_KEY));
+    myTooltipLabel.setText(XDebuggerBundle.message("settings.tooltip.label", Registry.stringValue("ide.forcedShowTooltip")));
   }
 
   public void apply(@NotNull XDebuggerDataViewSettings settings) {
