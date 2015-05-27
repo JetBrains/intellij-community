@@ -34,11 +34,13 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   public synchronized void onStart(final ISuite suite) {
     myPrintStream.println("##teamcity[enteredTheMatrix]");
-    onSuiteStart(suite.getName(), false);
   }
 
   public synchronized void onFinish(ISuite suite) {
-    onSuiteFinish(suite.getName());
+    for (int i = myCurrentSuites.size() - 1; i >= 0; i--) {
+      onSuiteFinish(myCurrentSuites.remove(i));
+    }
+    myCurrentSuites.clear();
   }
 
   public synchronized void onConfigurationSuccess(ITestResult result) {
@@ -77,12 +79,7 @@ public class IDEATestNGRemoteListener implements ISuiteListener, IResultListener
 
   public synchronized void onStart(ITestContext context) {}
 
-  public synchronized void onFinish(ITestContext context) {
-    for (int i = myCurrentSuites.size() - 1; i >= 0; i--) {
-      onSuiteFinish(myCurrentSuites.remove(i));
-    }
-    myCurrentSuites.clear();
-  }
+  public synchronized void onFinish(ITestContext context) {}
 
   public void onTestStart(ExposedTestResult result) {
     final String testMethodName = result.getMethodName();

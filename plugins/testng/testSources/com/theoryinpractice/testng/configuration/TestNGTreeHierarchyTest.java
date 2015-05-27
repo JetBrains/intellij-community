@@ -21,7 +21,7 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.testng.IDEATestNGRemoteListener;
-import org.testng.ITestContext;
+import org.testng.ISuite;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
 import org.testng.xml.XmlSuite;
@@ -58,11 +58,12 @@ public class TestNGTreeHierarchyTest {
 
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
-    listener.onStart((ITestContext)null);
+    listener.onStart((ISuite)null);
     listener.onTestSkipped(new MockTestNGResult("ATest", "testName"));
-    listener.onFinish((ITestContext)null);
+    listener.onFinish((ISuite)null);
 
-    Assert.assertEquals("output: " + buf, "\n" +
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
@@ -77,13 +78,14 @@ public class TestNGTreeHierarchyTest {
   public void testSkipMethodAfterStartTest() throws Exception {
     final StringBuffer buf = new StringBuffer();
     final IDEATestNGRemoteListener listener = createListener(buf);
-    listener.onStart((ITestContext)null);
+    listener.onStart((ISuite)null);
     final MockTestNGResult result = new MockTestNGResult("ATest", "testName");
     listener.onTestStart(result);
     listener.onTestSkipped(result);
-    listener.onFinish((ITestContext)null);
+    listener.onFinish((ISuite)null);
 
-    Assert.assertEquals("output: " + buf, "\n" +
+    Assert.assertEquals("output: " + buf, "##teamcity[enteredTheMatrix]\n" +
+                                          "\n" +
                                           "##teamcity[testSuiteStarted name ='ATest' locationHint = 'java:suite://ATest']\n" +
                                           "\n" +
                                           "##teamcity[testStarted name='testName' locationHint='java:test://ATest.testName|[0|]']\n" +
