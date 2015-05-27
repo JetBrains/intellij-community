@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -67,7 +68,9 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
 
     @Override
     public void visitMethod(GrMethod method) {
-      check(method, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
+      if (!(method.getContainingClass() instanceof GrAnonymousClassDefinition)) {
+        check(method, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
+      }
     }
 
     @Override
@@ -76,7 +79,7 @@ public class GrConstantConditionsInspection extends GroovySuppressableInspection
         check(file, myProblemsHolder, myIsOnTheFly, UNKNOWN_MEMBERS_ARE_NULLABLE);
       }
     }
-    
+
     @Override
     public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
       for (GrMembersDeclaration declaration : typeDefinitionBody.getMemberDeclarations()) {
