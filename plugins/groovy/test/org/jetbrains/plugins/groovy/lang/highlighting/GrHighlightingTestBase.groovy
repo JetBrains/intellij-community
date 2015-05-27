@@ -17,18 +17,20 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.LocalInspectionTool
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Max Medvedev
  */
+@CompileStatic
 abstract class GrHighlightingTestBase extends LightGroovyTestCase {
   String getBasePath() {
     TestUtils.testDataPath + 'highlighting/'
   }
 
-  InspectionProfileEntry[] getCustomInspections() {[]}
+  InspectionProfileEntry[] getCustomInspections() {new InspectionProfileEntry[0]}
 
   void doTest(boolean checkWarnings = true, boolean checkInfos = false, boolean checkWeakWarnings = true, InspectionProfileEntry... tools) {
     myFixture.enableInspections(tools);
